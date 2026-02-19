@@ -1,6 +1,7 @@
+import type { PluginRuntimeContextValue } from '../types/ctx'
+
 import { useContext } from 'react'
 
-import type { PluginRuntimeContextValue } from '../types/ctx'
 import { FlowToolRuntimeContext } from './context'
 import { createMissingRuntimeContextError } from './errors'
 

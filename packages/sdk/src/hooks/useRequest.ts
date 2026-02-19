@@ -1,6 +1,7 @@
+import type { RequestCapability } from '../types/capabilities/request'
+
 import { createMissingCapabilityError } from '../runtime/errors'
 import { useRuntime } from '../runtime/useRuntime'
-import type { RequestCapability } from '../types/capabilities/request'
 
 /**
  * Read request capability from runtime context.

@@ -21,7 +21,6 @@
     "groups": [
       "type",
       "builtin",
-      "object",
       "external",
       "internal",
       "parent",

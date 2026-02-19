@@ -1,6 +1,5 @@
-import type { ReactNode } from 'react'
-
 import type { ToolContext } from './ctx'
+import type { ReactNode } from 'react'
 
 /**
  * Runtime mode for command execution.
@@ -52,8 +51,7 @@ export interface PanelCommandDef<In = void, Out = void> extends CommandBase {
 /**
  * Headless command definition.
  */
-export interface HeadlessCommandDef<In = void, Out = void>
-  extends CommandBase {
+export interface HeadlessCommandDef<In = void, Out = void> extends CommandBase {
   /**
    * Headless mode marker.
    */

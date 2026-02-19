@@ -1,6 +1,7 @@
+import type { DBCapability } from '../types/capabilities/db'
+
 import { createMissingCapabilityError } from '../runtime/errors'
 import { useRuntime } from '../runtime/useRuntime'
-import type { DBCapability } from '../types/capabilities/db'
 
 /**
  * Read database capability from runtime context.

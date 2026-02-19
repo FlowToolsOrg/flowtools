@@ -1,6 +1,7 @@
+import type { FSCapability } from '../types/capabilities/fs'
+
 import { createMissingCapabilityError } from '../runtime/errors'
 import { useRuntime } from '../runtime/useRuntime'
-import type { FSCapability } from '../types/capabilities/fs'
 
 /**
  * Read filesystem capability from runtime context.

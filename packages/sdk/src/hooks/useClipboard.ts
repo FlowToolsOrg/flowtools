@@ -1,6 +1,7 @@
+import type { ClipboardCapability } from '../types/capabilities/clipboard'
+
 import { createMissingCapabilityError } from '../runtime/errors'
 import { useRuntime } from '../runtime/useRuntime'
-import type { ClipboardCapability } from '../types/capabilities/clipboard'
 
 /**
  * Read clipboard capability from runtime context.

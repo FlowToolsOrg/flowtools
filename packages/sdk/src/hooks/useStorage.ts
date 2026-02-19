@@ -1,6 +1,7 @@
+import type { StorageCapability } from '../types/capabilities/storage'
+
 import { createMissingCapabilityError } from '../runtime/errors'
 import { useRuntime } from '../runtime/useRuntime'
-import type { StorageCapability } from '../types/capabilities/storage'
 
 /**
  * Read storage capability from runtime context.

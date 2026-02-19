@@ -1,6 +1,7 @@
+import type { NativeCapability } from '../types/capabilities/native'
+
 import { createMissingCapabilityError } from '../runtime/errors'
 import { useRuntime } from '../runtime/useRuntime'
-import type { NativeCapability } from '../types/capabilities/native'
 
 /**
  * Read native capability from runtime context.

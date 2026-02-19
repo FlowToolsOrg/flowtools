@@ -1,8 +1,7 @@
-import type { ComponentType } from 'react'
-
 import type { CommandDef } from './command'
 import type { ToolContext } from './ctx'
 import type { Permission } from './permissions'
+import type { ComponentType } from 'react'
 
 /**
  * Supported plugin categories in Flow Tool.

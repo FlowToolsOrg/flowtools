@@ -1,0 +1,56 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": [
+    "node_modules/**",
+    "dist/**",
+    "coverage/**",
+    "src-tauri/**",
+    "src/utils/bindings.ts"
+  ],
+  "tabWidth": 2,
+  "useTabs": false,
+  "endOfLine": "lf",
+  "quoteStyle": "single",
+  "semi": false,
+  "singleQuote": true,
+  "trailingComma": "es5",
+  "printWidth": 80,
+  "bracketSpacing": true,
+  "arrowParens": "avoid",
+  "experimentalSortImports": {
+    "groups": [
+      "type",
+      "builtin",
+      "object",
+      "external",
+      "internal",
+      "parent",
+      "sibling",
+      "index"
+    ],
+    "customGroups": [
+      {
+        "pattern": "react",
+        "group": "external",
+        "position": "before"
+      },
+      {
+        "pattern": "@heroui/**",
+        "group": "external",
+        "position": "after"
+      },
+      {
+        "pattern": "@tauri-apps/**",
+        "group": "external",
+        "position": "after"
+      },
+      {
+        "pattern": "@/**",
+        "group": "internal",
+        "position": "after"
+      }
+    ],
+    "newlinesBetween": true,
+    "order": "asc"
+  }
+}

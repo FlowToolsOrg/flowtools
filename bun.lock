@@ -4,6 +4,7 @@
     "": {
       "name": "flow-tool",
       "devDependencies": {
+        "husky": "^9.1.7",
         "oxfmt": "^0.33.0",
         "oxlint": "^1.48.0",
         "turbo": "^2.8.10",
@@ -131,6 +132,8 @@
     "@types/react-dom": ["@types/react-dom@19.2.2", "https://registry.npmmirror.com/@types/react-dom/-/react-dom-19.2.2.tgz", { "peerDependencies": { "@types/react": "^19.2.0" } }, "sha512-9KQPoO6mZCi7jcIStSnlOWn2nEF3mNmyr3rIAsGnAbQKYbRLyqmeSc39EVgtxXVia+LMT8j3knZLAZAh+xLmrw=="],
 
     "csstype": ["csstype@3.2.3", "https://registry.npmmirror.com/csstype/-/csstype-3.2.3.tgz", {}, "sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ=="],
+
+    "husky": ["husky@9.1.7", "", { "bin": { "husky": "bin.js" } }, "sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA=="],
 
     "oxfmt": ["oxfmt@0.33.0", "", { "dependencies": { "tinypool": "2.1.0" }, "optionalDependencies": { "@oxfmt/binding-android-arm-eabi": "0.33.0", "@oxfmt/binding-android-arm64": "0.33.0", "@oxfmt/binding-darwin-arm64": "0.33.0", "@oxfmt/binding-darwin-x64": "0.33.0", "@oxfmt/binding-freebsd-x64": "0.33.0", "@oxfmt/binding-linux-arm-gnueabihf": "0.33.0", "@oxfmt/binding-linux-arm-musleabihf": "0.33.0", "@oxfmt/binding-linux-arm64-gnu": "0.33.0", "@oxfmt/binding-linux-arm64-musl": "0.33.0", "@oxfmt/binding-linux-ppc64-gnu": "0.33.0", "@oxfmt/binding-linux-riscv64-gnu": "0.33.0", "@oxfmt/binding-linux-riscv64-musl": "0.33.0", "@oxfmt/binding-linux-s390x-gnu": "0.33.0", "@oxfmt/binding-linux-x64-gnu": "0.33.0", "@oxfmt/binding-linux-x64-musl": "0.33.0", "@oxfmt/binding-openharmony-arm64": "0.33.0", "@oxfmt/binding-win32-arm64-msvc": "0.33.0", "@oxfmt/binding-win32-ia32-msvc": "0.33.0", "@oxfmt/binding-win32-x64-msvc": "0.33.0" }, "bin": { "oxfmt": "bin/oxfmt" } }, "sha512-ogxBXA9R4BFeo8F1HeMIIxHr5kGnQwKTYZ5k131AEGOq1zLxInNhvYSpyRQ+xIXVMYfCN7yZHKff/lb5lp4auQ=="],
 

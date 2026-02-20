@@ -11,6 +11,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@flow-tool/sdk": "workspace:*",
+    "@flow-tool/ui": "workspace:*",
     "@heroui/react": "^3.0.0-beta.7",
     "@heroui/styles": "^3.0.0-beta.7",
     "@tanstack/react-router": "^1.161.3",

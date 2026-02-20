@@ -51,8 +51,5 @@
     ],
     "newlinesBetween": true,
     "order": "asc"
-  },
-  "experimentalTailwindcss": {
-    "stylesheet": "./src/assets/globals.css"
   }
 }

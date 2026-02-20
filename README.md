@@ -31,19 +31,21 @@ But purpose-built for utility workflows.
 
 Flow Tool is built in layered form:
 
+<pre>
 ┌───────────────────────────────┐
-│ Plugin Layer │
-│ Tool Plugins | App Plugins│
+│ Plugin Layer                  │
+│ Tool Plugins  |  App Plugins  │
 ├───────────────────────────────┤
-│ SDK & Runtime │
-│ definePlugin | hooks | perms │
+│ SDK & Runtime                 │
+│ definePlugin | hooks | perms  │
 ├───────────────────────────────┤
-│ Host Capability │
-│ FS | DB | Network | Native │
+│ Host Capability               │
+│ FS | DB | Network | Native    │
 ├───────────────────────────────┤
-│ Rust Core (Tauri) │
+│ Rust Core (Tauri)             │
 └───────────────────────────────┘
-
+</pre>
+	
 Core principles:
 
 - Single React tree

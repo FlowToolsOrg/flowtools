@@ -67,7 +67,12 @@ export interface PluginRuntimeContextValue {
    */
   fs?: FSCapability
   /**
+   * Optional network request capability (`fetch` compatible).
+   */
+  fetch?: RequestCapability
+  /**
    * Optional network request capability.
+   * @deprecated Use `fetch` instead.
    */
   request?: RequestCapability
   /**

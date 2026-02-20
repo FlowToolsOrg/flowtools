@@ -1,6 +1,7 @@
 export { definePlugin } from './definePlugin'
 
 export { useClipboard } from './hooks/useClipboard'
+export { useCapability } from './hooks/useCapability'
 export { useDB } from './hooks/useDB'
 export { useDialog } from './hooks/useDialog'
 export { useEnv } from './hooks/useEnv'
@@ -11,8 +12,15 @@ export { useRequest } from './hooks/useRequest'
 export { useStorage } from './hooks/useStorage'
 export { useUI } from './hooks/useUI'
 
+export { FlowToolRuntimeContext } from './runtime/context'
+export {
+  FlowToolRuntimeProvider,
+  type FlowToolRuntimeProviderProps,
+} from './runtime/provider'
+
 export { result } from './result/helpers'
 
+export type { CapabilitySelector } from './hooks/useCapability'
 export type {
   DefinedFlowToolPlugin,
   FlowToolPluginMarker,

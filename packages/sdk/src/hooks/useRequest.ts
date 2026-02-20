@@ -8,10 +8,11 @@ import { useRuntime } from '../runtime/useRuntime'
  */
 export function useRequest(): RequestCapability {
   const ctx = useRuntime()
+  const request = ctx.fetch ?? ctx.request
 
-  if (!ctx.request) {
+  if (!request) {
     throw createMissingCapabilityError('network')
   }
 
-  return ctx.request
+  return request
 }

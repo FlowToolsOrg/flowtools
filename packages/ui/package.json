@@ -11,23 +11,40 @@
     "generate:component": "turbo gen react-component",
     "check-types": "tsc --noEmit"
   },
-  "dependencies": {
+  "peerDependencies": {
+    "@heroui/react": "^3.0.0-beta.7",
+    "@heroui/styles": "^3.0.0-beta.7",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "tailwindcss": "^4.2.0"
   },
   "devDependencies": {
+    "@heroui/react": "^3.0.0-beta.7",
+    "@heroui/styles": "^3.0.0-beta.7",
     "@types/node": "^22.15.3",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "oxfmt": "^0.33.0",
     "oxlint": "^1.48.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tailwindcss": "^4.2.0",
     "typescript": "5.9.2"
   },
   "peerDependenciesMeta": {
+    "@heroui/react": {
+      "optional": false
+    },
+    "@heroui/styles": {
+      "optional": false
+    },
     "react": {
       "optional": false
     },
     "react-dom": {
+      "optional": false
+    },
+    "tailwindcss": {
       "optional": false
     }
   }

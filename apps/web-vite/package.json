@@ -1,7 +1,7 @@
 {
   "name": "@flow-tool/web-vite",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,9 +11,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@heroui/react": "^3.0.0-beta.7",
+    "@heroui/styles": "^3.0.0-beta.7",
     "@tanstack/react-router": "^1.161.3",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "zustand": "^5.0.11"
   },
   "devDependencies": {
     "@tanstack/react-router-devtools": "^1.161.3",

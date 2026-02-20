@@ -1,0 +1,45 @@
+:root {
+  color: #e8eef7;
+  background: #0e1116;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.shell {
+  min-height: 100vh;
+  padding: 40px 24px;
+}
+
+.row {
+  margin: 20px 0;
+}
+
+.button {
+  border: 1px solid #3f485a;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #e8eef7;
+  background: #1b2230;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: #242d3f;
+}
+
+.muted {
+  color: #a7b1c2;
+}
+
+.snippet {
+  border-radius: 6px;
+  padding: 6px 10px;
+  background: #151b26;
+}

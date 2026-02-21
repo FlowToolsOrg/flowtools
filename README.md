@@ -2,10 +2,12 @@
 
 > An extensible, cross-platform toolbox powered by a plugin runtime.
 
-Flow Tool is a desktop-first (Tauri-based) extensible tool platform that supports both instant “tool” plugins and long-running “app” plugins.  
-It is designed around capability injection, permission control, and a unified React UI system.
+Flow Tool is a plugin-driven utility platform focused on capability injection,
+permission gating, and a unified React UI runtime.
 
-Instead of shipping hundreds of built-in utilities, Flow Tool provides a stable runtime and SDK — tools are delivered as installable plugins.
+The target production host is desktop (Tauri + Rust).
+This repository currently contains a web runtime prototype used to validate the
+SDK, plugin contracts, and capability model before desktop host implementation.
 
 ## ✨ Vision
 
@@ -31,7 +33,7 @@ But purpose-built for utility workflows.
 
 Flow Tool is built in layered form:
 
-<pre>
+```
 ┌───────────────────────────────┐
 │ Plugin Layer                  │
 │ Tool Plugins  |  App Plugins  │
@@ -44,8 +46,8 @@ Flow Tool is built in layered form:
 ├───────────────────────────────┤
 │ Rust Core (Tauri)             │
 └───────────────────────────────┘
-</pre>
-	
+```
+
 Core principles:
 
 - Single React tree
@@ -54,90 +56,113 @@ Core principles:
 - Namespaced storage & database
 - Plugin lifecycle management
 
-## 🧩 Plugin Model
+## Current Status (February 2026)
 
-Flow Tool supports two plugin types:
+- Product direction: desktop-first, cross-platform ready.
+- Current runnable host: `apps/web-vite`.
+- Core packages under active development:
+  - `packages/sdk` (`@flow-tool/sdk`)
+  - `packages/ui` (`@flow-tool/ui`)
+- Local plugin workspace example:
+  - `plugins/plugin-example-hello-world`
+- Planned (not implemented yet in this repo):
+  - `apps/desktop`
+  - `apps/docs`
 
-### 1️⃣ Tool Plugins (Instant Execution)
+## Monorepo Layout
 
-- Stateless
-- No persistent runtime
-- Optional UI
-- Executes and exits
+```text
+apps/
+  web-vite/    # web host prototype (router + runtime adapters)
+  ui-test/     # UI package consumer and browser test app
+packages/
+  sdk/         # plugin contract, hooks, runtime provider, result helpers
+  ui/          # shared React UI primitives
+plugins/
+  plugin-example-hello-world/
+configs/
+  tsdown/      # shared package build config
+```
 
-Example:
+## Development
 
-- Text conversion
-- Sitemap extraction
-- Hash calculation
+Run from repository root:
 
-### 2️⃣ App Plugins (Persistent UI)
+```bash
+bun install
+bun run dev
+bun run build
+bun run lint
+bun run check-types
+bun run test
+bun run format
+```
 
-- Long-running
-- Store support
-- Database access
-- Lifecycle-managed
+Useful local commands:
 
-Example:
+```bash
+cd apps/web-vite && bun run dev
+cd apps/ui-test && bun run dev
+cd apps/ui-test && bun run test
+```
 
-- Bookmark manager
-- Clipboard history
-- Task tracker
+## Plugin Model
 
-## 🛠 Plugin Development
+Flow Tool supports two plugin categories:
 
-Plugins are defined using the Flow Tool SDK:
+- `app`: persistent panel plugins (`setup()` returns a React component)
+- `tool`: instant execution plugins (`run(ctx, input)`)
 
-```ts
-import { definePlugin, useFS } from "@flow-tool/sdk"
+Minimal app plugin example:
+
+```tsx
+import { definePlugin, useStorage } from '@flow-tool/sdk'
 
 export default definePlugin({
-  type: "app",
-
+  type: 'app',
   meta: {
-    id: "example",
-    name: "Example Plugin",
-    version: "1.0.0",
-    permissions: ["fs"]
+    id: 'example-app',
+    name: 'Example App',
+    version: '0.1.0',
+    permissions: ['storage'],
   },
-
   setup() {
     return function Panel() {
-      const fs = useFS()
+      const storage = useStorage()
 
-      return <button onClick={() => fs.readFile()}>
-        Read File
-      </button>
+      return <button onClick={() => storage.set('hello', 'world')}>Save</button>
     }
-  }
+  },
 })
 ```
 
-### Tool Plugin Example
+## Runtime Snapshot
 
-```ts
-import { definePlugin } from '@flow-tool/sdk'
+Desktop-first remains the architecture direction.
+Current implemented runtime in this repository is web-based:
 
-export default definePlugin({
-	type: 'tool',
+- App plugin mount: `renderWebAppPlugin(...)`
+- Tool plugin execution: `runWebToolPlugin(...)`
+- Permission-based capability injection via runtime context provider
 
-	meta: {
-		id: 'hash',
-		name: 'Hash Generator',
-		version: '1.0.0',
-	},
+Web prototype capability behavior:
 
-	async run(ctx, input) {
-		return ctx.crypto.hash(input.text)
-	},
-})
-```
+| Permission     | Web host behavior                           |
+| -------------- | ------------------------------------------- |
+| `network`      | Uses browser `fetch`                        |
+| `storage`      | Namespaced `localStorage`                   |
+| `fs`           | Simulated file read/write on `localStorage` |
+| `clipboard`    | Browser clipboard API                       |
+| `notification` | Notification API with toast fallback        |
+| `dialog`       | Declared but not yet supported in web host  |
+| `db`           | Declared but not yet supported in web host  |
+| `native`       | Declared but not yet supported in web host  |
 
 ## 🔐 Permission System
 
 Plugins declare required capabilities:
 
-```ts
+```
 permissions: ['fs', 'network', 'db']
 ```
 
@@ -215,10 +240,10 @@ Flow Tool ensures:
 Current Focus:
 
 - Desktop (Tauri)
+- Web runtime
 
 Planned:
 
-- Web runtime
 - Plugin marketplace
 - Mobile adaptation
 - Advanced permission UI
@@ -248,10 +273,17 @@ The focus is on:
 - Permission system
 - State & DB isolation model
 
-## 📜 License
+## Documentation
+
+- Architecture details: [`architecture.md`](./architecture.md)
+- Contributor/agent guide: [`AGENTS.md`](./AGENTS.md)
+
+## License
 
 [Apache 2.0 License](./LICENSE)
 
 ## 👨‍💻 Author
+
+[HM Suiji](https://github.com/HM-Suiji)
 
 Built with architectural obsession and system-level thinking.

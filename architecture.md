@@ -1,135 +1,63 @@
 # Flow Tool Architecture
 
-Flow Tool 是一个插件驱动的工具平台（Toolbox Platform），核心目标是：
+Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平台。
+当前仓库代码处于“先验证插件运行时，再落地桌面宿主”的阶段。
 
-- 用最小的宿主内核提供统一 UI 与能力（capabilities）
-- 将大量功能以“本地安装插件”的形式交付
-- 支持两种插件形态：即时工具（Tool）与长期应用（App）
-- 插件不能直接调用 Tauri/Node/native，只能通过受控 SDK 能力访问
+- 目标：以最小宿主内核 + 可扩展插件生态交付能力
+- 核心机制：Capability Injection / Permission Gating / Single React Tree
+- 插件形态：`app`（长期 UI）与 `tool`（即时执行）
 
 > 关键词：Capability Injection / Plugin Runtime / Permission Gating / Namespacing / Single React Tree
 
-## 1. Non-Goals（明确不做）
+## 1. Reality Check（当前实现状态）
 
-- 不提供 iframe 沙箱隔离
-- 不支持运行时动态编译插件（插件必须预构建）
-- 不支持插件直接编写并动态注册 Rust commands（native 能力由宿主提供）
-- 不追求“执行不可信插件”的强安全模型（插件需受信任；安全依赖审核/签名/权限提示等）
+截至 2026-02，仓库中的实现状态：
 
-## 2. Core Decisions（已确定的关键决策）
+- 已实现：
+  - `packages/sdk`：插件契约、hooks、runtime provider、结果类型
+  - `packages/ui`：基础 UI 组件
+  - `apps/web-vite`：web runtime 原型（用于验证 SDK 与运行时模型）
+  - `plugins/plugin-example-hello-world`：本地插件示例
+- 计划中（尚未落地到当前代码）：
+  - `apps/desktop`（Tauri 桌面宿主）
+  - `apps/docs`
 
-- 插件安装方式：本地安装（plugins 目录）
-- 运行模型：同线程（与宿主同一 JS runtime）
-- UI：全 React；支持无 UI（headless）
-- React 树：单 React Root（所有插件共享同一 React 树）
-- 插件能力访问：通过 SDK hooks / ctx 注入，禁止直接访问 Tauri API
-- 权限模型：声明式 permissions，运行时能力裁剪（capability gating）
+结论：架构方向是 desktop-first，但当前可运行宿主是 web 原型。
 
-## 3. Plugin Taxonomy（插件物种）
+## 2. Layered Model（分层模型）
 
-插件分为两种类型，运行模型不同，必须在第一天就区分。
-
-### 3.1 Tool Plugin（即时型工具）
-
-- 默认无长期状态
-- 可以无 UI（headless）
-- 执行即结束：run → return → destroy context
-- 典型：sitemap 提取、hash 计算、格式转换
-
-### 3.2 App Plugin（长期型应用）
-
-- 可提供 UI 面板
-- 可使用 store / db / settings（由宿主管理与隔离）
-- 生命周期更长：load → mount UI → background → unmount UI（插件仍可保持资源）
-- 典型：书签管理、剪贴板历史、任务管理
-
-## 4. System Layers（系统分层）
-
+```text
 [ Plugins ]
-↓ use @flow-tool/sdk (types + definePlugin + hooks)
-[ Runtime ]
-
-- loader / registry / lifecycle / permissions / command system
-- creates ctx (capability instances)
-- mounts plugin UI under Provider (single React tree)
-  [ Host (Desktop/Web) ]
-- implements capabilities (fs/db/network/native bridge)
-  [ Native (Rust/Tauri) ]
-- provides high-performance primitives via invoke/commands
-
-依赖方向必须单向：
-plugin → sdk → runtime → capabilities → native
-
-## 5. Plugin Contract（插件契约）
-
-插件通过 `definePlugin()` 声明。`definePlugin` 是契约入口，非组件本身。
-
-### 5.1 App Plugin Contract
-
-- `setup()` 返回 React Function Component（Panel）
-- React hooks 从 `react` 导入使用
-- 平台能力通过 `@flow-tool/sdk` 提供的 hooks 获取（内部读 runtime context）
-
-示例：
-
-```ts
-export default definePlugin({
-  type: "app",
-  meta: {...},
-  setup() {
-    return function Panel() {
-      const fs = useFS()
-      return (...)
-    }
-  }
-})
+  -> use @flow-tool/sdk
+[ Runtime (Host App) ]
+  -> loader / ctx factory / permission gating
+[ Capability Adapters ]
+  -> fs / request / storage / native bridge
+[ Platform ]
+  -> Web APIs today, Tauri+Rust in target desktop host
 ```
 
-### 5.2 Tool Plugin Contract
+依赖方向保持单向：
 
-- `run(ctx, input)` 执行
-- 无 React provider，因此必须显式使用 ctx
-- 支持返回结构化输出，供宿主展示结果/复制等
+`plugin -> sdk -> host runtime -> capability adapter -> platform`
 
-示例：
+## 3. Plugin Contract（SDK 契约）
 
-```ts
-export default definePlugin({
-  type: "tool",
-  meta: {...},
-  commands: {...},
-  async run(ctx, input) { ... }
-})
-```
+插件统一通过 `definePlugin(...)` 声明。
 
-## 6. Command System（命令系统）
+- `type: 'app'`
+  - 必须提供 `setup()`
+  - `setup()` 返回 React 组件，由宿主渲染
+- `type: 'tool'`
+  - 必须提供 `run(ctx, input)`
+  - 无 UI 依赖，直接执行并返回结果
 
-命令是插件对外暴露的“唯一入口”（Single Entry Principle）。
+`definePlugin` 会写入 `__flow_tool` marker，并在类型层限制
+`meta.permissions` 的重复声明（tuple 字面量可在编译期发现重复权限）。
 
-- 所有插件必须通过 commands 暴露能力
-- 命令支持两种 mode：
-  - `panel`: 打开 UI 面板
-  - `headless`: 执行并返回结果
+## 4. Runtime Context 与 Hooks
 
-最小 command schema：
-
-- id（命令 id）
-- title（展示名）
-- mode（panel/headless）
-- handler（render/run）
-
-宿主提供统一 Command Palette（类似 uTools/Raycast）：
-
-- 搜索命令
-- 触发命令
-- 记录历史
-- 绑定快捷键（后续）
-
-## 7. Runtime Context（ctx）与 SDK Hooks
-
-### 7.1 ctx 的定位
-
-ctx 是 runtime 内部对象，代表“插件能力实例集合”。插件 UI 不直接接触 ctx，通常通过 hooks 获取能力。
+ctx(context) 是 runtime 内部对象，代表“插件能力实例集合”。插件 UI 不直接接触 ctx，通常通过 hooks 获取能力。
 
 ctx 的职责：
 
@@ -137,64 +65,124 @@ ctx 的职责：
 - 命名空间隔离：store/db/cache 都与 pluginId 绑定
 - 多平台适配：desktop/web 的实现不同，但 ctx contract 不变
 
-### 7.2 SDK hooks 的原理
+`@flow-tool/sdk` 暴露：
 
-SDK hooks（如 useFS/useDB）是桥接函数：
+- Provider：`FlowToolRuntimeProvider`
+- 环境：`useEnv()`
+- 通用能力：`useCapability()`
+- 专用能力 hooks：`useFS/useRequest/useStorage/useDB/...`
 
-- 运行时：从 React Context 读取 ctx
-- 类型：提供 TS 类型提示
-- 实体能力：来自 runtime 注入的 ctx.fs/ctx.db
+运行时通过 context 注入 `PluginRuntimeContextValue`：
 
-> useFS 不是“只有类型”，而是运行时读取入口。
+- `env`：`pluginId`、`pluginType`、`platform`、`mode`
+- `ui`：toast/openPanel/closePanel
+- 可选能力：`fs/request/clipboard/dialog/notification/storage/db/native`
+- `utils.now()`
 
-## 8. Permissions（权限模型）
+若插件调用了未注入能力，对应 hook 会抛出 `MissingCapabilityError`。
 
-插件在 meta 中声明 permissions：
+## 5. Permission Model（权限模型）
 
-- 例如：["fs", "network", "db", "clipboard", "dialog", "notification", "storage"]
+权限集合（SDK）当前为：
 
-运行时创建 ctx 时按权限裁剪：
+- `fs`
+- `network`
+- `clipboard`
+- `dialog`
+- `notification`
+- `storage`
+- `db`
+- `native`
 
-- 允许：注入真实 capability 实例
-- 不允许：注入 denied proxy（访问即抛错）
+Host runtime 用 `pickCapability(...)` 做权限裁剪：
 
-后续可扩展：
+- 已声明权限 -> 注入 capability 实现
+- 未声明权限 -> 对应 capability 为 `undefined`
 
-- 首次运行弹窗授权
-- 权限细粒度（fs.read vs fs.write）
-- 用户可在设置中撤销
+## 6. Web Runtime Prototype（当前宿主实现）
 
-## 9. State Model（Store）
+`apps/web-vite/src/runtime/ctx.tsx` 提供当前 web 适配。
 
-原则：插件不能随意创建全局 store，平台托管 store。
+能力映射如下：
 
-- App 插件可使用 `usePluginStore()` / `ctx.store` 申请 scoped store
-- store 以 pluginId 命名空间隔离
-- 支持持久化（future）：
-  - desktop: sqlite
-  - web: indexedDB/localStorage
+- `ui`：通过 `window.dispatchEvent` 发事件
+  - `flow-tool:toast`
+  - `flow-tool:panel-open`
+  - `flow-tool:panel-close`
+  - `flow-tool:tool-log`
+- `network`：直接映射到浏览器 `fetch`
+- `storage`：`localStorage`（key 前缀 `flow-tool:{pluginId}:storage:`）
+- `fs`：`localStorage` 模拟文件（key 前缀 `flow-tool:{pluginId}:fs:`）
+- `clipboard`：浏览器 clipboard API
+- `notification`：Notification API（不可用时降级为 toast 事件）
+- `dialog`：web 未实现，调用抛错
+- `db`：web 未实现，调用抛错
+- `native`：web 未实现，调用抛错
 
-Tool 插件默认不提供 store。
+## 7. Plugin Execution Flow
 
-## 10. Database Model（DB）
+### 7.1 App Plugin
 
-原则：插件不能直接操作 sqlite 连接，平台托管 db。
+入口：`renderWebAppPlugin(plugin)`
 
-- 统一 SQLite 数据库（desktop）
-- 插件数据通过 pluginId namespace 隔离
-- 表名策略：
-  - `${pluginId}__${tableName}`
+1. 调用 `plugin.setup()` 获取 Panel 组件
+2. 使用 `WebPluginRuntimeProvider` 注入 runtime context
+3. 在 React 树中渲染插件 Panel
 
-- 迁移策略（future）：
-  - 插件版本与 migration 绑定
-  - 安装/升级触发 migration
-  - 卸载清理 namespace（可选）
+### 7.2 Tool Plugin
 
-Web 端 db：
+入口：`runWebToolPlugin(plugin, input, options)`
 
-- 可使用 indexedDB 适配层（future）
+1. 调用 `createWebToolContext(...)`
+2. 注入 `signal` 与 `log`
+3. 执行 `plugin.run(ctx, input)` 并返回结果
 
-## 11. Native Performance（Rust/Tauri）
+## 8. Commands 与 Result Model
+
+SDK 已定义命令与结果契约：
+
+- Command mode：`panel` / `headless`
+- `CommandDef`：统一描述命令入口
+- `result` helpers：`text/json/table/open/multi`
+
+说明：命令契约已经在 SDK 中可用，但当前 web host 仍以示例路由直挂插件为主，
+尚未形成完整 command palette / 命令分发中枢。
+
+## 9. Lifecycle State（现状）
+
+`PluginLifecycle` 类型已定义（`onLoad/onUnload/onActivate/onDeactivate`），
+但当前 host 原型尚未系统性调度这些生命周期钩子。
+
+## 10. Non-Goals / Current Limits
+
+当前版本明确限制：
+
+- 不做 iframe/worker 沙箱隔离（同线程模型）
+- 不支持运行时编译插件（插件需预构建）
+- 不允许插件直接调用宿主私有 API
+- 不追求“运行不可信插件”的强安全模型
+
+## 11. Path to Desktop (Tauri)
+
+下一阶段应将 web 适配层替换/扩展为 desktop host：
+
+1. 新增 `apps/desktop` 作为主宿主
+2. 将 `dialog/db/native/fs` 等能力切换到 Tauri + Rust 实现
+3. 建立命令注册中心（palette、历史、快捷键）
+4. 接入插件安装/加载策略（本地安装、版本管理、签名/权限提示）
+
+这一路径与当前 SDK 契约兼容，重点是 host capability 实现迁移。
+
+## 12. Stability & Recovery（稳定性策略）
+
+由于同线程无沙箱，必须制定稳定性策略：
+
+- 命令执行 watchdog（超时提示）
+- 长任务建议走 native（Rust）或可取消的异步
+- 插件错误隔离（try/catch + error boundary）
+- 性能预算：对渲染频繁组件做 虚拟列表、分片计算
+
+## 13. Native Performance（Rust/Tauri）
 
 原则：插件不直接写 Rust，native 能力由宿主提供为 capability。
 
@@ -211,27 +199,36 @@ Web 端 db：
 - sidecar 模型（插件携带二进制并 IPC 通信）
 - 需要签名/权限/审核，属于平台 v2/v3
 
-## 12. Stability & Recovery（稳定性策略）
+## 14. State Model（Store）
 
-由于同线程无沙箱，必须制定稳定性策略：
+原则：插件不能随意创建全局 store，平台托管 store。
 
-- 命令执行 watchdog（超时提示）
-- 长任务建议走 native（Rust）或可取消的异步
-- 插件错误隔离（try/catch + error boundary）
-- 性能预算：对渲染频繁组件做 memo、虚拟列表、分片计算
+- App 插件可使用 `usePluginStore()` / `ctx.store` 申请 scoped store
+- store 以 pluginId 命名空间隔离
+- 支持持久化（future）：
+  - desktop: sqlite
+  - web: indexedDB/localStorage
 
-## 13. Packaging（插件打包原则）
+Tool 插件默认不提供 store。
 
-- 插件必须预构建为 ESM
-- external 依赖必须固定：
-  - react / react-dom
-  - @flow-tool/sdk
-  - @flow-tool/ui
+## 15. Database Model（DB）
 
-- 禁止插件直接依赖宿主内部私有包
-- 插件包可携带 assets（icons, wasm 等）
+原则：插件不能直接操作 sqlite 连接，平台托管 db。
 
-## 14. Future Extensions（未来扩展点）
+- 统一 SQLite 数据库（desktop）
+- 插件数据通过 pluginId namespace 隔离
+- 表名策略：
+  - `${pluginId}__${tableName}`
+- 迁移策略（future）：
+  - 插件版本与 migration 绑定
+  - 安装/升级触发 migration
+  - 卸载清理 namespace（可选）
+
+Web 端 db：
+
+- 可使用 indexedDB 适配层（future）
+
+## 16. Future Extensions（未来扩展点）
 
 - Web runtime：能力适配（fs/db/native）
 - Plugin marketplace：安装、评分、更新、签名

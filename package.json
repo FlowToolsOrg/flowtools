@@ -16,6 +16,8 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@heroui/react": "^3.0.0-beta.7",
+    "@heroui/styles": "^3.0.0-beta.7",
     "@tailwindcss/vite": "^4.2.0",
     "tailwindcss": "^4.2.0",
     "zustand": "^5.0.11"

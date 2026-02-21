@@ -103,6 +103,14 @@ export interface PluginMeta {
    */
   description?: string
   /**
+   * Optional plugin author.
+   */
+  author?: string
+  /**
+   * Optional plugin author link.
+   */
+  link?: string
+  /**
    * Declared capability permissions.
    */
   permissions?: readonly Permission[]

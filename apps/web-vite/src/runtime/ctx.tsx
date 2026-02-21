@@ -238,7 +238,7 @@ function createNotificationCapability(
 
 function createStorageCapability(pluginId: string): StorageCapability {
   return {
-    async get<T>(key: string) {
+    get<T>(key: string) {
       const storageKey = createStorageKey(pluginId, 'storage', key)
       const raw = safeGetLocalStorageItem(storageKey)
 
@@ -255,13 +255,13 @@ function createStorageCapability(pluginId: string): StorageCapability {
         )
       }
     },
-    async set<T>(key: string, value: T) {
+    set<T>(key: string, value: T) {
       const storageKey = createStorageKey(pluginId, 'storage', key)
       const serialized = JSON.stringify(value)
 
       safeSetLocalStorageItem(storageKey, serialized)
     },
-    async remove(key) {
+    remove(key) {
       const storageKey = createStorageKey(pluginId, 'storage', key)
 
       safeRemoveLocalStorageItem(storageKey)

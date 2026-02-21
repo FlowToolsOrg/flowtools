@@ -5,13 +5,13 @@ export interface StorageCapability {
   /**
    * Read a value by key.
    */
-  get: <T = unknown>(key: string) => Promise<T | undefined>
+  get: <T = unknown>(key: string) => T | undefined
   /**
    * Persist a value by key.
    */
-  set: <T = unknown>(key: string, value: T) => Promise<void>
+  set: <T = unknown>(key: string, value: T) => void
   /**
    * Remove a value by key.
    */
-  remove: (key: string) => Promise<void>
+  remove: (key: string) => void
 }

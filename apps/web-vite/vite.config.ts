@@ -9,13 +9,21 @@ const workspaceRoot = fileURLToPath(new URL('../..', import.meta.url))
 const sdkEntry = fileURLToPath(
   new URL('../../packages/sdk/src/index.ts', import.meta.url)
 )
+const sdkDir = fileURLToPath(new URL('../../packages/sdk/src', import.meta.url))
+const uiEntry = fileURLToPath(
+  new URL('../../packages/ui/src/index.ts', import.meta.url)
+)
+const uiDir = fileURLToPath(new URL('../../packages/ui/src', import.meta.url))
 
 // https://vite.dev/config/
 export default defineConfig({
   resolve: {
-    alias: {
-      '@flow-tool/sdk': sdkEntry,
-    },
+    alias: [
+      { find: /^@flow-tool\/sdk$/, replacement: sdkEntry },
+      { find: /^@flow-tool\/sdk\/(.+)$/, replacement: `${sdkDir}/$1` },
+      { find: /^@flow-tool\/ui$/, replacement: uiEntry },
+      { find: /^@flow-tool\/ui\/(.+)$/, replacement: `${uiDir}/$1` },
+    ],
     dedupe: ['react', 'react-dom'],
   },
   server: {

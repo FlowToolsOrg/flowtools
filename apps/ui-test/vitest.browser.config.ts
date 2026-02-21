@@ -1,5 +1,6 @@
 import { fileURLToPath, URL } from 'node:url'
 
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { playwright } from '@vitest/browser-playwright'
 import { defineConfig } from 'vitest/config'
@@ -13,11 +14,14 @@ const uiSrcIndex = fileURLToPath(
 
 export default defineConfig({
   plugins: [
+    // @ts-ignore
     react({
       babel: {
         plugins: [['babel-plugin-react-compiler']],
       },
     }),
+    // @ts-ignore
+    tailwindcss(),
   ],
   resolve: {
     alias: [

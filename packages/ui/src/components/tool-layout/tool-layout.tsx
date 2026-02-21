@@ -26,7 +26,7 @@ export const ToolLayout = ({
   return (
     <div
       className={cn(
-        'relative min-h-screen overflow-hidden bg-gradient-to-b from-amber-50 via-white to-slate-100 text-slate-900',
+        'relative min-h-screen overflow-hidden bg-linear-to-b from-amber-50 via-white to-slate-100 text-slate-900',
         className
       )}
       {...props}

@@ -1,81 +1,152 @@
-# UI Components Blueprint
+# UI Components Roadmap
 
-## Goal
+## 0. 约束与目标
 
-Build reusable UI wrappers in `packages/ui` with HeroUI + Tailwind CSS for Flow Tool host pages.
+- 目标模块：`工具市场`、`工具详情`、`运行面板`、`设置中心`
+- 组件形态：优先 `compound component`（组合式 API）
+- 当前阶段：先做 `纯展示组件`（逻辑通过 props/callback 注入，不内置业务状态机）
+- 视觉方案：使用 HeroUI 默认 theme/color，不额外自定义品牌主题
+- 命名规范：文件夹和文件名全部 `kebab-case`
 
-## Naming Convention
+## 1. 设计原则
 
-- Use lowercase and kebab-case for all folders/files.
-- Keep reusable layout and data-display components inside `packages/ui/src/components`.
+- 可组合：每个业务块拆成 `Root + Slot` 子组件，避免单体大组件
+- 可替换：尽量让输入/输出通过 props 定义，避免耦合 SDK/runtime
+- 可测试：每个组件至少 2 条用例（1 渲染 + 1 交互）
+- 可评审：所有新类型定义处加注释 `// TODO(review): waiting code review`
 
-## Component Groups
+## 2. 模块与组件清单
 
-### 1. Layout Group
+## 2.1 工具市场 (`tool-market`)
 
-- `tool-layout`
-  - Responsibility: page shell, spacing system, two-column responsive layout.
-  - Subcomponents:
-    - `tool-layout`: root wrapper
-    - `tool-layout-main`: main content container
-    - `tool-layout-sidebar`: right panel container
+- `tool-market-page`
+  - `ToolMarketPage.Root`
+  - `ToolMarketPage.Header`
+  - `ToolMarketPage.Content`
+- `market-toolbar`
+  - `MarketToolbar.Root`
+  - `MarketToolbar.Search`
+  - `MarketToolbar.Filters`
+  - `MarketToolbar.Actions`
+- `tool-grid`
+  - `ToolGrid.Root`
+  - `ToolGrid.Item`
+- `tool-card`
+  - `ToolCard.Root`
+  - `ToolCard.Header`
+  - `ToolCard.Meta`
+  - `ToolCard.Tags`
+  - `ToolCard.Actions`
+- `market-empty-state`
 
-### 2. Hero Group
+## 2.2 工具详情 (`tool-detail`)
 
-- `hero-section`
-  - Responsibility: page intro banner with title, description, quick stats, and actions.
-  - Data model:
-    - `hero-stat` (`id`, `label`, `value`)
-  - Slots:
-    - heading and summary
-    - status chips
-    - action area
+- `tool-detail-page`
+  - `ToolDetailPage.Root`
+  - `ToolDetailPage.Header`
+  - `ToolDetailPage.Content`
+- `tool-summary-card`
+- `tool-permission-list`
+  - `ToolPermissionList.Root`
+  - `ToolPermissionList.Item`
+- `tool-version-timeline`
+- `tool-related-list`
 
-### 3. Tool Discovery Group
+## 2.3 运行面板 (`run-panel`)
 
-- `tool-list`
-  - Responsibility: display plugin/tool entries with status, tags, version, and install state.
-  - Data model:
-    - `tool-list-item` (`id`, `name`, `description`, `status`, `version`, `tags`, `isInstalled`, `isPinned`)
-  - Behaviors:
-    - selectable list
-    - item action callback
-    - empty state rendering
+- `run-panel`
+  - `RunPanel.Root`
+  - `RunPanel.Header`
+  - `RunPanel.Content`
+  - `RunPanel.Footer`
+- `run-input-panel`
+- `run-result-panel`
+- `run-log-list`
+- `run-status-strip`
+- `run-history-panel`
 
-### 4. Settings Group
+## 2.4 设置中心 (`settings-center`)
 
-- `settings`
-  - Responsibility: structured settings panel with switch/select controls.
-  - Data model:
-    - `settings-section`
-    - `settings-item-switch`
-    - `settings-item-select`
-    - `settings-select-option`
-  - Behaviors:
-    - grouped rendering
-    - controlled values via callbacks
+- `settings-center-page`
+  - `SettingsCenterPage.Root`
+  - `SettingsCenterPage.Nav`
+  - `SettingsCenterPage.Content`
+- `settings-group-card`
+- `settings-item`
+  - `SettingsItem.Root`
+  - `SettingsItem.Label`
+  - `SettingsItem.Description`
+  - `SettingsItem.Control`
+- `settings-switch-field`
+- `settings-select-field`
+- `settings-input-field`
 
-## Public Exports
+## 3. 数据模型草案（首版）
 
-Expose from `packages/ui/src/index.ts`:
+> 具体类型放到 `packages/ui/src/components/**/types.ts`，并在类型顶部标记 `// TODO(review): waiting code review`
 
-- `ToolLayout`
-- `ToolLayoutMain`
-- `ToolLayoutSidebar`
-- `HeroSection`
-- `ToolList`
-- `Settings`
-- related public types for tool list and settings
+- `tool-entity`
+  - `id`
+  - `name`
+  - `description`
+  - `status`
+  - `version`
+  - `tags`
+  - `permissions`
+  - `is-installed`
+  - `is-pinned`
+- `tool-run-record`
+  - `id`
+  - `started-at`
+  - `duration-ms`
+  - `status`
+  - `summary`
+- `setting-entity`
+  - `id`
+  - `group`
+  - `type` (`switch | select | input`)
+  - `label`
+  - `description`
+  - `value`
+  - `options` (仅 select)
 
-## Validation Plan
+## 4. 实施顺序（按依赖关系）
 
-1. Update `apps/ui-test` demo app to exercise new components.
-2. Add/adjust browser tests to assert key UI rendering and interactions.
-3. Run:
-   - `bun run check-types`
-   - `bun run test` (or `cd apps/ui-test && bun run test`)
+1. `settings-center`（依赖最少，先沉淀 field 组件）
+2. `tool-card` / `tool-grid`（市场核心展示单元）
+3. `tool-market-page` / `market-toolbar` / `market-empty-state`
+4. `tool-detail` 全套组件
+5. `run-panel` 全套组件
+6. `apps/ui-test` 页面集成与回归
 
-## Commit Plan
+## 5. 开发节奏（必须执行）
 
-1. Commit A: add blueprint + new components in `packages/ui`.
-2. Commit B: update `apps/ui-test` demo/tests and pass validation.
+每个组件组严格按下面流程推进，并在中间频繁 commit：
+
+1. 写完组件（实现）
+2. 写该组件测试（至少 1 渲染 + 1 交互）
+3. 运行该组件相关测试
+4. commit 当前组件组
+
+示例（固定模板）：
+
+1. 写完 `settings-*` -> 测试 `settings-*` -> commit `settings-*`
+2. 写完 `tool-card` -> 测试 `tool-card` -> commit `tool-card`
+3. 写完 `tool-grid/toolbar` -> 测试 -> commit
+4. 写完 `tool-detail-*` -> 测试 -> commit
+5. 写完 `run-panel-*` -> 测试 -> commit
+
+## 6. 测试文件组织
+
+- 组件测试与实现同目录放置：
+  - `packages/ui/src/components/<component>/<component>.test.tsx`
+- 测试命名：
+  - `renders ...`
+  - `calls ... when ...`
+- 集成测试：
+  - `apps/ui-test/src/test/*.test.tsx` 仅验证跨组件组合
+
+## 7. 本轮提交要求
+
+- 第一笔提交只包含：`components.md`
+- 后续提交按第 5 节节奏执行，不混入无关改动

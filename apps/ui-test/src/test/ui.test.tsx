@@ -1,25 +1,38 @@
-import { Button, Code } from '@flow-tool/ui'
-import { vi, describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { render } from 'vitest-browser-react'
 import { userEvent } from 'vitest/browser'
 
-describe('ui package smoke tests', () => {
-  it('renders code component content', async () => {
-    const { getByText } = await render(<Code className="x">bun run test</Code>)
+import { App } from '../app'
 
-    const code = getByText('bun run test')
-    await expect.element(code).toBeInTheDocument()
-    await expect.element(code).toHaveClass('x')
+describe('ui package dashboard smoke tests', () => {
+  it('renders core wrapper components', async () => {
+    const { getByRole } = await render(<App />)
+
+    await expect
+      .element(getByRole('heading', { name: 'Flow Tool Console' }))
+      .toBeInTheDocument()
+    await expect
+      .element(getByRole('heading', { name: 'Available Tools' }))
+      .toBeInTheDocument()
+    await expect
+      .element(getByRole('heading', { name: 'Settings' }))
+      .toBeInTheDocument()
   })
 
-  it('triggers alert in button click handler', async () => {
+  it('updates active tool and telemetry state through interactions', async () => {
     const user = userEvent.setup()
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
-    const { getByRole } = await render(<Button appName="ui-test">Run</Button>)
+    const { getByRole, getByText, getByTestId } = await render(<App />)
 
-    await user.click(getByRole('button', { name: 'Run' }))
+    await user.click(getByRole('option', { name: 'Hash Generator' }))
 
-    expect(alertSpy).toHaveBeenCalledWith('Hello from your ui-test app!')
-    alertSpy.mockRestore()
+    await expect
+      .element(getByTestId('active-tool'))
+      .toHaveTextContent('hash-generator')
+
+    await user.click(getByText('Enable telemetry'))
+
+    await expect
+      .element(getByTestId('settings-summary'))
+      .toHaveTextContent('Telemetry: on')
   })
 })

@@ -19,7 +19,7 @@ import type {
 import type { PropsWithChildren } from 'react'
 
 import { FlowToolRuntimeProvider } from '@flow-tool/sdk'
-import { useMemo } from 'react'
+import { pickCapability } from '@flow-tool/sdk/utils'
 
 const RUNTIME_PREFIX = '[flow-tool-web-runtime]'
 const STORAGE_PREFIX = 'flow-tool'
@@ -323,18 +323,6 @@ function createNativeCapability(): NativeCapability {
   }
 }
 
-function pickCapability<T>(
-  permission: Permission,
-  allowedPermissions: ReadonlySet<Permission>,
-  createCapability: () => T
-): T | undefined {
-  if (!allowedPermissions.has(permission)) {
-    return undefined
-  }
-
-  return createCapability()
-}
-
 function createDefaultToolLogger(pluginId: string): ToolContext['log'] {
   return (level, message, details) => {
     dispatchRuntimeEvent('tool-log', {
@@ -420,16 +408,12 @@ export function WebPluginRuntimeProvider({
   mode,
   children,
 }: WebPluginRuntimeProviderProps) {
-  const value = useMemo(
-    () =>
-      createWebRuntimeContext({
-        mode,
-        permissions,
-        pluginId,
-        pluginType,
-      }),
-    [mode, permissions, pluginId, pluginType]
-  )
+  const value = createWebRuntimeContext({
+    mode,
+    permissions,
+    pluginId,
+    pluginType,
+  })
 
   return (
     <FlowToolRuntimeProvider value={value}>{children}</FlowToolRuntimeProvider>

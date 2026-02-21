@@ -3,6 +3,53 @@ import type { ToolContext } from './ctx'
 import type { Permission } from './permissions'
 import type { ComponentType } from 'react'
 
+type IsTuple<T extends readonly unknown[]> = number extends T['length']
+  ? false
+  : true
+
+type Includes<T extends readonly unknown[], Item> = T extends readonly [
+  infer Head,
+  ...infer Tail,
+]
+  ? [Head] extends [Item]
+    ? true
+    : Includes<Tail, Item>
+  : false
+
+type HasDuplicateItems<
+  T extends readonly unknown[],
+  Seen extends readonly unknown[] = [],
+> =
+  IsTuple<T> extends false
+    ? false
+    : T extends readonly [infer Head, ...infer Tail]
+      ? Includes<Seen, Head> extends true
+        ? true
+        : HasDuplicateItems<Tail, [...Seen, Head]>
+      : false
+
+/**
+ * Validate a permissions tuple and reject duplicate items.
+ * For non-literal arrays, duplicate checks are skipped at type level.
+ */
+export type UniquePermissions<T extends readonly Permission[] | undefined> =
+  T extends readonly Permission[]
+    ? HasDuplicateItems<T> extends true
+      ? never
+      : T
+    : T
+
+/**
+ * Enforce unique permission declarations in plugin metadata.
+ */
+export type EnforceUniquePluginPermissions<
+  T extends { meta: { permissions?: readonly Permission[] } },
+> = T & {
+  meta: Omit<T['meta'], 'permissions'> & {
+    permissions?: UniquePermissions<T['meta']['permissions']>
+  }
+}
+
 /**
  * Supported plugin categories in Flow Tool.
  */

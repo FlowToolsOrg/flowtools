@@ -1,4 +1,4 @@
-import { definePlugin, useCapability, useStorage } from '@flow-tool/sdk'
+import { definePlugin, useCapability } from '@flow-tool/sdk'
 import { useEffect } from 'react'
 
 export default definePlugin({

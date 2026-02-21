@@ -1,4 +1,7 @@
-import type { FlowToolPlugin } from './types/plugin'
+import type {
+  EnforceUniquePluginPermissions,
+  FlowToolPlugin,
+} from './types/plugin'
 
 /**
  * Marker field added by `definePlugin`.
@@ -31,10 +34,11 @@ export type DefinedFlowToolPlugin<T extends FlowToolPlugin = FlowToolPlugin> =
  *  }
  *})
  */
-export function definePlugin<T extends FlowToolPlugin>(
-  plugin: T
+export function definePlugin<const T extends FlowToolPlugin>(
+  plugin: EnforceUniquePluginPermissions<T>
 ): DefinedFlowToolPlugin<T> {
-  ;(plugin as T & { __flow_tool?: true }).__flow_tool = true
+  const normalizedPlugin = plugin as unknown as T
+  ;(normalizedPlugin as T & { __flow_tool?: true }).__flow_tool = true
 
-  return plugin as DefinedFlowToolPlugin<T>
+  return normalizedPlugin as DefinedFlowToolPlugin<T>
 }

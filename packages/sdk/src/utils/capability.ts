@@ -1,4 +1,4 @@
-import { Permission } from '../types/permissions'
+import type { Permission } from '../types/permissions'
 
 export function pickCapability<T>(
   permission: Permission,

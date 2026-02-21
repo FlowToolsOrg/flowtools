@@ -8,8 +8,6 @@ import {
   type SettingsSection,
   type ToolListItem,
 } from '@flow-tool/ui'
-
-import './assets/globals.css'
 import { useState } from 'react'
 
 const TOOL_ITEMS: ToolListItem[] = [

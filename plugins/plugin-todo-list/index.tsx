@@ -1,4 +1,7 @@
-import { useStorage, definePlugin } from '@flow-tool/sdk'
+import type { StorageCapability } from '@flow-tool/sdk'
+import type { FormEvent } from 'react'
+
+import { definePlugin, useStorage } from '@flow-tool/sdk'
 import {
   Input,
   Form,
@@ -9,6 +12,60 @@ import {
   Label,
   TextField,
 } from '@flow-tool/ui/plugin'
+import { useStore } from 'zustand'
+import { createJSONStorage, persist } from 'zustand/middleware'
+import { createStore } from 'zustand/vanilla'
+
+interface TodoItem {
+  todo: string
+  deadline: string
+}
+
+interface TodoStoreState {
+  todos: TodoItem[]
+  addTodo: (item: TodoItem) => void
+}
+
+type TodoStore = ReturnType<typeof createTodoStore>
+
+let todoStore: TodoStore | undefined
+
+function createTodoStore(storage: StorageCapability) {
+  return createStore<TodoStoreState>()(
+    persist(
+      set => ({
+        todos: [],
+        addTodo: item =>
+          set(state => ({
+            todos: [...state.todos, item],
+          })),
+      }),
+      {
+        name: 'root',
+        storage: createJSONStorage(() => storage.zustand('todo-list')),
+      }
+    )
+  )
+}
+
+function useTodoStore<T>(selector: (state: TodoStoreState) => T): T {
+  const storage = useStorage()
+  const store = todoStore ?? createTodoStore(storage)
+
+  if (!todoStore) {
+    todoStore = store
+  }
+
+  return useStore(store, selector)
+}
+
+function readValue(input: FormDataEntryValue | null): string {
+  if (typeof input !== 'string') {
+    return ''
+  }
+
+  return input.trim()
+}
 
 export default definePlugin({
   type: 'app',
@@ -20,19 +77,24 @@ export default definePlugin({
   },
   setup() {
     return function () {
-      const storage = useStorage()
+      const todos = useTodoStore(state => state.todos)
+      const addTodo = useTodoStore(state => state.addTodo)
 
-      const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+      const onSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         const formData = new FormData(e.currentTarget)
-        const data: Record<string, string> = {}
-        // Convert FormData to plain object
-        formData.forEach((value, key) => {
-          data[key] = value.toString()
+        const todo = readValue(formData.get('todo'))
+        const deadline = readValue(formData.get('deadline'))
+
+        if (!todo) {
+          return
+        }
+
+        addTodo({
+          todo,
+          deadline,
         })
-        console.log(data)
-        const pre = JSON.parse(storage.get('todo') || '[]')
-        storage.set('todo', JSON.stringify([...pre, data]))
+        e.currentTarget.reset()
       }
 
       return (
@@ -99,6 +161,26 @@ export default definePlugin({
                 Add
               </Button>
             </Form>
+          </div>
+          <div className="mt-6">
+            <h3 className="text-base font-semibold">Todo Items</h3>
+            {todos.length === 0 ? (
+              <p className="text-sm text-gray-500">No todo items yet.</p>
+            ) : (
+              <ul className="mt-2 space-y-2">
+                {todos.map((item, index) => (
+                  <li
+                    key={`${item.todo}-${index}`}
+                    className="flex items-center justify-between rounded border px-3 py-2"
+                  >
+                    <span>{item.todo}</span>
+                    <span className="text-sm text-gray-500">
+                      {item.deadline}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       )

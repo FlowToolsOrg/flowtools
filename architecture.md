@@ -112,6 +112,8 @@ Host runtime 用 `pickCapability(...)` 做权限裁剪：
   - `flow-tool:tool-log`
 - `network`：直接映射到浏览器 `fetch`
 - `storage`：`localStorage`（key 前缀 `flow-tool:{pluginId}:storage:`）
+  - 提供 `storage.zustand(namespace?)` 适配器，供插件侧
+    Zustand `persist/createJSONStorage` 使用
 - `fs`：`localStorage` 模拟文件（key 前缀 `flow-tool:{pluginId}:fs:`）
 - `clipboard`：浏览器 clipboard API
 - `notification`：Notification API（不可用时降级为 toast 事件）
@@ -201,13 +203,15 @@ SDK 已定义命令与结果契约：
 
 ## 14. State Model（Store）
 
-原则：插件不能随意创建全局 store，平台托管 store。
+原则：store 定义在插件侧，宿主只提供持久化能力与命名空间隔离。
 
-- App 插件可使用 `usePluginStore()` / `ctx.store` 申请 scoped store
-- store 以 pluginId 命名空间隔离
-- 支持持久化（future）：
-  - desktop: sqlite
-  - web: indexedDB/localStorage
+- App 插件可自由使用 Zustand/React state，保持完整类型与响应式能力
+- 推荐每个 App 插件维护一个 root store（大对象 + actions）
+- 通过 `useStorage().zustand(namespace?)` 接入宿主持久化
+- 存储隔离仍由 `pluginId` 保证
+- 持久化后端（current/future）：
+  - web: localStorage（当前）
+  - desktop: sqlite 或其他宿主管理存储（规划）
 
 Tool 插件默认不提供 store。
 

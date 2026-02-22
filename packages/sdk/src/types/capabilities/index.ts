@@ -18,4 +18,4 @@ export type {
   RequestOptions,
   RequestQueryValue,
 } from './request'
-export type { StorageCapability } from './storage'
+export type { StorageCapability, ZustandStorageAdapter } from './storage'

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import {
   SettingsCenterItem,
@@ -36,12 +36,9 @@ function SettingsPage() {
   const [startupMode, setStartupMode] = useState<string | number>('workspace')
   const [workspaceName, setWorkspaceName] = useState('Flow Workspace')
 
-  const sectionTitle = useMemo(() => {
-    return (
-      navSections.find(section => section.id === activeSectionId)?.label ??
-      'General'
-    )
-  }, [activeSectionId])
+  const sectionTitle =
+    navSections.find(section => section.id === activeSectionId)?.label ??
+    'General'
 
   return (
     <ToolLayout>

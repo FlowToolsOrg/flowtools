@@ -120,6 +120,73 @@ export default definePlugin({
 })
 ```
 
+### 4.1 在 App 插件里使用 Zustand Store（推荐）
+
+推荐每个 app plugin 维护一个 root store，然后通过 `useStorage()` 提供的
+`storage.zustand(namespace?)` 接入持久化。
+
+```tsx
+import type { StorageCapability } from '@flow-tool/sdk'
+
+import { definePlugin, useStorage } from '@flow-tool/sdk'
+import { Button } from '@flow-tool/ui/plugin'
+import { createJSONStorage, persist } from 'zustand/middleware'
+import { useStore } from 'zustand'
+import { createStore } from 'zustand/vanilla'
+
+interface CounterState {
+  count: number
+  inc: () => void
+}
+
+type CounterStore = ReturnType<typeof createCounterStore>
+
+let counterStore: CounterStore | undefined
+
+function createCounterStore(storage: StorageCapability) {
+  return createStore<CounterState>()(
+    persist(
+      set => ({
+        count: 0,
+        inc: () => set(state => ({ count: state.count + 1 })),
+      }),
+      {
+        name: 'root',
+        storage: createJSONStorage(() => storage.zustand('counter')),
+      }
+    )
+  )
+}
+
+function useCounterStore<T>(selector: (state: CounterState) => T): T {
+  const storage = useStorage()
+
+  if (!counterStore) {
+    counterStore = createCounterStore(storage)
+  }
+
+  return useStore(counterStore, selector)
+}
+
+export default definePlugin({
+  type: 'app',
+  meta: {
+    id: 'plugin-counter',
+    name: 'Counter',
+    version: '0.1.0',
+    permissions: ['storage'],
+  },
+  setup() {
+    return function CounterPanel() {
+      const count = useCounterStore(state => state.count)
+      const inc = useCounterStore(state => state.inc)
+
+      return <Button onPress={inc}>Count: {count}</Button>
+    }
+  },
+})
+```
+
 ## 5. 开发一个 Tool 插件（无常驻 UI）
 
 `plugins/plugin-word-counter/index.ts`：
@@ -210,16 +277,16 @@ console.log(output)
 
 ## 7. 权限与 Capability 对照（Web 原型）
 
-| permission     | SDK 能力                                 | web-vite 当前行为                  |
-| -------------- | ---------------------------------------- | ---------------------------------- |
-| `network`      | `useRequest()` / `ctx.request`           | 浏览器 `fetch`                     |
-| `storage`      | `useStorage()` / `ctx.storage`           | namespaced `localStorage`          |
-| `fs`           | `useFS()` / `ctx.fs`                     | `localStorage` 模拟文件系统        |
-| `clipboard`    | `useClipboard()` / `ctx.clipboard`       | 浏览器 clipboard API               |
-| `notification` | `useNotification()` / `ctx.notification` | Notification API，失败时降级 toast |
-| `dialog`       | `useDialog()` / `ctx.dialog`             | 已注入但调用会抛 `Not supported`   |
-| `db`           | `useDB()` / `ctx.db`                     | 已注入但调用会抛 `Not supported`   |
-| `native`       | `useNative()` / `ctx.native`             | 已注入但调用会抛 `Not supported`   |
+| permission     | SDK 能力                                 | web-vite 当前行为                           |
+| -------------- | ---------------------------------------- | ------------------------------------------- |
+| `network`      | `useRequest()` / `ctx.request`           | 浏览器 `fetch`                              |
+| `storage`      | `useStorage()` / `ctx.storage`           | namespaced `localStorage` + zustand adapter |
+| `fs`           | `useFS()` / `ctx.fs`                     | `localStorage` 模拟文件系统                 |
+| `clipboard`    | `useClipboard()` / `ctx.clipboard`       | 浏览器 clipboard API                        |
+| `notification` | `useNotification()` / `ctx.notification` | Notification API，失败时降级 toast          |
+| `dialog`       | `useDialog()` / `ctx.dialog`             | 已注入但调用会抛 `Not supported`            |
+| `db`           | `useDB()` / `ctx.db`                     | 已注入但调用会抛 `Not supported`            |
+| `native`       | `useNative()` / `ctx.native`             | 已注入但调用会抛 `Not supported`            |
 
 补充：
 

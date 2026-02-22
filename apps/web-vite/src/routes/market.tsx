@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import {
   MarketEmptyState,
@@ -63,23 +63,21 @@ function MarketPage() {
   const [filter, setFilter] = useState<FilterMode>('all')
   const [selectedToolId, setSelectedToolId] = useState(tools[0]?.id ?? '')
 
-  const filteredTools = useMemo(() => {
-    return tools.filter(tool => {
-      const matchesQuery =
-        query.trim().length === 0 ||
-        tool.name.toLowerCase().includes(query.toLowerCase()) ||
-        tool.description.toLowerCase().includes(query.toLowerCase())
+  const filteredTools = tools.filter(tool => {
+    const matchesQuery =
+      query.trim().length === 0 ||
+      tool.name.toLowerCase().includes(query.toLowerCase()) ||
+      tool.description.toLowerCase().includes(query.toLowerCase())
 
-      const matchesFilter =
-        filter === 'all'
-          ? true
-          : filter === 'installed'
-            ? !!tool.isInstalled
-            : tool.status === 'beta'
+    const matchesFilter =
+      filter === 'all'
+        ? true
+        : filter === 'installed'
+          ? !!tool.isInstalled
+          : tool.status === 'beta'
 
-      return matchesQuery && matchesFilter
-    })
-  }, [query, filter])
+    return matchesQuery && matchesFilter
+  })
 
   const selectedTool =
     filteredTools.find(tool => tool.id === selectedToolId) ??

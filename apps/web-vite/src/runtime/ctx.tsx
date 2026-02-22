@@ -105,6 +105,13 @@ function createStorageKey(
   return `${STORAGE_PREFIX}:${pluginId}:${kind}:${key}`
 }
 
+function createZustandStorageName(namespace: string | undefined, name: string) {
+  const normalizedNamespace =
+    namespace && namespace.trim().length > 0 ? namespace.trim() : 'default'
+
+  return `zustand:${normalizedNamespace}:${name}`
+}
+
 function safeGetLocalStorageItem(key: string): string | null {
   if (typeof window === 'undefined') {
     return null
@@ -265,6 +272,28 @@ function createStorageCapability(pluginId: string): StorageCapability {
       const storageKey = createStorageKey(pluginId, 'storage', key)
 
       safeRemoveLocalStorageItem(storageKey)
+    },
+    zustand(namespace) {
+      return {
+        getItem(name) {
+          const storageName = createZustandStorageName(namespace, name)
+          const storageKey = createStorageKey(pluginId, 'storage', storageName)
+
+          return safeGetLocalStorageItem(storageKey)
+        },
+        setItem(name, value) {
+          const storageName = createZustandStorageName(namespace, name)
+          const storageKey = createStorageKey(pluginId, 'storage', storageName)
+
+          safeSetLocalStorageItem(storageKey, value)
+        },
+        removeItem(name) {
+          const storageName = createZustandStorageName(namespace, name)
+          const storageKey = createStorageKey(pluginId, 'storage', storageName)
+
+          safeRemoveLocalStorageItem(storageKey)
+        },
+      }
     },
   }
 }

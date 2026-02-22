@@ -150,7 +150,7 @@ Web prototype capability behavior:
 | Permission     | Web host behavior                           |
 | -------------- | ------------------------------------------- |
 | `network`      | Uses browser `fetch`                        |
-| `storage`      | Namespaced `localStorage`                   |
+| `storage`      | Namespaced `localStorage` + zustand adapter |
 | `fs`           | Simulated file read/write on `localStorage` |
 | `clipboard`    | Browser clipboard API                       |
 | `notification` | Notification API with toast fallback        |
@@ -185,11 +185,57 @@ All access must go through the Flow Tool runtime.
 
 ### Store
 
-App plugins may use scoped state:
+App plugins should manage state locally (for example with Zustand), then use
+`useStorage()` as host-backed persistence.
 
-- Namespaced per plugin
-- Lifecycle-managed
-- Optional persistence
+- Keep the store in plugin code for full type safety/reactivity
+- Recommended: one root Zustand store per app plugin
+- Persist through `storage.zustand(namespace?)`
+- Storage remains namespaced by `pluginId`
+
+Example (single plugin store + `zustand/persist`):
+
+```tsx
+import type { StorageCapability } from '@flow-tool/sdk'
+import { useStore } from 'zustand'
+import { createJSONStorage, persist } from 'zustand/middleware'
+import { createStore } from 'zustand/vanilla'
+
+import { useStorage } from '@flow-tool/sdk'
+
+interface CounterState {
+  count: number
+  inc: () => void
+}
+
+type CounterStore = ReturnType<typeof createCounterStore>
+
+let counterStore: CounterStore | undefined
+
+function createCounterStore(storage: StorageCapability) {
+  return createStore<CounterState>()(
+    persist(
+      set => ({
+        count: 0,
+        inc: () => set(state => ({ count: state.count + 1 })),
+      }),
+      {
+        name: 'root',
+        storage: createJSONStorage(() => storage.zustand()),
+      }
+    )
+  )
+}
+
+export function useCounterStore<T>(selector: (state: CounterState) => T): T {
+  const storage = useStorage()
+  if (!counterStore) {
+    counterStore = createCounterStore(storage)
+  }
+
+  return useStore(counterStore, selector)
+}
+```
 
 ### Database
 
@@ -277,6 +323,7 @@ The focus is on:
 
 - Architecture details: [`architecture.md`](./architecture.md)
 - Contributor/agent guide: [`AGENTS.md`](./AGENTS.md)
+- Plugin development: [`plugin.md`](./docs/plugin.md)
 
 ## License
 

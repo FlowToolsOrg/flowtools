@@ -11,6 +11,7 @@ export default createPackageTsdownConfig({
   packageDir,
   entry: {
     index: 'src/index.ts',
+    plugin: 'src/plugin/index.ts',
   },
   external: ['react/jsx-runtime', 'react/jsx-dev-runtime'],
 })

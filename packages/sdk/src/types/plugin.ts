@@ -114,6 +114,10 @@ export interface PluginMeta {
    * Declared capability permissions.
    */
   permissions?: readonly Permission[]
+  /**
+   * Optional plugin group tags.
+   */
+  tags?: string[]
 }
 
 /**

@@ -1,5 +1,6 @@
-import { definePlugin, useCapability } from '@flow-tool/sdk'
 import { useEffect } from 'react'
+
+import { definePlugin, useCapability } from '@flow-tool/sdk'
 
 export default definePlugin({
   type: 'app',
@@ -15,11 +16,10 @@ export default definePlugin({
       // const storage = useStorage()
       const { request, storage } = useCapability()
 
-      console.log(request, storage)
-
       useEffect(() => {
         request('https://jsonplaceholder.typicode.com/todos/1')
           .then(response => response.json())
+          // eslint-disable-next-line no-console
           .then(console.log)
       }, [request])
 
@@ -27,6 +27,7 @@ export default definePlugin({
         <h1>
           hello-world
           <button onClick={() => storage.set('hello', 'world')}>set</button>
+          {/* eslint-disable-next-line no-console */}
           <button onClick={() => console.log(storage.get('hello'))}>get</button>
         </h1>
       )

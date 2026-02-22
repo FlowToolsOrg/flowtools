@@ -2,6 +2,7 @@
 
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+
 import { defineConfig } from 'tsdown'
 
 type ManifestDeps = Record<string, string> | undefined

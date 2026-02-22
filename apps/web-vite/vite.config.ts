@@ -6,6 +6,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
 const workspaceRoot = fileURLToPath(new URL('../..', import.meta.url))
+const pluginsDir = fileURLToPath(new URL('../../plugins', import.meta.url))
 const sdkEntry = fileURLToPath(
   new URL('../../packages/sdk/src/index.ts', import.meta.url)
 )
@@ -14,11 +15,14 @@ const uiEntry = fileURLToPath(
   new URL('../../packages/ui/src/index.ts', import.meta.url)
 )
 const uiDir = fileURLToPath(new URL('../../packages/ui/src', import.meta.url))
+const srcDir = fileURLToPath(new URL('./src', import.meta.url))
 
 // https://vite.dev/config/
 export default defineConfig({
   resolve: {
     alias: [
+      { find: /^@\//, replacement: `${srcDir}/` },
+      { find: /^@plugins\/(.+)$/, replacement: `${pluginsDir}/$1` },
       { find: /^@flow-tool\/sdk$/, replacement: sdkEntry },
       { find: /^@flow-tool\/sdk\/(.+)$/, replacement: `${sdkDir}/$1` },
       { find: /^@flow-tool\/ui$/, replacement: uiEntry },

@@ -1,9 +1,9 @@
+import helloWorldPlugin from '@plugins/plugin-example-hello-world'
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect } from 'react'
 
-import helloWorldPlugin from '../../../../plugins/plugin-example-hello-world'
-import runHello from '../../../../plugins/plugin-example-run-hello'
-import { renderWebAppPlugin, runWebToolPlugin } from '../runtime'
+import { runHello } from '@/plugin/tool'
+import { renderWebAppPlugin } from '@/runtime'
 
 export const Route = createFileRoute('/test')({
   component: RouteComponent,
@@ -11,7 +11,7 @@ export const Route = createFileRoute('/test')({
 
 function RouteComponent() {
   useEffect(() => {
-    const output = runWebToolPlugin(runHello, 'li hua')
+    const output = runHello('li hua')
     void output
   }, [])
   return (

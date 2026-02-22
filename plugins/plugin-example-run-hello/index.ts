@@ -7,8 +7,9 @@ export default definePlugin({
     name: 'run hello',
     version: '0.0.1',
   },
-  run(_, input) {
+  run(_, input: string) {
     // eslint-disable-next-line no-console
     console.log('hello world', input)
+    return 'hello world'
   },
 })

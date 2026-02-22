@@ -27,11 +27,11 @@ export function renderWebAppPlugin(plugin: AppPlugin) {
 /**
  * Execute a tool plugin with web runtime ctx.
  */
-export async function runWebToolPlugin<In, Out>(
-  plugin: ToolPlugin<In, Out>,
-  input: In,
+export function runWebToolPlugin<TPlugin extends ToolPlugin<never, unknown>>(
+  plugin: TPlugin,
+  input: Parameters<TPlugin['run']>[1],
   options?: RunWebToolPluginOptions
-): Promise<Out> {
+): ReturnType<TPlugin['run']> {
   const ctx = createWebToolContext({
     mode: 'development',
     permissions: plugin.meta.permissions,
@@ -39,5 +39,5 @@ export async function runWebToolPlugin<In, Out>(
     signal: options?.signal,
   })
 
-  return plugin.run(ctx, input)
+  return plugin.run(ctx, input) as ReturnType<TPlugin['run']>
 }

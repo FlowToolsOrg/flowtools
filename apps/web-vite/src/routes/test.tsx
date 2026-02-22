@@ -11,7 +11,8 @@ export const Route = createFileRoute('/test')({
 
 function RouteComponent() {
   useEffect(() => {
-    runWebToolPlugin(runHello, 'li hua')
+    const output = runWebToolPlugin(runHello, 'li hua')
+    void output
   }, [])
   return (
     <div>

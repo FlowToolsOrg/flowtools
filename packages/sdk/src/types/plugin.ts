@@ -168,7 +168,7 @@ export interface AppPlugin extends PluginBase {
 /**
  * Instant execution plugin contract.
  */
-export interface ToolPlugin<In = unknown, Out = unknown> extends PluginBase {
+export interface ToolPlugin<In = never, Out = unknown> extends PluginBase {
   /**
    * Tool plugin type marker.
    */
@@ -186,6 +186,6 @@ export interface ToolPlugin<In = unknown, Out = unknown> extends PluginBase {
 /**
  * Unified plugin contract.
  */
-export type FlowToolPlugin<In = unknown, Out = unknown> =
+export type FlowToolPlugin<In = never, Out = unknown> =
   | AppPlugin
   | ToolPlugin<In, Out>

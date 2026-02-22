@@ -1,6 +1,7 @@
 import type {
+  AppPlugin,
   EnforceUniquePluginPermissions,
-  FlowToolPlugin,
+  ToolPlugin,
 } from './types/plugin'
 
 /**
@@ -16,8 +17,11 @@ export interface FlowToolPluginMarker {
 /**
  * Plugin type after `definePlugin` tagging.
  */
-export type DefinedFlowToolPlugin<T extends FlowToolPlugin = FlowToolPlugin> =
-  T & FlowToolPluginMarker
+type AnyFlowToolPlugin = AppPlugin | ToolPlugin<never, any>
+
+export type DefinedFlowToolPlugin<
+  T extends AnyFlowToolPlugin = AnyFlowToolPlugin,
+> = T & FlowToolPluginMarker
 
 /**
  * Define a plugin contract for Flow Tool runtime.
@@ -34,7 +38,7 @@ export type DefinedFlowToolPlugin<T extends FlowToolPlugin = FlowToolPlugin> =
  *  }
  *})
  */
-export function definePlugin<const T extends FlowToolPlugin>(
+export function definePlugin<const T extends AnyFlowToolPlugin>(
   plugin: EnforceUniquePluginPermissions<T>
 ): DefinedFlowToolPlugin<T> {
   const normalizedPlugin = plugin as unknown as T

@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint --fix",
     "format": "oxfmt",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:types": "tsc --noEmit"
   },
   "dependencies": {
     "@flow-tool/sdk": "workspace:*",

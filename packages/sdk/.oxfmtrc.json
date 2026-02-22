@@ -21,34 +21,51 @@
     "groups": [
       "type",
       "builtin",
+      "react",
       "external",
+      "external-heroui",
+      "external-tauri",
+      "internal-plugin",
       "internal",
+      "internal-alias",
       "parent",
       "sibling",
-      "index"
+      "index",
+      "unknown"
     ],
     "customGroups": [
       {
-        "pattern": "react",
-        "group": "external",
-        "position": "before"
+        "groupName": "react",
+        "elementNamePattern": ["react"],
+        "selector": "external",
+        "modifiers": ["value"]
       },
       {
-        "pattern": "@heroui/**",
-        "group": "external",
-        "position": "after"
+        "groupName": "external-heroui",
+        "elementNamePattern": ["@heroui/**"],
+        "selector": "external",
+        "modifiers": ["value"]
       },
       {
-        "pattern": "@tauri-apps/**",
-        "group": "external",
-        "position": "after"
+        "groupName": "external-tauri",
+        "elementNamePattern": ["@tauri-apps/**"],
+        "selector": "external",
+        "modifiers": ["value"]
       },
       {
-        "pattern": "@/**",
-        "group": "internal",
-        "position": "after"
+        "groupName": "internal-plugin",
+        "elementNamePattern": ["@plugins/**"],
+        "selector": "internal",
+        "modifiers": ["value"]
+      },
+      {
+        "groupName": "internal-alias",
+        "elementNamePattern": ["@/**"],
+        "selector": "internal",
+        "modifiers": ["value"]
       }
     ],
+    "internalPattern": ["~/", "@/", "@plugins/"],
     "newlinesBetween": true,
     "order": "asc"
   }

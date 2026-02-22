@@ -1,7 +1,8 @@
 'use client'
 
-import { Button } from '@heroui/react'
 import { type ComponentPropsWithoutRef } from 'react'
+
+import { Button } from '@heroui/react'
 
 import { cn } from '../../utils/class-name'
 

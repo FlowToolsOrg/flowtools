@@ -1,5 +1,7 @@
 'use client'
 
+import { type ComponentPropsWithoutRef, type ReactNode } from 'react'
+
 import {
   Card,
   Chip,
@@ -8,7 +10,6 @@ import {
   ListBox,
   type Selection,
 } from '@heroui/react'
-import { type ComponentPropsWithoutRef, type ReactNode } from 'react'
 
 import { cn } from '../../utils/class-name'
 

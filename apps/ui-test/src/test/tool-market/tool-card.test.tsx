@@ -1,8 +1,9 @@
 import { ToolCard } from '@flow-tool/ui'
-import { Button, Chip } from '@heroui/react'
 import { describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
 import { userEvent } from 'vitest/browser'
+
+import { Button, Chip } from '@heroui/react'
 
 describe('ToolCard', () => {
   it('renders title, description, meta and tags', async () => {

@@ -1,6 +1,8 @@
-import helloWorldPlugin from '@plugins/plugin-example-hello-world'
-import { createFileRoute } from '@tanstack/react-router'
 import { useEffect } from 'react'
+
+import { createFileRoute } from '@tanstack/react-router'
+
+import helloWorldPlugin from '@plugins/plugin-example-hello-world'
 
 import { runHello } from '@/plugin/tool'
 import { renderWebAppPlugin } from '@/runtime'

@@ -1,5 +1,7 @@
 'use client'
 
+import { type ComponentPropsWithoutRef } from 'react'
+
 import {
   Card,
   Description,
@@ -9,7 +11,6 @@ import {
   Separator,
   Switch,
 } from '@heroui/react'
-import { type ComponentPropsWithoutRef } from 'react'
 
 import { cn } from '../../utils/class-name'
 

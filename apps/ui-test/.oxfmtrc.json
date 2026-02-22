@@ -1,6 +1,12 @@
 {
   "$schema": "../../node_modules/oxfmt/configuration_schema.json",
-  "ignorePatterns": ["node_modules/**", "dist/**", "coverage/**"],
+  "ignorePatterns": [
+    "node_modules/**",
+    "dist/**",
+    "coverage/**",
+    "src-tauri/**",
+    "src/utils/bindings.ts"
+  ],
   "tabWidth": 2,
   "useTabs": false,
   "endOfLine": "lf",
@@ -10,5 +16,60 @@
   "trailingComma": "es5",
   "printWidth": 80,
   "bracketSpacing": true,
-  "arrowParens": "avoid"
+  "arrowParens": "avoid",
+  "experimentalSortImports": {
+    "groups": [
+      "type",
+      "builtin",
+      "react",
+      "external",
+      "external-heroui",
+      "external-tauri",
+      "internal-plugin",
+      "internal",
+      "internal-alias",
+      "parent",
+      "sibling",
+      "index",
+      "unknown"
+    ],
+    "customGroups": [
+      {
+        "groupName": "react",
+        "elementNamePattern": ["react"],
+        "selector": "external",
+        "modifiers": ["value"]
+      },
+      {
+        "groupName": "external-heroui",
+        "elementNamePattern": ["@heroui/**"],
+        "selector": "external",
+        "modifiers": ["value"]
+      },
+      {
+        "groupName": "external-tauri",
+        "elementNamePattern": ["@tauri-apps/**"],
+        "selector": "external",
+        "modifiers": ["value"]
+      },
+      {
+        "groupName": "internal-plugin",
+        "elementNamePattern": ["@plugins/**"],
+        "selector": "internal",
+        "modifiers": ["value"]
+      },
+      {
+        "groupName": "internal-alias",
+        "elementNamePattern": ["@/**"],
+        "selector": "internal",
+        "modifiers": ["value"]
+      }
+    ],
+    "internalPattern": ["~/", "@/", "@plugins/"],
+    "newlinesBetween": true,
+    "order": "asc"
+  },
+  "experimentalTailwindcss": {
+    "stylesheet": "./src/assets/globals.css"
+  }
 }

@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 import {
   HeroSection,
   Settings,
@@ -8,7 +10,6 @@ import {
   type SettingsSection,
   type ToolListItem,
 } from '@flow-tool/ui'
-import { useState } from 'react'
 
 const TOOL_ITEMS: ToolListItem[] = [
   {

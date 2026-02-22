@@ -1,5 +1,6 @@
-import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { StrictMode } from 'react'
+
+import { RouterProvider, createRouter } from '@tanstack/react-router'
 import ReactDOM from 'react-dom/client'
 
 import './assets/globals.css'

@@ -1,7 +1,8 @@
 'use client'
 
-import { Surface } from '@heroui/react'
 import { type ComponentPropsWithoutRef, type ReactNode } from 'react'
+
+import { Surface } from '@heroui/react'
 
 import { cn } from '../../utils/class-name'
 

@@ -1,7 +1,8 @@
 'use client'
 
-import { Description, Label, Switch } from '@heroui/react'
 import { type ComponentPropsWithoutRef } from 'react'
+
+import { Description, Label, Switch } from '@heroui/react'
 
 import { cn } from '../../utils/class-name'
 

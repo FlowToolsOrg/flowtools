@@ -1,7 +1,8 @@
 'use client'
 
-import { Chip, Surface } from '@heroui/react'
 import { type ComponentPropsWithoutRef } from 'react'
+
+import { Chip, Surface } from '@heroui/react'
 
 import { cn } from '../../utils/class-name'
 

@@ -1,7 +1,8 @@
 'use client'
 
-import { Card } from '@heroui/react'
 import { type ComponentProps, type ComponentPropsWithoutRef } from 'react'
+
+import { Card } from '@heroui/react'
 
 import { cn } from '../../utils/class-name'
 

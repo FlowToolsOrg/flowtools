@@ -1,7 +1,8 @@
 'use client'
 
-import { Description, Label, ListBox, Select } from '@heroui/react'
 import { type ComponentPropsWithoutRef } from 'react'
+
+import { Description, Label, ListBox, Select } from '@heroui/react'
 
 import { cn } from '../../utils/class-name'
 

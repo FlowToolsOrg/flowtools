@@ -23,6 +23,6 @@
     "verbatimModuleSyntax": true,
     "noEmit": true
   },
-  "include": ["./*/index.tsx"],
+  "include": ["./*/index.tsx", "./*/index.ts"],
   "exclude": ["../node_modules", "../dist", "../build"]
 }

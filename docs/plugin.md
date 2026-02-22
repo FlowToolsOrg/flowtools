@@ -122,9 +122,9 @@ export default definePlugin({
 
 ## 5. 开发一个 Tool 插件（无常驻 UI）
 
-`plugins/plugin-word-counter/index.tsx`：
+`plugins/plugin-word-counter/index.ts`：
 
-```tsx
+```ts
 import { definePlugin, result } from '@flow-tool/sdk'
 
 interface WordCounterInput {

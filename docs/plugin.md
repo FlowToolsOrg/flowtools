@@ -122,66 +122,65 @@ export default definePlugin({
 
 ### 4.1 在 App 插件里使用 Zustand Store（推荐）
 
-推荐每个 app plugin 维护一个 root store，然后通过 `useStorage()` 提供的
-`storage.zustand(namespace?)` 接入持久化。
+推荐 app plugin 使用 host 注入的 store hooks：
+
+- `usePluginStore(selector)`：读取响应式状态
+- `usePluginStoreApi()`：更新状态（`setState/getState/reset`）
+
+插件可以在 `meta.store.initialState` 定义 store 初始结构，host 会按 `pluginId`
+创建并复用单实例 store。
 
 ```tsx
-import type { StorageCapability } from '@flow-tool/sdk'
-
-import { definePlugin, useStorage } from '@flow-tool/sdk'
+import type { FormEvent } from 'react'
+import { definePlugin, usePluginStore, usePluginStoreApi } from '@flow-tool/sdk'
 import { Button } from '@flow-tool/ui/plugin'
-import { createJSONStorage, persist } from 'zustand/middleware'
-import { useStore } from 'zustand'
-import { createStore } from 'zustand/vanilla'
 
-interface CounterState {
-  count: number
-  inc: () => void
+interface TodoItem {
+  title: string
 }
 
-type CounterStore = ReturnType<typeof createCounterStore>
-
-let counterStore: CounterStore | undefined
-
-function createCounterStore(storage: StorageCapability) {
-  return createStore<CounterState>()(
-    persist(
-      set => ({
-        count: 0,
-        inc: () => set(state => ({ count: state.count + 1 })),
-      }),
-      {
-        name: 'root',
-        storage: createJSONStorage(() => storage.zustand('counter')),
-      }
-    )
-  )
-}
-
-function useCounterStore<T>(selector: (state: CounterState) => T): T {
-  const storage = useStorage()
-
-  if (!counterStore) {
-    counterStore = createCounterStore(storage)
-  }
-
-  return useStore(counterStore, selector)
+interface TodoStoreState {
+  todos: TodoItem[]
 }
 
 export default definePlugin({
   type: 'app',
   meta: {
-    id: 'plugin-counter',
-    name: 'Counter',
+    id: 'plugin-todo-list',
+    name: 'Todo List',
     version: '0.1.0',
     permissions: ['storage'],
+    store: {
+      initialState: {
+        todos: [],
+      },
+    },
   },
   setup() {
-    return function CounterPanel() {
-      const count = useCounterStore(state => state.count)
-      const inc = useCounterStore(state => state.inc)
+    return function TodoPanel() {
+      const todos = usePluginStore<TodoStoreState>(state => state.todos)
+      const store = usePluginStoreApi<TodoStoreState>()
 
-      return <Button onPress={inc}>Count: {count}</Button>
+      const onAdd = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        const formData = new FormData(event.currentTarget)
+        const title = String(formData.get('title') ?? '').trim()
+        if (!title) return
+
+        store.setState(state => ({
+          todos: [...state.todos, { title }],
+        }))
+      }
+
+      return (
+        <>
+          <form onSubmit={onAdd}>
+            <input name="title" />
+            <Button type="submit">Add</Button>
+          </form>
+          <div>Total: {todos.length}</div>
+        </>
+      )
     }
   },
 })
@@ -277,16 +276,17 @@ console.log(output)
 
 ## 7. 权限与 Capability 对照（Web 原型）
 
-| permission     | SDK 能力                                 | web-vite 当前行为                           |
-| -------------- | ---------------------------------------- | ------------------------------------------- |
-| `network`      | `useRequest()` / `ctx.request`           | 浏览器 `fetch`                              |
-| `storage`      | `useStorage()` / `ctx.storage`           | namespaced `localStorage` + zustand adapter |
-| `fs`           | `useFS()` / `ctx.fs`                     | `localStorage` 模拟文件系统                 |
-| `clipboard`    | `useClipboard()` / `ctx.clipboard`       | 浏览器 clipboard API                        |
-| `notification` | `useNotification()` / `ctx.notification` | Notification API，失败时降级 toast          |
-| `dialog`       | `useDialog()` / `ctx.dialog`             | 已注入但调用会抛 `Not supported`            |
-| `db`           | `useDB()` / `ctx.db`                     | 已注入但调用会抛 `Not supported`            |
-| `native`       | `useNative()` / `ctx.native`             | 已注入但调用会抛 `Not supported`            |
+| permission     | SDK 能力                                   | web-vite 当前行为                             |
+| -------------- | ------------------------------------------ | --------------------------------------------- |
+| `network`      | `useRequest()` / `ctx.request`             | 浏览器 `fetch`                                |
+| `storage`      | `useStorage()` / `ctx.storage`             | namespaced `localStorage` + zustand adapter   |
+| `store`        | `usePluginStore()` / `usePluginStoreApi()` | host 管理的 Zustand store（按 pluginId 单例） |
+| `fs`           | `useFS()` / `ctx.fs`                       | `localStorage` 模拟文件系统                   |
+| `clipboard`    | `useClipboard()` / `ctx.clipboard`         | 浏览器 clipboard API                          |
+| `notification` | `useNotification()` / `ctx.notification`   | Notification API，失败时降级 toast            |
+| `dialog`       | `useDialog()` / `ctx.dialog`               | 已注入但调用会抛 `Not supported`              |
+| `db`           | `useDB()` / `ctx.db`                       | 已注入但调用会抛 `Not supported`              |
+| `native`       | `useNative()` / `ctx.native`               | 已注入但调用会抛 `Not supported`              |
 
 补充：
 
@@ -314,7 +314,8 @@ console.log(output)
 
 ## 9. 推荐开发习惯
 
-- 建议优先使用 capability selector 获取 Capability（如：`useCapabilities(_=>({storage: _.storage}))`），也可以使用专用 hooks（如 `useStorage()`），还可以使用 `useCapabilities()` 直接获取全部 capability
+- 建议优先使用 capability selector 获取 Capability（如：`useCapability(_ => ({ storage: _.storage }))`），也可以使用专用 hooks（如 `useStorage()`）
+- App 插件状态优先走 `usePluginStore()` / `usePluginStoreApi()`，不要在插件内重复创建全局 store
 - `permissions` 仅声明需要的最小集合
 - 插件 ID、命令 ID 使用 kebab-case
 - 插件逻辑放 `plugins/*`，宿主集成逻辑放 `apps/*`

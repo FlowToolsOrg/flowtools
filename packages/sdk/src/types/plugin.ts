@@ -1,6 +1,7 @@
 import type { CommandDef } from './command'
 import type { ToolContext } from './ctx'
 import type { Permission } from './permissions'
+import type { PluginStoreState } from './store'
 import type { ComponentType } from 'react'
 
 type IsTuple<T extends readonly unknown[]> = number extends T['length']
@@ -85,6 +86,16 @@ export interface PluginLifecycle {
 /**
  * Basic metadata for every plugin package.
  */
+export interface PluginStoreMeta {
+  /**
+   * Optional initial state for host-managed plugin store.
+   */
+  initialState?: PluginStoreState
+}
+
+/**
+ * Basic metadata for every plugin package.
+ */
 export interface PluginMeta {
   /**
    * Stable plugin id in kebab-case.
@@ -118,6 +129,10 @@ export interface PluginMeta {
    * Optional plugin group tags.
    */
   tags?: string[]
+  /**
+   * Optional host-managed store metadata.
+   */
+  store?: PluginStoreMeta
 }
 
 /**

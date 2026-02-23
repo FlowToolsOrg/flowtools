@@ -151,6 +151,7 @@ Web prototype capability behavior:
 | -------------- | ------------------------------------------- |
 | `network`      | Uses browser `fetch`                        |
 | `storage`      | Namespaced `localStorage` + zustand adapter |
+| `store`        | Host-managed Zustand store for app plugins  |
 | `fs`           | Simulated file read/write on `localStorage` |
 | `clipboard`    | Browser clipboard API                       |
 | `notification` | Notification API with toast fallback        |
@@ -185,56 +186,55 @@ All access must go through the Flow Tool runtime.
 
 ### Store
 
-App plugins should manage state locally (for example with Zustand), then use
-`useStorage()` as host-backed persistence.
+App plugins use a host-managed Zustand store:
 
-- Keep the store in plugin code for full type safety/reactivity
-- Recommended: one root Zustand store per app plugin
-- Persist through `storage.zustand(namespace?)`
-- Storage remains namespaced by `pluginId`
+- Read reactive state with `usePluginStore(selector)`
+- Update state with `usePluginStoreApi()`
+- Host creates one store per `pluginId`
+- Optional initial shape via `meta.store.initialState`
+- If `storage` permission is granted, host persists store by plugin namespace
 
-Example (single plugin store + `zustand/persist`):
+Example:
 
 ```tsx
-import type { StorageCapability } from '@flow-tool/sdk'
-import { useStore } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
-import { createStore } from 'zustand/vanilla'
-
-import { useStorage } from '@flow-tool/sdk'
+import { definePlugin, usePluginStore, usePluginStoreApi } from '@flow-tool/sdk'
 
 interface CounterState {
   count: number
-  inc: () => void
 }
 
-type CounterStore = ReturnType<typeof createCounterStore>
-
-let counterStore: CounterStore | undefined
-
-function createCounterStore(storage: StorageCapability) {
-  return createStore<CounterState>()(
-    persist(
-      set => ({
+export default definePlugin({
+  type: 'app',
+  meta: {
+    id: 'counter',
+    name: 'Counter',
+    version: '0.1.0',
+    permissions: ['storage'],
+    store: {
+      initialState: {
         count: 0,
-        inc: () => set(state => ({ count: state.count + 1 })),
-      }),
-      {
-        name: 'root',
-        storage: createJSONStorage(() => storage.zustand()),
-      }
-    )
-  )
-}
+      },
+    },
+  },
+  setup() {
+    return function CounterPanel() {
+      const count = usePluginStore<CounterState>(state => state.count)
+      const store = usePluginStoreApi<CounterState>()
 
-export function useCounterStore<T>(selector: (state: CounterState) => T): T {
-  const storage = useStorage()
-  if (!counterStore) {
-    counterStore = createCounterStore(storage)
-  }
-
-  return useStore(counterStore, selector)
-}
+      return (
+        <button
+          onClick={() =>
+            store.setState(state => ({
+              count: state.count + 1,
+            }))
+          }
+        >
+          Count: {count}
+        </button>
+      )
+    }
+  },
+})
 ```
 
 ### Database

@@ -4,6 +4,7 @@ export type {
   PluginCommands,
   PluginLifecycle,
   PluginMeta,
+  PluginStoreMeta,
   PluginSettingsSchema,
   PluginType,
   AppPlugin,
@@ -12,6 +13,11 @@ export type {
 } from './plugin'
 export type { Permission } from './permissions'
 export { permissions } from './permissions'
+export type {
+  PluginStoreCapability,
+  PluginStoreState,
+  PluginStoreUpdater,
+} from './store'
 
 export type {
   PluginEnv,

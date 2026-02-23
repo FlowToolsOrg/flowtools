@@ -114,6 +114,10 @@ Host runtime 用 `pickCapability(...)` 做权限裁剪：
 - `storage`：`localStorage`（key 前缀 `flow-tool:{pluginId}:storage:`）
   - 提供 `storage.zustand(namespace?)` 适配器，供插件侧
     Zustand `persist/createJSONStorage` 使用
+- `store`：host 管理的 Zustand vanilla store（每个 pluginId 单实例）
+  - app 插件通过 `usePluginStore()` / `usePluginStoreApi()` 访问
+  - 可通过 `meta.store.initialState` 提供初始状态
+  - 若声明了 `storage` 权限，store 会持久化到插件命名空间
 - `fs`：`localStorage` 模拟文件（key 前缀 `flow-tool:{pluginId}:fs:`）
 - `clipboard`：浏览器 clipboard API
 - `notification`：Notification API（不可用时降级为 toast 事件）
@@ -203,12 +207,12 @@ SDK 已定义命令与结果契约：
 
 ## 14. State Model（Store）
 
-原则：store 定义在插件侧，宿主只提供持久化能力与命名空间隔离。
+原则：store 由宿主创建和托管，插件只消费 store hooks。
 
-- App 插件可自由使用 Zustand/React state，保持完整类型与响应式能力
-- 推荐每个 App 插件维护一个 root store（大对象 + actions）
-- 通过 `useStorage().zustand(namespace?)` 接入宿主持久化
-- 存储隔离仍由 `pluginId` 保证
+- App 插件通过 `usePluginStore()` 订阅状态，通过 `usePluginStoreApi()` 更新状态
+- 每个 `pluginId` 只创建一个 store（host registry）
+- 插件可在 `meta.store.initialState` 声明初始状态结构
+- 持久化由宿主控制，命名空间仍按 `pluginId` 隔离
 - 持久化后端（current/future）：
   - web: localStorage（当前）
   - desktop: sqlite 或其他宿主管理存储（规划）

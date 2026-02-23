@@ -6,6 +6,7 @@ import type { NativeCapability } from './capabilities/native'
 import type { NotificationCapability } from './capabilities/notification'
 import type { RequestCapability } from './capabilities/request'
 import type { StorageCapability } from './capabilities/storage'
+import type { PluginStoreCapability } from './store'
 import type { UICapability } from './ui'
 
 /**
@@ -86,6 +87,10 @@ export interface PluginRuntimeContextValue {
    * Optional namespaced storage capability.
    */
   storage?: StorageCapability
+  /**
+   * Optional host-managed app store capability.
+   */
+  store?: PluginStoreCapability
   /**
    * Optional namespaced database capability.
    */

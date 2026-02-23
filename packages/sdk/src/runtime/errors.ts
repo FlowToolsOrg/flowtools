@@ -30,6 +30,19 @@ export class MissingCapabilityError extends Error {
 }
 
 /**
+ * Error thrown when app store hook is used but host did not inject store.
+ */
+export class MissingPluginStoreError extends Error {
+  constructor() {
+    super(
+      `${SDK_ERROR_PREFIX} Plugin store is unavailable. ` +
+        'Ensure host runtime injects store for app plugins.'
+    )
+    this.name = 'MissingPluginStoreError'
+  }
+}
+
+/**
  * Create a standard missing runtime context error.
  */
 export function createMissingRuntimeContextError(): MissingRuntimeContextError {
@@ -43,4 +56,11 @@ export function createMissingCapabilityError(
   capability: string
 ): MissingCapabilityError {
   return new MissingCapabilityError(capability)
+}
+
+/**
+ * Create a standard missing plugin store error.
+ */
+export function createMissingPluginStoreError(): MissingPluginStoreError {
+  return new MissingPluginStoreError()
 }

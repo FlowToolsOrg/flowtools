@@ -7,6 +7,9 @@ import type {
   NativeCapability,
   NotificationCapability,
   Permission,
+  PluginStoreCapability,
+  PluginStoreState,
+  PluginStoreUpdater,
   PluginRuntimeContextValue,
   PluginType,
   RequestCapability,
@@ -20,14 +23,22 @@ import type { PropsWithChildren } from 'react'
 
 import { FlowToolRuntimeProvider } from '@flow-tool/sdk'
 import { pickCapability } from '@flow-tool/sdk/utils'
+import { createStore } from 'zustand/vanilla'
 
 const RUNTIME_PREFIX = '[flow-tool-web-runtime]'
 const STORAGE_PREFIX = 'flow-tool'
+const PLUGIN_STORE_STORAGE_NAMESPACE = '__plugin-store__'
+const PLUGIN_STORE_STORAGE_KEY = 'root'
+
+interface InternalPluginStoreState {
+  state: PluginStoreState
+}
 
 export interface CreateWebRuntimeContextOptions {
   pluginId: string
   pluginType: PluginType
   permissions?: readonly Permission[]
+  storeInitialState?: PluginStoreState
   mode?: RuntimeMode
 }
 
@@ -110,6 +121,153 @@ function createZustandStorageName(namespace: string | undefined, name: string) {
     namespace && namespace.trim().length > 0 ? namespace.trim() : 'default'
 
   return `zustand:${normalizedNamespace}:${name}`
+}
+
+const pluginStoreRegistry = new Map<string, PluginStoreCapability>()
+
+function parsePluginStoreState(raw: string | null): PluginStoreState {
+  if (!raw) {
+    return {}
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as { state?: unknown }
+    if (!parsed || typeof parsed !== 'object') {
+      return {}
+    }
+
+    const state = parsed.state
+    if (!state || typeof state !== 'object' || Array.isArray(state)) {
+      return {}
+    }
+
+    return state as PluginStoreState
+  } catch {
+    return {}
+  }
+}
+
+function readInitialPluginStoreState(
+  pluginId: string,
+  initialState: PluginStoreState | undefined,
+  persistent: boolean
+): PluginStoreState {
+  if (!persistent) {
+    return initialState ?? {}
+  }
+
+  const storage = createStorageCapability(pluginId)
+  const raw = storage
+    .zustand(PLUGIN_STORE_STORAGE_NAMESPACE)
+    .getItem(PLUGIN_STORE_STORAGE_KEY)
+  const persistedState = parsePluginStoreState(raw)
+
+  return {
+    ...(initialState ?? {}),
+    ...persistedState,
+  }
+}
+
+function persistPluginStoreState(
+  pluginId: string,
+  persistent: boolean,
+  state: PluginStoreState
+): void {
+  if (!persistent) {
+    return
+  }
+
+  const storage = createStorageCapability(pluginId)
+  storage
+    .zustand(PLUGIN_STORE_STORAGE_NAMESPACE)
+    .setItem(PLUGIN_STORE_STORAGE_KEY, JSON.stringify({ state }))
+}
+
+function resolveNextPluginStoreState(
+  current: PluginStoreState,
+  updater: PluginStoreUpdater<PluginStoreState>,
+  replace: boolean
+): PluginStoreState {
+  const update = typeof updater === 'function' ? updater(current) : updater
+
+  if (replace) {
+    return update as PluginStoreState
+  }
+
+  return {
+    ...current,
+    ...update,
+  }
+}
+
+function createPluginStoreCapability(
+  pluginId: string,
+  initialState: PluginStoreState | undefined,
+  persistent: boolean
+): PluginStoreCapability {
+  const initialSnapshot = readInitialPluginStoreState(
+    pluginId,
+    initialState,
+    persistent
+  )
+  const store = createStore<InternalPluginStoreState>(() => ({
+    state: initialSnapshot,
+  }))
+
+  if (persistent) {
+    persistPluginStoreState(pluginId, true, initialSnapshot)
+    store.subscribe(snapshot => {
+      persistPluginStoreState(pluginId, true, snapshot.state)
+    })
+  }
+
+  const capability: PluginStoreCapability = {
+    getState() {
+      return store.getState().state
+    },
+    setState(updater, replace = false) {
+      const next = resolveNextPluginStoreState(
+        store.getState().state,
+        updater,
+        replace
+      )
+      store.setState({
+        state: next,
+      })
+    },
+    subscribe(listener) {
+      return store.subscribe(() => {
+        listener()
+      })
+    },
+    reset() {
+      store.setState({
+        state: { ...initialSnapshot },
+      })
+    },
+  }
+
+  return capability
+}
+
+function getOrCreatePluginStoreCapability(
+  pluginId: string,
+  initialState: PluginStoreState | undefined,
+  persistent: boolean
+): PluginStoreCapability {
+  const existing = pluginStoreRegistry.get(pluginId)
+  if (existing) {
+    return existing
+  }
+
+  const capability = createPluginStoreCapability(
+    pluginId,
+    initialState,
+    persistent
+  )
+  pluginStoreRegistry.set(pluginId, capability)
+
+  return capability
 }
 
 function safeGetLocalStorageItem(key: string): string | null {
@@ -368,6 +526,15 @@ export function createWebRuntimeContext(
 ): PluginRuntimeContextValue {
   const permissions = normalizePermissions(options.permissions)
   const allowedPermissions = new Set<Permission>(permissions)
+  const storePersistent = allowedPermissions.has('storage')
+  const storeCapability =
+    options.pluginType === 'app'
+      ? getOrCreatePluginStoreCapability(
+          options.pluginId,
+          options.storeInitialState,
+          storePersistent
+        )
+      : undefined
 
   return {
     env: {
@@ -401,6 +568,7 @@ export function createWebRuntimeContext(
     storage: pickCapability('storage', allowedPermissions, () =>
       createStorageCapability(options.pluginId)
     ),
+    store: storeCapability,
     db: pickCapability('db', allowedPermissions, createDBCapability),
     native: pickCapability(
       'native',
@@ -434,12 +602,14 @@ export function WebPluginRuntimeProvider({
   pluginId,
   pluginType,
   permissions,
+  storeInitialState,
   mode,
   children,
 }: WebPluginRuntimeProviderProps) {
   const value = createWebRuntimeContext({
     mode,
     permissions,
+    storeInitialState,
     pluginId,
     pluginType,
   })

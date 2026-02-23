@@ -1,20 +1,16 @@
-import type { StorageCapability } from '@flow-tool/sdk'
 import type { FormEvent } from 'react'
 
-import { definePlugin, useStorage } from '@flow-tool/sdk'
+import { definePlugin, usePluginStore, usePluginStoreApi } from '@flow-tool/sdk'
 import {
-  Input,
-  Form,
   Button,
+  Calendar,
   DateField,
   DatePicker,
-  Calendar,
+  Form,
+  Input,
   Label,
   TextField,
 } from '@flow-tool/ui/plugin'
-import { useStore } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
-import { createStore } from 'zustand/vanilla'
 
 interface TodoItem {
   todo: string
@@ -23,40 +19,6 @@ interface TodoItem {
 
 interface TodoStoreState {
   todos: TodoItem[]
-  addTodo: (item: TodoItem) => void
-}
-
-type TodoStore = ReturnType<typeof createTodoStore>
-
-let todoStore: TodoStore | undefined
-
-function createTodoStore(storage: StorageCapability) {
-  return createStore<TodoStoreState>()(
-    persist(
-      set => ({
-        todos: [],
-        addTodo: item =>
-          set(state => ({
-            todos: [...state.todos, item],
-          })),
-      }),
-      {
-        name: 'root',
-        storage: createJSONStorage(() => storage.zustand('todo-list')),
-      }
-    )
-  )
-}
-
-function useTodoStore<T>(selector: (state: TodoStoreState) => T): T {
-  const storage = useStorage()
-  const store = todoStore ?? createTodoStore(storage)
-
-  if (!todoStore) {
-    todoStore = store
-  }
-
-  return useStore(store, selector)
 }
 
 function readValue(input: FormDataEntryValue | null): string {
@@ -74,11 +36,19 @@ export default definePlugin({
     name: 'Todo List',
     version: '0.0.1',
     permissions: ['storage'],
+    store: {
+      initialState: {
+        todos: [],
+      },
+    },
   },
   setup() {
     return function () {
-      const todos = useTodoStore(state => state.todos)
-      const addTodo = useTodoStore(state => state.addTodo)
+      // TODO: add strong type for TodoStoreState
+      // @ts-ignore
+      const todos = usePluginStore<TodoStoreState>(state => state.todos)
+      // @ts-ignore
+      const store = usePluginStoreApi<TodoStoreState>()
 
       const onSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -90,10 +60,15 @@ export default definePlugin({
           return
         }
 
-        addTodo({
-          todo,
-          deadline,
-        })
+        store.setState(state => ({
+          todos: [
+            ...state.todos,
+            {
+              todo,
+              deadline,
+            },
+          ],
+        }))
         e.currentTarget.reset()
       }
 
@@ -168,7 +143,7 @@ export default definePlugin({
               <p className="text-sm text-gray-500">No todo items yet.</p>
             ) : (
               <ul className="mt-2 space-y-2">
-                {todos.map((item, index) => (
+                {(todos as unknown as TodoItem[]).map((item, index) => (
                   <li
                     key={`${item.todo}-${index}`}
                     className="flex items-center justify-between rounded border px-3 py-2"

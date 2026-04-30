@@ -11,16 +11,19 @@ Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平�
 
 ## 1. Reality Check（当前实现状态）
 
-截至 2026-02，仓库中的实现状态：
+截至 2026-05，仓库中的实现状态：
 
 - 已实现：
-  - `packages/sdk`：插件契约、hooks、runtime provider、结果类型
-  - `packages/ui`：基础 UI 组件
+  - `packages/sdk`：插件契约、hooks（工厂模式）、runtime provider、结果类型
+  - `packages/ui`：共享 UI 组件库（HeroUI 基础）
   - `apps/web-vite`：web runtime 原型（用于验证 SDK 与运行时模型）
-  - `plugins/plugin-example-hello-world`：本地插件示例
-- 计划中（尚未落地到当前代码）：
+  - `plugins/plugin-example-hello-world`：app 插件示例
+  - `plugins/plugin-example-run-hello`：tool 插件示例
+  - `plugins/plugin-todo-list`：带 host-managed store 的 app 插件示例
+- 目录已创建，尚未实现：
   - `apps/desktop`（Tauri 桌面宿主）
   - `apps/docs`
+  - `apps/web`
 
 结论：架构方向是 desktop-first，但当前可运行宿主是 web 原型。
 
@@ -68,9 +71,11 @@ ctx 的职责：
 `@flow-tool/sdk` 暴露：
 
 - Provider：`FlowToolRuntimeProvider`
-- 环境：`useEnv()`
-- 通用能力：`useCapability()`
-- 专用能力 hooks：`useFS/useRequest/useStorage/useDB/...`
+- 通用能力：`useCapability(selector?)` — 支持 selector 模式按需取能力
+- Plugin Store：`usePluginStore(selector?)` / `usePluginStoreApi()`
+- 专用能力 hooks：`useEnv`、`useUI`、`useFS`、`useRequest`、`useStorage`、`useDB`、`useClipboard`、`useDialog`、`useNotification`、`useNative`
+- 工厂函数：`createRequiredCapabilityHook(key)` / `createOptionalCapabilityHook(key)`
+  - 专用能力 hooks 由工厂函数生成，插件也可自行创建自定义 hook
 
 运行时通过 context 注入 `PluginRuntimeContextValue`：
 

@@ -56,30 +56,38 @@ Core principles:
 - Namespaced storage & database
 - Plugin lifecycle management
 
-## Current Status (February 2026)
+## Current Status (May 2026)
 
 - Product direction: desktop-first, cross-platform ready.
 - Current runnable host: `apps/web-vite`.
 - Core packages under active development:
   - `packages/sdk` (`@flow-tool/sdk`)
   - `packages/ui` (`@flow-tool/ui`)
-- Local plugin workspace example:
-  - `plugins/plugin-example-hello-world`
-- Planned (not implemented yet in this repo):
+- Local plugin workspace examples:
+  - `plugins/plugin-example-hello-world` (app plugin)
+  - `plugins/plugin-example-run-hello` (tool plugin)
+  - `plugins/plugin-todo-list` (app plugin with store)
+- Planned (directory created, not yet implemented):
   - `apps/desktop`
   - `apps/docs`
+  - `apps/web`
 
 ## Monorepo Layout
 
 ```text
 apps/
   web-vite/    # web host prototype (router + runtime adapters)
+  web/         # (planned)
+  desktop/     # (planned) Tauri desktop host
+  docs/        # (planned) documentation site
   ui-test/     # UI package consumer and browser test app
 packages/
   sdk/         # plugin contract, hooks, runtime provider, result helpers
   ui/          # shared React UI primitives
 plugins/
-  plugin-example-hello-world/
+  plugin-example-hello-world/  # app plugin example
+  plugin-example-run-hello/    # tool plugin example
+  plugin-todo-list/            # app plugin with host-managed store
 configs/
   tsdown/      # shared package build config
 ```
@@ -116,7 +124,7 @@ Flow Tool supports two plugin categories:
 Minimal app plugin example:
 
 ```tsx
-import { definePlugin, useStorage } from '@flow-tool/sdk'
+import { definePlugin, useCapability } from '@flow-tool/sdk'
 
 export default definePlugin({
   type: 'app',
@@ -128,7 +136,7 @@ export default definePlugin({
   },
   setup() {
     return function Panel() {
-      const storage = useStorage()
+      const { storage } = useCapability()
 
       return <button onClick={() => storage.set('hello', 'world')}>Save</button>
     }
@@ -136,7 +144,19 @@ export default definePlugin({
 })
 ```
 
-## Runtime Snapshot
+## SDK Hooks
+
+`@flow-tool/sdk` exposes:
+
+- **`useCapability()`** — read runtime capabilities with optional selector
+- **`usePluginStore(selector?)`** — subscribe to host-managed plugin state
+- **`usePluginStoreApi()`** — get plugin store API for state updates
+- **Capability hooks** — `useEnv`, `useUI`, `useStorage`, `useRequest`,
+  `useFS`, `useDB`, `useClipboard`, `useDialog`, `useNotification`, `useNative`
+
+Individual capability hooks are generated via factory functions
+`createRequiredCapabilityHook` / `createOptionalCapabilityHook`.
+Plugins can also use these factories to create custom hooks.
 
 Desktop-first remains the architecture direction.
 Current implemented runtime in this repository is web-based:

@@ -10,9 +10,8 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
+      "@/*": ["./src/*"],
       "@plugins/*": ["../../plugins/*"],
       "@flow-tool/sdk": ["../../packages/sdk/src/index.ts"],
       "@flow-tool/sdk/*": ["../../packages/sdk/src/*"],

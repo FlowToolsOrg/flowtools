@@ -9,5 +9,8 @@ export {
   type FlowToolPluginMarker,
 } from './definePlugin'
 
+export { definePluginStore } from './definePluginStore'
+export type { InferStoreActions, InferStoreState } from './storeHelpers'
+
 export { result } from './result/helpers'
 export type { CommandResult } from './result/types'

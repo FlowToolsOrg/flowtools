@@ -8,6 +8,7 @@ import type {
   NotificationCapability,
   Permission,
   PluginStoreCapability,
+  PluginStoreShape,
   PluginStoreState,
   PluginStoreUpdater,
   PluginRuntimeContextValue,
@@ -38,7 +39,7 @@ export interface CreateWebRuntimeContextOptions {
   pluginId: string
   pluginType: PluginType
   permissions?: readonly Permission[]
-  storeInitialState?: PluginStoreState
+  storeShape?: PluginStoreShape
   mode?: RuntimeMode
 }
 
@@ -202,9 +203,12 @@ function resolveNextPluginStoreState(
 
 function createPluginStoreCapability(
   pluginId: string,
-  initialState: PluginStoreState | undefined,
+  shape: PluginStoreShape | undefined,
   persistent: boolean
 ): PluginStoreCapability {
+  const initialState = shape?.initialState ?? {}
+  const actionsFactory = shape?.actions
+
   const initialSnapshot = readInitialPluginStoreState(
     pluginId,
     initialState,
@@ -221,20 +225,27 @@ function createPluginStoreCapability(
     })
   }
 
+  const setState = (
+    updater: PluginStoreUpdater<PluginStoreState>,
+    replace = false
+  ) => {
+    const next = resolveNextPluginStoreState(
+      store.getState().state,
+      updater,
+      replace
+    )
+    store.setState({
+      state: next,
+    })
+  }
+
+  const getState = () => store.getState().state
+
+  const actions = actionsFactory ? actionsFactory(setState, getState) : {}
+
   const capability: PluginStoreCapability = {
-    getState() {
-      return store.getState().state
-    },
-    setState(updater, replace = false) {
-      const next = resolveNextPluginStoreState(
-        store.getState().state,
-        updater,
-        replace
-      )
-      store.setState({
-        state: next,
-      })
-    },
+    getState,
+    setState,
     subscribe(listener) {
       return store.subscribe(() => {
         listener()
@@ -245,6 +256,7 @@ function createPluginStoreCapability(
         state: { ...initialSnapshot },
       })
     },
+    actions,
   }
 
   return capability
@@ -252,7 +264,7 @@ function createPluginStoreCapability(
 
 function getOrCreatePluginStoreCapability(
   pluginId: string,
-  initialState: PluginStoreState | undefined,
+  shape: PluginStoreShape | undefined,
   persistent: boolean
 ): PluginStoreCapability {
   const existing = pluginStoreRegistry.get(pluginId)
@@ -260,11 +272,7 @@ function getOrCreatePluginStoreCapability(
     return existing
   }
 
-  const capability = createPluginStoreCapability(
-    pluginId,
-    initialState,
-    persistent
-  )
+  const capability = createPluginStoreCapability(pluginId, shape, persistent)
   pluginStoreRegistry.set(pluginId, capability)
 
   return capability
@@ -531,7 +539,7 @@ export function createWebRuntimeContext(
     options.pluginType === 'app'
       ? getOrCreatePluginStoreCapability(
           options.pluginId,
-          options.storeInitialState,
+          options.storeShape,
           storePersistent
         )
       : undefined
@@ -602,14 +610,14 @@ export function WebPluginRuntimeProvider({
   pluginId,
   pluginType,
   permissions,
-  storeInitialState,
+  storeShape,
   mode,
   children,
 }: WebPluginRuntimeProviderProps) {
   const value = createWebRuntimeContext({
     mode,
     permissions,
-    storeInitialState,
+    storeShape,
     pluginId,
     pluginType,
   })

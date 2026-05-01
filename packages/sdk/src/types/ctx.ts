@@ -90,7 +90,7 @@ export interface PluginRuntimeContextValue {
   /**
    * Optional host-managed app store capability.
    */
-  store?: PluginStoreCapability
+  store?: PluginStoreCapability<any, any>
   /**
    * Optional namespaced database capability.
    */

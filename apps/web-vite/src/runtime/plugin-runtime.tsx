@@ -16,7 +16,7 @@ export function renderWebAppPlugin(plugin: AppPlugin) {
     <WebPluginRuntimeProvider
       mode="development"
       permissions={plugin.meta.permissions}
-      storeInitialState={plugin.meta.store?.initialState}
+      storeShape={plugin.store}
       pluginId={plugin.meta.id}
       pluginType="app"
     >

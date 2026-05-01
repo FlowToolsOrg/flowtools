@@ -14,14 +14,12 @@ type StoreSelector<TState extends PluginStoreState, TSlice> = (
 export function usePluginStore<
   TState extends PluginStoreState = PluginStoreState,
 >(): TState
-export function usePluginStore<
-  TState extends PluginStoreState,
-  TSlice = TState,
->(selector: StoreSelector<TState, TSlice>): TSlice
-export function usePluginStore<
-  TState extends PluginStoreState,
-  TSlice = TState,
->(selector?: StoreSelector<TState, TSlice>): TSlice | TState {
+export function usePluginStore<TState extends PluginStoreState, TSlice>(
+  selector: (state: TState) => TSlice
+): TSlice
+export function usePluginStore<TState extends PluginStoreState, TSlice>(
+  selector?: (state: TState) => TSlice
+): TSlice | TState {
   const store = usePluginStoreApi<TState>()
   const select = (selector ??
     ((state: TState) => state as unknown as TSlice)) as StoreSelector<

@@ -8,12 +8,16 @@ import { useRuntime } from '../runtime/useRuntime'
  */
 export function usePluginStoreApi<
   TState extends PluginStoreState = PluginStoreState,
->(): PluginStoreCapability<TState> {
+  TActions extends Record<string, (...args: any[]) => void> = Record<
+    string,
+    never
+  >,
+>(): PluginStoreCapability<TState, TActions> {
   const ctx = useRuntime()
 
   if (!ctx.store) {
     throw createMissingPluginStoreError()
   }
 
-  return ctx.store as PluginStoreCapability<TState>
+  return ctx.store as PluginStoreCapability<TState, TActions>
 }

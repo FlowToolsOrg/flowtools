@@ -1,6 +1,13 @@
 import type { FormEvent } from 'react'
 
-import { definePlugin, usePluginStore, usePluginStoreApi } from '@flow-tool/sdk'
+import {
+  type InferStoreActions,
+  type InferStoreState,
+  definePlugin,
+  usePluginStore,
+  usePluginStoreApi,
+  definePluginStore,
+} from '@flow-tool/sdk'
 import {
   Button,
   Calendar,
@@ -12,14 +19,29 @@ import {
   TextField,
 } from '@flow-tool/ui/plugin'
 
-interface TodoItem {
+export interface TodoItem {
   todo: string
   deadline: string
 }
 
-interface TodoStoreState {
-  todos: TodoItem[]
-}
+export const todoStore = definePluginStore({
+  initialState: {
+    todos: [] as TodoItem[],
+  },
+  actions: set => ({
+    addTodo(item: TodoItem) {
+      set(state => ({ todos: [...state.todos, item] }))
+    },
+    removeTodo(index: number) {
+      set(state => ({
+        todos: state.todos.filter((_, i) => i !== index),
+      }))
+    },
+  }),
+})
+
+type TodoState = InferStoreState<typeof todoStore>
+type TodoActions = InferStoreActions<typeof todoStore>
 
 function readValue(input: FormDataEntryValue | null): string {
   if (typeof input !== 'string') {
@@ -36,19 +58,14 @@ export default definePlugin({
     name: 'Todo List',
     version: '0.0.1',
     permissions: ['storage'],
-    store: {
-      initialState: {
-        todos: [],
-      },
-    },
   },
+  store: todoStore,
   setup() {
     return function () {
-      // TODO: add strong type for TodoStoreState
-      // @ts-ignore
-      const todos = usePluginStore<TodoStoreState>(state => state.todos)
-      // @ts-ignore
-      const store = usePluginStoreApi<TodoStoreState>()
+      const { todos } = usePluginStore<TodoState>()
+      const {
+        actions: { addTodo },
+      } = usePluginStoreApi<TodoState, TodoActions>()
 
       const onSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -60,25 +77,14 @@ export default definePlugin({
           return
         }
 
-        store.setState(state => ({
-          todos: [
-            ...state.todos,
-            {
-              todo,
-              deadline,
-            },
-          ],
-        }))
+        addTodo({ todo, deadline })
         e.currentTarget.reset()
       }
 
       return (
         <div className="w-full">
           <div className="flex">
-            <Form
-              className="flex flex-row flex-grow w-full"
-              onSubmit={onSubmit}
-            >
+            <Form className="flex flex-row grow w-full" onSubmit={onSubmit}>
               <TextField
                 isRequired
                 name="todo"
@@ -143,7 +149,7 @@ export default definePlugin({
               <p className="text-sm text-gray-500">No todo items yet.</p>
             ) : (
               <ul className="mt-2 space-y-2">
-                {(todos as unknown as TodoItem[]).map((item, index) => (
+                {todos.map((item, index) => (
                   <li
                     key={`${item.todo}-${index}`}
                     className="flex items-center justify-between rounded border px-3 py-2"

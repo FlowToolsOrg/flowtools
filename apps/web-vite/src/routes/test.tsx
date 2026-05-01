@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 
 import { helloWorldPlugin, todoListPlugin } from '@/plugin/app'
+import apps from '@/plugin/app'
 import { runHello } from '@/plugin/tool'
 import { renderWebAppPlugin } from '@/runtime'
 
@@ -17,15 +18,13 @@ function RouteComponent() {
     console.log(todoListPlugin)
   }, [])
   return (
-    <div className="container max-w-7xl m-auto flex flex-col gap-8 mt-8">
-      <section className="border p-8 rounded-2xl">
-        <h1 className="text-2xl mb-2">Hello World Plugin</h1>
-        <div>{renderWebAppPlugin(helloWorldPlugin)}</div>
-      </section>
-      <section className="border p-8 rounded-2xl">
-        <h1 className="text-2xl mb-2">Todo List Plugin</h1>
-        <div>{renderWebAppPlugin(todoListPlugin)}</div>
-      </section>
+    <div className="container m-auto mt-8 flex max-w-7xl flex-col gap-8">
+      {apps.map(app => (
+        <section className="rounded-2xl border p-8" key={app.meta.id}>
+          <h1 className="mb-2 text-2xl">{app.meta.name}</h1>
+          <div>{renderWebAppPlugin(app)}</div>
+        </section>
+      ))}
     </div>
   )
 }

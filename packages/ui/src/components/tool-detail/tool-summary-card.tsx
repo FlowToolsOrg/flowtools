@@ -49,13 +49,13 @@ export const ToolSummaryCard = ({
   return (
     <section className={cn('w-full', className)} {...props}>
       <Card
-        className="rounded-3xl border border-slate-200/80 bg-white/90 shadow-sm"
+        className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]"
         variant="secondary"
       >
         <Card.Header className="flex flex-col gap-2">
-          <Card.Title>{title}</Card.Title>
+          <Card.Title className="text-[var(--foreground)]">{title}</Card.Title>
           {description ? (
-            <Card.Description className="text-sm text-slate-500">
+            <Card.Description className="text-sm text-[var(--muted)]">
               {description}
             </Card.Description>
           ) : null}

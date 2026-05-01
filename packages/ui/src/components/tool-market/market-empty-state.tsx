@@ -25,13 +25,15 @@ export const MarketEmptyState = ({
   return (
     <section className={cn('w-full', className)} {...props}>
       <Card
-        className="rounded-3xl border border-dashed border-slate-300/80 bg-white/70 p-6 text-center"
+        className="rounded-[var(--radius)] border border-dashed border-[var(--border)] bg-[var(--surface-secondary)] p-6 text-center"
         variant="secondary"
       >
         <Card.Header className="flex flex-col items-center gap-2">
-          <Card.Title className="text-lg">{title}</Card.Title>
+          <Card.Title className="text-lg text-[var(--foreground)]">
+            {title}
+          </Card.Title>
           {description ? (
-            <Card.Description className="max-w-md text-sm text-slate-500">
+            <Card.Description className="max-w-md text-sm text-[var(--muted)]">
               {description}
             </Card.Description>
           ) : null}

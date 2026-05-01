@@ -31,7 +31,7 @@ export const RunInputPanel = ({
   return (
     <section
       className={cn(
-        'rounded-3xl border border-slate-200/80 bg-white p-4',
+        'rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4',
         className
       )}
       {...props}

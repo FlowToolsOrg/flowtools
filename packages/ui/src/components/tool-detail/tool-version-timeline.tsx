@@ -25,7 +25,7 @@ export const ToolVersionTimeline = ({
   return (
     <section
       className={cn(
-        'w-full rounded-3xl border border-slate-200/80 bg-white/90 p-4',
+        'w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4',
         className
       )}
       {...props}
@@ -34,12 +34,12 @@ export const ToolVersionTimeline = ({
         {records.map(record => (
           <li key={record.id}>
             <button
-              className="w-full rounded-2xl border border-slate-200/80 bg-white px-4 py-3 text-left transition hover:bg-slate-50"
+              className="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-secondary)] px-4 py-3 text-left transition hover:bg-[var(--surface-tertiary)]"
               onClick={() => onSelect?.(record.id)}
               type="button"
             >
               <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-medium text-slate-900">
+                <p className="text-sm font-medium text-[var(--foreground)]">
                   {record.version}
                 </p>
                 <Chip size="sm" variant="tertiary">
@@ -47,7 +47,9 @@ export const ToolVersionTimeline = ({
                 </Chip>
               </div>
               {record.notes ? (
-                <p className="mt-1 text-xs text-slate-500">{record.notes}</p>
+                <p className="mt-1 text-xs text-[var(--muted)]">
+                  {record.notes}
+                </p>
               ) : null}
             </button>
           </li>

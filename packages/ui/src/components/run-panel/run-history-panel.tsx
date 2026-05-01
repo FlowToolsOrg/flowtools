@@ -35,7 +35,7 @@ export const RunHistoryPanel = ({
   return (
     <section
       className={cn(
-        'rounded-3xl border border-slate-200/80 bg-white p-4',
+        'rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4',
         className
       )}
       {...props}
@@ -44,13 +44,13 @@ export const RunHistoryPanel = ({
         {entries.map(entry => (
           <li
             key={entry.id}
-            className="flex items-center justify-between gap-2 rounded-2xl border border-slate-200/80 bg-white px-3 py-2"
+            className="flex items-center justify-between gap-2 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-secondary)] px-3 py-2"
           >
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-slate-900">
+              <p className="truncate text-sm font-medium text-[var(--foreground)]">
                 {entry.title}
               </p>
-              <p className="text-xs text-slate-500">{entry.startedAt}</p>
+              <p className="text-xs text-[var(--muted)]">{entry.startedAt}</p>
             </div>
             <div className="flex items-center gap-2">
               <Chip

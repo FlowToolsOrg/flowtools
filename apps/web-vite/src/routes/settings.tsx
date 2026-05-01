@@ -7,14 +7,11 @@ import {
   SettingsInputField,
   SettingsSelectField,
   SettingsSwitchField,
-  ToolLayout,
-  ToolLayoutMain,
-  ToolLayoutSidebar,
   type SettingsNavSection,
 } from '@flow-tool/ui'
 import { createFileRoute } from '@tanstack/react-router'
 
-import { Button } from '@heroui/react'
+import { Button, Chip } from '@heroui/react'
 
 const navSections: SettingsNavSection[] = [
   { id: 'general', label: 'General', description: 'Basic host options' },
@@ -41,8 +38,17 @@ function SettingsPage() {
     'General'
 
   return (
-    <ToolLayout>
-      <ToolLayoutMain>
+    <div className="flex flex-col gap-6 p-6 lg:p-8">
+      <header className="space-y-1">
+        <h1 className="text-2xl font-semibold text-[var(--foreground)]">
+          Settings
+        </h1>
+        <p className="text-sm text-[var(--muted)]">
+          Configure your workspace and runtime behavior.
+        </p>
+      </header>
+
+      <div className="grid min-h-0 flex-1 gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
         <SettingsCenterPage>
           <SettingsCenterPage.Nav
             activeSectionId={activeSectionId}
@@ -56,8 +62,7 @@ function SettingsPage() {
                   {sectionTitle}
                 </SettingsGroupCard.Title>
                 <SettingsGroupCard.Description>
-                  Pure presentation settings page built with settings-center
-                  components.
+                  Manage your host preferences.
                 </SettingsGroupCard.Description>
               </SettingsGroupCard.Header>
               <SettingsGroupCard.Content>
@@ -78,8 +83,8 @@ function SettingsPage() {
                   label="Startup mode"
                   onChange={value => setStartupMode(value ?? 'workspace')}
                   options={[
-                    { key: 'workspace', label: 'Workspace' },
-                    { key: 'market', label: 'Market' },
+                    { key: 'workspace', label: 'Dashboard' },
+                    { key: 'market', label: 'Tools' },
                     { key: 'run', label: 'Run Panel' },
                   ]}
                   value={startupMode}
@@ -109,24 +114,49 @@ function SettingsPage() {
             </SettingsGroupCard>
           </SettingsCenterPage.Content>
         </SettingsCenterPage>
-      </ToolLayoutMain>
-      <ToolLayoutSidebar>
-        <h3 className="text-sm font-semibold text-slate-900">
-          Settings Snapshot
-        </h3>
-        <p className="text-sm text-slate-600">
-          auto-update: <strong>{autoUpdate ? 'on' : 'off'}</strong>
-        </p>
-        <p className="text-sm text-slate-600">
-          telemetry: <strong>{telemetry ? 'on' : 'off'}</strong>
-        </p>
-        <p className="text-sm text-slate-600">
-          startup: <strong>{String(startupMode)}</strong>
-        </p>
-        <p className="text-sm text-slate-600">
-          workspace: <strong>{workspaceName}</strong>
-        </p>
-      </ToolLayoutSidebar>
-    </ToolLayout>
+
+        <aside className="hidden min-w-0 xl:block">
+          <div className="sticky top-6 space-y-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <h3 className="text-sm font-semibold text-[var(--foreground)]">
+              Current Settings
+            </h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-[var(--muted)]">Auto-update</span>
+                <Chip
+                  color={autoUpdate ? 'success' : 'default'}
+                  size="sm"
+                  variant="soft"
+                >
+                  {autoUpdate ? 'on' : 'off'}
+                </Chip>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[var(--muted)]">Telemetry</span>
+                <Chip
+                  color={telemetry ? 'success' : 'default'}
+                  size="sm"
+                  variant="soft"
+                >
+                  {telemetry ? 'on' : 'off'}
+                </Chip>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[var(--muted)]">Startup</span>
+                <span className="font-medium text-[var(--foreground)]">
+                  {String(startupMode)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[var(--muted)]">Workspace</span>
+                <span className="font-medium text-[var(--foreground)]">
+                  {workspaceName}
+                </span>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
   )
 }

@@ -27,15 +27,12 @@ export const ToolLayout = ({
   return (
     <div
       className={cn(
-        'relative min-h-screen overflow-hidden bg-linear-to-b from-amber-50 via-white to-slate-100 text-slate-900',
+        'min-h-[calc(100vh-3.5rem)] bg-[var(--background)] text-[var(--foreground)]',
         className
       )}
       {...props}
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.2),transparent_70%)]" />
-      <div className="relative mx-auto grid w-full max-w-7xl gap-6 px-4 py-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:px-8">
-        {children}
-      </div>
+      <div className="mx-auto w-full gap-6 px-5 py-6 lg:px-8">{children}</div>
     </div>
   )
 }
@@ -62,8 +59,8 @@ export const ToolLayoutSidebar = ({
     <aside className={cn('min-w-0', className)} {...props}>
       <Surface
         className={cn(
-          'flex flex-col gap-4 rounded-3xl border border-slate-200/80 bg-white/90 p-4 shadow-sm backdrop-blur',
-          isSticky && 'lg:sticky lg:top-8'
+          'flex flex-col gap-4 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4',
+          isSticky && 'lg:sticky lg:top-20'
         )}
         variant="secondary"
       >

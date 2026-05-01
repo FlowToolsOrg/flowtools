@@ -30,7 +30,7 @@ const ToolDetailPageHeader = ({
   return (
     <header
       className={cn(
-        'space-y-2 rounded-3xl border border-slate-200/80 bg-white/90 p-5 shadow-sm',
+        'space-y-2 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-5',
         className
       )}
       {...props}

@@ -1,34 +1,70 @@
-import { createRootRoute, Link, Outlet } from '@tanstack/react-router'
+import {
+  createRootRoute,
+  Link,
+  Outlet,
+  useMatchRoute,
+} from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
 const navItems = [
-  { to: '/', label: 'Home' },
-  { to: '/market', label: 'Market' },
-  { to: '/detail', label: 'Detail' },
-  { to: '/run', label: 'Run' },
-  { to: '/settings', label: 'Settings' },
-  { to: '/test', label: 'Plugin Test' },
+  { to: '/', label: 'Dashboard', icon: '⊞' },
+  { to: '/tools', label: 'Tools', icon: '⊡' },
+  { to: '/settings', label: 'Settings', icon: '⚙' },
 ] as const
 
-const RootLayout = () => (
-  <>
-    <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/90 px-4 py-3 backdrop-blur lg:px-8">
-      <nav className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-2">
-        {navItems.map(item => (
-          <Link
-            key={item.to}
-            activeProps={{ className: 'bg-slate-900 text-white' }}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-            to={item.to}
-          >
-            {item.label}
-          </Link>
-        ))}
-      </nav>
-    </header>
-    <Outlet />
-    <TanStackRouterDevtools />
-  </>
-)
+const RootLayout = () => {
+  const matchRoute = useMatchRoute()
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-[var(--background)]">
+      <aside className="hidden w-56 shrink-0 border-r border-[var(--border)] bg-[var(--surface)] lg:flex lg:flex-col">
+        <div className="flex items-center gap-2.5 border-b border-[var(--border)] px-4 py-4">
+          <div className="flex h-8 w-8 items-center justify-center rounded-[var(--radius)] bg-[var(--accent)] text-sm font-bold text-[var(--accent-foreground)]">
+            F
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[var(--foreground)]">
+              Flow Tool
+            </p>
+            <p className="text-xs text-[var(--muted)]">Smart Toolbox</p>
+          </div>
+        </div>
+        <nav className="flex-1 overflow-y-auto px-3 py-3">
+          <ul className="flex flex-col gap-0.5">
+            {navItems.map(item => {
+              const isActive =
+                item.to === '/'
+                  ? matchRoute({ to: '/', fuzzy: false })
+                  : matchRoute({ to: item.to, fuzzy: true })
+
+              return (
+                <li key={item.to}>
+                  <Link
+                    className={`flex items-center gap-3 rounded-[var(--radius)] px-3 py-2 text-sm font-medium transition ${
+                      isActive
+                        ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
+                        : 'text-[var(--foreground)] hover:bg-[var(--surface-secondary)]'
+                    }`}
+                    to={item.to}
+                  >
+                    <span className="text-base">{item.icon}</span>
+                    {item.label}
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </nav>
+        <div className="border-t border-[var(--border)] px-4 py-3">
+          <p className="text-xs text-[var(--muted)]">v0.1.0</p>
+        </div>
+      </aside>
+      <main className="flex min-w-0 flex-1 flex-col overflow-y-auto">
+        <Outlet />
+      </main>
+      <TanStackRouterDevtools />
+    </div>
+  )
+}
 
 export const Route = createRootRoute({ component: RootLayout })

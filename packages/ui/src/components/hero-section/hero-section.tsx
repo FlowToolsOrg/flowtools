@@ -39,21 +39,21 @@ export const HeroSection = ({
   return (
     <section className={cn('w-full', className)} {...props}>
       <Card
-        className="overflow-hidden rounded-3xl border border-amber-200/60 bg-white/90 shadow-sm backdrop-blur"
+        className="overflow-hidden rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]"
         variant={tone}
       >
         <Card.Header className="flex flex-col gap-4">
           {eyebrow ? (
-            <p className="text-xs font-semibold tracking-[0.18em] text-amber-700 uppercase">
+            <p className="text-xs font-semibold tracking-[0.18em] text-[var(--accent)] uppercase">
               {eyebrow}
             </p>
           ) : null}
           <div className="flex flex-col gap-2">
-            <Card.Title className="text-2xl leading-tight font-semibold md:text-3xl">
+            <Card.Title className="text-2xl leading-tight font-semibold text-[var(--foreground)] md:text-3xl">
               {title}
             </Card.Title>
             {description ? (
-              <Card.Description className="max-w-3xl text-sm leading-6 text-slate-600 md:text-base">
+              <Card.Description className="max-w-3xl text-sm leading-6 text-[var(--muted)] md:text-base">
                 {description}
               </Card.Description>
             ) : null}
@@ -74,12 +74,12 @@ export const HeroSection = ({
               {stats.map(stat => (
                 <div
                   key={stat.id}
-                  className="rounded-2xl border border-slate-200/80 bg-white/80 px-4 py-3"
+                  className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-secondary)] px-4 py-3"
                 >
-                  <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">
+                  <p className="text-xs font-medium tracking-wide text-[var(--muted)] uppercase">
                     {stat.label}
                   </p>
-                  <p className="mt-1 text-lg font-semibold text-slate-900">
+                  <p className="mt-1 text-lg font-semibold text-[var(--foreground)]">
                     {stat.value}
                   </p>
                 </div>

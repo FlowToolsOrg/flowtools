@@ -24,8 +24,8 @@ const SettingsItemRoot = ({
   ...props
 }: SettingsItemRootProps) => {
   const classes = cn(
-    'flex w-full items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white px-4 py-3 text-left',
-    onPress && 'transition hover:bg-slate-50',
+    'flex w-full items-center justify-between gap-4 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-left',
+    onPress && 'transition hover:bg-[var(--surface-secondary)]',
     className
   )
 
@@ -63,7 +63,7 @@ const SettingsItemLabel = ({
 }: SettingsItemLabelProps) => {
   return (
     <p
-      className={cn('text-sm font-medium text-slate-900', className)}
+      className={cn('text-sm font-medium text-[var(--foreground)]', className)}
       {...props}
     >
       {children}
@@ -77,7 +77,7 @@ const SettingsItemDescription = ({
   ...props
 }: SettingsItemDescriptionProps) => {
   return (
-    <p className={cn('text-xs text-slate-500', className)} {...props}>
+    <p className={cn('text-xs text-[var(--muted)]', className)} {...props}>
       {children}
     </p>
   )

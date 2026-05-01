@@ -34,7 +34,7 @@ export const RunLogList = ({
   return (
     <section
       className={cn(
-        'rounded-3xl border border-slate-200/80 bg-white p-4',
+        'rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4',
         className
       )}
       {...props}
@@ -43,15 +43,15 @@ export const RunLogList = ({
         {entries.map(entry => (
           <li key={entry.id}>
             <button
-              className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white px-3 py-2 text-left transition hover:bg-slate-50"
+              className="flex w-full items-center justify-between gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-secondary)] px-3 py-2 text-left transition hover:bg-[var(--surface-tertiary)]"
               onClick={() => onSelect?.(entry.id)}
               type="button"
             >
               <div className="min-w-0 space-y-0.5">
-                <p className="truncate text-sm text-slate-800">
+                <p className="truncate text-sm text-[var(--foreground)]">
                   {entry.message}
                 </p>
-                <p className="text-xs text-slate-500">{entry.timestamp}</p>
+                <p className="text-xs text-[var(--muted)]">{entry.timestamp}</p>
               </div>
               <Chip color={levelColorMap[entry.level]} size="sm" variant="soft">
                 {entry.level}

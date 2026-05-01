@@ -29,7 +29,7 @@ export const SettingsSwitchField = ({
   return (
     <div
       className={cn(
-        'rounded-2xl border border-slate-200/80 bg-white px-4 py-3',
+        'rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3',
         className
       )}
       {...props}
@@ -43,9 +43,11 @@ export const SettingsSwitchField = ({
           <Switch.Thumb />
         </Switch.Control>
         <Switch.Content>
-          <Label className="text-sm font-medium text-slate-900">{label}</Label>
+          <Label className="text-sm font-medium text-[var(--foreground)]">
+            {label}
+          </Label>
           {description ? (
-            <Description className="text-xs text-slate-500">
+            <Description className="text-xs text-[var(--muted)]">
               {description}
             </Description>
           ) : null}

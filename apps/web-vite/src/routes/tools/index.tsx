@@ -1,0 +1,221 @@
+import { useState } from 'react'
+
+import { extractMeta } from '@flow-tool/sdk'
+import {
+  MarketEmptyState,
+  MarketToolbar,
+  ToolCard,
+  ToolGrid,
+  ToolSummaryCard,
+  type ToolEntity,
+} from '@flow-tool/ui'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+
+import { Button, Chip } from '@heroui/react'
+
+import runHello from '@plugins/plugin-example-run-hello'
+
+import appPlugins from '@/plugin/app'
+
+const allPlugins = [...appPlugins, runHello]
+
+const tools: ToolEntity[] = extractMeta(allPlugins).map(meta => ({
+  id: meta.id,
+  name: meta.name,
+  description: meta.description ?? '',
+  version: meta.version,
+  status: meta.status ?? 'stable',
+  category: meta.category,
+  tags: meta.tags,
+  permissions: meta.permissions?.map(p => ({ id: p, label: p })),
+  isInstalled: true,
+}))
+
+const categories = [
+  'all',
+  ...new Set(tools.map(t => t.category).filter(Boolean)),
+] as string[]
+
+type FilterMode = 'all' | 'installed' | 'beta'
+
+export const Route = createFileRoute('/tools/')({
+  component: ToolsPage,
+})
+
+function ToolsPage() {
+  const navigate = useNavigate()
+  const [query, setQuery] = useState('')
+  const [filter, setFilter] = useState<FilterMode>('all')
+  const [category, setCategory] = useState('all')
+  const [selectedToolId, setSelectedToolId] = useState(tools[0]?.id ?? '')
+
+  const filteredTools = tools.filter(tool => {
+    const matchesQuery =
+      query.trim().length === 0 ||
+      tool.name.toLowerCase().includes(query.toLowerCase()) ||
+      tool.description.toLowerCase().includes(query.toLowerCase())
+
+    const matchesFilter =
+      filter === 'all'
+        ? true
+        : filter === 'installed'
+          ? !!tool.isInstalled
+          : tool.status === 'beta'
+
+    const matchesCategory = category === 'all' || tool.category === category
+
+    return matchesQuery && matchesFilter && matchesCategory
+  })
+
+  const selectedTool =
+    filteredTools.find(tool => tool.id === selectedToolId) ??
+    filteredTools[0] ??
+    null
+
+  return (
+    <div className="grid min-h-0 flex-1 gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:p-8">
+      <div className="flex min-w-0 flex-col gap-4">
+        <header className="space-y-1">
+          <h1 className="text-2xl font-semibold text-[var(--foreground)]">
+            Tools
+          </h1>
+          <p className="text-sm text-[var(--muted)]">
+            Browse and run available tools.
+          </p>
+        </header>
+
+        <MarketToolbar>
+          <MarketToolbar.Search
+            ariaLabel="Search tools"
+            onChange={setQuery}
+            value={query}
+          />
+          <MarketToolbar.Filters>
+            <Button
+              onPress={() => setFilter('all')}
+              size="sm"
+              variant={filter === 'all' ? 'primary' : 'ghost'}
+            >
+              All
+            </Button>
+            <Button
+              onPress={() => setFilter('installed')}
+              size="sm"
+              variant={filter === 'installed' ? 'primary' : 'ghost'}
+            >
+              Installed
+            </Button>
+            <Button
+              onPress={() => setFilter('beta')}
+              size="sm"
+              variant={filter === 'beta' ? 'primary' : 'ghost'}
+            >
+              Beta
+            </Button>
+          </MarketToolbar.Filters>
+          <MarketToolbar.Actions>
+            <Chip size="sm" variant="tertiary">
+              {filteredTools.length} tools
+            </Chip>
+          </MarketToolbar.Actions>
+        </MarketToolbar>
+
+        <div className="flex flex-wrap gap-2">
+          {categories.map(cat => (
+            <Button
+              key={cat}
+              onPress={() => setCategory(cat)}
+              size="sm"
+              variant={category === cat ? 'primary' : 'ghost'}
+            >
+              {cat === 'all' ? 'All Categories' : cat}
+            </Button>
+          ))}
+        </div>
+
+        {filteredTools.length === 0 ? (
+          <MarketEmptyState
+            title="No tools matched"
+            description="Try clearing the search text or switching filter mode."
+            action={
+              <Button
+                onPress={() => {
+                  setFilter('all')
+                  setCategory('all')
+                  setQuery('')
+                }}
+                size="sm"
+                variant="outline"
+              >
+                Reset Filters
+              </Button>
+            }
+          />
+        ) : (
+          <ToolGrid>
+            {filteredTools.map(tool => (
+              <ToolGrid.Item key={tool.id}>
+                <ToolCard
+                  onPress={() => {
+                    setSelectedToolId(tool.id)
+                    navigate({ to: `/tools/${tool.id}` })
+                  }}
+                >
+                  <ToolCard.Header>
+                    <ToolCard.Title>{tool.name}</ToolCard.Title>
+                    <ToolCard.Description>
+                      {tool.description}
+                    </ToolCard.Description>
+                  </ToolCard.Header>
+                  <ToolCard.Meta status={tool.status} version={tool.version}>
+                    {tool.category ? (
+                      <Chip size="sm" variant="tertiary">
+                        {tool.category}
+                      </Chip>
+                    ) : null}
+                  </ToolCard.Meta>
+                  <ToolCard.Tags>
+                    {tool.tags?.map(tag => (
+                      <Chip key={tag} size="sm" variant="secondary">
+                        {tag}
+                      </Chip>
+                    ))}
+                  </ToolCard.Tags>
+                </ToolCard>
+              </ToolGrid.Item>
+            ))}
+          </ToolGrid>
+        )}
+      </div>
+
+      <aside className="hidden min-w-0 lg:block">
+        <div className="sticky top-6">
+          {selectedTool ? (
+            <ToolSummaryCard
+              category={selectedTool.category}
+              description={selectedTool.description}
+              status={selectedTool.status}
+              title={selectedTool.name}
+              version={selectedTool.version}
+              actions={
+                <>
+                  <Button
+                    onPress={() =>
+                      navigate({ to: `/tools/${selectedTool.id}` })
+                    }
+                    size="sm"
+                  >
+                    Open
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    Install
+                  </Button>
+                </>
+              }
+            />
+          ) : null}
+        </div>
+      </aside>
+    </div>
+  )
+}

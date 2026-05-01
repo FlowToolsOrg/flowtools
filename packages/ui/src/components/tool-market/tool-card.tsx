@@ -56,9 +56,9 @@ const ToolCardRoot = ({
   return (
     <Card
       className={cn(
-        'rounded-3xl border border-slate-200/80 bg-white/90 p-4 shadow-sm',
+        'rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4',
         onPress &&
-          'cursor-pointer transition hover:-translate-y-0.5 hover:shadow-md',
+          'cursor-pointer transition hover:-translate-y-0.5 hover:border-[var(--accent)]/30 hover:shadow-md',
         className
       )}
       onClick={onPress}
@@ -101,7 +101,10 @@ const ToolCardTitle = ({
 }: ToolCardTitleProps) => {
   return (
     <h3
-      className={cn('text-base font-semibold text-slate-900', className)}
+      className={cn(
+        'text-base font-semibold text-[var(--foreground)]',
+        className
+      )}
       {...props}
     >
       {children}
@@ -115,7 +118,7 @@ const ToolCardDescription = ({
   ...props
 }: ToolCardDescriptionProps) => {
   return (
-    <p className={cn('text-sm text-slate-500', className)} {...props}>
+    <p className={cn('text-sm text-[var(--muted)]', className)} {...props}>
       {children}
     </p>
   )

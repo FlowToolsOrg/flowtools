@@ -2,9 +2,7 @@ import { useEffect } from 'react'
 
 import { createFileRoute } from '@tanstack/react-router'
 
-import helloWorldPlugin from '@plugins/plugin-example-hello-world'
-import todoListPlugin from '@plugins/plugin-todo-list'
-
+import { helloWorldPlugin, todoListPlugin } from '@/plugin/app'
 import { runHello } from '@/plugin/tool'
 import { renderWebAppPlugin } from '@/runtime'
 

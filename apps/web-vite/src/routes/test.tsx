@@ -15,17 +15,17 @@ export const Route = createFileRoute('/test')({
 function RouteComponent() {
   useEffect(() => {
     const output = runHello('li hua')
-    void output
+    console.log(output)
+    console.log(todoListPlugin)
   }, [])
   return (
-    <div>
-      Hello "/test"!
-      <section>
-        <h1 className="text-2xl">Hello World Plugin</h1>
+    <div className="container max-w-7xl m-auto flex flex-col gap-8 mt-8">
+      <section className="border p-8 rounded-2xl">
+        <h1 className="text-2xl mb-2">Hello World Plugin</h1>
         <div>{renderWebAppPlugin(helloWorldPlugin)}</div>
       </section>
-      <section>
-        <h1 className="text-2xl">Todo List Plugin</h1>
+      <section className="border p-8 rounded-2xl">
+        <h1 className="text-2xl mb-2">Todo List Plugin</h1>
         <div>{renderWebAppPlugin(todoListPlugin)}</div>
       </section>
     </div>

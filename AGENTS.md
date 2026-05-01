@@ -59,9 +59,11 @@ If dependencies change, run `bun install`.
 - Use lowercase filenames for modules (for example `button.tsx`) and
   PascalCase for exported React components (for example `Button`).
 - Keep plugin IDs and command IDs kebab-case (for example `hash-generator`).
-- For plugin state in app plugins, use host-managed store hooks
-  (`usePluginStore` / `usePluginStoreApi`) and define initial structure via
-  `meta.store.initialState` when needed.
+- For plugin state in app plugins, use `definePluginStore()` to declare typed
+  store shape (initialState + actions), then attach via `AppPlugin.store`.
+  Derive types with `InferStoreState<T>` / `InferStoreActions<T>`.
+  Consume state with `usePluginStore<TState>()` and dispatch actions via
+  `usePluginStoreApi<TState, TActions>().actions.xxx()`.
 
 ## Testing Guidelines
 

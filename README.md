@@ -148,9 +148,11 @@ export default definePlugin({
 
 `@flow-tool/sdk` exposes:
 
+- **`definePluginStore()`** — define typed store shape (initialState + actions)
+- **`usePluginStore<TState>()`** — subscribe to host-managed plugin state
+- **`usePluginStoreApi<TState, TActions>()`** — get plugin store API with actions
+- **`InferStoreState<T>` / `InferStoreActions<T>`** — extract types from store shape
 - **`useCapability()`** — read runtime capabilities with optional selector
-- **`usePluginStore(selector?)`** — subscribe to host-managed plugin state
-- **`usePluginStoreApi()`** — get plugin store API for state updates
 - **Capability hooks** — `useEnv`, `useUI`, `useStorage`, `useRequest`,
   `useFS`, `useDB`, `useClipboard`, `useDialog`, `useNotification`, `useNative`
 
@@ -206,22 +208,36 @@ All access must go through the Flow Tool runtime.
 
 ### Store
 
-App plugins use a host-managed Zustand store:
+App plugins use a host-managed Zustand store with declarative shape:
 
-- Read reactive state with `usePluginStore(selector)`
-- Update state with `usePluginStoreApi()`
+- Define store shape with `definePluginStore(initialState, actions)`
+- Read reactive state with `usePluginStore<TState>()`
+- Update state via `usePluginStoreApi<TState, TActions>()` actions
 - Host creates one store per `pluginId`
-- Optional initial shape via `meta.store.initialState`
 - If `storage` permission is granted, host persists store by plugin namespace
 
 Example:
 
 ```tsx
-import { definePlugin, usePluginStore, usePluginStoreApi } from '@flow-tool/sdk'
+import {
+  definePlugin,
+  definePluginStore,
+  usePluginStore,
+  usePluginStoreApi,
+} from '@flow-tool/sdk'
 
 interface CounterState {
   count: number
 }
+
+const counterStore = definePluginStore<CounterState>({
+  initialState: { count: 0 },
+  actions: set => ({
+    increment() {
+      set(state => ({ count: state.count + 1 }))
+    },
+  }),
+})
 
 export default definePlugin({
   type: 'app',
@@ -230,28 +246,14 @@ export default definePlugin({
     name: 'Counter',
     version: '0.1.0',
     permissions: ['storage'],
-    store: {
-      initialState: {
-        count: 0,
-      },
-    },
   },
+  store: counterStore,
   setup() {
     return function CounterPanel() {
-      const count = usePluginStore<CounterState>(state => state.count)
-      const store = usePluginStoreApi<CounterState>()
+      const { count } = usePluginStore<CounterState>()
+      const { actions } = usePluginStoreApi<CounterState>()
 
-      return (
-        <button
-          onClick={() =>
-            store.setState(state => ({
-              count: state.count + 1,
-            }))
-          }
-        >
-          Count: {count}
-        </button>
-      )
+      return <button onClick={() => actions.increment()}>Count: {count}</button>
     }
   },
 })

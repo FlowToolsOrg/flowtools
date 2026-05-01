@@ -121,7 +121,7 @@ Host runtime 用 `pickCapability(...)` 做权限裁剪：
     Zustand `persist/createJSONStorage` 使用
 - `store`：host 管理的 Zustand vanilla store（每个 pluginId 单实例）
   - app 插件通过 `usePluginStore()` / `usePluginStoreApi()` 访问
-  - 可通过 `meta.store.initialState` 提供初始状态
+  - 插件通过 `definePluginStore()` 声明 store 形态（初始状态 + actions），挂在 `AppPlugin.store`
   - 若声明了 `storage` 权限，store 会持久化到插件命名空间
 - `fs`：`localStorage` 模拟文件（key 前缀 `flow-tool:{pluginId}:fs:`）
 - `clipboard`：浏览器 clipboard API
@@ -212,15 +212,78 @@ SDK 已定义命令与结果契约：
 
 ## 14. State Model（Store）
 
-原则：store 由宿主创建和托管，插件只消费 store hooks。
+原则：store 由宿主创建和托管，插件声明 store 形态，宿主实例化运行时。
 
-- App 插件通过 `usePluginStore()` 订阅状态，通过 `usePluginStoreApi()` 更新状态
-- 每个 `pluginId` 只创建一个 store（host registry）
-- 插件可在 `meta.store.initialState` 声明初始状态结构
-- 持久化由宿主控制，命名空间仍按 `pluginId` 隔离
-- 持久化后端（current/future）：
-  - web: localStorage（当前）
-  - desktop: sqlite 或其他宿主管理存储（规划）
+### 插件侧：`definePluginStore`
+
+插件通过 `definePluginStore()` 声明 store 的初始状态和 actions：
+
+```ts
+import {
+  definePluginStore,
+  type InferStoreState,
+  type InferStoreActions,
+} from '@flow-tool/sdk'
+
+const todoStore = definePluginStore({
+  initialState: {
+    todos: [] as TodoItem[],
+  },
+  actions: (set, get) => ({
+    addTodo(item: TodoItem) {
+      set(state => ({ todos: [...state.todos, item] }))
+    },
+    removeTodo(index: number) {
+      set(state => ({
+        todos: state.todos.filter((_, i) => i !== index),
+      }))
+    },
+  }),
+})
+
+// 推导类型，无需手动维护
+type TodoState = InferStoreState<typeof todoStore>
+type TodoActions = InferStoreActions<typeof todoStore>
+```
+
+`definePluginStore` 是纯类型函数，不产生运行时开销。store 声明挂在 `AppPlugin.store`：
+
+```ts
+export default definePlugin({
+  type: 'app',
+  meta: { ... },
+  store: todoStore,
+  setup() { ... },
+})
+```
+
+### 插件消费：hooks
+
+- `usePluginStore<TState>()`：读取响应式状态（无 selector 时返回完整 state）
+- `usePluginStoreApi<TState, TActions>()`：获取 store API，通过 `actions.xxx()` 更新状态
+
+```ts
+const { todos } = usePluginStore<TodoState>()
+const {
+  actions: { addTodo, removeTodo },
+} = usePluginStoreApi<TodoState, TodoActions>()
+
+// 调用声明式 actions
+addTodo({ todo: 'Buy milk', deadline: '2026-05-10' })
+```
+
+### 宿主侧：实例化
+
+宿主在 runtime context 中为每个 `pluginId` 创建一个 zustand vanilla store：
+
+- 从 `plugin.store` 读取 `initialState` 传给 zustand `createStore`
+- 从 `plugin.store.actions` 工厂函数创建 actions 对象，注入 `set/get`
+- 通过 `PluginStoreCapability<TState, TActions>` 暴露给 hooks
+
+持久化由宿主控制，命名空间仍按 `pluginId` 隔离。持久化后端（current/future）：
+
+- web: localStorage（当前）
+- desktop: sqlite 或其他宿主管理存储（规划）
 
 Tool 插件默认不提供 store。
 

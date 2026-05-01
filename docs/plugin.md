@@ -124,24 +124,46 @@ export default definePlugin({
 
 推荐 app plugin 使用 host 注入的 store hooks：
 
-- `usePluginStore(selector)`：读取响应式状态
-- `usePluginStoreApi()`：更新状态（`setState/getState/reset`）
+- `usePluginStore<TState>()`：读取响应式状态
+- `usePluginStoreApi<TState, TActions>()`：获取 store API，通过 `actions.xxx()` 更新状态
 
-插件可以在 `meta.store.initialState` 定义 store 初始结构，host 会按 `pluginId`
-创建并复用单实例 store。
+插件通过 `definePluginStore()` 声明 store 形态（初始状态 + actions），
+挂在 `AppPlugin.store`，host 会按 `pluginId` 创建并复用单实例 store。
 
 ```tsx
 import type { FormEvent } from 'react'
-import { definePlugin, usePluginStore, usePluginStoreApi } from '@flow-tool/sdk'
+import {
+  definePlugin,
+  definePluginStore,
+  usePluginStore,
+  usePluginStoreApi,
+  type InferStoreState,
+  type InferStoreActions,
+} from '@flow-tool/sdk'
 import { Button } from '@flow-tool/ui/plugin'
 
 interface TodoItem {
   title: string
 }
 
-interface TodoStoreState {
-  todos: TodoItem[]
-}
+const todoStore = definePluginStore({
+  initialState: {
+    todos: [] as TodoItem[],
+  },
+  actions: set => ({
+    addTodo(item: TodoItem) {
+      set(state => ({ todos: [...state.todos, item] }))
+    },
+    removeTodo(index: number) {
+      set(state => ({
+        todos: state.todos.filter((_, i) => i !== index),
+      }))
+    },
+  }),
+})
+
+type TodoState = InferStoreState<typeof todoStore>
+type TodoActions = InferStoreActions<typeof todoStore>
 
 export default definePlugin({
   type: 'app',
@@ -150,16 +172,14 @@ export default definePlugin({
     name: 'Todo List',
     version: '0.1.0',
     permissions: ['storage'],
-    store: {
-      initialState: {
-        todos: [],
-      },
-    },
   },
+  store: todoStore,
   setup() {
     return function TodoPanel() {
-      const todos = usePluginStore<TodoStoreState>(state => state.todos)
-      const store = usePluginStoreApi<TodoStoreState>()
+      const { todos } = usePluginStore<TodoState>()
+      const {
+        actions: { addTodo, removeTodo },
+      } = usePluginStoreApi<TodoState, TodoActions>()
 
       const onAdd = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault()
@@ -167,9 +187,7 @@ export default definePlugin({
         const title = String(formData.get('title') ?? '').trim()
         if (!title) return
 
-        store.setState(state => ({
-          todos: [...state.todos, { title }],
-        }))
+        addTodo({ title })
       }
 
       return (
@@ -276,17 +294,17 @@ console.log(output)
 
 ## 7. 权限与 Capability 对照（Web 原型）
 
-| permission     | SDK 能力                                   | web-vite 当前行为                             |
-| -------------- | ------------------------------------------ | --------------------------------------------- |
-| `network`      | `useRequest()` / `ctx.request`             | 浏览器 `fetch`                                |
-| `storage`      | `useStorage()` / `ctx.storage`             | namespaced `localStorage` + zustand adapter   |
-| `store`        | `usePluginStore()` / `usePluginStoreApi()` | host 管理的 Zustand store（按 pluginId 单例） |
-| `fs`           | `useFS()` / `ctx.fs`                       | `localStorage` 模拟文件系统                   |
-| `clipboard`    | `useClipboard()` / `ctx.clipboard`         | 浏览器 clipboard API                          |
-| `notification` | `useNotification()` / `ctx.notification`   | Notification API，失败时降级 toast            |
-| `dialog`       | `useDialog()` / `ctx.dialog`               | 已注入但调用会抛 `Not supported`              |
-| `db`           | `useDB()` / `ctx.db`                       | 已注入但调用会抛 `Not supported`              |
-| `native`       | `useNative()` / `ctx.native`               | 已注入但调用会抛 `Not supported`              |
+| permission     | SDK 能力                                   | web-vite 当前行为                                                            |
+| -------------- | ------------------------------------------ | ---------------------------------------------------------------------------- |
+| `network`      | `useRequest()` / `ctx.request`             | 浏览器 `fetch`                                                               |
+| `storage`      | `useStorage()` / `ctx.storage`             | namespaced `localStorage` + zustand adapter                                  |
+| `store`        | `usePluginStore()` / `usePluginStoreApi()` | host 管理的 Zustand store（按 pluginId 单例，通过 `definePluginStore` 声明） |
+| `fs`           | `useFS()` / `ctx.fs`                       | `localStorage` 模拟文件系统                                                  |
+| `clipboard`    | `useClipboard()` / `ctx.clipboard`         | 浏览器 clipboard API                                                         |
+| `notification` | `useNotification()` / `ctx.notification`   | Notification API，失败时降级 toast                                           |
+| `dialog`       | `useDialog()` / `ctx.dialog`               | 已注入但调用会抛 `Not supported`                                             |
+| `db`           | `useDB()` / `ctx.db`                       | 已注入但调用会抛 `Not supported`                                             |
+| `native`       | `useNative()` / `ctx.native`               | 已注入但调用会抛 `Not supported`                                             |
 
 补充：
 
@@ -315,7 +333,7 @@ console.log(output)
 ## 9. 推荐开发习惯
 
 - 建议优先使用 capability selector 获取 Capability（如：`useCapability(_ => ({ storage: _.storage }))`），也可以使用专用 hooks（如 `useStorage()`）
-- App 插件状态优先走 `usePluginStore()` / `usePluginStoreApi()`，不要在插件内重复创建全局 store
+- App 插件状态优先使用 `definePluginStore()` 声明 store 形态，通过 `AppPlugin.store` 挂载；消费时使用 `usePluginStore<TState>()` 和 `usePluginStoreApi<TState, TActions>().actions.xxx()`
 - `permissions` 仅声明需要的最小集合
 - 插件 ID、命令 ID 使用 kebab-case
 - 插件逻辑放 `plugins/*`，宿主集成逻辑放 `apps/*`

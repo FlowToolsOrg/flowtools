@@ -64,7 +64,7 @@ export default definePlugin({
     return function () {
       const { todos } = usePluginStore<TodoState>()
       const {
-        actions: { addTodo },
+        actions: { addTodo, removeTodo },
       } = usePluginStoreApi<TodoState, TodoActions>()
 
       const onSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -158,6 +158,7 @@ export default definePlugin({
                     <span className="text-sm text-gray-500">
                       {item.deadline}
                     </span>
+                    <Button onPress={() => removeTodo(index)}>Delete</Button>
                   </li>
                 ))}
               </ul>

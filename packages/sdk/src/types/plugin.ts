@@ -119,6 +119,14 @@ export interface PluginMeta {
    * Optional plugin group tags.
    */
   tags?: string[]
+  /**
+   * Plugin release status.
+   */
+  status?: 'stable' | 'beta' | 'experimental' | 'deprecated'
+  /**
+   * Plugin category label.
+   */
+  category?: string
 }
 
 /**

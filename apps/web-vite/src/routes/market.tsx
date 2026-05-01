@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { extractMeta } from '@flow-tool/sdk'
 import {
   MarketEmptyState,
   MarketToolbar,
@@ -16,41 +17,29 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { Button, Chip } from '@heroui/react'
 
-const tools: ToolEntity[] = [
-  {
-    id: 'clipboard-history',
-    name: 'Clipboard History',
-    description: 'Track and search copied snippets across sessions.',
-    category: 'Productivity',
-    status: 'stable',
-    version: '1.4.2',
-    tags: ['clipboard', 'history'],
-    permissions: [{ id: 'storage', label: 'storage' }],
-    isInstalled: true,
-    isPinned: true,
-  },
-  {
-    id: 'hash-generator',
-    name: 'Hash Generator',
-    description: 'Generate SHA-256/MD5 hashes for verification.',
-    category: 'Security',
-    status: 'beta',
-    version: '0.9.1',
-    tags: ['hash', 'security'],
-    permissions: [{ id: 'network', label: 'network' }],
-    isInstalled: true,
-  },
-  {
-    id: 'image-compressor',
-    name: 'Image Compressor',
-    description: 'Compress PNG/JPG assets in local batches.',
-    category: 'Media',
-    status: 'experimental',
-    version: '0.3.0',
-    tags: ['image', 'batch'],
-    permissions: [{ id: 'fs', label: 'fs' }],
-  },
-]
+import runHello from '@plugins/plugin-example-run-hello'
+
+import appPlugins from '@/plugin/app'
+
+const allPlugins = [...appPlugins, runHello]
+
+const pathMap: Record<string, string> = {
+  'plugin-example-hello-world': '/plugins/hello-world',
+  'plugin-todo-list': '/plugins/todo-list',
+  'plugin-example-run-hello': '/plugins/run-hello',
+}
+
+const tools: ToolEntity[] = extractMeta(allPlugins, pathMap).map(meta => ({
+  id: meta.id,
+  name: meta.name,
+  description: meta.description ?? '',
+  version: meta.version,
+  status: meta.status ?? 'stable',
+  category: meta.category,
+  tags: meta.tags,
+  permissions: meta.permissions?.map(p => ({ id: p, label: p })),
+  isInstalled: true,
+}))
 
 type FilterMode = 'all' | 'installed' | 'beta'
 

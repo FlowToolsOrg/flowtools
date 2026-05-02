@@ -8,6 +8,7 @@ import {
   usePluginStoreApi,
   definePluginStore,
 } from '@flow-tool/sdk'
+import { result } from '@flow-tool/sdk/result'
 import {
   Button,
   Calendar,
@@ -18,6 +19,7 @@ import {
   Label,
   TextField,
 } from '@flow-tool/ui/plugin'
+import { z } from 'zod'
 
 export interface TodoItem {
   todo: string
@@ -51,6 +53,11 @@ function readValue(input: FormDataEntryValue | null): string {
   return input.trim()
 }
 
+const inputSchema = z.object({
+  todo: z.string().optional().describe('Todo item text to add'),
+  deadline: z.string().optional().describe('Deadline date (YYYY-MM-DD)'),
+})
+
 export default definePlugin({
   type: 'app',
   meta: {
@@ -59,7 +66,19 @@ export default definePlugin({
     version: '0.0.1',
     permissions: ['storage'],
   },
+  inputSchema,
   store: todoStore,
+  async run(ctx, input: z.infer<typeof inputSchema>) {
+    if (input.todo) {
+      const item = { todo: input.todo, deadline: input.deadline ?? '' }
+      const stored = ctx.storage?.get('todos') as TodoItem[] | undefined
+      const todos = [...(stored ?? []), item]
+      ctx.storage?.set('todos', todos)
+      return result.json({ added: item, total: todos.length })
+    }
+    const stored = ctx.storage?.get('todos') as TodoItem[] | undefined
+    return result.json({ todos: stored ?? [], count: (stored ?? []).length })
+  },
   setup() {
     return function () {
       const { todos } = usePluginStore<TodoState>()

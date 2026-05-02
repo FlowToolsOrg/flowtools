@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react'
 
 import { definePlugin, useCapability } from '@flow-tool/sdk'
+import { result } from '@flow-tool/sdk/result'
 import { Button, Card, Input, Label, TextField } from '@flow-tool/ui/plugin'
+import { z } from 'zod'
 
 interface ColorFormats {
   hex: string
@@ -71,48 +73,9 @@ function rgbToHsl(
   }
 }
 
-function hslToRgb(
-  h: number,
-  s: number,
-  l: number
-): { r: number; g: number; b: number } {
-  h /= 360
-  s /= 100
-  l /= 100
-
-  let r, g, b
-
-  if (s === 0) {
-    r = g = b = l
-  } else {
-    const hue2rgb = (p: number, q: number, t: number) => {
-      if (t < 0) t += 1
-      if (t > 1) t -= 1
-      if (t < 1 / 6) return p + (q - p) * 6 * t
-      if (t < 1 / 2) return q
-      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6
-      return p
-    }
-
-    const q = l < 0.5 ? l * (1 + s) : l + s - l * s
-    const p = 2 * l - q
-
-    r = hue2rgb(p, q, h + 1 / 3)
-    g = hue2rgb(p, q, h)
-    b = hue2rgb(p, q, h - 1 / 3)
-  }
-
-  return {
-    r: Math.round(r * 255),
-    g: Math.round(g * 255),
-    b: Math.round(b * 255),
-  }
-}
-
 function parseColor(input: string): ColorFormats | null {
   const trimmed = input.trim()
 
-  // HEX format
   const hexMatch = trimmed.match(/^#?([a-f\d]{3}|[a-f\d]{6})$/i)
   if (hexMatch) {
     let hex = hexMatch[1]
@@ -134,7 +97,6 @@ function parseColor(input: string): ColorFormats | null {
     }
   }
 
-  // RGB format
   const rgbMatch = trimmed.match(
     /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/i
   )
@@ -152,27 +114,14 @@ function parseColor(input: string): ColorFormats | null {
     }
   }
 
-  // HSL format
-  const hslMatch = trimmed.match(
-    /^hsl\(\s*(\d{1,3})\s*,\s*(\d{1,3})%?\s*,\s*(\d{1,3})%?\s*\)$/i
-  )
-  if (hslMatch) {
-    const h = parseInt(hslMatch[1])
-    const s = parseInt(hslMatch[2])
-    const l = parseInt(hslMatch[3])
-
-    if (h > 360 || s > 100 || l > 100) return null
-
-    const rgb = hslToRgb(h, s, l)
-    return {
-      hex: rgbToHex(rgb.r, rgb.g, rgb.b),
-      rgb,
-      hsl: { h, s, l },
-    }
-  }
-
   return null
 }
+
+const inputSchema = z.object({
+  color: z
+    .string()
+    .describe('Color value (hex like #3b82f6 or rgb(59,130,246))'),
+})
 
 export default definePlugin({
   type: 'app',
@@ -184,6 +133,20 @@ export default definePlugin({
     permissions: ['clipboard'],
     tags: ['color', 'hex', 'rgb', 'hsl', 'converter'],
     category: '开发工具',
+  },
+  inputSchema,
+  async run(_ctx, input: z.infer<typeof inputSchema>) {
+    const { color } = input
+    if (!color) return result.text('Error: color is required')
+    const parsed = parseColor(color)
+    if (!parsed) return result.text('Error: invalid color format')
+    return result.json({
+      hex: parsed.hex,
+      rgb: parsed.rgb,
+      hsl: parsed.hsl,
+      cssRgb: `rgb(${parsed.rgb.r}, ${parsed.rgb.g}, ${parsed.rgb.b})`,
+      cssHsl: `hsl(${parsed.hsl.h}, ${parsed.hsl.s}%, ${parsed.hsl.l}%)`,
+    })
   },
   setup() {
     return function ColorConverterPanel() {

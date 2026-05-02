@@ -1,7 +1,13 @@
 import { useCallback, useRef, useState } from 'react'
 
 import { definePlugin, useCapability } from '@flow-tool/sdk'
+import { result } from '@flow-tool/sdk/result'
 import { Button, Card, Label, TextArea } from '@flow-tool/ui/plugin'
+import { z } from 'zod'
+
+const inputSchema = z.object({
+  base64: z.string().optional().describe('Base64 string to get info about'),
+})
 
 export default definePlugin({
   type: 'app',
@@ -13,6 +19,19 @@ export default definePlugin({
     permissions: ['clipboard'],
     tags: ['image', 'base64', 'converter'],
     category: '编码工具',
+  },
+  inputSchema,
+  async run(_ctx, input: z.infer<typeof inputSchema>) {
+    const b64 = input.base64
+    if (!b64) return result.text('Error: base64 is required')
+    const src = b64.startsWith('data:') ? b64 : `data:image/png;base64,${b64}`
+    const raw = src.includes(',') ? src.split(',')[1] : src
+    const bytes = Math.round((raw.length * 3) / 4)
+    return result.json({
+      dataUrl: src.slice(0, 80) + '...',
+      estimatedBytes: bytes,
+      hasPrefix: src.startsWith('data:'),
+    })
   },
   setup() {
     return function ImageBase64Panel() {

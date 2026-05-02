@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react'
 
 import { definePlugin, useCapability } from '@flow-tool/sdk'
+import { result } from '@flow-tool/sdk/result'
 import { Button, Card, Input, Label, TextField } from '@flow-tool/ui/plugin'
+import { z } from 'zod'
 
 function generateUUID(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -14,6 +16,10 @@ function generateUUID(): string {
   })
 }
 
+const inputSchema = z.object({
+  count: z.number().default(1).describe('Number of UUIDs to generate (1-100)'),
+})
+
 export default definePlugin({
   type: 'app',
   meta: {
@@ -24,6 +30,12 @@ export default definePlugin({
     permissions: ['clipboard'],
     tags: ['uuid', 'random', 'generator'],
     category: '开发工具',
+  },
+  inputSchema,
+  async run(_ctx, input: z.infer<typeof inputSchema>) {
+    const count = Math.max(1, Math.min(100, input.count ?? 1))
+    const uuids = Array.from({ length: count }, () => generateUUID())
+    return result.json({ uuids, count: uuids.length })
   },
   setup() {
     return function UUIDGeneratorPanel() {

@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react'
 
 import { definePlugin } from '@flow-tool/sdk'
+import { result } from '@flow-tool/sdk/result'
 import { Button, Card, Chip } from '@flow-tool/ui/plugin'
+import { z } from 'zod'
 
 interface LatencyResult {
   name: string
@@ -60,6 +62,13 @@ function getLatencyColor(latency: number | null): string {
   return 'text-red-600'
 }
 
+const inputSchema = z.object({
+  urls: z
+    .string()
+    .optional()
+    .describe('Comma-separated URLs to test (defaults to popular sites)'),
+})
+
 export default definePlugin({
   type: 'app',
   meta: {
@@ -70,6 +79,49 @@ export default definePlugin({
     permissions: ['network'],
     tags: ['network', 'latency', 'ping'],
     category: '网络工具',
+  },
+  inputSchema,
+  async run(ctx, input: z.infer<typeof inputSchema>) {
+    const sites = input.urls
+      ? input.urls
+          .split(',')
+          .map(u => u.trim())
+          .filter(Boolean)
+      : DEFAULT_SITES.map(s => s.url)
+
+    const results = await Promise.allSettled(
+      sites.map(async url => {
+        try {
+          const latency = await measureLatency(url, ctx.signal)
+          return { url, latency, status: 'success' as const }
+        } catch (err) {
+          return {
+            url,
+            latency: null,
+            status: 'error' as const,
+            error: err instanceof Error ? err.message : 'request failed',
+          }
+        }
+      })
+    )
+
+    const items = results.map(r =>
+      r.status === 'fulfilled'
+        ? r.value
+        : { url: '?', latency: null, status: 'error' as const }
+    )
+    const successes = items.filter(i => i.latency !== null)
+    const avg = successes.length
+      ? Math.round(
+          successes.reduce((s, i) => s + (i.latency ?? 0), 0) / successes.length
+        )
+      : null
+
+    return result.json({
+      results: items,
+      average: avg,
+      tested: items.length,
+    })
   },
   setup() {
     return function WebsiteLatencyPanel() {

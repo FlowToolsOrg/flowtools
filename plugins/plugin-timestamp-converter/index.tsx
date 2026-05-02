@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { definePlugin, useCapability } from '@flow-tool/sdk'
+import { result } from '@flow-tool/sdk/result'
 import {
   Button,
   Card,
@@ -9,6 +10,7 @@ import {
   Label,
   TextField,
 } from '@flow-tool/ui/plugin'
+import { z } from 'zod'
 
 type TimestampUnit = 'seconds' | 'milliseconds'
 
@@ -38,6 +40,21 @@ function parseDateInput(dateStr: string): number | null {
   return date.getTime()
 }
 
+const inputSchema = z.object({
+  timestamp: z
+    .string()
+    .optional()
+    .describe('Unix timestamp to convert to date'),
+  date: z
+    .string()
+    .optional()
+    .describe('Date string to convert to timestamp (ISO format)'),
+  unit: z
+    .enum(['seconds', 'milliseconds'])
+    .default('seconds')
+    .describe('Timestamp unit'),
+})
+
 export default definePlugin({
   type: 'app',
   meta: {
@@ -48,6 +65,29 @@ export default definePlugin({
     permissions: ['clipboard'],
     tags: ['timestamp', 'unix', 'date', 'converter'],
     category: '开发工具',
+  },
+  inputSchema,
+  async run(_ctx, input: z.infer<typeof inputSchema>) {
+    const unit = input.unit ?? 'seconds'
+    if (input.timestamp) {
+      const ts = Number(input.timestamp)
+      if (isNaN(ts)) return result.text('Error: invalid timestamp')
+      const iso = new Date(unit === 'seconds' ? ts * 1000 : ts).toISOString()
+      return result.json({ timestamp: input.timestamp, unit, iso })
+    }
+    if (input.date) {
+      const ms = parseDateInput(input.date)
+      if (ms === null) return result.text('Error: invalid date string')
+      const ts = unit === 'seconds' ? Math.floor(ms / 1000) : ms
+      return result.json({ date: input.date, unit, timestamp: ts })
+    }
+    const now = Date.now()
+    const ts = unit === 'seconds' ? Math.floor(now / 1000) : now
+    return result.json({
+      timestamp: ts,
+      unit,
+      iso: new Date(now).toISOString(),
+    })
   },
   setup() {
     return function TimestampConverterPanel() {

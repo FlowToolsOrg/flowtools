@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react'
 
 import { definePlugin, useCapability } from '@flow-tool/sdk'
+import { result } from '@flow-tool/sdk/result'
 import { Button, Card, Chip, Label, TextArea } from '@flow-tool/ui/plugin'
+import { z } from 'zod'
 
 type Operation = 'intersection' | 'union' | 'difference'
 
@@ -18,15 +20,20 @@ function computeSetOp(
   setA: Set<string>,
   setB: Set<string>,
   op: Operation
-): Set<string> {
+): string[] {
+  let resultSet: Set<string>
   switch (op) {
     case 'intersection':
-      return new Set([...setA].filter(x => setB.has(x)))
+      resultSet = new Set([...setA].filter(x => setB.has(x)))
+      break
     case 'union':
-      return new Set([...setA, ...setB])
+      resultSet = new Set([...setA, ...setB])
+      break
     case 'difference':
-      return new Set([...setA].filter(x => !setB.has(x)))
+      resultSet = new Set([...setA].filter(x => !setB.has(x)))
+      break
   }
+  return [...resultSet]
 }
 
 const OP_LABELS: Record<Operation, string> = {
@@ -34,6 +41,15 @@ const OP_LABELS: Record<Operation, string> = {
   union: '并集 (A ∪ B)',
   difference: '差集 (A - B)',
 }
+
+const inputSchema = z.object({
+  setA: z.string().describe('Set A items (newline-separated)'),
+  setB: z.string().describe('Set B items (newline-separated)'),
+  operation: z
+    .enum(['intersection', 'union', 'difference'])
+    .default('intersection')
+    .describe('Set operation to perform'),
+})
 
 export default definePlugin({
   type: 'app',
@@ -45,6 +61,17 @@ export default definePlugin({
     permissions: ['clipboard'],
     tags: ['text', 'set', 'intersection', 'union', 'difference'],
     category: '文本工具',
+  },
+  inputSchema,
+  async run(_ctx, input: z.infer<typeof inputSchema>) {
+    const setA = parseLines(input.setA)
+    const setB = parseLines(input.setB)
+    const items = computeSetOp(setA, setB, input.operation)
+    return result.json({
+      operation: input.operation,
+      count: items.length,
+      items,
+    })
   },
   setup() {
     return function TextOpsPanel() {

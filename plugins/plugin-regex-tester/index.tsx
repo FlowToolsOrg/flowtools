@@ -1,21 +1,21 @@
 import { useCallback, useMemo, useState } from 'react'
 
 import { definePlugin, useCapability } from '@flow-tool/sdk'
-import {
-  Button,
-  Card,
-  Chip,
-  Input,
-  Label,
-  TextArea,
-  TextField,
-} from '@flow-tool/ui/plugin'
+import { result } from '@flow-tool/sdk/result'
+import { Button, Card, Chip, Label, TextArea } from '@flow-tool/ui/plugin'
+import { z } from 'zod'
 
 interface MatchResult {
   match: string
   index: number
   groups?: Record<string, string>
 }
+
+const inputSchema = z.object({
+  pattern: z.string().describe('Regular expression pattern'),
+  text: z.string().describe('Text to test against'),
+  flags: z.string().default('g').describe('Regex flags (e.g., "gi", "gm")'),
+})
 
 export default definePlugin({
   type: 'app',
@@ -27,6 +27,45 @@ export default definePlugin({
     permissions: ['clipboard'],
     tags: ['regex', 'regexp', 'test', 'pattern'],
     category: '开发工具',
+  },
+  inputSchema,
+  async run(_ctx, input: z.infer<typeof inputSchema>) {
+    const { pattern, text, flags } = input
+    if (!pattern) return result.text('Error: pattern is required')
+    if (!text) return result.text('Error: text is required')
+    try {
+      const regex = new RegExp(pattern, flags)
+      const matches: MatchResult[] = []
+      if (flags.includes('g')) {
+        let match: RegExpExecArray | null
+        while ((match = regex.exec(text)) !== null) {
+          matches.push({
+            match: match[0],
+            index: match.index,
+            groups: match.groups ? { ...match.groups } : undefined,
+          })
+          if (!match[0]) break
+        }
+      } else {
+        const match = regex.exec(text)
+        if (match) {
+          matches.push({
+            match: match[0],
+            index: match.index,
+            groups: match.groups ? { ...match.groups } : undefined,
+          })
+        }
+      }
+      return result.json({
+        pattern,
+        flags,
+        matchCount: matches.length,
+        matches,
+      })
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Invalid regex'
+      return result.text(`Error: ${message}`)
+    }
   },
   setup() {
     return function RegexTesterPanel() {

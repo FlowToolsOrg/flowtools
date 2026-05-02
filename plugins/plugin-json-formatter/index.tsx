@@ -1,9 +1,19 @@
 import { useCallback, useState } from 'react'
 
 import { definePlugin, useCapability } from '@flow-tool/sdk'
+import { result } from '@flow-tool/sdk/result'
 import { Button, Card, Chip, Label, TextArea } from '@flow-tool/ui/plugin'
+import { z } from 'zod'
 
 type FormatMode = 'format' | 'minify' | 'validate'
+
+const inputSchema = z.object({
+  text: z.string().describe('JSON string to process'),
+  mode: z
+    .enum(['format', 'minify', 'validate'])
+    .default('format')
+    .describe('Processing mode'),
+})
 
 export default definePlugin({
   type: 'app',
@@ -15,6 +25,25 @@ export default definePlugin({
     permissions: ['clipboard'],
     tags: ['json', 'format', 'minify', 'validate'],
     category: '开发工具',
+  },
+  inputSchema,
+  async run(_ctx, input: z.infer<typeof inputSchema>) {
+    const { text, mode } = input
+    if (!text) return result.text('Error: text is required')
+    try {
+      const parsed: unknown = JSON.parse(text)
+      if (mode === 'validate') return result.json({ valid: true })
+      const output =
+        mode === 'format'
+          ? JSON.stringify(parsed, null, 2)
+          : JSON.stringify(parsed)
+      return result.text(output)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'JSON parse error'
+      if (mode === 'validate')
+        return result.json({ valid: false, error: message })
+      return result.text(`Error: ${message}`)
+    }
   },
   setup() {
     return function JSONFormatterPanel() {

@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react'
 
 import { definePlugin, useCapability } from '@flow-tool/sdk'
+import { result } from '@flow-tool/sdk/result'
 import { Button, Card, Chip, Label, TextArea } from '@flow-tool/ui/plugin'
+import { z } from 'zod'
 
 type Mode = 'encode' | 'decode'
 
@@ -32,6 +34,14 @@ function decodeBase64(base64: string): string {
   }
 }
 
+const inputSchema = z.object({
+  text: z.string().describe('Text to encode or decode'),
+  mode: z
+    .enum(['encode', 'decode'])
+    .default('encode')
+    .describe('Encode or decode mode'),
+})
+
 export default definePlugin({
   type: 'app',
   meta: {
@@ -42,6 +52,18 @@ export default definePlugin({
     permissions: ['clipboard'],
     tags: ['base64', 'encode', 'decode', 'converter'],
     category: '编码工具',
+  },
+  inputSchema,
+  async run(_ctx, input: z.infer<typeof inputSchema>) {
+    const { text, mode } = input
+    if (!text) return result.text('Error: text is required')
+    try {
+      const output = mode === 'encode' ? encodeBase64(text) : decodeBase64(text)
+      return result.json({ mode, input: text, output })
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Conversion failed'
+      return result.text(`Error: ${message}`)
+    }
   },
   setup() {
     return function Base64EncoderPanel() {

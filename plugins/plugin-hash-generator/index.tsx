@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react'
 
 import { definePlugin, useCapability } from '@flow-tool/sdk'
+import { result } from '@flow-tool/sdk/result'
 import { Button, Card, Chip, Label, TextArea } from '@flow-tool/ui/plugin'
+import { z } from 'zod'
 
 type HashAlgorithm = 'SHA-1' | 'SHA-256' | 'SHA-384' | 'SHA-512'
 
@@ -23,6 +25,14 @@ async function computeHash(
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
+const inputSchema = z.object({
+  text: z.string().describe('Text to hash'),
+  algorithm: z
+    .enum(['SHA-1', 'SHA-256', 'SHA-384', 'SHA-512'])
+    .default('SHA-256')
+    .describe('Hash algorithm to use'),
+})
+
 export default definePlugin({
   type: 'app',
   meta: {
@@ -33,6 +43,13 @@ export default definePlugin({
     permissions: ['clipboard'],
     tags: ['hash', 'sha', 'sha256', 'md5', 'generator'],
     category: '开发工具',
+  },
+  inputSchema,
+  async run(_ctx, input: z.infer<typeof inputSchema>) {
+    const { text, algorithm } = input
+    if (!text) return result.text('Error: text is required')
+    const hash = await computeHash(text, algorithm)
+    return result.json({ algorithm, hash, bytes: hash.length / 2 })
   },
   setup() {
     return function HashGeneratorPanel() {
@@ -137,7 +154,7 @@ export default definePlugin({
                             size="sm"
                             variant="soft"
                             color={
-                              algo === selectedAlgo ? 'primary' : 'default'
+                              algo === selectedAlgo ? 'success' : 'default'
                             }
                           >
                             {algo}

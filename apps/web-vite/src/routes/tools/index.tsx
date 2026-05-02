@@ -82,12 +82,12 @@ function ToolsPage() {
     <div className="grid min-h-0 flex-1 gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:p-8">
       <div className="flex min-w-0 flex-col gap-4">
         <header className="flex items-center gap-2.5 space-y-0">
-          <BlocksIcon className="text-[var(--accent)]" size={22} />
+          <BlocksIcon className="text-(--accent)" size={22} />
           <div>
-            <h1 className="text-2xl font-semibold text-[var(--foreground)]">
+            <h1 className="text-2xl font-semibold text-(--foreground)">
               Tools
             </h1>
-            <p className="text-sm text-[var(--muted)]">
+            <p className="text-sm text-(--muted)">
               Browse and run available tools.
             </p>
           </div>

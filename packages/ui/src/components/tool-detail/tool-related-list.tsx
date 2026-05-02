@@ -25,7 +25,7 @@ export const ToolRelatedList = ({
   return (
     <section
       className={cn(
-        'w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4',
+        'w-full rounded-(--radius) border border-(--border) bg-(--surface) p-4',
         className
       )}
       {...props}
@@ -34,14 +34,14 @@ export const ToolRelatedList = ({
         {items.map(item => (
           <li
             key={item.id}
-            className="flex items-center justify-between gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-secondary)] px-3 py-2"
+            className="flex items-center justify-between gap-3 rounded-(--radius) border border-border bg-(--surface-secondary) px-3 py-2"
           >
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-[var(--foreground)]">
+              <p className="truncate text-sm font-medium text-(--foreground)">
                 {item.name}
               </p>
               {item.description ? (
-                <p className="truncate text-xs text-[var(--muted)]">
+                <p className="truncate text-xs text-(--muted)">
                   {item.description}
                 </p>
               ) : null}

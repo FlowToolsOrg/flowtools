@@ -16,7 +16,7 @@ const RunPanelRoot = ({ children, className, ...props }: RunPanelRootProps) => {
   return (
     <section
       className={cn(
-        'space-y-4 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4',
+        'space-y-4 rounded-(--radius) border border-(--border) bg-(--surface) p-4',
         className
       )}
       {...props}

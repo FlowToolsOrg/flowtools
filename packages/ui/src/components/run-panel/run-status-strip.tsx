@@ -50,7 +50,7 @@ export const RunStatusStrip = ({
   return (
     <section
       className={cn(
-        'flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-4 py-2',
+        'flex flex-wrap items-center justify-between gap-3 rounded-(--radius) border border-(--border) bg-(--surface) px-4 py-2',
         className
       )}
       {...props}
@@ -66,11 +66,9 @@ export const RunStatusStrip = ({
           </span>
         </Chip>
         {message ? (
-          <p className="text-sm text-[var(--foreground)]">{message}</p>
+          <p className="text-sm text-(--foreground)">{message}</p>
         ) : null}
-        {duration ? (
-          <p className="text-xs text-[var(--muted)]">{duration}</p>
-        ) : null}
+        {duration ? <p className="text-xs text-(--muted)">{duration}</p> : null}
       </div>
       {onReset ? (
         <Button onPress={onReset} size="sm" variant="ghost">

@@ -27,7 +27,7 @@ export const ToolLayout = ({
   return (
     <div
       className={cn(
-        'min-h-[calc(100vh-3.5rem)] bg-[var(--background)] text-[var(--foreground)]',
+        'min-h-[calc(100vh-3.5rem)] bg-background text-(--foreground)',
         className
       )}
       {...props}
@@ -59,7 +59,7 @@ export const ToolLayoutSidebar = ({
     <aside className={cn('min-w-0', className)} {...props}>
       <Surface
         className={cn(
-          'flex flex-col gap-4 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4',
+          'flex flex-col gap-4 rounded-(--radius) border border-border bg-surface p-4',
           isSticky && 'lg:sticky lg:top-20'
         )}
         variant="secondary"

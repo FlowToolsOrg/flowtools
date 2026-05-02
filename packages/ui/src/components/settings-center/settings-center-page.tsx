@@ -46,7 +46,7 @@ const SettingsCenterPageNav = ({
   return (
     <nav className={cn('min-w-0', className)} {...props}>
       <Surface
-        className="rounded-[var(--radius)] border border-[var(--border)] p-2"
+        className="rounded-(--radius) border border-(--border) p-2"
         variant="secondary"
       >
         <ul className="flex flex-col gap-1" role="list">
@@ -58,10 +58,10 @@ const SettingsCenterPageNav = ({
                 <button
                   aria-current={isActive ? 'page' : undefined}
                   className={cn(
-                    'flex w-full items-start justify-between gap-3 rounded-[var(--radius)] px-3 py-2 text-left transition',
+                    'flex w-full items-start justify-between gap-3 rounded-(--radius) px-3 py-2 text-left transition',
                     isActive
-                      ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
-                      : 'text-[var(--foreground)] hover:bg-[var(--surface-secondary)]'
+                      ? 'bg-(--accent)/10 text-(--accent)'
+                      : 'text-(--foreground) hover:bg-(--surface-secondary)'
                   )}
                   data-active={isActive}
                   onClick={() => onSectionChange?.(section.id)}
@@ -72,7 +72,7 @@ const SettingsCenterPageNav = ({
                       {section.label}
                     </span>
                     {section.description ? (
-                      <span className="truncate text-xs text-[var(--muted)]">
+                      <span className="truncate text-xs text-(--muted)">
                         {section.description}
                       </span>
                     ) : null}

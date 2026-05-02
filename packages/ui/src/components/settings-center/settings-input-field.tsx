@@ -36,7 +36,7 @@ export const SettingsInputField = ({
   return (
     <div
       className={cn(
-        'rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3',
+        'rounded-(--radius) border border-(--border) bg-(--surface) px-4 py-3',
         className
       )}
       {...props}
@@ -50,7 +50,7 @@ export const SettingsInputField = ({
         <Label>{label}</Label>
         <Input placeholder={placeholder} variant="secondary" />
         {description ? (
-          <Description className="text-xs text-[var(--muted)]">
+          <Description className="text-xs text-(--muted)">
             {description}
           </Description>
         ) : null}

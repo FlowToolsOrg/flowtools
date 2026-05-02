@@ -123,10 +123,10 @@ function ToolDetailPage_() {
   if (!meta) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
-        <h1 className="text-xl font-semibold text-[var(--foreground)]">
+        <h1 className="text-xl font-semibold text-(--foreground)">
           Tool Not Found
         </h1>
-        <p className="text-sm text-[var(--muted)]">
+        <p className="text-sm text-(--muted)">
           No tool with id &quot;{toolId}&quot; was found.
         </p>
         <Button onPress={() => navigate({ to: '/tools' })} size="sm">
@@ -150,9 +150,9 @@ function ToolDetailPage_() {
           <ArrowLeftIcon size={16} />
           Back
         </Button>
-        <div className="h-4 w-px bg-[var(--separator)]" />
+        <div className="h-4 w-px bg-separator" />
         <div className="flex items-center gap-2">
-          <h1 className="text-xl font-semibold text-[var(--foreground)]">
+          <h1 className="text-xl font-semibold text-(--foreground)">
             {meta.name}
           </h1>
           <Chip
@@ -217,7 +217,7 @@ function ToolDetailPage_() {
 
                 {meta.permissions && meta.permissions.length > 0 ? (
                   <section className="space-y-2">
-                    <h2 className="text-sm font-semibold text-[var(--foreground)]">
+                    <h2 className="text-sm font-semibold text-(--foreground)">
                       Permissions
                     </h2>
                     <ToolPermissionList>
@@ -233,7 +233,7 @@ function ToolDetailPage_() {
                 ) : null}
 
                 <section className="space-y-2">
-                  <h2 className="text-sm font-semibold text-[var(--foreground)]">
+                  <h2 className="text-sm font-semibold text-(--foreground)">
                     Version History
                   </h2>
                   <ToolVersionTimeline records={versions} />
@@ -243,7 +243,7 @@ function ToolDetailPage_() {
               <div className="space-y-4">
                 {meta.tags && meta.tags.length > 0 ? (
                   <section className="space-y-2">
-                    <h2 className="text-sm font-semibold text-[var(--foreground)]">
+                    <h2 className="text-sm font-semibold text-(--foreground)">
                       Tags
                     </h2>
                     <div className="flex flex-wrap gap-2">
@@ -262,7 +262,7 @@ function ToolDetailPage_() {
 
         <Tabs.Panel id="run">
           {isAppPlugin ? (
-            <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <div className="rounded-(--radius) border border-(--border) bg-(--surface) p-4">
               {renderWebAppPlugin(plugin)}
             </div>
           ) : (

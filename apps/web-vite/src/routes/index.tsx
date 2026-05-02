@@ -46,20 +46,20 @@ function Dashboard() {
   return (
     <div className="flex flex-col gap-6 p-6 lg:p-8">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold text-[var(--foreground)]">
+        <h1 className="text-2xl font-semibold text-(--foreground)">
           Dashboard
         </h1>
-        <p className="text-sm text-[var(--muted)]">
+        <p className="text-sm text-(--muted)">
           Your smart toolbox — quick access to all tools.
         </p>
       </header>
 
       <section className="space-y-2">
         <div className="flex items-center gap-3">
-          <h2 className="text-xs font-semibold tracking-wide text-[var(--muted)] uppercase">
+          <h2 className="text-xs font-semibold tracking-wide text-(--muted) uppercase">
             Pinned
           </h2>
-          <div className="h-px flex-1 bg-[var(--separator)]" />
+          <div className="h-px flex-1 bg-(--separator)" />
         </div>
         <ToolGrid className="md:grid-cols-2 xl:grid-cols-4">
           {tools.slice(0, 4).map(tool => (
@@ -90,15 +90,15 @@ function Dashboard() {
           <section key={category.id} className="space-y-2">
             <div className="flex items-center gap-3">
               {CategoryIcon ? (
-                <CategoryIcon className="text-[var(--muted)]" size={14} />
+                <CategoryIcon className="text-(--muted)" size={14} />
               ) : null}
-              <h2 className="text-xs font-semibold tracking-wide text-[var(--muted)] uppercase">
+              <h2 className="text-xs font-semibold tracking-wide text-(--muted) uppercase">
                 {category.label}
               </h2>
               <Chip size="sm" variant="tertiary">
                 {categoryTools.length}
               </Chip>
-              <div className="h-px flex-1 bg-[var(--separator)]" />
+              <div className="h-px flex-1 bg-(--separator)" />
             </div>
             <ToolGrid>
               {categoryTools.map(tool => (

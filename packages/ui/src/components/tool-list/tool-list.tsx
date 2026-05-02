@@ -79,26 +79,26 @@ export const ToolList = ({
   return (
     <section className={cn('w-full', className)} {...props}>
       <Card
-        className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]"
+        className="rounded-(--radius) border border-(--border) bg-(--surface)"
         variant="secondary"
       >
         <Card.Header className="flex flex-col gap-2">
-          <Card.Title className="text-[var(--foreground)]">{title}</Card.Title>
+          <Card.Title className="text-(--foreground)">{title}</Card.Title>
           {description ? (
-            <Card.Description className="text-sm text-[var(--muted)]">
+            <Card.Description className="text-sm text-(--muted)">
               {description}
             </Card.Description>
           ) : null}
         </Card.Header>
         <Card.Content>
           {items.length === 0 ? (
-            <div className="rounded-[var(--radius)] border border-dashed border-[var(--border)] bg-[var(--surface-secondary)] px-4 py-6 text-sm text-[var(--muted)]">
+            <div className="rounded-(--radius) border border-dashed border-border bg-(--surface-secondary) px-4 py-6 text-sm text-muted">
               {emptyContent ?? 'No tools found yet.'}
             </div>
           ) : (
             <ListBox
               aria-label={ariaLabel}
-              className="w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-2"
+              className="w-full rounded-(--radius) border border-(--border) bg-(--surface) p-2"
               defaultSelectedKeys={defaultSelectedKeys}
               onAction={onAction}
               onSelectionChange={onSelectionChange}
@@ -108,14 +108,14 @@ export const ToolList = ({
               {items.map(item => (
                 <ListBox.Item
                   key={String(item.id)}
-                  className="rounded-[var(--radius)] px-3 py-3 transition data-[hovered=true]:bg-[var(--accent)]/10 data-[selected=true]:bg-[var(--accent)]/15"
+                  className="rounded-(--radius) px-3 py-3 transition data-[hovered=true]:bg-(--accent)/10 data-[selected=true]:bg-(--accent)/15"
                   id={item.id}
                   isDisabled={item.isDisabled}
                   textValue={item.name}
                 >
                   <div className="flex min-w-0 flex-1 flex-col gap-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Label className="text-sm font-semibold text-[var(--foreground)]">
+                      <Label className="text-sm font-semibold text-(--foreground)">
                         {item.name}
                       </Label>
                       {item.status ? (
@@ -139,7 +139,7 @@ export const ToolList = ({
                       ) : null}
                     </div>
                     {item.description ? (
-                      <Description className="text-sm text-[var(--muted)]">
+                      <Description className="text-sm text-(--muted)">
                         {item.description}
                       </Description>
                     ) : null}

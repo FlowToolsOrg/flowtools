@@ -44,9 +44,8 @@ const ToolPermissionListItem = ({
   return (
     <li
       className={cn(
-        'flex items-start justify-between gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3',
-        onPress &&
-          'cursor-pointer transition hover:bg-[var(--surface-secondary)]',
+        'flex items-start justify-between gap-3 rounded-(--radius) border border-(--border) bg-(--surface) px-4 py-3',
+        onPress && 'cursor-pointer transition hover:bg-(--surface-secondary)',
         className
       )}
       onClick={onPress}
@@ -56,9 +55,9 @@ const ToolPermissionListItem = ({
       {...props}
     >
       <div className="space-y-1">
-        <p className="text-sm font-medium text-[var(--foreground)]">{name}</p>
+        <p className="text-sm font-medium text-(--foreground)">{name}</p>
         {description ? (
-          <p className="text-xs text-[var(--muted)]">{description}</p>
+          <p className="text-xs text-(--muted)">{description}</p>
         ) : null}
       </div>
       {required ? (

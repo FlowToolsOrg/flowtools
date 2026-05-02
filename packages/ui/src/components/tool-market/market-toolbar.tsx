@@ -30,7 +30,7 @@ const MarketToolbarRoot = ({
   return (
     <section
       className={cn(
-        'flex flex-col gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4 md:flex-row md:items-end md:justify-between',
+        'flex flex-col gap-3 rounded-(--radius) border border-(--border) bg-(--surface) p-4 md:flex-row md:items-end md:justify-between',
         className
       )}
       {...props}

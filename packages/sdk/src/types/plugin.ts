@@ -1,8 +1,10 @@
+import type { CommandResult } from '../result/types'
 import type { CommandDef } from './command'
 import type { ToolContext } from './ctx'
 import type { Permission } from './permissions'
 import type { PluginStoreShape } from './store'
 import type { ComponentType } from 'react'
+import type { z } from 'zod'
 
 type IsTuple<T extends readonly unknown[]> = number extends T['length']
   ? false
@@ -135,6 +137,19 @@ export interface PluginMeta {
 export type PluginCommands = Record<string, CommandDef<unknown, unknown>>
 
 /**
+ * Zod object schema for plugin input.
+ * Used for runtime validation and CLI flag generation.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type PluginInputSchema = z.ZodObject<any>
+
+/**
+ * Infer the input type from a PluginInputSchema.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type InferInput<S extends PluginInputSchema> = z.infer<S>
+
+/**
  * Shared fields for app and tool plugins.
  */
 export interface PluginBase {
@@ -146,6 +161,12 @@ export interface PluginBase {
    * Plugin metadata.
    */
   meta: PluginMeta
+  /**
+   * Declarative Zod schema for plugin input.
+   * When defined, CLI auto-generates typed flags and validates input at runtime.
+   * When omitted, CLI falls back to `--input <json>`.
+   */
+  inputSchema?: PluginInputSchema
   /**
    * Optional command list exposed by this plugin.
    */
@@ -177,9 +198,12 @@ export interface AppPlugin extends PluginBase {
    */
   setup: () => ComponentType
   /**
-   * App plugins do not expose direct `run`.
+   * Optional execution entry for CLI and headless invocation.
+   * When present, the plugin can be called without rendering its UI.
+   * `setup()` can internally reuse the same core logic via shared helper functions.
    */
-  run?: never
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  run?: (ctx: ToolContext, input: any) => Promise<CommandResult> | CommandResult
 }
 
 /**

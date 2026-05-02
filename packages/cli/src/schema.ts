@@ -1,0 +1,185 @@
+/**
+ * Zod schema → Commander flags converter.
+ * Uses Zod 4's z.toJSONSchema() for introspection.
+ */
+
+import type { Command } from 'commander'
+
+import { z } from 'zod'
+
+/**
+ * Convert camelCase or snake_case to kebab-case.
+ */
+function toKebab(str: string): string {
+  return str
+    .replace(/([a-z])([A-Z])/g, '$1-$2')
+    .replace(/_/g, '-')
+    .toLowerCase()
+}
+
+interface FieldMeta {
+  type: 'string' | 'number' | 'boolean' | 'enum'
+  description?: string
+  required: boolean
+  default?: unknown
+  enum?: string[]
+}
+
+/**
+ * Convert a Zod schema to a JSON Schema and extract field metadata.
+ */
+function introspectSchema(schema: z.ZodObject<any>): Record<string, FieldMeta> {
+  const jsonSchema = z.toJSONSchema(schema, { target: 'draft-7' })
+  const properties = (jsonSchema as any).properties ?? {}
+  const required = new Set((jsonSchema as any).required ?? [])
+  const fields: Record<string, FieldMeta> = {}
+
+  for (const [key, prop] of Object.entries(properties)) {
+    const p = prop as Record<string, unknown>
+    const field: FieldMeta = {
+      type: 'string',
+      required: required.has(key),
+    }
+
+    // Extract description
+    if (typeof p.description === 'string') {
+      field.description = p.description
+    }
+
+    // Extract default
+    if ('default' in p) {
+      field.default = p.default
+      field.required = false
+    }
+
+    // Determine type
+    if (p.type === 'boolean') {
+      field.type = 'boolean'
+    } else if (p.type === 'integer' || p.type === 'number') {
+      field.type = 'number'
+    } else if (p.enum) {
+      field.type = 'enum'
+      field.enum = p.enum as string[]
+    } else {
+      field.type = 'string'
+    }
+
+    fields[key] = field
+  }
+
+  return fields
+}
+
+/**
+ * Add CLI options to a Commander command from a Zod input schema.
+ */
+export function addSchemaFlags(
+  command: Command,
+  schema: z.ZodObject<any>
+): void {
+  const fields = introspectSchema(schema)
+
+  for (const [key, def] of Object.entries(fields)) {
+    const flag = `--${toKebab(key)}`
+    const desc = def.description ?? key
+
+    switch (def.type) {
+      case 'boolean':
+        command.option(flag, desc, def.default ? true : false)
+        break
+      case 'number':
+        command.option(`${flag} <number>`, desc, String(def.default))
+        break
+      case 'enum': {
+        const choices = def.enum ?? []
+        command.option(
+          `${flag} <value>`,
+          `${desc} (choices: ${choices.join(', ')})`,
+          def.default != null ? String(def.default) : undefined
+        )
+        break
+      }
+      default:
+        command.option(
+          `${flag} <value>`,
+          desc,
+          def.default != null ? String(def.default) : undefined
+        )
+        break
+    }
+  }
+}
+
+/**
+ * Build input object from Commander options using a Zod schema.
+ * Maps kebab-case CLI flags back to camelCase schema keys.
+ * Coerces types based on JSON Schema metadata.
+ */
+export function buildInputFromOptions(
+  opts: Record<string, unknown>,
+  schema: z.ZodObject<any>
+): Record<string, unknown> {
+  const fields = introspectSchema(schema)
+  const input: Record<string, unknown> = {}
+
+  for (const [key, def] of Object.entries(fields)) {
+    const kebabKey = toKebab(key)
+    const value = opts[kebabKey]
+
+    if (value !== undefined) {
+      // Coerce types
+      switch (def.type) {
+        case 'number':
+          input[key] = Number(value)
+          break
+        case 'boolean':
+          input[key] = value === 'true' || value === true
+          break
+        default:
+          input[key] = value
+          break
+      }
+    } else if (def.default !== undefined) {
+      input[key] = def.default
+    }
+  }
+
+  return input
+}
+
+/**
+ * Parse a JSON input string and validate against a schema.
+ */
+export function parseJsonInput(
+  jsonStr: string,
+  schema?: z.ZodObject<any>
+): Record<string, unknown> {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(jsonStr)
+  } catch (err) {
+    console.error('Error: Invalid JSON in --input:', err)
+    process.exit(1)
+  }
+
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    console.error(
+      'Warning: --input must be a JSON object, wrapping in { value }'
+    )
+    return { value: parsed }
+  }
+
+  if (schema) {
+    const result = schema.safeParse(parsed)
+    if (!result.success) {
+      console.error('Input validation failed:')
+      for (const issue of result.error.issues) {
+        console.error(`  ${issue.path.join('.')}: ${issue.message}`)
+      }
+      process.exit(1)
+    }
+    return result.data as Record<string, unknown>
+  }
+
+  return parsed as Record<string, unknown>
+}

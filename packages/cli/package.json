@@ -1,0 +1,38 @@
+{
+  "name": "@flow-tool/cli",
+  "version": "0.0.0",
+  "private": true,
+  "bin": {
+    "flow-tool": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsdown --config tsdown.config.ts",
+    "dev": "tsdown --config tsdown.config.ts --watch",
+    "lint": "oxlint --fix",
+    "format": "oxfmt",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "zod": "^4.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "oxfmt": "^0.47.0",
+    "oxlint": "^1.48.0",
+    "typescript": "^6.0.3"
+  }
+}

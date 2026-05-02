@@ -21,6 +21,7 @@ interface PluginMeta {
   permissions?: string[]
   tags?: string[]
   category?: string
+  cliAvailable: boolean
 }
 
 const PLUGINS_DIR = resolve(__dirname, '..', 'plugins')
@@ -62,6 +63,12 @@ function extractMeta(content: string, filePath: string): PluginMeta | null {
   // 提取 category
   const category = extractStringField(metaStr, 'category')
 
+  // 检测是否有 run 函数（CLI 可用）
+  const cliAvailable = /run\s*[<(]/.test(content) || /run\s*:/.test(content)
+
+  // 检测是否有 Zod inputSchema
+  const hasSchema = /inputSchema:\s*z\.object/.test(content)
+
   return {
     id,
     name,
@@ -71,6 +78,7 @@ function extractMeta(content: string, filePath: string): PluginMeta | null {
     permissions,
     tags,
     category,
+    cliAvailable,
   }
 }
 
@@ -155,6 +163,7 @@ function generateManifests(plugins: PluginMeta[]): string {
     name: '${p.name}',
     version: '${p.version}',${p.description ? `\n    description: '${p.description}',` : ''}
     type: '${p.type}',${p.permissions && p.permissions.length > 0 ? `\n    permissions: [${p.permissions.map(p => `'${p}'`).join(', ')}],` : ''}${p.tags && p.tags.length > 0 ? `\n    tags: [${p.tags.map(t => `'${t}'`).join(', ')}],` : ''}${p.category ? `\n    category: '${p.category}',` : ''}
+    cliAvailable: ${p.cliAvailable},
     loader: () => import('@plugins/${p.id}'),
   }`
     )

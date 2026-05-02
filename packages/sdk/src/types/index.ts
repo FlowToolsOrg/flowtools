@@ -1,6 +1,8 @@
 export * from './capabilities'
 export type { CommandDef, CommandMode } from './command'
 export type {
+  PluginInputSchema,
+  InferInput,
   PluginCommands,
   PluginLifecycle,
   PluginMeta,

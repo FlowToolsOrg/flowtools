@@ -50,6 +50,10 @@ export interface PluginManifestEntry {
    */
   category?: string
   /**
+   * Whether this plugin has a `run()` function and is CLI-compatible.
+   */
+  cliAvailable?: boolean
+  /**
    * Async loader that returns the plugin module.
    * Built-in plugins use relative import(), external plugins use URL import().
    */

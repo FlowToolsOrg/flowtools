@@ -1,4 +1,12 @@
-import { BlocksIcon, HomeIcon, SettingsIcon } from '@flow-tool/ui/icons'
+import { useCallback, useEffect, useState } from 'react'
+
+import { CommandPalette } from '@flow-tool/ui'
+import {
+  BlocksIcon,
+  HomeIcon,
+  SearchIcon,
+  SettingsIcon,
+} from '@flow-tool/ui/icons'
 import {
   createRootRoute,
   Link,
@@ -6,6 +14,10 @@ import {
   useMatchRoute,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
+import { useStore } from 'zustand'
+
+import { executeCommand, getCommandPaletteItems } from '@/stores/command-store'
+import { pluginRegistryStore } from '@/stores/plugin-registry-store'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: HomeIcon },
@@ -15,6 +27,33 @@ const navItems = [
 
 const RootLayout = () => {
   const matchRoute = useMatchRoute()
+  const [paletteOpen, setPaletteOpen] = useState(false)
+  const { commands } = useStore(pluginRegistryStore)
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setPaletteOpen(prev => !prev)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  const handleSelect = useCallback(
+    async (item: { id: string }) => {
+      const cmd = commands.find(c => c.id === item.id)
+      if (cmd) {
+        await executeCommand(cmd.id)
+      }
+    },
+    [commands]
+  )
+
+  const items = getCommandPaletteItems()
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -61,6 +100,19 @@ const RootLayout = () => {
             })}
           </ul>
         </nav>
+        <div className="border-t border-(--border) px-3 py-3">
+          <button
+            className="flex w-full items-center gap-2 rounded-(--radius) border border-(--border) px-3 py-1.5 text-xs text-(--muted) transition hover:bg-(--surface-secondary)"
+            onClick={() => setPaletteOpen(true)}
+            type="button"
+          >
+            <SearchIcon size={14} />
+            <span className="flex-1 text-left">Search commands...</span>
+            <kbd className="rounded border border-(--border) px-1 py-0.5">
+              ⌘K
+            </kbd>
+          </button>
+        </div>
         <div className="border-t border-(--border) px-4 py-3">
           <p className="text-xs text-(--muted)">v0.1.0</p>
         </div>
@@ -68,6 +120,12 @@ const RootLayout = () => {
       <main className="flex min-w-0 flex-1 flex-col overflow-y-auto">
         <Outlet />
       </main>
+      <CommandPalette
+        items={items}
+        onClose={() => setPaletteOpen(false)}
+        onSelect={handleSelect}
+        open={paletteOpen}
+      />
       <TanStackRouterDevtools />
     </div>
   )

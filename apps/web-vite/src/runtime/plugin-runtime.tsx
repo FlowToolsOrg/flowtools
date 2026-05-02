@@ -1,32 +1,37 @@
 import type { AppPlugin, ToolPlugin } from '@flow-tool/sdk'
 
+import { PluginErrorBoundary, withWatchdog } from '@flow-tool/sdk'
+
 import { createWebToolContext, WebPluginRuntimeProvider } from './ctx'
 
 interface RunWebToolPluginOptions {
   signal?: AbortSignal
+  timeoutMs?: number
 }
 
 /**
- * Wrap an app plugin panel with runtime ctx provider.
+ * Wrap an app plugin panel with runtime ctx provider and error boundary.
  */
 export function renderWebAppPlugin(plugin: AppPlugin) {
   const Panel = plugin.setup()
 
   return (
-    <WebPluginRuntimeProvider
-      mode="development"
-      permissions={plugin.meta.permissions}
-      storeShape={plugin.store}
-      pluginId={plugin.meta.id}
-      pluginType="app"
-    >
-      <Panel />
-    </WebPluginRuntimeProvider>
+    <PluginErrorBoundary pluginId={plugin.meta.id}>
+      <WebPluginRuntimeProvider
+        mode="development"
+        permissions={plugin.meta.permissions}
+        storeShape={plugin.store}
+        pluginId={plugin.meta.id}
+        pluginType="app"
+      >
+        <Panel />
+      </WebPluginRuntimeProvider>
+    </PluginErrorBoundary>
   )
 }
 
 /**
- * Execute a tool plugin with web runtime ctx.
+ * Execute a tool plugin with web runtime ctx and watchdog.
  */
 export function runWebToolPlugin<TPlugin extends ToolPlugin<never, unknown>>(
   plugin: TPlugin,
@@ -40,5 +45,9 @@ export function runWebToolPlugin<TPlugin extends ToolPlugin<never, unknown>>(
     signal: options?.signal,
   })
 
-  return plugin.run(ctx, input) as ReturnType<TPlugin['run']>
+  const guardedRun = withWatchdog(plugin, {
+    timeoutMs: options?.timeoutMs,
+  })
+
+  return guardedRun(ctx, input) as ReturnType<TPlugin['run']>
 }

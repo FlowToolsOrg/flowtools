@@ -4,6 +4,7 @@ import { type ComponentPropsWithoutRef } from 'react'
 
 import { Chip } from '@heroui/react'
 
+import { LockIcon, ShieldCheckIcon } from '../../icons'
 import { cn } from '../../utils/class-name'
 
 export interface ToolPermissionListRootProps extends ComponentPropsWithoutRef<'ul'> {}
@@ -62,11 +63,17 @@ const ToolPermissionListItem = ({
       </div>
       {required ? (
         <Chip color="warning" size="sm" variant="soft">
-          Required
+          <span className="flex items-center gap-1">
+            <ShieldCheckIcon size={12} />
+            Required
+          </span>
         </Chip>
       ) : (
         <Chip size="sm" variant="tertiary">
-          Optional
+          <span className="flex items-center gap-1">
+            <LockIcon size={12} />
+            Optional
+          </span>
         </Chip>
       )}
     </li>

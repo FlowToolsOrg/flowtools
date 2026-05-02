@@ -9,14 +9,37 @@ import {
   SettingsSwitchField,
   type SettingsNavSection,
 } from '@flow-tool/ui'
+import {
+  SettingsIcon,
+  SlidersHorizontalIcon,
+  TerminalIcon,
+  ZapIcon,
+} from '@flow-tool/ui/icons'
 import { createFileRoute } from '@tanstack/react-router'
 
 import { Button, Chip } from '@heroui/react'
 
-const navSections: SettingsNavSection[] = [
-  { id: 'general', label: 'General', description: 'Basic host options' },
-  { id: 'runtime', label: 'Runtime', description: 'Execution behavior' },
-  { id: 'developer', label: 'Developer', description: 'Debug and logs' },
+const navSections: (SettingsNavSection & {
+  icon: typeof SlidersHorizontalIcon
+})[] = [
+  {
+    id: 'general',
+    label: 'General',
+    description: 'Basic host options',
+    icon: SlidersHorizontalIcon,
+  },
+  {
+    id: 'runtime',
+    label: 'Runtime',
+    description: 'Execution behavior',
+    icon: ZapIcon,
+  },
+  {
+    id: 'developer',
+    label: 'Developer',
+    description: 'Debug and logs',
+    icon: TerminalIcon,
+  },
 ]
 
 export const Route = createFileRoute('/settings')({
@@ -33,19 +56,24 @@ function SettingsPage() {
   const [startupMode, setStartupMode] = useState<string | number>('workspace')
   const [workspaceName, setWorkspaceName] = useState('Flow Workspace')
 
-  const sectionTitle =
-    navSections.find(section => section.id === activeSectionId)?.label ??
-    'General'
+  const activeSection = navSections.find(
+    section => section.id === activeSectionId
+  )
+  const sectionTitle = activeSection?.label ?? 'General'
+  const SectionIcon = activeSection?.icon ?? SlidersHorizontalIcon
 
   return (
     <div className="flex flex-col gap-6 p-6 lg:p-8">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold text-[var(--foreground)]">
-          Settings
-        </h1>
-        <p className="text-sm text-[var(--muted)]">
-          Configure your workspace and runtime behavior.
-        </p>
+      <header className="flex items-center gap-2.5 space-y-0">
+        <SettingsIcon className="text-[var(--accent)]" size={22} />
+        <div>
+          <h1 className="text-2xl font-semibold text-[var(--foreground)]">
+            Settings
+          </h1>
+          <p className="text-sm text-[var(--muted)]">
+            Configure your workspace and runtime behavior.
+          </p>
+        </div>
       </header>
 
       <div className="grid min-h-0 flex-1 gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
@@ -59,7 +87,10 @@ function SettingsPage() {
             <SettingsGroupCard>
               <SettingsGroupCard.Header>
                 <SettingsGroupCard.Title>
-                  {sectionTitle}
+                  <span className="flex items-center gap-2">
+                    <SectionIcon size={16} />
+                    {sectionTitle}
+                  </span>
                 </SettingsGroupCard.Title>
                 <SettingsGroupCard.Description>
                   Manage your host preferences.

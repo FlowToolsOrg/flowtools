@@ -1,3 +1,4 @@
+export { cn } from './utils/class-name'
 export {
   HeroSection,
   type HeroSectionProps,

@@ -16,6 +16,15 @@ import {
   type RunStatus,
   type ToolVersionRecord,
 } from '@flow-tool/ui'
+import {
+  ArrowLeftIcon,
+  BanIcon,
+  CircleCheckIcon,
+  EyeIcon,
+  FlaskIcon,
+  PlayIcon,
+  SparklesIcon,
+} from '@flow-tool/ui/icons'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 
 import { Button, Chip, Tabs } from '@heroui/react'
@@ -39,6 +48,13 @@ const versions: ToolVersionRecord[] = [
     notes: 'Bug fixes and improvements',
   },
 ]
+
+const statusIcons: Record<string, typeof CircleCheckIcon> = {
+  stable: CircleCheckIcon,
+  beta: FlaskIcon,
+  experimental: SparklesIcon,
+  deprecated: BanIcon,
+}
 
 export const Route = createFileRoute('/tools/$toolId')({
   component: ToolDetailPage_,
@@ -121,6 +137,7 @@ function ToolDetailPage_() {
   }
 
   const isAppPlugin = !!plugin
+  const StatusIcon = statusIcons[meta.status ?? 'stable'] ?? CircleCheckIcon
 
   return (
     <div className="flex flex-col gap-6 p-6 lg:p-8">
@@ -130,7 +147,8 @@ function ToolDetailPage_() {
           size="sm"
           variant="ghost"
         >
-          ← Back
+          <ArrowLeftIcon size={16} />
+          Back
         </Button>
         <div className="h-4 w-px bg-[var(--separator)]" />
         <div className="flex items-center gap-2">
@@ -150,7 +168,10 @@ function ToolDetailPage_() {
             size="sm"
             variant="soft"
           >
-            {meta.status ?? 'stable'}
+            <span className="flex items-center gap-1">
+              <StatusIcon size={12} />
+              {meta.status ?? 'stable'}
+            </span>
           </Chip>
           {meta.version ? (
             <Chip size="sm" variant="secondary">
@@ -167,11 +188,17 @@ function ToolDetailPage_() {
         <Tabs.ListContainer>
           <Tabs.List aria-label="Tool sections">
             <Tabs.Tab id="overview">
-              Overview
+              <span className="flex items-center gap-1.5">
+                <EyeIcon size={14} />
+                Overview
+              </span>
               <Tabs.Indicator />
             </Tabs.Tab>
             <Tabs.Tab id="run">
-              Run
+              <span className="flex items-center gap-1.5">
+                <PlayIcon size={14} />
+                Run
+              </span>
               <Tabs.Indicator />
             </Tabs.Tab>
           </Tabs.List>
@@ -269,6 +296,7 @@ function ToolDetailPage_() {
                   size="sm"
                   variant="ghost"
                 >
+                  <SparklesIcon size={16} />
                   Fill Demo Input
                 </Button>
               </RunPanel.Footer>

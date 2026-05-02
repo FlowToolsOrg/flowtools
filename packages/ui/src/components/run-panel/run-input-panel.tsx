@@ -4,6 +4,7 @@ import { type ComponentPropsWithoutRef } from 'react'
 
 import { Button, Input, Label, TextField } from '@heroui/react'
 
+import { PlayIcon } from '../../icons'
 import { cn } from '../../utils/class-name'
 
 export interface RunInputPanelProps extends Omit<
@@ -44,7 +45,10 @@ export const RunInputPanel = ({
             variant="secondary"
           />
         </TextField>
-        <Button onPress={onRun}>{runButtonText}</Button>
+        <Button onPress={onRun}>
+          <PlayIcon size={16} />
+          {runButtonText}
+        </Button>
       </div>
     </section>
   )

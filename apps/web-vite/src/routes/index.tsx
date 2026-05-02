@@ -1,5 +1,11 @@
 import { extractMeta } from '@flow-tool/sdk'
 import { ToolCard, ToolGrid } from '@flow-tool/ui'
+import {
+  EarthIcon,
+  GalleryThumbnailsIcon,
+  ScanTextIcon,
+  WrenchIcon,
+} from '@flow-tool/ui/icons'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 
 import { Chip } from '@heroui/react'
@@ -19,6 +25,13 @@ const tools = extractMeta(allPlugins).map(meta => ({
   tags: meta.tags,
   isInstalled: true,
 }))
+
+const categoryIcons: Record<string, typeof ScanTextIcon> = {
+  text: ScanTextIcon,
+  image: GalleryThumbnailsIcon,
+  network: EarthIcon,
+  utility: WrenchIcon,
+}
 
 export const Route = createFileRoute('/')({
   component: Dashboard,
@@ -71,9 +84,14 @@ function Dashboard() {
         ] as string[])
         if (categoryTools.length === 0) return null
 
+        const CategoryIcon = categoryIcons[category.id]
+
         return (
           <section key={category.id} className="space-y-2">
             <div className="flex items-center gap-3">
+              {CategoryIcon ? (
+                <CategoryIcon className="text-[var(--muted)]" size={14} />
+              ) : null}
               <h2 className="text-xs font-semibold tracking-wide text-[var(--muted)] uppercase">
                 {category.label}
               </h2>

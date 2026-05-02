@@ -4,6 +4,7 @@ import { type ComponentPropsWithoutRef } from 'react'
 
 import { Chip } from '@heroui/react'
 
+import { BadgeAlertIcon, CircleHelpIcon, XIcon } from '../../icons'
 import { cn } from '../../utils/class-name'
 
 import { type RunLogEntry } from './types'
@@ -23,6 +24,12 @@ const levelColorMap: Record<
   info: 'default',
   warn: 'warning',
   error: 'danger',
+}
+
+const levelIcons: Record<RunLogEntry['level'], typeof CircleHelpIcon> = {
+  info: CircleHelpIcon,
+  warn: BadgeAlertIcon,
+  error: XIcon,
 }
 
 export const RunLogList = ({
@@ -54,7 +61,13 @@ export const RunLogList = ({
                 <p className="text-xs text-[var(--muted)]">{entry.timestamp}</p>
               </div>
               <Chip color={levelColorMap[entry.level]} size="sm" variant="soft">
-                {entry.level}
+                <span className="flex items-center gap-1">
+                  {(() => {
+                    const LevelIcon = levelIcons[entry.level]
+                    return <LevelIcon size={12} />
+                  })()}
+                  {entry.level}
+                </span>
               </Chip>
             </button>
           </li>

@@ -4,6 +4,7 @@ import { type ComponentPropsWithoutRef, type ReactNode } from 'react'
 
 import { Card } from '@heroui/react'
 
+import { SearchIcon } from '../../icons'
 import { cn } from '../../utils/class-name'
 
 export interface MarketEmptyStateProps extends Omit<
@@ -29,6 +30,7 @@ export const MarketEmptyState = ({
         variant="secondary"
       >
         <Card.Header className="flex flex-col items-center gap-2">
+          <SearchIcon className="text-[var(--muted)]" size={40} />
           <Card.Title className="text-lg text-[var(--foreground)]">
             {title}
           </Card.Title>

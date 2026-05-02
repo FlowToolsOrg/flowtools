@@ -1,3 +1,4 @@
+import { BlocksIcon, HomeIcon, SettingsIcon } from '@flow-tool/ui/icons'
 import {
   createRootRoute,
   Link,
@@ -7,9 +8,9 @@ import {
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: '⊞' },
-  { to: '/tools', label: 'Tools', icon: '⊡' },
-  { to: '/settings', label: 'Settings', icon: '⚙' },
+  { to: '/', label: 'Dashboard', icon: HomeIcon },
+  { to: '/tools', label: 'Tools', icon: BlocksIcon },
+  { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ] as const
 
 const RootLayout = () => {
@@ -47,7 +48,14 @@ const RootLayout = () => {
                     }`}
                     to={item.to}
                   >
-                    <span className="text-base">{item.icon}</span>
+                    <item.icon
+                      className={
+                        isActive
+                          ? 'text-[var(--accent)]'
+                          : 'text-[var(--muted)]'
+                      }
+                      size={18}
+                    />
                     {item.label}
                   </Link>
                 </li>

@@ -17,6 +17,7 @@
     "@heroui/react": "^3.0.3",
     "@heroui/styles": "^3.0.3",
     "@tanstack/react-router": "^1.161.3",
+    "motion": "^11.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "zustand": "^5.0.12"

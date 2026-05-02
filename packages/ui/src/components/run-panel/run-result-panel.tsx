@@ -4,6 +4,7 @@ import { type ComponentPropsWithoutRef } from 'react'
 
 import { Button } from '@heroui/react'
 
+import { CopyIcon } from '../../icons'
 import { cn } from '../../utils/class-name'
 
 import { type RunResultPayload } from './types'
@@ -38,6 +39,7 @@ export const RunResultPanel = ({
         </div>
         {onCopy ? (
           <Button onPress={onCopy} size="sm" variant="ghost">
+            <CopyIcon size={14} />
             Copy
           </Button>
         ) : null}

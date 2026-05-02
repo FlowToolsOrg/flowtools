@@ -9,6 +9,12 @@ import {
   ToolSummaryCard,
   type ToolEntity,
 } from '@flow-tool/ui'
+import {
+  BlocksIcon,
+  CircleCheckIcon,
+  FlaskIcon,
+  LayersIcon,
+} from '@flow-tool/ui/icons'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 
 import { Button, Chip } from '@heroui/react'
@@ -75,13 +81,16 @@ function ToolsPage() {
   return (
     <div className="grid min-h-0 flex-1 gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:p-8">
       <div className="flex min-w-0 flex-col gap-4">
-        <header className="space-y-1">
-          <h1 className="text-2xl font-semibold text-[var(--foreground)]">
-            Tools
-          </h1>
-          <p className="text-sm text-[var(--muted)]">
-            Browse and run available tools.
-          </p>
+        <header className="flex items-center gap-2.5 space-y-0">
+          <BlocksIcon className="text-[var(--accent)]" size={22} />
+          <div>
+            <h1 className="text-2xl font-semibold text-[var(--foreground)]">
+              Tools
+            </h1>
+            <p className="text-sm text-[var(--muted)]">
+              Browse and run available tools.
+            </p>
+          </div>
         </header>
 
         <MarketToolbar>
@@ -96,6 +105,7 @@ function ToolsPage() {
               size="sm"
               variant={filter === 'all' ? 'primary' : 'ghost'}
             >
+              <LayersIcon size={14} />
               All
             </Button>
             <Button
@@ -103,6 +113,7 @@ function ToolsPage() {
               size="sm"
               variant={filter === 'installed' ? 'primary' : 'ghost'}
             >
+              <CircleCheckIcon size={14} />
               Installed
             </Button>
             <Button
@@ -110,6 +121,7 @@ function ToolsPage() {
               size="sm"
               variant={filter === 'beta' ? 'primary' : 'ghost'}
             >
+              <FlaskIcon size={14} />
               Beta
             </Button>
           </MarketToolbar.Filters>

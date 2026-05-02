@@ -61,12 +61,14 @@ Core principles:
 - Product direction: desktop-first, cross-platform ready.
 - Current runnable host: `apps/web-vite`.
 - Core packages under active development:
-  - `packages/sdk` (`@flow-tool/sdk`)
-  - `packages/ui` (`@flow-tool/ui`)
-- Local plugin workspace examples:
-  - `plugins/plugin-example-hello-world` (app plugin)
-  - `plugins/plugin-example-run-hello` (tool plugin)
-  - `plugins/plugin-todo-list` (app plugin with store)
+  - `packages/sdk` (`@flow-tool/sdk`) — plugin contract, hooks, registry, lifecycle
+  - `packages/ui` (`@flow-tool/ui`) — shared UI components including CommandPalette
+- Local plugin workspace with 8 built-in plugins:
+  - `plugins/plugin-example-hello-world` (app)
+  - `plugins/plugin-example-run-hello` (tool)
+  - `plugins/plugin-todo-list` (app with host-managed store)
+  - `plugins/plugin-uuid-generator`, `plugin-text-ops`, `plugin-random-picker`,
+    `plugin-image-base64`, `plugin-website-latency` (app)
 - Planned (directory created, not yet implemented):
   - `apps/desktop`
   - `apps/docs`
@@ -76,18 +78,23 @@ Core principles:
 
 ```text
 apps/
-  web-vite/    # web host prototype (router + runtime adapters)
+  web-vite/    # web host prototype (router + registry + command palette)
   web/         # (planned)
   desktop/     # (planned) Tauri desktop host
   docs/        # (planned) documentation site
   ui-test/     # UI package consumer and browser test app
 packages/
-  sdk/         # plugin contract, hooks, runtime provider, result helpers
-  ui/          # shared React UI primitives
+  sdk/         # plugin contract, hooks, registry, lifecycle, result helpers
+  ui/          # shared React UI primitives (HeroUI-based)
 plugins/
   plugin-example-hello-world/  # app plugin example
   plugin-example-run-hello/    # tool plugin example
   plugin-todo-list/            # app plugin with host-managed store
+  plugin-uuid-generator/       # UUID generator (clipboard)
+  plugin-text-ops/             # text set operations (clipboard)
+  plugin-random-picker/        # random name picker
+  plugin-image-base64/         # image ↔ base64 converter (clipboard)
+  plugin-website-latency/      # website latency tester (network)
 configs/
   tsdown/      # shared package build config
 ```
@@ -288,20 +295,41 @@ Examples:
 - Encryption
 - High-performance computation
 
-## 📦 Plugin Loading
+## 📦 Plugin Registry & Loading
 
-Plugins are:
+Plugins are managed through a central registry system:
 
-- Installed locally
-- Loaded dynamically (ESM)
-- React-externalized
-- SDK-externalized
+- **`PluginRegistry`** — single source of truth for plugin state
+- **`PluginLoader`** — async loading via manifest `loader()` functions
+- **`CommandRegistry`** — command registration and search
+- **`PluginLifecycleManager`** — orchestrates lifecycle hooks
+- **`PluginErrorBoundary`** — catches rendering errors from plugin panels
+- **`withWatchdog`** — wraps tool execution with timeout detection
+
+Plugin states: `registered` → `loaded` → `enabled` → `disabled`
+
+Built-in plugins are declared in `apps/web-vite/src/plugin/manifests.ts`
+and loaded at startup via `bootstrap()`. External plugins can be loaded
+dynamically via `import()` URLs.
 
 Flow Tool ensures:
 
 - Single React instance
 - Dependency stability
 - Runtime validation
+- Error isolation per plugin
+
+## ⌨️ Command Palette
+
+The host includes a `Cmd/Ctrl+K` command palette (Raycast/uTools style):
+
+- **Keyboard shortcut**: `Cmd+K` (macOS) / `Ctrl+K` (Windows/Linux)
+- **Search**: matches title, description, and keywords
+- **Navigation**: `↑↓` arrows, `Enter` to execute, `Esc` to close
+- **Recent commands**: recently used commands shown first
+- **Auto-registration**: all enabled plugins register commands automatically
+
+UI component: `packages/ui/src/components/command-palette/`
 
 ## 🌍 Platform Roadmap
 
@@ -336,10 +364,11 @@ Flow Tool is currently under active architectural development.
 
 The focus is on:
 
-- Stable plugin runtime
-- SDK design
-- Permission system
-- State & DB isolation model
+- Plugin registry and dynamic loading
+- Command palette and command dispatch
+- Lifecycle management and error isolation
+- Run history and settings persistence
+- SDK design and permission system
 
 ## Documentation
 

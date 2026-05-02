@@ -15,25 +15,27 @@ Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平�
 
 - 已实现：
   - `packages/sdk`：插件契约、hooks（工厂模式）、runtime provider、结果类型
-  - `packages/ui`：共享 UI 组件库（HeroUI 基础）
-  - `apps/web-vite`：web runtime 原型（用于验证 SDK 与运行时模型）
-  - `plugins/plugin-example-hello-world`：app 插件示例
-  - `plugins/plugin-example-run-hello`：tool 插件示例
-  - `plugins/plugin-todo-list`：带 host-managed store 的 app 插件示例
+  - `packages/sdk/src/registry`：PluginRegistry、CommandRegistry、PluginLoader、PluginLifecycleManager、PluginErrorBoundary、withWatchdog
+  - `packages/ui`：共享 UI 组件库（HeroUI 基础），含 CommandPalette 组件
+  - `apps/web-vite`：web runtime 原型，含命令面板、插件注册中心、bootstrap 启动流程
+  - `apps/web-vite/src/stores`：pluginRegistryStore、commandStore、runHistoryStore、settingsStore
+  - 8 个内置插件（7 个 app + 1 个 tool）
 - 目录已创建，尚未实现：
   - `apps/desktop`（Tauri 桌面宿主）
   - `apps/docs`
   - `apps/web`
 
-结论：架构方向是 desktop-first，但当前可运行宿主是 web 原型。
+结论：架构方向是 desktop-first，当前 web 原型已具备注册中心、命令面板、生命周期管理、错误隔离等核心机制。
 
 ## 2. Layered Model（分层模型）
 
 ```text
 [ Plugins ]
   -> use @flow-tool/sdk
+[ Registry & Lifecycle ]
+  -> PluginRegistry / CommandRegistry / PluginLoader / LifecycleManager
 [ Runtime (Host App) ]
-  -> loader / ctx factory / permission gating
+  -> ctx factory / permission gating / error boundary / watchdog
 [ Capability Adapters ]
   -> fs / request / storage / native bridge
 [ Platform ]
@@ -42,7 +44,7 @@ Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平�
 
 依赖方向保持单向：
 
-`plugin -> sdk -> host runtime -> capability adapter -> platform`
+`plugin -> sdk -> registry -> host runtime -> capability adapter -> platform`
 
 ## 3. Plugin Contract（SDK 契约）
 
@@ -137,8 +139,9 @@ Host runtime 用 `pickCapability(...)` 做权限裁剪：
 入口：`renderWebAppPlugin(plugin)`
 
 1. 调用 `plugin.setup()` 获取 Panel 组件
-2. 使用 `WebPluginRuntimeProvider` 注入 runtime context
-3. 在 React 树中渲染插件 Panel
+2. 使用 `PluginErrorBoundary` 包裹（捕获渲染错误）
+3. 使用 `WebPluginRuntimeProvider` 注入 runtime context
+4. 在 React 树中渲染插件 Panel
 
 ### 7.2 Tool Plugin
 
@@ -146,9 +149,21 @@ Host runtime 用 `pickCapability(...)` 做权限裁剪：
 
 1. 调用 `createWebToolContext(...)`
 2. 注入 `signal` 与 `log`
-3. 执行 `plugin.run(ctx, input)` 并返回结果
+3. 使用 `withWatchdog()` 包装（超时检测）
+4. 执行 `plugin.run(ctx, input)` 并返回结果
 
-## 8. Commands 与 Result Model
+### 7.3 Bootstrap Flow
+
+应用启动时 `bootstrap(navigate)` 执行：
+
+1. 创建 `PluginRegistry`、`CommandRegistry`、`PluginLoader` 实例
+2. 注册所有内置插件清单（`builtInManifests`）
+3. 加载并启用所有插件（`loadAll()` → `enableAll()`）
+4. 初始化 `pluginRegistryStore`（Zustand 响应式）
+5. 自动注册命令到 `CommandRegistry`
+6. 同步状态到 UI
+
+## 8. Commands 与 Command Palette
 
 SDK 已定义命令与结果契约：
 
@@ -156,13 +171,56 @@ SDK 已定义命令与结果契约：
 - `CommandDef`：统一描述命令入口
 - `result` helpers：`text/json/table/open/multi`
 
-说明：命令契约已经在 SDK 中可用，但当前 web host 仍以示例路由直挂插件为主，
-尚未形成完整 command palette / 命令分发中枢。
+### CommandRegistry
 
-## 9. Lifecycle State（现状）
+`packages/sdk/src/registry/command-registry.ts` 提供命令注册中心：
 
-`PluginLifecycle` 类型已定义（`onLoad/onUnload/onActivate/onDeactivate`），
-但当前 host 原型尚未系统性调度这些生命周期钩子。
+- 每个插件自动注册为命令（app → panel 命令，tool → headless 命令）
+- 插件的 `commands` 字段中的命令也会被注册
+- 支持搜索（匹配 title、description、keywords）
+- 支持最近执行记录（最多 5 条）
+
+### Command Palette UI
+
+`packages/ui/src/components/command-palette/` 提供命令面板组件：
+
+- 居中弹窗，`Cmd/Ctrl+K` 唤出
+- 实时搜索过滤
+- 键盘导航（`↑↓` 选择，`Enter` 执行，`Esc` 关闭）
+- 最近执行的命令置顶
+
+宿主集成在 `apps/web-vite/src/routes/__root.tsx`，
+通过 `commandStore` 连接 `CommandRegistry`。
+
+## 9. Lifecycle & Error Isolation（生命周期与错误隔离）
+
+### PluginLifecycleManager
+
+`packages/sdk/src/registry/lifecycle-manager.ts` 管理插件生命周期：
+
+- `load()` → 调用 `onLoad`
+- `unload()` → 调用 `onUnload`
+- `activate()` → 调用 `onActivate`
+- `deactivate()` → 调用 `onDeactivate`
+- `isHealthy()` → 检查插件是否处于健康状态
+
+状态机：`registered → loaded → enabled ↔ disabled`
+
+### PluginErrorBoundary
+
+`packages/sdk/src/registry/plugin-error-boundary.tsx` 捕获插件渲染错误：
+
+- 包裹每个 app 插件的 Panel 渲染
+- 捕获 React 渲染异常，显示降级 UI
+- 提供"重新加载"按钮恢复
+
+### withWatchdog
+
+`packages/sdk/src/registry/watchdog.ts` 包装 tool 插件执行：
+
+- 默认 30 秒超时
+- 超时后触发 AbortSignal
+- 防止长时间运行的 tool 阻塞宿主
 
 ## 10. Non-Goals / Current Limits
 
@@ -179,19 +237,24 @@ SDK 已定义命令与结果契约：
 
 1. 新增 `apps/desktop` 作为主宿主
 2. 将 `dialog/db/native/fs` 等能力切换到 Tauri + Rust 实现
-3. 建立命令注册中心（palette、历史、快捷键）
+3. ~~建立命令注册中心（palette、历史、快捷键）~~ ✅ 已实现
 4. 接入插件安装/加载策略（本地安装、版本管理、签名/权限提示）
 
 这一路径与当前 SDK 契约兼容，重点是 host capability 实现迁移。
 
 ## 12. Stability & Recovery（稳定性策略）
 
-由于同线程无沙箱，必须制定稳定性策略：
+由于同线程无沙箱，已实施以下稳定性策略：
 
-- 命令执行 watchdog（超时提示）
+- **PluginErrorBoundary**：包裹 app 插件 Panel，捕获渲染错误并显示降级 UI
+- **withWatchdog**：tool 执行超时检测（默认 30s），超时触发 AbortSignal
+- **LifecycleManager**：插件生命周期钩子隔离，单个插件的钩子失败不影响其他插件
+- **Registry 状态管理**：插件错误状态通过 `registry.markError()` 记录，不影响宿主
+
+待实施：
+
 - 长任务建议走 native（Rust）或可取消的异步
-- 插件错误隔离（try/catch + error boundary）
-- 性能预算：对渲染频繁组件做 虚拟列表、分片计算
+- 性能预算：对渲染频繁组件做虚拟列表、分片计算
 
 ## 13. Native Performance（Rust/Tauri）
 
@@ -311,3 +374,7 @@ Web 端 db：
 - 权限 UI：授权提示、细粒度控制
 - Tool 插件 worker 化（隔离计算）
 - 自动化系统：定时任务、监听剪贴板、文件监控等
+- 外部插件动态加载（`import()` URL）
+- 插件 `package.json` 规范化（独立 npm 包）
+- Run History UI（Tool Detail 页 History Tab）
+- 插件间通信机制（事件总线 / RPC）

@@ -4,13 +4,19 @@
 
 This repository is a Bun + Turbo monorepo.
 
-- `packages/ui`: shared React UI primitives (`src/button.tsx`, `src/card.tsx`).
-- `packages/sdk`: plugin-facing SDK contract, hooks, runtime provider, and
-  result helpers.
-- `apps/web-vite`: current runnable host prototype (web runtime + routing).
+- `packages/sdk`: plugin-facing SDK contract, hooks, runtime provider,
+  registry system, result helpers, and lifecycle management.
+- `packages/ui`: shared React UI primitives (HeroUI-based), including
+  `CommandPalette`, `ToolCard`, `RunPanel`, `SettingsCenter`, etc.
+- `apps/web-vite`: current runnable host prototype (web runtime + routing +
+  command palette + plugin registry).
 - `apps/ui-test`: consumer app for manual/UI testing of `@flow-tool/ui`.
-- `plugins/`: local plugin workspace (currently includes
-  `plugin-example-hello-world`).
+- `plugins/`: local plugin workspace with 8 built-in plugins:
+  - `plugin-example-hello-world` (app)
+  - `plugin-example-run-hello` (tool)
+  - `plugin-todo-list` (app with host-managed store)
+  - `plugin-uuid-generator`, `plugin-text-ops`, `plugin-random-picker`,
+    `plugin-image-base64`, `plugin-website-latency` (app)
 - `configs/tsdown`: shared package build config.
 - `docs/` and root docs such as `README.md` and `architecture.md`: product and
   architecture references.
@@ -64,6 +70,38 @@ If dependencies change, run `bun install`.
   Derive types with `InferStoreState<T>` / `InferStoreActions<T>`.
   Consume state with `usePluginStore<TState>()` and dispatch actions via
   `usePluginStoreApi<TState, TActions>().actions.xxx()`.
+
+## Plugin Registry & Loading
+
+Plugins are managed through a central registry system:
+
+- `PluginRegistry`: single source of truth for plugin state
+  (`registered` → `loaded` → `enabled` → `disabled`).
+- `PluginLoader`: handles async loading via manifest `loader()` functions.
+- `CommandRegistry`: registers and searches commands from all plugins.
+- `PluginLifecycleManager`: orchestrates `onLoad/onUnload/onActivate/onDeactivate`.
+- `PluginErrorBoundary`: catches rendering errors from plugin panels.
+- `withWatchdog`: wraps tool execution with timeout detection.
+
+Built-in plugins are declared in `apps/web-vite/src/plugin/manifests.ts`
+and loaded at startup via `bootstrap()`.
+
+Host UI reads plugin/command state from Zustand stores:
+
+- `pluginRegistryStore`: reactive plugin list
+- `commandStore`: command palette items + execution
+- `runHistoryStore`: persisted tool execution history
+- `settingsStore`: persisted host settings
+
+## Command Palette
+
+The host includes a `Cmd/Ctrl+K` command palette:
+
+- UI component: `packages/ui/src/components/command-palette/`
+- Keyboard shortcut: `Cmd+K` (macOS) / `Ctrl+K` (Windows/Linux)
+- Commands auto-registered from all enabled plugins
+- Search matches title, description, and keywords
+- Recent commands shown first
 
 ## Testing Guidelines
 

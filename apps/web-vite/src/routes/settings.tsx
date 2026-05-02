@@ -16,8 +16,11 @@ import {
   ZapIcon,
 } from '@flow-tool/ui/icons'
 import { createFileRoute } from '@tanstack/react-router'
+import { useStore } from 'zustand'
 
 import { Button, Chip } from '@heroui/react'
+
+import { settingsStore } from '@/stores/settings-store'
 
 const navSections: (SettingsNavSection & {
   icon: typeof SlidersHorizontalIcon
@@ -51,10 +54,16 @@ function SettingsPage() {
     navSections[0]?.id ?? 'general'
   )
 
-  const [autoUpdate, setAutoUpdate] = useState(true)
-  const [telemetry, setTelemetry] = useState(false)
-  const [startupMode, setStartupMode] = useState<string | number>('workspace')
-  const [workspaceName, setWorkspaceName] = useState('Flow Workspace')
+  const {
+    autoUpdate,
+    telemetry,
+    startupMode,
+    workspaceName,
+    setAutoUpdate,
+    setTelemetry,
+    setStartupMode,
+    setWorkspaceName,
+  } = useStore(settingsStore)
 
   const activeSection = navSections.find(
     section => section.id === activeSectionId
@@ -112,7 +121,9 @@ function SettingsPage() {
                 <SettingsSelectField
                   description="Select the first screen after startup."
                   label="Startup mode"
-                  onChange={value => setStartupMode(value ?? 'workspace')}
+                  onChange={value =>
+                    setStartupMode(String(value ?? 'workspace'))
+                  }
                   options={[
                     { key: 'workspace', label: 'Dashboard' },
                     { key: 'market', label: 'Tools' },
@@ -153,7 +164,7 @@ function SettingsPage() {
             </h3>
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-muted">Auto-update</span>
+                <span className="text-(--muted)">Auto-update</span>
                 <Chip
                   color={autoUpdate ? 'success' : 'default'}
                   size="sm"
@@ -175,7 +186,7 @@ function SettingsPage() {
               <div className="flex items-center justify-between">
                 <span className="text-(--muted)">Startup</span>
                 <span className="font-medium text-(--foreground)">
-                  {String(startupMode)}
+                  {startupMode}
                 </span>
               </div>
               <div className="flex items-center justify-between">

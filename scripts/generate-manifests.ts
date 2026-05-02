@@ -5,8 +5,12 @@
  * 扫描 plugins 目录，提取插件 meta 信息，生成 manifests.ts
  */
 
-import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs'
-import { join, resolve } from 'path'
+import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs'
+import { join, dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 interface PluginMeta {
   id: string
@@ -19,9 +23,9 @@ interface PluginMeta {
   category?: string
 }
 
-const PLUGINS_DIR = resolve(import.meta.dir, '..', 'plugins')
+const PLUGINS_DIR = resolve(__dirname, '..', 'plugins')
 const OUTPUT_FILE = resolve(
-  import.meta.dir,
+  __dirname,
   '..',
   'apps/web-vite/src/plugin/manifests.ts'
 )

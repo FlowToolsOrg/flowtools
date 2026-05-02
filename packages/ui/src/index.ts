@@ -1,5 +1,10 @@
 export { cn } from './utils/class-name'
 export {
+  CommandPalette,
+  type CommandPaletteItem,
+  type CommandPaletteRootProps,
+} from './components/command-palette'
+export {
   HeroSection,
   type HeroSectionProps,
   type HeroStat,

@@ -14,7 +14,8 @@
     "check-types": "turbo run check-types",
     "test": "turbo run test",
     "lint:staged": "lint-staged",
-    "prepare": "husky"
+    "prepare": "husky",
+    "generate:manifests": "bun run scripts/generate-manifests.ts"
   },
   "dependencies": {
     "motion": "^12.38.0"

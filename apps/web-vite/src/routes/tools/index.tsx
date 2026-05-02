@@ -1,6 +1,5 @@
 import { useState } from 'react'
 
-import { extractMeta } from '@flow-tool/sdk'
 import {
   MarketEmptyState,
   MarketToolbar,
@@ -16,31 +15,11 @@ import {
   LayersIcon,
 } from '@flow-tool/ui/icons'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useStore } from 'zustand'
 
 import { Button, Chip } from '@heroui/react'
 
-import runHello from '@plugins/plugin-example-run-hello'
-
-import appPlugins from '@/plugin/app'
-
-const allPlugins = [...appPlugins, runHello]
-
-const tools: ToolEntity[] = extractMeta(allPlugins).map(meta => ({
-  id: meta.id,
-  name: meta.name,
-  description: meta.description ?? '',
-  version: meta.version,
-  status: meta.status ?? 'stable',
-  category: meta.category,
-  tags: meta.tags,
-  permissions: meta.permissions?.map(p => ({ id: p, label: p })),
-  isInstalled: true,
-}))
-
-const categories = [
-  'all',
-  ...new Set(tools.map(t => t.category).filter(Boolean)),
-] as string[]
+import { pluginRegistryStore } from '@/stores/plugin-registry-store'
 
 type FilterMode = 'all' | 'installed' | 'beta'
 
@@ -50,10 +29,34 @@ export const Route = createFileRoute('/tools/')({
 
 function ToolsPage() {
   const navigate = useNavigate()
+  const { plugins } = useStore(pluginRegistryStore)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<FilterMode>('all')
   const [category, setCategory] = useState('all')
+
+  const tools: ToolEntity[] = plugins
+    .filter(p => p.state === 'enabled')
+    .map(p => ({
+      id: p.id,
+      name: p.manifest.name,
+      description: p.manifest.description ?? '',
+      version: p.manifest.version,
+      status: 'stable' as const,
+      category: p.manifest.category,
+      tags: p.manifest.tags,
+      permissions: p.manifest.permissions?.map(perm => ({
+        id: perm,
+        label: perm,
+      })),
+      isInstalled: true,
+    }))
+
   const [selectedToolId, setSelectedToolId] = useState(tools[0]?.id ?? '')
+
+  const categories = [
+    'all',
+    ...new Set(tools.map(t => t.category).filter(Boolean)),
+  ] as string[]
 
   const filteredTools = tools.filter(tool => {
     const matchesQuery =

@@ -1,4 +1,3 @@
-import { extractMeta } from '@flow-tool/sdk'
 import { ToolCard, ToolGrid } from '@flow-tool/ui'
 import {
   EarthIcon,
@@ -7,24 +6,12 @@ import {
   WrenchIcon,
 } from '@flow-tool/ui/icons'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useStore } from 'zustand'
 
 import { Chip } from '@heroui/react'
 
-import runHello from '@plugins/plugin-example-run-hello'
-
-import appPlugins, { pluginCategories } from '@/plugin/app'
-
-const allPlugins = [...appPlugins, runHello]
-const tools = extractMeta(allPlugins).map(meta => ({
-  id: meta.id,
-  name: meta.name,
-  description: meta.description ?? '',
-  version: meta.version,
-  status: meta.status ?? 'stable',
-  category: meta.category,
-  tags: meta.tags,
-  isInstalled: true,
-}))
+import { pluginCategories } from '@/plugin/manifests'
+import { pluginRegistryStore } from '@/stores/plugin-registry-store'
 
 const categoryIcons: Record<string, typeof ScanTextIcon> = {
   text: ScanTextIcon,
@@ -39,6 +26,20 @@ export const Route = createFileRoute('/')({
 
 function Dashboard() {
   const navigate = useNavigate()
+  const { plugins } = useStore(pluginRegistryStore)
+
+  const enabledPlugins = plugins.filter(p => p.state === 'enabled')
+
+  const tools = enabledPlugins.map(p => ({
+    id: p.id,
+    name: p.manifest.name,
+    description: p.manifest.description ?? '',
+    version: p.manifest.version,
+    status: 'stable' as const,
+    category: p.manifest.category,
+    tags: p.manifest.tags,
+    isInstalled: true,
+  }))
 
   const getCategoryTools = (pluginIds: readonly string[]) =>
     tools.filter(t => pluginIds.includes(t.id))

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 
-import { extractMeta } from '@flow-tool/sdk'
 import {
   RunInputPanel,
   RunLogList,
@@ -18,21 +17,18 @@ import {
 } from '@flow-tool/ui'
 import {
   ArrowLeftIcon,
-  BanIcon,
   CircleCheckIcon,
   EyeIcon,
-  FlaskIcon,
   PlayIcon,
   SparklesIcon,
 } from '@flow-tool/ui/icons'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useStore } from 'zustand'
 
 import { Button, Chip, Tabs } from '@heroui/react'
 
-import appPlugins, { getPluginById } from '@/plugin/app'
 import { renderWebAppPlugin } from '@/runtime'
-
-const allMeta = extractMeta(appPlugins)
+import { pluginRegistryStore } from '@/stores/plugin-registry-store'
 
 const versions: ToolVersionRecord[] = [
   {
@@ -49,13 +45,6 @@ const versions: ToolVersionRecord[] = [
   },
 ]
 
-const statusIcons: Record<string, typeof CircleCheckIcon> = {
-  stable: CircleCheckIcon,
-  beta: FlaskIcon,
-  experimental: SparklesIcon,
-  deprecated: BanIcon,
-}
-
 export const Route = createFileRoute('/tools/$toolId')({
   component: ToolDetailPage_,
 })
@@ -64,9 +53,11 @@ function ToolDetailPage_() {
   const { toolId } = Route.useParams()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
+  const { plugins } = useStore(pluginRegistryStore)
 
-  const plugin = getPluginById(toolId)
-  const meta = allMeta.find(m => m.id === toolId)
+  const registered = plugins.find(p => p.id === toolId)
+  const plugin = registered?.plugin
+  const meta = registered?.manifest
 
   const [input, setInput] = useState('')
   const [status, setStatus] = useState<RunStatus>('idle')
@@ -136,8 +127,8 @@ function ToolDetailPage_() {
     )
   }
 
-  const isAppPlugin = !!plugin
-  const StatusIcon = statusIcons[meta.status ?? 'stable'] ?? CircleCheckIcon
+  const isAppPlugin = plugin?.type === 'app'
+  const StatusIcon = CircleCheckIcon
 
   return (
     <div className="flex flex-col gap-6 p-6 lg:p-8">
@@ -155,29 +146,15 @@ function ToolDetailPage_() {
           <h1 className="text-xl font-semibold text-(--foreground)">
             {meta.name}
           </h1>
-          <Chip
-            color={
-              meta.status === 'stable'
-                ? 'success'
-                : meta.status === 'beta'
-                  ? 'accent'
-                  : meta.status === 'experimental'
-                    ? 'warning'
-                    : 'danger'
-            }
-            size="sm"
-            variant="soft"
-          >
+          <Chip color="success" size="sm" variant="soft">
             <span className="flex items-center gap-1">
               <StatusIcon size={12} />
-              {meta.status ?? 'stable'}
+              stable
             </span>
           </Chip>
-          {meta.version ? (
-            <Chip size="sm" variant="secondary">
-              v{meta.version}
-            </Chip>
-          ) : null}
+          <Chip size="sm" variant="secondary">
+            v{meta.version}
+          </Chip>
         </div>
       </header>
 
@@ -210,7 +187,7 @@ function ToolDetailPage_() {
                 <ToolSummaryCard
                   category={meta.category}
                   description={meta.description}
-                  status={meta.status ?? 'stable'}
+                  status="stable"
                   title={meta.name}
                   version={meta.version}
                 />
@@ -261,7 +238,7 @@ function ToolDetailPage_() {
         </Tabs.Panel>
 
         <Tabs.Panel id="run">
-          {isAppPlugin ? (
+          {isAppPlugin && plugin ? (
             <div className="rounded-(--radius) border border-(--border) bg-(--surface) p-4">
               {renderWebAppPlugin(plugin)}
             </div>

@@ -20,8 +20,7 @@
     "dev": "tsdown --config tsdown.config.ts --watch",
     "lint": "oxlint --fix",
     "format": "oxfmt",
-    "check-types": "tsc --noEmit",
-    "clear": "rm -rf dist node_modules"
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@flow-tool/cli": "workspace:*",

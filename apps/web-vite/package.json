@@ -12,11 +12,14 @@
     "check:types": "tsc --noEmit"
   },
   "dependencies": {
+    "@flow-tool/plugins": "workspace:*",
     "@flow-tool/sdk": "workspace:*",
     "@flow-tool/ui": "workspace:*",
     "@heroui/react": "catalog:",
     "@heroui/styles": "catalog:",
+    "@tailwindcss/vite": "^4.2.4",
     "@tanstack/react-router": "catalog:",
+    "es-toolkit": "catalog:",
     "motion": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",

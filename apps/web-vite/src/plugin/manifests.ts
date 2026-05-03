@@ -10,6 +10,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     permissions: ['clipboard'],
     tags: ['base64', 'encode', 'decode', 'converter'],
     category: '编码工具',
+    cliAvailable: true,
     loader: () => import('@plugins/plugin-base64-encoder'),
   },
   {
@@ -21,6 +22,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     permissions: ['clipboard'],
     tags: ['color', 'hex', 'rgb', 'hsl', 'converter'],
     category: '开发工具',
+    cliAvailable: true,
     loader: () => import('@plugins/plugin-color-converter'),
   },
   {
@@ -32,6 +34,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     permissions: ['clipboard'],
     tags: ['hash', 'sha', 'sha256', 'md5', 'generator'],
     category: '开发工具',
+    cliAvailable: true,
     loader: () => import('@plugins/plugin-hash-generator'),
   },
   {
@@ -43,6 +46,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     permissions: ['clipboard'],
     tags: ['image', 'base64', 'converter'],
     category: '编码工具',
+    cliAvailable: true,
     loader: () => import('@plugins/plugin-image-base64'),
   },
   {
@@ -54,6 +58,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     permissions: ['clipboard'],
     tags: ['json', 'format', 'minify', 'validate'],
     category: '开发工具',
+    cliAvailable: true,
     loader: () => import('@plugins/plugin-json-formatter'),
   },
   {
@@ -64,6 +69,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     type: 'app',
     tags: ['random', 'picker', 'name'],
     category: '实用工具',
+    cliAvailable: true,
     loader: () => import('@plugins/plugin-random-picker'),
   },
   {
@@ -75,6 +81,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     permissions: ['clipboard'],
     tags: ['regex', 'regexp', 'test', 'pattern'],
     category: '开发工具',
+    cliAvailable: true,
     loader: () => import('@plugins/plugin-regex-tester'),
   },
   {
@@ -86,6 +93,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     permissions: ['clipboard'],
     tags: ['text', 'set', 'intersection', 'union', 'difference'],
     category: '文本工具',
+    cliAvailable: true,
     loader: () => import('@plugins/plugin-text-ops'),
   },
   {
@@ -97,6 +105,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     permissions: ['clipboard'],
     tags: ['timestamp', 'unix', 'date', 'converter'],
     category: '开发工具',
+    cliAvailable: true,
     loader: () => import('@plugins/plugin-timestamp-converter'),
   },
   {
@@ -105,6 +114,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     version: '0.0.1',
     type: 'app',
     permissions: ['storage'],
+    cliAvailable: true,
     loader: () => import('@plugins/plugin-todo-list'),
   },
   {
@@ -116,6 +126,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     permissions: ['clipboard'],
     tags: ['uuid', 'random', 'generator'],
     category: '开发工具',
+    cliAvailable: true,
     loader: () => import('@plugins/plugin-uuid-generator'),
   },
   {
@@ -127,6 +138,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     permissions: ['network'],
     tags: ['network', 'latency', 'ping'],
     category: '网络工具',
+    cliAvailable: true,
     loader: () => import('@plugins/plugin-website-latency'),
   },
 ]

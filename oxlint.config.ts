@@ -7,14 +7,17 @@ export default defineConfig({
   },
   rules: {
     'no-console': 'warn',
-    'eslint/no-unused-vars': 'error',
-    'eslint/unused-imports': 'error',
-    'react/prop-types': 'off',
-    'react/jsx-uses-react': 'off',
-    'react/react-in-jsx-scope': 'off',
-    'react-hooks/exhaustive-deps': 'off',
-    'jsx-a11y/click-events-have-key-events': 'warn',
-    'jsx-a11y/interactive-supports-focus': 'warn',
+    'no-unused-vars': [
+      'error',
+      {
+        fix: {
+          imports: 'safe-fix',
+          variables: 'off',
+        },
+      },
+    ],
+    'typescript/no-floating-promises': 'error',
+    'typescript/no-unsafe-assignment': 'warn',
 
     '@typescript-eslint/no-unused-vars': [
       'warn',
@@ -26,34 +29,6 @@ export default defineConfig({
     ],
     'react/self-closing-comp': 'warn',
 
-    'react/jsx-sort-props': [
-      'warn',
-      {
-        callbacksLast: true,
-        shorthandFirst: true,
-        noSortAlphabetically: false,
-        reservedFirst: true,
-      },
-    ],
-
-    'padding-line-between-statements': [
-      'warn',
-      {
-        blankLine: 'always',
-        prev: '*',
-        next: 'return',
-      },
-      {
-        blankLine: 'always',
-        prev: ['const', 'let', 'var'],
-        next: '*',
-      },
-      {
-        blankLine: 'any',
-        prev: ['const', 'let', 'var'],
-        next: ['const', 'let', 'var'],
-      },
-    ],
     'no-floating-promises': 'off',
     // Correctness
     'tailwindcss/no-unknown-classes': 'error',

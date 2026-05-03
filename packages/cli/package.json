@@ -27,12 +27,12 @@
   },
   "dependencies": {
     "commander": "^13.1.0",
-    "zod": "^4.4.2"
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "^25.3.0",
-    "oxfmt": "^0.47.0",
-    "oxlint": "^1.62.0",
-    "typescript": "^6.0.3"
+    "@types/node": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "typescript": "catalog:"
   }
 }

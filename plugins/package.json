@@ -27,21 +27,21 @@
     "@flow-tool/cli": "workspace:*",
     "@flow-tool/sdk": "workspace:*",
     "@flow-tool/ui": "workspace:*",
-    "zod": "^4.4.2"
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "^25.3.0",
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
-    "oxfmt": "^0.47.0",
-    "oxlint": "^1.62.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "typescript": "^6.0.3"
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "typescript": "catalog:"
   },
   "peerDependencies": {
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react": "catalog:",
+    "react-dom": "catalog:"
   },
   "peerDependenciesMeta": {
     "react": {

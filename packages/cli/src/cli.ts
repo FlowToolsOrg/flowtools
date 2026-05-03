@@ -38,6 +38,7 @@ program
 
 program
   .command('list')
+  .alias('ls')
   .description('List all plugins')
   .option('-f, --format <format>', 'Output format: json or stdio', 'stdio')
   .option('-a, --all', 'Show all plugins (including non-CLI)', false)
@@ -68,106 +69,35 @@ program
 // ─── info ───────────────────────────────────────────────────────────
 
 program
-  .command('info <plugin-id>')
+  .command('info [plugin-id]')
   .description('Show plugin details and input schema')
   .option('-f, --format <format>', 'Output format: json or stdio', 'stdio')
-  .action(async (pluginId: string, opts: { format: string }) => {
-    const plugins = scanPlugins()
-    const pluginInfo = plugins.find(p => p.id === pluginId)
+  .option('-a, --all', 'Show info for all plugins', false)
+  .action(
+    async (
+      pluginId: string | undefined,
+      opts: { format: string; all: boolean }
+    ) => {
+      const plugins = scanPlugins()
 
-    if (!pluginInfo) {
-      console.error(`Error: plugin not found: ${pluginId}`)
-      console.error(`\nAvailable plugins: ${plugins.map(p => p.id).join(', ')}`)
-      process.exit(1)
-    }
-
-    if (opts.format === 'json') {
-      const plugin = pluginInfo.hasSchema ? await loadPlugin(pluginId) : null
-      const schema = plugin?.inputSchema
-        ? introspectSchema(plugin.inputSchema as ZodObject<any>)
-        : null
-      const mock = schema
-        ? await generateMockFromSchema(plugin!.inputSchema as ZodObject<any>)
-        : null
-      console.log(
-        JSON.stringify(
-          {
-            ...pluginInfo,
-            schema: schema
-              ? Object.fromEntries(
-                  Object.entries(schema).map(([k, v]) => [
-                    k,
-                    { ...v, flag: `--${toKebab(k)}` },
-                  ])
-                )
-              : null,
-            examples: mock
-              ? {
-                  flags: `flow-tool run ${pluginId} ${buildFlagExample(schema!, mock)}`,
-                  json: `flow-tool run ${pluginId} --input '${JSON.stringify(mock)}'`,
-                  input: mock,
-                }
-              : null,
-          },
-          null,
-          2
-        )
-      )
-      return
-    }
-
-    console.log()
-    console.log(`  Plugin:    ${pluginInfo.id}`)
-    console.log(`  Name:      ${pluginInfo.name}`)
-    console.log(`  Version:   ${pluginInfo.version}`)
-    if (pluginInfo.description) {
-      console.log(`  Desc:      ${pluginInfo.description}`)
-    }
-    console.log(`  Type:      ${pluginInfo.type}`)
-    console.log(
-      `  CLI:       ${pluginInfo.hasRun ? '✓ available' : '✗ not available'}`
-    )
-
-    if (pluginInfo.hasSchema) {
-      try {
-        const plugin = await loadPlugin(pluginId)
-        if (plugin?.inputSchema) {
-          const fields = introspectSchema(plugin.inputSchema as ZodObject<any>)
-          console.log('\n  Input flags:\n')
-          for (const [key, def] of Object.entries(fields)) {
-            const flag = `--${toKebab(key)}`
-            const type = def.type === 'boolean' ? '' : ` <${def.type}>`
-            const req = def.required ? ' [required]' : ''
-            const defVal =
-              def.default !== undefined
-                ? ` [default: ${JSON.stringify(def.default)}]`
-                : ''
-            const desc = def.description ?? key
-            console.log(`    ${flag}${type.padEnd(14)} ${desc}${req}${defVal}`)
-            if (def.enum) {
-              console.log(`${' '.repeat(18)}Choices: ${def.enum.join(', ')}`)
-            }
-          }
-          console.log(`\n  Run:  flow-tool run ${pluginId} [flags]`)
-          console.log(`  Help: flow-tool run ${pluginId} --help`)
-
-          const mock = await generateMockFromSchema(
-            plugin.inputSchema as ZodObject<any>
-          )
-          console.log('\n  Examples:\n')
-          console.log(
-            `    flow-tool run ${pluginId} ${buildFlagExample(fields, mock)}`
-          )
-          console.log(
-            `    flow-tool run ${pluginId} --input '${JSON.stringify(mock)}'`
-          )
+      if (opts.all) {
+        for (const p of plugins) {
+          await printPluginInfo(p.id, opts.format)
         }
-      } catch (err) {
-        console.log(`\n  Schema: could not load plugin: ${err}`)
+        return
       }
+
+      if (!pluginId) {
+        console.error('Error: specify a <plugin-id> or use --all')
+        console.error(
+          `\nAvailable plugins: ${plugins.map(p => p.id).join(', ')}`
+        )
+        process.exit(1)
+      }
+
+      await printPluginInfo(pluginId, opts.format)
     }
-    console.log()
-  })
+  )
 
 // ─── run ────────────────────────────────────────────────────────────
 
@@ -249,6 +179,107 @@ program
   )
 
 // ─── Plugin-specific help ───────────────────────────────────────────
+
+async function printPluginInfo(
+  pluginId: string,
+  format: string
+): Promise<void> {
+  const plugins = scanPlugins()
+  const pluginInfo = plugins.find(p => p.id === pluginId)
+
+  if (!pluginInfo) {
+    console.error(`Error: plugin not found: ${pluginId}`)
+    console.error(`\nAvailable plugins: ${plugins.map(p => p.id).join(', ')}`)
+    process.exit(1)
+  }
+
+  if (format === 'json') {
+    const plugin = pluginInfo.hasSchema ? await loadPlugin(pluginId) : null
+    const schema = plugin?.inputSchema
+      ? introspectSchema(plugin.inputSchema as ZodObject<any>)
+      : null
+    const mock = schema
+      ? await generateMockFromSchema(plugin!.inputSchema as ZodObject<any>)
+      : null
+    console.log(
+      JSON.stringify(
+        {
+          ...pluginInfo,
+          schema: schema
+            ? Object.fromEntries(
+                Object.entries(schema).map(([k, v]) => [
+                  k,
+                  { ...v, flag: `--${toKebab(k)}` },
+                ])
+              )
+            : null,
+          examples: mock
+            ? {
+                flags: `flow-tool run ${pluginId} ${buildFlagExample(schema!, mock)}`,
+                json: `flow-tool run ${pluginId} --input '${JSON.stringify(mock)}'`,
+                input: mock,
+              }
+            : null,
+        },
+        null,
+        2
+      )
+    )
+    return
+  }
+
+  console.log()
+  console.log(`  Plugin:    ${pluginInfo.id}`)
+  console.log(`  Name:      ${pluginInfo.name}`)
+  console.log(`  Version:   ${pluginInfo.version}`)
+  if (pluginInfo.description) {
+    console.log(`  Desc:      ${pluginInfo.description}`)
+  }
+  console.log(`  Type:      ${pluginInfo.type}`)
+  console.log(
+    `  CLI:       ${pluginInfo.hasRun ? '✓ available' : '✗ not available'}`
+  )
+
+  if (pluginInfo.hasSchema) {
+    try {
+      const plugin = await loadPlugin(pluginId)
+      if (plugin?.inputSchema) {
+        const fields = introspectSchema(plugin.inputSchema as ZodObject<any>)
+        console.log('\n  Input flags:\n')
+        for (const [key, def] of Object.entries(fields)) {
+          const flag = `--${toKebab(key)}`
+          const type = def.type === 'boolean' ? '' : ` <${def.type}>`
+          const req = def.required ? ' [required]' : ''
+          const defVal =
+            def.default !== undefined
+              ? ` [default: ${JSON.stringify(def.default)}]`
+              : ''
+          const desc = def.description ?? key
+          console.log(`    ${flag}${type.padEnd(14)} ${desc}${req}${defVal}`)
+          if (def.enum) {
+            console.log(`${' '.repeat(18)}Choices: ${def.enum.join(', ')}`)
+          }
+        }
+        console.log(`\n  Run:  flow-tool run ${pluginId} [flags]`)
+        console.log(`  Help: flow-tool run ${pluginId} --help`)
+
+        const mock = await generateMockFromSchema(
+          plugin.inputSchema as ZodObject<any>
+        )
+        console.log('\n  Examples:\n')
+        console.log(
+          `    flow-tool run ${pluginId} ${buildFlagExample(fields, mock)}`
+        )
+        console.log(
+          `    flow-tool run ${pluginId} --input '${JSON.stringify(mock)}'`
+        )
+      }
+    } catch (err) {
+      console.log(`\n  Schema: could not load plugin: ${err}`)
+    }
+  }
+  console.log()
+}
 
 function printSchemaFlags(
   schema: Record<string, import('./schema').FieldMeta>

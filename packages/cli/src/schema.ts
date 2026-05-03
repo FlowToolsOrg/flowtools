@@ -178,6 +178,57 @@ export function buildInputFromOptions(
 }
 
 /**
+ * Generate a mock input object from a Zod schema using json-schema-faker.
+ * Converts Zod → JSON Schema → mock data. Handles complex types
+ * (email, url, uuid, etc.) automatically via JSON Schema format support.
+ */
+export async function generateMockFromSchema(
+  schema: z.ZodObject<any>
+): Promise<Record<string, unknown>> {
+  const { generate } = await import('json-schema-faker')
+
+  const jsonSchema = z.toJSONSchema(schema, { target: 'draft-7' }) as Record<
+    string,
+    unknown
+  >
+
+  // Force all properties as required so json-schema-faker generates values
+  // for optional fields too
+  const props = (jsonSchema as any).properties ?? {}
+  jsonSchema.required = Object.keys(props)
+
+  // Keep examples concise: 2 items per array
+  return (await generate(jsonSchema, {
+    minItems: 2,
+    maxItems: 2,
+  })) as Record<string, unknown>
+}
+
+/**
+ * Build CLI flag string from fields and mock values.
+ */
+export function buildFlagExample(
+  fields: Record<string, FieldMeta>,
+  mock: Record<string, unknown>
+): string {
+  const parts: string[] = []
+  for (const [key, field] of Object.entries(fields)) {
+    const flag = `--${toKebab(key)}`
+    const value = mock[key]
+    if (field.type === 'boolean') {
+      if (value) parts.push(flag)
+    } else if (field.type === 'array' && Array.isArray(value)) {
+      for (const item of value) {
+        parts.push(`${flag} ${JSON.stringify(item)}`)
+      }
+    } else {
+      parts.push(`${flag} ${JSON.stringify(value)}`)
+    }
+  }
+  return parts.join(' ')
+}
+
+/**
  * Parse a JSON input string and validate against a schema.
  */
 export function parseJsonInput(

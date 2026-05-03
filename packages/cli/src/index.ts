@@ -12,6 +12,8 @@ export {
   parseJsonInput,
   introspectSchema,
   toKebab,
+  generateMockFromSchema,
+  buildFlagExample,
 } from './schema'
 export type { FieldMeta } from './schema'
 export { runPlugin, runPluginAndPrint } from './runner'

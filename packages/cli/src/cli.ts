@@ -23,6 +23,8 @@ import {
   parseJsonInput,
   introspectSchema,
   toKebab,
+  generateMockFromSchema,
+  buildFlagExample,
 } from './schema'
 
 const program = new Command()
@@ -84,6 +86,9 @@ program
       const schema = plugin?.inputSchema
         ? introspectSchema(plugin.inputSchema as ZodObject<any>)
         : null
+      const mock = schema
+        ? await generateMockFromSchema(plugin!.inputSchema as ZodObject<any>)
+        : null
       console.log(
         JSON.stringify(
           {
@@ -95,6 +100,13 @@ program
                     { ...v, flag: `--${toKebab(k)}` },
                   ])
                 )
+              : null,
+            examples: mock
+              ? {
+                  flags: `flow-tool run ${pluginId} ${buildFlagExample(schema!, mock)}`,
+                  json: `flow-tool run ${pluginId} --input '${JSON.stringify(mock)}'`,
+                  input: mock,
+                }
               : null,
           },
           null,
@@ -138,6 +150,17 @@ program
           }
           console.log(`\n  Run:  flow-tool run ${pluginId} [flags]`)
           console.log(`  Help: flow-tool run ${pluginId} --help`)
+
+          const mock = await generateMockFromSchema(
+            plugin.inputSchema as ZodObject<any>
+          )
+          console.log('\n  Examples:\n')
+          console.log(
+            `    flow-tool run ${pluginId} ${buildFlagExample(fields, mock)}`
+          )
+          console.log(
+            `    flow-tool run ${pluginId} --input '${JSON.stringify(mock)}'`
+          )
         }
       } catch (err) {
         console.log(`\n  Schema: could not load plugin: ${err}`)
@@ -271,6 +294,17 @@ async function showPluginHelp(pluginId: string): Promise<void> {
         const fields = introspectSchema(plugin.inputSchema as ZodObject<any>)
         console.log('\n  Plugin options:\n')
         printSchemaFlags(fields)
+
+        const mock = await generateMockFromSchema(
+          plugin.inputSchema as ZodObject<any>
+        )
+        console.log('\n  Examples:\n')
+        console.log(
+          `    flow-tool run ${pluginId} ${buildFlagExample(fields, mock)}`
+        )
+        console.log(
+          `    flow-tool run ${pluginId} --input '${JSON.stringify(mock)}'`
+        )
       }
     } catch (err) {
       console.log(`\n  Warning: could not load plugin schema: ${err}`)
@@ -284,12 +318,6 @@ async function showPluginHelp(pluginId: string): Promise<void> {
   console.log('    -i, --input <json>     Raw JSON input')
   console.log('    -t, --timeout <ms>     Execution timeout (default: 30000)')
   console.log('    -h, --help             Show this help')
-
-  console.log('\n  Examples:\n')
-  console.log(`    flow-tool run ${pluginId} --help`)
-  if (pluginInfo.hasSchema) {
-    console.log(`    flow-tool run ${pluginId} --input '{"key":"value"}'`)
-  }
   console.log()
 }
 

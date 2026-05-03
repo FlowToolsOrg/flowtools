@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "commander": "^13.1.0",
+    "json-schema-faker": "^0.6.1",
     "zod": "catalog:"
   },
   "devDependencies": {

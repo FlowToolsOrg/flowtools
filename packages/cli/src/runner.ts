@@ -6,7 +6,7 @@ import type { OutputFormat } from './types'
 
 import { createCLIToolContext } from './context'
 import { loadPlugin } from './discovery'
-import { formatResult } from './formatter'
+import { formatRaw, formatResult } from './formatter'
 
 export interface RunResult {
   success: boolean
@@ -83,19 +83,13 @@ export async function runPluginAndPrint(
   }
 
   if (result.data && typeof result.data === 'object' && 'type' in result.data) {
-    // CommandResult
     const output = formatResult(
       result.data as Parameters<typeof formatResult>[0],
       format
     )
     console.log(output)
   } else {
-    // Raw value
-    if (format === 'json') {
-      console.log(JSON.stringify(result.data, null, 2))
-    } else {
-      console.log(String(result.data))
-    }
+    console.log(formatRaw(result.data, format))
   }
 
   return 0

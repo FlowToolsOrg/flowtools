@@ -1,8 +1,17 @@
 /**
- * Output formatter — converts CommandResult to CLI-friendly output.
+ * Output formatter — top-level entry point.
+ *
+ * Two output formats:
+ *   json  — full CommandResult as JSON (with type wrapper)
+ *   stdio — human-readable plain text via format-stdio
+ *
+ * The format layer is intentionally thin: it delegates to format-stdio
+ * for stdio rendering, so the output strategy can be changed in one place.
  */
 
 import type { OutputFormat } from './types'
+
+import { formatStdio } from './format-stdio'
 
 interface CommandResultShape {
   type: string
@@ -18,6 +27,9 @@ interface CommandResultShape {
 
 /**
  * Format a command result for CLI output.
+ *
+ * - `json`:  full CommandResult as JSON
+ * - `stdio`: plain text via format-stdio
  */
 export function formatResult(
   result: CommandResultShape,
@@ -26,75 +38,19 @@ export function formatResult(
   if (format === 'json') {
     return JSON.stringify(result, null, 2)
   }
-
-  return formatResultText(result)
+  return formatStdio(result)
 }
 
-function formatResultText(result: CommandResultShape): string {
-  switch (result.type) {
-    case 'text':
-      return result.text ?? ''
-
-    case 'json':
-      return JSON.stringify(result.value, null, 2)
-
-    case 'table': {
-      if (!result.columns || !result.rows) return '(empty table)'
-      return formatTable(result.columns, result.rows)
-    }
-
-    case 'open':
-      return `Open: ${result.target ?? result.path ?? '(unknown)'}`
-
-    case 'file':
-      return `File: ${result.path ?? '(unknown)'}${result.name ? ` (${result.name})` : ''}`
-
-    case 'multi': {
-      if (!result.items) return '(empty)'
-      return result.items.map(item => formatResultText(item)).join('\n---\n')
-    }
-
-    default:
-      return JSON.stringify(result, null, 2)
+/**
+ * Format a raw (non-CommandResult) value for CLI output.
+ */
+export function formatRaw(value: unknown, format: OutputFormat): string {
+  if (format === 'json') {
+    return JSON.stringify(value, null, 2)
   }
-}
-
-function formatTable(
-  columns: readonly { key: string; title: string }[],
-  rows: readonly Record<string, unknown>[]
-): string {
-  if (rows.length === 0) return '(empty table)'
-
-  // Calculate column widths
-  const widths = new Map<string, number>()
-  for (const col of columns) {
-    widths.set(col.key, col.title.length)
-  }
-  for (const row of rows) {
-    for (const col of columns) {
-      const val = String(row[col.key] ?? '')
-      const current = widths.get(col.key) ?? 0
-      widths.set(col.key, Math.max(current, val.length))
-    }
-  }
-
-  // Header
-  const header = columns
-    .map(col => col.title.padEnd(widths.get(col.key) ?? 0))
-    .join('  ')
-
-  const separator = columns
-    .map(col => '─'.repeat(widths.get(col.key) ?? 0))
-    .join('──')
-
-  // Rows
-  const body = rows
-    .map(row =>
-      columns
-        .map(col => String(row[col.key] ?? '').padEnd(widths.get(col.key) ?? 0))
-        .join('  ')
-    )
-    .join('\n')
-
-  return `${header}\n${separator}\n${body}`
+  if (value === null || value === undefined) return ''
+  if (typeof value === 'string') return value
+  if (typeof value === 'number' || typeof value === 'boolean')
+    return String(value)
+  return formatStdio(value)
 }

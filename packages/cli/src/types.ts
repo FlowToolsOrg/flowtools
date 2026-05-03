@@ -2,7 +2,7 @@
  * CLI-internal types for Flow Tool CLI.
  */
 
-export type OutputFormat = 'json' | 'text'
+export type OutputFormat = 'json' | 'stdio'
 
 export interface CLIPluginInfo {
   id: string

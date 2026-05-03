@@ -10,14 +10,14 @@ import { z } from 'zod'
 /**
  * Convert camelCase or snake_case to kebab-case.
  */
-function toKebab(str: string): string {
+export function toKebab(str: string): string {
   return str
     .replace(/([a-z])([A-Z])/g, '$1-$2')
     .replace(/_/g, '-')
     .toLowerCase()
 }
 
-interface FieldMeta {
+export interface FieldMeta {
   type: 'string' | 'number' | 'boolean' | 'enum' | 'array'
   description?: string
   required: boolean
@@ -29,7 +29,9 @@ interface FieldMeta {
 /**
  * Convert a Zod schema to a JSON Schema and extract field metadata.
  */
-function introspectSchema(schema: z.ZodObject<any>): Record<string, FieldMeta> {
+export function introspectSchema(
+  schema: z.ZodObject<any>
+): Record<string, FieldMeta> {
   const jsonSchema = z.toJSONSchema(schema, { target: 'draft-7' })
   const properties = (jsonSchema as any).properties ?? {}
   const required = new Set((jsonSchema as any).required ?? [])

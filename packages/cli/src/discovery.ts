@@ -81,7 +81,9 @@ function extractMetaFromSource(pluginDir: string): CLIPluginInfo | null {
     if (!id || !name || !version) continue
 
     const hasRun = /run\s*[<(]/.test(content) || /run\s*:/.test(content)
-    const hasSchema = /inputSchema:\s*z\.object/.test(content)
+    const hasSchema =
+      /inputSchema\s*=\s*z\.object/.test(content) ||
+      /inputSchema:\s*z\.object/.test(content)
 
     return { id, name, version, description, type, hasRun, hasSchema }
   }

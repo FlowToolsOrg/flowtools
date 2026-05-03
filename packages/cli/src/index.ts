@@ -6,7 +6,14 @@
 export { createCLIToolContext } from './context'
 export { scanPlugins, loadPlugin } from './discovery'
 export { formatResult } from './formatter'
-export { addSchemaFlags, buildInputFromOptions, parseJsonInput } from './schema'
+export {
+  addSchemaFlags,
+  buildInputFromOptions,
+  parseJsonInput,
+  introspectSchema,
+  toKebab,
+} from './schema'
+export type { FieldMeta } from './schema'
 export { runPlugin, runPluginAndPrint } from './runner'
 export type { RunResult } from './runner'
 export type {

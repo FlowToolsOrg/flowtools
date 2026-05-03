@@ -61,12 +61,22 @@ Core principles:
 - Product direction: desktop-first, cross-platform ready.
 - Current runnable host: `apps/web-vite`.
 - Core packages under active development:
-  - `packages/sdk` (`@flow-tool/sdk`) — plugin contract, hooks, registry, lifecycle
+  - `packages/sdk` (`@flow-tool/sdk`) — plugin contract, hooks, registry, lifecycle, Zod-based inputSchema
   - `packages/ui` (`@flow-tool/ui`) — shared UI components including CommandPalette
-- Local plugin workspace with 8 built-in plugins:
-  - `plugins/plugin-todo-list` (app with host-managed store)
-  - `plugins/plugin-uuid-generator`, `plugin-text-ops`, `plugin-random-picker`,
-    `plugin-image-base64`, `plugin-website-latency` (app)
+  - `packages/cli` (`@flow-tool/cli`) — unified CLI entry (`flow-tool list/info/run`), auto-generates flags from Zod schema
+- Local plugin workspace with 12 built-in plugins (all app type, all CLI-compatible via `run()` + `inputSchema`):
+  - `plugins/plugin-todo-list` — 待办清单（host-managed store）
+  - `plugins/plugin-uuid-generator` — UUID 生成器
+  - `plugins/plugin-hash-generator` — 哈希生成器
+  - `plugins/plugin-text-ops` — 文本集合运算
+  - `plugins/plugin-json-formatter` — JSON 格式化/压缩
+  - `plugins/plugin-base64-encoder` — Base64 编解码
+  - `plugins/plugin-timestamp-converter` — 时间戳转换
+  - `plugins/plugin-color-converter` — 颜色格式转换
+  - `plugins/plugin-random-picker` — 随机选取器
+  - `plugins/plugin-regex-tester` — 正则表达式测试
+  - `plugins/plugin-image-base64` — 图片 ↔ Base64
+  - `plugins/plugin-website-latency` — 网站延迟测试
 - Planned (directory created, not yet implemented):
   - `apps/desktop`
   - `apps/docs`
@@ -84,13 +94,18 @@ apps/
 packages/
   sdk/         # plugin contract, hooks, registry, lifecycle, result helpers
   ui/          # shared React UI primitives (HeroUI-based)
+  cli/         # unified CLI entry (flow-tool list/info/run)
 plugins/
-  plugin-example-hello-world/  # app plugin example
-  plugin-example-run-hello/    # tool plugin example
   plugin-todo-list/            # app plugin with host-managed store
   plugin-uuid-generator/       # UUID generator (clipboard)
+  plugin-hash-generator/       # hash generator (SHA/MD5)
   plugin-text-ops/             # text set operations (clipboard)
+  plugin-json-formatter/       # JSON formatter/minifier
+  plugin-base64-encoder/       # Base64 encode/decode
+  plugin-timestamp-converter/  # timestamp converter
+  plugin-color-converter/      # color format converter (hex/rgb/hsl)
   plugin-random-picker/        # random name picker
+  plugin-regex-tester/         # regex tester and debugger
   plugin-image-base64/         # image ↔ base64 converter (clipboard)
   plugin-website-latency/      # website latency tester (network)
 configs/
@@ -117,19 +132,35 @@ Useful local commands:
 cd apps/web-vite && bun run dev
 cd apps/ui-test && bun run dev
 cd apps/ui-test && bun run test
+
+# CLI commands
+bun run packages/cli/src/cli.ts list
+bun run packages/cli/src/cli.ts run <plugin-id> --format text
 ```
 
 ## Plugin Model
 
 Flow Tool supports two plugin categories:
 
-- `app`: persistent panel plugins (`setup()` returns a React component)
+- `app`: persistent panel plugins (`setup()` returns a React component), optionally with `run()` for CLI/headless invocation
 - `tool`: instant execution plugins (`run(ctx, input)`)
+
+All plugins can declare `inputSchema` (Zod `z.object({...})`) for:
+
+- CLI auto-generated flags
+- Runtime input validation
+- TypeScript type inference
 
 Minimal app plugin example:
 
 ```tsx
 import { definePlugin, useCapability } from '@flow-tool/sdk'
+import { result } from '@flow-tool/sdk/result'
+import { z } from 'zod'
+
+const inputSchema = z.object({
+  initial: z.string().default('').describe('Initial value'),
+})
 
 export default definePlugin({
   type: 'app',
@@ -138,6 +169,10 @@ export default definePlugin({
     name: 'Example App',
     version: '0.1.0',
     permissions: ['storage'],
+  },
+  inputSchema,
+  async run(_ctx, input) {
+    return result.json({ received: input.initial })
   },
   setup() {
     return function Panel() {
@@ -148,6 +183,33 @@ export default definePlugin({
   },
 })
 ```
+
+## CLI
+
+`packages/cli` provides a unified CLI entry for invoking plugins without UI:
+
+```bash
+# List all CLI-compatible plugins
+bun run packages/cli/src/cli.ts list
+
+# Show plugin details
+bun run packages/cli/src/cli.ts info plugin-uuid-generator
+
+# Execute a plugin with auto-generated flags
+bun run packages/cli/src/cli.ts run plugin-uuid-generator --count 5
+
+# Execute with raw JSON input
+bun run packages/cli/src/cli.ts run plugin-uuid-generator \
+  --input '{"count": 5}'
+
+# Output as text (default is JSON)
+bun run packages/cli/src/cli.ts run plugin-uuid-generator --count 3 \
+  --format text
+```
+
+CLI flags are auto-generated from each plugin's `inputSchema` (Zod).
+Input is validated with `z.safeParse()` before execution.
+Desktop Tauri host can invoke CLI via `Command::new("flow-tool")` and parse JSON output for AI agent integration.
 
 ## SDK Hooks
 
@@ -160,6 +222,12 @@ export default definePlugin({
 - **`useCapability()`** — read runtime capabilities with optional selector
 - **Capability hooks** — `useEnv`, `useUI`, `useStorage`, `useRequest`,
   `useFS`, `useDB`, `useClipboard`, `useDialog`, `useNotification`, `useNative`
+- **`z`** — re-exported from Zod (convenience for plugin `inputSchema`)
+
+Subpath imports:
+
+- **`@flow-tool/sdk/definePlugin`** — standalone `definePlugin` import
+- **`@flow-tool/sdk/result`** — `result.text/json/table/open/multi` helpers
 
 Individual capability hooks are generated via factory functions
 `createRequiredCapabilityHook` / `createOptionalCapabilityHook`.
@@ -367,6 +435,7 @@ The focus is on:
 - Lifecycle management and error isolation
 - Run history and settings persistence
 - SDK design and permission system
+- CLI entry for plugin invocation and AI agent bridge
 
 ## Documentation
 

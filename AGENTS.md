@@ -5,16 +5,30 @@
 This repository is a Bun + Turbo monorepo.
 
 - `packages/sdk`: plugin-facing SDK contract, hooks, runtime provider,
-  registry system, result helpers, and lifecycle management.
+  registry system, result helpers, lifecycle management, and Zod-based
+  `inputSchema` for CLI flag generation.
 - `packages/ui`: shared React UI primitives (HeroUI-based), including
   `CommandPalette`, `ToolCard`, `RunPanel`, `SettingsCenter`, etc.
+- `packages/cli`: unified CLI entry (`flow-tool list/info/run`), Commander-based,
+  auto-generates flags from plugin `inputSchema` (Zod), validates input at runtime,
+  outputs structured `result.*` in JSON or text format.
 - `apps/web-vite`: current runnable host prototype (web runtime + routing +
   command palette + plugin registry).
 - `apps/ui-test`: consumer app for manual/UI testing of `@flow-tool/ui`.
-- `plugins/`: local plugin workspace with 8 built-in plugins:
-  - `plugin-todo-list` (app with host-managed store)
-  - `plugin-uuid-generator`, `plugin-text-ops`, `plugin-random-picker`,
-    `plugin-image-base64`, `plugin-website-latency` (app)
+- `plugins/`: local plugin workspace with 12 built-in plugins (all app type,
+  all CLI-compatible via `run()` + `inputSchema`):
+  - `plugin-todo-list` — 待办清单（host-managed store）
+  - `plugin-uuid-generator` — UUID 生成器
+  - `plugin-hash-generator` — 哈希生成器
+  - `plugin-text-ops` — 文本集合运算
+  - `plugin-json-formatter` — JSON 格式化/压缩
+  - `plugin-base64-encoder` — Base64 编解码
+  - `plugin-timestamp-converter` — 时间戳转换
+  - `plugin-color-converter` — 颜色格式转换
+  - `plugin-random-picker` — 随机选取器
+  - `plugin-regex-tester` — 正则表达式测试
+  - `plugin-image-base64` — 图片 ↔ Base64
+  - `plugin-website-latency` — 网站延迟测试
 - `configs/tsdown`: shared package build config.
 - `docs/` and root docs such as `README.md` and `architecture.md`: product and
   architecture references.
@@ -51,6 +65,12 @@ Useful app-level commands:
 - `cd apps/web-vite && bun run dev`
 - `cd apps/ui-test && bun run dev`
 - `cd apps/ui-test && bun run test`
+
+CLI commands (from repo root):
+
+- `bun run packages/cli/src/cli.ts list` — list CLI-compatible plugins
+- `bun run packages/cli/src/cli.ts info <plugin-id>` — show plugin details
+- `bun run packages/cli/src/cli.ts run <plugin-id> --format text` — execute a plugin
 
 If dependencies change, run `bun install`.
 
@@ -114,7 +134,7 @@ Current quality gate:
 When adding tests, prefer colocated `*.test.ts` / `*.test.tsx` files and
 register the test task in `turbo.json`.
 
-## Documentation Sync (Required)
+## Documentation Sync (Required and !Important)
 
 When code includes major refactoring or important new features, update these
 files in the same change:

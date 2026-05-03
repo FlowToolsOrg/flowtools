@@ -14,24 +14,28 @@ Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平�
 截至 2026-05，仓库中的实现状态：
 
 - 已实现：
-  - `packages/sdk`：插件契约、hooks（工厂模式）、runtime provider、结果类型
+  - `packages/sdk`：插件契约、hooks（工厂模式）、runtime provider、结果类型、Zod-based `inputSchema`
   - `packages/sdk/src/registry`：PluginRegistry、CommandRegistry、PluginLoader、PluginLifecycleManager、PluginErrorBoundary、withWatchdog
   - `packages/ui`：共享 UI 组件库（HeroUI 基础），含 CommandPalette 组件
+  - `packages/cli`：统一 CLI 入口，`flow-tool list/info/run` 子命令，Zod schema 自动生成 flags，`result.*` 结构化输出
   - `apps/web-vite`：web runtime 原型，含命令面板、插件注册中心、bootstrap 启动流程
   - `apps/web-vite/src/stores`：pluginRegistryStore、commandStore、runHistoryStore、settingsStore
-  - 8 个内置插件（7 个 app + 1 个 tool）
+  - 12 个内置插件（全部为 app 类型，均提供 `setup()` + `run()` + `inputSchema`）
 - 目录已创建，尚未实现：
   - `apps/desktop`（Tauri 桌面宿主）
   - `apps/docs`
   - `apps/web`
 
 结论：架构方向是 desktop-first，当前 web 原型已具备注册中心、命令面板、生命周期管理、错误隔离等核心机制。
+CLI 入口已就绪，桌面端可通过 `Command::new("flow-tool")` 调用插件。
 
 ## 2. Layered Model（分层模型）
 
 ```text
 [ Plugins ]
   -> use @flow-tool/sdk
+[ CLI & Desktop Agent ]
+  -> packages/cli (Commander) / Tauri Command bridge
 [ Registry & Lifecycle ]
   -> PluginRegistry / CommandRegistry / PluginLoader / LifecycleManager
 [ Runtime (Host App) ]
@@ -44,7 +48,7 @@ Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平�
 
 依赖方向保持单向：
 
-`plugin -> sdk -> registry -> host runtime -> capability adapter -> platform`
+`plugin -> sdk -> cli/registry -> host runtime -> capability adapter -> platform`
 
 ## 3. Plugin Contract（SDK 契约）
 
@@ -53,9 +57,21 @@ Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平�
 - `type: 'app'`
   - 必须提供 `setup()`
   - `setup()` 返回 React 组件，由宿主渲染
+  - 可选提供 `run(ctx, input)`，使 app 插件可被 CLI / 桌面 agent 无头调用
 - `type: 'tool'`
   - 必须提供 `run(ctx, input)`
   - 无 UI 依赖，直接执行并返回结果
+
+所有插件可选提供 `inputSchema`（Zod `z.object({...})`）：
+
+- CLI 通过 `z.toJSONSchema()` 自动生成 `--flag` 参数定义
+- 运行时用 `.safeParse()` 校验输入
+- `z.infer<typeof inputSchema>` 推导 TypeScript 类型
+
+`run()` 推荐返回 `result.*` 结构化结果（`@flow-tool/sdk/result`）：
+
+- `result.text(string)` / `result.json(value)` / `result.table(cols, rows)`
+- `result.open(target)` / `result.multi(items)`
 
 `definePlugin` 会写入 `__flow_tool` marker，并在类型层限制
 `meta.permissions` 的重复声明（tuple 字面量可在编译期发现重复权限）。
@@ -152,7 +168,21 @@ Host runtime 用 `pickCapability(...)` 做权限裁剪：
 3. 使用 `withWatchdog()` 包装（超时检测）
 4. 执行 `plugin.run(ctx, input)` 并返回结果
 
-### 7.3 Bootstrap Flow
+### 7.3 CLI Execution Flow
+
+入口：`bun run packages/cli/src/cli.ts run <plugin-id> [flags]`
+
+1. `scanPlugins()` 扫描 `plugins/` 目录，检测 `run()` 和 `inputSchema`
+2. 动态 `import()` 加载目标插件
+3. 若有 `inputSchema`：
+   - 解析 CLI flags → key-value 对象
+   - 用 `z.safeParse()` 校验，失败则输出错误并退出
+4. 若无 `inputSchema`：使用 `--input <json>` 传入原始 JSON
+5. `runPluginAndPrint()` 创建 CLI ToolContext，执行 `plugin.run(ctx, input)`
+6. `formatOutput()` 根据 `--format json|text` 输出结果
+7. 返回 exit code（0 成功，1 失败）
+
+### 7.4 Bootstrap Flow
 
 应用启动时 `bootstrap(navigate)` 执行：
 
@@ -238,7 +268,9 @@ SDK 已定义命令与结果契约：
 1. 新增 `apps/desktop` 作为主宿主
 2. 将 `dialog/db/native/fs` 等能力切换到 Tauri + Rust 实现
 3. ~~建立命令注册中心（palette、历史、快捷键）~~ ✅ 已实现
-4. 接入插件安装/加载策略（本地安装、版本管理、签名/权限提示）
+4. ~~CLI 入口（插件无头调用、AI agent bridge）~~ ✅ 已实现（`packages/cli`）
+5. 接入插件安装/加载策略（本地安装、版本管理、签名/权限提示）
+6. 桌面端 AI agent 通过 `Command::new("flow-tool")` 调用 CLI，解析 JSON 输出
 
 这一路径与当前 SDK 契约兼容，重点是 host capability 实现迁移。
 
@@ -378,3 +410,6 @@ Web 端 db：
 - 插件 `package.json` 规范化（独立 npm 包）
 - Run History UI（Tool Detail 页 History Tab）
 - 插件间通信机制（事件总线 / RPC）
+- CLI `--schema` 输出 JSON Schema（供桌面端动态 UI 生成）
+- CLI `--watch` 模式（监听输入变化重新执行）
+- CLI `flow-tool create` 脚手架（交互式创建新插件）

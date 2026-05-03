@@ -18,11 +18,12 @@ function toKebab(str: string): string {
 }
 
 interface FieldMeta {
-  type: 'string' | 'number' | 'boolean' | 'enum'
+  type: 'string' | 'number' | 'boolean' | 'enum' | 'array'
   description?: string
   required: boolean
   default?: unknown
   enum?: string[]
+  itemType?: 'string' | 'number'
 }
 
 /**
@@ -60,6 +61,14 @@ function introspectSchema(schema: z.ZodObject<any>): Record<string, FieldMeta> {
     } else if (p.enum) {
       field.type = 'enum'
       field.enum = p.enum as string[]
+    } else if (p.type === 'array') {
+      field.type = 'array'
+      const items = p.items as Record<string, unknown> | undefined
+      if (items?.type === 'number' || items?.type === 'integer') {
+        field.itemType = 'number'
+      } else {
+        field.itemType = 'string'
+      }
     } else {
       field.type = 'string'
     }
@@ -99,6 +108,14 @@ export function addSchemaFlags(
         )
         break
       }
+      case 'array':
+        command.option(
+          `${flag} <value>`,
+          `${desc} (repeatable)`,
+          (val: string, prev: string[]) => [...prev, val],
+          []
+        )
+        break
       default:
         command.option(
           `${flag} <value>`,
@@ -135,6 +152,17 @@ export function buildInputFromOptions(
         case 'boolean':
           input[key] = value === 'true' || value === true
           break
+        case 'array': {
+          // value may already be an array (from Commander collect),
+          // or a single string from parseUnknownArgs
+          const arr = Array.isArray(value) ? value : [value]
+          if (def.itemType === 'number') {
+            input[key] = arr.map(Number)
+          } else {
+            input[key] = arr
+          }
+          break
+        }
         default:
           input[key] = value
           break

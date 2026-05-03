@@ -35,7 +35,7 @@ export default definePlugin({
   async run(_ctx, input: z.infer<typeof inputSchema>) {
     const count = Math.max(1, Math.min(100, input.count ?? 1))
     const uuids = Array.from({ length: count }, () => generateUUID())
-    return result.json({ uuids, count: uuids.length })
+    return result.json({ results: uuids, count: uuids.length })
   },
   setup() {
     return function UUIDGeneratorPanel() {

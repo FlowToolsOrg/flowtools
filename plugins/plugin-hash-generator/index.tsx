@@ -49,7 +49,7 @@ export default definePlugin({
     const { text, algorithm } = input
     if (!text) return result.text('Error: text is required')
     const hash = await computeHash(text, algorithm)
-    return result.json({ algorithm, hash, bytes: hash.length / 2 })
+    return result.json({ algorithm, results: hash, bytes: hash.length / 2 })
   },
   setup() {
     return function HashGeneratorPanel() {

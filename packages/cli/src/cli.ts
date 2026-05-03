@@ -185,8 +185,8 @@ function getPluginArgs(): string[] {
  * Parse CLI args into a key-value object.
  * Handles: --key value, --flag, -k value, -f
  */
-function parseUnknownArgs(args: string[]): Record<string, string> {
-  const result: Record<string, string> = {}
+function parseUnknownArgs(args: string[]): Record<string, string | string[]> {
+  const result: Record<string, string | string[]> = {}
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
@@ -196,7 +196,13 @@ function parseUnknownArgs(args: string[]): Record<string, string> {
       const key = arg.slice(2)
       const next = args[i + 1]
       if (next && !next.startsWith('-')) {
-        result[key] = next
+        // Collect repeated flags into arrays
+        if (key in result) {
+          const prev = result[key]
+          result[key] = Array.isArray(prev) ? [...prev, next] : [prev, next]
+        } else {
+          result[key] = next
+        }
         i++
       } else {
         result[key] = 'true'
@@ -205,7 +211,12 @@ function parseUnknownArgs(args: string[]): Record<string, string> {
       const key = arg.slice(1)
       const next = args[i + 1]
       if (next && !next.startsWith('-')) {
-        result[key] = next
+        if (key in result) {
+          const prev = result[key]
+          result[key] = Array.isArray(prev) ? [...prev, next] : [prev, next]
+        } else {
+          result[key] = next
+        }
         i++
       } else {
         result[key] = 'true'

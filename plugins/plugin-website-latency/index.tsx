@@ -64,7 +64,7 @@ function getLatencyColor(latency: number | null): string {
 
 const inputSchema = z.object({
   urls: z
-    .string()
+    .array(z.url())
     .optional()
     .describe('Comma-separated URLs to test (defaults to popular sites)'),
 })
@@ -83,10 +83,7 @@ export default definePlugin({
   inputSchema,
   async run(ctx, input: z.infer<typeof inputSchema>) {
     const sites = input.urls
-      ? input.urls
-          .split(',')
-          .map(u => u.trim())
-          .filter(Boolean)
+      ? input.urls.filter(Boolean)
       : DEFAULT_SITES.map(s => s.url)
 
     const results = await Promise.allSettled(

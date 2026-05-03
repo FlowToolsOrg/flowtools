@@ -1,7 +1,7 @@
 /**
  * JSON primitive value type.
  */
-export type JsonPrimitive = string | number | boolean | null
+export type JsonPrimitive = string | number | boolean | null | undefined
 
 /**
  * Recursive JSON value type.
@@ -23,6 +23,11 @@ export interface TextCommandResult {
    * Text payload.
    */
   text: string
+  /**
+   * Optional plain text override for stdio output.
+   * When present, stdio format outputs this instead of the default rendering.
+   */
+  stdio?: string
 }
 
 /**
@@ -37,6 +42,11 @@ export interface JsonCommandResult {
    * JSON payload.
    */
   value: JsonValue
+  /**
+   * Optional plain text override for stdio output.
+   * When present, stdio format outputs this instead of JSON.stringify.
+   */
+  stdio?: string
 }
 
 /**

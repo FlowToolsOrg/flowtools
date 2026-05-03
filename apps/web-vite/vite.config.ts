@@ -22,7 +22,7 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: /^@\//, replacement: `${srcDir}/` },
-      { find: /^@plugins\/(.+)$/, replacement: `${pluginsDir}/$1` },
+      { find: /^@flow-tool\/plugins\/(.+)$/, replacement: `${pluginsDir}/$1` },
       { find: /^@flow-tool\/sdk$/, replacement: sdkEntry },
       { find: /^@flow-tool\/sdk\/(.+)$/, replacement: `${sdkDir}/$1` },
       { find: /^@flow-tool\/ui$/, replacement: uiEntry },

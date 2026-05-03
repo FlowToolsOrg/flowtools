@@ -12,8 +12,6 @@ This repository is a Bun + Turbo monorepo.
   command palette + plugin registry).
 - `apps/ui-test`: consumer app for manual/UI testing of `@flow-tool/ui`.
 - `plugins/`: local plugin workspace with 8 built-in plugins:
-  - `plugin-example-hello-world` (app)
-  - `plugin-example-run-hello` (tool)
   - `plugin-todo-list` (app with host-managed store)
   - `plugin-uuid-generator`, `plugin-text-ops`, `plugin-random-picker`,
     `plugin-image-base64`, `plugin-website-latency` (app)

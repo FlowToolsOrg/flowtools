@@ -64,8 +64,6 @@ Core principles:
   - `packages/sdk` (`@flow-tool/sdk`) — plugin contract, hooks, registry, lifecycle
   - `packages/ui` (`@flow-tool/ui`) — shared UI components including CommandPalette
 - Local plugin workspace with 8 built-in plugins:
-  - `plugins/plugin-example-hello-world` (app)
-  - `plugins/plugin-example-run-hello` (tool)
   - `plugins/plugin-todo-list` (app with host-managed store)
   - `plugins/plugin-uuid-generator`, `plugin-text-ops`, `plugin-random-picker`,
     `plugin-image-base64`, `plugin-website-latency` (app)

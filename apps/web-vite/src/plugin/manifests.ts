@@ -11,7 +11,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['base64', 'encode', 'decode', 'converter'],
     category: '编码工具',
     cliAvailable: true,
-    loader: () => import('@plugins/plugin-base64-encoder'),
+    loader: () => import('@flow-tool/plugins/plugin-base64-encoder'),
   },
   {
     id: 'plugin-color-converter',
@@ -23,7 +23,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['color', 'hex', 'rgb', 'hsl', 'converter'],
     category: '开发工具',
     cliAvailable: true,
-    loader: () => import('@plugins/plugin-color-converter'),
+    loader: () => import('@flow-tool/plugins/plugin-color-converter'),
   },
   {
     id: 'plugin-hash-generator',
@@ -35,7 +35,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['hash', 'sha', 'sha256', 'md5', 'generator'],
     category: '开发工具',
     cliAvailable: true,
-    loader: () => import('@plugins/plugin-hash-generator'),
+    loader: () => import('@flow-tool/plugins/plugin-hash-generator'),
   },
   {
     id: 'plugin-image-base64',
@@ -47,7 +47,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['image', 'base64', 'converter'],
     category: '编码工具',
     cliAvailable: true,
-    loader: () => import('@plugins/plugin-image-base64'),
+    loader: () => import('@flow-tool/plugins/plugin-image-base64'),
   },
   {
     id: 'plugin-json-formatter',
@@ -59,7 +59,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['json', 'format', 'minify', 'validate'],
     category: '开发工具',
     cliAvailable: true,
-    loader: () => import('@plugins/plugin-json-formatter'),
+    loader: () => import('@flow-tool/plugins/plugin-json-formatter'),
   },
   {
     id: 'plugin-random-picker',
@@ -70,7 +70,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['random', 'picker', 'name'],
     category: '实用工具',
     cliAvailable: true,
-    loader: () => import('@plugins/plugin-random-picker'),
+    loader: () => import('@flow-tool/plugins/plugin-random-picker'),
   },
   {
     id: 'plugin-regex-tester',
@@ -82,7 +82,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['regex', 'regexp', 'test', 'pattern'],
     category: '开发工具',
     cliAvailable: true,
-    loader: () => import('@plugins/plugin-regex-tester'),
+    loader: () => import('@flow-tool/plugins/plugin-regex-tester'),
   },
   {
     id: 'plugin-text-ops',
@@ -94,7 +94,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['text', 'set', 'intersection', 'union', 'difference'],
     category: '文本工具',
     cliAvailable: true,
-    loader: () => import('@plugins/plugin-text-ops'),
+    loader: () => import('@flow-tool/plugins/plugin-text-ops'),
   },
   {
     id: 'plugin-timestamp-converter',
@@ -106,7 +106,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['timestamp', 'unix', 'date', 'converter'],
     category: '开发工具',
     cliAvailable: true,
-    loader: () => import('@plugins/plugin-timestamp-converter'),
+    loader: () => import('@flow-tool/plugins/plugin-timestamp-converter'),
   },
   {
     id: 'plugin-todo-list',
@@ -115,7 +115,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     type: 'app',
     permissions: ['storage'],
     cliAvailable: true,
-    loader: () => import('@plugins/plugin-todo-list'),
+    loader: () => import('@flow-tool/plugins/plugin-todo-list'),
   },
   {
     id: 'plugin-uuid-generator',
@@ -127,7 +127,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['uuid', 'random', 'generator'],
     category: '开发工具',
     cliAvailable: true,
-    loader: () => import('@plugins/plugin-uuid-generator'),
+    loader: () => import('@flow-tool/plugins/plugin-uuid-generator'),
   },
   {
     id: 'plugin-website-latency',
@@ -139,7 +139,7 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['network', 'latency', 'ping'],
     category: '网络工具',
     cliAvailable: true,
-    loader: () => import('@plugins/plugin-website-latency'),
+    loader: () => import('@flow-tool/plugins/plugin-website-latency'),
   },
 ]
 

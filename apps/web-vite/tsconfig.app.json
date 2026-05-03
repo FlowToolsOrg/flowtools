@@ -12,7 +12,7 @@
     "moduleResolution": "bundler",
     "paths": {
       "@/*": ["./src/*"],
-      "@plugins/*": ["../../plugins/*"],
+      "@flow-tool/plugins/*": ["../../plugins/*"],
       "@flow-tool/sdk": ["../../packages/sdk/src/index.ts"],
       "@flow-tool/sdk/*": ["../../packages/sdk/src/*"],
       "react": ["./node_modules/@types/react/index.d.ts"],

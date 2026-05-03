@@ -164,7 +164,7 @@ function generateManifests(plugins: PluginMeta[]): string {
     version: '${p.version}',${p.description ? `\n    description: '${p.description}',` : ''}
     type: '${p.type}',${p.permissions && p.permissions.length > 0 ? `\n    permissions: [${p.permissions.map(p => `'${p}'`).join(', ')}],` : ''}${p.tags && p.tags.length > 0 ? `\n    tags: [${p.tags.map(t => `'${t}'`).join(', ')}],` : ''}${p.category ? `\n    category: '${p.category}',` : ''}
     cliAvailable: ${p.cliAvailable},
-    loader: () => import('@plugins/${p.id}'),
+    loader: () => import('@flow-tool/plugins/${p.id}'),
   }`
     )
     .join(',\n')

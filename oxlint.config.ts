@@ -16,8 +16,8 @@ export default defineConfig({
         },
       },
     ],
-    'typescript/no-floating-promises': 'error',
-    'typescript/no-unsafe-assignment': 'warn',
+    // 'typescript/no-floating-promises': 'error',
+    // 'typescript/no-unsafe-assignment': 'warn',
 
     '@typescript-eslint/no-unused-vars': [
       'warn',

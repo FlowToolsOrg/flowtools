@@ -6,6 +6,7 @@ import { builtInManifests } from '@/plugin/manifests'
 import {
   initPluginRegistryStore,
   pluginRegistryStore,
+  restoreExternalPlugins,
 } from '@/stores/plugin-registry-store'
 
 let _ready = false
@@ -103,9 +104,18 @@ export async function bootstrap(
   registry.registerAll(builtInManifests)
 
   await loader.loadAll()
-  await loader.enableAll()
+
+  const { disabledPluginIds } = pluginRegistryStore.getState()
+
+  for (const entry of registry.getAll()) {
+    if (entry.state === 'loaded' && !disabledPluginIds.includes(entry.id)) {
+      await loader.enable(entry.id)
+    }
+  }
 
   initPluginRegistryStore(registry, commandRegistry, loader, fileLoader)
+
+  await restoreExternalPlugins()
 
   registerPluginCommands(registry, commandRegistry, navigate)
 

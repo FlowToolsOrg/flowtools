@@ -127,6 +127,37 @@ function ToolDetailPage_() {
     )
   }
 
+  if (registered.state !== 'enabled') {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
+        <h1 className="text-xl font-semibold text-(--foreground)">
+          Plugin Disabled
+        </h1>
+        <p className="text-sm text-(--muted)">
+          &quot;{meta.name}&quot; is currently {registered.state}. Enable it to
+          use this tool.
+        </p>
+        <div className="flex gap-2">
+          <Button
+            onPress={() => navigate({ to: '/plugins' })}
+            size="sm"
+            variant="ghost"
+          >
+            Manage Plugins
+          </Button>
+          <Button
+            onPress={async () => {
+              await pluginRegistryStore.getState().enablePlugin(toolId)
+            }}
+            size="sm"
+          >
+            Enable Plugin
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   const isAppPlugin = plugin?.type === 'app'
   const StatusIcon = CircleCheckIcon
 

@@ -13,10 +13,7 @@ import { useStore } from 'zustand'
 
 import { Button, Chip, Spinner } from '@heroui/react'
 
-import {
-  pluginRegistryActions,
-  pluginRegistryStore,
-} from '@/stores/plugin-registry-store'
+import { pluginRegistryStore } from '@/stores/plugin-registry-store'
 
 export const Route = createFileRoute('/plugins')({
   component: PluginsPage,
@@ -41,7 +38,9 @@ function PluginsPage() {
     setLoadedName(null)
 
     try {
-      const entry = await pluginRegistryActions.loadPluginFromFile(file)
+      const entry = await pluginRegistryStore
+        .getState()
+        .loadPluginFromFile(file)
       setLoadStatus('success')
       setLoadedName(entry.manifest.name)
     } catch (err) {
@@ -87,7 +86,7 @@ function PluginsPage() {
 
   const handleUnload = useCallback(async (pluginId: string) => {
     try {
-      await pluginRegistryActions.unloadExternalPlugin(pluginId)
+      await pluginRegistryStore.getState().unloadExternalPlugin(pluginId)
     } catch {
       // Plugin unload failed silently
     }
@@ -95,14 +94,14 @@ function PluginsPage() {
 
   const handleToggle = useCallback(async (plugin: RegisteredPlugin) => {
     if (plugin.state === 'enabled') {
-      await pluginRegistryActions.disablePlugin(plugin.id)
+      await pluginRegistryStore.getState().disablePlugin(plugin.id)
     } else {
-      await pluginRegistryActions.enablePlugin(plugin.id)
+      await pluginRegistryStore.getState().enablePlugin(plugin.id)
     }
   }, [])
 
   const handleReload = useCallback(async (pluginId: string) => {
-    await pluginRegistryActions.reloadPlugin(pluginId)
+    await pluginRegistryStore.getState().reloadPlugin(pluginId)
   }, [])
 
   return (

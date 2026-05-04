@@ -5,12 +5,20 @@ import type {
 } from '@flowtools/sdk'
 
 import { PluginFileLoader, PluginLoader } from '@flowtools/sdk'
+import { persist } from 'zustand/middleware'
 import { createStore } from 'zustand/vanilla'
+
+import {
+  loadAllPluginFiles,
+  removePluginFile,
+  savePluginFile,
+} from '@/utils/plugin-storage'
 
 interface PluginRegistryState {
   plugins: RegisteredPlugin[]
   commands: RegisteredCommand[]
   externalPluginIds: string[]
+  disabledPluginIds: string[]
 }
 
 interface PluginRegistryActions {
@@ -43,25 +51,83 @@ function getFileLoader(): PluginFileLoader {
   return _fileLoader
 }
 
-export const pluginRegistryStore = createStore<PluginRegistryState>()(() => ({
-  plugins: [],
-  commands: [],
-  externalPluginIds: [],
-}))
+export const pluginRegistryStore = createStore<
+  PluginRegistryState & PluginRegistryActions
+>()(
+  persist(
+    (set, get) => ({
+      plugins: [],
+      commands: [],
+      externalPluginIds: [],
+      disabledPluginIds: [],
 
-function syncState(): void {
-  const { _registry, _commandRegistry } = pluginRegistryInternals
+      sync() {
+        const { _registry, _commandRegistry } = pluginRegistryInternals
 
-  if (!_registry || !_commandRegistry) {
-    return
-  }
+        if (!_registry || !_commandRegistry) {
+          return
+        }
 
-  pluginRegistryStore.setState({
-    plugins: _registry.getAll(),
-    commands: _commandRegistry.getAll(),
-    externalPluginIds: _fileLoader?.getExternalPluginIds() ?? [],
-  })
-}
+        set({
+          plugins: _registry.getAll(),
+          commands: _commandRegistry.getAll(),
+          externalPluginIds: _fileLoader?.getExternalPluginIds() ?? [],
+        })
+      },
+
+      async enablePlugin(pluginId: string) {
+        set(state => ({
+          disabledPluginIds: state.disabledPluginIds.filter(
+            id => id !== pluginId
+          ),
+        }))
+        await getLoader().enable(pluginId)
+        get().sync()
+      },
+
+      async disablePlugin(pluginId: string) {
+        set(state => ({
+          disabledPluginIds: [...state.disabledPluginIds, pluginId],
+        }))
+        await getLoader().disable(pluginId)
+        get().sync()
+      },
+
+      async reloadPlugin(pluginId: string) {
+        await getLoader().reload(pluginId)
+        get().sync()
+      },
+
+      async loadPluginFromFile(file: File) {
+        const entry = await getFileLoader().loadFromFile(file)
+
+        const buffer = await file.arrayBuffer()
+        await savePluginFile({
+          id: entry.id,
+          name: entry.manifest.name,
+          fileName: file.name,
+          type: file.type || 'application/javascript',
+          data: buffer,
+        })
+
+        get().sync()
+        return entry
+      },
+
+      async unloadExternalPlugin(pluginId: string) {
+        await getFileLoader().unloadExternalPlugin(pluginId)
+        await removePluginFile(pluginId)
+        get().sync()
+      },
+    }),
+    {
+      name: 'flowtools-plugin-registry',
+      partialize: state => ({
+        disabledPluginIds: state.disabledPluginIds,
+      }),
+    }
+  )
+)
 
 export const pluginRegistryInternals = {
   _registry: null as import('@flowtools/sdk').PluginRegistry | null,
@@ -80,44 +146,33 @@ export function initPluginRegistryStore(
   _fileLoader = fileLoader
 
   registry.subscribe((_event: PluginRegistryEvent) => {
-    syncState()
+    pluginRegistryStore.getState().sync()
   })
 
   commandRegistry.subscribe(() => {
-    syncState()
+    pluginRegistryStore.getState().sync()
   })
 
-  syncState()
+  pluginRegistryStore.getState().sync()
 }
 
-export const pluginRegistryActions: PluginRegistryActions = {
-  sync() {
-    syncState()
-  },
+/**
+ * Restore external plugins from IndexedDB.
+ * Call after initPluginRegistryStore and import map setup.
+ */
+export async function restoreExternalPlugins(): Promise<void> {
+  const stored = await loadAllPluginFiles()
 
-  async enablePlugin(pluginId: string) {
-    await getLoader().enable(pluginId)
-    syncState()
-  },
+  for (const entry of stored) {
+    try {
+      const file = new File([entry.data], entry.fileName, {
+        type: entry.type,
+      })
+      await getFileLoader().loadFromFile(file)
+    } catch {
+      await removePluginFile(entry.id)
+    }
+  }
 
-  async disablePlugin(pluginId: string) {
-    await getLoader().disable(pluginId)
-    syncState()
-  },
-
-  async reloadPlugin(pluginId: string) {
-    await getLoader().reload(pluginId)
-    syncState()
-  },
-
-  async loadPluginFromFile(file: File) {
-    const entry = await getFileLoader().loadFromFile(file)
-    syncState()
-    return entry
-  },
-
-  async unloadExternalPlugin(pluginId: string) {
-    await getFileLoader().unloadExternalPlugin(pluginId)
-    syncState()
-  },
+  pluginRegistryStore.getState().sync()
 }

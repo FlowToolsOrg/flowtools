@@ -240,12 +240,6 @@ export class PluginFileLoader {
       throw error
     }
 
-    const entry = this.registry.get(id)
-
-    if (!entry) {
-      throw new Error(`[PluginFileLoader] Failed to register plugin "${id}".`)
-    }
-
-    return entry
+    return this.registry.get(id)!
   }
 }

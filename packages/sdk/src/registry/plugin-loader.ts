@@ -77,13 +77,21 @@ export class PluginLoader {
       await this.load(pluginId)
     }
 
+    const updated = this.registry.get(pluginId)
+
+    if (!updated) {
+      throw new Error(
+        `[PluginLoader] Plugin "${pluginId}" disappeared during enable.`
+      )
+    }
+
     this.registry.updateState(pluginId, {
       state: 'enabled',
       enabledAt: Date.now(),
     })
 
     try {
-      entry.plugin?.lifecycle?.onActivate?.()
+      updated.plugin?.lifecycle?.onActivate?.()
     } catch (error) {
       this.registry.markError(
         pluginId,

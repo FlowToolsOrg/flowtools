@@ -1,6 +1,6 @@
-# @flow-tool/ui-test
+# @flowtools/ui-test
 
-A Vite + Vitest consumer app for validating `@flow-tool/ui`.
+A Vite + Vitest consumer app for validating `@flowtools/ui`.
 
 ## Commands
 
@@ -10,5 +10,5 @@ A Vite + Vitest consumer app for validating `@flow-tool/ui`.
 
 ## Notes
 
-- `@flow-tool/ui` is aliased to `../../packages/ui/src/index.ts` in
+- `@flowtools/ui` is aliased to `../../packages/ui/src/index.ts` in
   `vite.config.ts`, so tests run against source code directly.

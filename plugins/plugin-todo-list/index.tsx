@@ -7,8 +7,8 @@ import {
   usePluginStore,
   usePluginStoreApi,
   definePluginStore,
-} from '@flow-tool/sdk'
-import { result } from '@flow-tool/sdk/result'
+} from '@flowtools/sdk'
+import { result } from '@flowtools/sdk/result'
 import {
   Button,
   Calendar,
@@ -18,7 +18,7 @@ import {
   Input,
   Label,
   TextField,
-} from '@flow-tool/ui/plugin'
+} from '@flowtools/ui/plugin'
 import { z } from 'zod'
 
 export interface TodoItem {

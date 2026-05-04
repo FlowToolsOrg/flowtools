@@ -1,8 +1,8 @@
 import { useCallback, useRef, useState } from 'react'
 
-import { definePlugin, useCapability } from '@flow-tool/sdk'
-import { result } from '@flow-tool/sdk/result'
-import { Button, Card, Label, TextArea } from '@flow-tool/ui/plugin'
+import { definePlugin, useCapability } from '@flowtools/sdk'
+import { result } from '@flowtools/sdk/result'
+import { Button, Card, Label, TextArea } from '@flowtools/ui/plugin'
 import { z } from 'zod'
 
 const inputSchema = z.object({

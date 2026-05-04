@@ -1,5 +1,5 @@
-import type { RegisteredCommand } from '@flow-tool/sdk'
-import type { CommandPaletteItem } from '@flow-tool/ui'
+import type { RegisteredCommand } from '@flowtools/sdk'
+import type { CommandPaletteItem } from '@flowtools/ui'
 
 import { pluginRegistryStore } from './plugin-registry-store'
 

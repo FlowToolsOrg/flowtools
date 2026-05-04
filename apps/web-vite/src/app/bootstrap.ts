@@ -1,6 +1,6 @@
-import type { RegisteredCommand } from '@flow-tool/sdk'
+import type { RegisteredCommand } from '@flowtools/sdk'
 
-import { CommandRegistry, PluginLoader, PluginRegistry } from '@flow-tool/sdk'
+import { CommandRegistry, PluginLoader, PluginRegistry } from '@flowtools/sdk'
 
 import { builtInManifests } from '@/plugin/manifests'
 import {

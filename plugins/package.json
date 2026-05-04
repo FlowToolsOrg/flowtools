@@ -1,5 +1,5 @@
 {
-  "name": "@flow-tool/plugins",
+  "name": "@flowtools/plugins",
   "version": "0.0.0",
   "private": true,
   "files": [
@@ -27,9 +27,9 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@flow-tool/cli": "workspace:*",
-    "@flow-tool/sdk": "workspace:*",
-    "@flow-tool/ui": "workspace:*",
+    "@flowtools/cli": "workspace:*",
+    "@flowtools/sdk": "workspace:*",
+    "@flowtools/ui": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

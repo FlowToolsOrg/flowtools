@@ -61,9 +61,9 @@ Core principles:
 - Product direction: desktop-first, cross-platform ready.
 - Current runnable host: `apps/web-vite`.
 - Core packages under active development:
-  - `packages/sdk` (`@flow-tool/sdk`) — plugin contract, hooks, registry, lifecycle, Zod-based inputSchema
-  - `packages/ui` (`@flow-tool/ui`) — shared UI components including CommandPalette
-  - `packages/cli` (`@flow-tool/cli`) — unified CLI entry (`flow-tool list/info/run`), auto-generates flags from Zod schema
+  - `packages/sdk` (`@flowtools/sdk`) — plugin contract, hooks, registry, lifecycle, Zod-based inputSchema
+  - `packages/ui` (`@flowtools/ui`) — shared UI components including CommandPalette
+  - `packages/cli` (`@flowtools/cli`) — unified CLI entry (`flowtools list/info/run`), auto-generates flags from Zod schema
 - Local plugin workspace with 12 built-in plugins (all app type, all CLI-compatible via `run()` + `inputSchema`):
   - `plugins/plugin-todo-list` — 待办清单（host-managed store）
   - `plugins/plugin-uuid-generator` — UUID 生成器
@@ -94,7 +94,7 @@ apps/
 packages/
   sdk/         # plugin contract, hooks, registry, lifecycle, result helpers
   ui/          # shared React UI primitives (HeroUI-based)
-  cli/         # unified CLI entry (flow-tool list/info/run)
+  cli/         # unified CLI entry (flowtools list/info/run)
 plugins/
   plugin-todo-list/            # app plugin with host-managed store
   plugin-uuid-generator/       # UUID generator (clipboard)
@@ -154,8 +154,8 @@ All plugins can declare `inputSchema` (Zod `z.object({...})`) for:
 Minimal app plugin example:
 
 ```tsx
-import { definePlugin, useCapability } from '@flow-tool/sdk'
-import { result } from '@flow-tool/sdk/result'
+import { definePlugin, useCapability } from '@flowtools/sdk'
+import { result } from '@flowtools/sdk/result'
 import { z } from 'zod'
 
 const inputSchema = z.object({
@@ -209,11 +209,11 @@ bun run packages/cli/src/cli.ts run plugin-uuid-generator --count 3 \
 
 CLI flags are auto-generated from each plugin's `inputSchema` (Zod).
 Input is validated with `z.safeParse()` before execution.
-Desktop Tauri host can invoke CLI via `Command::new("flow-tool")` and parse JSON output for AI agent integration.
+Desktop Tauri host can invoke CLI via `Command::new("flowtools")` and parse JSON output for AI agent integration.
 
 ## SDK Hooks
 
-`@flow-tool/sdk` exposes:
+`@flowtools/sdk` exposes:
 
 - **`definePluginStore()`** — define typed store shape (initialState + actions)
 - **`usePluginStore<TState>()`** — subscribe to host-managed plugin state
@@ -226,8 +226,8 @@ Desktop Tauri host can invoke CLI via `Command::new("flow-tool")` and parse JSON
 
 Subpath imports:
 
-- **`@flow-tool/sdk/definePlugin`** — standalone `definePlugin` import
-- **`@flow-tool/sdk/result`** — `result.text/json/table/open/multi` helpers
+- **`@flowtools/sdk/definePlugin`** — standalone `definePlugin` import
+- **`@flowtools/sdk/result`** — `result.text/json/table/open/multi` helpers
 
 Individual capability hooks are generated via factory functions
 `createRequiredCapabilityHook` / `createOptionalCapabilityHook`.
@@ -297,7 +297,7 @@ import {
   definePluginStore,
   usePluginStore,
   usePluginStoreApi,
-} from '@flow-tool/sdk'
+} from '@flowtools/sdk'
 
 interface CounterState {
   count: number

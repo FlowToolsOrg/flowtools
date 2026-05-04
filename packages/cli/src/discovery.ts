@@ -40,7 +40,6 @@ export function scanPlugins(): CLIPluginInfo[] {
   try {
     entries = readdirSync(PLUGINS_DIR)
   } catch {
-    console.error('Error: plugins/ directory not found at', PLUGINS_DIR)
     return []
   }
 
@@ -125,19 +124,14 @@ export async function loadPlugin(
       const plugin = mod.default
 
       if (!plugin?.run) {
-        console.error(
-          `Plugin ${pluginId} has no run() function — CLI unavailable`
-        )
         return null
       }
 
       return plugin
     } catch (err) {
-      console.error(`Failed to load plugin ${pluginId}:`, err)
       return null
     }
   }
 
-  console.error(`Plugin ${pluginId}: no index.ts/tsx found`)
   return null
 }

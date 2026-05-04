@@ -9,7 +9,7 @@ import {
   ToolList,
   type SettingsSection,
   type ToolListItem,
-} from '@flow-tool/ui'
+} from '@flowtools/ui'
 
 const TOOL_ITEMS: ToolListItem[] = [
   {
@@ -138,7 +138,7 @@ export const App = () => {
             </>
           }
           badges={['desktop-first', 'plugin-runtime', 'heroui-v3']}
-          description="Composable wrappers in @flow-tool/ui for plugin dashboards, discovery lists, and host settings panels."
+          description="Composable wrappers in @flowtools/ui for plugin dashboards, discovery lists, and host settings panels."
           eyebrow="Flow Tool"
           stats={[
             { id: 'plugins', label: 'Installed Plugins', value: 12 },

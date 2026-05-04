@@ -17,7 +17,7 @@ Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平�
   - `packages/sdk`：插件契约、hooks（工厂模式）、runtime provider、结果类型、Zod-based `inputSchema`
   - `packages/sdk/src/registry`：PluginRegistry、CommandRegistry、PluginLoader、PluginLifecycleManager、PluginErrorBoundary、withWatchdog
   - `packages/ui`：共享 UI 组件库（HeroUI 基础），含 CommandPalette 组件
-  - `packages/cli`：统一 CLI 入口，`flow-tool list/info/run` 子命令，Zod schema 自动生成 flags，`result.*` 结构化输出
+  - `packages/cli`：统一 CLI 入口，`flowtools list/info/run` 子命令，Zod schema 自动生成 flags，`result.*` 结构化输出
   - `apps/web-vite`：web runtime 原型，含命令面板、插件注册中心、bootstrap 启动流程
   - `apps/web-vite/src/stores`：pluginRegistryStore、commandStore、runHistoryStore、settingsStore
   - 12 个内置插件（全部为 app 类型，均提供 `setup()` + `run()` + `inputSchema`）
@@ -27,13 +27,13 @@ Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平�
   - `apps/web`
 
 结论：架构方向是 desktop-first，当前 web 原型已具备注册中心、命令面板、生命周期管理、错误隔离等核心机制。
-CLI 入口已就绪，桌面端可通过 `Command::new("flow-tool")` 调用插件。
+CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用插件。
 
 ## 2. Layered Model（分层模型）
 
 ```text
 [ Plugins ]
-  -> use @flow-tool/sdk
+  -> use @flowtools/sdk
 [ CLI & Desktop Agent ]
   -> packages/cli (Commander) / Tauri Command bridge
 [ Registry & Lifecycle ]
@@ -68,7 +68,7 @@ CLI 入口已就绪，桌面端可通过 `Command::new("flow-tool")` 调用插�
 - 运行时用 `.safeParse()` 校验输入
 - `z.infer<typeof inputSchema>` 推导 TypeScript 类型
 
-`run()` 推荐返回 `result.*` 结构化结果（`@flow-tool/sdk/result`）：
+`run()` 推荐返回 `result.*` 结构化结果（`@flowtools/sdk/result`）：
 
 - `result.text(string)` / `result.json(value)` / `result.table(cols, rows)`
 - `result.open(target)` / `result.multi(items)`
@@ -86,7 +86,7 @@ ctx 的职责：
 - 命名空间隔离：store/db/cache 都与 pluginId 绑定
 - 多平台适配：desktop/web 的实现不同，但 ctx contract 不变
 
-`@flow-tool/sdk` 暴露：
+`@flowtools/sdk` 暴露：
 
 - Provider：`FlowToolRuntimeProvider`
 - 通用能力：`useCapability(selector?)` — 支持 selector 模式按需取能力
@@ -129,19 +129,19 @@ Host runtime 用 `pickCapability(...)` 做权限裁剪：
 能力映射如下：
 
 - `ui`：通过 `window.dispatchEvent` 发事件
-  - `flow-tool:toast`
-  - `flow-tool:panel-open`
-  - `flow-tool:panel-close`
-  - `flow-tool:tool-log`
+  - `flowtools:toast`
+  - `flowtools:panel-open`
+  - `flowtools:panel-close`
+  - `flowtools:tool-log`
 - `network`：直接映射到浏览器 `fetch`
-- `storage`：`localStorage`（key 前缀 `flow-tool:{pluginId}:storage:`）
+- `storage`：`localStorage`（key 前缀 `flowtools:{pluginId}:storage:`）
   - 提供 `storage.zustand(namespace?)` 适配器，供插件侧
     Zustand `persist/createJSONStorage` 使用
 - `store`：host 管理的 Zustand vanilla store（每个 pluginId 单实例）
   - app 插件通过 `usePluginStore()` / `usePluginStoreApi()` 访问
   - 插件通过 `definePluginStore()` 声明 store 形态（初始状态 + actions），挂在 `AppPlugin.store`
   - 若声明了 `storage` 权限，store 会持久化到插件命名空间
-- `fs`：`localStorage` 模拟文件（key 前缀 `flow-tool:{pluginId}:fs:`）
+- `fs`：`localStorage` 模拟文件（key 前缀 `flowtools:{pluginId}:fs:`）
 - `clipboard`：浏览器 clipboard API
 - `notification`：Notification API（不可用时降级为 toast 事件）
 - `dialog`：web 未实现，调用抛错
@@ -270,7 +270,7 @@ SDK 已定义命令与结果契约：
 3. ~~建立命令注册中心（palette、历史、快捷键）~~ ✅ 已实现
 4. ~~CLI 入口（插件无头调用、AI agent bridge）~~ ✅ 已实现（`packages/cli`）
 5. 接入插件安装/加载策略（本地安装、版本管理、签名/权限提示）
-6. 桌面端 AI agent 通过 `Command::new("flow-tool")` 调用 CLI，解析 JSON 输出
+6. 桌面端 AI agent 通过 `Command::new("flowtools")` 调用 CLI，解析 JSON 输出
 
 这一路径与当前 SDK 契约兼容，重点是 host capability 实现迁移。
 
@@ -318,7 +318,7 @@ import {
   definePluginStore,
   type InferStoreState,
   type InferStoreActions,
-} from '@flow-tool/sdk'
+} from '@flowtools/sdk'
 
 const todoStore = definePluginStore({
   initialState: {
@@ -412,4 +412,4 @@ Web 端 db：
 - 插件间通信机制（事件总线 / RPC）
 - CLI `--schema` 输出 JSON Schema（供桌面端动态 UI 生成）
 - CLI `--watch` 模式（监听输入变化重新执行）
-- CLI `flow-tool create` 脚手架（交互式创建新插件）
+- CLI `flowtools create` 脚手架（交互式创建新插件）

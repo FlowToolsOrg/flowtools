@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
-import { definePlugin, useCapability } from '@flow-tool/sdk'
-import { result } from '@flow-tool/sdk/result'
+import { definePlugin, useCapability } from '@flowtools/sdk'
+import { result } from '@flowtools/sdk/result'
 import {
   Button,
   Card,
@@ -9,7 +9,7 @@ import {
   Input,
   Label,
   TextField,
-} from '@flow-tool/ui/plugin'
+} from '@flowtools/ui/plugin'
 import { z } from 'zod'
 
 type TimestampUnit = 'seconds' | 'milliseconds'

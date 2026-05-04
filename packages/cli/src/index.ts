@@ -1,5 +1,5 @@
 /**
- * @flow-tool/cli — public API.
+ * @flowtools/cli — public API.
  * Import this module to use the CLI as a library (e.g., from Tauri desktop host).
  */
 

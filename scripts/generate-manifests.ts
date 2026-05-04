@@ -50,7 +50,6 @@ function extractMeta(content: string, filePath: string): PluginMeta | null {
   const description = extractStringField(metaStr, 'description')
 
   if (!id || !name || !version) {
-    console.warn(`⚠️  ${filePath}: 缺少必要的 meta 字段 (id, name, version)`)
     return null
   }
 
@@ -122,7 +121,6 @@ function scanPlugins(): PluginMeta[] {
         try {
           statSync(filePath)
         } catch {
-          console.warn(`⚠️  ${entry}: 未找到 index.ts 或 index.tsx`)
           continue
         }
       }
@@ -132,11 +130,9 @@ function scanPlugins(): PluginMeta[] {
 
       if (meta) {
         plugins.push(meta)
-        console.log(`✅ ${meta.id}`)
       }
     }
   } catch (err) {
-    console.error('❌ 扫描 plugins 目录失败:', err)
     process.exit(1)
   }
 
@@ -164,7 +160,7 @@ function generateManifests(plugins: PluginMeta[]): string {
     version: '${p.version}',${p.description ? `\n    description: '${p.description}',` : ''}
     type: '${p.type}',${p.permissions && p.permissions.length > 0 ? `\n    permissions: [${p.permissions.map(p => `'${p}'`).join(', ')}],` : ''}${p.tags && p.tags.length > 0 ? `\n    tags: [${p.tags.map(t => `'${t}'`).join(', ')}],` : ''}${p.category ? `\n    category: '${p.category}',` : ''}
     cliAvailable: ${p.cliAvailable},
-    loader: () => import('@flow-tool/plugins/${p.id}'),
+    loader: () => import('@flowtools/plugins/${p.id}'),
   }`
     )
     .join(',\n')
@@ -180,7 +176,7 @@ function generateManifests(plugins: PluginMeta[]): string {
     )
     .join(',\n')
 
-  return `import type { PluginManifestEntry } from '@flow-tool/sdk'
+  return `import type { PluginManifestEntry } from '@flowtools/sdk'
 
 export const builtInManifests: PluginManifestEntry[] = [
 ${manifestsEntries},
@@ -193,16 +189,9 @@ ${categoryEntries},
 }
 
 // 主流程
-console.log('🔍 扫描 plugins 目录...\n')
 
 const plugins = scanPlugins()
-
-console.log(`\n📦 共发现 ${plugins.length} 个插件\n`)
-console.log('📝 生成 manifests.ts...\n')
 
 const content = generateManifests(plugins)
 
 writeFileSync(OUTPUT_FILE, content, 'utf-8')
-
-console.log(`✅ 已生成: ${OUTPUT_FILE}`)
-console.log('\n🎉 完成!')

@@ -8,13 +8,13 @@ import {
   SettingsSelectField,
   SettingsSwitchField,
   type SettingsNavSection,
-} from '@flow-tool/ui'
+} from '@flowtools/ui'
 import {
   SettingsIcon,
   SlidersHorizontalIcon,
   TerminalIcon,
   ZapIcon,
-} from '@flow-tool/ui/icons'
+} from '@flowtools/ui/icons'
 import { createFileRoute } from '@tanstack/react-router'
 import { useStore } from 'zustand'
 

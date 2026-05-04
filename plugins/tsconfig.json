@@ -7,10 +7,10 @@
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
     "paths": {
-      "@flow-tool/sdk": ["../packages/sdk/src/index.ts"],
-      "@flow-tool/sdk/*": ["../packages/sdk/src/*"],
-      "@flow-tool/ui": ["../packages/ui/src/index.ts"],
-      "@flow-tool/ui/*": ["../packages/ui/src/*"],
+      "@flowtools/sdk": ["../packages/sdk/src/index.ts"],
+      "@flowtools/sdk/*": ["../packages/sdk/src/*"],
+      "@flowtools/ui": ["../packages/ui/src/index.ts"],
+      "@flowtools/ui/*": ["../packages/ui/src/*"],
       "react": ["../apps/web-vite/node_modules/@types/react/index.d.ts"],
       "react/jsx-runtime": [
         "../apps/web-vite/node_modules/@types/react/jsx-runtime.d.ts"

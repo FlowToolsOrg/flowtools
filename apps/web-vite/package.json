@@ -1,5 +1,5 @@
 {
-  "name": "@flow-tool/web-vite",
+  "name": "@flowtools/web-vite",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -12,9 +12,9 @@
     "check:types": "tsc --noEmit"
   },
   "dependencies": {
-    "@flow-tool/plugins": "workspace:*",
-    "@flow-tool/sdk": "workspace:*",
-    "@flow-tool/ui": "workspace:*",
+    "@flowtools/plugins": "workspace:*",
+    "@flowtools/sdk": "workspace:*",
+    "@flowtools/ui": "workspace:*",
     "@heroui/react": "catalog:",
     "@heroui/styles": "catalog:",
     "@tailwindcss/vite": "^4.2.4",

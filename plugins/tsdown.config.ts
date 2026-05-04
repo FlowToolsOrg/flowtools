@@ -21,8 +21,8 @@ export default createPackageTsdownConfig({
   external: [
     'react/jsx-runtime',
     'react/jsx-dev-runtime',
-    '@flow-tool/sdk',
-    '@flow-tool/cli',
-    '@flow-tool/ui',
+    '@flowtools/sdk',
+    '@flowtools/cli',
+    '@flowtools/ui',
   ],
 })

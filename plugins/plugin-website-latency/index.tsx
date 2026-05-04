@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react'
 
-import { definePlugin } from '@flow-tool/sdk'
-import { result } from '@flow-tool/sdk/result'
-import { Button, Card, Chip } from '@flow-tool/ui/plugin'
+import { definePlugin } from '@flowtools/sdk'
+import { result } from '@flowtools/sdk/result'
+import { Button, Card, Chip } from '@flowtools/ui/plugin'
 import { z } from 'zod'
 
 interface LatencyResult {

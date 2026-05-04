@@ -2,9 +2,9 @@ import type {
   PluginRegistryEvent,
   RegisteredCommand,
   RegisteredPlugin,
-} from '@flow-tool/sdk'
+} from '@flowtools/sdk'
 
-import { PluginLoader } from '@flow-tool/sdk'
+import { PluginLoader } from '@flowtools/sdk'
 import { createStore } from 'zustand/vanilla'
 
 interface PluginRegistryState {
@@ -50,13 +50,13 @@ function syncState(): void {
 }
 
 export const pluginRegistryInternals = {
-  _registry: null as import('@flow-tool/sdk').PluginRegistry | null,
-  _commandRegistry: null as import('@flow-tool/sdk').CommandRegistry | null,
+  _registry: null as import('@flowtools/sdk').PluginRegistry | null,
+  _commandRegistry: null as import('@flowtools/sdk').CommandRegistry | null,
 }
 
 export function initPluginRegistryStore(
-  registry: import('@flow-tool/sdk').PluginRegistry,
-  commandRegistry: import('@flow-tool/sdk').CommandRegistry,
+  registry: import('@flowtools/sdk').PluginRegistry,
+  commandRegistry: import('@flowtools/sdk').CommandRegistry,
   loader: PluginLoader
 ): void {
   pluginRegistryInternals._registry = registry

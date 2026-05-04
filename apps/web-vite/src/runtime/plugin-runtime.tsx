@@ -1,6 +1,6 @@
-import type { AppPlugin, ToolPlugin } from '@flow-tool/sdk'
+import type { AppPlugin, ToolPlugin } from '@flowtools/sdk'
 
-import { PluginErrorBoundary, withWatchdog } from '@flow-tool/sdk'
+import { PluginErrorBoundary, withWatchdog } from '@flowtools/sdk'
 
 import { createWebToolContext, WebPluginRuntimeProvider } from './ctx'
 

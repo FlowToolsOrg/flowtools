@@ -1,9 +1,9 @@
 {
-  "name": "@flow-tool/cli",
+  "name": "@flowtools/cli",
   "version": "0.0.0",
   "private": true,
   "bin": {
-    "flow-tool": "./dist/cli.js"
+    "flowtools": "./dist/cli.js"
   },
   "files": [
     "dist"

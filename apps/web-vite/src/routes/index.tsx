@@ -1,10 +1,10 @@
-import { ToolCard, ToolGrid } from '@flow-tool/ui'
+import { ToolCard, ToolGrid } from '@flowtools/ui'
 import {
   EarthIcon,
   GalleryThumbnailsIcon,
   ScanTextIcon,
   WrenchIcon,
-} from '@flow-tool/ui/icons'
+} from '@flowtools/ui/icons'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useStore } from 'zustand'
 

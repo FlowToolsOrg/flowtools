@@ -44,7 +44,7 @@ export const settingsStore = createStore<SettingsState & SettingsActions>()(
       },
     }),
     {
-      name: 'flow-tool-settings',
+      name: 'flowtools-settings',
     }
   )
 )

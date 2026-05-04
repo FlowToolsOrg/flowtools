@@ -78,7 +78,6 @@ export async function runPluginAndPrint(
   const result = await runPlugin(pluginId, input, { format })
 
   if (!result.success) {
-    console.error(`Error: ${result.error}`)
     return 1
   }
 
@@ -87,9 +86,7 @@ export async function runPluginAndPrint(
       result.data as Parameters<typeof formatResult>[0],
       format
     )
-    console.log(output)
   } else {
-    console.log(formatRaw(result.data, format))
   }
 
   return 0

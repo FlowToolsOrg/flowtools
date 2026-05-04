@@ -1,7 +1,7 @@
 /**
  * Error prefix for SDK runtime guard failures.
  */
-const SDK_ERROR_PREFIX = '[flow-tool-sdk]'
+const SDK_ERROR_PREFIX = '[flowtools-sdk]'
 
 /**
  * Error thrown when hooks run outside the runtime provider.

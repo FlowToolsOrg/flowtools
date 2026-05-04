@@ -25,8 +25,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: [
-      { find: '@flow-tool/ui', replacement: uiSrcIndex },
-      { find: '@flow-tool/ui/', replacement: `${uiSrcDir}/` },
+      { find: '@flowtools/ui', replacement: uiSrcIndex },
+      { find: '@flowtools/ui/', replacement: `${uiSrcDir}/` },
     ],
   },
   test: {

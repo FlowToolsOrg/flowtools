@@ -1,5 +1,5 @@
 {
-  "name": "@flow-tool/ui-test",
+  "name": "@flowtools/ui-test",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
     "test:browser": "vitest --config=vitest.browser.config.ts --ui"
   },
   "dependencies": {
-    "@flow-tool/ui": "workspace:*",
+    "@flowtools/ui": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:"
   },

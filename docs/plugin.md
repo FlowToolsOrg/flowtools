@@ -29,11 +29,11 @@ Flow Tool 目前支持两类插件：
 ### 输入 Schema（Zod）
 
 插件推荐通过 `inputSchema` 声明输入参数。使用 Zod `z.object({...})` 定义，
-SDK 重新导出了 `z`，也可以从 `@flow-tool/sdk` 直接导入：
+SDK 重新导出了 `z`，也可以从 `@flowtools/sdk` 直接导入：
 
 ```ts
 import { z } from 'zod'
-// or: import { z } from '@flow-tool/sdk'
+// or: import { z } from '@flowtools/sdk'
 
 const inputSchema = z.object({
   count: z.number().default(1).describe('生成数量'),
@@ -55,7 +55,7 @@ const inputSchema = z.object({
 `run()` 推荐返回结构化的 `CommandResult`，使用 `result.*` helpers：
 
 ```ts
-import { result } from '@flow-tool/sdk/result'
+import { result } from '@flowtools/sdk/result'
 
 result.text('Hello')           // 纯文本
 result.json({ count: 3 })     // JSON 数据
@@ -123,8 +123,8 @@ plugins/
 ```tsx
 import { useState } from 'react'
 
-import { definePlugin, useCapability } from '@flow-tool/sdk'
-import { result } from '@flow-tool/sdk/result'
+import { definePlugin, useCapability } from '@flowtools/sdk'
+import { result } from '@flowtools/sdk/result'
 import { z } from 'zod'
 
 const inputSchema = z.object({
@@ -206,8 +206,8 @@ import {
   usePluginStoreApi,
   type InferStoreState,
   type InferStoreActions,
-} from '@flow-tool/sdk'
-import { Button } from '@flow-tool/ui/plugin'
+} from '@flowtools/sdk'
+import { Button } from '@flowtools/ui/plugin'
 
 interface TodoItem {
   title: string
@@ -276,8 +276,8 @@ export default definePlugin({
 `plugins/plugin-word-counter/index.ts`：
 
 ```ts
-import { definePlugin } from '@flow-tool/sdk'
-import { result } from '@flow-tool/sdk/result'
+import { definePlugin } from '@flowtools/sdk'
+import { result } from '@flowtools/sdk/result'
 import { z } from 'zod'
 
 const inputSchema = z.object({
@@ -409,7 +409,7 @@ bun run packages/cli/src/cli.ts run plugin-uuid-generator --count 3 \
 ### 7.4 为桌面端 AI agent 预留
 
 CLI 入口设计为机器可读：`--format json` 输出结构化结果，
-桌面端 Tauri host 可通过 `Command::new("flow-tool")` 调用 CLI，
+桌面端 Tauri host 可通过 `Command::new("flowtools")` 调用 CLI，
 将输出解析后反馈给 AI agent。
 
 ### 7.5 子路径导入
@@ -418,10 +418,10 @@ SDK 提供两个子路径，插件可以直接从这里导入：
 
 ```ts
 // definePlugin 函数（单独导入，避免拉入整个 SDK）
-import { definePlugin } from '@flow-tool/sdk/definePlugin'
+import { definePlugin } from '@flowtools/sdk/definePlugin'
 
 // result helpers
-import { result } from '@flow-tool/sdk/result'
+import { result } from '@flowtools/sdk/result'
 ```
 
 ## 8. 权限与 Capability 对照（Web 原型）
@@ -457,7 +457,7 @@ import { result } from '@flow-tool/sdk/result'
 原因：插件代码调用了某 capability，但 `meta.permissions` 没声明。  
 处理：补充对应 permission，或删除 capability 调用。
 
-### 9.3 `[flow-tool-web-runtime] [dialog/db/native] Not supported on web runtime`
+### 9.3 `[flowtools-web-runtime] [dialog/db/native] Not supported on web runtime`
 
 原因：web 原型暂未实现这些能力。  
 处理：本地 web 调试阶段避免依赖这些能力；等 desktop host 接入后再使用。
@@ -468,7 +468,7 @@ import { result } from '@flow-tool/sdk/result'
 - App 插件状态优先使用 `definePluginStore()` 声明 store 形态，通过 `AppPlugin.store` 挂载；消费时使用 `usePluginStore<TState>()` 和 `usePluginStoreApi<TState, TActions>().actions.xxx()`
 - 推荐定义 `inputSchema`（Zod `z.object({...})`），使插件可被 CLI 调用并自动校验输入
 - 推荐 `run()` 返回 `result.*` 结构化结果，便于 CLI `--format json` 和桌面端解析
-- 推荐从 `@flow-tool/sdk/definePlugin` 和 `@flow-tool/sdk/result` 子路径导入，避免拉入整个 SDK
+- 推荐从 `@flowtools/sdk/definePlugin` 和 `@flowtools/sdk/result` 子路径导入，避免拉入整个 SDK
 - `permissions` 仅声明需要的最小集合
 - 插件 ID、命令 ID 使用 kebab-case
 - 插件逻辑放 `plugins/*`，宿主集成逻辑放 `apps/*`

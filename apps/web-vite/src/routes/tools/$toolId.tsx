@@ -14,14 +14,14 @@ import {
   type RunResultPayload,
   type RunStatus,
   type ToolVersionRecord,
-} from '@flow-tool/ui'
+} from '@flowtools/ui'
 import {
   ArrowLeftIcon,
   CircleCheckIcon,
   EyeIcon,
   PlayIcon,
   SparklesIcon,
-} from '@flow-tool/ui/icons'
+} from '@flowtools/ui/icons'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useStore } from 'zustand'
 

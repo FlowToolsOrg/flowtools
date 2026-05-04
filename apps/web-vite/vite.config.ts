@@ -22,11 +22,11 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: /^@\//, replacement: `${srcDir}/` },
-      { find: /^@flow-tool\/plugins\/(.+)$/, replacement: `${pluginsDir}/$1` },
-      { find: /^@flow-tool\/sdk$/, replacement: sdkEntry },
-      { find: /^@flow-tool\/sdk\/(.+)$/, replacement: `${sdkDir}/$1` },
-      { find: /^@flow-tool\/ui$/, replacement: uiEntry },
-      { find: /^@flow-tool\/ui\/(.+)$/, replacement: `${uiDir}/$1` },
+      { find: /^@flowtools\/plugins\/(.+)$/, replacement: `${pluginsDir}/$1` },
+      { find: /^@flowtools\/sdk$/, replacement: sdkEntry },
+      { find: /^@flowtools\/sdk\/(.+)$/, replacement: `${sdkDir}/$1` },
+      { find: /^@flowtools\/ui$/, replacement: uiEntry },
+      { find: /^@flowtools\/ui\/(.+)$/, replacement: `${uiDir}/$1` },
     ],
     dedupe: ['react', 'react-dom'],
   },

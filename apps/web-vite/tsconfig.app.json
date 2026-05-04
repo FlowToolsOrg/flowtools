@@ -12,9 +12,9 @@
     "moduleResolution": "bundler",
     "paths": {
       "@/*": ["./src/*"],
-      "@flow-tool/plugins/*": ["../../plugins/*"],
-      "@flow-tool/sdk": ["../../packages/sdk/src/index.ts"],
-      "@flow-tool/sdk/*": ["../../packages/sdk/src/*"],
+      "@flowtools/plugins/*": ["../../plugins/*"],
+      "@flowtools/sdk": ["../../packages/sdk/src/index.ts"],
+      "@flowtools/sdk/*": ["../../packages/sdk/src/*"],
       "react": ["./node_modules/@types/react/index.d.ts"],
       "react/jsx-runtime": ["./node_modules/@types/react/jsx-runtime.d.ts"],
       "react/jsx-dev-runtime": [

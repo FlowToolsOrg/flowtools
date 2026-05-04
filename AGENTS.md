@@ -9,12 +9,12 @@ This repository is a Bun + Turbo monorepo.
   `inputSchema` for CLI flag generation.
 - `packages/ui`: shared React UI primitives (HeroUI-based), including
   `CommandPalette`, `ToolCard`, `RunPanel`, `SettingsCenter`, etc.
-- `packages/cli`: unified CLI entry (`flow-tool list/info/run`), Commander-based,
+- `packages/cli`: unified CLI entry (`flowtools list/info/run`), Commander-based,
   auto-generates flags from plugin `inputSchema` (Zod), validates input at runtime,
   outputs structured `result.*` in JSON or text format.
 - `apps/web-vite`: current runnable host prototype (web runtime + routing +
   command palette + plugin registry).
-- `apps/ui-test`: consumer app for manual/UI testing of `@flow-tool/ui`.
+- `apps/ui-test`: consumer app for manual/UI testing of `@flowtools/ui`.
 - `plugins/`: local plugin workspace with 12 built-in plugins (all app type,
   all CLI-compatible via `run()` + `inputSchema`):
   - `plugin-todo-list` — 待办清单（host-managed store）

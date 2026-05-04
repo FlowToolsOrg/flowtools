@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react'
 
-import { definePlugin, useCapability } from '@flow-tool/sdk'
-import { result } from '@flow-tool/sdk/result'
-import { Button, Card, Chip, Label, TextArea } from '@flow-tool/ui/plugin'
+import { definePlugin, useCapability } from '@flowtools/sdk'
+import { result } from '@flowtools/sdk/result'
+import { Button, Card, Chip, Label, TextArea } from '@flowtools/ui/plugin'
 import { z } from 'zod'
 
 type Mode = 'encode' | 'decode'
@@ -29,7 +29,7 @@ function decodeBase64(base64: string): string {
         c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
       ).join('')
     )
-  } catch (e) {
+  } catch {
     throw new Error('解码失败: 无效的 Base64 字符串')
   }
 }

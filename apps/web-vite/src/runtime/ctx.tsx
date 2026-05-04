@@ -19,15 +19,15 @@ import type {
   ToolContext,
   ToolLogLevel,
   UICapability,
-} from '@flow-tool/sdk'
+} from '@flowtools/sdk'
 import type { PropsWithChildren } from 'react'
 
-import { FlowToolRuntimeProvider } from '@flow-tool/sdk'
-import { pickCapability } from '@flow-tool/sdk/utils'
+import { FlowToolRuntimeProvider } from '@flowtools/sdk'
+import { pickCapability } from '@flowtools/sdk/utils'
 import { createStore } from 'zustand/vanilla'
 
-const RUNTIME_PREFIX = '[flow-tool-web-runtime]'
-const STORAGE_PREFIX = 'flow-tool'
+const RUNTIME_PREFIX = '[flowtools-web-runtime]'
+const STORAGE_PREFIX = 'flowtools'
 const PLUGIN_STORE_STORAGE_NAMESPACE = '__plugin-store__'
 const PLUGIN_STORE_STORAGE_KEY = 'root'
 
@@ -103,7 +103,7 @@ function dispatchRuntimeEvent(
   }
 
   window.dispatchEvent(
-    new CustomEvent(`flow-tool:${eventName}`, {
+    new CustomEvent(`flowtools:${eventName}`, {
       detail,
     })
   )

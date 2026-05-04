@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 
-import { CommandPalette } from '@flow-tool/ui'
+import { CommandPalette } from '@flowtools/ui'
 import {
   BlocksIcon,
   HomeIcon,
   SearchIcon,
   SettingsIcon,
-} from '@flow-tool/ui/icons'
+} from '@flowtools/ui/icons'
 import {
   createRootRoute,
   Link,

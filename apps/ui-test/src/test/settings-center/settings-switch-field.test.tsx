@@ -1,4 +1,4 @@
-import { SettingsSwitchField } from '@flow-tool/ui'
+import { SettingsSwitchField } from '@flowtools/ui'
 import { describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
 import { userEvent } from 'vitest/browser'

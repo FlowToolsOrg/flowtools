@@ -239,23 +239,17 @@ export function parseJsonInput(
   try {
     parsed = JSON.parse(jsonStr)
   } catch (err) {
-    console.error('Error: Invalid JSON in --input:', err)
     process.exit(1)
   }
 
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-    console.error(
-      'Warning: --input must be a JSON object, wrapping in { value }'
-    )
     return { value: parsed }
   }
 
   if (schema) {
     const result = schema.safeParse(parsed)
     if (!result.success) {
-      console.error('Input validation failed:')
       for (const issue of result.error.issues) {
-        console.error(`  ${issue.path.join('.')}: ${issue.message}`)
       }
       process.exit(1)
     }

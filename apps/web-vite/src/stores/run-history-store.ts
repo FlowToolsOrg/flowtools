@@ -53,7 +53,7 @@ export const runHistoryStore = createStore<
       },
     }),
     {
-      name: 'flow-tool-run-history',
+      name: 'flowtools-run-history',
     }
   )
 )

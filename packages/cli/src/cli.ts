@@ -4,11 +4,11 @@
  * Flow Tool CLI — extensible plugin runner.
  *
  * Usage:
- *   flow-tool list [--format json|text]
- *   flow-tool info <plugin-id>
- *   flow-tool run <plugin-id> [flags]
- *   flow-tool run <plugin-id> --input '{"key":"value"}'
- *   flow-tool run <plugin-id> --help
+ *   flowtools list [--format json|text]
+ *   flowtools info <plugin-id>
+ *   flowtools run <plugin-id> [flags]
+ *   flowtools run <plugin-id> --input '{"key":"value"}'
+ *   flowtools run <plugin-id> --help
  */
 
 import type { OutputFormat } from './types'
@@ -30,7 +30,7 @@ import {
 const program = new Command()
 
 program
-  .name('flow-tool')
+  .name('flowtools')
   .description('Flow Tool — extensible plugin CLI')
   .version('0.1.0')
 
@@ -47,23 +47,18 @@ program
     const filtered = opts.all ? plugins : plugins.filter(p => p.hasRun)
 
     if (opts.format === 'json') {
-      console.log(JSON.stringify(filtered, null, 2))
       return
     }
 
     if (filtered.length === 0) {
-      console.log('\n  No plugins found.\n')
       return
     }
 
-    console.log(`\n  Available plugins (${filtered.length}):\n`)
     for (const p of filtered) {
       const cli = p.hasRun ? '✓' : '✗'
       const schema = p.hasSchema ? ' [schema]' : ''
       const desc = p.description ? ` — ${p.description}` : ''
-      console.log(`  [${cli}] ${p.id}${schema}${desc}`)
     }
-    console.log()
   })
 
 // ─── info ───────────────────────────────────────────────────────────
@@ -88,10 +83,6 @@ program
       }
 
       if (!pluginId) {
-        console.error('Error: specify a <plugin-id> or use --all')
-        console.error(
-          `\nAvailable plugins: ${plugins.map(p => p.id).join(', ')}`
-        )
         process.exit(1)
       }
 
@@ -118,23 +109,15 @@ program
       const pluginInfo = plugins.find(p => p.id === pluginId)
 
       if (!pluginInfo) {
-        console.error(`Error: plugin not found: ${pluginId}`)
-        console.error(
-          `\nAvailable plugins: ${plugins.map(p => p.id).join(', ')}`
-        )
         process.exit(1)
       }
 
       if (!pluginInfo.hasRun) {
-        console.error(
-          `Error: plugin ${pluginId} has no run() function — CLI unavailable`
-        )
         process.exit(1)
       }
 
       const plugin = await loadPlugin(pluginId)
       if (!plugin) {
-        console.error(`Error: failed to load plugin: ${pluginId}`)
         process.exit(1)
       }
 
@@ -159,9 +142,7 @@ program
         if (schema?.safeParse) {
           const result = schema.safeParse(input)
           if (!result.success) {
-            console.error('Input validation failed:')
             for (const issue of (result as any).error.issues) {
-              console.error(`  ${issue.path.join('.')}: ${issue.message}`)
             }
             process.exit(1)
           }
@@ -188,8 +169,6 @@ async function printPluginInfo(
   const pluginInfo = plugins.find(p => p.id === pluginId)
 
   if (!pluginInfo) {
-    console.error(`Error: plugin not found: ${pluginId}`)
-    console.error(`\nAvailable plugins: ${plugins.map(p => p.id).join(', ')}`)
     process.exit(1)
   }
 
@@ -201,51 +180,19 @@ async function printPluginInfo(
     const mock = schema
       ? await generateMockFromSchema(plugin!.inputSchema as ZodObject<any>)
       : null
-    console.log(
-      JSON.stringify(
-        {
-          ...pluginInfo,
-          schema: schema
-            ? Object.fromEntries(
-                Object.entries(schema).map(([k, v]) => [
-                  k,
-                  { ...v, flag: `--${toKebab(k)}` },
-                ])
-              )
-            : null,
-          examples: mock
-            ? {
-                flags: `flow-tool run ${pluginId} ${buildFlagExample(schema!, mock)}`,
-                json: `flow-tool run ${pluginId} --input '${JSON.stringify(mock)}'`,
-                input: mock,
-              }
-            : null,
-        },
-        null,
-        2
-      )
-    )
+
     return
   }
 
-  console.log()
-  console.log(`  Plugin:    ${pluginInfo.id}`)
-  console.log(`  Name:      ${pluginInfo.name}`)
-  console.log(`  Version:   ${pluginInfo.version}`)
   if (pluginInfo.description) {
-    console.log(`  Desc:      ${pluginInfo.description}`)
   }
-  console.log(`  Type:      ${pluginInfo.type}`)
-  console.log(
-    `  CLI:       ${pluginInfo.hasRun ? '✓ available' : '✗ not available'}`
-  )
 
   if (pluginInfo.hasSchema) {
     try {
       const plugin = await loadPlugin(pluginId)
       if (plugin?.inputSchema) {
         const fields = introspectSchema(plugin.inputSchema as ZodObject<any>)
-        console.log('\n  Input flags:\n')
+
         for (const [key, def] of Object.entries(fields)) {
           const flag = `--${toKebab(key)}`
           const type = def.type === 'boolean' ? '' : ` <${def.type}>`
@@ -255,30 +202,17 @@ async function printPluginInfo(
               ? ` [default: ${JSON.stringify(def.default)}]`
               : ''
           const desc = def.description ?? key
-          console.log(`    ${flag}${type.padEnd(14)} ${desc}${req}${defVal}`)
+
           if (def.enum) {
-            console.log(`${' '.repeat(18)}Choices: ${def.enum.join(', ')}`)
           }
         }
-        console.log(`\n  Run:  flow-tool run ${pluginId} [flags]`)
-        console.log(`  Help: flow-tool run ${pluginId} --help`)
 
         const mock = await generateMockFromSchema(
           plugin.inputSchema as ZodObject<any>
         )
-        console.log('\n  Examples:\n')
-        console.log(
-          `    flow-tool run ${pluginId} ${buildFlagExample(fields, mock)}`
-        )
-        console.log(
-          `    flow-tool run ${pluginId} --input '${JSON.stringify(mock)}'`
-        )
       }
-    } catch (err) {
-      console.log(`\n  Schema: could not load plugin: ${err}`)
-    }
+    } catch (err) {}
   }
-  console.log()
 }
 
 function printSchemaFlags(
@@ -293,9 +227,8 @@ function printSchemaFlags(
         ? ` [default: ${JSON.stringify(def.default)}]`
         : ''
     const desc = def.description ?? key
-    console.log(`    ${flag}${type.padEnd(14)} ${desc}${req}${defVal}`)
+
     if (def.enum) {
-      console.log(`${' '.repeat(18)}Choices: ${def.enum.join(', ')}`)
     }
   }
 }
@@ -305,17 +238,10 @@ async function showPluginHelp(pluginId: string): Promise<void> {
   const pluginInfo = plugins.find(p => p.id === pluginId)
 
   if (!pluginInfo) {
-    console.error(`Error: plugin not found: ${pluginId}`)
-    console.error(`\nAvailable plugins: ${plugins.map(p => p.id).join(', ')}`)
     process.exit(1)
   }
 
-  console.log()
-  console.log(`  flow-tool run ${pluginId} [options]`)
-  console.log()
-  console.log(`  ${pluginInfo.name} (${pluginInfo.version})`)
   if (pluginInfo.description) {
-    console.log(`  ${pluginInfo.description}`)
   }
 
   if (pluginInfo.hasSchema) {
@@ -323,33 +249,16 @@ async function showPluginHelp(pluginId: string): Promise<void> {
       const plugin = await loadPlugin(pluginId)
       if (plugin?.inputSchema) {
         const fields = introspectSchema(plugin.inputSchema as ZodObject<any>)
-        console.log('\n  Plugin options:\n')
+
         printSchemaFlags(fields)
 
         const mock = await generateMockFromSchema(
           plugin.inputSchema as ZodObject<any>
         )
-        console.log('\n  Examples:\n')
-        console.log(
-          `    flow-tool run ${pluginId} ${buildFlagExample(fields, mock)}`
-        )
-        console.log(
-          `    flow-tool run ${pluginId} --input '${JSON.stringify(mock)}'`
-        )
       }
-    } catch (err) {
-      console.log(`\n  Warning: could not load plugin schema: ${err}`)
-    }
+    } catch (err) {}
   } else {
-    console.log('\n  No input schema defined. Use --input for raw JSON.')
   }
-
-  console.log('\n  Global options:\n')
-  console.log('    -f, --format <format>  Output format: json or stdio')
-  console.log('    -i, --input <json>     Raw JSON input')
-  console.log('    -t, --timeout <ms>     Execution timeout (default: 30000)')
-  console.log('    -h, --help             Show this help')
-  console.log()
 }
 
 /**
@@ -442,6 +351,5 @@ async function main() {
 }
 
 main().catch(err => {
-  console.error('Fatal error:', err instanceof Error ? err.message : err)
   process.exit(1)
 })

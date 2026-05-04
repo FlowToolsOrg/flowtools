@@ -7,13 +7,13 @@ import {
   ToolGrid,
   ToolSummaryCard,
   type ToolEntity,
-} from '@flow-tool/ui'
+} from '@flowtools/ui'
 import {
   BlocksIcon,
   CircleCheckIcon,
   FlaskIcon,
   LayersIcon,
-} from '@flow-tool/ui/icons'
+} from '@flowtools/ui/icons'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useStore } from 'zustand'
 

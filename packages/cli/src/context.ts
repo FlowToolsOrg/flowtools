@@ -44,7 +44,7 @@ interface ToolContextShape {
 }
 
 function getStorageDir(pluginId: string): string {
-  const dir = join(tmpdir(), 'flow-tool', pluginId, 'storage')
+  const dir = join(tmpdir(), 'flowtools', pluginId, 'storage')
   mkdirSync(dir, { recursive: true })
   return dir
 }
@@ -113,9 +113,7 @@ export function createCLIToolContext(pluginId: string): ToolContextShape {
     ) => {
       const prefix = `[${pluginId}] [${level}]`
       if (details) {
-        console.error(prefix, message, details)
       } else {
-        console.error(prefix, message)
       }
     },
     storage: createCLIStorage(pluginId),

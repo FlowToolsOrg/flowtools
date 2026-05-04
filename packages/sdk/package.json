@@ -42,7 +42,7 @@
   "scripts": {
     "build": "tsdown --config tsdown.config.ts",
     "dev": "tsdown --config tsdown.config.ts --watch",
-    "lint": "oxlint --fix",
+    "lint": "oxlint --fix --type-aware --type-check",
     "format": "oxfmt",
     "generate:component": "turbo gen react-component",
     "check-types": "tsgo --noEmit"

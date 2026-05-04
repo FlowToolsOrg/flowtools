@@ -164,7 +164,7 @@ function readInitialPluginStoreState(
   const persistedState = parsePluginStoreState(raw)
 
   return {
-    ...(initialState ?? {}),
+    ...initialState,
     ...persistedState,
   }
 }

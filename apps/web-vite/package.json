@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsgo -b && vite build",
-    "lint": "oxlint --fix",
+    "lint": "oxlint --fix --type-aware --type-check",
     "format": "oxfmt",
     "preview": "vite preview",
     "check:types": "tsgo --noEmit"

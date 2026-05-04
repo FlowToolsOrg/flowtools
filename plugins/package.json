@@ -24,7 +24,7 @@
     "dev": "tsdown --config tsdown.config.ts --watch",
     "lint": "oxlint --fix",
     "format": "oxfmt",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsgo --noEmit"
   },
   "dependencies": {
     "@flowtools/cli": "workspace:*",

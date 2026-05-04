@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5174",
-    "build": "tsc -b && vite build",
+    "build": "tsgo -b && vite build",
     "lint": "oxlint --fix",
     "format": "oxfmt",
-    "check-types": "tsc -b",
+    "check-types": "tsgo --noEmit",
     "test": "bun test:browser",
     "test:watch": "vitest",
     "test:browser": "vitest --config=vitest.browser.config.ts --ui"

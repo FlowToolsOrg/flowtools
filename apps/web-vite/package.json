@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsgo -b && vite build",
     "lint": "oxlint --fix",
     "format": "oxfmt",
     "preview": "vite preview",
-    "check:types": "tsc --noEmit"
+    "check:types": "tsgo --noEmit"
   },
   "dependencies": {
     "@flowtools/plugins": "workspace:*",

@@ -29,7 +29,7 @@
     "lint": "oxlint --fix",
     "format": "oxfmt",
     "generate:component": "turbo gen react-component",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsgo --noEmit"
   },
   "devDependencies": {
     "@heroui/react": "catalog:",

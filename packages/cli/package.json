@@ -23,7 +23,7 @@
     "dev": "tsdown --config tsdown.config.ts --watch",
     "lint": "oxlint --fix",
     "format": "oxfmt",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsgo --noEmit"
   },
   "dependencies": {
     "commander": "^13.1.0",

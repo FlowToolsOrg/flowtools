@@ -7,8 +7,7 @@
     "module": "ESNext",
     "types": ["vite/client", "vitest/globals"],
     "skipLibCheck": true,
-    "moduleResolution": "bundler",
-    "baseUrl": ".",
+    "moduleResolution": "nodenext",
     "paths": {
       "@flowtools/ui": ["../../packages/ui/src/index.ts"],
       "@flowtools/ui/*": ["../../packages/ui/src/*"]

@@ -4,12 +4,13 @@ import type {
   RegisteredPlugin,
 } from '@flowtools/sdk'
 
-import { PluginLoader } from '@flowtools/sdk'
+import { PluginFileLoader, PluginLoader } from '@flowtools/sdk'
 import { createStore } from 'zustand/vanilla'
 
 interface PluginRegistryState {
   plugins: RegisteredPlugin[]
   commands: RegisteredCommand[]
+  externalPluginIds: string[]
 }
 
 interface PluginRegistryActions {
@@ -17,11 +18,14 @@ interface PluginRegistryActions {
   enablePlugin: (pluginId: string) => Promise<void>
   disablePlugin: (pluginId: string) => Promise<void>
   reloadPlugin: (pluginId: string) => Promise<void>
+  loadPluginFromFile: (file: File) => Promise<RegisteredPlugin>
+  unloadExternalPlugin: (pluginId: string) => Promise<void>
 }
 
 export type PluginRegistryStore = PluginRegistryState & PluginRegistryActions
 
 let _loader: PluginLoader | null = null
+let _fileLoader: PluginFileLoader | null = null
 
 function getLoader(): PluginLoader {
   if (!_loader) {
@@ -31,9 +35,18 @@ function getLoader(): PluginLoader {
   return _loader
 }
 
+function getFileLoader(): PluginFileLoader {
+  if (!_fileLoader) {
+    throw new Error('[PluginRegistryStore] Store not initialized.')
+  }
+
+  return _fileLoader
+}
+
 export const pluginRegistryStore = createStore<PluginRegistryState>()(() => ({
   plugins: [],
   commands: [],
+  externalPluginIds: [],
 }))
 
 function syncState(): void {
@@ -46,6 +59,7 @@ function syncState(): void {
   pluginRegistryStore.setState({
     plugins: _registry.getAll(),
     commands: _commandRegistry.getAll(),
+    externalPluginIds: _fileLoader?.getExternalPluginIds() ?? [],
   })
 }
 
@@ -57,11 +71,13 @@ export const pluginRegistryInternals = {
 export function initPluginRegistryStore(
   registry: import('@flowtools/sdk').PluginRegistry,
   commandRegistry: import('@flowtools/sdk').CommandRegistry,
-  loader: PluginLoader
+  loader: PluginLoader,
+  fileLoader: PluginFileLoader
 ): void {
   pluginRegistryInternals._registry = registry
   pluginRegistryInternals._commandRegistry = commandRegistry
   _loader = loader
+  _fileLoader = fileLoader
 
   registry.subscribe((_event: PluginRegistryEvent) => {
     syncState()
@@ -91,6 +107,17 @@ export const pluginRegistryActions: PluginRegistryActions = {
 
   async reloadPlugin(pluginId: string) {
     await getLoader().reload(pluginId)
+    syncState()
+  },
+
+  async loadPluginFromFile(file: File) {
+    const entry = await getFileLoader().loadFromFile(file)
+    syncState()
+    return entry
+  },
+
+  async unloadExternalPlugin(pluginId: string) {
+    await getFileLoader().unloadExternalPlugin(pluginId)
     syncState()
   },
 }

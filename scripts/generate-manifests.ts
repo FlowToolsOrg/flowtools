@@ -5,24 +5,14 @@
  * 扫描 plugins 目录，提取插件 meta 信息，生成 manifests.ts
  */
 
+import type { Permission, PluginMeta } from '../packages/sdk'
+
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
-
-interface PluginMeta {
-  id: string
-  name: string
-  version: string
-  description?: string
-  type: 'app' | 'tool'
-  permissions?: string[]
-  tags?: string[]
-  category?: string
-  cliAvailable: boolean
-}
 
 const PLUGINS_DIR = resolve(__dirname, '..', 'plugins')
 const OUTPUT_FILE = resolve(
@@ -31,7 +21,15 @@ const OUTPUT_FILE = resolve(
   'apps/web-vite/src/plugin/manifests.ts'
 )
 
-function extractMeta(content: string, filePath: string): PluginMeta | null {
+type ComputedPluginMeta = PluginMeta & {
+  type: 'app' | 'tool'
+  cliAvailable: boolean
+}
+
+function extractMeta(
+  content: string,
+  filePath: string
+): ComputedPluginMeta | null {
   // 提取 type
   const typeMatch = content.match(/type:\s*['"](\w+)['"]/)
   if (!typeMatch) return null
@@ -54,7 +52,8 @@ function extractMeta(content: string, filePath: string): PluginMeta | null {
   }
 
   // 提取 permissions 数组
-  const permissions = extractArrayField(metaStr, 'permissions')
+  const permissions = (extractArrayField(metaStr, 'permissions') ||
+    []) as Permission[]
 
   // 提取 tags 数组
   const tags = extractArrayField(metaStr, 'tags')
@@ -98,8 +97,8 @@ function extractArrayField(str: string, field: string): string[] | undefined {
   return items.length > 0 ? items : undefined
 }
 
-function scanPlugins(): PluginMeta[] {
-  const plugins: PluginMeta[] = []
+function scanPlugins(): ComputedPluginMeta[] {
+  const plugins: ComputedPluginMeta[] = []
 
   try {
     const entries = readdirSync(PLUGINS_DIR)
@@ -132,14 +131,14 @@ function scanPlugins(): PluginMeta[] {
         plugins.push(meta)
       }
     }
-  } catch (err) {
+  } catch {
     process.exit(1)
   }
 
   return plugins
 }
 
-function generateManifests(plugins: PluginMeta[]): string {
+function generateManifests(plugins: ComputedPluginMeta[]): string {
   // 按 category 分组生成 categories
   const categoryMap = new Map<string, string[]>()
 

@@ -129,6 +129,10 @@ export interface PluginMeta {
    * Plugin category label.
    */
   category?: string
+  /**
+   * Plugin icon.
+   */
+  icon?: string
 }
 
 /**

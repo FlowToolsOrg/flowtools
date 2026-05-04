@@ -4,6 +4,7 @@ import { CommandPalette } from '@flowtools/ui'
 import {
   BlocksIcon,
   HomeIcon,
+  LayersIcon,
   SearchIcon,
   SettingsIcon,
 } from '@flowtools/ui/icons'
@@ -22,6 +23,7 @@ import { pluginRegistryStore } from '@/stores/plugin-registry-store'
 const navItems = [
   { to: '/', label: 'Dashboard', icon: HomeIcon },
   { to: '/tools', label: 'Tools', icon: BlocksIcon },
+  { to: '/plugins', label: 'Plugins', icon: LayersIcon },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ] as const
 

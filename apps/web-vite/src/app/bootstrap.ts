@@ -1,6 +1,6 @@
 import type { RegisteredCommand } from '@flowtools/sdk'
 
-import { CommandRegistry, PluginLoader, PluginRegistry } from '@flowtools/sdk'
+import * as sdk from '@flowtools/sdk'
 
 import { builtInManifests } from '@/plugin/manifests'
 import {
@@ -11,8 +11,8 @@ import {
 let _ready = false
 
 function registerPluginCommands(
-  registry: PluginRegistry,
-  commandRegistry: CommandRegistry,
+  registry: sdk.PluginRegistry,
+  commandRegistry: sdk.CommandRegistry,
   navigate: (path: string) => void
 ): void {
   for (const entry of registry.getEnabled()) {
@@ -78,9 +78,10 @@ function registerPluginCommands(
 }
 
 export interface BootstrapResult {
-  registry: PluginRegistry
-  commandRegistry: CommandRegistry
-  loader: PluginLoader
+  registry: sdk.PluginRegistry
+  commandRegistry: sdk.CommandRegistry
+  loader: sdk.PluginLoader
+  fileLoader: sdk.PluginFileLoader
 }
 
 export async function bootstrap(
@@ -92,20 +93,23 @@ export async function bootstrap(
     return state as unknown as BootstrapResult
   }
 
-  const registry = new PluginRegistry()
-  const commandRegistry = new CommandRegistry()
-  const loader = new PluginLoader(registry)
+  sdk.setupImportMap(sdk)
+
+  const registry = new sdk.PluginRegistry()
+  const commandRegistry = new sdk.CommandRegistry()
+  const loader = new sdk.PluginLoader(registry)
+  const fileLoader = new sdk.PluginFileLoader(registry, loader)
 
   registry.registerAll(builtInManifests)
 
   await loader.loadAll()
   await loader.enableAll()
 
-  initPluginRegistryStore(registry, commandRegistry, loader)
+  initPluginRegistryStore(registry, commandRegistry, loader, fileLoader)
 
   registerPluginCommands(registry, commandRegistry, navigate)
 
   _ready = true
 
-  return { registry, commandRegistry, loader }
+  return { registry, commandRegistry, loader, fileLoader }
 }

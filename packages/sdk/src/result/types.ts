@@ -1,7 +1,7 @@
 /**
  * JSON primitive value type.
  */
-export type JsonPrimitive = string | number | boolean | null | undefined
+export type JsonPrimitive = string | number | boolean | null | undefined | any
 
 /**
  * Recursive JSON value type.

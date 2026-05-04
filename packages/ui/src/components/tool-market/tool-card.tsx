@@ -62,7 +62,7 @@ const ToolCardRoot = ({
         className
       )}
       onClick={onPress}
-      onKeyDown={event => {
+      onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>) => {
         if (!onPress) {
           return
         }

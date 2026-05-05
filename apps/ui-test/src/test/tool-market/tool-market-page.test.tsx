@@ -1,9 +1,7 @@
-import { ToolMarketPage } from '@flowtools/ui'
+import { ToolMarketPage, Button } from '@flowtools/ui'
 import { describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
 import { userEvent } from 'vitest/browser'
-
-import { Button } from '@heroui/react'
 
 describe('ToolMarketPage', () => {
   it('renders header and content slots', async () => {

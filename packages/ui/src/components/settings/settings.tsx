@@ -75,7 +75,7 @@ const normalizeSelectValue = (
 const renderSettingsItem = (item: SettingsItem) => {
   if (item.type === 'switch') {
     return (
-      <div className="rounded-(--radius) border border-(--border) bg-(--surface-secondary) px-3 py-3">
+      <div className="rounded-(--radius) border border-border bg-surface-secondary px-3 py-3">
         <Switch
           isDisabled={item.isDisabled}
           isSelected={item.value}
@@ -98,7 +98,7 @@ const renderSettingsItem = (item: SettingsItem) => {
   }
 
   return (
-    <div className="rounded-(--radius) border border-border bg-(--surface-secondary) p-3">
+    <div className="rounded-(--radius) border border-border bg-surface-secondary p-3">
       <Select
         className="w-full"
         isDisabled={item.isDisabled}
@@ -123,7 +123,7 @@ const renderSettingsItem = (item: SettingsItem) => {
                 <div className="flex flex-col gap-0.5">
                   <Label>{option.label}</Label>
                   {option.description ? (
-                    <Description className="text-xs text-(--muted)">
+                    <Description className="text-xs text-muted">
                       {option.description}
                     </Description>
                   ) : null}
@@ -134,7 +134,7 @@ const renderSettingsItem = (item: SettingsItem) => {
           </ListBox>
         </Select.Popover>
         {item.description ? (
-          <Description className="text-xs text-(--muted)">
+          <Description className="text-xs text-muted">
             {item.description}
           </Description>
         ) : null}
@@ -153,13 +153,13 @@ export const Settings = ({
   return (
     <section className={cn('w-full', className)} {...props}>
       <Card
-        className="rounded-(--radius) border border-(--border) bg-(--surface)"
+        className="rounded-(--radius) border border-border bg-surface"
         variant="secondary"
       >
         <Card.Header className="flex flex-col gap-2">
-          <Card.Title className="text-(--foreground)">{title}</Card.Title>
+          <Card.Title className="text-foreground">{title}</Card.Title>
           {description ? (
-            <Card.Description className="text-sm text-(--muted)">
+            <Card.Description className="text-sm text-muted">
               {description}
             </Card.Description>
           ) : null}
@@ -168,13 +168,11 @@ export const Settings = ({
           {sections.map((section, index) => (
             <div key={section.id} className="space-y-3">
               <div className="space-y-1">
-                <h3 className="text-sm font-semibold tracking-wide text-(--foreground) uppercase">
+                <h3 className="text-sm font-semibold tracking-wide text-foreground uppercase">
                   {section.title}
                 </h3>
                 {section.description ? (
-                  <p className="text-sm text-(--muted)">
-                    {section.description}
-                  </p>
+                  <p className="text-sm text-muted">{section.description}</p>
                 ) : null}
               </div>
               <div className="space-y-3">

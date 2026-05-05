@@ -23,14 +23,14 @@ export const RunResultPanel = ({
   return (
     <section
       className={cn(
-        'rounded-(--radius) border border-(--border) bg-(--surface) p-4',
+        'rounded-(--radius) border border-border bg-surface p-4',
         className
       )}
       {...props}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-(--foreground)">
+          <h3 className="text-sm font-semibold text-foreground">
             {result.title}
           </h3>
           {result.summary ? (
@@ -45,7 +45,7 @@ export const RunResultPanel = ({
         ) : null}
       </div>
       {result.raw ? (
-        <pre className="mt-3 overflow-x-auto rounded-(--radius) bg-(--surface-tertiary) p-3 text-xs text-(--foreground)">
+        <pre className="mt-3 overflow-x-auto rounded-(--radius) bg-surface-tertiary p-3 text-xs text-foreground">
           {result.raw}
         </pre>
       ) : null}

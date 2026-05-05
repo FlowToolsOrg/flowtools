@@ -32,6 +32,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@flowtools/ui": "workspace:*",
+        "@heroui/styles": "catalog:",
         "react": "catalog:",
         "react-dom": "catalog:",
       },
@@ -65,6 +66,7 @@
         "motion": "catalog:",
         "react": "catalog:",
         "react-dom": "catalog:",
+        "tailwindcss": "catalog:",
         "zustand": "catalog:",
       },
       "devDependencies": {
@@ -181,7 +183,7 @@
     "motion": "^12.38.0",
     "oxfmt": "^0.47.0",
     "oxlint": "^1.62.0",
-    "oxlint-tailwindcss": "^0.6.3",
+    "oxlint-tailwindcss": "^0.7.0",
     "oxlint-tsgolint": "^0.22.1",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
@@ -925,7 +927,7 @@
 
     "oxlint": ["oxlint@1.62.0", "https://registry.npmmirror.com/oxlint/-/oxlint-1.62.0.tgz", { "optionalDependencies": { "@oxlint/binding-android-arm-eabi": "1.62.0", "@oxlint/binding-android-arm64": "1.62.0", "@oxlint/binding-darwin-arm64": "1.62.0", "@oxlint/binding-darwin-x64": "1.62.0", "@oxlint/binding-freebsd-x64": "1.62.0", "@oxlint/binding-linux-arm-gnueabihf": "1.62.0", "@oxlint/binding-linux-arm-musleabihf": "1.62.0", "@oxlint/binding-linux-arm64-gnu": "1.62.0", "@oxlint/binding-linux-arm64-musl": "1.62.0", "@oxlint/binding-linux-ppc64-gnu": "1.62.0", "@oxlint/binding-linux-riscv64-gnu": "1.62.0", "@oxlint/binding-linux-riscv64-musl": "1.62.0", "@oxlint/binding-linux-s390x-gnu": "1.62.0", "@oxlint/binding-linux-x64-gnu": "1.62.0", "@oxlint/binding-linux-x64-musl": "1.62.0", "@oxlint/binding-openharmony-arm64": "1.62.0", "@oxlint/binding-win32-arm64-msvc": "1.62.0", "@oxlint/binding-win32-ia32-msvc": "1.62.0", "@oxlint/binding-win32-x64-msvc": "1.62.0" }, "peerDependencies": { "oxlint-tsgolint": ">=0.18.0" }, "optionalPeers": ["oxlint-tsgolint"], "bin": { "oxlint": "bin/oxlint" } }, "sha512-1uFkg6HakjsGIpW9wNdeW4/2LOHW9MEkoWjZUTUfQtIHyLIZPYt00w3Sg+H3lH+206FgBPHBbW5dVE5l2ExECQ=="],
 
-    "oxlint-tailwindcss": ["oxlint-tailwindcss@0.6.3", "https://registry.npmmirror.com/oxlint-tailwindcss/-/oxlint-tailwindcss-0.6.3.tgz", { "dependencies": { "@tailwindcss/node": "^4.2.4", "tailwindcss": "^4.2.4" }, "peerDependencies": { "@oxlint/plugins": ">=1.43.0" } }, "sha512-FuM8Hf6e59/FWi4aobymWWGgwuvCDpCU2/uWlnfU5FwTe3cKw5RLu8t2Q9K7wbbmgkjyfS4V5TmdVQX3O1s0kw=="],
+    "oxlint-tailwindcss": ["oxlint-tailwindcss@0.7.0", "https://registry.npmmirror.com/oxlint-tailwindcss/-/oxlint-tailwindcss-0.7.0.tgz", { "dependencies": { "@tailwindcss/node": "^4.2.4", "tailwindcss": "^4.2.4" }, "peerDependencies": { "@oxlint/plugins": ">=1.43.0" } }, "sha512-vTnjgJtc87y2hltgG6Z5D6AFHi55USb4iGDDyZDgnGrJDWlqEY8Zf6+5tkk1FpRVILPZIqlcVkDg9B6iLX0x+w=="],
 
     "oxlint-tsgolint": ["oxlint-tsgolint@0.22.1", "https://registry.npmmirror.com/oxlint-tsgolint/-/oxlint-tsgolint-0.22.1.tgz", { "optionalDependencies": { "@oxlint-tsgolint/darwin-arm64": "0.22.1", "@oxlint-tsgolint/darwin-x64": "0.22.1", "@oxlint-tsgolint/linux-arm64": "0.22.1", "@oxlint-tsgolint/linux-x64": "0.22.1", "@oxlint-tsgolint/win32-arm64": "0.22.1", "@oxlint-tsgolint/win32-x64": "0.22.1" }, "bin": { "tsgolint": "bin/tsgolint.js" } }, "sha512-YUSGSLUnoolsu8gxISEDio3q1rtsCozwfOzASUn3DT2mR2EeQ93uEEnen7s+6LpF+lyTQFln1pQfqwBh/fsVEg=="],
 

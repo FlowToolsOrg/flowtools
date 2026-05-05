@@ -45,7 +45,7 @@ export const SettingsSelectField = ({
   return (
     <div
       className={cn(
-        'rounded-(--radius) border border-(--border) bg-(--surface) px-4 py-3',
+        'rounded-(--radius) border border-border bg-surface px-4 py-3',
         className
       )}
       {...props}
@@ -74,7 +74,7 @@ export const SettingsSelectField = ({
                 <div className="flex flex-col gap-0.5">
                   <Label>{option.label}</Label>
                   {option.description ? (
-                    <Description className="text-xs text-(--muted)">
+                    <Description className="text-xs text-muted">
                       {option.description}
                     </Description>
                   ) : null}
@@ -85,7 +85,7 @@ export const SettingsSelectField = ({
           </ListBox>
         </Select.Popover>
         {description ? (
-          <Description className="text-xs text-(--muted)">
+          <Description className="text-xs text-muted">
             {description}
           </Description>
         ) : null}

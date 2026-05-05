@@ -26,7 +26,7 @@ const SettingsGroupCardRoot = ({
   return (
     <Card
       className={cn(
-        'rounded-(--radius) border border-(--border) bg-(--surface)',
+        'rounded-(--radius) border border-border bg-surface',
         className
       )}
       variant="secondary"
@@ -56,7 +56,7 @@ const SettingsGroupCardTitle = ({
 }: SettingsGroupCardTitleProps) => {
   return (
     <h3
-      className={cn('text-base font-semibold text-(--foreground)', className)}
+      className={cn('text-base font-semibold text-foreground', className)}
       {...props}
     >
       {children}
@@ -70,7 +70,7 @@ const SettingsGroupCardDescription = ({
   ...props
 }: SettingsGroupCardDescriptionProps) => {
   return (
-    <p className={cn('text-sm text-(--muted)', className)} {...props}>
+    <p className={cn('text-sm text-muted', className)} {...props}>
       {children}
     </p>
   )

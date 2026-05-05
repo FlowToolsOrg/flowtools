@@ -30,7 +30,7 @@ const ToolMarketPageHeader = ({
   return (
     <header
       className={cn(
-        'space-y-2 rounded-(--radius) border border-(--border) bg-(--surface) p-5',
+        'space-y-2 rounded-(--radius) border border-border bg-surface p-5',
         className
       )}
       {...props}

@@ -19,7 +19,7 @@
       "motion": "^12.38.0",
       "oxfmt": "^0.47.0",
       "oxlint": "^1.62.0",
-      "oxlint-tailwindcss": "^0.6.3",
+      "oxlint-tailwindcss": "^0.7.0",
       "oxlint-tsgolint": "^0.22.1",
       "react": "^19.2.5",
       "react-dom": "^19.2.5",

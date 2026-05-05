@@ -55,7 +55,7 @@ export const RunLogList = ({
               type="button"
             >
               <div className="min-w-0 space-y-0.5">
-                <p className="truncate text-sm text-(--foreground)">
+                <p className="truncate text-sm text-foreground">
                   {entry.message}
                 </p>
                 <p className="text-xs text-muted">{entry.timestamp}</p>

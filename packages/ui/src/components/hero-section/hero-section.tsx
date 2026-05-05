@@ -39,7 +39,7 @@ export const HeroSection = ({
   return (
     <section className={cn('w-full', className)} {...props}>
       <Card
-        className="overflow-hidden rounded-(--radius) border border-(--border) bg-(--surface)"
+        className="overflow-hidden rounded-(--radius) border border-border bg-surface"
         variant={tone}
       >
         <Card.Header className="flex flex-col gap-4">
@@ -49,11 +49,11 @@ export const HeroSection = ({
             </p>
           ) : null}
           <div className="flex flex-col gap-2">
-            <Card.Title className="text-2xl leading-tight font-semibold text-(--foreground) md:text-3xl">
+            <Card.Title className="text-2xl leading-tight font-semibold text-foreground md:text-3xl">
               {title}
             </Card.Title>
             {description ? (
-              <Card.Description className="max-w-3xl text-sm leading-6 text-(--muted) md:text-base">
+              <Card.Description className="max-w-3xl text-sm leading-6 text-muted md:text-base">
                 {description}
               </Card.Description>
             ) : null}
@@ -74,12 +74,12 @@ export const HeroSection = ({
               {stats.map(stat => (
                 <div
                   key={stat.id}
-                  className="rounded-(--radius) border border-(--border) bg-(--surface-secondary) px-4 py-3"
+                  className="rounded-(--radius) border border-border bg-surface-secondary px-4 py-3"
                 >
-                  <p className="text-xs font-medium tracking-wide text-(--muted) uppercase">
+                  <p className="text-xs font-medium tracking-wide text-muted uppercase">
                     {stat.label}
                   </p>
-                  <p className="mt-1 text-lg font-semibold text-(--foreground)">
+                  <p className="mt-1 text-lg font-semibold text-foreground">
                     {stat.value}
                   </p>
                 </div>

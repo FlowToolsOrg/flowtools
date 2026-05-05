@@ -27,7 +27,7 @@ export const ToolLayout = ({
   return (
     <div
       className={cn(
-        'min-h-[calc(100vh-3.5rem)] bg-background text-(--foreground)',
+        'min-h-[calc(100vh-3.5rem)] bg-background text-foreground',
         className
       )}
       {...props}

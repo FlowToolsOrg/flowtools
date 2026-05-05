@@ -56,6 +56,7 @@ export default defineConfig({
     'tailwindcss/no-arbitrary-value': 'off',
     'tailwindcss/no-hardcoded-colors': 'warn',
     'tailwindcss/no-unnecessary-arbitrary-value': 'warn',
+    'tailwindcss/prefer-theme-tokens': 'error',
   },
   plugins: ['import', 'oxc', 'react', 'promise', 'typescript'],
   ignorePatterns: [

@@ -74,12 +74,10 @@ function SettingsPage() {
   return (
     <div className="flex flex-col gap-6 p-6 lg:p-8">
       <header className="flex items-center gap-2.5 space-y-0">
-        <SettingsIcon className="text-(--accent)" size={22} />
+        <SettingsIcon className="text-accent" size={22} />
         <div>
-          <h1 className="text-2xl font-semibold text-(--foreground)">
-            Settings
-          </h1>
-          <p className="text-sm text-(--muted)">
+          <h1 className="text-2xl font-semibold text-foreground">Settings</h1>
+          <p className="text-sm text-muted">
             Configure your workspace and runtime behavior.
           </p>
         </div>
@@ -158,13 +156,13 @@ function SettingsPage() {
         </SettingsCenterPage>
 
         <aside className="hidden min-w-0 xl:block">
-          <div className="sticky top-6 space-y-3 rounded-(--radius) border border-(--border) bg-(--surface) p-4">
-            <h3 className="text-sm font-semibold text-(--foreground)">
+          <div className="sticky top-6 space-y-3 rounded-(--radius) border border-border bg-surface p-4">
+            <h3 className="text-sm font-semibold text-foreground">
               Current Settings
             </h3>
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-(--muted)">Auto-update</span>
+                <span className="text-muted">Auto-update</span>
                 <Chip
                   color={autoUpdate ? 'success' : 'default'}
                   size="sm"
@@ -174,7 +172,7 @@ function SettingsPage() {
                 </Chip>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-(--muted)">Telemetry</span>
+                <span className="text-muted">Telemetry</span>
                 <Chip
                   color={telemetry ? 'success' : 'default'}
                   size="sm"
@@ -184,14 +182,14 @@ function SettingsPage() {
                 </Chip>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-(--muted)">Startup</span>
-                <span className="font-medium text-(--foreground)">
+                <span className="text-muted">Startup</span>
+                <span className="font-medium text-foreground">
                   {startupMode}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-(--muted)">Workspace</span>
-                <span className="font-medium text-(--foreground)">
+                <span className="text-muted">Workspace</span>
+                <span className="font-medium text-foreground">
                   {workspaceName}
                 </span>
               </div>

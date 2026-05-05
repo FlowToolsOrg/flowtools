@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@flowtools/ui": "workspace:*",
+    "@heroui/styles": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
   },

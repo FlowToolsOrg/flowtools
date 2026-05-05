@@ -1,9 +1,7 @@
-import { MarketEmptyState } from '@flowtools/ui'
+import { MarketEmptyState, Button } from '@flowtools/ui'
 import { describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
 import { userEvent } from 'vitest/browser'
-
-import { Button } from '@heroui/react'
 
 describe('MarketEmptyState', () => {
   it('renders title and description', async () => {

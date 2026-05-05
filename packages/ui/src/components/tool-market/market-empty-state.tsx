@@ -31,9 +31,7 @@ export const MarketEmptyState = ({
       >
         <Card.Header className="flex flex-col items-center gap-2">
           <SearchIcon className="text-muted" size={40} />
-          <Card.Title className="text-lg text-(--foreground)">
-            {title}
-          </Card.Title>
+          <Card.Title className="text-lg text-foreground">{title}</Card.Title>
           {description ? (
             <Card.Description className="max-w-md text-sm text-muted">
               {description}

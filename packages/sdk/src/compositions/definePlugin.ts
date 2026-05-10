@@ -4,6 +4,8 @@ import type {
   ToolPlugin,
 } from '../types/plugin'
 
+import { PLUGIN_MARKER } from '../constants/marker'
+
 /**
  * Marker field added by `definePlugin`.
  */
@@ -11,7 +13,7 @@ export interface FlowToolPluginMarker {
   /**
    * Flow Tool plugin signature marker.
    */
-  readonly __flow_tools__: true
+  readonly [PLUGIN_MARKER]: true
 }
 
 /**
@@ -42,7 +44,7 @@ export function definePlugin<const T extends AnyFlowToolPlugin>(
   plugin: EnforceUniquePluginPermissions<T>
 ): DefinedFlowToolPlugin<T> {
   const normalizedPlugin = plugin as unknown as T
-  ;(normalizedPlugin as T & { __flow_tools__?: true }).__flow_tools__ = true
+  ;(normalizedPlugin as T & { [PLUGIN_MARKER]?: true })[PLUGIN_MARKER] = true
 
   return normalizedPlugin as DefinedFlowToolPlugin<T>
 }

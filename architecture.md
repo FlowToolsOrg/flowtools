@@ -73,7 +73,7 @@ CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用插�
 - `result.text(string)` / `result.json(value)` / `result.table(cols, rows)`
 - `result.open(target)` / `result.multi(items)`
 
-`definePlugin` 会写入 `__flow_tool` marker，并在类型层限制
+`definePlugin` 会写入 `__flow_tools__s__` marker，并在类型层限制
 `meta.permissions` 的重复声明（tuple 字面量可在编译期发现重复权限）。
 
 ## 4. Runtime Context 与 Hooks

@@ -11,7 +11,7 @@ export interface FlowToolPluginMarker {
   /**
    * Flow Tool plugin signature marker.
    */
-  readonly __flow_tool: true
+  readonly __flow_tools__: true
 }
 
 /**
@@ -42,7 +42,7 @@ export function definePlugin<const T extends AnyFlowToolPlugin>(
   plugin: EnforceUniquePluginPermissions<T>
 ): DefinedFlowToolPlugin<T> {
   const normalizedPlugin = plugin as unknown as T
-  ;(normalizedPlugin as T & { __flow_tool?: true }).__flow_tool = true
+  ;(normalizedPlugin as T & { __flow_tools__?: true }).__flow_tools__ = true
 
   return normalizedPlugin as DefinedFlowToolPlugin<T>
 }

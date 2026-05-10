@@ -7,31 +7,7 @@ import type { ComponentType } from 'react'
 import type { z } from 'zod'
 
 import { MarkedPluginFeature } from './plugin-features'
-
-type IsTuple<T extends readonly unknown[]> = number extends T['length']
-  ? false
-  : true
-
-type Includes<T extends readonly unknown[], Item> = T extends readonly [
-  infer Head,
-  ...infer Tail,
-]
-  ? [Head] extends [Item]
-    ? true
-    : Includes<Tail, Item>
-  : false
-
-type HasDuplicateItems<
-  T extends readonly unknown[],
-  Seen extends readonly unknown[] = [],
-> =
-  IsTuple<T> extends false
-    ? false
-    : T extends readonly [infer Head, ...infer Tail]
-      ? Includes<Seen, Head> extends true
-        ? true
-        : HasDuplicateItems<Tail, [...Seen, Head]>
-      : false
+import { HasDuplicateItems } from './utils'
 
 /**
  * Validate a permissions tuple and reject duplicate items.

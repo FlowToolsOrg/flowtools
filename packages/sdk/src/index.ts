@@ -5,13 +5,9 @@ export * from './runtime'
 export * from './registry'
 export * from './services'
 
-export {
-  definePlugin,
-  type DefinedFlowToolPlugin,
-  type FlowToolPluginMarker,
-} from './definePlugin'
+export * from './compositions/definePlugin'
+export * from './compositions/definePluginStore'
 
-export { definePluginStore } from './definePluginStore'
 export type { InferStoreActions, InferStoreState } from './storeHelpers'
 
 export { result } from './result/helpers'

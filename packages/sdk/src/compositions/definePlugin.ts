@@ -2,7 +2,7 @@ import type {
   AppPlugin,
   EnforceUniquePluginPermissions,
   ToolPlugin,
-} from './types/plugin'
+} from '../types/plugin'
 
 /**
  * Marker field added by `definePlugin`.

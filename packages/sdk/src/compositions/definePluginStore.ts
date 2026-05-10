@@ -1,4 +1,4 @@
-import type { PluginStoreShape, PluginStoreState } from './types/store'
+import type { PluginStoreShape, PluginStoreState } from '../types/store'
 
 /**
  * Define a typed plugin store shape with initial state and optional actions.

@@ -6,6 +6,8 @@ import type { PluginStoreShape } from './store'
 import type { ComponentType } from 'react'
 import type { z } from 'zod'
 
+import { MarkedPluginFeature } from './plugin-features'
+
 type IsTuple<T extends readonly unknown[]> = number extends T['length']
   ? false
   : true
@@ -157,13 +159,7 @@ export type InferInput<S extends PluginInputSchema> = z.infer<S>
  * Shared fields for app and tool plugins.
  */
 export interface PluginBase {
-  /**
-   * Plugin category.
-   */
   type: PluginType
-  /**
-   * Plugin metadata.
-   */
   meta: PluginMeta
   /**
    * Declarative Zod schema for plugin input.
@@ -171,18 +167,8 @@ export interface PluginBase {
    * When omitted, CLI falls back to `--input <json>`.
    */
   inputSchema?: PluginInputSchema
-  /**
-   * Optional command list exposed by this plugin.
-   */
-  commands?: PluginCommands
-  /**
-   * Optional plugin settings schema.
-   */
-  settingsSchema?: PluginSettingsSchema
-  /**
-   * Optional lifecycle handlers.
-   */
   lifecycle?: PluginLifecycle
+  features?: MarkedPluginFeature[]
 }
 
 /**

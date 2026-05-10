@@ -41,3 +41,5 @@ export type {
   ToastInput,
   ToastLevel,
 } from './ui'
+
+export * from './plugin-features'

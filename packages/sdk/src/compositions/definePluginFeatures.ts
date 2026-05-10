@@ -1,4 +1,4 @@
-import { PLUGIN_FEATURE } from '../constants/marker'
+import { PLUGIN_FEATURE } from '../constants'
 import { PluginFeature } from '../types/plugin-features'
 
 export function definePluginFeatures<T extends PluginFeature>(

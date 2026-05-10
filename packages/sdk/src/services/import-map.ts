@@ -1,8 +1,4 @@
-import type { FlowToolPlugin } from '../types/plugin'
-
-const IMPORT_MAP_ID = '__flowtools_importmap__'
-const SDK_BRIDGE_ID = '__flowtools_sdk_bridge__'
-const GLOBAL_KEY = '__FLOWTOOLS__'
+import { GLOBAL_KEY, IMPORT_MAP_ID } from '../constants'
 
 interface FlowToolsGlobal {
   sdk: Record<string, unknown>
@@ -10,7 +6,7 @@ interface FlowToolsGlobal {
 
 declare global {
   interface Window {
-    __FLOWTOOLS__?: FlowToolsGlobal
+    [GLOBAL_KEY]?: FlowToolsGlobal
   }
 }
 
@@ -23,7 +19,7 @@ function cdnUrl(pkg: string, version: string): string {
 
 /**
  * Create a blob URL bridge module that re-exports the host's SDK
- * from `window.__FLOWTOOLS__`.
+ * from `window.[GLOBAL_KEY]`.
  */
 function createSdkBridgeUrl(): string {
   const code = `const g = window['${GLOBAL_KEY}'];export default g.sdk;const{definePlugin,PluginFileLoader,PluginRegistry,PluginLoader,CommandRegistry,PluginLifecycleManager,PluginErrorBoundary,withWatchdog,FlowToolRuntimeContext,FlowToolRuntimeProvider,result,z}=g.sdk;export{definePlugin,PluginFileLoader,PluginRegistry,PluginLoader,CommandRegistry,PluginLifecycleManager,PluginErrorBoundary,withWatchdog,FlowToolRuntimeContext,FlowToolRuntimeProvider,result,z};`
@@ -60,8 +56,8 @@ export function setupImportMap(
   const reactDomVer = config?.reactDomVersion ?? '19'
 
   // Expose host SDK on window for the bridge module
-  if (!window.__FLOWTOOLS__) {
-    window.__FLOWTOOLS__ = { sdk }
+  if (!window[GLOBAL_KEY]) {
+    window[GLOBAL_KEY] = { sdk }
   }
 
   const sdkBridgeUrl = createSdkBridgeUrl()

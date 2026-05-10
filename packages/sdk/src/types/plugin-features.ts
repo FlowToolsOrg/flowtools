@@ -1,4 +1,4 @@
-import { PLUGIN_FEATURE } from '../constants/marker'
+import { PLUGIN_FEATURE } from '../constants'
 
 export type FeatureTag = string
 

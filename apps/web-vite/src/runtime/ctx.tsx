@@ -22,14 +22,15 @@ import type {
 } from '@flowtools/sdk'
 import type { PropsWithChildren } from 'react'
 
-import { FlowToolRuntimeProvider } from '@flowtools/sdk'
+import { FlowToolRuntimeProvider, APP_PREFIX } from '@flowtools/sdk'
 import { pickCapability } from '@flowtools/sdk/utils'
 import { createStore } from 'zustand/vanilla'
 
-const RUNTIME_PREFIX = '[flowtools-web-runtime]'
-const STORAGE_PREFIX = 'flowtools'
-const PLUGIN_STORE_STORAGE_NAMESPACE = '__plugin-store__'
-const PLUGIN_STORE_STORAGE_KEY = 'root'
+import {
+  PLUGIN_STORE_STORAGE_KEY,
+  PLUGIN_STORE_STORAGE_NAMESPACE,
+  RUNTIME_PREFIX,
+} from '@/constants'
 
 interface InternalPluginStoreState {
   state: PluginStoreState
@@ -114,7 +115,7 @@ function createStorageKey(
   kind: 'storage' | 'fs',
   key: string
 ): string {
-  return `${STORAGE_PREFIX}:${pluginId}:${kind}:${key}`
+  return `${APP_PREFIX}:${pluginId}:${kind}:${key}`
 }
 
 function createZustandStorageName(namespace: string | undefined, name: string) {

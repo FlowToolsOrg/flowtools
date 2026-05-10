@@ -4,6 +4,7 @@ export * from './utils'
 export * from './runtime'
 export * from './registry'
 export * from './services'
+export * from './constants'
 
 export * from './compositions/definePlugin'
 export * from './compositions/definePluginStore'

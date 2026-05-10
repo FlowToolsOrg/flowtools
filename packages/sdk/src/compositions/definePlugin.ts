@@ -4,7 +4,7 @@ import type {
   ToolPlugin,
 } from '../types/plugin'
 
-import { PLUGIN_MARKER } from '../constants/marker'
+import { PLUGIN_MARKER } from '../constants'
 
 /**
  * Marker field added by `definePlugin`.

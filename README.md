@@ -156,6 +156,7 @@ Minimal app plugin example:
 ```tsx
 import { definePlugin, useCapability } from '@flowtools/sdk'
 import { result } from '@flowtools/sdk/result'
+import { Button } from '@flowtools/ui'
 import { z } from 'zod'
 
 const inputSchema = z.object({
@@ -178,7 +179,7 @@ export default definePlugin({
     return function Panel() {
       const { storage } = useCapability()
 
-      return <button onClick={() => storage.set('hello', 'world')}>Save</button>
+      return <Button onPress={() => storage.set('hello', 'world')}>Save</Button>
     }
   },
 })

@@ -125,6 +125,7 @@ import { useState } from 'react'
 
 import { definePlugin, useCapability } from '@flowtools/sdk'
 import { result } from '@flowtools/sdk/result'
+import { Button, TextArea } from '@flowtools/sdk/ui'
 import { z } from 'zod'
 
 const inputSchema = z.object({
@@ -171,14 +172,14 @@ export default definePlugin({
       return (
         <section style={{ display: 'grid', gap: 8 }}>
           <h3>My First Plugin Panel</h3>
-          <textarea
+          <TextArea
             value={value}
             onChange={event => setValue(event.target.value)}
             rows={6}
           />
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={save}>Save</button>
-            <button onClick={loadRemote}>Load Remote Demo Data</button>
+            <Button onPress={save}>Save</Button>
+            <Button onPress={loadRemote}>Load Remote Demo Data</Button>
           </div>
         </section>
       )

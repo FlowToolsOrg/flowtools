@@ -1,6 +1,7 @@
 # Flow Tool
 
 > An extensible, cross-platform toolbox powered by a plugin runtime.
+> Plugin Runtime for AI Age
 
 Flow Tool is a plugin-driven utility platform focused on capability injection,
 permission gating, and a unified React UI runtime.
@@ -95,19 +96,7 @@ packages/
   sdk/         # plugin contract, hooks, registry, lifecycle, result helpers
   ui/          # shared React UI primitives (HeroUI-based)
   cli/         # unified CLI entry (flowtools list/info/run)
-plugins/
-  plugin-todo-list/            # app plugin with host-managed store
-  plugin-uuid-generator/       # UUID generator (clipboard)
-  plugin-hash-generator/       # hash generator (SHA/MD5)
-  plugin-text-ops/             # text set operations (clipboard)
-  plugin-json-formatter/       # JSON formatter/minifier
-  plugin-base64-encoder/       # Base64 encode/decode
-  plugin-timestamp-converter/  # timestamp converter
-  plugin-color-converter/      # color format converter (hex/rgb/hsl)
-  plugin-random-picker/        # random name picker
-  plugin-regex-tester/         # regex tester and debugger
-  plugin-image-base64/         # image ↔ base64 converter (clipboard)
-  plugin-website-latency/      # website latency tester (network)
+plugins/       # plugin workspace
 configs/
   tsdown/      # shared package build config
 ```
@@ -129,7 +118,7 @@ bun run format
 Useful local commands:
 
 ```bash
-cd apps/web-vite && bun run dev
+bun run dev --filter=@flowtools/web-vite
 cd apps/ui-test && bun run dev
 cd apps/ui-test && bun run test
 

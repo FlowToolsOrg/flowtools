@@ -16,19 +16,7 @@ This repository is a Bun + Turbo monorepo.
   command palette + plugin registry).
 - `apps/ui-test`: consumer app for manual/UI testing of `@flowtools/ui`.
 - `plugins/`: local plugin workspace with 12 built-in plugins (all app type,
-  all CLI-compatible via `run()` + `inputSchema`):
-  - `plugin-todo-list` — 待办清单（host-managed store）
-  - `plugin-uuid-generator` — UUID 生成器
-  - `plugin-hash-generator` — 哈希生成器
-  - `plugin-text-ops` — 文本集合运算
-  - `plugin-json-formatter` — JSON 格式化/压缩
-  - `plugin-base64-encoder` — Base64 编解码
-  - `plugin-timestamp-converter` — 时间戳转换
-  - `plugin-color-converter` — 颜色格式转换
-  - `plugin-random-picker` — 随机选取器
-  - `plugin-regex-tester` — 正则表达式测试
-  - `plugin-image-base64` — 图片 ↔ Base64
-  - `plugin-website-latency` — 网站延迟测试
+  all CLI-compatible via `run()` + `inputSchema`).
 - `configs/tsdown`: shared package build config.
 - `docs/` and root docs such as `README.md` and `architecture.md`: product and
   architecture references.
@@ -45,6 +33,7 @@ Keep reusable logic in `packages/*`; keep host-specific behavior in `apps/*`.
 You should reference the following files when changing architecture or developer
 workflows:
 
+- [Structure](./docs/structure.md)
 - [Architecture](./architecture.md)
 - [README](./README.md)
 - [Plugin](./docs/plugin.md)
@@ -142,8 +131,8 @@ files in the same change:
 - `README.md`
 - `AGENTS.md`
 - `architecture.md`
-
-Do not merge architecture/runtime changes with stale docs.
+- `docs/structure.md`
+- `docs/plugin.md`
 
 ## Commit and Pull Request Guidelines
 

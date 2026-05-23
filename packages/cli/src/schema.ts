@@ -7,6 +7,11 @@ import type { Command } from 'commander'
 
 import { z } from 'zod'
 
+type JsonSchemaObject = {
+  properties?: Record<string, Record<string, unknown>>
+  required?: string[]
+}
+
 /**
  * Convert camelCase or snake_case to kebab-case.
  */
@@ -32,9 +37,11 @@ export interface FieldMeta {
 export function introspectSchema(
   schema: z.ZodObject<any>
 ): Record<string, FieldMeta> {
-  const jsonSchema = z.toJSONSchema(schema, { target: 'draft-7' })
-  const properties = (jsonSchema as any).properties ?? {}
-  const required = new Set((jsonSchema as any).required ?? [])
+  const jsonSchema = z.toJSONSchema(schema, {
+    target: 'draft-7',
+  }) as JsonSchemaObject
+  const properties = jsonSchema.properties ?? {}
+  const required = new Set(jsonSchema.required ?? [])
   const fields: Record<string, FieldMeta> = {}
 
   for (const [key, prop] of Object.entries(properties)) {
@@ -106,7 +113,7 @@ export function addSchemaFlags(
         command.option(
           `${flag} <value>`,
           `${desc} (choices: ${choices.join(', ')})`,
-          def.default != null ? String(def.default) : undefined
+          defaultToString(def.default)
         )
         break
       }
@@ -119,11 +126,7 @@ export function addSchemaFlags(
         )
         break
       default:
-        command.option(
-          `${flag} <value>`,
-          desc,
-          def.default != null ? String(def.default) : undefined
-        )
+        command.option(`${flag} <value>`, desc, defaultToString(def.default))
         break
     }
   }
@@ -194,7 +197,7 @@ export async function generateMockFromSchema(
 
   // Force all properties as required so json-schema-faker generates values
   // for optional fields too
-  const props = (jsonSchema as any).properties ?? {}
+  const props = (jsonSchema as JsonSchemaObject).properties ?? {}
   jsonSchema.required = Object.keys(props)
 
   // Keep examples concise: 2 items per array
@@ -202,6 +205,15 @@ export async function generateMockFromSchema(
     minItems: 2,
     maxItems: 2,
   })) as Record<string, unknown>
+}
+
+function defaultToString(value: unknown): string | undefined {
+  if (value === null || value === undefined) return undefined
+  if (typeof value === 'string') return value
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return value.toString()
+  }
+  return JSON.stringify(value)
 }
 
 /**
@@ -239,6 +251,8 @@ export function parseJsonInput(
   try {
     parsed = JSON.parse(jsonStr)
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    process.stderr.write(`Invalid JSON input: ${message}\n`)
     process.exit(1)
   }
 
@@ -250,6 +264,8 @@ export function parseJsonInput(
     const result = schema.safeParse(parsed)
     if (!result.success) {
       for (const issue of result.error.issues) {
+        const path = issue.path.length ? `${issue.path.join('.')}: ` : ''
+        process.stderr.write(`${path}${issue.message}\n`)
       }
       process.exit(1)
     }

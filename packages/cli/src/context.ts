@@ -4,7 +4,14 @@
  * No React dependency — only provides non-UI capabilities.
  */
 
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -70,11 +77,14 @@ function createCLIStorage(pluginId: string) {
     delete(key: string): void {
       const file = join(dir, `${key}.json`)
       if (existsSync(file)) {
-        writeFileSync(file, '', 'utf-8')
+        unlinkSync(file)
       }
     },
     clear(): void {
-      // noop for CLI
+      if (existsSync(dir)) {
+        rmSync(dir, { recursive: true, force: true })
+        mkdirSync(dir, { recursive: true })
+      }
     },
   }
 }
@@ -113,7 +123,11 @@ export function createCLIToolContext(pluginId: string): ToolContextShape {
     ) => {
       const prefix = `[${pluginId}] [${level}]`
       if (details) {
+        process.stderr.write(
+          `${prefix} ${message} ${JSON.stringify(details)}\n`
+        )
       } else {
+        process.stderr.write(`${prefix} ${message}\n`)
       }
     },
     storage: createCLIStorage(pluginId),

@@ -22,7 +22,6 @@ export async function runPlugin(
   pluginId: string,
   input: Record<string, unknown>,
   options?: {
-    format?: OutputFormat
     timeout?: number
   }
 ): Promise<RunResult> {
@@ -73,11 +72,15 @@ export async function runPlugin(
 export async function runPluginAndPrint(
   pluginId: string,
   input: Record<string, unknown>,
-  format: OutputFormat = 'json'
+  format: OutputFormat = 'json',
+  options?: {
+    timeout?: number
+  }
 ): Promise<number> {
-  const result = await runPlugin(pluginId, input, { format })
+  const result = await runPlugin(pluginId, input, options)
 
   if (!result.success) {
+    process.stderr.write(`${result.error ?? 'Plugin execution failed'}\n`)
     return 1
   }
 
@@ -86,7 +89,10 @@ export async function runPluginAndPrint(
       result.data as Parameters<typeof formatResult>[0],
       format
     )
+    if (output) process.stdout.write(`${output}\n`)
   } else {
+    const output = formatRaw(result.data, format)
+    if (output) process.stdout.write(`${output}\n`)
   }
 
   return 0

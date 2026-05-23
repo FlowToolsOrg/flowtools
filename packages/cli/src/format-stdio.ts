@@ -22,7 +22,7 @@ interface TableLike {
  * Format a CommandResult as plain text for stdio output.
  */
 export function formatStdio(result: unknown): string {
-  if (!result || typeof result !== 'object') return String(result ?? '')
+  if (!result || typeof result !== 'object') return formatPrimitive(result)
 
   const res = result as Record<string, unknown>
   const value = extractValue(res)
@@ -40,7 +40,7 @@ export function formatStdio(result: unknown): string {
     return renderObject(value as Record<string, unknown>)
   }
 
-  return String(value)
+  return formatPrimitive(value)
 }
 
 // ─── Value extraction ────────────────────────────────────────────────
@@ -130,7 +130,7 @@ function renderObject(obj: Record<string, unknown>): string {
         parts.push('(empty results)')
       }
     } else if (results !== null && results !== undefined) {
-      parts.push(String(results))
+      parts.push(formatCell(results))
     }
 
     return parts.join('\n')
@@ -208,9 +208,26 @@ function isObjectArray(arr: unknown[]): boolean {
 function formatCell(value: unknown): string {
   if (value === null || value === undefined) return ''
   if (typeof value === 'object') return JSON.stringify(value)
-  return String(value)
+  return formatPrimitive(value)
 }
 
 function padR(s: string, width: number): string {
   return s.length >= width ? s : s + ' '.repeat(width - s.length)
+}
+
+function formatPrimitive(value: unknown): string {
+  if (value === null || value === undefined) return ''
+
+  switch (typeof value) {
+    case 'string':
+      return value
+    case 'number':
+    case 'boolean':
+    case 'bigint':
+      return value.toString()
+    case 'symbol':
+      return value.description ? `Symbol(${value.description})` : 'Symbol()'
+    default:
+      return ''
+  }
 }

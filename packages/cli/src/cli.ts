@@ -40,17 +40,20 @@ program
   .command('list')
   .alias('ls')
   .description('List all plugins')
-  .option('-f, --format <format>', 'Output format: json or stdio', 'stdio')
+  .option('-f, --format <format>', 'Output format: json or text', 'text')
   .option('-a, --all', 'Show all plugins (including non-CLI)', false)
   .action((opts: { format: string; all: boolean }) => {
     const plugins = scanPlugins()
     const filtered = opts.all ? plugins : plugins.filter(p => p.hasRun)
+    const format = normalizeFormat(opts.format)
 
-    if (opts.format === 'json') {
+    if (format === 'json') {
+      writeJson(filtered)
       return
     }
 
     if (filtered.length === 0) {
+      process.stdout.write('No plugins found\n')
       return
     }
 
@@ -58,6 +61,7 @@ program
       const cli = p.hasRun ? '✓' : '✗'
       const schema = p.hasSchema ? ' [schema]' : ''
       const desc = p.description ? ` — ${p.description}` : ''
+      process.stdout.write(`${cli} ${p.id}${schema}${desc}\n`)
     }
   })
 
@@ -66,7 +70,7 @@ program
 program
   .command('info [plugin-id]')
   .description('Show plugin details and input schema')
-  .option('-f, --format <format>', 'Output format: json or stdio', 'stdio')
+  .option('-f, --format <format>', 'Output format: json or text', 'text')
   .option('-a, --all', 'Show info for all plugins', false)
   .action(
     async (
@@ -83,6 +87,9 @@ program
       }
 
       if (!pluginId) {
+        process.stderr.write(
+          'Missing plugin id. Use --all to show all plugins.\n'
+        )
         process.exit(1)
       }
 
@@ -95,7 +102,7 @@ program
 program
   .command('run <plugin-id>')
   .description('Execute a plugin (use --help with plugin-id for options)')
-  .option('-f, --format <format>', 'Output format: json or stdio')
+  .option('-f, --format <format>', 'Output format: json or text')
   .option('-i, --input <json>', 'Raw JSON input (default output: json)')
   .option('-t, --timeout <ms>', 'Execution timeout in ms', '30000')
   .allowUnknownOption(true)
@@ -109,15 +116,18 @@ program
       const pluginInfo = plugins.find(p => p.id === pluginId)
 
       if (!pluginInfo) {
+        process.stderr.write(`Plugin not found: ${pluginId}\n`)
         process.exit(1)
       }
 
       if (!pluginInfo.hasRun) {
+        process.stderr.write(`Plugin has no run() function: ${pluginId}\n`)
         process.exit(1)
       }
 
       const plugin = await loadPlugin(pluginId)
       if (!plugin) {
+        process.stderr.write(`Failed to load plugin: ${pluginId}\n`)
         process.exit(1)
       }
 
@@ -142,18 +152,19 @@ program
         if (schema?.safeParse) {
           const result = schema.safeParse(input)
           if (!result.success) {
-            for (const issue of (result as any).error.issues) {
-            }
+            printIssues((result as any).error.issues)
             process.exit(1)
           }
           input = result.data as Record<string, unknown>
         }
       }
 
+      const timeout = Number(opts.timeout)
       const exitCode = await runPluginAndPrint(
         pluginId,
         input,
-        (opts.format ?? (opts.input ? 'json' : 'stdio')) as OutputFormat
+        normalizeFormat(opts.format ?? (opts.input ? 'json' : 'text')),
+        { timeout: Number.isFinite(timeout) ? timeout : undefined }
       )
       process.exit(exitCode)
     }
@@ -169,6 +180,7 @@ async function printPluginInfo(
   const pluginInfo = plugins.find(p => p.id === pluginId)
 
   if (!pluginInfo) {
+    process.stderr.write(`Plugin not found: ${pluginId}\n`)
     process.exit(1)
   }
 
@@ -181,10 +193,18 @@ async function printPluginInfo(
       ? await generateMockFromSchema(plugin!.inputSchema as ZodObject<any>)
       : null
 
+    writeJson({ ...pluginInfo, schema, example: schema ? mock : null })
     return
   }
 
+  process.stdout.write(`${pluginInfo.id}\n`)
+  process.stdout.write(`Name: ${pluginInfo.name}\n`)
+  process.stdout.write(`Version: ${pluginInfo.version}\n`)
+  process.stdout.write(`Type: ${pluginInfo.type}\n`)
+  process.stdout.write(`CLI: ${pluginInfo.hasRun ? 'yes' : 'no'}\n`)
+
   if (pluginInfo.description) {
+    process.stdout.write(`Description: ${pluginInfo.description}\n`)
   }
 
   if (pluginInfo.hasSchema) {
@@ -193,25 +213,23 @@ async function printPluginInfo(
       if (plugin?.inputSchema) {
         const fields = introspectSchema(plugin.inputSchema as ZodObject<any>)
 
-        for (const [key, def] of Object.entries(fields)) {
-          const flag = `--${toKebab(key)}`
-          const type = def.type === 'boolean' ? '' : ` <${def.type}>`
-          const req = def.required ? ' [required]' : ''
-          const defVal =
-            def.default !== undefined
-              ? ` [default: ${JSON.stringify(def.default)}]`
-              : ''
-          const desc = def.description ?? key
-
-          if (def.enum) {
-          }
-        }
+        process.stdout.write('\nOptions:\n')
+        printSchemaFlags(fields)
 
         const mock = await generateMockFromSchema(
           plugin.inputSchema as ZodObject<any>
         )
+        const example = buildFlagExample(fields, mock)
+        if (example) {
+          process.stdout.write(
+            `\nExample:\n  flowtools run ${pluginId} ${example}\n`
+          )
+        }
       }
-    } catch (err) {}
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      process.stderr.write(`Failed to load schema: ${message}\n`)
+    }
   }
 }
 
@@ -228,8 +246,9 @@ function printSchemaFlags(
         : ''
     const desc = def.description ?? key
 
-    if (def.enum) {
-    }
+    const choices = def.enum ? ` [choices: ${def.enum.join(', ')}]` : ''
+    process.stdout.write(`  ${flag}${type}${req}${defVal}${choices}\n`)
+    process.stdout.write(`    ${desc}\n`)
   }
 }
 
@@ -238,10 +257,14 @@ async function showPluginHelp(pluginId: string): Promise<void> {
   const pluginInfo = plugins.find(p => p.id === pluginId)
 
   if (!pluginInfo) {
+    process.stderr.write(`Plugin not found: ${pluginId}\n`)
     process.exit(1)
   }
 
+  process.stdout.write(`Usage: flowtools run ${pluginId} [options]\n`)
+  process.stdout.write(`\n${pluginInfo.name}\n`)
   if (pluginInfo.description) {
+    process.stdout.write(`${pluginInfo.description}\n`)
   }
 
   if (pluginInfo.hasSchema) {
@@ -255,9 +278,40 @@ async function showPluginHelp(pluginId: string): Promise<void> {
         const mock = await generateMockFromSchema(
           plugin.inputSchema as ZodObject<any>
         )
+        const example = buildFlagExample(fields, mock)
+        if (example) {
+          process.stdout.write(
+            `\nExample:\n  flowtools run ${pluginId} ${example}\n`
+          )
+        }
       }
-    } catch (err) {}
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      process.stderr.write(`Failed to load schema: ${message}\n`)
+    }
   } else {
+    process.stdout.write('\nThis plugin does not declare input options.\n')
+  }
+}
+
+function normalizeFormat(format: string): OutputFormat {
+  if (format === 'json') return 'json'
+  if (format === 'stdio' || format === 'text') return 'text'
+
+  process.stderr.write(`Unsupported format: ${format}\n`)
+  process.exit(1)
+}
+
+function writeJson(value: unknown): void {
+  process.stdout.write(`${JSON.stringify(value, null, 2)}\n`)
+}
+
+function printIssues(
+  issues: readonly { path?: readonly unknown[]; message: string }[]
+): void {
+  for (const issue of issues) {
+    const path = issue.path?.length ? `${issue.path.join('.')}: ` : ''
+    process.stderr.write(`${path}${issue.message}\n`)
   }
 }
 
@@ -350,6 +404,6 @@ async function main() {
   program.parse()
 }
 
-main().catch(err => {
+main().catch(() => {
   process.exit(1)
 })

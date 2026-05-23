@@ -2,12 +2,11 @@ import type { CommandResult } from '../result/types'
 import type { CommandDef } from './command'
 import type { ToolContext } from './ctx'
 import type { Permission } from './permissions'
+import type { MarkedPluginFeature } from './plugin-features'
 import type { PluginStoreShape } from './store'
+import type { HasDuplicateItems } from './utils'
 import type { ComponentType } from 'react'
 import type { z } from 'zod'
-
-import { MarkedPluginFeature } from './plugin-features'
-import { HasDuplicateItems } from './utils'
 
 /**
  * Validate a permissions tuple and reject duplicate items.

@@ -68,9 +68,9 @@ export default definePlugin({
     const setB = parseLines(input.setB)
     const items = computeSetOp(setA, setB, input.operation)
     return result.json({
+      result: items,
       operation: input.operation,
       count: items.length,
-      items,
     })
   },
   setup() {

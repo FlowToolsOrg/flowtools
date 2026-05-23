@@ -74,10 +74,17 @@ export default definePlugin({
       const stored = ctx.storage?.get('todos') as TodoItem[] | undefined
       const todos = [...(stored ?? []), item]
       ctx.storage?.set('todos', todos)
-      return result.json({ added: item, total: todos.length })
+      return result.json({ result: { added: item.todo, total: todos.length } })
     }
     const stored = ctx.storage?.get('todos') as TodoItem[] | undefined
-    return result.json({ todos: stored ?? [], count: (stored ?? []).length })
+    const items = stored ?? []
+    return result.json({
+      result: items.map(
+        (item, idx) =>
+          `${idx + 1}. [${item.deadline || 'No Deadline'}] ${item.todo}`
+      ),
+      count: items.length,
+    })
   },
   setup() {
     return function () {

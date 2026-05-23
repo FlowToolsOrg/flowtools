@@ -31,6 +31,30 @@ export interface TextCommandResult {
 }
 
 /**
+ * Structured JSON payload for CLI results.
+ *
+ * Convention: every `result.json()` call MUST include a `result` property
+ * containing the primary display content. The CLI text formatter extracts
+ * this key for clean output:
+ *   - primitive → printed directly
+ *   - array    → each item on a separate line
+ *   - object   → each key-value pair as `key: value` per line
+ *
+ * Additional metadata keys (e.g. `count`, `algorithm`) are preserved in
+ * JSON output but ignored in text/stdio mode.
+ */
+export interface JsonResultPayload {
+  /**
+   * Primary display content shown in CLI text mode.
+   */
+  result: JsonValue
+  /**
+   * Additional metadata (preserved in JSON output, ignored in text mode).
+   */
+  [key: string]: JsonValue
+}
+
+/**
  * JSON command result.
  */
 export interface JsonCommandResult {
@@ -39,9 +63,9 @@ export interface JsonCommandResult {
    */
   type: 'json'
   /**
-   * JSON payload.
+   * JSON payload. Must contain a `result` key for CLI display.
    */
-  value: JsonValue
+  value: JsonResultPayload
   /**
    * Optional plain text override for stdio output.
    * When present, stdio format outputs this instead of JSON.stringify.

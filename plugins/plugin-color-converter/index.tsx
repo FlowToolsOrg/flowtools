@@ -141,11 +141,11 @@ export default definePlugin({
     const parsed = parseColor(color)
     if (!parsed) return result.text('Error: invalid color format')
     return result.json({
-      hex: parsed.hex,
-      rgb: parsed.rgb,
-      hsl: parsed.hsl,
-      cssRgb: `rgb(${parsed.rgb.r}, ${parsed.rgb.g}, ${parsed.rgb.b})`,
-      cssHsl: `hsl(${parsed.hsl.h}, ${parsed.hsl.s}%, ${parsed.hsl.l}%)`,
+      result: {
+        hex: parsed.hex,
+        rgb: `${parsed.rgb.r},${parsed.rgb.g},${parsed.rgb.b}`,
+        hsl: `${parsed.hsl.h},${parsed.hsl.s}%,${parsed.hsl.l}%`,
+      },
     })
   },
   setup() {

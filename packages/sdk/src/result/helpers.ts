@@ -1,7 +1,7 @@
 import type {
   CommandResult,
   JsonCommandResult,
-  JsonValue,
+  JsonResultPayload,
   MultiCommandResult,
   OpenCommandResult,
   TableColumn,
@@ -25,8 +25,9 @@ export const result = {
 
   /**
    * Build JSON result.
+   * The value must contain a `result` key for CLI text display.
    */
-  json(value: JsonValue): JsonCommandResult {
+  json(value: JsonResultPayload): JsonCommandResult {
     return {
       type: 'json',
       value,

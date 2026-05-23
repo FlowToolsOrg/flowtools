@@ -4,6 +4,7 @@ export type {
   FileCommandResult,
   JsonCommandResult,
   JsonPrimitive,
+  JsonResultPayload,
   JsonValue,
   MultiCommandResult,
   OpenCommandResult,

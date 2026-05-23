@@ -111,6 +111,11 @@ function renderObject(obj: Record<string, unknown>): string {
     return renderTable(table.rows as Record<string, unknown>[], table.columns)
   }
 
+  // Has 'result' key — prioritize this new convention
+  if ('result' in obj) {
+    return renderDisplayValue(obj.result)
+  }
+
   // Has `results` key — split into summary + table
   if ('results' in obj) {
     const { results, ...meta } = obj
@@ -138,6 +143,31 @@ function renderObject(obj: Record<string, unknown>): string {
 
   // Plain object → JSON
   return JSON.stringify(obj, null, 2)
+}
+
+function renderDisplayValue(value: unknown): string {
+  if (value === null || value === undefined) return ''
+
+  if (typeof value === 'string') return value
+  if (typeof value === 'number' || typeof value === 'boolean')
+    return String(value)
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '(empty)'
+    if (isObjectArray(value)) {
+      return renderTable(value as Record<string, unknown>[])
+    }
+    return value.map(String).join('\n')
+  }
+
+  if (typeof value === 'object') {
+    const obj = value as Record<string, unknown>
+    const keys = Object.keys(obj)
+    if (keys.length === 0) return '{}'
+    return keys.map(k => `${k}: ${formatCell(obj[k])}`).join('\n')
+  }
+
+  return formatPrimitive(value)
 }
 
 // ─── Table renderer ──────────────────────────────────────────────────

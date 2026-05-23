@@ -32,7 +32,7 @@ export default definePlugin({
     if (!text) return result.text('Error: text is required')
     try {
       const parsed: unknown = JSON.parse(text)
-      if (mode === 'validate') return result.json({ valid: true })
+      if (mode === 'validate') return result.json({ result: { valid: true } })
       const output =
         mode === 'format'
           ? JSON.stringify(parsed, null, 2)
@@ -41,7 +41,7 @@ export default definePlugin({
     } catch (e) {
       const message = e instanceof Error ? e.message : 'JSON parse error'
       if (mode === 'validate')
-        return result.json({ valid: false, error: message })
+        return result.json({ result: { valid: false, error: message } })
       return result.text(`Error: ${message}`)
     }
   },

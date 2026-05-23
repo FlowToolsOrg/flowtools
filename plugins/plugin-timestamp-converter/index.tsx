@@ -73,18 +73,18 @@ export default definePlugin({
       const ts = Number(input.timestamp)
       if (isNaN(ts)) return result.text('Error: invalid timestamp')
       const iso = new Date(unit === 'seconds' ? ts * 1000 : ts).toISOString()
-      return result.json({ timestamp: input.timestamp, unit, iso })
+      return result.json({ result: iso, timestamp: input.timestamp, unit })
     }
     if (input.date) {
       const ms = parseDateInput(input.date)
       if (ms === null) return result.text('Error: invalid date string')
       const ts = unit === 'seconds' ? Math.floor(ms / 1000) : ms
-      return result.json({ date: input.date, unit, timestamp: ts })
+      return result.json({ result: ts, date: input.date, unit })
     }
     const now = Date.now()
     const ts = unit === 'seconds' ? Math.floor(now / 1000) : now
     return result.json({
-      timestamp: ts,
+      result: ts,
       unit,
       iso: new Date(now).toISOString(),
     })

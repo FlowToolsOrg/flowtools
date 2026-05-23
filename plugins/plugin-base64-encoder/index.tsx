@@ -59,7 +59,7 @@ export default definePlugin({
     if (!text) return result.text('Error: text is required')
     try {
       const output = mode === 'encode' ? encodeBase64(text) : decodeBase64(text)
-      return result.json({ mode, input: text, output })
+      return result.json({ result: output, mode, input: text })
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Conversion failed'
       return result.text(`Error: ${message}`)

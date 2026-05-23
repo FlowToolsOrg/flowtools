@@ -57,10 +57,10 @@ export default definePlugin({
         }
       }
       return result.json({
+        result: matches,
         pattern,
         flags,
         matchCount: matches.length,
-        matches,
       })
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Invalid regex'

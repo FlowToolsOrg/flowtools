@@ -115,7 +115,10 @@ export default definePlugin({
       : null
 
     return result.json({
-      results: items,
+      result: items.map(
+        i =>
+          `${i.url}: ${i.latency !== null ? `${i.latency}ms` : `error (${'error' in i ? i.error : 'request failed'})`}`
+      ),
       average: avg,
       tested: items.length,
     })

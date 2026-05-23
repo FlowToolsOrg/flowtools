@@ -38,7 +38,7 @@ export default definePlugin({
       picked.push(remaining[idx])
       remaining.splice(idx, 1)
     }
-    return result.json({ picked, total: nameList.length })
+    return result.json({ result: picked, total: nameList.length })
   },
   setup() {
     return function RandomPickerPanel() {

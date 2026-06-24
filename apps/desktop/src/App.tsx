@@ -26,6 +26,8 @@ import {
 
 import { Button, Chip, SearchField } from '@heroui/react'
 
+import { convertFileSrc } from '@tauri-apps/api/core'
+
 import pluginIndexData from './data/plugin-catalog.ztools.json'
 import './App.css'
 
@@ -39,6 +41,10 @@ interface IndexedCommand {
   category?: string
   pluginType: 'app' | 'tool'
   compatibilityLevel: string
+  sourceDir?: string
+  main?: string
+  preload?: string
+  developmentMain?: string
   hasUi: boolean
   hasPreload: boolean
   requiresNative: boolean
@@ -52,8 +58,10 @@ interface IndexedPlugin {
   type: 'app' | 'tool'
   category?: string
   ztools: {
+    sourceDir?: string
     main?: string
     preload?: string
+    developmentMain?: string
     commands: Array<{
       id: string
       title: string
@@ -67,6 +75,7 @@ interface IndexedPlugin {
 }
 
 interface PluginIndex {
+  source: string
   totals: {
     plugins: number
     commands: number
@@ -95,6 +104,10 @@ const builtInActions: IndexedCommand[] = [
     category: '系统',
     pluginType: 'app',
     compatibilityLevel: 'native',
+    sourceDir: undefined,
+    main: undefined,
+    preload: undefined,
+    developmentMain: undefined,
     hasUi: true,
     hasPreload: false,
     requiresNative: false,
@@ -109,6 +122,10 @@ const builtInActions: IndexedCommand[] = [
     category: '插件',
     pluginType: 'app',
     compatibilityLevel: 'native',
+    sourceDir: undefined,
+    main: undefined,
+    preload: undefined,
+    developmentMain: undefined,
     hasUi: true,
     hasPreload: false,
     requiresNative: false,
@@ -123,6 +140,10 @@ const builtInActions: IndexedCommand[] = [
     category: '安全',
     pluginType: 'app',
     compatibilityLevel: 'native',
+    sourceDir: undefined,
+    main: undefined,
+    preload: undefined,
+    developmentMain: undefined,
     hasUi: true,
     hasPreload: false,
     requiresNative: false,
@@ -139,7 +160,11 @@ function toCommandIndex(plugin: IndexedPlugin): IndexedCommand[] {
     category: plugin.category,
     pluginType: plugin.type,
     compatibilityLevel: plugin.ztools.compatibility.level,
-    hasUi: Boolean(plugin.ztools.main),
+    sourceDir: plugin.ztools.sourceDir,
+    main: plugin.ztools.main,
+    preload: plugin.ztools.preload,
+    developmentMain: plugin.ztools.developmentMain,
+    hasUi: Boolean(plugin.ztools.main || plugin.ztools.developmentMain),
     hasPreload: Boolean(plugin.ztools.preload),
     requiresNative: plugin.ztools.compatibility.level === 'native-bridge',
   } satisfies Omit<IndexedCommand, 'id' | 'title' | 'description' | 'type'>
@@ -234,7 +259,91 @@ function writeRecentCommandIds(commandIds: string[]): void {
 }
 
 function getRunLabel(command: IndexedCommand): string {
-  return command.pluginId === 'flowtools' ? '打开' : '运行命令'
+  if (command.pluginId === 'flowtools') return '打开'
+  return command.hasUi ? '启动插件' : '运行命令'
+}
+
+interface PluginLaunchTarget {
+  url: string
+  entryPath?: string
+  entry: string
+}
+
+function isExternalUrl(value: string | undefined): boolean {
+  return Boolean(value && /^https?:\/\//i.test(value))
+}
+
+function stripRelativePath(value: string): string {
+  return value.replace(/\\/g, '/').replace(/^\.?\//, '')
+}
+
+function isAbsoluteLocalPath(value: string): boolean {
+  return /^[a-zA-Z]:[\\/]/.test(value) || value.startsWith('/')
+}
+
+function joinLocalPath(...parts: string[]): string {
+  const [first = '', ...rest] = parts
+  return [
+    first.replace(/\\/g, '/').replace(/\/+$/, ''),
+    ...rest.map(part => stripRelativePath(part).replace(/^\/+|\/+$/g, '')),
+  ]
+    .filter(Boolean)
+    .join('/')
+}
+
+function toViteFsUrl(path: string): string {
+  return encodeURI(`/@fs/${path.replace(/\\/g, '/')}`)
+}
+
+function isTauriRuntime(): boolean {
+  return Boolean(
+    (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__
+  )
+}
+
+function toRuntimeAssetUrl(path: string): string {
+  if (isTauriRuntime() && !import.meta.env.DEV) {
+    return convertFileSrc(path)
+  }
+
+  return toViteFsUrl(path)
+}
+
+function getPluginEntryPath(command: IndexedCommand): string | undefined {
+  const entry = command.main ?? command.developmentMain
+
+  if (!entry || isExternalUrl(entry)) return undefined
+  if (isAbsoluteLocalPath(entry)) return entry.replace(/\\/g, '/')
+  if (!command.sourceDir) return undefined
+
+  return joinLocalPath(pluginIndex.source, 'plugins', command.sourceDir, entry)
+}
+
+function getPluginLaunchTarget(
+  command: IndexedCommand
+): PluginLaunchTarget | undefined {
+  const entry = command.main ?? command.developmentMain
+
+  if (!entry) return undefined
+
+  if (isExternalUrl(entry)) {
+    return { url: entry, entry }
+  }
+
+  const entryPath = getPluginEntryPath(command)
+  if (!entryPath) return undefined
+
+  return {
+    url: toRuntimeAssetUrl(entryPath),
+    entryPath,
+    entry,
+  }
+}
+
+function getPrimaryCommandForPlugin(
+  pluginId: string
+): IndexedCommand | undefined {
+  return allCommands.find(command => command.pluginId === pluginId)
 }
 
 function App() {
@@ -378,7 +487,7 @@ function LauncherView() {
             value={query}
             variant="secondary"
           >
-            <SearchField.Group className="grid h-10.5 min-w-0 grid-cols-[24px_minmax(0,1fr)_28px] items-center gap-2.5 rounded-lg border border-transparent bg-(--control-bg) px-3 text-(--text-secondary) focus-within:border-[color-mix(in_srgb,var(--primary-color)_42%,transparent)] focus-within:bg-[color-mix(in_srgb,var(--primary-color)_7%,white)] dark:focus-within:bg-[color-mix(in_srgb,var(--primary-color)_8%,#303133)]">
+            <SearchField.Group className="grid h-10.5 min-w-0 grid-cols-[24px_minmax(0,1fr)_28px] items-center gap-2.5 rounded-lg border border-transparent bg-(--control-bg) px-3 text-(--text-secondary) focus-within:border-[color-mix(in_srgb,var(--primary-color)_42%,transparent)] focus-within:bg-[color-mix(in_srgb,var(--primary-color)_7%,white)] focus-within:dark:bg-[color-mix(in_srgb,var(--primary-color)_8%,#303133)]">
               <SearchField.SearchIcon className="text-(--text-secondary)">
                 <SearchIcon size={22} />
               </SearchField.SearchIcon>
@@ -483,7 +592,7 @@ function IconGridSection({
       <div className="grid grid-cols-8 gap-0.5 max-[780px]:grid-cols-4">
         {commands.map((command, index) => (
           <Button
-            className={`h-[82px] min-w-0 flex-col gap-1.5 rounded-lg bg-transparent px-1 py-2 text-(--text-color) ${hoverClass} ${
+            className={`h-20.5 min-w-0 flex-col gap-1.5 rounded-lg bg-transparent px-1 py-2 text-(--text-color) ${hoverClass} ${
               command.id === selectedCommandId ? selectedClass : ''
             }`}
             key={command.id}
@@ -582,7 +691,7 @@ function CommandIcon({ command }: { command: IndexedCommand }) {
   return (
     <span className="relative grid size-8 shrink-0 place-items-center rounded-[7px] bg-(--primary-gradient) text-(--text-on-primary)">
       <Icon className="opacity-90" size={18} />
-      <span className="absolute -right-1 -bottom-1 grid h-4 min-w-4 place-items-center rounded-full border border-[var(--bg-color)] bg-[var(--bg-color)] px-1 text-[9px] font-extrabold text-[var(--text-color)] dark:bg-[#48484a] dark:text-[var(--text-on-primary)]">
+      <span className="absolute -right-1 -bottom-1 grid h-4 min-w-4 place-items-center rounded-full border border-(--bg-color) bg-(--bg-color) px-1 text-[9px] font-extrabold text-(--text-color) dark:bg-[#48484a] dark:text-(--text-on-primary)">
         {getInitials(command.pluginName)}
       </span>
     </span>
@@ -666,7 +775,7 @@ interface DesktopSurfaceProps {
 
 function DesktopSurface({ children }: DesktopSurfaceProps) {
   return (
-    <main className="grid h-screen w-screen place-items-center overflow-hidden bg-[radial-gradient(circle_at_24%_20%,rgba(2,132,199,0.12),transparent_32%),radial-gradient(circle_at_76%_88%,rgba(102,126,234,0.1),transparent_30%),#dce4ea] p-[18px] text-(--text-color) dark:bg-[radial-gradient(circle_at_24%_20%,rgba(56,189,248,0.1),transparent_32%),radial-gradient(circle_at_76%_88%,rgba(167,139,250,0.09),transparent_30%),#151719]">
+    <main className="grid h-screen w-screen place-items-center overflow-hidden bg-[radial-gradient(circle_at_24%_20%,rgba(2,132,199,0.12),transparent_32%),radial-gradient(circle_at_76%_88%,rgba(102,126,234,0.1),transparent_30%),#dce4ea] p-4.5 text-(--text-color) dark:bg-[radial-gradient(circle_at_24%_20%,rgba(56,189,248,0.1),transparent_32%),radial-gradient(circle_at_76%_88%,rgba(167,139,250,0.09),transparent_30%),#151719]">
       {children}
     </main>
   )
@@ -677,9 +786,16 @@ interface PageFrameProps {
   description?: string
   children: ReactNode
   actions?: ReactNode
+  contentClassName?: string
 }
 
-function PageFrame({ title, description, children, actions }: PageFrameProps) {
+function PageFrame({
+  title,
+  description,
+  children,
+  actions,
+  contentClassName = 'overflow-y-auto p-4',
+}: PageFrameProps) {
   const navigate = useNavigate()
 
   return (
@@ -708,7 +824,7 @@ function PageFrame({ title, description, children, actions }: PageFrameProps) {
           </div>
           <div className="flex items-center gap-2">{actions}</div>
         </header>
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
+        <div className={`min-h-0 flex-1 ${contentClassName}`}>{children}</div>
       </section>
     </DesktopSurface>
   )
@@ -806,7 +922,7 @@ interface SettingsRowProps {
 
 function SettingsRow({ label, value }: SettingsRowProps) {
   return (
-    <div className="grid min-h-[52px] grid-cols-[160px_minmax(0,1fr)] items-center gap-4 border-b border-(--divider-color) py-2 text-sm max-[640px]:grid-cols-1">
+    <div className="grid min-h-13 grid-cols-[160px_minmax(0,1fr)] items-center gap-4 border-b border-(--divider-color) py-2 text-sm max-[640px]:grid-cols-1">
       <span className="text-(--text-secondary)">{label}</span>
       <div className="min-w-0 font-medium text-(--text-color)">{value}</div>
     </div>
@@ -814,6 +930,18 @@ function SettingsRow({ label, value }: SettingsRowProps) {
 }
 
 function PluginsView() {
+  const navigate = useNavigate()
+
+  const openPlugin = (pluginId: string) => {
+    const command = getPrimaryCommandForPlugin(pluginId)
+    if (!command) return
+
+    void navigate({
+      to: '/run/$commandId',
+      params: { commandId: command.id },
+    })
+  }
+
   return (
     <PageFrame
       description={`${pluginIndex.totals.plugins} 个插件 · ${pluginIndex.totals.commands} 个命令`}
@@ -821,9 +949,11 @@ function PluginsView() {
     >
       <div className="grid gap-2">
         {pluginIndex.plugins.slice(0, 80).map(plugin => (
-          <div
-            className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2 py-2 hover:bg-(--hover-bg)"
+          <Button
+            className="grid min-h-13.5 w-full grid-cols-[36px_minmax(0,1fr)_auto] justify-normal gap-3 rounded-lg bg-transparent px-2 py-2 text-left text-(--text-color) hover:bg-(--hover-bg)"
             key={plugin.id}
+            onPress={() => openPlugin(plugin.id)}
+            variant="ghost"
           >
             <span className="grid size-9 place-items-center rounded-[7px] bg-(--primary-gradient) text-xs font-extrabold text-(--text-on-primary)">
               {getInitials(plugin.name)}
@@ -837,7 +967,7 @@ function PluginsView() {
             <Chip color="accent" size="sm" variant="soft">
               {plugin.ztools.compatibility.level}
             </Chip>
-          </div>
+          </Button>
         ))}
       </div>
     </PageFrame>
@@ -900,6 +1030,8 @@ function CommandRunView() {
     )
   }
 
+  const launchTarget = getPluginLaunchTarget(command)
+
   return (
     <PageFrame
       actions={
@@ -912,49 +1044,94 @@ function CommandRunView() {
           插件
         </Button>
       }
+      contentClassName="overflow-hidden p-0"
       description={command.pluginName}
       title={command.title}
     >
-      <div className="grid gap-4">
-        <div className="grid grid-cols-[42px_minmax(0,1fr)] gap-3">
+      {launchTarget ? (
+        <PluginLaunchSurface command={command} target={launchTarget} />
+      ) : (
+        <HeadlessCommandSurface command={command} />
+      )}
+    </PageFrame>
+  )
+}
+
+interface PluginLaunchSurfaceProps {
+  command: IndexedCommand
+  target: PluginLaunchTarget
+}
+
+function PluginLaunchSurface({ command, target }: PluginLaunchSurfaceProps) {
+  const [frameVersion, setFrameVersion] = useState(0)
+
+  return (
+    <div className="flex h-full min-h-0 flex-col bg-[#111827]">
+      <div className="flex min-h-10.5 items-center justify-between gap-3 border-b border-black/20 bg-(--bg-color) px-3 py-2">
+        <div className="flex min-w-0 items-center gap-2">
           <CommandIcon command={command} />
           <div className="min-w-0">
-            <p className="m-0 text-sm leading-relaxed text-(--text-color)">
-              {command.description ??
-                'FlowTools 已接收该命令，并进入桌面运行路由。'}
-            </p>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              <CapabilityChip icon={PlayIcon}>{command.type}</CapabilityChip>
-              <CapabilityChip icon={ShieldCheckIcon}>
-                {command.compatibilityLevel}
-              </CapabilityChip>
-              <CapabilityChip icon={LockIcon}>
-                {command.requiresNative ? '需要原生桥' : '可沙箱化'}
-              </CapabilityChip>
+            <div className="truncate text-sm font-semibold text-(--text-color)">
+              {command.pluginName}
+            </div>
+            <div className="truncate text-[11px] text-(--text-secondary)">
+              {target.entry}
             </div>
           </div>
         </div>
-
-        <div className="grid gap-2 border-t border-(--divider-color) pt-4 text-sm">
-          <SettingsRow label="命令 ID" value={command.id} />
-          <SettingsRow label="插件 ID" value={command.pluginId} />
-          <SettingsRow label="插件类型" value={command.pluginType} />
-          <SettingsRow label="分类" value={command.category ?? '未分类'} />
-          <SettingsRow
-            label="运行通道"
-            value={
-              command.hasPreload
-                ? 'Preload API Bridge'
-                : command.requiresNative
-                  ? 'Tauri Native Bridge'
-                  : command.hasUi
-                    ? 'Tauri WebView'
-                    : 'Headless/Metadata'
-            }
-          />
+        <div className="flex shrink-0 items-center gap-1.5">
+          <Chip color="accent" size="sm" variant="soft">
+            {command.compatibilityLevel}
+          </Chip>
+          {command.hasPreload ? (
+            <Chip color="warning" size="sm" variant="soft">
+              Bridge
+            </Chip>
+          ) : null}
+          <Button
+            onPress={() => setFrameVersion(version => version + 1)}
+            size="sm"
+            variant="secondary"
+          >
+            重新载入
+          </Button>
         </div>
       </div>
-    </PageFrame>
+      <iframe
+        className="min-h-0 flex-1 border-0 bg-white"
+        key={`${target.url}:${frameVersion}`}
+        sandbox="allow-same-origin allow-scripts allow-forms allow-modals allow-popups allow-downloads"
+        src={target.url}
+        title={`${command.pluginName} - ${command.title}`}
+      />
+    </div>
+  )
+}
+
+function HeadlessCommandSurface({ command }: { command: IndexedCommand }) {
+  return (
+    <div className="grid h-full place-items-center p-6">
+      <div className="grid max-w-130 gap-4 text-center">
+        <div className="mx-auto">
+          <CommandIcon command={command} />
+        </div>
+        <div>
+          <h2 className="m-0 text-base font-semibold text-(--text-color)">
+            命令已触发
+          </h2>
+          <p className="m-0 mt-2 text-sm leading-relaxed text-(--text-secondary)">
+            这个入口没有声明 UI main，后续会接入 FlowTools headless runner 或
+            Tauri 原生能力执行。
+          </p>
+        </div>
+        <div className="flex justify-center gap-1.5">
+          <CapabilityChip icon={PlayIcon}>{command.type}</CapabilityChip>
+          <CapabilityChip icon={ShieldCheckIcon}>
+            {command.compatibilityLevel}
+          </CapabilityChip>
+        </div>
+      </div>
+    </div>
   )
 }
 

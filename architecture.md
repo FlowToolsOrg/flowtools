@@ -169,11 +169,11 @@ Host runtime 用 `pickCapability(...)` 做权限裁剪：
 ## 6.1 Desktop Runtime Prototype（Tauri）
 
 `apps/desktop` 当前是 Tauri 桌面壳，不再是默认模板页。它读取
-`apps/desktop/src/data/plugin-catalog.ztools.json`，展示 ZTools 风格插件启动、搜索、命令数量、分类和运行支持级别；`docs/plugin-catalog.ztools.json` 作为同源的人类可读目录副本。桌面端路由使用 TanStack Router，当前包括 `/`、`/settings`、`/plugins`、`/permissions` 和 `/run/$commandId`。
+`apps/desktop/src/data/plugin-catalog.ztools.json`，展示 ZTools 风格插件启动、搜索、命令数量、分类和运行支持级别；`docs/plugin-catalog.ztools.json` 作为同源的人类可读目录副本。桌面端路由使用 TanStack Router，当前包括 `/`、`/settings`、`/plugins`、`/permissions` 和 `/run/$commandId`。其中 `/run/$commandId` 对声明了 `main` 的 ZTools 插件会启动 iframe 运行容器，而不是仅展示插件元数据。
 
 当前边界：
 
-- 已实现：HeroUI + Tailwind 桌面首屏、ZTools 插件目录驱动的启动器界面、设置/插件/权限/命令运行路由、workspace icon 复用。
+- 已实现：HeroUI + Tailwind 桌面首屏、ZTools 插件目录驱动的启动器界面、设置/插件/权限路由、ZTools `main` iframe 启动容器、workspace icon 复用。
 - 待实现：真正打开 ZTools `main` 的 WebView runner。
 - 待实现：preload API bridge，将 Electron/uTools 风格 API 映射到 Tauri commands。
 - 待实现：文件、窗口、截图、系统命令等 native bridge。

@@ -95,7 +95,7 @@ Virtual Bridge Link 流程:
 
 Web (基于 Vite): 实现 Dynamic Import (动态导入)、SDK Mount (SDK 挂载)、Import Map (导入映射)。
 
-Desktop (基于 Tauri): 已有 `apps/desktop` 壳，用于承载 HeroUI + Tailwind 桌面启动器、TanStack Router 桌面路由、ZTools 风格插件目录和后续 WebView 插件运行。
+Desktop (基于 Tauri): 已有 `apps/desktop` 壳，用于承载 HeroUI + Tailwind 桌面启动器、TanStack Router 桌面路由、ZTools 风格插件目录和 iframe 插件运行容器。
 
 ### ZTools 兼容导入层
 

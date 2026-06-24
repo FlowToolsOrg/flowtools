@@ -115,6 +115,8 @@ bun run inspect:ztools
 
 Desktop 端使用 TanStack Router 承载启动器、设置、插件、权限和命令运行页。
 ZTools 目录中的命令会进入 `/run/$commandId`，内置设置类命令会进入对应页面。
+如果 ZTools 插件声明了 `main`，该路由会直接启动 iframe 运行容器；没有 UI
+入口的命令才进入 headless 执行状态视图。
 
 ### 2.1 ZTools 插件兼容判断
 

@@ -63,7 +63,8 @@ Core principles:
 - Current runnable hosts:
   - `apps/web-vite`: web runtime prototype.
   - `apps/desktop`: Tauri desktop shell with a HeroUI + Tailwind powered
-    ZTools-style launcher surface and TanStack Router desktop routes.
+    ZTools-style launcher surface, TanStack Router desktop routes, and an
+    iframe-based plugin launch surface for ZTools `main` entries.
 - Core packages under active development:
   - `packages/sdk` (`@flowtools/sdk`) — plugin contract, hooks, registry, lifecycle, Zod-based inputSchema
   - `packages/ui` (`@flowtools/ui`) — shared UI components including CommandPalette

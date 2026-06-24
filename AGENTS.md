@@ -122,7 +122,9 @@ Host UI reads plugin/command state from Zustand stores:
 
 Desktop routes are owned by `apps/desktop` and should use TanStack Router. The
 current routes are `/`, `/settings`, `/plugins`, `/permissions`, and
-`/run/$commandId`.
+`/run/$commandId`. For ZTools plugins with a `main` entry, `/run/$commandId`
+must launch the plugin UI in the desktop runner instead of acting as a metadata
+detail page.
 
 ## Command Palette
 

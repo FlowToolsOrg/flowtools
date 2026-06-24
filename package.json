@@ -36,6 +36,9 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=@flowtools/web",
+    "dev:desktop": "bun run --cwd apps/desktop tauri dev",
+    "build:desktop": "bun run --cwd apps/desktop tauri build",
     "lint": "turbo run lint",
     "format": "turbo run format",
     "check-types": "turbo run check-types",

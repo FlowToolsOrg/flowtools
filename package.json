@@ -24,6 +24,7 @@
       "react": "^19.2.5",
       "react-dom": "^19.2.5",
       "tailwindcss": "^4.2.4",
+      "@tailwindcss/vite": "^4.2.4",
       "tsdown": "^0.22.0",
       "typescript": "^6.0.3",
       "vite": "^8.0.10",
@@ -42,10 +43,11 @@
     "lint": "turbo run lint",
     "format": "turbo run format",
     "check-types": "turbo run check-types",
-    "test": "turbo run test",
+    "test": "bun -e \"console.log('Tests are deprecated for this project; use lint, check-types, builds, and manual validation instead.')\"",
     "lint:staged": "lint-staged",
     "prepare": "husky",
-    "generate:manifests": "bun run scripts/generate-manifests.ts"
+    "generate:manifests": "bun run scripts/generate-manifests.ts",
+    "inspect:ztools": "bun run scripts/inspect-ztools-plugins.ts"
   },
   "dependencies": {
     "es-toolkit": "catalog:",

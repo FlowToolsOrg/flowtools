@@ -1,13 +1,28 @@
+import { fileURLToPath, URL } from 'node:url'
+
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST
 const devHost = host || '127.0.0.1'
+const workspaceRoot = fileURLToPath(new URL('../..', import.meta.url))
+const uiEntry = fileURLToPath(
+  new URL('../../packages/ui/src/index.ts', import.meta.url)
+)
+const uiDir = fileURLToPath(new URL('../../packages/ui/src', import.meta.url))
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
-  plugins: [react()],
+  resolve: {
+    alias: [
+      { find: /^@flowtools\/ui$/, replacement: uiEntry },
+      { find: /^@flowtools\/ui\/(.+)$/, replacement: `${uiDir}/$1` },
+    ],
+    dedupe: ['react', 'react-dom'],
+  },
+  plugins: [react(), tailwindcss()],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
@@ -28,6 +43,9 @@ export default defineConfig(async () => ({
     watch: {
       // 3. tell Vite to ignore watching `src-tauri`
       ignored: ['**/src-tauri/**'],
+    },
+    fs: {
+      allow: [workspaceRoot],
     },
   },
 }))

@@ -39,3 +39,7 @@ yarn-error.log*
 *.pem
 # heroui-agents-md
 .heroui-docs/
+
+# clone lib
+ZTools
+ZTools*

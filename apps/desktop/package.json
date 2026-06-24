@@ -10,17 +10,24 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@flowtools/ui": "workspace:*",
+    "@heroui/react": "catalog:",
+    "@heroui/styles": "catalog:",
+    "@tailwindcss/vite": "catalog:",
+    "@tanstack/react-router": "^1.170.16",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "motion": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tailwindcss": "catalog:"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
-    "@vitejs/plugin-react": "^4.6.0",
-    "typescript": "~5.8.3",
-    "vite": "^7.0.4"
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
   }
 }

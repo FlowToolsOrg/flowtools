@@ -91,7 +91,7 @@ export class PluginLoader {
     })
 
     try {
-      updated.plugin?.lifecycle?.onActivate?.()
+      await updated.plugin?.lifecycle?.onActivate?.()
     } catch (error) {
       this.registry.markError(
         pluginId,
@@ -116,7 +116,7 @@ export class PluginLoader {
     }
 
     try {
-      entry.plugin?.lifecycle?.onDeactivate?.()
+      await entry.plugin?.lifecycle?.onDeactivate?.()
     } catch (error) {
       this.registry.markError(
         pluginId,

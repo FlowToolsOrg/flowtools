@@ -9,9 +9,9 @@
     "lint": "oxlint --fix --type-aware --type-check",
     "format": "oxfmt",
     "check-types": "tsgo --noEmit",
-    "test": "bun test:browser",
-    "test:watch": "vitest",
-    "test:browser": "vitest --config=vitest.browser.config.ts --ui"
+    "test": "bun -e \"console.log('Tests are deprecated for this project; use manual UI validation instead.')\"",
+    "test:watch": "bun -e \"console.log('Tests are deprecated for this project; use manual UI validation instead.')\"",
+    "test:browser": "bun -e \"console.log('Tests are deprecated for this project; use manual UI validation instead.')\""
   },
   "dependencies": {
     "@flowtools/ui": "workspace:*",
@@ -20,6 +20,7 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.2.4",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",

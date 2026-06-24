@@ -14,6 +14,10 @@ Flow Tool 目前支持两类插件：
   `run(ctx, input)` 使其可通过 CLI 或桌面端 AI agent 无 UI 调用。
 - `tool`：即时执行型，入口是 `run(ctx, input)`
 
+此外，SDK 提供 ZTools `plugin.json` 兼容解析。它不会把 ZTools 插件直接改写成
+FlowTools 插件，而是先把 `main`、`preload`、`features`、`cmds` 归一化为可搜索
+的插件描述，供 Tauri desktop 壳、后续 WebView runner 和导入器使用。
+
 统一通过 `definePlugin(...)` 声明，且必须有 `meta`：
 
 - `id`：稳定唯一，命名方式使用 kebab-case
@@ -98,6 +102,30 @@ bun install
 cd apps/web-vite
 bun run dev
 ```
+
+如果你本地放了 `ZTools-plugins`，可以从仓库根目录刷新插件兼容目录：
+
+```bash
+bun run inspect:ztools
+```
+
+该命令会写入 `apps/desktop/src/data/plugin-catalog.ztools.json`，desktop
+启动器会直接读取这份目录；同时写入 `docs/plugin-catalog.ztools.json`
+作为可读副本。
+
+Desktop 端使用 TanStack Router 承载启动器、设置、插件、权限和命令运行页。
+ZTools 目录中的命令会进入 `/run/$commandId`，内置设置类命令会进入对应页面。
+
+### 2.1 ZTools 插件兼容判断
+
+`normalizeZToolsManifest(...)` 会按运行时需求给 ZTools 插件分级：
+
+- `webview`：有 `main` 入口，优先作为 Tauri WebView 承载的 UI 插件。
+- `preload-bridge`：存在 `preload`，需要实现 `window.ztools` API 兼容层。
+- `native-bridge`：包含 `files`、`img`、`window` 等命令类型，需要 Tauri/Rust 原生能力。
+- `metadata`：没有 UI 入口，可先作为命令索引或重写为 FlowTools `tool` 插件。
+
+兼容导入时优先保留 FlowTools 的 SDK/CLI/Zod 模型；只有当 ZTools 数据结构更能表达实际插件入口时，才扩展 FlowTools 结构。
 
 然后打开 Vite 输出的本地地址（默认通常是 `http://localhost:5173`）。
 
@@ -481,8 +509,11 @@ import { result } from '@flowtools/sdk/result'
 ```bash
 bun run lint
 bun run check-types
-bun run test
+bun run build
 ```
+
+自动化测试已废弃：不要新增 `*.test.ts` / `*.test.tsx`，也不要把 test task
+作为提交或 PR 的质量门。`bun run test` 只保留为兼容性的废弃提示。
 
 并手动验证：
 

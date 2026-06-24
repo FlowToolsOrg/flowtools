@@ -11,7 +11,7 @@ Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平�
 
 ## 1. Reality Check（当前实现状态）
 
-截至 2026-05，仓库中的实现状态：
+截至 2026-06，仓库中的实现状态：
 
 - 已实现：
   - `packages/sdk`：插件契约、hooks（工厂模式）、runtime provider、结果类型、Zod-based `inputSchema`
@@ -19,15 +19,17 @@ Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平�
   - `packages/ui`：共享 UI 组件库（HeroUI 基础），含 CommandPalette 组件
   - `packages/cli`：统一 CLI 入口，`flowtools list/info/run` 子命令，Zod schema 自动生成 flags，`result.*` 结构化输出
   - `apps/web-vite`：web runtime 原型，含命令面板、插件注册中心、bootstrap 启动流程
+  - `apps/desktop`：Tauri desktop 壳，当前提供 HeroUI + Tailwind 的 ZTools 风格启动器界面，并用 TanStack Router 承载桌面路由
   - `apps/web-vite/src/stores`：pluginRegistryStore、commandStore、runHistoryStore、settingsStore
+  - `packages/sdk/src/compat/ztools.ts`：ZTools `plugin.json` 类型、命令解析和兼容分级
+  - `scripts/inspect-ztools-plugins.ts`：扫描 `ZTools-plugins` 并生成 `apps/desktop/src/data/plugin-catalog.ztools.json` 与 `docs/plugin-catalog.ztools.json`
   - 12 个内置插件（全部为 app 类型，均提供 `setup()` + `run()` + `inputSchema`）
 - 目录已创建，尚未实现：
-  - `apps/desktop`（Tauri 桌面宿主）
   - `apps/docs`
   - `apps/web`
 
 结论：架构方向是 desktop-first，当前 web 原型已具备注册中心、命令面板、生命周期管理、错误隔离等核心机制。
-CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用插件。
+CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用插件。ZTools 兼容层当前先解决插件元数据与命令入口归一化，后续再补齐 Tauri WebView runner、preload bridge 与原生能力 bridge。
 
 ## 2. Layered Model（分层模型）
 
@@ -72,6 +74,22 @@ CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用插�
 
 - `result.text(string)` / `result.json(value)` / `result.table(cols, rows)`
 - `result.open(target)` / `result.multi(items)`
+
+### 3.1 ZTools Compatibility Contract
+
+ZTools 插件先通过 `normalizeZToolsManifest(...)` 转为
+`FlowToolsZToolsManifest`，保留原始 `main`、`preload`、`features`、`cmds`
+信息，并生成 FlowTools 可搜索的命令描述。
+
+兼容分级：
+
+- `webview`：有 `main` 或 `development.main`，可优先由 Tauri WebView 承载。
+- `preload-bridge`：声明了 `preload`，需要实现 `window.ztools` 兼容 API。
+- `native-bridge`：包含 `files`、`img`、`window` 等命令类型，需要 Tauri/Rust 原生能力。
+- `metadata`：没有 UI 入口，可先作为索引或重写为 headless/tool 插件。
+
+`bun run inspect:ztools` 会扫描本地 `ZTools-plugins`，输出插件兼容目录，供
+desktop 启动器、插件市场和后续导入器复用。
 
 `definePlugin` 会写入 `Symbol('__flow_tools__')` marker，并在类型层限制
 `meta.permissions` 的重复声明（tuple 字面量可在编译期发现重复权限）。
@@ -147,6 +165,18 @@ Host runtime 用 `pickCapability(...)` 做权限裁剪：
 - `dialog`：web 未实现，调用抛错
 - `db`：web 未实现，调用抛错
 - `native`：web 未实现，调用抛错
+
+## 6.1 Desktop Runtime Prototype（Tauri）
+
+`apps/desktop` 当前是 Tauri 桌面壳，不再是默认模板页。它读取
+`apps/desktop/src/data/plugin-catalog.ztools.json`，展示 ZTools 风格插件启动、搜索、命令数量、分类和运行支持级别；`docs/plugin-catalog.ztools.json` 作为同源的人类可读目录副本。桌面端路由使用 TanStack Router，当前包括 `/`、`/settings`、`/plugins`、`/permissions` 和 `/run/$commandId`。
+
+当前边界：
+
+- 已实现：HeroUI + Tailwind 桌面首屏、ZTools 插件目录驱动的启动器界面、设置/插件/权限/命令运行路由、workspace icon 复用。
+- 待实现：真正打开 ZTools `main` 的 WebView runner。
+- 待实现：preload API bridge，将 Electron/uTools 风格 API 映射到 Tauri commands。
+- 待实现：文件、窗口、截图、系统命令等 native bridge。
 
 ## 7. Plugin Execution Flow
 

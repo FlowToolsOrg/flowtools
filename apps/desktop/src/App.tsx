@@ -1,53 +1,1009 @@
-import { useState } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 
-import { invoke } from '@tauri-apps/api/core'
+import { useEffect, useMemo, useState } from 'react'
 
-import reactLogo from './assets/react.svg'
+import {
+  BlocksIcon,
+  ClockIcon,
+  LayersIcon,
+  LockIcon,
+  PlayIcon,
+  SearchIcon,
+  SettingsIcon,
+  ShieldCheckIcon,
+  SparklesIcon,
+  TerminalIcon,
+  WrenchIcon,
+} from '@flowtools/ui/icons'
+import {
+  Outlet,
+  RouterProvider,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  useNavigate,
+} from '@tanstack/react-router'
+
+import { Button, Chip, SearchField } from '@heroui/react'
+
+import pluginIndexData from './data/plugin-catalog.ztools.json'
 import './App.css'
 
-function App() {
-  const [greetMsg, setGreetMsg] = useState('')
-  const [name, setName] = useState('')
+interface IndexedCommand {
+  id: string
+  title: string
+  description?: string
+  type: string
+  pluginId: string
+  pluginName: string
+  category?: string
+  pluginType: 'app' | 'tool'
+  compatibilityLevel: string
+  hasUi: boolean
+  hasPreload: boolean
+  requiresNative: boolean
+}
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke('greet', { name }))
+interface IndexedPlugin {
+  id: string
+  name: string
+  version: string
+  description?: string
+  type: 'app' | 'tool'
+  category?: string
+  ztools: {
+    main?: string
+    preload?: string
+    commands: Array<{
+      id: string
+      title: string
+      description?: string
+      type: string
+    }>
+    compatibility: {
+      level: string
+    }
+  }
+}
+
+interface PluginIndex {
+  totals: {
+    plugins: number
+    commands: number
+  }
+  plugins: IndexedPlugin[]
+}
+
+interface IconProps {
+  className?: string
+  size?: number
+}
+
+type IconComponent = ComponentType<IconProps>
+
+const pluginIndex = pluginIndexData as PluginIndex
+const recentStorageKey = 'flowtools.desktop.recentCommandIds'
+
+const builtInActions: IndexedCommand[] = [
+  {
+    id: 'flowtools:settings',
+    title: '设置',
+    description: '打开 FlowTools 设置中心',
+    type: 'route',
+    pluginId: 'flowtools',
+    pluginName: 'FlowTools',
+    category: '系统',
+    pluginType: 'app',
+    compatibilityLevel: 'native',
+    hasUi: true,
+    hasPreload: false,
+    requiresNative: false,
+  },
+  {
+    id: 'flowtools:plugin-market',
+    title: '插件市场',
+    description: '浏览、安装和更新插件',
+    type: 'route',
+    pluginId: 'flowtools',
+    pluginName: 'FlowTools',
+    category: '插件',
+    pluginType: 'app',
+    compatibilityLevel: 'native',
+    hasUi: true,
+    hasPreload: false,
+    requiresNative: false,
+  },
+  {
+    id: 'flowtools:permissions',
+    title: '权限中心',
+    description: '查看插件权限和安全隔离状态',
+    type: 'route',
+    pluginId: 'flowtools',
+    pluginName: 'FlowTools',
+    category: '安全',
+    pluginType: 'app',
+    compatibilityLevel: 'native',
+    hasUi: true,
+    hasPreload: false,
+    requiresNative: false,
+  },
+]
+
+const selectedClass = 'bg-[var(--active-bg)]'
+const hoverClass = 'hover:bg-[var(--hover-bg)]'
+
+function toCommandIndex(plugin: IndexedPlugin): IndexedCommand[] {
+  const base = {
+    pluginId: plugin.id,
+    pluginName: plugin.name,
+    category: plugin.category,
+    pluginType: plugin.type,
+    compatibilityLevel: plugin.ztools.compatibility.level,
+    hasUi: Boolean(plugin.ztools.main),
+    hasPreload: Boolean(plugin.ztools.preload),
+    requiresNative: plugin.ztools.compatibility.level === 'native-bridge',
+  } satisfies Omit<IndexedCommand, 'id' | 'title' | 'description' | 'type'>
+
+  if (plugin.ztools.commands.length === 0) {
+    return [
+      {
+        ...base,
+        id: `${plugin.id}:open`,
+        title: plugin.name,
+        description: plugin.description,
+        type: 'open',
+      },
+    ]
+  }
+
+  return plugin.ztools.commands.map(command => ({
+    ...base,
+    id: `${plugin.id}:${command.id}`,
+    title: command.title,
+    description: command.description ?? plugin.description,
+    type: command.type,
+    requiresNative:
+      base.requiresNative || ['files', 'img', 'window'].includes(command.type),
+  }))
+}
+
+const allCommands = [
+  ...builtInActions,
+  ...pluginIndex.plugins.flatMap(toCommandIndex),
+]
+
+const commandById = new Map(allCommands.map(command => [command.id, command]))
+
+const pinnedIds = new Set([
+  'flowtools:settings',
+  'flowtools:plugin-market',
+  'json-editor:json:text:json:0',
+  '2048:2048:text:2048:0',
+])
+
+function scoreCommand(command: IndexedCommand, query: string): number {
+  const title = command.title.toLowerCase()
+  const pluginName = command.pluginName.toLowerCase()
+  const category = command.category?.toLowerCase() ?? ''
+  const description = command.description?.toLowerCase() ?? ''
+
+  let score = 0
+
+  if (title === query) score += 100
+  if (title.startsWith(query)) score += 48
+  if (title.includes(query)) score += 28
+  if (pluginName.includes(query)) score += 14
+  if (category.includes(query)) score += 8
+  if (description.includes(query)) score += 4
+
+  return score
+}
+
+function getInitials(value: string): string {
+  return (Array.from(value.trim())[0] ?? 'F').toUpperCase()
+}
+
+function getCommandIcon(command: IndexedCommand): IconComponent {
+  if (command.pluginId === 'flowtools') return SparklesIcon
+  if (command.requiresNative) return TerminalIcon
+  if (command.hasPreload) return LayersIcon
+  if (command.pluginType === 'tool') return WrenchIcon
+  return BlocksIcon
+}
+
+function getCommand(commandId: string): IndexedCommand | undefined {
+  return commandById.get(commandId)
+}
+
+function readRecentCommandIds(): string[] {
+  try {
+    const raw = window.localStorage.getItem(recentStorageKey)
+    if (!raw) return []
+
+    const value = JSON.parse(raw) as unknown
+    if (!Array.isArray(value)) return []
+
+    return value.filter(item => typeof item === 'string')
+  } catch {
+    return []
+  }
+}
+
+function writeRecentCommandIds(commandIds: string[]): void {
+  window.localStorage.setItem(recentStorageKey, JSON.stringify(commandIds))
+}
+
+function getRunLabel(command: IndexedCommand): string {
+  return command.pluginId === 'flowtools' ? '打开' : '运行命令'
+}
+
+function App() {
+  return <RouterProvider router={router} />
+}
+
+function RootLayout() {
+  return <Outlet />
+}
+
+function LauncherView() {
+  const navigate = useNavigate()
+  const [query, setQuery] = useState('')
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const [recentCommandIds, setRecentCommandIds] = useState(readRecentCommandIds)
+  const normalizedQuery = query.trim().toLowerCase()
+
+  const searchedCommands = useMemo(() => {
+    if (!normalizedQuery) return []
+
+    return allCommands
+      .map(command => ({
+        command,
+        score: scoreCommand(command, normalizedQuery),
+      }))
+      .filter(item => item.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 36)
+      .map(item => item.command)
+  }, [normalizedQuery])
+
+  const pinnedCommands = useMemo(
+    () => allCommands.filter(command => pinnedIds.has(command.id)).slice(0, 8),
+    []
+  )
+
+  const recentCommands = useMemo(() => {
+    const storedCommands = recentCommandIds
+      .map(commandId => getCommand(commandId))
+      .filter((command): command is IndexedCommand => Boolean(command))
+    const storedIds = new Set(storedCommands.map(command => command.id))
+    const fallbackCommands = allCommands
+      .filter(command => !pinnedIds.has(command.id))
+      .filter(command => !storedIds.has(command.id))
+      .slice(0, 48)
+
+    return [...storedCommands, ...fallbackCommands].slice(0, 56)
+  }, [recentCommandIds])
+
+  const recommendedCommands = allCommands
+    .filter(command => command.hasUi && !command.requiresNative)
+    .slice(20, 40)
+
+  const activeCommands = normalizedQuery
+    ? searchedCommands
+    : [...pinnedCommands, ...recentCommands, ...recommendedCommands]
+  const selectedCommand = activeCommands[selectedIndex] ?? activeCommands[0]
+
+  const markRecent = (command: IndexedCommand) => {
+    const nextIds = [
+      command.id,
+      ...recentCommandIds.filter(commandId => commandId !== command.id),
+    ].slice(0, 40)
+
+    setRecentCommandIds(nextIds)
+    writeRecentCommandIds(nextIds)
+  }
+
+  const openCommand = (command: IndexedCommand) => {
+    markRecent(command)
+
+    if (command.id === 'flowtools:settings') {
+      void navigate({ to: '/settings' })
+      return
+    }
+
+    if (command.id === 'flowtools:plugin-market') {
+      void navigate({ to: '/plugins' })
+      return
+    }
+
+    if (command.id === 'flowtools:permissions') {
+      void navigate({ to: '/permissions' })
+      return
+    }
+
+    void navigate({
+      to: '/run/$commandId',
+      params: { commandId: command.id },
+    })
+  }
+
+  const handleQueryChange = (value: string) => {
+    setQuery(value)
+    setSelectedIndex(0)
+  }
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      setSelectedIndex(index => {
+        if (activeCommands.length === 0) return 0
+        return Math.min(index + 1, activeCommands.length - 1)
+      })
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      setSelectedIndex(index => Math.max(index - 1, 0))
+    }
+
+    if (event.key === 'Enter' && selectedCommand) {
+      event.preventDefault()
+      openCommand(selectedCommand)
+    }
+
+    if (event.key === 'Escape') {
+      setQuery('')
+      setSelectedIndex(0)
+    }
   }
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
+    <DesktopSurface>
+      <section className="flex h-[min(720px,calc(100vh-36px))] w-[min(920px,calc(100vw-36px))] flex-col overflow-hidden rounded-[10px] border border-(--border-color) bg-[color-mix(in_srgb,var(--bg-color)_92%,transparent)] shadow-(--window-shadow) backdrop-blur-[18px]">
+        <div className="grid grid-cols-[42px_minmax(0,1fr)_34px] items-center gap-2.5 border-b border-(--divider-color) p-3">
+          <button
+            className="grid size-9 place-items-center rounded-lg bg-(--primary-gradient) text-base font-extrabold text-(--text-on-primary)"
+            onClick={() => void navigate({ to: '/' })}
+            type="button"
+          >
+            F
+          </button>
+          <SearchField
+            aria-label="搜索应用、插件、命令或输入内容"
+            autoFocus
+            className="min-w-0"
+            fullWidth
+            name="launcher-search"
+            onChange={handleQueryChange}
+            value={query}
+            variant="secondary"
+          >
+            <SearchField.Group className="grid h-10.5 min-w-0 grid-cols-[24px_minmax(0,1fr)_28px] items-center gap-2.5 rounded-lg border border-transparent bg-(--control-bg) px-3 text-(--text-secondary) focus-within:border-[color-mix(in_srgb,var(--primary-color)_42%,transparent)] focus-within:bg-[color-mix(in_srgb,var(--primary-color)_7%,white)] dark:focus-within:bg-[color-mix(in_srgb,var(--primary-color)_8%,#303133)]">
+              <SearchField.SearchIcon className="text-(--text-secondary)">
+                <SearchIcon size={22} />
+              </SearchField.SearchIcon>
+              <SearchField.Input
+                className="min-w-0 border-0 bg-transparent p-0 text-xl leading-none text-(--text-color) shadow-none outline-none placeholder:text-[color-mix(in_srgb,var(--text-secondary)_72%,transparent)]"
+                onKeyDown={handleKeyDown}
+                placeholder="搜索应用、插件、命令或输入内容"
+              />
+              <SearchField.ClearButton className="grid size-7 place-items-center rounded-md text-(--text-secondary) hover:bg-(--hover-bg)" />
+            </SearchField.Group>
+          </SearchField>
+          <Button
+            aria-label="设置"
+            className="size-8.5 text-(--text-secondary)"
+            isIconOnly
+            onPress={() => void navigate({ to: '/settings' })}
+            size="sm"
+            variant="ghost"
+          >
+            <SettingsIcon size={18} />
+          </Button>
+        </div>
 
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_268px] overflow-hidden max-[780px]:grid-cols-1">
+          <div className="min-h-0 min-w-0 overflow-y-auto px-3 pt-2.5 pb-3">
+            {normalizedQuery ? (
+              <CommandSection
+                commands={searchedCommands}
+                emptyText="没有找到匹配的命令"
+                selectedCommandId={selectedCommand?.id}
+                title="最佳匹配"
+                onFocusCommand={setSelectedIndex}
+                onRunCommand={openCommand}
+              />
+            ) : (
+              <>
+                <IconGridSection
+                  commands={pinnedCommands}
+                  selectedCommandId={selectedCommand?.id}
+                  title="固定"
+                  onFocusCommand={setSelectedIndex}
+                  onRunCommand={openCommand}
+                />
+                <CommandSection
+                  commands={recentCommands}
+                  offset={pinnedCommands.length}
+                  scrollable
+                  selectedCommandId={selectedCommand?.id}
+                  title="最近使用"
+                  onFocusCommand={setSelectedIndex}
+                  onRunCommand={openCommand}
+                />
+                <CommandSection
+                  commands={recommendedCommands}
+                  offset={pinnedCommands.length + recentCommands.length}
+                  selectedCommandId={selectedCommand?.id}
+                  title="推荐插件"
+                  onFocusCommand={setSelectedIndex}
+                  onRunCommand={openCommand}
+                />
+              </>
+            )}
+          </div>
+
+          <aside className="min-h-0 min-w-0 border-l border-(--divider-color) bg-[color-mix(in_srgb,var(--control-bg)_70%,transparent)] max-[780px]:hidden">
+            {selectedCommand ? (
+              <CommandInspector command={selectedCommand} onRun={openCommand} />
+            ) : null}
+          </aside>
+        </div>
+
+        <footer className="flex justify-between gap-3 border-t border-(--divider-color) px-3 py-2 text-[11px] text-(--text-secondary) max-[780px]:flex-col">
+          <span>
+            {pluginIndex.totals.plugins} plugins · {pluginIndex.totals.commands}{' '}
+            commands
+          </span>
+          <span>Alt+Z 唤起 · Enter 运行 · Esc 清空</span>
+        </footer>
+      </section>
+    </DesktopSurface>
+  )
+}
+
+interface IconGridSectionProps {
+  title: string
+  commands: IndexedCommand[]
+  selectedCommandId?: string
+  onFocusCommand: (index: number) => void
+  onRunCommand: (command: IndexedCommand) => void
+}
+
+function IconGridSection({
+  title,
+  commands,
+  selectedCommandId,
+  onFocusCommand,
+  onRunCommand,
+}: IconGridSectionProps) {
+  return (
+    <section className="mb-3">
+      <SectionHeading title={title} />
+      <div className="grid grid-cols-8 gap-0.5 max-[780px]:grid-cols-4">
+        {commands.map((command, index) => (
+          <Button
+            className={`h-[82px] min-w-0 flex-col gap-1.5 rounded-lg bg-transparent px-1 py-2 text-(--text-color) ${hoverClass} ${
+              command.id === selectedCommandId ? selectedClass : ''
+            }`}
+            key={command.id}
+            onFocus={() => onFocusCommand(index)}
+            onMouseEnter={() => onFocusCommand(index)}
+            onPress={() => onRunCommand(command)}
+            variant="ghost"
+          >
+            <CommandIcon command={command} />
+            <span className="line-clamp-2 h-8 w-full overflow-hidden px-1 text-center text-xs leading-4 font-medium break-all">
+              {command.title}
+            </span>
+          </Button>
+        ))}
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
+    </section>
+  )
+}
 
-      <form
-        className="row"
-        onSubmit={e => {
-          e.preventDefault()
-          greet()
-        }}
+interface CommandSectionProps {
+  title: string
+  commands: IndexedCommand[]
+  selectedCommandId?: string
+  offset?: number
+  emptyText?: string
+  scrollable?: boolean
+  onFocusCommand: (index: number) => void
+  onRunCommand: (command: IndexedCommand) => void
+}
+
+function CommandSection({
+  title,
+  commands,
+  selectedCommandId,
+  offset = 0,
+  emptyText,
+  scrollable = false,
+  onFocusCommand,
+  onRunCommand,
+}: CommandSectionProps) {
+  return (
+    <section className="mb-3">
+      <SectionHeading title={title} />
+      {commands.length === 0 ? (
+        <div className="px-3 py-8 text-center text-[13px] text-(--text-secondary)">
+          {emptyText}
+        </div>
+      ) : (
+        <div
+          className={`flex flex-col gap-0.5 ${
+            scrollable ? 'max-h-[224px] overflow-y-auto pr-1' : ''
+          }`}
+        >
+          {commands.map((command, index) => (
+            <Button
+              className={`grid min-h-13.5 w-full grid-cols-[38px_minmax(0,1fr)_auto] justify-normal gap-2.5 rounded-lg bg-transparent px-2 py-2 text-left text-(--text-color) ${hoverClass} ${
+                command.id === selectedCommandId ? selectedClass : ''
+              }`}
+              key={command.id}
+              onFocus={() => onFocusCommand(offset + index)}
+              onMouseEnter={() => onFocusCommand(offset + index)}
+              onPress={() => onRunCommand(command)}
+              variant="ghost"
+            >
+              <CommandIcon command={command} />
+              <span className="min-w-0">
+                <strong className="block truncate text-sm font-semibold text-(--text-color)">
+                  {command.title}
+                </strong>
+                <span className="mt-0.5 block truncate text-xs text-(--text-secondary)">
+                  {command.description ?? command.pluginName}
+                </span>
+              </span>
+              <span className="max-w-32 truncate text-xs text-(--text-secondary) max-[780px]:hidden">
+                {command.pluginName}
+              </span>
+            </Button>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+function SectionHeading({ title }: { title: string }) {
+  return (
+    <div className="flex h-7 items-center text-xs font-semibold text-(--text-secondary)">
+      {title}
+    </div>
+  )
+}
+
+function CommandIcon({ command }: { command: IndexedCommand }) {
+  const Icon = getCommandIcon(command)
+
+  return (
+    <span className="relative grid size-8 shrink-0 place-items-center rounded-[7px] bg-(--primary-gradient) text-(--text-on-primary)">
+      <Icon className="opacity-90" size={18} />
+      <span className="absolute -right-1 -bottom-1 grid h-4 min-w-4 place-items-center rounded-full border border-[var(--bg-color)] bg-[var(--bg-color)] px-1 text-[9px] font-extrabold text-[var(--text-color)] dark:bg-[#48484a] dark:text-[var(--text-on-primary)]">
+        {getInitials(command.pluginName)}
+      </span>
+    </span>
+  )
+}
+
+interface CommandInspectorProps {
+  command: IndexedCommand
+  onRun: (command: IndexedCommand) => void
+}
+
+function CommandInspector({ command, onRun }: CommandInspectorProps) {
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-3 p-4.5">
+      <CommandIcon command={command} />
+      <h2 className="m-0 text-lg leading-tight text-(--text-color)">
+        {command.title}
+      </h2>
+      <p className="m-0 text-[13px] leading-relaxed text-(--text-secondary)">
+        {command.description ??
+          '该命令来自插件声明，可由 FlowTools runtime 承载。'}
+      </p>
+
+      <div className="flex flex-wrap gap-1.5">
+        <CapabilityChip icon={PlayIcon}>
+          {command.hasUi ? 'UI 插件' : '无界面'}
+        </CapabilityChip>
+        <CapabilityChip icon={ShieldCheckIcon}>
+          {command.requiresNative ? '原生权限' : '安全沙箱'}
+        </CapabilityChip>
+        <CapabilityChip icon={LockIcon}>
+          {command.hasPreload ? 'API Bridge' : '声明式插件'}
+        </CapabilityChip>
+        <CapabilityChip icon={ClockIcon}>历史记录</CapabilityChip>
+      </div>
+
+      <Button
+        className="mt-1 h-9.5 w-full"
+        onPress={() => onRun(command)}
+        size="sm"
       >
-        <input
-          id="greet-input"
-          onChange={e => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
+        <PlayIcon size={17} />
+        {getRunLabel(command)}
+      </Button>
+
+      <dl className="mt-auto grid grid-cols-[72px_minmax(0,1fr)] gap-x-2.5 gap-y-2 border-t border-(--divider-color) pt-3 text-xs">
+        <dt className="text-(--text-secondary)">插件</dt>
+        <dd className="m-0 truncate font-semibold text-(--text-color)">
+          {command.pluginName}
+        </dd>
+        <dt className="text-(--text-secondary)">分类</dt>
+        <dd className="m-0 truncate font-semibold text-(--text-color)">
+          {command.category ?? '未分类'}
+        </dd>
+        <dt className="text-(--text-secondary)">触发类型</dt>
+        <dd className="m-0 truncate font-semibold text-(--text-color)">
+          {command.type}
+        </dd>
+      </dl>
+    </div>
+  )
+}
+
+interface CapabilityChipProps {
+  icon: IconComponent
+  children: string
+}
+
+function CapabilityChip({ icon: Icon, children }: CapabilityChipProps) {
+  return (
+    <Chip className="gap-1" color="accent" size="sm" variant="soft">
+      <Icon size={14} />
+      <Chip.Label>{children}</Chip.Label>
+    </Chip>
+  )
+}
+
+interface DesktopSurfaceProps {
+  children: ReactNode
+}
+
+function DesktopSurface({ children }: DesktopSurfaceProps) {
+  return (
+    <main className="grid h-screen w-screen place-items-center overflow-hidden bg-[radial-gradient(circle_at_24%_20%,rgba(2,132,199,0.12),transparent_32%),radial-gradient(circle_at_76%_88%,rgba(102,126,234,0.1),transparent_30%),#dce4ea] p-[18px] text-(--text-color) dark:bg-[radial-gradient(circle_at_24%_20%,rgba(56,189,248,0.1),transparent_32%),radial-gradient(circle_at_76%_88%,rgba(167,139,250,0.09),transparent_30%),#151719]">
+      {children}
     </main>
   )
+}
+
+interface PageFrameProps {
+  title: string
+  description?: string
+  children: ReactNode
+  actions?: ReactNode
+}
+
+function PageFrame({ title, description, children, actions }: PageFrameProps) {
+  const navigate = useNavigate()
+
+  return (
+    <DesktopSurface>
+      <section className="flex h-[min(720px,calc(100vh-36px))] w-[min(920px,calc(100vw-36px))] flex-col overflow-hidden rounded-[10px] border border-(--border-color) bg-[color-mix(in_srgb,var(--bg-color)_92%,transparent)] shadow-(--window-shadow) backdrop-blur-[18px]">
+        <header className="grid grid-cols-[34px_minmax(0,1fr)_auto] items-center gap-3 border-b border-(--divider-color) p-3">
+          <Button
+            aria-label="返回启动器"
+            className="size-8.5"
+            isIconOnly
+            onPress={() => void navigate({ to: '/' })}
+            size="sm"
+            variant="ghost"
+          >
+            <SearchIcon size={17} />
+          </Button>
+          <div className="min-w-0">
+            <h1 className="m-0 truncate text-base font-semibold text-(--text-color)">
+              {title}
+            </h1>
+            {description ? (
+              <p className="m-0 mt-0.5 truncate text-xs text-(--text-secondary)">
+                {description}
+              </p>
+            ) : null}
+          </div>
+          <div className="flex items-center gap-2">{actions}</div>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
+      </section>
+    </DesktopSurface>
+  )
+}
+
+function SettingsView() {
+  const navigate = useNavigate()
+  const [appearance, setAppearance] = useState('system')
+
+  useEffect(() => {
+    if (appearance === 'system') {
+      document.documentElement.removeAttribute('data-theme')
+      return
+    }
+
+    document.documentElement.dataset.theme = appearance
+  }, [appearance])
+
+  return (
+    <PageFrame
+      actions={
+        <Button
+          onPress={() => void navigate({ to: '/permissions' })}
+          size="sm"
+          variant="secondary"
+        >
+          <ShieldCheckIcon size={16} />
+          权限
+        </Button>
+      }
+      description="桌面宿主、外观、运行时与插件安全"
+      title="设置"
+    >
+      <div className="grid gap-4">
+        <SettingsRow
+          label="外观"
+          value={
+            <SegmentedOptions
+              options={['system', 'light', 'dark']}
+              selected={appearance}
+              titleMap={{ dark: '深色', light: '浅色', system: '系统' }}
+              onSelect={setAppearance}
+            />
+          }
+        />
+        <SettingsRow label="启动快捷键" value="Alt+Z" />
+        <SettingsRow label="命令路由" value="TanStack Router" />
+        <SettingsRow label="插件 UI" value="React 声明式运行时" />
+        <SettingsRow label="桌面内核" value="Tauri WebView + Rust 能力层" />
+        <SettingsRow
+          label="ZTools 目录"
+          value={`${pluginIndex.totals.plugins} 个插件`}
+        />
+      </div>
+    </PageFrame>
+  )
+}
+
+interface SegmentedOptionsProps {
+  options: string[]
+  selected: string
+  titleMap: Record<string, string>
+  onSelect: (value: string) => void
+}
+
+function SegmentedOptions({
+  options,
+  selected,
+  titleMap,
+  onSelect,
+}: SegmentedOptionsProps) {
+  return (
+    <div className="flex rounded-lg border border-(--divider-color) p-0.5">
+      {options.map(option => (
+        <Button
+          className={`h-7 px-2.5 text-xs ${
+            selected === option ? 'bg-[var(--active-bg)]' : 'bg-transparent'
+          }`}
+          key={option}
+          onPress={() => onSelect(option)}
+          size="sm"
+          variant="ghost"
+        >
+          {titleMap[option]}
+        </Button>
+      ))}
+    </div>
+  )
+}
+
+interface SettingsRowProps {
+  label: string
+  value: ReactNode
+}
+
+function SettingsRow({ label, value }: SettingsRowProps) {
+  return (
+    <div className="grid min-h-[52px] grid-cols-[160px_minmax(0,1fr)] items-center gap-4 border-b border-(--divider-color) py-2 text-sm max-[640px]:grid-cols-1">
+      <span className="text-(--text-secondary)">{label}</span>
+      <div className="min-w-0 font-medium text-(--text-color)">{value}</div>
+    </div>
+  )
+}
+
+function PluginsView() {
+  return (
+    <PageFrame
+      description={`${pluginIndex.totals.plugins} 个插件 · ${pluginIndex.totals.commands} 个命令`}
+      title="插件市场"
+    >
+      <div className="grid gap-2">
+        {pluginIndex.plugins.slice(0, 80).map(plugin => (
+          <div
+            className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2 py-2 hover:bg-(--hover-bg)"
+            key={plugin.id}
+          >
+            <span className="grid size-9 place-items-center rounded-[7px] bg-(--primary-gradient) text-xs font-extrabold text-(--text-on-primary)">
+              {getInitials(plugin.name)}
+            </span>
+            <span className="min-w-0">
+              <strong className="block truncate text-sm">{plugin.name}</strong>
+              <span className="block truncate text-xs text-(--text-secondary)">
+                {plugin.description ?? plugin.id}
+              </span>
+            </span>
+            <Chip color="accent" size="sm" variant="soft">
+              {plugin.ztools.compatibility.level}
+            </Chip>
+          </div>
+        ))}
+      </div>
+    </PageFrame>
+  )
+}
+
+function PermissionsView() {
+  const permissionRows = [
+    ['storage', '插件命名空间存储', '安全沙箱'],
+    ['network', '网络请求能力', '需授权'],
+    ['fs', '文件读写能力', 'Tauri/Rust'],
+    ['clipboard', '剪贴板访问', '可控'],
+    ['native', '窗口、截图、系统命令', '高风险'],
+    ['preload', 'ZTools API Bridge', '兼容层'],
+  ] as const
+
+  return (
+    <PageFrame
+      description="插件能力声明、授权状态和原生桥接范围"
+      title="权限中心"
+    >
+      <div className="grid gap-2">
+        {permissionRows.map(([name, description, status]) => (
+          <div
+            className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-(--divider-color) py-3"
+            key={name}
+          >
+            <span className="min-w-0">
+              <strong className="block text-sm">{name}</strong>
+              <span className="block truncate text-xs text-(--text-secondary)">
+                {description}
+              </span>
+            </span>
+            <Chip
+              color={status === '高风险' ? 'warning' : 'accent'}
+              size="sm"
+              variant="soft"
+            >
+              {status}
+            </Chip>
+          </div>
+        ))}
+      </div>
+    </PageFrame>
+  )
+}
+
+function CommandRunView() {
+  const navigate = useNavigate()
+  const { commandId } = runRoute.useParams()
+  const command = getCommand(commandId)
+
+  if (!command) {
+    return (
+      <PageFrame title="命令不存在">
+        <div className="grid place-items-center py-16 text-sm text-(--text-secondary)">
+          未找到这个命令入口
+        </div>
+      </PageFrame>
+    )
+  }
+
+  return (
+    <PageFrame
+      actions={
+        <Button
+          onPress={() => void navigate({ to: '/plugins' })}
+          size="sm"
+          variant="secondary"
+        >
+          <LayersIcon size={16} />
+          插件
+        </Button>
+      }
+      description={command.pluginName}
+      title={command.title}
+    >
+      <div className="grid gap-4">
+        <div className="grid grid-cols-[42px_minmax(0,1fr)] gap-3">
+          <CommandIcon command={command} />
+          <div className="min-w-0">
+            <p className="m-0 text-sm leading-relaxed text-(--text-color)">
+              {command.description ??
+                'FlowTools 已接收该命令，并进入桌面运行路由。'}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <CapabilityChip icon={PlayIcon}>{command.type}</CapabilityChip>
+              <CapabilityChip icon={ShieldCheckIcon}>
+                {command.compatibilityLevel}
+              </CapabilityChip>
+              <CapabilityChip icon={LockIcon}>
+                {command.requiresNative ? '需要原生桥' : '可沙箱化'}
+              </CapabilityChip>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-2 border-t border-(--divider-color) pt-4 text-sm">
+          <SettingsRow label="命令 ID" value={command.id} />
+          <SettingsRow label="插件 ID" value={command.pluginId} />
+          <SettingsRow label="插件类型" value={command.pluginType} />
+          <SettingsRow label="分类" value={command.category ?? '未分类'} />
+          <SettingsRow
+            label="运行通道"
+            value={
+              command.hasPreload
+                ? 'Preload API Bridge'
+                : command.requiresNative
+                  ? 'Tauri Native Bridge'
+                  : command.hasUi
+                    ? 'Tauri WebView'
+                    : 'Headless/Metadata'
+            }
+          />
+        </div>
+      </div>
+    </PageFrame>
+  )
+}
+
+const rootRoute = createRootRoute({ component: RootLayout })
+
+const indexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/',
+  component: LauncherView,
+})
+
+const settingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/settings',
+  component: SettingsView,
+})
+
+const pluginsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/plugins',
+  component: PluginsView,
+})
+
+const permissionsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/permissions',
+  component: PermissionsView,
+})
+
+const runRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/run/$commandId',
+  component: CommandRunView,
+})
+
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  settingsRoute,
+  pluginsRoute,
+  permissionsRoute,
+  runRoute,
+])
+
+const router = createRouter({ routeTree })
+
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router
+  }
 }
 
 export default App

@@ -1,15 +1,12 @@
 /**
  * JSON primitive value type.
  */
-export type JsonPrimitive = string | number | boolean | null | undefined | any
+export type JsonPrimitive = string | number | boolean | null | undefined
 
 /**
  * Recursive JSON value type.
  */
-export type JsonValue =
-  | JsonPrimitive
-  | { [key: string]: JsonValue }
-  | readonly JsonValue[]
+export type JsonValue = unknown
 
 /**
  * Text command result.

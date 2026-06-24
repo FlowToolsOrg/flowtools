@@ -95,7 +95,21 @@ Virtual Bridge Link 流程:
 
 Web (基于 Vite): 实现 Dynamic Import (动态导入)、SDK Mount (SDK 挂载)、Import Map (导入映射)。
 
-Desktop (基于 Tauri): Developing... (建设中)。
+Desktop (基于 Tauri): 已有 `apps/desktop` 壳，用于承载 HeroUI + Tailwind 桌面启动器、TanStack Router 桌面路由、ZTools 风格插件目录和后续 WebView 插件运行。
+
+### ZTools 兼容导入层
+
+- `packages/sdk/src/compat/ztools.ts`: ZTools `plugin.json` 类型、命令解析、兼容支持分级。
+- `scripts/inspect-ztools-plugins.ts`: 扫描本地 `ZTools-plugins/plugins`，生成 runtime 目录和 docs 副本。
+- `apps/desktop/src/data/plugin-catalog.ztools.json`: desktop 启动器直接读取的 ZTools 插件目录。
+- `docs/plugin-catalog.ztools.json`: 同源的人类可读目录副本，供后续插件市场/导入器参考。
+
+兼容级别：
+
+- `webview`: 可优先进入 Tauri WebView 承载。
+- `preload-bridge`: 需要补齐 `window.ztools` API bridge。
+- `native-bridge`: 需要 Tauri/Rust 原生能力配合。
+- `metadata`: 仅完成索引或适合重写为 FlowTools headless/tool 插件。
 
 ## 6. 插件捆绑包结构 (Plugins Bundle)
 

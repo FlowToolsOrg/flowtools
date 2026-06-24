@@ -57,14 +57,23 @@ Core principles:
 - Namespaced storage & database
 - Plugin lifecycle management
 
-## Current Status (May 2026)
+## Current Status (June 2026)
 
 - Product direction: desktop-first, cross-platform ready.
-- Current runnable host: `apps/web-vite`.
+- Current runnable hosts:
+  - `apps/web-vite`: web runtime prototype.
+  - `apps/desktop`: Tauri desktop shell with a HeroUI + Tailwind powered
+    ZTools-style launcher surface and TanStack Router desktop routes.
 - Core packages under active development:
   - `packages/sdk` (`@flowtools/sdk`) — plugin contract, hooks, registry, lifecycle, Zod-based inputSchema
   - `packages/ui` (`@flowtools/ui`) — shared UI components including CommandPalette
   - `packages/cli` (`@flowtools/cli`) — unified CLI entry (`flowtools list/info/run`), auto-generates flags from Zod schema
+- ZTools compatibility foundation:
+  - SDK types and normalizers for ZTools `plugin.json`.
+  - `bun run inspect:ztools` scans `ZTools-plugins` and writes
+    `apps/desktop/src/data/plugin-catalog.ztools.json` for the launcher and
+    `docs/plugin-catalog.ztools.json` as the readable catalog copy.
+  - The current local scan found 125 ZTools plugins and 723 commands.
 - Local plugin workspace with 12 built-in plugins (all app type, all CLI-compatible via `run()` + `inputSchema`):
   - `plugins/plugin-todo-list` — 待办清单（host-managed store）
   - `plugins/plugin-uuid-generator` — UUID 生成器
@@ -79,7 +88,6 @@ Core principles:
   - `plugins/plugin-image-base64` — 图片 ↔ Base64
   - `plugins/plugin-website-latency` — 网站延迟测试
 - Planned (directory created, not yet implemented):
-  - `apps/desktop`
   - `apps/docs`
   - `apps/web`
 
@@ -89,9 +97,10 @@ Core principles:
 apps/
   web-vite/    # web host prototype (router + registry + command palette)
   web/         # (planned)
-  desktop/     # (planned) Tauri desktop host
+  desktop/     # Tauri desktop shell, ZTools-style launcher, settings/run routes
+    src/data/  # generated ZTools plugin catalog consumed by the launcher
   docs/        # (planned) documentation site
-  ui-test/     # UI package consumer and browser test app
+  ui-test/     # UI package consumer for manual validation; automated tests are deprecated
 packages/
   sdk/         # plugin contract, hooks, registry, lifecycle, result helpers
   ui/          # shared React UI primitives (HeroUI-based)
@@ -108,11 +117,12 @@ Run from repository root:
 ```bash
 bun install
 bun run dev
+bun run dev:desktop
 bun run build
 bun run lint
 bun run check-types
-bun run test
 bun run format
+bun run inspect:ztools
 ```
 
 Useful local commands:
@@ -120,12 +130,18 @@ Useful local commands:
 ```bash
 bun run dev --filter=@flowtools/web-vite
 cd apps/ui-test && bun run dev
-cd apps/ui-test && bun run test
+bun run --cwd apps/desktop tauri dev
 
 # CLI commands
 bun run packages/cli/src/cli.ts list
 bun run packages/cli/src/cli.ts run <plugin-id> --format text
 ```
+
+## Testing Deprecated
+
+Automated tests are deprecated for this project. `bun run test` is now a no-op
+that prints the deprecation notice. Use linting, type checks, builds, and manual
+validation for changed UI/runtime flows instead.
 
 ## Plugin Model
 
@@ -133,6 +149,16 @@ Flow Tool supports two plugin categories:
 
 - `app`: persistent panel plugins (`setup()` returns a React component), optionally with `run()` for CLI/headless invocation
 - `tool`: instant execution plugins (`run(ctx, input)`)
+
+Flow Tool also has a ZTools compatibility model for absorbing ZTools-style
+`plugin.json` metadata. ZTools plugins are first normalized into searchable
+FlowTools descriptors, then classified by required runtime support:
+
+- `webview`: `main` can be hosted by a Tauri WebView shell.
+- `preload-bridge`: requires a `window.ztools` / preload API bridge.
+- `native-bridge`: requires Tauri native capability work for files, images,
+  windows, screenshots, or other host-level APIs.
+- `metadata`: useful for indexing or headless rewrite, but no UI entry exists.
 
 All plugins can declare `inputSchema` (Zod `z.object({...})`) for:
 

@@ -28,9 +28,11 @@ export default definePlugin({
     const raw = src.includes(',') ? src.split(',')[1] : src
     const bytes = Math.round((raw.length * 3) / 4)
     return result.json({
-      dataUrl: src.slice(0, 80) + '...',
-      estimatedBytes: bytes,
-      hasPrefix: src.startsWith('data:'),
+      result: {
+        dataUrl: src.slice(0, 80) + '...',
+        estimatedBytes: bytes,
+        hasPrefix: src.startsWith('data:'),
+      },
     })
   },
   setup() {

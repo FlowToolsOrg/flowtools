@@ -1,14 +1,16 @@
 # @flowtools/ui-test
 
-A Vite + Vitest consumer app for validating `@flowtools/ui`.
+A Vite consumer app for manual validation of `@flowtools/ui`.
+
+Automated tests are deprecated for this project. The `test`, `test:watch`, and
+`test:browser` scripts are compatibility no-ops that print a deprecation notice.
 
 ## Commands
 
-- `bun run dev`: run the local testbed app
-- `bun run test`: run Vitest once
-- `bun run test:watch`: run Vitest in watch mode
+- `bun run dev`: run the local validation app
+- `bun run build`: verify the validation app builds
 
 ## Notes
 
 - `@flowtools/ui` is aliased to `../../packages/ui/src/index.ts` in
-  `vite.config.ts`, so tests run against source code directly.
+  `vite.config.ts`, so manual validation runs against source code directly.

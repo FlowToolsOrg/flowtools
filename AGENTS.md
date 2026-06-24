@@ -12,18 +12,24 @@ This repository is a Bun + Turbo monorepo.
 - `packages/cli`: unified CLI entry (`flowtools list/info/run`), Commander-based,
   auto-generates flags from plugin `inputSchema` (Zod), validates input at runtime,
   outputs structured `result.*` in JSON or text format.
-- `apps/web-vite`: current runnable host prototype (web runtime + routing +
-  command palette + plugin registry).
-- `apps/ui-test`: consumer app for manual/UI testing of `@flowtools/ui`.
+- `apps/web-vite`: runnable host prototype (web runtime + routing + command
+  palette + plugin registry).
+- `apps/desktop`: Tauri desktop shell. It hosts the HeroUI + Tailwind
+  ZTools-style launcher, uses TanStack Router for desktop pages, and reads the
+  generated ZTools plugin catalog.
+- `apps/ui-test`: consumer app for manual validation of `@flowtools/ui`.
+  Automated tests are deprecated.
 - `plugins/`: local plugin workspace with 12 built-in plugins (all app type,
   all CLI-compatible via `run()` + `inputSchema`).
 - `configs/tsdown`: shared package build config.
 - `docs/` and root docs such as `README.md` and `architecture.md`: product and
   architecture references.
+- `scripts/inspect-ztools-plugins.ts`: scans `ZTools-plugins/plugins` and
+  writes `apps/desktop/src/data/plugin-catalog.ztools.json` and
+  `docs/plugin-catalog.ztools.json`.
 
 Planned but not yet present in this repo:
 
-- `apps/desktop` (desktop-first Tauri host)
 - `apps/docs`
 
 Keep reusable logic in `packages/*`; keep host-specific behavior in `apps/*`.
@@ -38,7 +44,7 @@ workflows:
 - [README](./README.md)
 - [Plugin](./docs/plugin.md)
 
-## Build, Test, and Development Commands
+## Build, Validation, and Development Commands
 
 Run from repository root:
 
@@ -46,14 +52,17 @@ Run from repository root:
 - `bun run build`: builds workspaces (`turbo run build`).
 - `bun run lint`: runs workspace lint tasks.
 - `bun run check-types`: runs workspace type checks.
-- `bun run test`: runs workspace tests (currently used by `apps/ui-test`).
+- `bun run test`: deprecated no-op; do not use tests as a quality gate.
 - `bun run format`: formats tracked source/document files.
+- `bun run inspect:ztools`: scans a local `ZTools-plugins` checkout and
+  regenerates `apps/desktop/src/data/plugin-catalog.ztools.json` plus
+  `docs/plugin-catalog.ztools.json`.
 
 Useful app-level commands:
 
 - `cd apps/web-vite && bun run dev`
 - `cd apps/ui-test && bun run dev`
-- `cd apps/ui-test && bun run test`
+- `cd apps/desktop && bun run dev`
 
 CLI commands (from repo root):
 
@@ -90,6 +99,17 @@ Plugins are managed through a central registry system:
 - `PluginErrorBoundary`: catches rendering errors from plugin panels.
 - `withWatchdog`: wraps tool execution with timeout detection.
 
+ZTools compatibility is handled as an import/compatibility layer, not as direct
+execution:
+
+- Use `packages/sdk/src/compat/ztools.ts` to parse and normalize ZTools
+  `plugin.json`.
+- Treat `webview`, `preload-bridge`, `native-bridge`, and `metadata` as the
+  support levels.
+- Do not assume a ZTools plugin is runnable merely because its metadata appears
+  in `apps/desktop/src/data/plugin-catalog.ztools.json` or
+  `docs/plugin-catalog.ztools.json`.
+
 Built-in plugins are declared in `apps/web-vite/src/plugin/manifests.ts`
 and loaded at startup via `bootstrap()`.
 
@@ -99,6 +119,10 @@ Host UI reads plugin/command state from Zustand stores:
 - `commandStore`: command palette items + execution
 - `runHistoryStore`: persisted tool execution history
 - `settingsStore`: persisted host settings
+
+Desktop routes are owned by `apps/desktop` and should use TanStack Router. The
+current routes are `/`, `/settings`, `/plugins`, `/permissions`, and
+`/run/$commandId`.
 
 ## Command Palette
 
@@ -112,16 +136,16 @@ The host includes a `Cmd/Ctrl+K` command palette:
 
 ## Testing Guidelines
 
-Current quality gate:
+Automated tests are deprecated for this project. Do not add new test files and
+do not register test tasks as a required quality gate.
+
+Current validation gate:
 
 1. `bun run lint`
 2. `bun run check-types`
-3. `bun run test`
+3. `bun run build` or the relevant app/package build command
 4. Manual validation for changed flows (for web host, verify routes and plugin
    rendering in `apps/web-vite`)
-
-When adding tests, prefer colocated `*.test.ts` / `*.test.tsx` files and
-register the test task in `turbo.json`.
 
 ## Documentation Sync (Required and !Important)
 

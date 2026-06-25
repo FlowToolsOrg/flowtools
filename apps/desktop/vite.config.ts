@@ -1,10 +1,12 @@
 import { fileURLToPath, URL } from 'node:url'
 
+import babel from '@rolldown/plugin-babel'
 import tailwindcss from '@tailwindcss/vite'
-import react from '@vitejs/plugin-react'
+import { tanstackRouter } from '@tanstack/router-plugin/vite'
+import react, { reactCompilerPreset } from '@vitejs/plugin-react'
+import { codeInspectorPlugin } from 'code-inspector-plugin'
 import { defineConfig } from 'vite'
 
-// @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST
 const devHost = host || '127.0.0.1'
 const workspaceRoot = fileURLToPath(new URL('../..', import.meta.url))
@@ -28,7 +30,20 @@ export default defineConfig(async () => ({
     ],
     dedupe: ['react', 'react-dom'],
   },
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    codeInspectorPlugin({
+      bundler: 'vite',
+    }),
+    // tanstackRouter({
+    //   target: 'react',
+    //   autoCodeSplitting: true,
+    // }),
+    react(),
+    babel({
+      presets: [reactCompilerPreset()],
+    }),
+    tailwindcss(),
+  ],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //

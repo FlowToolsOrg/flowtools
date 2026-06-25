@@ -13,6 +13,8 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
+      "@flowtools/sdk": ["../../packages/sdk/src/index.ts"],
+      "@flowtools/sdk/*": ["../../packages/sdk/src/*"],
       "@flowtools/ui": ["../../packages/ui/src/index.ts"],
       "@flowtools/ui/*": ["../../packages/ui/src/*"]
     },

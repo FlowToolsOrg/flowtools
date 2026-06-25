@@ -65,6 +65,8 @@ Core principles:
   - `apps/desktop`: Tauri desktop shell with a HeroUI + Tailwind powered
     ZTools-style launcher surface, TanStack Router desktop routes, and an
     iframe-based plugin launch surface for ZTools `main` entries.
+    Desktop native capabilities are installed through official Tauri plugins
+    and exposed to plugins through the existing SDK capability contract.
 - Core packages under active development:
   - `packages/sdk` (`@flowtools/sdk`) — plugin contract, hooks, registry, lifecycle, Zod-based inputSchema
   - `packages/ui` (`@flowtools/ui`) — shared UI components including CommandPalette
@@ -75,6 +77,10 @@ Core principles:
     `apps/desktop/src/data/plugin-catalog.ztools.json` for the launcher and
     `docs/plugin-catalog.ztools.json` as the readable catalog copy.
   - The current local scan found 125 ZTools plugins and 723 commands.
+  - `/run/$commandId` launches ZTools `main` entries and pre-injects a
+    `window.ztools/window.utools` compatibility bridge. Bridge calls are
+    handled by the desktop SDK runtime context and then mapped to Tauri
+    plugins where native access is required.
 - Local plugin workspace with 12 built-in plugins (all app type, all CLI-compatible via `run()` + `inputSchema`):
   - `plugins/plugin-todo-list` — 待办清单（host-managed store）
   - `plugins/plugin-uuid-generator` — UUID 生成器
@@ -132,6 +138,7 @@ Useful local commands:
 bun run dev --filter=@flowtools/web-vite
 cd apps/ui-test && bun run dev
 bun run --cwd apps/desktop tauri dev
+bun run --cwd apps/desktop tauri add <plugin-name>
 
 # CLI commands
 bun run packages/cli/src/cli.ts list
@@ -160,6 +167,12 @@ FlowTools descriptors, then classified by required runtime support:
 - `native-bridge`: requires Tauri native capability work for files, images,
   windows, screenshots, or other host-level APIs.
 - `metadata`: useful for indexing or headless rewrite, but no UI entry exists.
+
+Desktop ZTools execution is a compatibility layer, not a second plugin model:
+the iframe bridge maps legacy `ztools/utools` calls back into the SDK
+capabilities (`fs`, `network`, `clipboard`, `dialog`, `notification`,
+`storage`, `db`, `native`). Tauri is only the desktop implementation behind
+that contract.
 
 All plugins can declare `inputSchema` (Zod `z.object({...})`) for:
 
@@ -271,6 +284,19 @@ Web prototype capability behavior:
 | `db`           | Declared but not yet supported in web host  |
 | `native`       | Declared but not yet supported in web host  |
 
+Desktop capability behavior:
+
+| Permission     | Desktop host behavior                                   |
+| -------------- | ------------------------------------------------------- |
+| `fs`           | `@tauri-apps/plugin-fs`                                 |
+| `clipboard`    | `@tauri-apps/plugin-clipboard-manager`                  |
+| `dialog`       | `@tauri-apps/plugin-dialog`                             |
+| `notification` | `@tauri-apps/plugin-notification`                       |
+| `storage`      | SDK-sync `localStorage` adapter mirrored to Tauri Store |
+| `db`           | `@tauri-apps/plugin-sql` SQLite adapter                 |
+| `network`      | browser/WebView `fetch`                                 |
+| `native`       | `@tauri-apps/api/core.invoke`                           |
+
 ## 🔐 Permission System
 
 Plugins declare required capabilities:
@@ -362,6 +388,9 @@ Each plugin:
 ## ⚡ Native Capabilities
 
 Rust/Tauri commands are provided by the host layer.
+For standard desktop features, prefer official Tauri plugins installed with
+`bun run --cwd apps/desktop tauri add <plugin-name>` and adapt them through the
+SDK capability context before adding custom Rust commands.
 
 Plugins do not compile native code directly.
 

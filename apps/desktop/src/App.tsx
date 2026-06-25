@@ -1,6 +1,7 @@
+import type { Permission } from '@flowtools/sdk/types'
 import type { ComponentType, ReactNode } from 'react'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import {
   BlocksIcon,
@@ -29,6 +30,13 @@ import { Button, Chip, SearchField } from '@heroui/react'
 import { convertFileSrc } from '@tauri-apps/api/core'
 
 import pluginIndexData from './data/plugin-catalog.ztools.json'
+import { createDesktopRuntimeContext } from './runtime/desktop-capabilities'
+import {
+  handleZToolsBridgeRequest,
+  injectZToolsBridge,
+  isZToolsBridgeRequest,
+  type ZToolsBridgeResponse,
+} from './runtime/ztools-bridge'
 import './App.css'
 
 interface IndexedCommand {
@@ -45,6 +53,8 @@ interface IndexedCommand {
   main?: string
   preload?: string
   developmentMain?: string
+  permissions: readonly Permission[]
+  featureCode?: string
   hasUi: boolean
   hasPreload: boolean
   requiresNative: boolean
@@ -56,6 +66,7 @@ interface IndexedPlugin {
   version: string
   description?: string
   type: 'app' | 'tool'
+  permissions: readonly Permission[]
   category?: string
   ztools: {
     sourceDir?: string
@@ -66,6 +77,7 @@ interface IndexedPlugin {
       id: string
       title: string
       description?: string
+      featureCode?: string
       type: string
     }>
     compatibility: {
@@ -108,6 +120,7 @@ const builtInActions: IndexedCommand[] = [
     main: undefined,
     preload: undefined,
     developmentMain: undefined,
+    permissions: [],
     hasUi: true,
     hasPreload: false,
     requiresNative: false,
@@ -126,6 +139,7 @@ const builtInActions: IndexedCommand[] = [
     main: undefined,
     preload: undefined,
     developmentMain: undefined,
+    permissions: [],
     hasUi: true,
     hasPreload: false,
     requiresNative: false,
@@ -144,6 +158,7 @@ const builtInActions: IndexedCommand[] = [
     main: undefined,
     preload: undefined,
     developmentMain: undefined,
+    permissions: [],
     hasUi: true,
     hasPreload: false,
     requiresNative: false,
@@ -164,10 +179,14 @@ function toCommandIndex(plugin: IndexedPlugin): IndexedCommand[] {
     main: plugin.ztools.main,
     preload: plugin.ztools.preload,
     developmentMain: plugin.ztools.developmentMain,
+    permissions: plugin.permissions,
     hasUi: Boolean(plugin.ztools.main || plugin.ztools.developmentMain),
     hasPreload: Boolean(plugin.ztools.preload),
     requiresNative: plugin.ztools.compatibility.level === 'native-bridge',
-  } satisfies Omit<IndexedCommand, 'id' | 'title' | 'description' | 'type'>
+  } satisfies Omit<
+    IndexedCommand,
+    'id' | 'title' | 'description' | 'type' | 'featureCode'
+  >
 
   if (plugin.ztools.commands.length === 0) {
     return [
@@ -186,6 +205,7 @@ function toCommandIndex(plugin: IndexedPlugin): IndexedCommand[] {
     id: `${plugin.id}:${command.id}`,
     title: command.title,
     description: command.description ?? plugin.description,
+    featureCode: command.featureCode,
     type: command.type,
     requiresNative:
       base.requiresNative || ['files', 'img', 'window'].includes(command.type),
@@ -307,6 +327,15 @@ function toRuntimeAssetUrl(path: string): string {
   }
 
   return toViteFsUrl(path)
+}
+
+function getBaseUrl(value: string): string {
+  const normalized = value.replace(/\\/g, '/')
+  const index = normalized.lastIndexOf('/')
+
+  if (index < 0) return normalized
+
+  return normalized.slice(0, index + 1)
 }
 
 function getPluginEntryPath(command: IndexedCommand): string | undefined {
@@ -1062,8 +1091,121 @@ interface PluginLaunchSurfaceProps {
   target: PluginLaunchTarget
 }
 
+interface FrameSource {
+  kind: 'src' | 'srcDoc'
+  value: string
+}
+
 function PluginLaunchSurface({ command, target }: PluginLaunchSurfaceProps) {
+  const navigate = useNavigate()
+  const frameRef = useRef<HTMLIFrameElement>(null)
   const [frameVersion, setFrameVersion] = useState(0)
+  const [frameSource, setFrameSource] = useState<FrameSource | null>(null)
+
+  const runtimeContext = useMemo(
+    () =>
+      createDesktopRuntimeContext({
+        pluginId: command.pluginId,
+        pluginType: command.pluginType,
+        permissions: command.permissions,
+      }),
+    [command.permissions, command.pluginId, command.pluginType]
+  )
+
+  useEffect(() => {
+    const handleClosePanel = (event: Event) => {
+      const detail = (event as CustomEvent<{ pluginId?: string }>).detail
+      if (detail?.pluginId && detail.pluginId !== command.pluginId) return
+
+      void navigate({ to: '/' })
+    }
+
+    window.addEventListener('flowtools:close-panel', handleClosePanel)
+
+    return () => {
+      window.removeEventListener('flowtools:close-panel', handleClosePanel)
+    }
+  }, [command.pluginId, navigate])
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent<unknown>) => {
+      const source = event.source
+      if (!source || source !== frameRef.current?.contentWindow) return
+      const request = event.data
+      if (!isZToolsBridgeRequest(request)) return
+
+      void (async () => {
+        const response: ZToolsBridgeResponse = {
+          type: 'flowtools:ztools-response',
+          id: request.id,
+          ok: true,
+        }
+
+        try {
+          response.value = await handleZToolsBridgeRequest(
+            runtimeContext,
+            request
+          )
+        } catch (error) {
+          response.ok = false
+          response.error =
+            error instanceof Error ? error.message : 'Unknown bridge error'
+        }
+
+        ;(source as Window).postMessage(response, '*')
+      })()
+    }
+
+    window.addEventListener('message', handleMessage)
+
+    return () => {
+      window.removeEventListener('message', handleMessage)
+    }
+  }, [runtimeContext])
+
+  useEffect(() => {
+    if (isExternalUrl(target.url)) {
+      setFrameSource({
+        kind: 'src',
+        value: target.url,
+      })
+      return
+    }
+
+    let cancelled = false
+    setFrameSource(null)
+
+    const loadHtml = async () => {
+      try {
+        const response = await fetch(target.url, { cache: 'no-store' })
+        if (!response.ok) {
+          throw new Error(`Failed to load plugin HTML: ${response.status}`)
+        }
+
+        const html = await response.text()
+        if (cancelled) return
+
+        setFrameSource({
+          kind: 'srcDoc',
+          value: injectZToolsBridge(html, command, getBaseUrl(target.url)),
+        })
+      } catch (error) {
+        console.warn(error)
+        if (cancelled) return
+
+        setFrameSource({
+          kind: 'src',
+          value: target.url,
+        })
+      }
+    }
+
+    void loadHtml()
+
+    return () => {
+      cancelled = true
+    }
+  }, [command, frameVersion, target.url])
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-[#111827]">
@@ -1097,13 +1239,21 @@ function PluginLaunchSurface({ command, target }: PluginLaunchSurfaceProps) {
           </Button>
         </div>
       </div>
-      <iframe
-        className="min-h-0 flex-1 border-0 bg-white"
-        key={`${target.url}:${frameVersion}`}
-        sandbox="allow-same-origin allow-scripts allow-forms allow-modals allow-popups allow-downloads"
-        src={target.url}
-        title={`${command.pluginName} - ${command.title}`}
-      />
+      {frameSource ? (
+        <iframe
+          className="min-h-0 flex-1 border-0 bg-white"
+          key={`${target.url}:${frameVersion}:${frameSource.kind}`}
+          ref={frameRef}
+          sandbox="allow-same-origin allow-scripts allow-forms allow-modals allow-popups allow-downloads"
+          src={frameSource.kind === 'src' ? frameSource.value : undefined}
+          srcDoc={frameSource.kind === 'srcDoc' ? frameSource.value : undefined}
+          title={`${command.pluginName} - ${command.title}`}
+        />
+      ) : (
+        <div className="grid min-h-0 flex-1 place-items-center bg-white text-sm text-slate-500">
+          正在启动插件...
+        </div>
+      )}
     </div>
   )
 }

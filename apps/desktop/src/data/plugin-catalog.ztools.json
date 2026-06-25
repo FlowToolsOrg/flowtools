@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-24T08:41:17.682Z",
+  "generatedAt": "2026-06-25T14:05:04.111Z",
   "source": "D:\\code\\projects\\flowtools\\ZTools-plugins",
   "totals": {
     "plugins": 125,
@@ -38,7 +38,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["2048", "2048小游戏"],
       "category": "游戏娱乐",
@@ -89,7 +90,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "ai-helper",
@@ -187,7 +189,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "ai-skills-manager",
@@ -282,7 +285,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "anywhere",
@@ -388,7 +392,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "ascii-tree",
@@ -476,7 +481,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "ascll-art-font",
@@ -576,7 +582,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "automode",
@@ -675,7 +682,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["bad-bear", "邪恶的熊", "bad bear", "插件市场", "badbear"],
       "icon": "logo.png",
@@ -745,7 +753,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "bookmarks",
@@ -972,7 +981,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "chrome-history",
@@ -1115,7 +1125,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["clipboard", "剪贴板"],
       "category": "效率工具",
@@ -1176,7 +1187,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "clipboard-image-paintbrush",
@@ -1472,7 +1484,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "code-screenshot",
@@ -1654,7 +1667,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "code-snippets",
@@ -1743,7 +1757,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "color-helper",
@@ -1996,7 +2011,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "colors",
@@ -2367,7 +2383,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "curl-tool",
@@ -2512,7 +2529,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "deepread",
@@ -2599,7 +2617,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "devbox",
@@ -3712,7 +3731,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "diff-compare",
@@ -4004,7 +4024,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "domain-helper",
@@ -4078,7 +4099,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["doutu", "斗图表情包", "表情包搜索插件", "emo"],
       "category": "图像媒体",
@@ -4142,7 +4164,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "english-typing-practice",
@@ -4225,7 +4248,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "everything",
@@ -4327,7 +4351,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "fidget",
@@ -4442,7 +4467,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "file-renamer",
@@ -4538,7 +4564,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "file-tree",
@@ -4650,7 +4677,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["floating", "悬浮", "suspend-screenshot", "截图并悬浮"],
       "category": "其他工具",
@@ -4698,7 +4726,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["flyfont", "打飞字", "font", "飞字"],
       "category": "游戏娱乐",
@@ -4765,7 +4794,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "githubproxy",
@@ -4918,7 +4948,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "goose-note",
@@ -5064,7 +5095,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "he-calendar",
@@ -5148,7 +5180,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "hooost",
@@ -5226,7 +5259,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "hushreader",
@@ -5386,7 +5420,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "image-batch-studio",
@@ -5689,7 +5724,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "imgbatch",
@@ -5815,7 +5851,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "ip-switcher",
@@ -5891,7 +5928,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "jet-plugin",
@@ -6008,7 +6046,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["json-editor", "clean-cache", "Json 格式化编辑", "Json"],
       "category": "开发工具",
@@ -6078,7 +6117,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "json-tools",
@@ -6175,7 +6215,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["killprocess", "结束指定进程", "结束进程", "kill process"],
       "category": "系统工具",
@@ -6239,7 +6280,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "kuke-ai-agent",
@@ -6356,7 +6398,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "latex-ocr",
@@ -6474,7 +6517,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["lihua", "礼花", "confetti", "发射全屏五彩纸屑", "撒花", "庆祝"],
       "category": "其他工具",
@@ -6549,7 +6593,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "linuxcmddoc",
@@ -6627,7 +6672,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "local-ip",
@@ -6701,7 +6747,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "local-search-neo",
@@ -6792,7 +6839,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["long-screenshot", "长截图"],
       "category": "图像媒体",
@@ -6843,7 +6891,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "mac-file-search",
@@ -7051,7 +7100,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "mac-system-preference-ztools-plugin",
@@ -7592,7 +7642,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["markdown", "Markdown"],
       "category": "文本处理",
@@ -7645,7 +7696,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "memo-quick-paste",
@@ -7821,7 +7873,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "mt-ocr",
@@ -7966,7 +8019,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "musicsquare",
@@ -8075,7 +8129,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "my-calculator",
@@ -8153,7 +8208,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "my-hash-tool",
@@ -8369,7 +8425,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "mybatis-sql-formatter",
@@ -8487,7 +8544,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "ocr-new",
@@ -8834,7 +8892,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "otp-2fa",
@@ -8971,7 +9030,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "piclist-plugin",
@@ -9132,7 +9192,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "plain-text",
@@ -9345,7 +9406,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["pomodoro-timer", "超级番茄", "tomato", "番茄钟"],
       "category": "效率工具",
@@ -9403,7 +9465,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["port-use", "端口占用"],
       "category": "开发工具",
@@ -9455,7 +9518,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "port-use-win",
@@ -9533,7 +9597,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "project-manager",
@@ -9682,7 +9747,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "qrcode-helper",
@@ -9796,7 +9862,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "random-data",
@@ -9941,7 +10008,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "regex-editor",
@@ -10041,7 +10109,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "remote-manager",
@@ -10120,7 +10189,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "rogue-shooter",
@@ -10213,7 +10283,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["saladict-ztools", "沙拉查词", "saladict"],
       "category": "效率工具",
@@ -10291,7 +10362,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "screen-recorder",
@@ -10364,7 +10436,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "shortcut-capture",
@@ -10537,7 +10610,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["shorthand-box", "速记盒", "sj"],
       "category": "效率工具",
@@ -10600,7 +10674,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "showcode",
@@ -10714,7 +10789,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "splayer-z",
@@ -10803,7 +10879,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "sql-utils",
@@ -10892,7 +10969,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "sqlmate",
@@ -11980,7 +12058,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "ssh-screenshot",
@@ -12139,7 +12218,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "stickercan",
@@ -12227,7 +12307,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "sticky-note",
@@ -12342,7 +12423,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "sub2api-usage",
@@ -12419,7 +12501,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "subnet-calculator",
@@ -12528,7 +12611,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["super-mario", "超级玛丽"],
       "category": "游戏娱乐",
@@ -12579,7 +12663,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "swap-file",
@@ -12664,7 +12749,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "termdock",
@@ -12807,7 +12893,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "text-copy",
@@ -12938,7 +13025,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "tiga",
@@ -13348,7 +13436,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["tiny-clock", "小小时钟", "xiaoxiao", "小小时钟设置界面"],
       "category": "其他工具",
@@ -13399,7 +13488,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["tiny-rdm", "TinyRDM"],
       "category": "开发工具",
@@ -13450,7 +13540,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "tinypng",
@@ -13560,7 +13651,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "today-gold-price",
@@ -13635,7 +13727,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "todo-neo",
@@ -13720,7 +13813,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "topwindow",
@@ -13798,7 +13892,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "totodo",
@@ -13904,7 +13999,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "traditional-simplified-cn",
@@ -13997,7 +14093,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "url-wizard",
@@ -14143,7 +14240,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "utools-upassword",
@@ -14224,7 +14322,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["variable-name", "起个变量名", "fy", "起变量名"],
       "category": "开发工具",
@@ -14286,7 +14385,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "video-parse",
@@ -14354,7 +14454,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["vimtutor", "vim教程"],
       "category": "开发工具",
@@ -14413,7 +14514,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["virtual-data", "虚拟数据", "xn"],
       "category": "开发工具",
@@ -14476,7 +14578,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "web-quick-open",
@@ -14544,7 +14647,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "webapp",
@@ -14630,7 +14734,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "wechat-ocr",
@@ -14746,7 +14851,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "whiteboard",
@@ -14803,7 +14909,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "wifi-export-tool",
@@ -14886,7 +14993,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": ["yanhua", "烟花", "fireworks", "发射全屏烟花"],
       "category": "其他工具",
@@ -14937,7 +15045,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "zapapi",
@@ -14995,7 +15104,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "zhi-interaction",
@@ -15074,7 +15184,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "zosenlink-tunnel",
@@ -15162,7 +15273,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "ztool-vsc-recent",
@@ -15318,7 +15430,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "ztools-node-manager",
@@ -15463,7 +15576,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "ztools-openlist",
@@ -15540,7 +15654,8 @@
         "fs",
         "network",
         "notification",
-        "dialog"
+        "dialog",
+        "db"
       ],
       "tags": [
         "ztools-simpletimer",

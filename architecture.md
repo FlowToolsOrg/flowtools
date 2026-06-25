@@ -29,7 +29,7 @@ Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平�
   - `apps/web`
 
 结论：架构方向是 desktop-first，当前 web 原型已具备注册中心、命令面板、生命周期管理、错误隔离等核心机制。
-CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用插件。ZTools 兼容层当前先解决插件元数据与命令入口归一化，后续再补齐 Tauri WebView runner、preload bridge 与原生能力 bridge。
+CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用插件。ZTools 兼容层已完成插件元数据与命令入口归一化，并在 desktop 端提供 `main` iframe 启动容器、`window.ztools/window.utools` 兼容 bridge，以及基于 SDK capability contract 的 Tauri 官方插件适配。
 
 ## 2. Layered Model（分层模型）
 
@@ -89,7 +89,9 @@ ZTools 插件先通过 `normalizeZToolsManifest(...)` 转为
 - `metadata`：没有 UI 入口，可先作为索引或重写为 headless/tool 插件。
 
 `bun run inspect:ztools` 会扫描本地 `ZTools-plugins`，输出插件兼容目录，供
-desktop 启动器、插件市场和后续导入器复用。
+desktop 启动器、插件市场和后续导入器复用。preload 类 ZTools 插件会声明
+`storage/native/clipboard/fs/network/notification/dialog/db` 等权限，再由 desktop
+runtime 按声明裁剪 SDK capability。
 
 `definePlugin` 会写入 `Symbol('__flow_tools__')` marker，并在类型层限制
 `meta.permissions` 的重复声明（tuple 字面量可在编译期发现重复权限）。
@@ -166,7 +168,7 @@ Host runtime 用 `pickCapability(...)` 做权限裁剪：
 - `db`：web 未实现，调用抛错
 - `native`：web 未实现，调用抛错
 
-## 6.1 Desktop Runtime Prototype（Tauri）
+## 6.1 Desktop Runtime（Tauri）
 
 `apps/desktop` 当前是 Tauri 桌面壳，不再是默认模板页。它读取
 `apps/desktop/src/data/plugin-catalog.ztools.json`，展示 ZTools 风格插件启动、搜索、命令数量、分类和运行支持级别；`docs/plugin-catalog.ztools.json` 作为同源的人类可读目录副本。桌面端路由使用 TanStack Router，当前包括 `/`、`/settings`、`/plugins`、`/permissions` 和 `/run/$commandId`。其中 `/run/$commandId` 对声明了 `main` 的 ZTools 插件会启动 iframe 运行容器，而不是仅展示插件元数据。
@@ -174,9 +176,10 @@ Host runtime 用 `pickCapability(...)` 做权限裁剪：
 当前边界：
 
 - 已实现：HeroUI + Tailwind 桌面首屏、ZTools 插件目录驱动的启动器界面、设置/插件/权限路由、ZTools `main` iframe 启动容器、workspace icon 复用。
-- 待实现：真正打开 ZTools `main` 的 WebView runner。
-- 待实现：preload API bridge，将 Electron/uTools 风格 API 映射到 Tauri commands。
-- 待实现：文件、窗口、截图、系统命令等 native bridge。
+- 已实现：Desktop SDK capability adapter，按插件 permissions 暴露 `fs/request/clipboard/dialog/notification/storage/db/native`。
+- 已实现：通过 `bun tauri add` 安装并接入官方 Tauri 插件：`fs`、`dialog`、`clipboard-manager`、`notification`、`sql`、`store`、`opener`。
+- 已实现：iframe 注入 `window.ztools/window.utools` bridge，将常用 ZTools API 转回 SDK capability，再由 Tauri plugin 或 WebView API 执行。
+- 待完善：更完整的 Electron/uTools API 面覆盖、截图/窗口控制、插件安装与细粒度授权提示。
 
 ## 7. Plugin Execution Flow
 
@@ -293,10 +296,10 @@ SDK 已定义命令与结果契约：
 
 ## 11. Path to Desktop (Tauri)
 
-下一阶段应将 web 适配层替换/扩展为 desktop host：
+下一阶段应继续扩展 desktop host：
 
 1. 新增 `apps/desktop` 作为主宿主
-2. 将 `dialog/db/native/fs` 等能力切换到 Tauri + Rust 实现
+2. ~~将 `dialog/db/native/fs` 等能力切换到 Tauri + Rust 实现~~ ✅ 已通过官方 Tauri plugins + SDK adapter 建立基础实现
 3. ~~建立命令注册中心（palette、历史、快捷键）~~ ✅ 已实现
 4. ~~CLI 入口（插件无头调用、AI agent bridge）~~ ✅ 已实现（`packages/cli`）
 5. 接入插件安装/加载策略（本地安装、版本管理、签名/权限提示）
@@ -320,7 +323,9 @@ SDK 已定义命令与结果契约：
 
 ## 13. Native Performance（Rust/Tauri）
 
-原则：插件不直接写 Rust，native 能力由宿主提供为 capability。
+原则：插件不直接写 Rust，native 能力由宿主提供为 capability。标准桌面能力优先
+通过 `bun run --cwd apps/desktop tauri add <plugin-name>` 安装官方 Tauri plugin，
+再在 `apps/desktop/src/runtime/desktop-capabilities.ts` 中适配到 SDK contract。
 
 - Flow Tool 内置 native capability（host layer）
 - 插件通过 `ctx.native.xxx` / `useNative()` 调用

@@ -3,5 +3,14 @@
   "identifier": "default",
   "description": "Capability for the main window",
   "windows": ["main"],
-  "permissions": ["core:default", "opener:default"]
+  "permissions": [
+    "core:default",
+    "opener:default",
+    "fs:default",
+    "dialog:default",
+    "clipboard-manager:default",
+    "notification:default",
+    "sql:default",
+    "store:default"
+  ]
 }

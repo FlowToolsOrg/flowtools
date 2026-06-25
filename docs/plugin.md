@@ -3,8 +3,10 @@
 本文面向 Flow Tool 开发者，目标是帮助你在当前仓库里快速开发并调试自己的
 plugin。
 
-> 当前阶段说明：Flow Tool 的产品方向是 desktop-first（Tauri），但仓库里当前
-> 可运行宿主是 `apps/web-vite`，本文以 web 原型为准。
+> 当前阶段说明：Flow Tool 的产品方向是 desktop-first（Tauri）。
+> `apps/web-vite` 仍用于验证 SDK/registry/runtime，`apps/desktop` 已提供
+> ZTools 风格启动器、TanStack Router 路由、ZTools `main` 启动容器和 Tauri
+> 官方插件驱动的 desktop capability adapter。
 
 ## 1. 先理解插件模型
 
@@ -16,7 +18,7 @@ Flow Tool 目前支持两类插件：
 
 此外，SDK 提供 ZTools `plugin.json` 兼容解析。它不会把 ZTools 插件直接改写成
 FlowTools 插件，而是先把 `main`、`preload`、`features`、`cmds` 归一化为可搜索
-的插件描述，供 Tauri desktop 壳、后续 WebView runner 和导入器使用。
+的插件描述，供 Tauri desktop 壳、iframe runner、兼容 bridge 和导入器使用。
 
 统一通过 `definePlugin(...)` 声明，且必须有 `meta`：
 
@@ -117,6 +119,12 @@ Desktop 端使用 TanStack Router 承载启动器、设置、插件、权限和�
 ZTools 目录中的命令会进入 `/run/$commandId`，内置设置类命令会进入对应页面。
 如果 ZTools 插件声明了 `main`，该路由会直接启动 iframe 运行容器；没有 UI
 入口的命令才进入 headless 执行状态视图。
+
+Desktop runner 会在 iframe 里预注入 `window.ztools/window.utools`。常用旧 API
+会通过 `postMessage` 回到 desktop host，再走 SDK runtime context；实际原生能力由
+`@tauri-apps/plugin-fs`、`plugin-dialog`、`plugin-clipboard-manager`、
+`plugin-notification`、`plugin-sql`、`plugin-store`、`plugin-opener` 等官方
+Tauri 插件提供。
 
 ### 2.1 ZTools 插件兼容判断
 
@@ -455,7 +463,31 @@ import { definePlugin } from '@flowtools/sdk/definePlugin'
 import { result } from '@flowtools/sdk/result'
 ```
 
-## 8. 权限与 Capability 对照（Web 原型）
+## 8. 权限与 Capability 对照
+
+### 8.1 Desktop Host
+
+| permission     | SDK 能力                                 | desktop 当前行为                           |
+| -------------- | ---------------------------------------- | ------------------------------------------ |
+| `network`      | `useRequest()` / `ctx.request`           | WebView `fetch`                            |
+| `storage`      | `useStorage()` / `ctx.storage`           | namespaced sync storage + Tauri Store 镜像 |
+| `fs`           | `useFS()` / `ctx.fs`                     | `@tauri-apps/plugin-fs`                    |
+| `clipboard`    | `useClipboard()` / `ctx.clipboard`       | `@tauri-apps/plugin-clipboard-manager`     |
+| `notification` | `useNotification()` / `ctx.notification` | `@tauri-apps/plugin-notification`          |
+| `dialog`       | `useDialog()` / `ctx.dialog`             | `@tauri-apps/plugin-dialog`                |
+| `db`           | `useDB()` / `ctx.db`                     | `@tauri-apps/plugin-sql` SQLite            |
+| `native`       | `useNative()` / `ctx.native`             | Tauri `invoke`                             |
+
+新增桌面原生能力时，先在 `apps/desktop` 执行：
+
+```bash
+bun run tauri add <plugin-name>
+```
+
+然后在 `apps/desktop/src/runtime/desktop-capabilities.ts` 中把官方插件 API
+适配到 SDK capability。业务插件不直接依赖 Tauri API。
+
+### 8.2 Web Prototype
 
 | permission     | SDK 能力                                   | web-vite 当前行为                                                            |
 | -------------- | ------------------------------------------ | ---------------------------------------------------------------------------- |

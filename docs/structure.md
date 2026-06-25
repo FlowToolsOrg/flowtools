@@ -95,7 +95,7 @@ Virtual Bridge Link 流程:
 
 Web (基于 Vite): 实现 Dynamic Import (动态导入)、SDK Mount (SDK 挂载)、Import Map (导入映射)。
 
-Desktop (基于 Tauri): 已有 `apps/desktop` 壳，用于承载 HeroUI + Tailwind 桌面启动器、TanStack Router 桌面路由、ZTools 风格插件目录和 iframe 插件运行容器。
+Desktop (基于 Tauri): 已有 `apps/desktop` 壳，用于承载 HeroUI + Tailwind 桌面启动器、TanStack Router 桌面路由、ZTools 风格插件目录和 iframe 插件运行容器。原生能力通过官方 Tauri plugins 安装，再由 desktop SDK adapter 暴露为标准 capability。
 
 ### ZTools 兼容导入层
 
@@ -103,6 +103,8 @@ Desktop (基于 Tauri): 已有 `apps/desktop` 壳，用于承载 HeroUI + Tailwi
 - `scripts/inspect-ztools-plugins.ts`: 扫描本地 `ZTools-plugins/plugins`，生成 runtime 目录和 docs 副本。
 - `apps/desktop/src/data/plugin-catalog.ztools.json`: desktop 启动器直接读取的 ZTools 插件目录。
 - `docs/plugin-catalog.ztools.json`: 同源的人类可读目录副本，供后续插件市场/导入器参考。
+- `apps/desktop/src/runtime/desktop-capabilities.ts`: 将 SDK `fs/network/clipboard/dialog/notification/storage/db/native` capability 映射到 Tauri plugins 或 WebView API。
+- `apps/desktop/src/runtime/ztools-bridge.ts`: 在 ZTools iframe 中注入 `window.ztools/window.utools`，并通过 `postMessage` 回到 desktop SDK runtime。
 
 兼容级别：
 
@@ -110,6 +112,9 @@ Desktop (基于 Tauri): 已有 `apps/desktop` 壳，用于承载 HeroUI + Tailwi
 - `preload-bridge`: 需要补齐 `window.ztools` API bridge。
 - `native-bridge`: 需要 Tauri/Rust 原生能力配合。
 - `metadata`: 仅完成索引或适合重写为 FlowTools headless/tool 插件。
+
+新增 Tauri 原生能力时，优先在 `apps/desktop` 内执行
+`bun run tauri add <plugin-name>`，再把插件 API 适配到 SDK capability；避免让业务插件直接依赖 Tauri API。
 
 ## 6. 插件捆绑包结构 (Plugins Bundle)
 

@@ -8,6 +8,10 @@ import { defineConfig } from 'vite'
 const host = process.env.TAURI_DEV_HOST
 const devHost = host || '127.0.0.1'
 const workspaceRoot = fileURLToPath(new URL('../..', import.meta.url))
+const sdkEntry = fileURLToPath(
+  new URL('../../packages/sdk/src/index.ts', import.meta.url)
+)
+const sdkDir = fileURLToPath(new URL('../../packages/sdk/src', import.meta.url))
 const uiEntry = fileURLToPath(
   new URL('../../packages/ui/src/index.ts', import.meta.url)
 )
@@ -17,6 +21,8 @@ const uiDir = fileURLToPath(new URL('../../packages/ui/src', import.meta.url))
 export default defineConfig(async () => ({
   resolve: {
     alias: [
+      { find: /^@flowtools\/sdk$/, replacement: sdkEntry },
+      { find: /^@flowtools\/sdk\/(.+)$/, replacement: `${sdkDir}/$1` },
       { find: /^@flowtools\/ui$/, replacement: uiEntry },
       { find: /^@flowtools\/ui\/(.+)$/, replacement: `${uiDir}/$1` },
     ],

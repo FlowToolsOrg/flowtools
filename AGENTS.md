@@ -16,7 +16,8 @@ This repository is a Bun + Turbo monorepo.
   palette + plugin registry).
 - `apps/desktop`: Tauri desktop shell. It hosts the HeroUI + Tailwind
   ZTools-style launcher, uses TanStack Router for desktop pages, and reads the
-  generated ZTools plugin catalog.
+  generated ZTools plugin catalog. Desktop native capabilities should be added
+  with official Tauri plugins and adapted through the SDK runtime context.
 - `apps/ui-test`: consumer app for manual validation of `@flowtools/ui`.
   Automated tests are deprecated.
 - `plugins/`: local plugin workspace with 12 built-in plugins (all app type,
@@ -57,6 +58,8 @@ Run from repository root:
 - `bun run inspect:ztools`: scans a local `ZTools-plugins` checkout and
   regenerates `apps/desktop/src/data/plugin-catalog.ztools.json` plus
   `docs/plugin-catalog.ztools.json`.
+- `cd apps/desktop && bun run tauri add <plugin-name>`: install official Tauri
+  plugins for desktop native capability work before adding host-side adapters.
 
 Useful app-level commands:
 
@@ -100,14 +103,17 @@ Plugins are managed through a central registry system:
 - `withWatchdog`: wraps tool execution with timeout detection.
 
 ZTools compatibility is handled as an import/compatibility layer, not as direct
-execution:
+execution bypassing the SDK:
 
 - Use `packages/sdk/src/compat/ztools.ts` to parse and normalize ZTools
   `plugin.json`.
 - Treat `webview`, `preload-bridge`, `native-bridge`, and `metadata` as the
   support levels.
-- Do not assume a ZTools plugin is runnable merely because its metadata appears
-  in `apps/desktop/src/data/plugin-catalog.ztools.json` or
+- Desktop `/run/$commandId` may launch ZTools plugins with a `main` entry, but
+  native/preload behavior must still route through the desktop SDK capability
+  adapter and the ZTools bridge.
+- Do not assume a ZTools plugin is fully compatible merely because its metadata
+  appears in `apps/desktop/src/data/plugin-catalog.ztools.json` or
   `docs/plugin-catalog.ztools.json`.
 
 Built-in plugins are declared in `apps/web-vite/src/plugin/manifests.ts`
@@ -125,6 +131,12 @@ current routes are `/`, `/settings`, `/plugins`, `/permissions`, and
 `/run/$commandId`. For ZTools plugins with a `main` entry, `/run/$commandId`
 must launch the plugin UI in the desktop runner instead of acting as a metadata
 detail page.
+
+Desktop native capability work should prefer official Tauri plugins installed
+with `bun tauri add` (`fs`, `dialog`, `clipboard-manager`, `notification`,
+`sql`, `store`, `opener`, etc.). Expose those APIs to plugins only through
+`PluginRuntimeContextValue` capability adapters such as
+`apps/desktop/src/runtime/desktop-capabilities.ts`.
 
 ## Command Palette
 

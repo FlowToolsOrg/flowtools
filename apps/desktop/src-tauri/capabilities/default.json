@@ -10,7 +10,6 @@
     "dialog:default",
     "clipboard-manager:default",
     "notification:default",
-    "sql:default",
     "store:default"
   ]
 }

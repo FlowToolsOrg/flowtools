@@ -27,7 +27,6 @@ tauri-plugin-log = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-clipboard-manager = "2"
 tauri-plugin-notification = "2"
-tauri-plugin-sql = "2"
 tauri-plugin-store = "2"
 specta = { version = "=2.0.0-rc.25", features = ["serde_json"] }
 specta-typescript = "0.0.12"
@@ -35,3 +34,4 @@ tauri-specta = { version = "=2.0.0-rc.25", features = ["derive", "typescript"] }
 base64 = "0.22.1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 tauri-plugin-devtools = "2.0.0"
+toasty = { version = "0.7", features = ["sqlite"] }

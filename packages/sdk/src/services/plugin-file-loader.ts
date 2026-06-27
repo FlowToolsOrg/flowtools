@@ -39,6 +39,7 @@ export class PluginFileLoader {
       : source
 
     const module = await this.importFromCode(code)
+    this.validateModule(module)
     return await this.registerAndEnable(module.default)
   }
 

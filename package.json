@@ -47,7 +47,7 @@
     "lint:staged": "lint-staged",
     "prepare": "husky",
     "generate:manifests": "bun run scripts/generate-manifests.ts",
-    "inspect:ztools": "bun run scripts/inspect-ztools-plugins.ts"
+    "inspect:html-plugins": "bun run scripts/inspect-html-plugins.ts"
   },
   "dependencies": {
     "es-toolkit": "catalog:",

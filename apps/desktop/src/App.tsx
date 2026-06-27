@@ -1,8 +1,14 @@
+import type {
+  AppPlugin,
+  FlowToolPlugin,
+  PluginManifestEntry,
+} from '@flowtools/sdk'
 import type { Permission } from '@flowtools/sdk/types'
 import type { ComponentType, ReactNode } from 'react'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import { FlowToolRuntimeProvider, PluginErrorBoundary } from '@flowtools/sdk'
 import {
   BlocksIcon,
   ClockIcon,
@@ -29,15 +35,18 @@ import { Button, Chip, SearchField } from '@heroui/react'
 
 import { convertFileSrc } from '@tauri-apps/api/core'
 
-import pluginIndexData from './data/plugin-catalog.ztools.json'
+import htmlPluginIndexData from './data/html-plugin-catalog.json'
+import { builtInManifests } from './plugin/manifests'
 import { createDesktopRuntimeContext } from './runtime/desktop-capabilities'
 import {
-  handleZToolsBridgeRequest,
-  injectZToolsBridge,
-  isZToolsBridgeRequest,
-  type ZToolsBridgeResponse,
-} from './runtime/ztools-bridge'
+  handleHtmlPluginBridgeRequest,
+  injectHtmlPluginBridge,
+  isHtmlPluginBridgeRequest,
+  type HtmlPluginBridgeResponse,
+} from './runtime/html-plugin-bridge'
 import './App.css'
+
+type CommandSource = 'system' | 'html' | 'react'
 
 interface IndexedCommand {
   id: string
@@ -49,6 +58,7 @@ interface IndexedCommand {
   category?: string
   pluginType: 'app' | 'tool'
   compatibilityLevel: string
+  source: CommandSource
   sourceDir?: string
   main?: string
   preload?: string
@@ -60,7 +70,7 @@ interface IndexedCommand {
   requiresNative: boolean
 }
 
-interface IndexedPlugin {
+interface HtmlIndexedPlugin {
   id: string
   name: string
   version: string
@@ -68,7 +78,7 @@ interface IndexedPlugin {
   type: 'app' | 'tool'
   permissions: readonly Permission[]
   category?: string
-  ztools: {
+  html: {
     sourceDir?: string
     main?: string
     preload?: string
@@ -86,13 +96,13 @@ interface IndexedPlugin {
   }
 }
 
-interface PluginIndex {
+interface HtmlPluginIndex {
   source: string
   totals: {
     plugins: number
     commands: number
   }
-  plugins: IndexedPlugin[]
+  plugins: HtmlIndexedPlugin[]
 }
 
 interface IconProps {
@@ -102,7 +112,10 @@ interface IconProps {
 
 type IconComponent = ComponentType<IconProps>
 
-const pluginIndex = pluginIndexData as PluginIndex
+const htmlPluginIndex = htmlPluginIndexData as HtmlPluginIndex
+const reactPluginById = new Map(
+  builtInManifests.map(manifest => [manifest.id, manifest])
+)
 const recentStorageKey = 'flowtools.desktop.recentCommandIds'
 
 const builtInActions: IndexedCommand[] = [
@@ -116,6 +129,7 @@ const builtInActions: IndexedCommand[] = [
     category: '系统',
     pluginType: 'app',
     compatibilityLevel: 'native',
+    source: 'system',
     sourceDir: undefined,
     main: undefined,
     preload: undefined,
@@ -135,6 +149,7 @@ const builtInActions: IndexedCommand[] = [
     category: '插件',
     pluginType: 'app',
     compatibilityLevel: 'native',
+    source: 'system',
     sourceDir: undefined,
     main: undefined,
     preload: undefined,
@@ -154,6 +169,7 @@ const builtInActions: IndexedCommand[] = [
     category: '安全',
     pluginType: 'app',
     compatibilityLevel: 'native',
+    source: 'system',
     sourceDir: undefined,
     main: undefined,
     preload: undefined,
@@ -168,27 +184,28 @@ const builtInActions: IndexedCommand[] = [
 const selectedClass = 'bg-[var(--active-bg)]'
 const hoverClass = 'hover:bg-[var(--hover-bg)]'
 
-function toCommandIndex(plugin: IndexedPlugin): IndexedCommand[] {
+function toHtmlCommandIndex(plugin: HtmlIndexedPlugin): IndexedCommand[] {
   const base = {
     pluginId: plugin.id,
     pluginName: plugin.name,
     category: plugin.category,
     pluginType: plugin.type,
-    compatibilityLevel: plugin.ztools.compatibility.level,
-    sourceDir: plugin.ztools.sourceDir,
-    main: plugin.ztools.main,
-    preload: plugin.ztools.preload,
-    developmentMain: plugin.ztools.developmentMain,
+    compatibilityLevel: plugin.html.compatibility.level,
+    source: 'html' as const,
+    sourceDir: plugin.html.sourceDir,
+    main: plugin.html.main,
+    preload: plugin.html.preload,
+    developmentMain: plugin.html.developmentMain,
     permissions: plugin.permissions,
-    hasUi: Boolean(plugin.ztools.main || plugin.ztools.developmentMain),
-    hasPreload: Boolean(plugin.ztools.preload),
-    requiresNative: plugin.ztools.compatibility.level === 'native-bridge',
+    hasUi: Boolean(plugin.html.main || plugin.html.developmentMain),
+    hasPreload: Boolean(plugin.html.preload),
+    requiresNative: plugin.html.compatibility.level === 'native-bridge',
   } satisfies Omit<
     IndexedCommand,
     'id' | 'title' | 'description' | 'type' | 'featureCode'
   >
 
-  if (plugin.ztools.commands.length === 0) {
+  if (plugin.html.commands.length === 0) {
     return [
       {
         ...base,
@@ -200,7 +217,7 @@ function toCommandIndex(plugin: IndexedPlugin): IndexedCommand[] {
     ]
   }
 
-  return plugin.ztools.commands.map(command => ({
+  return plugin.html.commands.map(command => ({
     ...base,
     id: `${plugin.id}:${command.id}`,
     title: command.title,
@@ -212,12 +229,36 @@ function toCommandIndex(plugin: IndexedPlugin): IndexedCommand[] {
   }))
 }
 
+function toReactCommandIndex(manifest: PluginManifestEntry): IndexedCommand {
+  return {
+    id: `${manifest.id}:open`,
+    title: manifest.name,
+    description: manifest.description,
+    type: manifest.type === 'app' ? 'panel' : 'headless',
+    pluginId: manifest.id,
+    pluginName: manifest.name,
+    category: manifest.category,
+    pluginType: manifest.type,
+    compatibilityLevel: 'sdk',
+    source: 'react',
+    permissions: manifest.permissions ?? [],
+    hasUi: manifest.type === 'app',
+    hasPreload: false,
+    requiresNative: Boolean(manifest.permissions?.includes('native')),
+  }
+}
+
 const allCommands = [
   ...builtInActions,
-  ...pluginIndex.plugins.flatMap(toCommandIndex),
+  ...builtInManifests.map(toReactCommandIndex),
+  ...htmlPluginIndex.plugins.flatMap(toHtmlCommandIndex),
 ]
 
 const commandById = new Map(allCommands.map(command => [command.id, command]))
+const totalPluginCount =
+  builtInManifests.length + htmlPluginIndex.totals.plugins
+const totalCommandCount =
+  builtInManifests.length + htmlPluginIndex.totals.commands
 
 const pinnedIds = new Set([
   'flowtools:settings',
@@ -345,7 +386,12 @@ function getPluginEntryPath(command: IndexedCommand): string | undefined {
   if (isAbsoluteLocalPath(entry)) return entry.replace(/\\/g, '/')
   if (!command.sourceDir) return undefined
 
-  return joinLocalPath(pluginIndex.source, 'plugins', command.sourceDir, entry)
+  return joinLocalPath(
+    htmlPluginIndex.source,
+    'plugins',
+    command.sourceDir,
+    entry
+  )
 }
 
 function getPluginLaunchTarget(
@@ -374,6 +420,28 @@ function getPrimaryCommandForPlugin(
 ): IndexedCommand | undefined {
   return allCommands.find(command => command.pluginId === pluginId)
 }
+
+interface PluginListItem {
+  id: string
+  name: string
+  description?: string
+  compatibilityLevel: string
+}
+
+const pluginListItems: PluginListItem[] = [
+  ...builtInManifests.map(manifest => ({
+    id: manifest.id,
+    name: manifest.name,
+    description: manifest.description,
+    compatibilityLevel: 'React',
+  })),
+  ...htmlPluginIndex.plugins.map(plugin => ({
+    id: plugin.id,
+    name: plugin.name,
+    description: plugin.description,
+    compatibilityLevel: plugin.html.compatibility.level,
+  })),
+]
 
 function App() {
   return <RouterProvider router={router} />
@@ -590,8 +658,7 @@ function LauncherView() {
 
         <footer className="flex justify-between gap-3 border-t border-(--divider-color) px-3 py-2 text-[11px] text-(--text-secondary) max-[780px]:flex-col">
           <span>
-            {pluginIndex.totals.plugins} plugins · {pluginIndex.totals.commands}{' '}
-            commands
+            {totalPluginCount} plugins · {totalCommandCount} commands
           </span>
           <span>Alt+Z 唤起 · Enter 运行 · Esc 清空</span>
         </footer>
@@ -904,8 +971,8 @@ function SettingsView() {
         <SettingsRow label="插件 UI" value="React 声明式运行时" />
         <SettingsRow label="桌面内核" value="Tauri WebView + Rust 能力层" />
         <SettingsRow
-          label="ZTools 目录"
-          value={`${pluginIndex.totals.plugins} 个插件`}
+          label="HTML 插件目录"
+          value={`${htmlPluginIndex.totals.plugins} 个插件`}
         />
       </div>
     </PageFrame>
@@ -973,11 +1040,11 @@ function PluginsView() {
 
   return (
     <PageFrame
-      description={`${pluginIndex.totals.plugins} 个插件 · ${pluginIndex.totals.commands} 个命令`}
+      description={`${totalPluginCount} 个插件 · ${totalCommandCount} 个命令`}
       title="插件市场"
     >
       <div className="grid gap-2">
-        {pluginIndex.plugins.slice(0, 80).map(plugin => (
+        {pluginListItems.slice(0, 96).map(plugin => (
           <Button
             className="grid min-h-13.5 w-full grid-cols-[36px_minmax(0,1fr)_auto] justify-normal gap-3 rounded-lg bg-transparent px-2 py-2 text-left text-(--text-color) hover:bg-(--hover-bg)"
             key={plugin.id}
@@ -994,7 +1061,7 @@ function PluginsView() {
               </span>
             </span>
             <Chip color="accent" size="sm" variant="soft">
-              {plugin.ztools.compatibility.level}
+              {plugin.compatibilityLevel}
             </Chip>
           </Button>
         ))}
@@ -1010,7 +1077,7 @@ function PermissionsView() {
     ['fs', '文件读写能力', 'Tauri/Rust'],
     ['clipboard', '剪贴板访问', '可控'],
     ['native', '窗口、截图、系统命令', '高风险'],
-    ['preload', 'ZTools API Bridge', '兼容层'],
+    ['preload', '旧版宿主 API Bridge', '兼容层'],
   ] as const
 
   return (
@@ -1077,12 +1144,101 @@ function CommandRunView() {
       description={command.pluginName}
       title={command.title}
     >
-      {launchTarget ? (
+      {command.source === 'react' ? (
+        <ReactPluginSurface command={command} />
+      ) : launchTarget ? (
         <PluginLaunchSurface command={command} target={launchTarget} />
       ) : (
         <HeadlessCommandSurface command={command} />
       )}
     </PageFrame>
+  )
+}
+
+function isAppPlugin(plugin: FlowToolPlugin): plugin is AppPlugin {
+  return plugin.type === 'app'
+}
+
+function ReactPluginSurface({ command }: { command: IndexedCommand }) {
+  const manifest = reactPluginById.get(command.pluginId)
+  const [plugin, setPlugin] = useState<FlowToolPlugin | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!manifest) return
+
+    let cancelled = false
+    setPlugin(null)
+    setError(null)
+
+    void manifest
+      .loader()
+      .then(module => {
+        if (cancelled) return
+        setPlugin(module.default)
+      })
+      .catch((loadError: unknown) => {
+        if (cancelled) return
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : 'Failed to load React plugin'
+        )
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [manifest])
+
+  if (!manifest) {
+    return <HeadlessCommandSurface command={command} />
+  }
+
+  if (error) {
+    return (
+      <div className="grid h-full place-items-center p-6 text-sm text-(--text-secondary)">
+        {error}
+      </div>
+    )
+  }
+
+  if (!plugin) {
+    return (
+      <div className="grid h-full place-items-center p-6 text-sm text-(--text-secondary)">
+        正在加载插件...
+      </div>
+    )
+  }
+
+  if (!isAppPlugin(plugin)) {
+    return <HeadlessCommandSurface command={command} />
+  }
+
+  return <ReactAppPluginPanel plugin={plugin} />
+}
+
+function ReactAppPluginPanel({ plugin }: { plugin: AppPlugin }) {
+  const Panel = useMemo(() => plugin.setup(), [plugin])
+  const runtimeContext = useMemo(
+    () =>
+      createDesktopRuntimeContext({
+        pluginId: plugin.meta.id,
+        pluginType: plugin.type,
+        permissions: plugin.meta.permissions,
+        storeShape: plugin.store,
+      }),
+    [plugin]
+  )
+
+  return (
+    <div className="h-full min-h-0 overflow-auto bg-(--bg-color) p-4">
+      <PluginErrorBoundary pluginId={plugin.meta.id}>
+        <FlowToolRuntimeProvider value={runtimeContext}>
+          <Panel />
+        </FlowToolRuntimeProvider>
+      </PluginErrorBoundary>
+    </div>
   )
 }
 
@@ -1132,17 +1288,17 @@ function PluginLaunchSurface({ command, target }: PluginLaunchSurfaceProps) {
       const source = event.source
       if (!source || source !== frameRef.current?.contentWindow) return
       const request = event.data
-      if (!isZToolsBridgeRequest(request)) return
+      if (!isHtmlPluginBridgeRequest(request)) return
 
       void (async () => {
-        const response: ZToolsBridgeResponse = {
-          type: 'flowtools:ztools-response',
+        const response: HtmlPluginBridgeResponse = {
+          type: 'flowtools:html-plugin-response',
           id: request.id,
           ok: true,
         }
 
         try {
-          response.value = await handleZToolsBridgeRequest(
+          response.value = await handleHtmlPluginBridgeRequest(
             runtimeContext,
             request
           )
@@ -1187,7 +1343,7 @@ function PluginLaunchSurface({ command, target }: PluginLaunchSurfaceProps) {
 
         setFrameSource({
           kind: 'srcDoc',
-          value: injectZToolsBridge(html, command, getBaseUrl(target.url)),
+          value: injectHtmlPluginBridge(html, command, getBaseUrl(target.url)),
         })
       } catch (error) {
         console.warn(error)

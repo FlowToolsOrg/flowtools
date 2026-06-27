@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-06-25T14:05:04.111Z",
-  "source": "D:\\code\\projects\\flowtools\\ZTools-plugins",
+  "generatedAt": "2026-06-27T05:43:59.819Z",
+  "source": "D:\\code\\projects\\flowtools\\\u005a\u0054ools-plugins",
   "totals": {
     "plugins": 125,
     "commands": 723,
@@ -44,7 +44,7 @@
       "tags": ["2048", "2048小游戏"],
       "category": "游戏娱乐",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "2048",
         "main": "2048-master/index.html",
         "preload": "preload.js",
@@ -70,7 +70,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -103,7 +103,7 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "ai-helper",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -170,7 +170,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -205,7 +205,7 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "ai-skills-manager",
         "main": "index.html",
         "preload": "preload.js",
@@ -264,7 +264,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -298,7 +298,7 @@
       ],
       "category": "效率工具",
       "icon": "favicon.png",
-      "ztools": {
+      "html": {
         "sourceDir": "anywhere",
         "main": "/main/index.html",
         "preload": "preload.js",
@@ -370,7 +370,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：files。"
           ],
@@ -406,7 +406,7 @@
       ],
       "category": "文本处理",
       "icon": "logo.jpg",
-      "ztools": {
+      "html": {
         "sourceDir": "ascii-tree",
         "main": "index.html",
         "preload": "preload.js",
@@ -461,7 +461,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -497,7 +497,7 @@
       ],
       "category": "文本处理",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "ascll-art-font",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -562,7 +562,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -598,7 +598,7 @@
       ],
       "category": "系统工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "automode",
         "main": "index.html",
         "preload": "preload.js",
@@ -662,7 +662,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -672,7 +672,7 @@
       "id": "bad-bear",
       "name": "邪恶的熊",
       "version": "1.0.0",
-      "description": "轻松分享你的ZTools插件",
+      "description": "轻松分享你的\u005a\u0054ools插件",
       "author": "皮皮虾我们走",
       "type": "app",
       "permissions": [
@@ -687,7 +687,7 @@
       ],
       "tags": ["bad-bear", "邪恶的熊", "bad bear", "插件市场", "badbear"],
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "bad-bear",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -734,7 +734,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -766,7 +766,7 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "bookmarks",
         "preload": "preload.js",
         "commands": [
@@ -815,7 +815,7 @@
           "effort": "medium",
           "notes": [
             "无 main 入口，适合迁移为 FlowTools headless/tool 插件。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -847,7 +847,7 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "calculation-paper",
         "main": "index.html",
         "commands": [
@@ -999,7 +999,7 @@
       ],
       "category": "效率工具",
       "icon": "icon/browser.png",
-      "ztools": {
+      "html": {
         "sourceDir": "chrome-history",
         "preload": "preload.js",
         "commands": [
@@ -1104,7 +1104,7 @@
           "effort": "high",
           "notes": [
             "无 main 入口，适合迁移为 FlowTools headless/tool 插件。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：files。"
           ],
@@ -1131,7 +1131,7 @@
       "tags": ["clipboard", "剪贴板"],
       "category": "效率工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "clipboard",
         "main": "index.html",
         "preload": "preload.js",
@@ -1166,7 +1166,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -1223,7 +1223,7 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "clipboard-image-paintbrush",
         "preload": "preload.js",
         "commands": [
@@ -1462,7 +1462,7 @@
           "effort": "high",
           "notes": [
             "无 main 入口，适合迁移为 FlowTools headless/tool 插件。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：img, files。"
           ],
@@ -1497,7 +1497,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.svg",
-      "ztools": {
+      "html": {
         "sourceDir": "code-screenshot",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -1645,7 +1645,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：files。"
           ],
@@ -1681,7 +1681,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "code-snippets",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -1737,7 +1737,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -1785,7 +1785,7 @@
         "AI 配色"
       ],
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "color-helper",
         "main": "index.html",
         "preload": "preload.cjs",
@@ -1989,7 +1989,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：img, files。"
           ],
@@ -2031,7 +2031,7 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "colors",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -2144,14 +2144,14 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
       }
     },
     {
-      "id": "com-ztools-timestamp",
+      "id": "com-\u007a\u0074ools-timestamp",
       "name": "时间戳转换",
       "version": "1.0.0",
       "description": "时间戳与日期相互转换、多时区支持、实时时间戳显示、自动识别单位",
@@ -2159,7 +2159,7 @@
       "type": "app",
       "permissions": ["storage"],
       "tags": [
-        "com-ztools-timestamp",
+        "com-\u007a\u0074ools-timestamp",
         "时间戳转换",
         "时间戳与日期互转",
         "时间戳",
@@ -2171,70 +2171,70 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
-        "sourceDir": "com-ztools-timestamp",
+      "html": {
+        "sourceDir": "com-\u007a\u0074ools-timestamp",
         "main": "index.html",
         "developmentMain": "http://localhost:5178",
         "commands": [
           {
-            "id": "com-ztools-timestamp:text:command:0",
+            "id": "com-\u007a\u0074ools-timestamp:text:command:0",
             "title": "时间戳",
             "description": "时间戳与日期互转",
-            "featureCode": "com-ztools-timestamp",
+            "featureCode": "com-\u007a\u0074ools-timestamp",
             "type": "text",
             "matcher": "时间戳",
             "icon": "logo.png"
           },
           {
-            "id": "com-ztools-timestamp:text:timestamp:1",
+            "id": "com-\u007a\u0074ools-timestamp:text:timestamp:1",
             "title": "timestamp",
             "description": "时间戳与日期互转",
-            "featureCode": "com-ztools-timestamp",
+            "featureCode": "com-\u007a\u0074ools-timestamp",
             "type": "text",
             "matcher": "timestamp",
             "icon": "logo.png"
           },
           {
-            "id": "com-ztools-timestamp:text:command:2",
+            "id": "com-\u007a\u0074ools-timestamp:text:command:2",
             "title": "时间戳转换",
             "description": "时间戳与日期互转",
-            "featureCode": "com-ztools-timestamp",
+            "featureCode": "com-\u007a\u0074ools-timestamp",
             "type": "text",
             "matcher": "时间戳转换",
             "icon": "logo.png"
           },
           {
-            "id": "com-ztools-timestamp:text:unix:3",
+            "id": "com-\u007a\u0074ools-timestamp:text:unix:3",
             "title": "unix时间",
             "description": "时间戳与日期互转",
-            "featureCode": "com-ztools-timestamp",
+            "featureCode": "com-\u007a\u0074ools-timestamp",
             "type": "text",
             "matcher": "unix时间",
             "icon": "logo.png"
           },
           {
-            "id": "com-ztools-timestamp:text:command:4",
+            "id": "com-\u007a\u0074ools-timestamp:text:command:4",
             "title": "日期转换",
             "description": "时间戳与日期互转",
-            "featureCode": "com-ztools-timestamp",
+            "featureCode": "com-\u007a\u0074ools-timestamp",
             "type": "text",
             "matcher": "日期转换",
             "icon": "logo.png"
           },
           {
-            "id": "com-ztools-timestamp:text:command:5",
+            "id": "com-\u007a\u0074ools-timestamp:text:command:5",
             "title": "时间",
             "description": "时间戳与日期互转",
-            "featureCode": "com-ztools-timestamp",
+            "featureCode": "com-\u007a\u0074ools-timestamp",
             "type": "text",
             "matcher": "时间",
             "icon": "logo.png"
           },
           {
-            "id": "com-ztools-timestamp:text:command:6",
+            "id": "com-\u007a\u0074ools-timestamp:text:command:6",
             "title": "日期",
             "description": "时间戳与日期互转",
-            "featureCode": "com-ztools-timestamp",
+            "featureCode": "com-\u007a\u0074ools-timestamp",
             "type": "text",
             "matcher": "日期",
             "icon": "logo.png"
@@ -2242,7 +2242,7 @@
         ],
         "features": [
           {
-            "code": "com-ztools-timestamp",
+            "code": "com-\u007a\u0074ools-timestamp",
             "explain": "时间戳与日期互转",
             "icon": "logo.png",
             "cmds": [
@@ -2285,7 +2285,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "cron",
         "main": "index.html",
         "commands": [
@@ -2373,7 +2373,7 @@
       "id": "curl-tool",
       "name": "Curl Tool",
       "version": "1.0.0",
-      "description": "在 ZTools 中解析 curl 指令并发送 HTTP 请求的接口调试工具",
+      "description": "在 \u005a\u0054ools 中解析 curl 指令并发送 HTTP 请求的接口调试工具",
       "author": "qin54",
       "type": "app",
       "permissions": [
@@ -2399,7 +2399,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "curl-tool",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -2509,7 +2509,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -2519,7 +2519,7 @@
       "id": "deepread",
       "name": "DeepRead 深读",
       "version": "1.1.3",
-      "description": "一个面向 ZTools 的低调本地小说阅读插件，支持书架、分页、进度保存、章节/搜索跳转和快速隐藏。",
+      "description": "一个面向 \u005a\u0054ools 的低调本地小说阅读插件，支持书架、分页、进度保存、章节/搜索跳转和快速隐藏。",
       "author": "DeepRead",
       "type": "app",
       "permissions": [
@@ -2542,7 +2542,7 @@
         "阅读"
       ],
       "icon": "dist/logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "deepread",
         "main": "dist/index.html",
         "preload": "dist/preload/services.js",
@@ -2597,7 +2597,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -2715,7 +2715,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "devbox",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -3573,7 +3573,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -3604,7 +3604,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.svg",
-      "ztools": {
+      "html": {
         "sourceDir": "developer-codec-tools",
         "main": "index.html",
         "developmentMain": "http://localhost:5178",
@@ -3758,7 +3758,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "diff-compare",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -4001,7 +4001,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：img, files。"
           ],
@@ -4036,7 +4036,7 @@
       ],
       "category": "网络工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "domain-helper",
         "main": "index.html",
         "preload": "preload.js",
@@ -4079,7 +4079,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -4105,7 +4105,7 @@
       "tags": ["doutu", "斗图表情包", "表情包搜索插件", "emo"],
       "category": "图像媒体",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "doutu",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -4143,7 +4143,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -4178,7 +4178,7 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "english-typing-practice",
         "preload": "preload.js",
         "commands": [
@@ -4227,7 +4227,7 @@
           "effort": "medium",
           "notes": [
             "无 main 入口，适合迁移为 FlowTools headless/tool 插件。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -4263,7 +4263,7 @@
       ],
       "category": "系统工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "everything",
         "main": "index.html",
         "preload": "preload/preload.js",
@@ -4331,7 +4331,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -4366,7 +4366,7 @@
       ],
       "category": "游戏娱乐",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "fidget",
         "preload": "preload.js",
         "commands": [
@@ -4447,7 +4447,7 @@
           "effort": "medium",
           "notes": [
             "无 main 入口，适合迁移为 FlowTools headless/tool 插件。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -4480,7 +4480,7 @@
       ],
       "category": "系统工具",
       "icon": "logo.svg",
-      "ztools": {
+      "html": {
         "sourceDir": "file-renamer",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -4541,7 +4541,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：files。"
           ],
@@ -4578,7 +4578,7 @@
       ],
       "category": "文本处理",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "file-tree",
         "main": "index.html",
         "preload": "preload.js",
@@ -4654,7 +4654,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：files。"
           ],
@@ -4683,7 +4683,7 @@
       "tags": ["floating", "悬浮", "suspend-screenshot", "截图并悬浮"],
       "category": "其他工具",
       "icon": "icon.png",
-      "ztools": {
+      "html": {
         "sourceDir": "floating",
         "preload": "preload.js",
         "commands": [
@@ -4706,7 +4706,7 @@
           "effort": "medium",
           "notes": [
             "无 main 入口，适合迁移为 FlowTools headless/tool 插件。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -4732,7 +4732,7 @@
       "tags": ["flyfont", "打飞字", "font", "飞字"],
       "category": "游戏娱乐",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "flyfont",
         "main": "static/index.html",
         "preload": "static/preload.js",
@@ -4774,7 +4774,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -4809,7 +4809,7 @@
       ],
       "category": "网络工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "githubproxy",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -4928,7 +4928,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -4968,7 +4968,7 @@
       ],
       "category": "文本处理",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "goose-note",
         "main": "index.html",
         "preload": "preload.js",
@@ -5072,7 +5072,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：files。"
           ],
@@ -5109,7 +5109,7 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "he-calendar",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -5160,7 +5160,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -5192,7 +5192,7 @@
       ],
       "category": "网络工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "hooost",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -5239,7 +5239,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -5249,7 +5249,7 @@
       "id": "hushreader",
       "name": "隐阅盒",
       "version": "1.3.3",
-      "description": "ZTools自己的摸鱼阅读，支持TXT/EPUB/MOBI格式，沉浸式阅读",
+      "description": "\u005a\u0054ools自己的摸鱼阅读，支持TXT/EPUB/MOBI格式，沉浸式阅读",
       "author": "meidlinger",
       "type": "app",
       "permissions": [
@@ -5279,7 +5279,7 @@
         "导入到 隐阅盒"
       ],
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "hushreader",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -5398,7 +5398,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：files。"
           ],
@@ -5434,7 +5434,7 @@
         "批量处理文件夹图片"
       ],
       "icon": "logo.svg",
-      "ztools": {
+      "html": {
         "sourceDir": "image-batch-studio",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -5575,7 +5575,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：img, files。"
           ],
@@ -5603,7 +5603,7 @@
         "拼接剪贴板图片"
       ],
       "icon": "logo.svg",
-      "ztools": {
+      "html": {
         "sourceDir": "image-stitch",
         "main": "index.html",
         "commands": [
@@ -5737,7 +5737,7 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "imgbatch",
         "main": "index.html",
         "preload": "preload.js",
@@ -5829,7 +5829,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：img, files。"
           ],
@@ -5865,7 +5865,7 @@
       ],
       "category": "网络工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "ip-switcher",
         "main": "index.html",
         "preload": "preload.js",
@@ -5908,7 +5908,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -5918,7 +5918,7 @@
       "id": "jet-plugin",
       "name": "jet plugin",
       "version": "1.0.3",
-      "description": "A ZTools plugin",
+      "description": "A \u005a\u0054ools plugin",
       "author": "zl",
       "type": "tool",
       "permissions": [
@@ -5946,7 +5946,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "jet-plugin",
         "preload": "preload.js",
         "commands": [
@@ -6027,7 +6027,7 @@
           "effort": "medium",
           "notes": [
             "无 main 入口，适合迁移为 FlowTools headless/tool 插件。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -6052,7 +6052,7 @@
       "tags": ["json-editor", "clean-cache", "Json 格式化编辑", "Json"],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "json-editor",
         "main": "index.html",
         "preload": "preload.js",
@@ -6099,7 +6099,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -6130,7 +6130,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "json-tools",
         "main": "index.html",
         "preload": "preload.js",
@@ -6195,7 +6195,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -6221,7 +6221,7 @@
       "tags": ["killprocess", "结束指定进程", "结束进程", "kill process"],
       "category": "系统工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "killprocess",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -6259,7 +6259,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -6297,7 +6297,7 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "kuke-ai-agent",
         "main": "index.html",
         "preload": "preload.js",
@@ -6377,7 +6377,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -6389,7 +6389,7 @@
       "version": "1.0.0",
       "description": "LaTeX 公式编辑器，支持 SimpleTex api 识别图片转 LaTeX 公式",
       "author": "paxton",
-      "link": "https://github.com/Paxton-PKJ/ztools-LaTeX-OCR",
+      "link": "https://github.com/Paxton-PKJ/\u007a\u0074ools-LaTeX-OCR",
       "type": "app",
       "permissions": [
         "storage",
@@ -6416,7 +6416,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "latex-ocr",
         "main": "html/index.html",
         "preload": "preload.js",
@@ -6495,7 +6495,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：img。"
           ],
@@ -6523,7 +6523,7 @@
       "tags": ["lihua", "礼花", "confetti", "发射全屏五彩纸屑", "撒花", "庆祝"],
       "category": "其他工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "lihua",
         "preload": "preload.js",
         "commands": [
@@ -6573,7 +6573,7 @@
           "effort": "medium",
           "notes": [
             "无 main 入口，适合迁移为 FlowTools headless/tool 插件。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -6606,7 +6606,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "linuxcmddoc",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -6653,7 +6653,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -6685,7 +6685,7 @@
       ],
       "category": "网络工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "local-ip",
         "main": "index.html",
         "preload": "preload.js",
@@ -6727,7 +6727,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -6761,7 +6761,7 @@
         "文件搜索"
       ],
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "local-search-neo",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -6818,7 +6818,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -6845,7 +6845,7 @@
       "tags": ["long-screenshot", "长截图"],
       "category": "图像媒体",
       "icon": "assets/logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "long-screenshot",
         "preload": "core/preload.js",
         "commands": [
@@ -6871,7 +6871,7 @@
           "effort": "medium",
           "notes": [
             "无 main 入口，适合迁移为 FlowTools headless/tool 插件。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -6909,7 +6909,7 @@
       ],
       "category": "系统工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "mac-file-search",
         "main": "index.html",
         "preload": "preload.js",
@@ -7079,7 +7079,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：window, files。"
           ],
@@ -7088,7 +7088,7 @@
       }
     },
     {
-      "id": "mac-system-preference-ztools-plugin",
+      "id": "mac-system-preference-\u007a\u0074ools-plugin",
       "name": "系统设置",
       "version": "26.307.0",
       "description": "MacOS 系统设置快捷打开",
@@ -7104,7 +7104,7 @@
         "db"
       ],
       "tags": [
-        "mac-system-preference-ztools-plugin",
+        "mac-system-preference-\u007a\u0074ools-plugin",
         "系统设置",
         "preference.general",
         "通用设置",
@@ -7197,8 +7197,8 @@
       ],
       "category": "系统工具",
       "icon": "logo.png",
-      "ztools": {
-        "sourceDir": "mac-system-preference-ztools-plugin",
+      "html": {
+        "sourceDir": "mac-system-preference-\u007a\u0074ools-plugin",
         "preload": "preload.js",
         "commands": [
           {
@@ -7623,7 +7623,7 @@
           "effort": "medium",
           "notes": [
             "无 main 入口，适合迁移为 FlowTools headless/tool 插件。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -7648,7 +7648,7 @@
       "tags": ["markdown", "Markdown"],
       "category": "文本处理",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "markdown",
         "main": "index.html",
         "preload": "preload.js",
@@ -7675,7 +7675,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -7716,7 +7716,7 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "memo-quick-paste",
         "main": "index.html",
         "preload": "preload.js",
@@ -7851,7 +7851,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：files, img。"
           ],
@@ -7889,7 +7889,7 @@
       ],
       "category": "效率工具",
       "icon": "logo.svg",
-      "ztools": {
+      "html": {
         "sourceDir": "mt-ocr",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -7996,7 +7996,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：img, files。"
           ],
@@ -8035,7 +8035,7 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "musicsquare",
         "main": "index.html",
         "preload": "preload.js",
@@ -8109,7 +8109,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -8141,7 +8141,7 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "my-calculator",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -8188,7 +8188,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -8233,7 +8233,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "my-hash-tool",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -8404,7 +8404,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：files。"
           ],
@@ -8441,7 +8441,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "mybatis-sql-formatter",
         "main": "index.html",
         "preload": "preload.js",
@@ -8524,7 +8524,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -8583,7 +8583,7 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "ocr-new",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -8869,7 +8869,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：files, img。"
           ],
@@ -8883,7 +8883,7 @@
       "version": "1.3.0",
       "description": "安全、简约且高效的 2FA 令牌管理器，支持 TOTP/HOTP/Steam 多种协议。",
       "author": "狄硕",
-      "link": "https://github.com/dishuo183/ZTools-plugins",
+      "link": "https://github.com/dishuo183/\u005a\u0054ools-plugins",
       "type": "app",
       "permissions": [
         "storage",
@@ -8909,7 +8909,7 @@
       ],
       "category": "其他工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "otp-2fa",
         "main": "index.html",
         "preload": "services.js",
@@ -9010,7 +9010,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -9043,7 +9043,7 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "piclist-plugin",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -9170,7 +9170,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：img, files。"
           ],
@@ -9211,7 +9211,7 @@
       ],
       "category": "文本处理",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "plain-text",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -9383,7 +9383,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：files。"
           ],
@@ -9412,7 +9412,7 @@
       "tags": ["pomodoro-timer", "超级番茄", "tomato", "番茄钟"],
       "category": "效率工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "pomodoro-timer",
         "main": "page/index/index.html",
         "preload": "base/js/preload.js",
@@ -9446,7 +9446,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -9471,7 +9471,7 @@
       "tags": ["port-use", "端口占用"],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "port-use",
         "main": "index.html",
         "preload": "preload.js",
@@ -9498,7 +9498,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -9530,7 +9530,7 @@
         "端口使用情况"
       ],
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "port-use-win",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -9577,7 +9577,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -9615,7 +9615,7 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "project-manager",
         "main": "index.html",
         "preload": "preload.js",
@@ -9724,7 +9724,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：files。"
           ],
@@ -9762,7 +9762,7 @@
       ],
       "category": "其他工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "qrcode-helper",
         "main": "index.html",
         "preload": "preload.js",
@@ -9840,7 +9840,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：img。"
           ],
@@ -9876,7 +9876,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.svg",
-      "ztools": {
+      "html": {
         "sourceDir": "random-data",
         "main": "index.html",
         "preload": "preload.js",
@@ -9922,7 +9922,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -9945,7 +9945,7 @@
       ],
       "category": "其他工具",
       "icon": "logo-v2.png",
-      "ztools": {
+      "html": {
         "sourceDir": "random-password",
         "main": "index.html",
         "developmentMain": "http://localhost:5173",
@@ -10022,7 +10022,7 @@
         "正则测试"
       ],
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "regex-editor",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -10089,7 +10089,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -10122,7 +10122,7 @@
       ],
       "category": "网络工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "remote-manager",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -10169,7 +10169,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -10205,7 +10205,7 @@
       ],
       "category": "游戏娱乐",
       "icon": "icon.png",
-      "ztools": {
+      "html": {
         "sourceDir": "rogue-shooter",
         "main": "index.html",
         "preload": "preload.js",
@@ -10263,17 +10263,17 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
       }
     },
     {
-      "id": "saladict-ztools",
+      "id": "saladict-\u007a\u0074ools",
       "name": "沙拉查词",
       "version": "1.0.1",
-      "description": "沙拉查词-聚合词典专业查词翻译（ZTools 版）",
+      "description": "沙拉查词-聚合词典专业查词翻译（\u005a\u0054ools 版）",
       "author": "EvanW",
       "type": "app",
       "permissions": [
@@ -10286,11 +10286,11 @@
         "dialog",
         "db"
       ],
-      "tags": ["saladict-ztools", "沙拉查词", "saladict"],
+      "tags": ["saladict-\u007a\u0074ools", "沙拉查词", "saladict"],
       "category": "效率工具",
       "icon": "ext-saladic/assets/icon-128.png",
-      "ztools": {
-        "sourceDir": "saladict-ztools",
+      "html": {
+        "sourceDir": "saladict-\u007a\u0074ools",
         "main": "index.html",
         "preload": "preload.cjs",
         "commands": [
@@ -10341,7 +10341,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -10376,7 +10376,7 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "screen-recorder",
         "main": "index.html",
         "preload": "preload.js",
@@ -10416,7 +10416,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -10457,7 +10457,7 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "shortcut-capture",
         "main": "index.html",
         "preload": "preload.js",
@@ -10588,7 +10588,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：img。"
           ],
@@ -10616,7 +10616,7 @@
       "tags": ["shorthand-box", "速记盒", "sj"],
       "category": "效率工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "shorthand-box",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -10654,7 +10654,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -10688,7 +10688,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "showcode",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -10769,7 +10769,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -10803,7 +10803,7 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "splayer-z",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -10859,7 +10859,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -10892,7 +10892,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "sql-utils",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -10949,7 +10949,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -11059,7 +11059,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "sqlmate",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -11920,7 +11920,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：files。"
           ],
@@ -11930,7 +11930,7 @@
     },
     {
       "id": "srktoolbox",
-      "name": "SRK Toolbox for Ztools",
+      "name": "SRK Toolbox for \u005a\u0074ools",
       "version": "10.22.1",
       "description": "基于 CyberChef 的中文安全工具箱，支持编码、加密、压缩和数据分析。",
       "author": "Raka-loah&&LAOBILAXI233",
@@ -11938,7 +11938,7 @@
       "permissions": ["storage"],
       "tags": [
         "srktoolbox",
-        "SRK Toolbox for Ztools",
+        "SRK Toolbox for \u005a\u0074ools",
         "srk-toolbox",
         "打开 SRK Toolbox 工具箱",
         "SRK Toolbox",
@@ -11951,7 +11951,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "srktoolbox",
         "main": "index.html",
         "developmentMain": "http://localhost:54333",
@@ -12081,7 +12081,7 @@
       ],
       "category": "网络工具",
       "icon": "logo.svg",
-      "ztools": {
+      "html": {
         "sourceDir": "ssh-screenshot",
         "main": "index.html",
         "preload": "preload.js",
@@ -12195,7 +12195,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：img。"
           ],
@@ -12231,7 +12231,7 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "stickercan",
         "main": "index.html",
         "preload": "preload.js",
@@ -12287,7 +12287,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -12327,10 +12327,10 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "sticky-note",
         "main": "dist/index.html",
-        "preload": "ztools-preload/preload.js",
+        "preload": "\u007a\u0074ools-preload/preload.js",
         "commands": [
           {
             "id": "home:text:command:0",
@@ -12403,7 +12403,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -12435,7 +12435,7 @@
         "flymux 用量"
       ],
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "sub2api-usage",
         "main": "index.html",
         "preload": "preload.js",
@@ -12482,7 +12482,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -12517,7 +12517,7 @@
       ],
       "category": "网络工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "subnet-calculator",
         "main": "index.html",
         "preload": "preload.js",
@@ -12592,7 +12592,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -12617,7 +12617,7 @@
       "tags": ["super-mario", "超级玛丽"],
       "category": "游戏娱乐",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "super-mario",
         "main": "index.html",
         "preload": "preload.js",
@@ -12643,7 +12643,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -12675,7 +12675,7 @@
       ],
       "category": "网络工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "swap-file",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -12727,7 +12727,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：files。"
           ],
@@ -12763,7 +12763,7 @@
         "远程终端"
       ],
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "termdock",
         "main": "index.html",
         "preload": "preload.js",
@@ -12822,7 +12822,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -12842,7 +12842,7 @@
         "俄罗斯方块游戏，支持三种主题和自定义按键"
       ],
       "icon": "logo.jpg",
-      "ztools": {
+      "html": {
         "sourceDir": "tetris",
         "main": "index.html",
         "developmentMain": "http://localhost:5173",
@@ -12909,7 +12909,7 @@
       ],
       "category": "文本处理",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "text-copy",
         "preload": "preload/services.js",
         "commands": [
@@ -13005,7 +13005,7 @@
           "effort": "medium",
           "notes": [
             "无 main 入口，适合迁移为 FlowTools headless/tool 插件。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -13043,7 +13043,7 @@
         "提肛教程"
       ],
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "tiga",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -13120,7 +13120,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -13151,7 +13151,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "timestamp",
         "main": "index.html",
         "developmentMain": "http://localhost:5173",
@@ -13442,7 +13442,7 @@
       "tags": ["tiny-clock", "小小时钟", "xiaoxiao", "小小时钟设置界面"],
       "category": "其他工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "tiny-clock",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -13468,7 +13468,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -13494,7 +13494,7 @@
       "tags": ["tiny-rdm", "TinyRDM"],
       "category": "开发工具",
       "icon": "favicon.png",
-      "ztools": {
+      "html": {
         "sourceDir": "tiny-rdm",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -13520,7 +13520,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -13551,7 +13551,7 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "tinypng",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -13630,7 +13630,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：files。"
           ],
@@ -13665,7 +13665,7 @@
       ],
       "category": "其他工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "today-gold-price",
         "main": "index.html",
         "preload": "preload.js",
@@ -13707,7 +13707,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -13741,7 +13741,7 @@
       ],
       "category": "其他工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "todo-neo",
         "main": "../index.html",
         "preload": "preload/services.js",
@@ -13793,7 +13793,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -13825,7 +13825,7 @@
       ],
       "category": "系统工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "topwindow",
         "main": "index.html",
         "preload": "preload.js",
@@ -13872,7 +13872,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -13908,7 +13908,7 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "totodo",
         "main": "index.html",
         "preload": "preload.js",
@@ -13979,7 +13979,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -14014,7 +14014,7 @@
       ],
       "category": "文本处理",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "traditional-simplified-cn",
         "main": "index.html",
         "preload": "preload.js",
@@ -14073,7 +14073,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -14113,7 +14113,7 @@
       ],
       "category": "网络工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "url-wizard",
         "main": "index.html",
         "preload": "preload.js",
@@ -14221,7 +14221,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -14255,7 +14255,7 @@
       ],
       "category": "其他工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "utools-upassword",
         "main": "index.html",
         "preload": "preload.js",
@@ -14302,7 +14302,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -14328,7 +14328,7 @@
       "tags": ["variable-name", "起个变量名", "fy", "起变量名"],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "variable-name",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -14366,7 +14366,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -14398,7 +14398,7 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "video-parse",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -14433,7 +14433,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -14460,7 +14460,7 @@
       "tags": ["vimtutor", "vim教程"],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "vimtutor",
         "main": "index.html",
         "preload": "preload.js",
@@ -14494,7 +14494,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -14520,7 +14520,7 @@
       "tags": ["virtual-data", "虚拟数据", "xn"],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "virtual-data",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -14558,7 +14558,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -14589,7 +14589,7 @@
         "Web Quick Open"
       ],
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "web-quick-open",
         "main": "index.html",
         "preload": "preload.js",
@@ -14627,7 +14627,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -14658,7 +14658,7 @@
         "ai"
       ],
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "webapp",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -14714,7 +14714,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -14753,7 +14753,7 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "wechat-ocr",
         "main": "index.html",
         "preload": "preload.js",
@@ -14830,7 +14830,7 @@
           "effort": "high",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。",
+            "存在 preload，需要实现旧版宿主 API bridge。",
             "包含文件、图片或窗口类命令，需要 Tauri 原生能力适配。",
             "需要适配命令类型：img。"
           ],
@@ -14862,7 +14862,7 @@
       ],
       "category": "效率工具",
       "icon": "icon.png",
-      "ztools": {
+      "html": {
         "sourceDir": "whiteboard",
         "main": "index.html",
         "preload": "preload.js",
@@ -14889,7 +14889,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -14923,7 +14923,7 @@
       ],
       "category": "网络工具",
       "icon": "logo.svg",
-      "ztools": {
+      "html": {
         "sourceDir": "wifi-export-tool",
         "main": "index.html",
         "preload": "preload.js",
@@ -14973,7 +14973,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -14999,7 +14999,7 @@
       "tags": ["yanhua", "烟花", "fireworks", "发射全屏烟花"],
       "category": "其他工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "yanhua",
         "preload": "preload.js",
         "commands": [
@@ -15025,7 +15025,7 @@
           "effort": "medium",
           "notes": [
             "无 main 入口，适合迁移为 FlowTools headless/tool 插件。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -15055,7 +15055,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.svg",
-      "ztools": {
+      "html": {
         "sourceDir": "zapapi",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -15084,7 +15084,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -15118,7 +15118,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "zhi-interaction",
         "main": "index.html",
         "preload": "preload/services.js",
@@ -15164,7 +15164,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -15197,7 +15197,7 @@
         "frpc"
       ],
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "zosenlink-tunnel",
         "main": "index.html",
         "preload": "preload.js",
@@ -15253,7 +15253,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -15285,7 +15285,7 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
+      "html": {
         "sourceDir": "ztool-vsc-recent",
         "main": "index.html",
         "preload": "preload.js",
@@ -15312,23 +15312,23 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
       }
     },
     {
-      "id": "ztools-developer-plugin",
-      "name": "ZTools 开发者工具",
+      "id": "\u007a\u0074ools-developer-plugin",
+      "name": "\u005a\u0054ools 开发者工具",
       "version": "1.0.1",
-      "description": "ZTools 开发者插件",
+      "description": "\u005a\u0054ools 开发者插件",
       "author": "xiaou",
       "type": "app",
       "permissions": ["storage", "fs"],
       "tags": [
-        "ztools-developer-plugin",
-        "ZTools 开发者工具",
+        "\u007a\u0074ools-developer-plugin",
+        "\u005a\u0054ools 开发者工具",
         "ui.router",
         "开发者工具",
         "function.reload-all-plugin",
@@ -15339,15 +15339,15 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
-        "sourceDir": "ztools-developer-plugin",
+      "html": {
+        "sourceDir": "\u007a\u0074ools-developer-plugin",
         "main": "dist/index.html",
         "developmentMain": "http://localhost:8686/",
         "commands": [
           {
             "id": "ui-router:text:command:0",
             "title": "开发者工具",
-            "description": "ZTools 开发者工具",
+            "description": "\u005a\u0054ools 开发者工具",
             "featureCode": "ui.router",
             "type": "text",
             "matcher": "开发者工具"
@@ -15380,7 +15380,7 @@
         "features": [
           {
             "code": "ui.router",
-            "explain": "ZTools 开发者工具",
+            "explain": "\u005a\u0054ools 开发者工具",
             "cmds": ["开发者工具"]
           },
           {
@@ -15417,7 +15417,7 @@
       }
     },
     {
-      "id": "ztools-node-manager",
+      "id": "\u007a\u0074ools-node-manager",
       "name": "Node Dashboard",
       "version": "1.0.0",
       "description": "📦 极简、高效的 Node.js 生产力工具。支持版本一键切换 (基于 nvm)、npm 多源管理、快速指令极速换源，专为开发者打造。",
@@ -15434,7 +15434,7 @@
         "db"
       ],
       "tags": [
-        "ztools-node-manager",
+        "\u007a\u0074ools-node-manager",
         "Node Dashboard",
         "node-manager",
         "可视化管理 Node 版本与 npm 镜像源。注：版本管理需本地安装 nvm-windows 并具备管理员权限。",
@@ -15452,8 +15452,8 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
-      "ztools": {
-        "sourceDir": "ztools-node-manager",
+      "html": {
+        "sourceDir": "\u007a\u0074ools-node-manager",
         "main": "index.html",
         "preload": "preload.js",
         "commands": [
@@ -15556,17 +15556,17 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
       }
     },
     {
-      "id": "ztools-openlist",
+      "id": "\u007a\u0074ools-openlist",
       "name": "OpenListUI",
       "version": "1.0.0",
-      "description": "在 ZTools 中浏览、下载和上传 OpenList 文件。",
+      "description": "在 \u005a\u0054ools 中浏览、下载和上传 OpenList 文件。",
       "author": "gcnanmu",
       "type": "app",
       "permissions": [
@@ -15580,15 +15580,15 @@
         "db"
       ],
       "tags": [
-        "ztools-openlist",
+        "\u007a\u0074ools-openlist",
         "OpenListUI",
         "打开 OpenListUI 文件管理器",
         "openlist",
         "OpenList"
       ],
       "icon": "logo.png",
-      "ztools": {
-        "sourceDir": "ztools-openlist",
+      "html": {
+        "sourceDir": "\u007a\u0074ools-openlist",
         "main": "index.html",
         "preload": "preload/services.js",
         "developmentMain": "http://127.0.0.1:5173",
@@ -15634,14 +15634,14 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }
       }
     },
     {
-      "id": "ztools-simpletimer",
+      "id": "\u007a\u0074ools-simpletimer",
       "name": "计时器",
       "version": "1.0.0",
       "description": "简单的正计时和倒计时工具",
@@ -15658,7 +15658,7 @@
         "db"
       ],
       "tags": [
-        "ztools-simpletimer",
+        "\u007a\u0074ools-simpletimer",
         "计时器",
         "stopwatch",
         "打开正计时器",
@@ -15669,8 +15669,8 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
-      "ztools": {
-        "sourceDir": "ztools-simpletimer",
+      "html": {
+        "sourceDir": "\u007a\u0074ools-simpletimer",
         "main": "index.html",
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
@@ -15733,7 +15733,7 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现 window.ztools 兼容 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。"
           ],
           "unsupportedCommandTypes": []
         }

@@ -15,9 +15,10 @@ This repository is a Bun + Turbo monorepo.
 - `apps/web-vite`: runnable host prototype (web runtime + routing + command
   palette + plugin registry).
 - `apps/desktop`: Tauri desktop shell. It hosts the HeroUI + Tailwind
-  ZTools-style launcher, uses TanStack Router for desktop pages, and reads the
-  generated ZTools plugin catalog. Desktop native capabilities should be added
-  with official Tauri plugins and adapted through the SDK runtime context.
+  launcher, uses TanStack Router for desktop pages, renders React/SDK plugin
+  panels, and reads the generated HTML plugin catalog. Desktop native
+  capabilities should be added with official Tauri plugins and adapted through
+  the SDK runtime context.
 - `apps/ui-test`: consumer app for manual validation of `@flowtools/ui`.
   Automated tests are deprecated.
 - `plugins/`: local plugin workspace with 12 built-in plugins (all app type,
@@ -25,9 +26,9 @@ This repository is a Bun + Turbo monorepo.
 - `configs/tsdown`: shared package build config.
 - `docs/` and root docs such as `README.md` and `architecture.md`: product and
   architecture references.
-- `scripts/inspect-ztools-plugins.ts`: scans `ZTools-plugins/plugins` and
-  writes `apps/desktop/src/data/plugin-catalog.ztools.json` and
-  `docs/plugin-catalog.ztools.json`.
+- `scripts/inspect-html-plugins.ts`: scans a local HTML plugin checkout and
+  writes `apps/desktop/src/data/html-plugin-catalog.json` and
+  `docs/html-plugin-catalog.json`.
 
 Planned but not yet present in this repo:
 
@@ -55,9 +56,9 @@ Run from repository root:
 - `bun run check-types`: runs workspace type checks.
 - `bun run test`: deprecated no-op; do not use tests as a quality gate.
 - `bun run format`: formats tracked source/document files.
-- `bun run inspect:ztools`: scans a local `ZTools-plugins` checkout and
-  regenerates `apps/desktop/src/data/plugin-catalog.ztools.json` plus
-  `docs/plugin-catalog.ztools.json`.
+- `bun run inspect:html-plugins`: scans a local HTML plugin checkout and
+  regenerates `apps/desktop/src/data/html-plugin-catalog.json` plus
+  `docs/html-plugin-catalog.json`.
 - `cd apps/desktop && bun run tauri add <plugin-name>`: install official Tauri
   plugins for desktop native capability work before adding host-side adapters.
 
@@ -102,19 +103,19 @@ Plugins are managed through a central registry system:
 - `PluginErrorBoundary`: catches rendering errors from plugin panels.
 - `withWatchdog`: wraps tool execution with timeout detection.
 
-ZTools compatibility is handled as an import/compatibility layer, not as direct
+HTML plugin compatibility is handled as an import/compatibility layer, not as direct
 execution bypassing the SDK:
 
-- Use `packages/sdk/src/compat/ztools.ts` to parse and normalize ZTools
+- Use `packages/sdk/src/compat/html-plugin.ts` to parse and normalize HTML
   `plugin.json`.
 - Treat `webview`, `preload-bridge`, `native-bridge`, and `metadata` as the
   support levels.
-- Desktop `/run/$commandId` may launch ZTools plugins with a `main` entry, but
+- Desktop `/run/$commandId` may launch HTML plugins with a `main` entry, but
   native/preload behavior must still route through the desktop SDK capability
-  adapter and the ZTools bridge.
-- Do not assume a ZTools plugin is fully compatible merely because its metadata
-  appears in `apps/desktop/src/data/plugin-catalog.ztools.json` or
-  `docs/plugin-catalog.ztools.json`.
+  adapter and the HTML plugin bridge.
+- Do not assume an HTML plugin is fully compatible merely because its metadata
+  appears in `apps/desktop/src/data/html-plugin-catalog.json` or
+  `docs/html-plugin-catalog.json`.
 
 Built-in plugins are declared in `apps/web-vite/src/plugin/manifests.ts`
 and loaded at startup via `bootstrap()`.
@@ -128,9 +129,10 @@ Host UI reads plugin/command state from Zustand stores:
 
 Desktop routes are owned by `apps/desktop` and should use TanStack Router. The
 current routes are `/`, `/settings`, `/plugins`, `/permissions`, and
-`/run/$commandId`. For ZTools plugins with a `main` entry, `/run/$commandId`
-must launch the plugin UI in the desktop runner instead of acting as a metadata
-detail page.
+`/run/$commandId`. For React/SDK app plugins, `/run/$commandId` must render the
+plugin panel through the SDK runtime provider. For HTML plugins with a `main`
+entry, `/run/$commandId` must launch the plugin UI in the desktop runner instead
+of acting as a metadata detail page.
 
 Desktop native capability work should prefer official Tauri plugins installed
 with `bun tauri add` (`fs`, `dialog`, `clipboard-manager`, `notification`,

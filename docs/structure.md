@@ -95,21 +95,21 @@ Virtual Bridge Link 流程:
 
 Web (基于 Vite): 实现 Dynamic Import (动态导入)、SDK Mount (SDK 挂载)、Import Map (导入映射)。
 
-Desktop (基于 Tauri): 已有 `apps/desktop` 壳，用于承载 HeroUI + Tailwind 桌面启动器、TanStack Router 桌面路由、ZTools 风格插件目录和 iframe 插件运行容器。原生能力通过官方 Tauri plugins 安装，再由 desktop SDK adapter 暴露为标准 capability。
+Desktop (基于 Tauri): 已有 `apps/desktop` 壳，用于承载 HeroUI + Tailwind 桌面启动器、TanStack Router 桌面路由、React/SDK 插件面板、HTML 插件目录和 iframe 插件运行容器。原生能力通过官方 Tauri plugins 安装，再由 desktop SDK adapter 暴露为标准 capability。
 
-### ZTools 兼容导入层
+### HTML 插件兼容导入层
 
-- `packages/sdk/src/compat/ztools.ts`: ZTools `plugin.json` 类型、命令解析、兼容支持分级。
-- `scripts/inspect-ztools-plugins.ts`: 扫描本地 `ZTools-plugins/plugins`，生成 runtime 目录和 docs 副本。
-- `apps/desktop/src/data/plugin-catalog.ztools.json`: desktop 启动器直接读取的 ZTools 插件目录。
-- `docs/plugin-catalog.ztools.json`: 同源的人类可读目录副本，供后续插件市场/导入器参考。
+- `packages/sdk/src/compat/html-plugin.ts`: HTML `plugin.json` 类型、命令解析、兼容支持分级。
+- `scripts/inspect-html-plugins.ts`: 扫描本地 HTML 插件 checkout，生成 runtime 目录和 docs 副本。
+- `apps/desktop/src/data/html-plugin-catalog.json`: desktop 启动器直接读取的 HTML 插件目录。
+- `docs/html-plugin-catalog.json`: 同源的人类可读目录副本，供后续插件市场/导入器参考。
 - `apps/desktop/src/runtime/desktop-capabilities.ts`: 将 SDK `fs/network/clipboard/dialog/notification/storage/db/native` capability 映射到 Tauri plugins 或 WebView API。
-- `apps/desktop/src/runtime/ztools-bridge.ts`: 在 ZTools iframe 中注入 `window.ztools/window.utools`，并通过 `postMessage` 回到 desktop SDK runtime。
+- `apps/desktop/src/runtime/html-plugin-bridge.ts`: 在 HTML iframe 中注入旧版宿主 API，并通过 `postMessage` 回到 desktop SDK runtime。
 
 兼容级别：
 
 - `webview`: 可优先进入 Tauri WebView 承载。
-- `preload-bridge`: 需要补齐 `window.ztools` API bridge。
+- `preload-bridge`: 需要补齐旧版宿主 API bridge。
 - `native-bridge`: 需要 Tauri/Rust 原生能力配合。
 - `metadata`: 仅完成索引或适合重写为 FlowTools headless/tool 插件。
 

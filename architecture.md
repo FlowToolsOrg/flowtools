@@ -19,17 +19,17 @@ Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平�
   - `packages/ui`：共享 UI 组件库（HeroUI 基础），含 CommandPalette 组件
   - `packages/cli`：统一 CLI 入口，`flowtools list/info/run` 子命令，Zod schema 自动生成 flags，`result.*` 结构化输出
   - `apps/web-vite`：web runtime 原型，含命令面板、插件注册中心、bootstrap 启动流程
-  - `apps/desktop`：Tauri desktop 壳，当前提供 HeroUI + Tailwind 的 ZTools 风格启动器界面，并用 TanStack Router 承载桌面路由
+  - `apps/desktop`：Tauri desktop 壳，当前提供 HeroUI + Tailwind 启动器界面、React/SDK 插件面板、HTML 插件 iframe runner，并用 TanStack Router 承载桌面路由
   - `apps/web-vite/src/stores`：pluginRegistryStore、commandStore、runHistoryStore、settingsStore
-  - `packages/sdk/src/compat/ztools.ts`：ZTools `plugin.json` 类型、命令解析和兼容分级
-  - `scripts/inspect-ztools-plugins.ts`：扫描 `ZTools-plugins` 并生成 `apps/desktop/src/data/plugin-catalog.ztools.json` 与 `docs/plugin-catalog.ztools.json`
+  - `packages/sdk/src/compat/html-plugin.ts`：HTML `plugin.json` 类型、命令解析和兼容分级
+  - `scripts/inspect-html-plugins.ts`：扫描本地 HTML 插件 checkout 并生成 `apps/desktop/src/data/html-plugin-catalog.json` 与 `docs/html-plugin-catalog.json`
   - 12 个内置插件（全部为 app 类型，均提供 `setup()` + `run()` + `inputSchema`）
 - 目录已创建，尚未实现：
   - `apps/docs`
   - `apps/web`
 
 结论：架构方向是 desktop-first，当前 web 原型已具备注册中心、命令面板、生命周期管理、错误隔离等核心机制。
-CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用插件。ZTools 兼容层已完成插件元数据与命令入口归一化，并在 desktop 端提供 `main` iframe 启动容器、`window.ztools/window.utools` 兼容 bridge，以及基于 SDK capability contract 的 Tauri 官方插件适配。
+CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用插件。HTML 插件兼容层已完成插件元数据与命令入口归一化，并在 desktop 端提供 React/SDK panel 渲染、HTML `main` iframe 启动容器、旧版宿主 API bridge，以及基于 SDK capability contract 的 Tauri 官方插件适配。
 
 ## 2. Layered Model（分层模型）
 
@@ -75,21 +75,21 @@ CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用插�
 - `result.text(string)` / `result.json(value)` / `result.table(cols, rows)`
 - `result.open(target)` / `result.multi(items)`
 
-### 3.1 ZTools Compatibility Contract
+### 3.1 HTML Plugin Compatibility Contract
 
-ZTools 插件先通过 `normalizeZToolsManifest(...)` 转为
-`FlowToolsZToolsManifest`，保留原始 `main`、`preload`、`features`、`cmds`
+HTML 插件先通过 `normalizeHtmlPluginManifest(...)` 转为
+`FlowToolsHtmlPluginManifest`，保留原始 `main`、`preload`、`features`、`cmds`
 信息，并生成 FlowTools 可搜索的命令描述。
 
 兼容分级：
 
 - `webview`：有 `main` 或 `development.main`，可优先由 Tauri WebView 承载。
-- `preload-bridge`：声明了 `preload`，需要实现 `window.ztools` 兼容 API。
+- `preload-bridge`：声明了 `preload`，需要实现旧版宿主 API。
 - `native-bridge`：包含 `files`、`img`、`window` 等命令类型，需要 Tauri/Rust 原生能力。
 - `metadata`：没有 UI 入口，可先作为索引或重写为 headless/tool 插件。
 
-`bun run inspect:ztools` 会扫描本地 `ZTools-plugins`，输出插件兼容目录，供
-desktop 启动器、插件市场和后续导入器复用。preload 类 ZTools 插件会声明
+`bun run inspect:html-plugins` 会扫描本地 HTML 插件 checkout，输出插件兼容目录，供
+desktop 启动器、插件市场和后续导入器复用。preload 类 HTML 插件会声明
 `storage/native/clipboard/fs/network/notification/dialog/db` 等权限，再由 desktop
 runtime 按声明裁剪 SDK capability。
 
@@ -171,15 +171,15 @@ Host runtime 用 `pickCapability(...)` 做权限裁剪：
 ## 6.1 Desktop Runtime（Tauri）
 
 `apps/desktop` 当前是 Tauri 桌面壳，不再是默认模板页。它读取
-`apps/desktop/src/data/plugin-catalog.ztools.json`，展示 ZTools 风格插件启动、搜索、命令数量、分类和运行支持级别；`docs/plugin-catalog.ztools.json` 作为同源的人类可读目录副本。桌面端路由使用 TanStack Router，当前包括 `/`、`/settings`、`/plugins`、`/permissions` 和 `/run/$commandId`。其中 `/run/$commandId` 对声明了 `main` 的 ZTools 插件会启动 iframe 运行容器，而不是仅展示插件元数据。
+`apps/desktop/src/data/html-plugin-catalog.json`，并合并内置 React/SDK 插件 manifest，展示插件启动、搜索、命令数量、分类和运行支持级别；`docs/html-plugin-catalog.json` 作为同源的人类可读目录副本。桌面端路由使用 TanStack Router，当前包括 `/`、`/settings`、`/plugins`、`/permissions` 和 `/run/$commandId`。其中 `/run/$commandId` 对 React/SDK app 插件会直接渲染 panel，对声明了 `main` 的 HTML 插件会启动 iframe 运行容器。
 
 当前边界：
 
-- 已实现：HeroUI + Tailwind 桌面首屏、ZTools 插件目录驱动的启动器界面、设置/插件/权限路由、ZTools `main` iframe 启动容器、workspace icon 复用。
+- 已实现：HeroUI + Tailwind 桌面首屏、React/SDK 插件和 HTML 插件共同驱动的启动器界面、设置/插件/权限路由、HTML `main` iframe 启动容器、workspace icon 复用。
 - 已实现：Desktop SDK capability adapter，按插件 permissions 暴露 `fs/request/clipboard/dialog/notification/storage/db/native`。
 - 已实现：通过 `bun tauri add` 安装并接入官方 Tauri 插件：`fs`、`dialog`、`clipboard-manager`、`notification`、`sql`、`store`、`opener`。
-- 已实现：iframe 注入 `window.ztools/window.utools` bridge，将常用 ZTools API 转回 SDK capability，再由 Tauri plugin 或 WebView API 执行。
-- 待完善：更完整的 Electron/uTools API 面覆盖、截图/窗口控制、插件安装与细粒度授权提示。
+- 已实现：iframe 注入旧版宿主 API bridge，将常用旧 API 转回 SDK capability，再由 Tauri plugin 或 WebView API 执行。
+- 待完善：更完整的旧版桌面 API 面覆盖、截图/窗口控制、插件安装与细粒度授权提示。
 
 ## 7. Plugin Execution Flow
 

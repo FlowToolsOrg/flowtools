@@ -18,6 +18,7 @@ const uiEntry = fileURLToPath(
   new URL('../../packages/ui/src/index.ts', import.meta.url)
 )
 const uiDir = fileURLToPath(new URL('../../packages/ui/src', import.meta.url))
+const pluginsDir = fileURLToPath(new URL('../../plugins', import.meta.url))
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
@@ -25,6 +26,10 @@ export default defineConfig(async () => ({
     alias: [
       { find: /^@flowtools\/sdk$/, replacement: sdkEntry },
       { find: /^@flowtools\/sdk\/(.+)$/, replacement: `${sdkDir}/$1` },
+      {
+        find: /^@flowtools\/plugins\/(.+)$/,
+        replacement: `${pluginsDir}/$1/index.tsx`,
+      },
       { find: /^@flowtools\/ui$/, replacement: uiEntry },
       { find: /^@flowtools\/ui\/(.+)$/, replacement: `${uiDir}/$1` },
     ],

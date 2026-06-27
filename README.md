@@ -63,24 +63,24 @@ Core principles:
 - Current runnable hosts:
   - `apps/web-vite`: web runtime prototype.
   - `apps/desktop`: Tauri desktop shell with a HeroUI + Tailwind powered
-    ZTools-style launcher surface, TanStack Router desktop routes, and an
-    iframe-based plugin launch surface for ZTools `main` entries.
+    launcher surface, TanStack Router desktop routes, React/SDK plugin panels,
+    and an iframe-based plugin launch surface for legacy HTML `main` entries.
     Desktop native capabilities are installed through official Tauri plugins
     and exposed to plugins through the existing SDK capability contract.
 - Core packages under active development:
   - `packages/sdk` (`@flowtools/sdk`) — plugin contract, hooks, registry, lifecycle, Zod-based inputSchema
   - `packages/ui` (`@flowtools/ui`) — shared UI components including CommandPalette
   - `packages/cli` (`@flowtools/cli`) — unified CLI entry (`flowtools list/info/run`), auto-generates flags from Zod schema
-- ZTools compatibility foundation:
-  - SDK types and normalizers for ZTools `plugin.json`.
-  - `bun run inspect:ztools` scans `ZTools-plugins` and writes
-    `apps/desktop/src/data/plugin-catalog.ztools.json` for the launcher and
-    `docs/plugin-catalog.ztools.json` as the readable catalog copy.
-  - The current local scan found 125 ZTools plugins and 723 commands.
-  - `/run/$commandId` launches ZTools `main` entries and pre-injects a
-    `window.ztools/window.utools` compatibility bridge. Bridge calls are
-    handled by the desktop SDK runtime context and then mapped to Tauri
-    plugins where native access is required.
+- HTML plugin compatibility foundation:
+  - SDK types and normalizers for legacy HTML `plugin.json` metadata.
+  - `bun run inspect:html-plugins` scans a local legacy HTML plugin checkout
+    and writes `apps/desktop/src/data/html-plugin-catalog.json` for the
+    launcher and `docs/html-plugin-catalog.json` as the readable catalog copy.
+  - The current local scan found 125 HTML plugins and 723 commands.
+  - `/run/$commandId` launches HTML `main` entries and pre-injects legacy host
+    API globals expected by those plugins. Bridge calls are handled by the
+    desktop SDK runtime context and then mapped to Tauri plugins where native
+    access is required.
 - Local plugin workspace with 12 built-in plugins (all app type, all CLI-compatible via `run()` + `inputSchema`):
   - `plugins/plugin-todo-list` — 待办清单（host-managed store）
   - `plugins/plugin-uuid-generator` — UUID 生成器
@@ -104,8 +104,8 @@ Core principles:
 apps/
   web-vite/    # web host prototype (router + registry + command palette)
   web/         # (planned)
-  desktop/     # Tauri desktop shell, ZTools-style launcher, settings/run routes
-    src/data/  # generated ZTools plugin catalog consumed by the launcher
+  desktop/     # Tauri desktop shell, launcher, settings/run routes
+    src/data/  # generated HTML plugin catalog consumed by the launcher
   docs/        # (planned) documentation site
   ui-test/     # UI package consumer for manual validation; automated tests are deprecated
 packages/
@@ -129,7 +129,7 @@ bun run build
 bun run lint
 bun run check-types
 bun run format
-bun run inspect:ztools
+bun run inspect:html-plugins
 ```
 
 Useful local commands:
@@ -158,21 +158,20 @@ Flow Tool supports two plugin categories:
 - `app`: persistent panel plugins (`setup()` returns a React component), optionally with `run()` for CLI/headless invocation
 - `tool`: instant execution plugins (`run(ctx, input)`)
 
-Flow Tool also has a ZTools compatibility model for absorbing ZTools-style
-`plugin.json` metadata. ZTools plugins are first normalized into searchable
+Flow Tool also has an HTML plugin compatibility model for absorbing legacy
+`plugin.json` metadata. HTML plugins are first normalized into searchable
 FlowTools descriptors, then classified by required runtime support:
 
 - `webview`: `main` can be hosted by a Tauri WebView shell.
-- `preload-bridge`: requires a `window.ztools` / preload API bridge.
+- `preload-bridge`: requires a legacy host API / preload bridge.
 - `native-bridge`: requires Tauri native capability work for files, images,
   windows, screenshots, or other host-level APIs.
 - `metadata`: useful for indexing or headless rewrite, but no UI entry exists.
 
-Desktop ZTools execution is a compatibility layer, not a second plugin model:
-the iframe bridge maps legacy `ztools/utools` calls back into the SDK
-capabilities (`fs`, `network`, `clipboard`, `dialog`, `notification`,
-`storage`, `db`, `native`). Tauri is only the desktop implementation behind
-that contract.
+Desktop HTML execution is a compatibility layer, not a second plugin model:
+the iframe bridge maps legacy host API calls back into the SDK capabilities
+(`fs`, `network`, `clipboard`, `dialog`, `notification`, `storage`, `db`,
+`native`). Tauri is only the desktop implementation behind that contract.
 
 All plugins can declare `inputSchema` (Zod `z.object({...})`) for:
 

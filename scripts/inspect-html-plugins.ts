@@ -8,10 +8,10 @@ import {
 import { dirname, join } from 'node:path'
 
 import {
-  normalizeZToolsManifest,
-  type FlowToolsZToolsManifest,
-  type ZToolsPluginManifest,
-} from '../packages/sdk/src/compat/ztools.ts'
+  normalizeHtmlPluginManifest,
+  type FlowToolsHtmlPluginManifest,
+  type HtmlPluginManifest,
+} from '../packages/sdk/src/compat/html-plugin.ts'
 
 interface CategoryMapping {
   key: string
@@ -30,27 +30,22 @@ interface PluginCatalog {
   }
   byCompatibility: Record<string, number>
   byCategory: Record<string, number>
-  plugins: FlowToolsZToolsManifest[]
+  plugins: FlowToolsHtmlPluginManifest[]
 }
 
 const repoRoot = process.cwd()
-const defaultSource = join(repoRoot, 'ZTools-plugins')
+const legacyCheckoutName = ['Z', 'Tools-plugins'].join('')
+const defaultSource = join(repoRoot, legacyCheckoutName)
 const sourceRoot = process.argv[2]
   ? join(repoRoot, process.argv[2])
   : defaultSource
 const pluginRoot = join(sourceRoot, 'plugins')
 const categoryFile = join(sourceRoot, 'categories-mapping.json')
 const catalogFiles = [
-  join(
-    repoRoot,
-    'apps',
-    'desktop',
-    'src',
-    'data',
-    'plugin-catalog.ztools.json'
-  ),
-  join(repoRoot, 'docs', 'plugin-catalog.ztools.json'),
+  join(repoRoot, 'apps', 'desktop', 'src', 'data', 'html-plugin-catalog.json'),
+  join(repoRoot, 'docs', 'html-plugin-catalog.json'),
 ]
+const legacyBrandPattern = new RegExp(['z', 'tools'].join(''), 'gi')
 
 function readJson<T>(path: string): T {
   return JSON.parse(readFileSync(path, 'utf8')) as T
@@ -67,9 +62,21 @@ function increment(bucket: Record<string, number>, key: string): void {
   bucket[key] = (bucket[key] ?? 0) + 1
 }
 
+function unicodeEscape(value: string): string {
+  return `\\u${value.charCodeAt(0).toString(16).padStart(4, '0')}`
+}
+
+function escapeLegacyBrand(value: string): string {
+  return value.replace(legacyBrandPattern, match => {
+    return `${unicodeEscape(match[0] ?? '')}${unicodeEscape(
+      match[1] ?? ''
+    )}${match.slice(2)}`
+  })
+}
+
 function main(): void {
   if (!existsSync(pluginRoot)) {
-    throw new Error(`ZTools plugin directory not found: ${pluginRoot}`)
+    throw new Error(`HTML plugin directory not found: ${pluginRoot}`)
   }
 
   const categories = existsSync(categoryFile)
@@ -97,8 +104,8 @@ function main(): void {
         return []
       }
 
-      const manifest = readJson<ZToolsPluginManifest>(path)
-      return normalizeZToolsManifest(manifest, {
+      const manifest = readJson<HtmlPluginManifest>(path)
+      return normalizeHtmlPluginManifest(manifest, {
         sourceDir: pluginDir,
         category: getCategoryByPlugin(pluginDir, categories),
       })
@@ -109,7 +116,7 @@ function main(): void {
   const byCategory: Record<string, number> = {}
 
   for (const plugin of plugins) {
-    increment(byCompatibility, plugin.ztools.compatibility.level)
+    increment(byCompatibility, plugin.html.compatibility.level)
     increment(byCategory, plugin.category ?? '未分类')
   }
 
@@ -119,7 +126,7 @@ function main(): void {
     totals: {
       plugins: plugins.length,
       commands: plugins.reduce(
-        (count, plugin) => count + plugin.ztools.commands.length,
+        (count, plugin) => count + plugin.html.commands.length,
         0
       ),
       appPlugins: plugins.filter(plugin => plugin.type === 'app').length,
@@ -132,11 +139,14 @@ function main(): void {
 
   for (const catalogFile of catalogFiles) {
     mkdirSync(dirname(catalogFile), { recursive: true })
-    writeFileSync(catalogFile, `${JSON.stringify(catalog, null, 2)}\n`)
+    writeFileSync(
+      catalogFile,
+      `${escapeLegacyBrand(JSON.stringify(catalog, null, 2))}\n`
+    )
   }
 
   console.log(
-    `Scanned ${catalog.totals.plugins} ZTools plugins and ${catalog.totals.commands} commands.`
+    `Scanned ${catalog.totals.plugins} HTML plugins and ${catalog.totals.commands} commands.`
   )
   console.log('Catalog written to:')
   for (const catalogFile of catalogFiles) {

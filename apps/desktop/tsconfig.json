@@ -15,6 +15,7 @@
     "paths": {
       "@flowtools/sdk": ["../../packages/sdk/src/index.ts"],
       "@flowtools/sdk/*": ["../../packages/sdk/src/*"],
+      "@flowtools/plugins/*": ["../../plugins/*/index.tsx"],
       "@flowtools/ui": ["../../packages/ui/src/index.ts"],
       "@flowtools/ui/*": ["../../packages/ui/src/*"]
     },

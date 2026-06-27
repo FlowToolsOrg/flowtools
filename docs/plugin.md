@@ -5,7 +5,7 @@ plugin。
 
 > 当前阶段说明：Flow Tool 的产品方向是 desktop-first（Tauri）。
 > `apps/web-vite` 仍用于验证 SDK/registry/runtime，`apps/desktop` 已提供
-> ZTools 风格启动器、TanStack Router 路由、ZTools `main` 启动容器和 Tauri
+> 启动器、TanStack Router 路由、React/SDK 插件面板、HTML `main` 启动容器和 Tauri
 > 官方插件驱动的 desktop capability adapter。
 
 ## 1. 先理解插件模型
@@ -16,7 +16,7 @@ Flow Tool 目前支持两类插件：
   `run(ctx, input)` 使其可通过 CLI 或桌面端 AI agent 无 UI 调用。
 - `tool`：即时执行型，入口是 `run(ctx, input)`
 
-此外，SDK 提供 ZTools `plugin.json` 兼容解析。它不会把 ZTools 插件直接改写成
+此外，SDK 提供 HTML `plugin.json` 兼容解析。它不会把 HTML 插件直接改写成
 FlowTools 插件，而是先把 `main`、`preload`、`features`、`cmds` 归一化为可搜索
 的插件描述，供 Tauri desktop 壳、iframe runner、兼容 bridge 和导入器使用。
 
@@ -105,37 +105,36 @@ cd apps/web-vite
 bun run dev
 ```
 
-如果你本地放了 `ZTools-plugins`，可以从仓库根目录刷新插件兼容目录：
+如果你本地放了 legacy HTML 插件 checkout，可以从仓库根目录刷新插件兼容目录：
 
 ```bash
-bun run inspect:ztools
+bun run inspect:html-plugins
 ```
 
-该命令会写入 `apps/desktop/src/data/plugin-catalog.ztools.json`，desktop
-启动器会直接读取这份目录；同时写入 `docs/plugin-catalog.ztools.json`
+该命令会写入 `apps/desktop/src/data/html-plugin-catalog.json`，desktop
+启动器会直接读取这份目录；同时写入 `docs/html-plugin-catalog.json`
 作为可读副本。
 
 Desktop 端使用 TanStack Router 承载启动器、设置、插件、权限和命令运行页。
-ZTools 目录中的命令会进入 `/run/$commandId`，内置设置类命令会进入对应页面。
-如果 ZTools 插件声明了 `main`，该路由会直接启动 iframe 运行容器；没有 UI
-入口的命令才进入 headless 执行状态视图。
+React/SDK 插件和 HTML 目录中的命令都会进入 `/run/$commandId`，内置设置类命令会进入对应页面。
+React/SDK app 插件会直接渲染 panel；如果 HTML 插件声明了 `main`，该路由会启动 iframe 运行容器；没有 UI 入口的命令才进入 headless 执行状态视图。
 
-Desktop runner 会在 iframe 里预注入 `window.ztools/window.utools`。常用旧 API
-会通过 `postMessage` 回到 desktop host，再走 SDK runtime context；实际原生能力由
+Desktop runner 会在 iframe 里预注入旧版宿主 API。常用旧 API 会通过
+`postMessage` 回到 desktop host，再走 SDK runtime context；实际原生能力由
 `@tauri-apps/plugin-fs`、`plugin-dialog`、`plugin-clipboard-manager`、
 `plugin-notification`、`plugin-sql`、`plugin-store`、`plugin-opener` 等官方
 Tauri 插件提供。
 
-### 2.1 ZTools 插件兼容判断
+### 2.1 HTML 插件兼容判断
 
-`normalizeZToolsManifest(...)` 会按运行时需求给 ZTools 插件分级：
+`normalizeHtmlPluginManifest(...)` 会按运行时需求给 HTML 插件分级：
 
 - `webview`：有 `main` 入口，优先作为 Tauri WebView 承载的 UI 插件。
-- `preload-bridge`：存在 `preload`，需要实现 `window.ztools` API 兼容层。
+- `preload-bridge`：存在 `preload`，需要实现旧版宿主 API 兼容层。
 - `native-bridge`：包含 `files`、`img`、`window` 等命令类型，需要 Tauri/Rust 原生能力。
 - `metadata`：没有 UI 入口，可先作为命令索引或重写为 FlowTools `tool` 插件。
 
-兼容导入时优先保留 FlowTools 的 SDK/CLI/Zod 模型；只有当 ZTools 数据结构更能表达实际插件入口时，才扩展 FlowTools 结构。
+兼容导入时优先保留 FlowTools 的 SDK/CLI/Zod 模型；只有当 HTML 插件数据结构更能表达实际插件入口时，才扩展 FlowTools 结构。
 
 然后打开 Vite 输出的本地地址（默认通常是 `http://localhost:5173`）。
 

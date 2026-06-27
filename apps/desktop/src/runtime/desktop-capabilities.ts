@@ -3,6 +3,10 @@ import type {
   DialogFilter,
   FileWriteData,
   Permission,
+  PluginStoreCapability,
+  PluginStoreShape,
+  PluginStoreState,
+  PluginStoreUpdater,
   PluginRuntimeContextValue,
   RuntimeMode,
 } from '@flowtools/sdk/types'
@@ -28,12 +32,14 @@ interface DesktopRuntimeOptions {
   pluginId: string
   pluginType: 'app' | 'tool'
   permissions?: readonly Permission[]
+  storeShape?: PluginStoreShape
   mode?: RuntimeMode
 }
 
 const storagePrefix = 'flowtools:desktop:plugin'
 const nativeStores = new Map<string, LazyStore>()
 const sqlDatabase = Database.get('sqlite:flowtools.db')
+const pluginStoreRegistry = new Map<string, PluginStoreCapability>()
 
 export function isTauriRuntime(): boolean {
   return Boolean(
@@ -83,6 +89,14 @@ export function createDesktopRuntimeContext(
     storage: pickCapability('storage', allowedPermissions, () =>
       createStorageCapability(options.pluginId)
     ),
+    store:
+      options.pluginType === 'app'
+        ? getOrCreatePluginStoreCapability(
+            options.pluginId,
+            options.storeShape,
+            allowedPermissions.has('storage')
+          )
+        : undefined,
     db: pickCapability('db', allowedPermissions, createDbCapability),
     native: pickCapability(
       'native',
@@ -128,6 +142,127 @@ function createUiCapability(pluginId: string): PluginRuntimeContextValue['ui'] {
       )
     },
   }
+}
+
+function parsePluginStoreState(raw: string | null): PluginStoreState {
+  if (!raw) return {}
+
+  try {
+    const parsed = JSON.parse(raw) as { state?: unknown }
+    if (!parsed || typeof parsed !== 'object') return {}
+    const state = parsed.state
+    if (!state || typeof state !== 'object' || Array.isArray(state)) return {}
+    return state as PluginStoreState
+  } catch {
+    return {}
+  }
+}
+
+function resolveNextPluginStoreState(
+  current: PluginStoreState,
+  updater: PluginStoreUpdater<PluginStoreState>,
+  replace: boolean
+): PluginStoreState {
+  const update = typeof updater === 'function' ? updater(current) : updater
+
+  if (replace) {
+    return update as PluginStoreState
+  }
+
+  return {
+    ...current,
+    ...update,
+  }
+}
+
+function readInitialPluginStoreState(
+  pluginId: string,
+  initialState: PluginStoreState | undefined,
+  persistent: boolean
+): PluginStoreState {
+  if (!persistent) return initialState ?? {}
+
+  const raw = window.localStorage.getItem(toStorageKey(pluginId, 'store'))
+  const persistedState = parsePluginStoreState(raw)
+
+  return {
+    ...initialState,
+    ...persistedState,
+  }
+}
+
+function persistPluginStoreState(
+  pluginId: string,
+  persistent: boolean,
+  state: PluginStoreState
+): void {
+  if (!persistent) return
+
+  window.localStorage.setItem(
+    toStorageKey(pluginId, 'store'),
+    JSON.stringify({ state })
+  )
+}
+
+function createPluginStoreCapability(
+  pluginId: string,
+  shape: PluginStoreShape | undefined,
+  persistent: boolean
+): PluginStoreCapability {
+  const listeners = new Set<() => void>()
+  const initialState = readInitialPluginStoreState(
+    pluginId,
+    shape?.initialState,
+    persistent
+  )
+  let state = initialState
+
+  const notify = () => {
+    persistPluginStoreState(pluginId, persistent, state)
+    for (const listener of listeners) {
+      listener()
+    }
+  }
+
+  const setState = (
+    updater: PluginStoreUpdater<PluginStoreState>,
+    replace = false
+  ) => {
+    state = resolveNextPluginStoreState(state, updater, replace)
+    notify()
+  }
+
+  const getState = () => state
+  const actions = shape?.actions?.(setState, getState) ?? {}
+
+  return {
+    getState,
+    setState,
+    subscribe(listener) {
+      listeners.add(listener)
+      return () => {
+        listeners.delete(listener)
+      }
+    },
+    reset() {
+      state = { ...initialState }
+      notify()
+    },
+    actions,
+  }
+}
+
+function getOrCreatePluginStoreCapability(
+  pluginId: string,
+  shape: PluginStoreShape | undefined,
+  persistent: boolean
+): PluginStoreCapability {
+  const existing = pluginStoreRegistry.get(pluginId)
+  if (existing) return existing
+
+  const capability = createPluginStoreCapability(pluginId, shape, persistent)
+  pluginStoreRegistry.set(pluginId, capability)
+  return capability
 }
 
 function createRequestCapability(): PluginRuntimeContextValue['request'] {

@@ -22,14 +22,7 @@ import {
   TerminalIcon,
   WrenchIcon,
 } from '@flowtools/ui/icons'
-import {
-  Outlet,
-  RouterProvider,
-  createRootRoute,
-  createRoute,
-  createRouter,
-  useNavigate,
-} from '@tanstack/react-router'
+import { Outlet, useNavigate, useParams } from '@tanstack/react-router'
 
 import { Button, Chip, SearchField } from '@heroui/react'
 
@@ -442,10 +435,6 @@ const pluginListItems: PluginListItem[] = [
     compatibilityLevel: plugin.html.compatibility.level,
   })),
 ]
-
-function App() {
-  return <RouterProvider router={router} />
-}
 
 function RootLayout() {
   return <Outlet />
@@ -1113,7 +1102,7 @@ function PermissionsView() {
 
 function CommandRunView() {
   const navigate = useNavigate()
-  const { commandId } = runRoute.useParams()
+  const { commandId } = useParams({ from: '/run/$commandId' })
   const command = getCommand(commandId)
 
   if (!command) {
@@ -1441,52 +1430,13 @@ function HeadlessCommandSurface({ command }: { command: IndexedCommand }) {
   )
 }
 
-const rootRoute = createRootRoute({ component: RootLayout })
-
-const indexRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/',
-  component: LauncherView,
-})
-
-const settingsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/settings',
-  component: SettingsView,
-})
-
-const pluginsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/plugins',
-  component: PluginsView,
-})
-
-const permissionsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/permissions',
-  component: PermissionsView,
-})
-
-const runRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/run/$commandId',
-  component: CommandRunView,
-})
-
-const routeTree = rootRoute.addChildren([
-  indexRoute,
-  settingsRoute,
-  pluginsRoute,
-  permissionsRoute,
-  runRoute,
-])
-
-const router = createRouter({ routeTree })
-
-declare module '@tanstack/react-router' {
-  interface Register {
-    router: typeof router
-  }
+export {
+  CommandRunView,
+  LauncherView,
+  PermissionsView,
+  PluginsView,
+  RootLayout,
+  SettingsView,
 }
 
-export default App
+export default RootLayout

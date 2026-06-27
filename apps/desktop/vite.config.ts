@@ -39,10 +39,10 @@ export default defineConfig(async () => ({
     codeInspectorPlugin({
       bundler: 'vite',
     }),
-    // tanstackRouter({
-    //   target: 'react',
-    //   autoCodeSplitting: true,
-    // }),
+    tanstackRouter({
+      target: 'react',
+      autoCodeSplitting: true,
+    }),
     react(),
     babel({
       presets: [reactCompilerPreset()],

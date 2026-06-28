@@ -1,29 +1,32 @@
 mod app_state;
 mod commands;
 mod db;
+mod dto;
 mod error;
 mod models;
 mod repositories;
-mod dto;
 
 use app_state::AppState;
-use commands::get_plugins;
+use commands::{
+    add_plugin, disable_plugin, enable_plugin, get_plugin, get_plugins, remove_plugin,
+    update_plugin,
+};
 use specta_typescript::Typescript;
 use tauri::Manager;
 use tauri_specta::{collect_commands, Builder};
 use tokio::sync::Mutex;
 
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-#[specta::specta]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let commands_builder = Builder::<tauri::Wry>::new()
-        .commands(collect_commands![greet, get_plugins]);
+    let commands_builder = Builder::<tauri::Wry>::new().commands(collect_commands![
+        get_plugins,
+        get_plugin,
+        add_plugin,
+        update_plugin,
+        enable_plugin,
+        disable_plugin,
+        remove_plugin
+    ]);
 
     #[cfg(debug_assertions)]
     commands_builder
@@ -31,8 +34,8 @@ pub fn run() {
         .expect("Failed to export typescript bindings");
 
     #[allow(unused_mut)]
-    let mut log_plugin_builder = tauri_plugin_log::Builder::new()
-        .level(tauri_plugin_log::log::LevelFilter::Info);
+    let mut log_plugin_builder =
+        tauri_plugin_log::Builder::new().level(tauri_plugin_log::log::LevelFilter::Info);
 
     #[cfg(debug_assertions)]
     {
@@ -46,14 +49,10 @@ pub fn run() {
 
             let handle = app.handle().clone();
 
-            let db = tauri::async_runtime::block_on(async {
-                db::init_db(&handle).await
-            })
+            let db = tauri::async_runtime::block_on(async { db::init_db(&handle).await })
                 .expect("failed to initialize database");
 
-            app.manage(AppState {
-                db: Mutex::new(db),
-            });
+            app.manage(AppState { db: Mutex::new(db) });
 
             Ok(())
         })

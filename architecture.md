@@ -183,7 +183,19 @@ Host runtime 用 `pickCapability(...)` 做权限裁剪：
 - 已实现：Desktop SDK capability adapter，按插件 permissions 暴露 `fs/request/clipboard/dialog/notification/storage/db/native`。
 - 已实现：通过 `bun tauri add` 安装并接入官方 Tauri 插件：`fs`、`dialog`、`clipboard-manager`、`notification`、`sql`、`store`、`opener`。
 - 已实现：iframe 注入旧版宿主 API bridge，将常用旧 API 转回 SDK capability，再由 Tauri plugin 或 WebView API 执行。
+- 已实现：Tauri/Rust 后端持久化插件元数据，提供 `get_plugins`、`get_plugin`、`add_plugin`、`update_plugin`、`enable_plugin`、`disable_plugin`、`remove_plugin` 命令；数据库中的 `state` 与 SDK registry 状态词保持一致。
 - 待完善：更完整的旧版桌面 API 面覆盖、截图/窗口控制、插件安装与细粒度授权提示。
+
+### 6.2 Desktop Plugin Metadata Database
+
+`apps/desktop/src-tauri/src/models/plugin.rs` 定义桌面端插件元数据表。字段对齐
+`PluginManifestEntry` / `PluginMeta` 的常用前端属性，并额外记录持久化
+`state` 与 `created_at`。Rust repository 层负责 kebab-case `id`、`app/tool`
+类型和 registry state 的输入校验。
+
+新增或修改插件元数据时，前端通过 Tauri Specta 生成的 binding 调用后端命令；
+后端返回 `PluginDto`，再由 desktop UI 同步到本地 registry/store。当前 schema
+变更依赖 dev 模式重置数据库；发布环境需要单独补充版本化 migration。
 
 ## 7. Plugin Execution Flow
 

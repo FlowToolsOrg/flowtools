@@ -381,13 +381,21 @@ export default definePlugin({
 
 ### Database
 
-Flow Tool uses SQLite (via Drizzle ORM).
+Flow Tool uses SQLite for desktop-hosted plugin metadata and plugin-facing
+database capability work.
 
 Each plugin:
 
 - Has isolated table namespace
 - Cannot access other plugins’ data
 - Managed migrations (future roadmap)
+
+Desktop plugin metadata is moving into the Tauri/Rust backend. The Rust side
+stores FlowTools-compatible manifest fields such as `id`, `name`, `version`,
+`type`, `permissions`, `tags`, `category`, `icon`, `cliAvailable`, and lifecycle
+`state`. Tauri commands currently expose plugin list/get/add/update/remove plus
+enable/disable operations; frontend callers should use the generated
+`apps/desktop/src/utils/bindings.ts` command helpers when available.
 
 ## ⚡ Native Capabilities
 
@@ -427,6 +435,11 @@ Plugin states: `registered` → `loaded` → `enabled` → `disabled`
 Built-in plugins are declared in `apps/web-vite/src/plugin/manifests.ts`
 and loaded at startup via `bootstrap()`. External plugins can be loaded
 dynamically via `import()` URLs.
+
+Desktop persists plugin records in the Rust backend database. The persisted
+`state` uses the same state vocabulary as the SDK registry
+(`registered`, `loading`, `loaded`, `enabled`, `disabled`, `error`) so UI state
+and backend state can converge without type translation.
 
 Flow Tool ensures:
 

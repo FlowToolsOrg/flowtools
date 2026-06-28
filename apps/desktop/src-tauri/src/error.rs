@@ -1,7 +1,7 @@
 use serde::Serialize;
 use specta::Type;
 
-#[derive(Debug, Serialize,Type)]
+#[derive(Debug, Serialize, Type)]
 pub struct AppError {
     pub message: String,
 }

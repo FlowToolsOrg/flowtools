@@ -1,5 +1,5 @@
-use tauri::{AppHandle, Manager};
 use crate::models::Plugin;
+use tauri::{AppHandle, Manager};
 
 pub async fn init_db(app: &AppHandle) -> Result<toasty::Db, Box<dyn std::error::Error>> {
     let app_data_dir = app.path().app_data_dir()?;

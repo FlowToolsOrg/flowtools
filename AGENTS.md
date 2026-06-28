@@ -18,7 +18,10 @@ This repository is a Bun + Turbo monorepo.
   launcher, uses TanStack Router for desktop pages, renders React/SDK plugin
   panels, and reads the generated HTML plugin catalog. Desktop native
   capabilities should be added with official Tauri plugins and adapted through
-  the SDK runtime context.
+  the SDK runtime context. Desktop plugin metadata persistence lives in
+  `src-tauri/src/models/plugin.rs`, `repositories/plugin_repository.rs`, and
+  `commands/plugin_commands.rs`; keep Rust DTO fields aligned with frontend
+  plugin manifest/state types.
 - `apps/ui-test`: consumer app for manual validation of `@flowtools/ui`.
   Automated tests are deprecated.
 - `plugins/`: local plugin workspace with 12 built-in plugins (all app type,
@@ -143,6 +146,11 @@ with `bun tauri add` (`fs`, `dialog`, `clipboard-manager`, `notification`,
 `sql`, `store`, `opener`, etc.). Expose those APIs to plugins only through
 `PluginRuntimeContextValue` capability adapters such as
 `apps/desktop/src/runtime/desktop-capabilities.ts`.
+
+Desktop Rust plugin database commands should keep plugin ids kebab-case, plugin
+types limited to `app` / `tool`, and persisted state aligned with SDK
+`PluginState` (`registered`, `loading`, `loaded`, `enabled`, `disabled`,
+`error`). Prefer repository-layer validation before exposing new Tauri commands.
 
 ## Command Palette
 

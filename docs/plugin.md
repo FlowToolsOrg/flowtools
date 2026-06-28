@@ -130,6 +130,12 @@ Desktop runner 会在 iframe 里预注入旧版宿主 API。常用旧 API 会通
 `plugin-notification`、`plugin-sql`、`plugin-store`、`plugin-opener` 等官方
 Tauri 插件提供。
 
+Desktop host 的插件元数据正在迁移到 Rust + SQLite。后端记录与前端 manifest
+保持同一批核心字段：`id`、`name`、`version`、`description`、`author`、
+`link`、`type`、`permissions`、`tags`、`status`、`category`、`icon`、
+`cliAvailable` 和 `state`。宿主侧新增/更新/删除/启用/禁用插件时，应通过
+Tauri command binding 调用后端，不要绕过 Rust repository 直接改前端 registry。
+
 ### 2.1 HTML 插件兼容判断
 
 `normalizeHtmlPluginManifest(...)` 会按运行时需求给 HTML 插件分级：

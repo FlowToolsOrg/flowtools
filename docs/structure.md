@@ -97,6 +97,10 @@ Web (基于 Vite): 实现 Dynamic Import (动态导入)、SDK Mount (SDK 挂载)
 
 Desktop (基于 Tauri): 已有 `apps/desktop` 壳，用于承载 HeroUI + Tailwind 桌面启动器、TanStack Router 桌面路由、React/SDK 插件面板、HTML 插件目录和 iframe 插件运行容器。原生能力通过官方 Tauri plugins 安装，再由 desktop SDK adapter 暴露为标准 capability。
 
+Desktop 插件元数据逐步迁移到 Rust 后端。`apps/desktop/src-tauri/src/models/plugin.rs`
+定义插件记录，`repositories/plugin_repository.rs` 负责数据库增删改查、启用/禁用和基础校验，`commands/plugin_commands.rs` 暴露 Tauri IPC。持久化的 `state`
+与 SDK registry 使用同一组状态值。
+
 ### HTML 插件兼容导入层
 
 - `packages/sdk/src/compat/html-plugin.ts`: HTML `plugin.json` 类型、命令解析、兼容支持分级。

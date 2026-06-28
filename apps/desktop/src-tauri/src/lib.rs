@@ -4,6 +4,7 @@ mod db;
 mod error;
 mod models;
 mod repositories;
+mod dto;
 
 use app_state::AppState;
 use commands::get_plugins;

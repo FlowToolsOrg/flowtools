@@ -24,3 +24,4 @@ dist-ssr
 *.sw?
 
 routeTree.gen.ts
+src/utils/bindings.ts

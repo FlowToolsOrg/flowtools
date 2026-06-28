@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
-use specta::Type;
 
-#[derive(Debug, Clone, Serialize, Deserialize, toasty::Model,Type)]
+#[derive(Debug, Clone, Serialize, Deserialize, toasty::Model)]
 pub struct Plugin {
     #[key]
     pub id: String,
@@ -12,7 +11,10 @@ pub struct Plugin {
 
     pub description: String,
 
-    // pub type: String,
+    pub r#type: String,
 
     pub permissions: Vec<String>,
+
+    #[auto]
+    pub created_at: jiff::Timestamp,
 }

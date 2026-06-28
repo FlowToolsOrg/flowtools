@@ -115,6 +115,11 @@ bun run inspect:html-plugins
 启动器会直接读取这份目录；同时写入 `docs/html-plugin-catalog.json`
 作为可读副本。
 
+扫描器会区分源码 checkout 和可运行静态入口：如果 `main` 指向的 HTML 仍然引用
+`/src/main.ts`、`/main.tsx` 等 Vite 源码入口，目录会把该静态入口标记为不可用。
+Desktop runner 会改用 `development.main`；如果开发服务器没有启动，需要先在对应
+HTML 插件目录执行构建或启动 dev server。
+
 Desktop 端使用 TanStack Router 承载启动器、设置、插件、权限和命令运行页。
 React/SDK 插件和 HTML 目录中的命令都会进入 `/run/$commandId`，内置设置类命令会进入对应页面。
 React/SDK app 插件会直接渲染 panel；如果 HTML 插件声明了 `main`，该路由会启动 iframe 运行容器；没有 UI 入口的命令才进入 headless 执行状态视图。

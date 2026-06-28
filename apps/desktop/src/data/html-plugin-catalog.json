@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-27T05:43:59.819Z",
+  "generatedAt": "2026-06-28T04:52:40.643Z",
   "source": "D:\\code\\projects\\flowtools\\\u005a\u0054ools-plugins",
   "totals": {
     "plugins": 125,
@@ -47,6 +47,7 @@
       "html": {
         "sourceDir": "2048",
         "main": "2048-master/index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -106,6 +107,7 @@
       "html": {
         "sourceDir": "ai-helper",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -208,6 +210,7 @@
       "html": {
         "sourceDir": "ai-skills-manager",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload.js",
         "commands": [
           {
@@ -301,6 +304,7 @@
       "html": {
         "sourceDir": "anywhere",
         "main": "/main/index.html",
+        "mainAvailable": false,
         "preload": "preload.js",
         "commands": [
           {
@@ -409,6 +413,7 @@
       "html": {
         "sourceDir": "ascii-tree",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -500,6 +505,7 @@
       "html": {
         "sourceDir": "ascll-art-font",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -601,6 +607,7 @@
       "html": {
         "sourceDir": "automode",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -690,6 +697,7 @@
       "html": {
         "sourceDir": "bad-bear",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -768,6 +776,7 @@
       "icon": "logo.png",
       "html": {
         "sourceDir": "bookmarks",
+        "mainAvailable": false,
         "preload": "preload.js",
         "commands": [
           {
@@ -850,6 +859,7 @@
       "html": {
         "sourceDir": "calculation-paper",
         "main": "index.html",
+        "mainAvailable": true,
         "commands": [
           {
             "id": "calc:text:command:0",
@@ -1001,6 +1011,7 @@
       "icon": "icon/browser.png",
       "html": {
         "sourceDir": "chrome-history",
+        "mainAvailable": false,
         "preload": "preload.js",
         "commands": [
           {
@@ -1133,7 +1144,9 @@
       "icon": "logo.png",
       "html": {
         "sourceDir": "clipboard",
+        "assetDir": "public",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "developmentMain": "http://localhost:5178/",
         "commands": [
@@ -1225,6 +1238,7 @@
       "icon": "logo.png",
       "html": {
         "sourceDir": "clipboard-image-paintbrush",
+        "mainAvailable": false,
         "preload": "preload.js",
         "commands": [
           {
@@ -1500,6 +1514,7 @@
       "html": {
         "sourceDir": "code-screenshot",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -1684,6 +1699,7 @@
       "html": {
         "sourceDir": "code-snippets",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -1788,6 +1804,7 @@
       "html": {
         "sourceDir": "color-helper",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload.cjs",
         "commands": [
           {
@@ -2034,6 +2051,7 @@
       "html": {
         "sourceDir": "colors",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -2174,6 +2192,7 @@
       "html": {
         "sourceDir": "com-\u007a\u0074ools-timestamp",
         "main": "index.html",
+        "mainAvailable": false,
         "developmentMain": "http://localhost:5178",
         "commands": [
           {
@@ -2288,6 +2307,7 @@
       "html": {
         "sourceDir": "cron",
         "main": "index.html",
+        "mainAvailable": true,
         "commands": [
           {
             "id": "cron:text:cron:0",
@@ -2402,6 +2422,7 @@
       "html": {
         "sourceDir": "curl-tool",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -2545,6 +2566,7 @@
       "html": {
         "sourceDir": "deepread",
         "main": "dist/index.html",
+        "mainAvailable": false,
         "preload": "dist/preload/services.js",
         "commands": [
           {
@@ -2718,6 +2740,7 @@
       "html": {
         "sourceDir": "devbox",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -3607,6 +3630,7 @@
       "html": {
         "sourceDir": "developer-codec-tools",
         "main": "index.html",
+        "mainAvailable": true,
         "developmentMain": "http://localhost:5178",
         "commands": [
           {
@@ -3761,6 +3785,7 @@
       "html": {
         "sourceDir": "diff-compare",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:8080",
         "commands": [
@@ -4039,6 +4064,7 @@
       "html": {
         "sourceDir": "domain-helper",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload.js",
         "developmentMain": "http://localhost:5173/",
         "commands": [
@@ -4108,6 +4134,7 @@
       "html": {
         "sourceDir": "doutu",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -4180,6 +4207,7 @@
       "icon": "logo.png",
       "html": {
         "sourceDir": "english-typing-practice",
+        "mainAvailable": false,
         "preload": "preload.js",
         "commands": [
           {
@@ -4266,6 +4294,7 @@
       "html": {
         "sourceDir": "everything",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload/preload.js",
         "commands": [
           {
@@ -4368,6 +4397,7 @@
       "icon": "logo.png",
       "html": {
         "sourceDir": "fidget",
+        "mainAvailable": false,
         "preload": "preload.js",
         "commands": [
           {
@@ -4483,6 +4513,7 @@
       "html": {
         "sourceDir": "file-renamer",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -4581,6 +4612,7 @@
       "html": {
         "sourceDir": "file-tree",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -4685,6 +4717,7 @@
       "icon": "icon.png",
       "html": {
         "sourceDir": "floating",
+        "mainAvailable": false,
         "preload": "preload.js",
         "commands": [
           {
@@ -4735,6 +4768,7 @@
       "html": {
         "sourceDir": "flyfont",
         "main": "static/index.html",
+        "mainAvailable": true,
         "preload": "static/preload.js",
         "commands": [
           {
@@ -4812,6 +4846,7 @@
       "html": {
         "sourceDir": "githubproxy",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -4971,6 +5006,7 @@
       "html": {
         "sourceDir": "goose-note",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -5112,6 +5148,7 @@
       "html": {
         "sourceDir": "he-calendar",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -5195,6 +5232,7 @@
       "html": {
         "sourceDir": "hooost",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5179",
         "commands": [
@@ -5282,6 +5320,7 @@
       "html": {
         "sourceDir": "hushreader",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -5437,6 +5476,7 @@
       "html": {
         "sourceDir": "image-batch-studio",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload/services.js",
         "developmentMain": "http://127.0.0.1:5177",
         "commands": [
@@ -5606,6 +5646,7 @@
       "html": {
         "sourceDir": "image-stitch",
         "main": "index.html",
+        "mainAvailable": true,
         "commands": [
           {
             "id": "image-stitch:text:command:0",
@@ -5740,6 +5781,7 @@
       "html": {
         "sourceDir": "imgbatch",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -5868,6 +5910,7 @@
       "html": {
         "sourceDir": "ip-switcher",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload.js",
         "developmentMain": "http://localhost:8000/",
         "commands": [
@@ -5948,6 +5991,7 @@
       "icon": "logo.png",
       "html": {
         "sourceDir": "jet-plugin",
+        "mainAvailable": false,
         "preload": "preload.js",
         "commands": [
           {
@@ -6055,6 +6099,7 @@
       "html": {
         "sourceDir": "json-editor",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -6133,6 +6178,7 @@
       "html": {
         "sourceDir": "json-tools",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload.js",
         "commands": [
           {
@@ -6224,6 +6270,7 @@
       "html": {
         "sourceDir": "killprocess",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -6300,6 +6347,7 @@
       "html": {
         "sourceDir": "kuke-ai-agent",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -6419,6 +6467,7 @@
       "html": {
         "sourceDir": "latex-ocr",
         "main": "html/index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -6525,6 +6574,7 @@
       "icon": "logo.png",
       "html": {
         "sourceDir": "lihua",
+        "mainAvailable": false,
         "preload": "preload.js",
         "commands": [
           {
@@ -6609,6 +6659,7 @@
       "html": {
         "sourceDir": "linuxcmddoc",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -6688,6 +6739,7 @@
       "html": {
         "sourceDir": "local-ip",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -6763,7 +6815,9 @@
       "icon": "logo.png",
       "html": {
         "sourceDir": "local-search-neo",
+        "assetDir": "public",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -6847,6 +6901,7 @@
       "icon": "assets/logo.png",
       "html": {
         "sourceDir": "long-screenshot",
+        "mainAvailable": false,
         "preload": "core/preload.js",
         "commands": [
           {
@@ -6912,6 +6967,7 @@
       "html": {
         "sourceDir": "mac-file-search",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -7199,6 +7255,7 @@
       "icon": "logo.png",
       "html": {
         "sourceDir": "mac-system-preference-\u007a\u0074ools-plugin",
+        "mainAvailable": false,
         "preload": "preload.js",
         "commands": [
           {
@@ -7650,7 +7707,9 @@
       "icon": "logo.png",
       "html": {
         "sourceDir": "markdown",
+        "assetDir": "public",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "developmentMain": "http://localhost:5178/",
         "commands": [
@@ -7719,6 +7778,7 @@
       "html": {
         "sourceDir": "memo-quick-paste",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -7892,6 +7952,7 @@
       "html": {
         "sourceDir": "mt-ocr",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -8038,6 +8099,7 @@
       "html": {
         "sourceDir": "musicsquare",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -8144,6 +8206,7 @@
       "html": {
         "sourceDir": "my-calculator",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -8236,6 +8299,7 @@
       "html": {
         "sourceDir": "my-hash-tool",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -8444,6 +8508,7 @@
       "html": {
         "sourceDir": "mybatis-sql-formatter",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -8586,6 +8651,7 @@
       "html": {
         "sourceDir": "ocr-new",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -8912,6 +8978,7 @@
       "html": {
         "sourceDir": "otp-2fa",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -9046,6 +9113,7 @@
       "html": {
         "sourceDir": "piclist-plugin",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -9214,6 +9282,7 @@
       "html": {
         "sourceDir": "plain-text",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload/services.js",
         "commands": [
           {
@@ -9415,6 +9484,7 @@
       "html": {
         "sourceDir": "pomodoro-timer",
         "main": "page/index/index.html",
+        "mainAvailable": true,
         "preload": "base/js/preload.js",
         "commands": [
           {
@@ -9473,7 +9543,9 @@
       "icon": "logo.png",
       "html": {
         "sourceDir": "port-use",
+        "assetDir": "public",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "developmentMain": "http://localhost:5179/",
         "commands": [
@@ -9533,6 +9605,7 @@
       "html": {
         "sourceDir": "port-use-win",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -9618,6 +9691,7 @@
       "html": {
         "sourceDir": "project-manager",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload.js",
         "commands": [
           {
@@ -9765,6 +9839,7 @@
       "html": {
         "sourceDir": "qrcode-helper",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -9879,6 +9954,7 @@
       "html": {
         "sourceDir": "random-data",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -9948,6 +10024,7 @@
       "html": {
         "sourceDir": "random-password",
         "main": "index.html",
+        "mainAvailable": false,
         "developmentMain": "http://localhost:5173",
         "commands": [
           {
@@ -10025,6 +10102,7 @@
       "html": {
         "sourceDir": "regex-editor",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -10125,6 +10203,7 @@
       "html": {
         "sourceDir": "remote-manager",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -10208,6 +10287,7 @@
       "html": {
         "sourceDir": "rogue-shooter",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -10292,6 +10372,7 @@
       "html": {
         "sourceDir": "saladict-\u007a\u0074ools",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.cjs",
         "commands": [
           {
@@ -10379,6 +10460,7 @@
       "html": {
         "sourceDir": "screen-recorder",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -10460,6 +10542,7 @@
       "html": {
         "sourceDir": "shortcut-capture",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload.js",
         "developmentMain": "http://localhost:5180/",
         "commands": [
@@ -10619,6 +10702,7 @@
       "html": {
         "sourceDir": "shorthand-box",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -10691,6 +10775,7 @@
       "html": {
         "sourceDir": "showcode",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -10806,6 +10891,7 @@
       "html": {
         "sourceDir": "splayer-z",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -10895,6 +10981,7 @@
       "html": {
         "sourceDir": "sql-utils",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:1688",
         "commands": [
@@ -11062,6 +11149,7 @@
       "html": {
         "sourceDir": "sqlmate",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -11954,6 +12042,7 @@
       "html": {
         "sourceDir": "srktoolbox",
         "main": "index.html",
+        "mainAvailable": false,
         "developmentMain": "http://localhost:54333",
         "commands": [
           {
@@ -12084,6 +12173,7 @@
       "html": {
         "sourceDir": "ssh-screenshot",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload.js",
         "developmentMain": "http://localhost:5179/",
         "commands": [
@@ -12234,6 +12324,7 @@
       "html": {
         "sourceDir": "stickercan",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -12295,10 +12386,8 @@
     },
     {
       "id": "sticky-note",
-      "name": "悬浮便签",
-      "version": "1.0.13",
-      "description": "悬浮便签：✨固定悬浮任意位置，✨mardown语法，✨待办todo列表",
-      "author": "麦兜",
+      "name": "HTML Plugin",
+      "version": "0.0.0",
       "type": "app",
       "permissions": [
         "storage",
@@ -12312,10 +12401,10 @@
       ],
       "tags": [
         "sticky-note",
-        "悬浮便签",
         "home",
         "打开便签列表",
         "便签",
+        "悬浮便签",
         "便签列表",
         "new-note",
         "新建悬浮便签",
@@ -12330,7 +12419,9 @@
       "html": {
         "sourceDir": "sticky-note",
         "main": "dist/index.html",
+        "mainAvailable": true,
         "preload": "\u007a\u0074ools-preload/preload.js",
+        "developmentMain": "http://127.0.0.1:5173",
         "commands": [
           {
             "id": "home:text:command:0",
@@ -12438,6 +12529,7 @@
       "html": {
         "sourceDir": "sub2api-usage",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload.js",
         "developmentMain": "http://localhost:5182",
         "commands": [
@@ -12520,6 +12612,7 @@
       "html": {
         "sourceDir": "subnet-calculator",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -12619,7 +12712,9 @@
       "icon": "logo.png",
       "html": {
         "sourceDir": "super-mario",
+        "assetDir": "public",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -12678,6 +12773,7 @@
       "html": {
         "sourceDir": "swap-file",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -12766,6 +12862,7 @@
       "html": {
         "sourceDir": "termdock",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -12845,6 +12942,7 @@
       "html": {
         "sourceDir": "tetris",
         "main": "index.html",
+        "mainAvailable": false,
         "developmentMain": "http://localhost:5173",
         "commands": [
           {
@@ -12911,6 +13009,7 @@
       "icon": "logo.png",
       "html": {
         "sourceDir": "text-copy",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "commands": [
           {
@@ -13046,6 +13145,7 @@
       "html": {
         "sourceDir": "tiga",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -13154,6 +13254,7 @@
       "html": {
         "sourceDir": "timestamp",
         "main": "index.html",
+        "mainAvailable": false,
         "developmentMain": "http://localhost:5173",
         "commands": [
           {
@@ -13445,6 +13546,7 @@
       "html": {
         "sourceDir": "tiny-clock",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload/services.js",
         "commands": [
           {
@@ -13497,6 +13599,7 @@
       "html": {
         "sourceDir": "tiny-rdm",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload/services.js",
         "commands": [
           {
@@ -13554,6 +13657,7 @@
       "html": {
         "sourceDir": "tinypng",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -13668,6 +13772,7 @@
       "html": {
         "sourceDir": "today-gold-price",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -13744,6 +13849,7 @@
       "html": {
         "sourceDir": "todo-neo",
         "main": "../index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -13828,6 +13934,7 @@
       "html": {
         "sourceDir": "topwindow",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -13911,6 +14018,7 @@
       "html": {
         "sourceDir": "totodo",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -14017,6 +14125,7 @@
       "html": {
         "sourceDir": "traditional-simplified-cn",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -14116,6 +14225,7 @@
       "html": {
         "sourceDir": "url-wizard",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -14257,7 +14367,9 @@
       "icon": "logo.png",
       "html": {
         "sourceDir": "utools-upassword",
+        "assetDir": "public",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -14331,6 +14443,7 @@
       "html": {
         "sourceDir": "variable-name",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -14401,6 +14514,7 @@
       "html": {
         "sourceDir": "video-parse",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -14463,6 +14577,7 @@
       "html": {
         "sourceDir": "vimtutor",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -14523,6 +14638,7 @@
       "html": {
         "sourceDir": "virtual-data",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -14592,6 +14708,7 @@
       "html": {
         "sourceDir": "web-quick-open",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload.js",
         "developmentMain": "http://localhost:5178",
         "commands": [
@@ -14661,6 +14778,7 @@
       "html": {
         "sourceDir": "webapp",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -14756,6 +14874,7 @@
       "html": {
         "sourceDir": "wechat-ocr",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload.js",
         "developmentMain": "http://localhost:5179/",
         "commands": [
@@ -14865,6 +14984,7 @@
       "html": {
         "sourceDir": "whiteboard",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload.js",
         "developmentMain": "http://localhost:5178",
         "commands": [
@@ -14926,6 +15046,7 @@
       "html": {
         "sourceDir": "wifi-export-tool",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -15001,6 +15122,7 @@
       "icon": "logo.png",
       "html": {
         "sourceDir": "yanhua",
+        "mainAvailable": false,
         "preload": "preload.js",
         "commands": [
           {
@@ -15058,6 +15180,7 @@
       "html": {
         "sourceDir": "zapapi",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [
@@ -15121,6 +15244,7 @@
       "html": {
         "sourceDir": "zhi-interaction",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload/services.js",
         "commands": [
           {
@@ -15200,6 +15324,7 @@
       "html": {
         "sourceDir": "zosenlink-tunnel",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload.js",
         "developmentMain": "http://localhost:5173/",
         "commands": [
@@ -15288,6 +15413,7 @@
       "html": {
         "sourceDir": "ztool-vsc-recent",
         "main": "index.html",
+        "mainAvailable": true,
         "preload": "preload.js",
         "commands": [
           {
@@ -15342,6 +15468,7 @@
       "html": {
         "sourceDir": "\u007a\u0074ools-developer-plugin",
         "main": "dist/index.html",
+        "mainAvailable": true,
         "developmentMain": "http://localhost:8686/",
         "commands": [
           {
@@ -15455,6 +15582,7 @@
       "html": {
         "sourceDir": "\u007a\u0074ools-node-manager",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload.js",
         "commands": [
           {
@@ -15590,6 +15718,7 @@
       "html": {
         "sourceDir": "\u007a\u0074ools-openlist",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://127.0.0.1:5173",
         "commands": [
@@ -15672,6 +15801,7 @@
       "html": {
         "sourceDir": "\u007a\u0074ools-simpletimer",
         "main": "index.html",
+        "mainAvailable": false,
         "preload": "preload/services.js",
         "developmentMain": "http://localhost:5173",
         "commands": [

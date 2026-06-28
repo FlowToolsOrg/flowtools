@@ -83,7 +83,9 @@ export interface FlowToolsHtmlPluginManifest {
   icon?: string
   html: {
     sourceDir?: string
+    assetDir?: string
     main?: string
+    mainAvailable?: boolean
     preload?: string
     developmentMain?: string
     commands: HtmlPluginCommandDescriptor[]
@@ -99,6 +101,8 @@ export interface FlowToolsHtmlPluginManifest {
 
 export interface NormalizeHtmlPluginOptions {
   sourceDir?: string
+  assetDir?: string
+  mainAvailable?: boolean
   category?: string
 }
 
@@ -299,7 +303,9 @@ export function normalizeHtmlPluginManifest(
     icon: manifest.logo,
     html: {
       sourceDir: options.sourceDir,
+      assetDir: options.assetDir,
       main: manifest.main,
+      mainAvailable: options.mainAvailable,
       preload: manifest.preload,
       developmentMain: manifest.development?.main,
       commands,

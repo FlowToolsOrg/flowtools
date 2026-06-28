@@ -92,6 +92,10 @@ HTML 插件先通过 `normalizeHtmlPluginManifest(...)` 转为
 desktop 启动器、插件市场和后续导入器复用。preload 类 HTML 插件会声明
 `storage/native/clipboard/fs/network/notification/dialog/db` 等权限，再由 desktop
 runtime 按声明裁剪 SDK capability。
+扫描器会记录 HTML 插件的实际静态资源目录，并检测源码态 Vite HTML 入口；当
+`main` 在当前 checkout 中不可直接运行时，desktop runner 会优先使用
+`development.main`，避免把插件源码里的 `/src/main.ts` 解析到 FlowTools 自己的
+Vite dev server 上。
 
 `definePlugin` 会写入 `Symbol('__flow_tools__')` marker，并在类型层限制
 `meta.permissions` 的重复声明（tuple 字面量可在编译期发现重复权限）。

@@ -15,6 +15,7 @@ export interface HtmlPluginBridgeCommand {
   pluginType: 'app' | 'tool'
   permissions: readonly Permission[]
   featureCode?: string
+  preload?: string
 }
 
 export interface HtmlPluginBridgeRequest {
@@ -226,6 +227,19 @@ export function createHtmlPluginBridgeScript(
     }
   }
 
+  function createUnsupportedResult(message) {
+    return {
+      success: false,
+      error: message || 'This ZTools API is not supported by FlowTools yet',
+    }
+  }
+
+  function createAbortableRejectedPromise(message) {
+    const promise = Promise.reject(new Error(message))
+    promise.abort = () => {}
+    return promise
+  }
+
   const api = {
     db,
     dbStorage,
@@ -305,6 +319,14 @@ export function createHtmlPluginBridgeScript(
     readText() {
       return callHost('clipboard.readText')
     },
+    ai() {
+      return createAbortableRejectedPromise(
+        'AI calls are not supported by the HTML plugin bridge yet'
+      )
+    },
+    allAiModels() {
+      return Promise.resolve([])
+    },
     showNotification(options) {
       const payload =
         typeof options === 'string'
@@ -374,6 +396,58 @@ export function createHtmlPluginBridgeScript(
       callHost,
       meta,
     },
+    internal: {
+      dbPut(key, value) {
+        dbStorage.setItem('internal:' + String(key), value)
+        return Promise.resolve(true)
+      },
+      dbGet(key) {
+        return Promise.resolve(dbStorage.getItem('internal:' + String(key)))
+      },
+      getCommands() {
+        return Promise.resolve([])
+      },
+      getPlugins() {
+        return Promise.resolve([])
+      },
+      getAllPlugins() {
+        return Promise.resolve([])
+      },
+      getDisabledPlugins() {
+        return Promise.resolve([])
+      },
+      getRunningPlugins() {
+        return Promise.resolve([])
+      },
+      getPlatform() {
+        if (/Win/i.test(window.navigator.platform)) return 'win32'
+        if (/Mac/i.test(window.navigator.platform)) return 'darwin'
+        return 'linux'
+      },
+      launch() {
+        return Promise.resolve(createUnsupportedResult('launch is unsupported'))
+      },
+      installPluginFromMarket() {
+        return Promise.resolve(
+          createUnsupportedResult('installPluginFromMarket is unsupported')
+        )
+      },
+      deletePlugin() {
+        return Promise.resolve(createUnsupportedResult('deletePlugin is unsupported'))
+      },
+      getPluginReadme() {
+        return Promise.resolve(createUnsupportedResult('getPluginReadme is unsupported'))
+      },
+      reloadPlugin() {
+        return Promise.resolve(createUnsupportedResult('reloadPlugin is unsupported'))
+      },
+      killPlugin() {
+        return Promise.resolve(createUnsupportedResult('killPlugin is unsupported'))
+      },
+      revealInFinder(path) {
+        return callHost('opener.revealItemInDir', { path: String(path) })
+      },
+    },
   }
 
   window.addEventListener('message', event => {
@@ -416,7 +490,10 @@ export function injectHtmlPluginBridge(
     '<\\/script'
   )
   const baseTag = baseUrl ? `<base href="${escapeHtmlAttribute(baseUrl)}">` : ''
-  const injection = `${baseTag}<script>${bridgeScript}</script>`
+  const preloadTag = command.preload
+    ? `<script src="${escapeHtmlAttribute(command.preload.replace(/^\/+/, ''))}"></script>`
+    : ''
+  const injection = `${baseTag}<script>${bridgeScript}</script>${preloadTag}`
 
   if (/<head(\s[^>]*)?>/i.test(html)) {
     return html.replace(/<head(\s[^>]*)?>/i, match => `${match}${injection}`)

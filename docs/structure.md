@@ -100,7 +100,7 @@ Desktop (基于 Tauri): 已有 `apps/desktop` 壳，用于承载 HeroUI + Tailwi
 ### HTML 插件兼容导入层
 
 - `packages/sdk/src/compat/html-plugin.ts`: HTML `plugin.json` 类型、命令解析、兼容支持分级。
-- `scripts/inspect-html-plugins.ts`: 扫描本地 HTML 插件 checkout，生成 runtime 目录和 docs 副本。
+- `scripts/inspect-html-plugins.ts`: 扫描本地 HTML 插件 checkout，生成 runtime 目录和 docs 副本；同时记录静态资源目录并跳过源码态 Vite HTML 入口。
 - `apps/desktop/src/data/html-plugin-catalog.json`: desktop 启动器直接读取的 HTML 插件目录。
 - `docs/html-plugin-catalog.json`: 同源的人类可读目录副本，供后续插件市场/导入器参考。
 - `apps/desktop/src/runtime/desktop-capabilities.ts`: 将 SDK `fs/network/clipboard/dialog/notification/storage/db/native` capability 映射到 Tauri plugins 或 WebView API。

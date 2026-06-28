@@ -76,6 +76,9 @@ Core principles:
   - `bun run inspect:html-plugins` scans a local legacy HTML plugin checkout
     and writes `apps/desktop/src/data/html-plugin-catalog.json` for the
     launcher and `docs/html-plugin-catalog.json` as the readable catalog copy.
+    The scan records the resolved static asset directory and marks source-only
+    Vite entries as unavailable so desktop can fall back to `development.main`
+    instead of loading `/src/main.ts` from the host app.
   - The current local scan found 125 HTML plugins and 723 commands.
   - `/run/$commandId` launches HTML `main` entries and pre-injects legacy host
     API globals expected by those plugins. Bridge calls are handled by the
@@ -172,6 +175,8 @@ Desktop HTML execution is a compatibility layer, not a second plugin model:
 the iframe bridge maps legacy host API calls back into the SDK capabilities
 (`fs`, `network`, `clipboard`, `dialog`, `notification`, `storage`, `db`,
 `native`). Tauri is only the desktop implementation behind that contract.
+For source checkouts, static HTML plugins must be built first, or their own dev
+server must be running at `development.main`.
 
 All plugins can declare `inputSchema` (Zod `z.object({...})`) for:
 

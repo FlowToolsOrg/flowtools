@@ -53,7 +53,9 @@ interface IndexedCommand {
   compatibilityLevel: string
   source: CommandSource
   sourceDir?: string
+  assetDir?: string
   main?: string
+  mainAvailable?: boolean
   preload?: string
   developmentMain?: string
   permissions: readonly Permission[]
@@ -73,7 +75,9 @@ interface HtmlIndexedPlugin {
   category?: string
   html: {
     sourceDir?: string
+    assetDir?: string
     main?: string
+    mainAvailable?: boolean
     preload?: string
     developmentMain?: string
     commands: Array<{
@@ -124,7 +128,9 @@ const builtInActions: IndexedCommand[] = [
     compatibilityLevel: 'native',
     source: 'system',
     sourceDir: undefined,
+    assetDir: undefined,
     main: undefined,
+    mainAvailable: undefined,
     preload: undefined,
     developmentMain: undefined,
     permissions: [],
@@ -144,7 +150,9 @@ const builtInActions: IndexedCommand[] = [
     compatibilityLevel: 'native',
     source: 'system',
     sourceDir: undefined,
+    assetDir: undefined,
     main: undefined,
+    mainAvailable: undefined,
     preload: undefined,
     developmentMain: undefined,
     permissions: [],
@@ -164,7 +172,9 @@ const builtInActions: IndexedCommand[] = [
     compatibilityLevel: 'native',
     source: 'system',
     sourceDir: undefined,
+    assetDir: undefined,
     main: undefined,
+    mainAvailable: undefined,
     preload: undefined,
     developmentMain: undefined,
     permissions: [],
@@ -186,11 +196,16 @@ function toHtmlCommandIndex(plugin: HtmlIndexedPlugin): IndexedCommand[] {
     compatibilityLevel: plugin.html.compatibility.level,
     source: 'html' as const,
     sourceDir: plugin.html.sourceDir,
+    assetDir: plugin.html.assetDir,
     main: plugin.html.main,
+    mainAvailable: plugin.html.mainAvailable,
     preload: plugin.html.preload,
     developmentMain: plugin.html.developmentMain,
     permissions: plugin.permissions,
-    hasUi: Boolean(plugin.html.main || plugin.html.developmentMain),
+    hasUi: Boolean(
+      (plugin.html.mainAvailable !== false && plugin.html.main) ||
+      plugin.html.developmentMain
+    ),
     hasPreload: Boolean(plugin.html.preload),
     requiresNative: plugin.html.compatibility.level === 'native-bridge',
   } satisfies Omit<
@@ -373,7 +388,7 @@ function getBaseUrl(value: string): string {
 }
 
 function getPluginEntryPath(command: IndexedCommand): string | undefined {
-  const entry = command.main ?? command.developmentMain
+  const entry = command.mainAvailable === false ? undefined : command.main
 
   if (!entry || isExternalUrl(entry)) return undefined
   if (isAbsoluteLocalPath(entry)) return entry.replace(/\\/g, '/')
@@ -383,6 +398,7 @@ function getPluginEntryPath(command: IndexedCommand): string | undefined {
     htmlPluginIndex.source,
     'plugins',
     command.sourceDir,
+    command.assetDir ?? '',
     entry
   )
 }
@@ -390,7 +406,7 @@ function getPluginEntryPath(command: IndexedCommand): string | undefined {
 function getPluginLaunchTarget(
   command: IndexedCommand
 ): PluginLaunchTarget | undefined {
-  const entry = command.main ?? command.developmentMain
+  const entry = command.mainAvailable === false ? undefined : command.main
 
   if (!entry) return undefined
 
@@ -1237,8 +1253,17 @@ interface PluginLaunchSurfaceProps {
 }
 
 interface FrameSource {
-  kind: 'src' | 'srcDoc'
+  kind: 'src' | 'srcDoc' | 'error'
   value: string
+}
+
+function isLocalDevelopmentUrl(value: string): boolean {
+  try {
+    const url = new URL(value)
+    return ['localhost', '127.0.0.1', '0.0.0.0'].includes(url.hostname)
+  } catch {
+    return false
+  }
 }
 
 function PluginLaunchSurface({ command, target }: PluginLaunchSurfaceProps) {
@@ -1309,14 +1334,6 @@ function PluginLaunchSurface({ command, target }: PluginLaunchSurfaceProps) {
   }, [runtimeContext])
 
   useEffect(() => {
-    if (isExternalUrl(target.url)) {
-      setFrameSource({
-        kind: 'src',
-        value: target.url,
-      })
-      return
-    }
-
     let cancelled = false
     setFrameSource(null)
 
@@ -1337,6 +1354,14 @@ function PluginLaunchSurface({ command, target }: PluginLaunchSurfaceProps) {
       } catch (error) {
         console.warn(error)
         if (cancelled) return
+
+        if (isLocalDevelopmentUrl(target.url)) {
+          setFrameSource({
+            kind: 'error',
+            value: `无法连接到插件开发服务：${target.url}`,
+          })
+          return
+        }
 
         setFrameSource({
           kind: 'src',
@@ -1384,7 +1409,22 @@ function PluginLaunchSurface({ command, target }: PluginLaunchSurfaceProps) {
           </Button>
         </div>
       </div>
-      {frameSource ? (
+      {frameSource?.kind === 'error' ? (
+        <div className="grid min-h-0 flex-1 place-items-center bg-white p-6 text-center">
+          <div className="grid max-w-120 gap-3">
+            <h2 className="m-0 text-base font-semibold text-slate-900">
+              插件开发服务未启动
+            </h2>
+            <p className="m-0 text-sm leading-relaxed text-slate-600">
+              {frameSource.value}
+            </p>
+            <p className="m-0 text-sm leading-relaxed text-slate-500">
+              请先在对应 HTML 插件目录启动 dev server，或构建静态产物后重新运行
+              inspect:html-plugins。
+            </p>
+          </div>
+        </div>
+      ) : frameSource ? (
         <iframe
           className="min-h-0 flex-1 border-0 bg-white"
           key={`${target.url}:${frameVersion}:${frameSource.kind}`}
@@ -1404,6 +1444,13 @@ function PluginLaunchSurface({ command, target }: PluginLaunchSurfaceProps) {
 }
 
 function HeadlessCommandSurface({ command }: { command: IndexedCommand }) {
+  const message =
+    command.main && command.mainAvailable === false
+      ? command.developmentMain
+        ? '这个 HTML 插件的静态 main 尚不可直接运行，请先启动插件自己的 development.main 服务。'
+        : '这个 HTML 插件的静态 main 尚不可直接运行，请先构建插件产物后刷新 HTML 插件目录。'
+      : '这个入口没有声明 UI main，后续会接入 FlowTools headless runner 或 Tauri 原生能力执行。'
+
   return (
     <div className="grid h-full place-items-center p-6">
       <div className="grid max-w-130 gap-4 text-center">
@@ -1415,8 +1462,7 @@ function HeadlessCommandSurface({ command }: { command: IndexedCommand }) {
             命令已触发
           </h2>
           <p className="m-0 mt-2 text-sm leading-relaxed text-(--text-secondary)">
-            这个入口没有声明 UI main，后续会接入 FlowTools headless runner 或
-            Tauri 原生能力执行。
+            {message}
           </p>
         </div>
         <div className="flex justify-center gap-1.5">

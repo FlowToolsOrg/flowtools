@@ -5,7 +5,7 @@ import {
   readdirSync,
   writeFileSync,
 } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { dirname, join, relative, sep } from 'node:path'
 
 import {
   normalizeHtmlPluginManifest,
@@ -74,6 +74,78 @@ function escapeLegacyBrand(value: string): string {
   })
 }
 
+function toCatalogPath(path: string): string {
+  return path.split(sep).join('/')
+}
+
+function stripRelativePath(path: string): string {
+  return path.replace(/\\/g, '/').replace(/^\/+/, '')
+}
+
+function uniqueStrings(values: Iterable<string | undefined>): string[] {
+  const seen = new Set<string>()
+  const next: string[] = []
+
+  for (const value of values) {
+    const normalized = value?.replace(/\\/g, '/').replace(/\/+$/, '')
+    if (normalized === undefined || seen.has(normalized)) {
+      continue
+    }
+
+    seen.add(normalized)
+    next.push(normalized)
+  }
+
+  return next
+}
+
+function htmlUsesSourceEntrypoint(path: string): boolean {
+  if (!existsSync(path)) return false
+
+  const html = readFileSync(path, 'utf8')
+  return /<script\b[^>]+type=["']module["'][^>]+src=["']\/(?:src\/main\.[jt]sx?|main\.[jt]sx?)["']/i.test(
+    html
+  )
+}
+
+interface StaticMainInfo {
+  assetDir?: string
+  available: boolean
+}
+
+function getStaticMainInfo(
+  pluginPath: string,
+  manifestPath: string,
+  main?: string
+): StaticMainInfo {
+  if (!main) return { available: false }
+  if (/^https?:\/\//i.test(main)) return { available: true }
+
+  const manifestRelDir = toCatalogPath(
+    relative(pluginPath, dirname(manifestPath))
+  )
+  const candidates =
+    manifestRelDir === 'public'
+      ? uniqueStrings(['dist', 'public', ''])
+      : uniqueStrings([manifestRelDir || '', ''])
+  const entry = stripRelativePath(main)
+
+  for (const candidate of candidates) {
+    const entryPath = join(pluginPath, candidate, entry)
+    if (!existsSync(entryPath)) {
+      continue
+    }
+
+    if (htmlUsesSourceEntrypoint(entryPath)) {
+      continue
+    }
+
+    return { assetDir: candidate || undefined, available: true }
+  }
+
+  return { available: false }
+}
+
 function main(): void {
   if (!existsSync(pluginRoot)) {
     throw new Error(`HTML plugin directory not found: ${pluginRoot}`)
@@ -87,26 +159,29 @@ function main(): void {
     .filter(entry => entry.isDirectory())
     .map(entry => entry.name)
     .flatMap(pluginDir => {
-      const manifestPath = join(pluginRoot, pluginDir, 'plugin.json')
-      const publicManifestPath = join(
-        pluginRoot,
-        pluginDir,
-        'public',
-        'plugin.json'
-      )
-      const path = existsSync(manifestPath)
-        ? manifestPath
-        : existsSync(publicManifestPath)
-          ? publicManifestPath
-          : null
+      const pluginPath = join(pluginRoot, pluginDir)
+      const distManifestPath = join(pluginPath, 'dist', 'plugin.json')
+      const manifestPath = join(pluginPath, 'plugin.json')
+      const publicManifestPath = join(pluginPath, 'public', 'plugin.json')
+      const path = existsSync(distManifestPath)
+        ? distManifestPath
+        : existsSync(manifestPath)
+          ? manifestPath
+          : existsSync(publicManifestPath)
+            ? publicManifestPath
+            : null
 
       if (!path) {
         return []
       }
 
       const manifest = readJson<HtmlPluginManifest>(path)
+      const staticMain = getStaticMainInfo(pluginPath, path, manifest.main)
+
       return normalizeHtmlPluginManifest(manifest, {
         sourceDir: pluginDir,
+        assetDir: staticMain.assetDir,
+        mainAvailable: staticMain.available,
         category: getCategoryByPlugin(pluginDir, categories),
       })
     })

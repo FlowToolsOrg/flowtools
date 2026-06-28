@@ -113,6 +113,10 @@ execution bypassing the SDK:
 - Desktop `/run/$commandId` may launch HTML plugins with a `main` entry, but
   native/preload behavior must still route through the desktop SDK capability
   adapter and the HTML plugin bridge.
+- The generated HTML catalog records whether a static `main` is actually
+  runnable from the scanned checkout. Source-only Vite entries such as
+  `/src/main.ts` or `/main.tsx` should fall back to `development.main` or a
+  built artifact instead of being loaded from the FlowTools dev server root.
 - Do not assume an HTML plugin is fully compatible merely because its metadata
   appears in `apps/desktop/src/data/html-plugin-catalog.json` or
   `docs/html-plugin-catalog.json`.

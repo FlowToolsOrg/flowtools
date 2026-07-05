@@ -1,4 +1,10 @@
 import type {
+  AppError,
+  CreatePluginDto,
+  PluginDto,
+  UpdatePluginDto,
+} from './utils/bindings'
+import type {
   AppPlugin,
   FlowToolPlugin,
   PluginManifestEntry,
@@ -6,15 +12,18 @@ import type {
 import type { Permission } from '@flowtools/sdk/types'
 import type { ComponentType, ReactNode } from 'react'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { FlowToolRuntimeProvider, PluginErrorBoundary } from '@flowtools/sdk'
 import {
+  BanIcon,
   BlocksIcon,
   ClockIcon,
+  CircleCheckIcon,
   LayersIcon,
   LockIcon,
   PlayIcon,
+  RefreshCWIcon,
   SearchIcon,
   SettingsIcon,
   ShieldCheckIcon,
@@ -37,6 +46,7 @@ import {
   isHtmlPluginBridgeRequest,
   type HtmlPluginBridgeResponse,
 } from './runtime/html-plugin-bridge'
+import { commands as desktopCommands } from './utils/bindings'
 import './App.css'
 
 type CommandSource = 'system' | 'html' | 'react'
@@ -256,17 +266,16 @@ function toReactCommandIndex(manifest: PluginManifestEntry): IndexedCommand {
   }
 }
 
-const allCommands = [
-  ...builtInActions,
+const marketplaceCommands = [
   ...builtInManifests.map(toReactCommandIndex),
   ...htmlPluginIndex.plugins.flatMap(toHtmlCommandIndex),
 ]
 
+const allCommands = [...builtInActions, ...marketplaceCommands]
 const commandById = new Map(allCommands.map(command => [command.id, command]))
 const totalPluginCount =
   builtInManifests.length + htmlPluginIndex.totals.plugins
-const totalCommandCount =
-  builtInManifests.length + htmlPluginIndex.totals.commands
+const totalCommandCount = marketplaceCommands.length
 
 const pinnedIds = new Set([
   'flowtools:settings',
@@ -430,27 +439,198 @@ function getPrimaryCommandForPlugin(
   return allCommands.find(command => command.pluginId === pluginId)
 }
 
+type PluginCatalogSource = 'react' | 'html'
+type PluginLifecycleStage = 'available' | 'downloaded' | 'installed' | 'enabled'
+type PluginActionKind =
+  | 'install'
+  | 'enable'
+  | 'enable-and-open'
+  | 'disable'
+  | 'remove'
+
+interface CommandResult<T> {
+  status: 'ok' | 'error'
+  data?: T
+  error?: AppError
+}
+
 interface PluginListItem {
   id: string
   name: string
+  version: string
   description?: string
+  type: 'app' | 'tool'
+  source: PluginCatalogSource
+  permissions: readonly string[]
+  tags: readonly string[]
+  category?: string
+  cliAvailable: boolean
   compatibilityLevel: string
+  commandCount: number
+  hasUi: boolean
 }
 
 const pluginListItems: PluginListItem[] = [
   ...builtInManifests.map(manifest => ({
     id: manifest.id,
     name: manifest.name,
+    version: manifest.version,
     description: manifest.description,
+    type: manifest.type,
+    source: 'react' as const,
+    permissions: manifest.permissions ?? [],
+    tags: manifest.tags ?? [],
+    category: manifest.category,
+    cliAvailable: manifest.cliAvailable ?? false,
     compatibilityLevel: 'React',
+    commandCount: 1,
+    hasUi: manifest.type === 'app',
   })),
   ...htmlPluginIndex.plugins.map(plugin => ({
     id: plugin.id,
     name: plugin.name,
+    version: plugin.version,
     description: plugin.description,
+    type: plugin.type,
+    source: 'html' as const,
+    permissions: plugin.permissions,
+    tags: [],
+    category: plugin.category,
+    cliAvailable: false,
     compatibilityLevel: plugin.html.compatibility.level,
+    commandCount: Math.max(plugin.html.commands.length, 1),
+    hasUi: Boolean(
+      (plugin.html.mainAvailable !== false && plugin.html.main) ||
+      plugin.html.developmentMain
+    ),
   })),
 ]
+
+function getAppErrorMessage(error: AppError | undefined): string {
+  return error?.message ?? '插件数据库操作失败'
+}
+
+function assertCommandData<T>(result: CommandResult<T>): T {
+  if (result.status === 'ok') return result.data as T
+
+  throw new Error(getAppErrorMessage(result.error))
+}
+
+function getPluginStage(plugin: PluginDto | undefined): PluginLifecycleStage {
+  if (!plugin) return 'available'
+  if (plugin.state === 'enabled') return 'enabled'
+  if (plugin.status === 'downloaded' || plugin.state === 'registered') {
+    return 'downloaded'
+  }
+
+  return 'installed'
+}
+
+function getPluginStageLabel(stage: PluginLifecycleStage): string {
+  if (stage === 'available') return '未安装'
+  if (stage === 'downloaded') return '待安装'
+  if (stage === 'installed') return '已安装'
+  return '已启用'
+}
+
+function toCreatePluginDto(
+  plugin: PluginListItem,
+  state: string,
+  status: string
+): CreatePluginDto {
+  return {
+    id: plugin.id,
+    name: plugin.name,
+    version: plugin.version,
+    description: plugin.description ?? null,
+    author: null,
+    link: null,
+    type: plugin.type,
+    permissions: Array.from(plugin.permissions),
+    tags: Array.from(plugin.tags),
+    status,
+    category: plugin.category ?? null,
+    icon: null,
+    cliAvailable: plugin.cliAvailable,
+    state,
+  }
+}
+
+function createEmptyPluginUpdate(): UpdatePluginDto {
+  return {
+    name: null,
+    version: null,
+    description: null,
+    author: null,
+    link: null,
+    type: null,
+    permissions: null,
+    tags: null,
+    status: null,
+    category: null,
+    icon: null,
+    cliAvailable: null,
+    state: null,
+  }
+}
+
+function toInstallPluginDto(): UpdatePluginDto {
+  return {
+    ...createEmptyPluginUpdate(),
+    status: 'installed',
+    state: 'disabled',
+  }
+}
+
+function usePluginInventory() {
+  const [plugins, setPlugins] = useState<PluginDto[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const refresh = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const result = await desktopCommands.getPlugins()
+      setPlugins(assertCommandData(result))
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error ? loadError.message : '无法读取插件安装状态'
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void refresh()
+  }, [refresh])
+
+  const pluginById = useMemo(
+    () => new Map(plugins.map(plugin => [plugin.id, plugin])),
+    [plugins]
+  )
+
+  const enabledPluginIds = useMemo(
+    () =>
+      new Set(
+        plugins
+          .filter(plugin => plugin.state === 'enabled')
+          .map(plugin => plugin.id)
+      ),
+    [plugins]
+  )
+
+  return {
+    enabledPluginIds,
+    error,
+    isLoading,
+    pluginById,
+    plugins,
+    refresh,
+  }
+}
 
 function RootLayout() {
   return <Outlet />
@@ -458,15 +638,29 @@ function RootLayout() {
 
 function LauncherView() {
   const navigate = useNavigate()
+  const inventory = usePluginInventory()
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [recentCommandIds, setRecentCommandIds] = useState(readRecentCommandIds)
   const normalizedQuery = query.trim().toLowerCase()
+  const launcherCommands = useMemo(
+    () =>
+      allCommands.filter(
+        command =>
+          command.pluginId === 'flowtools' ||
+          inventory.enabledPluginIds.has(command.pluginId)
+      ),
+    [inventory.enabledPluginIds]
+  )
+  const launcherCommandById = useMemo(
+    () => new Map(launcherCommands.map(command => [command.id, command])),
+    [launcherCommands]
+  )
 
   const searchedCommands = useMemo(() => {
     if (!normalizedQuery) return []
 
-    return allCommands
+    return launcherCommands
       .map(command => ({
         command,
         score: scoreCommand(command, normalizedQuery),
@@ -475,34 +669,51 @@ function LauncherView() {
       .sort((a, b) => b.score - a.score)
       .slice(0, 36)
       .map(item => item.command)
-  }, [normalizedQuery])
+  }, [launcherCommands, normalizedQuery])
 
   const pinnedCommands = useMemo(
-    () => allCommands.filter(command => pinnedIds.has(command.id)).slice(0, 8),
-    []
+    () =>
+      launcherCommands.filter(command => pinnedIds.has(command.id)).slice(0, 8),
+    [launcherCommands]
   )
 
   const recentCommands = useMemo(() => {
     const storedCommands = recentCommandIds
-      .map(commandId => getCommand(commandId))
+      .map(commandId => launcherCommandById.get(commandId))
       .filter((command): command is IndexedCommand => Boolean(command))
     const storedIds = new Set(storedCommands.map(command => command.id))
-    const fallbackCommands = allCommands
+    const fallbackCommands = launcherCommands
       .filter(command => !pinnedIds.has(command.id))
       .filter(command => !storedIds.has(command.id))
       .slice(0, 48)
 
     return [...storedCommands, ...fallbackCommands].slice(0, 56)
-  }, [recentCommandIds])
+  }, [launcherCommandById, launcherCommands, recentCommandIds])
 
-  const recommendedCommands = allCommands
-    .filter(command => command.hasUi && !command.requiresNative)
-    .slice(20, 40)
+  const recommendedCommands = useMemo(() => {
+    const visibleIds = new Set(
+      [...pinnedCommands, ...recentCommands].map(command => command.id)
+    )
+
+    return launcherCommands
+      .filter(command => command.hasUi && !command.requiresNative)
+      .filter(command => command.pluginId !== 'flowtools')
+      .filter(command => !visibleIds.has(command.id))
+      .slice(0, 20)
+  }, [launcherCommands, pinnedCommands, recentCommands])
 
   const activeCommands = normalizedQuery
     ? searchedCommands
     : [...pinnedCommands, ...recentCommands, ...recommendedCommands]
   const selectedCommand = activeCommands[selectedIndex] ?? activeCommands[0]
+
+  useEffect(() => {
+    setSelectedIndex(index =>
+      activeCommands.length === 0
+        ? 0
+        : Math.min(index, activeCommands.length - 1)
+    )
+  }, [activeCommands.length])
 
   const markRecent = (command: IndexedCommand) => {
     const nextIds = [
@@ -645,6 +856,11 @@ function LauncherView() {
                 <CommandSection
                   commands={recommendedCommands}
                   offset={pinnedCommands.length + recentCommands.length}
+                  emptyText={
+                    inventory.isLoading
+                      ? '正在同步插件状态...'
+                      : '还没有启用插件，请先到插件市场安装并启用'
+                  }
                   selectedCommandId={selectedCommand?.id}
                   title="推荐插件"
                   onFocusCommand={setSelectedIndex}
@@ -663,9 +879,10 @@ function LauncherView() {
 
         <footer className="flex justify-between gap-3 border-t border-(--divider-color) px-3 py-2 text-[11px] text-(--text-secondary) max-[780px]:flex-col">
           <span>
-            {totalPluginCount} plugins · {totalCommandCount} commands
+            {inventory.enabledPluginIds.size}/{totalPluginCount} plugins enabled
+            · {totalCommandCount} commands
           </span>
-          <span>Alt+Z 唤起 · Enter 运行 · Esc 清空</span>
+          <span>{inventory.error ?? 'Alt+Z 唤起 · Enter 运行 · Esc 清空'}</span>
         </footer>
       </section>
     </DesktopSurface>
@@ -1032,6 +1249,12 @@ function SettingsRow({ label, value }: SettingsRowProps) {
 
 function PluginsView() {
   const navigate = useNavigate()
+  const inventory = usePluginInventory()
+  const [busyAction, setBusyAction] = useState<{
+    pluginId: string
+    action: PluginActionKind
+  } | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
 
   const openPlugin = (pluginId: string) => {
     const command = getPrimaryCommandForPlugin(pluginId)
@@ -1043,35 +1266,236 @@ function PluginsView() {
     })
   }
 
+  const runPluginAction = async (
+    plugin: PluginListItem,
+    action: PluginActionKind,
+    task: () => Promise<{ openAfterRefresh?: boolean } | void>
+  ) => {
+    setBusyAction({ pluginId: plugin.id, action })
+    setNotice(null)
+
+    try {
+      const result = await task()
+      await inventory.refresh()
+
+      const actionLabel = {
+        disable: '已禁用',
+        enable: '已启用',
+        'enable-and-open': '已启用，正在启动',
+        install: '已安装',
+        remove: '已卸载',
+      } satisfies Record<PluginActionKind, string>
+
+      setNotice(`${plugin.name} ${actionLabel[action]}`)
+
+      if (result?.openAfterRefresh) {
+        openPlugin(plugin.id)
+      }
+    } catch (actionError) {
+      setNotice(
+        actionError instanceof Error ? actionError.message : '插件操作失败'
+      )
+    } finally {
+      setBusyAction(null)
+    }
+  }
+
+  const installPlugin = async (
+    plugin: PluginListItem,
+    stage: PluginLifecycleStage
+  ) => {
+    if (stage === 'available') {
+      assertCommandData(
+        await desktopCommands.addPlugin(
+          toCreatePluginDto(plugin, 'disabled', 'installed')
+        )
+      )
+      return
+    }
+
+    if (stage === 'downloaded') {
+      assertCommandData(
+        await desktopCommands.updatePlugin(plugin.id, toInstallPluginDto())
+      )
+    }
+  }
+
+  const handlePrimaryAction = (plugin: PluginListItem) => {
+    const installedPlugin = inventory.pluginById.get(plugin.id)
+    const stage = getPluginStage(installedPlugin)
+
+    if (stage === 'enabled') {
+      openPlugin(plugin.id)
+      return
+    }
+
+    if (stage === 'available' || stage === 'downloaded') {
+      void runPluginAction(plugin, 'install', async () => {
+        await installPlugin(plugin, stage)
+      })
+      return
+    }
+
+    if (plugin.hasUi) {
+      void runPluginAction(plugin, 'enable-and-open', async () => {
+        assertCommandData(await desktopCommands.enablePlugin(plugin.id))
+        return { openAfterRefresh: true }
+      })
+      return
+    }
+
+    void runPluginAction(plugin, 'enable', async () => {
+      assertCommandData(await desktopCommands.enablePlugin(plugin.id))
+    })
+  }
+
+  const handleDisablePlugin = (plugin: PluginListItem) => {
+    void runPluginAction(plugin, 'disable', async () => {
+      assertCommandData(await desktopCommands.disablePlugin(plugin.id))
+    })
+  }
+
+  const handleRemovePlugin = (plugin: PluginListItem) => {
+    void runPluginAction(plugin, 'remove', async () => {
+      assertCommandData(await desktopCommands.removePlugin(plugin.id))
+    })
+  }
+
   return (
     <PageFrame
+      actions={
+        <Button
+          isPending={inventory.isLoading}
+          onPress={() => void inventory.refresh()}
+          size="sm"
+          variant="secondary"
+        >
+          <RefreshCWIcon size={16} />
+          刷新
+        </Button>
+      }
       description={`${totalPluginCount} 个插件 · ${totalCommandCount} 个命令`}
       title="插件市场"
     >
-      <div className="grid gap-2">
+      <div className="grid gap-3">
+        {notice || inventory.error ? (
+          <div className="rounded-lg border border-(--divider-color) bg-(--control-bg) px-3 py-2 text-sm text-(--text-secondary)">
+            {notice ?? inventory.error}
+          </div>
+        ) : null}
         {pluginListItems.slice(0, 96).map(plugin => (
-          <Button
-            className="grid min-h-13.5 w-full grid-cols-[36px_minmax(0,1fr)_auto] justify-normal gap-3 rounded-lg bg-transparent px-2 py-2 text-left text-(--text-color) hover:bg-(--hover-bg)"
+          <PluginMarketRow
+            busyAction={busyAction}
             key={plugin.id}
-            onPress={() => openPlugin(plugin.id)}
-            variant="ghost"
-          >
-            <span className="grid size-9 place-items-center rounded-[7px] bg-(--primary-gradient) text-xs font-extrabold text-(--text-on-primary)">
-              {getInitials(plugin.name)}
-            </span>
-            <span className="min-w-0">
-              <strong className="block truncate text-sm">{plugin.name}</strong>
-              <span className="block truncate text-xs text-(--text-secondary)">
-                {plugin.description ?? plugin.id}
-              </span>
-            </span>
-            <Chip color="accent" size="sm" variant="soft">
-              {plugin.compatibilityLevel}
-            </Chip>
-          </Button>
+            plugin={plugin}
+            stage={getPluginStage(inventory.pluginById.get(plugin.id))}
+            onDisable={handleDisablePlugin}
+            onPrimaryAction={handlePrimaryAction}
+            onRemove={handleRemovePlugin}
+          />
         ))}
       </div>
     </PageFrame>
+  )
+}
+
+interface PluginMarketRowProps {
+  plugin: PluginListItem
+  stage: PluginLifecycleStage
+  busyAction: { pluginId: string; action: PluginActionKind } | null
+  onPrimaryAction: (plugin: PluginListItem) => void
+  onDisable: (plugin: PluginListItem) => void
+  onRemove: (plugin: PluginListItem) => void
+}
+
+function PluginMarketRow({
+  plugin,
+  stage,
+  busyAction,
+  onPrimaryAction,
+  onDisable,
+  onRemove,
+}: PluginMarketRowProps) {
+  const isBusy = busyAction?.pluginId === plugin.id
+  const primaryLabel = {
+    available: '安装',
+    downloaded: '安装',
+    enabled: plugin.hasUi ? '启动' : '运行',
+    installed: plugin.hasUi ? '启用并启动' : '启用',
+  } satisfies Record<PluginLifecycleStage, string>
+
+  return (
+    <div className="grid min-h-18 w-full grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-transparent px-2 py-2 text-left text-(--text-color) hover:border-(--divider-color) hover:bg-(--hover-bg) max-[720px]:grid-cols-[40px_minmax(0,1fr)]">
+      <span className="grid size-10 place-items-center rounded-[7px] bg-(--primary-gradient) text-xs font-extrabold text-(--text-on-primary)">
+        {getInitials(plugin.name)}
+      </span>
+      <span className="min-w-0">
+        <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+          <strong className="truncate text-sm">{plugin.name}</strong>
+          <Chip color="accent" size="sm" variant="soft">
+            {plugin.source === 'react' ? 'React' : 'HTML'}
+          </Chip>
+          <Chip
+            color={stage === 'available' ? 'warning' : 'accent'}
+            size="sm"
+            variant="soft"
+          >
+            {getPluginStageLabel(stage)}
+          </Chip>
+        </span>
+        <span className="mt-1 block truncate text-xs text-(--text-secondary)">
+          {plugin.description ?? plugin.id}
+        </span>
+        <span className="mt-1 flex flex-wrap gap-1.5 text-[11px] text-(--text-secondary)">
+          <span>{plugin.compatibilityLevel}</span>
+          <span>{plugin.commandCount} 个命令</span>
+          <span>{plugin.permissions.length} 项权限</span>
+          <span>{plugin.version}</span>
+        </span>
+      </span>
+      <span className="flex items-center gap-1.5 max-[720px]:col-span-2 max-[720px]:justify-end">
+        {stage === 'enabled' ? (
+          <Button
+            isPending={isBusy && busyAction?.action === 'disable'}
+            onPress={() => onDisable(plugin)}
+            size="sm"
+            variant="secondary"
+          >
+            <BanIcon size={15} />
+            禁用
+          </Button>
+        ) : null}
+        {stage !== 'available' ? (
+          <Button
+            isPending={isBusy && busyAction?.action === 'remove'}
+            onPress={() => onRemove(plugin)}
+            size="sm"
+            variant="ghost"
+          >
+            卸载
+          </Button>
+        ) : null}
+        <Button
+          isPending={
+            isBusy &&
+            ['install', 'enable', 'enable-and-open'].includes(
+              busyAction?.action ?? ''
+            )
+          }
+          onPress={() => onPrimaryAction(plugin)}
+          size="sm"
+        >
+          {stage === 'enabled' || (stage === 'installed' && plugin.hasUi) ? (
+            <PlayIcon size={15} />
+          ) : stage === 'installed' ? (
+            <CircleCheckIcon size={15} />
+          ) : (
+            <LayersIcon size={15} />
+          )}
+          {primaryLabel[stage]}
+        </Button>
+      </span>
+    </div>
   )
 }
 
@@ -1120,6 +1544,8 @@ function CommandRunView() {
   const navigate = useNavigate()
   const { commandId } = useParams({ from: '/run/$commandId' })
   const command = getCommand(commandId)
+  const inventory = usePluginInventory()
+  const [isEnabling, setIsEnabling] = useState(false)
 
   if (!command) {
     return (
@@ -1128,6 +1554,55 @@ function CommandRunView() {
           未找到这个命令入口
         </div>
       </PageFrame>
+    )
+  }
+
+  const installedPlugin = inventory.pluginById.get(command.pluginId)
+  const stage = getPluginStage(installedPlugin)
+  const requiresPluginActivation = command.pluginId !== 'flowtools'
+
+  const enablePluginFromRun = async () => {
+    setIsEnabling(true)
+
+    try {
+      assertCommandData(await desktopCommands.enablePlugin(command.pluginId))
+      await inventory.refresh()
+    } finally {
+      setIsEnabling(false)
+    }
+  }
+
+  if (requiresPluginActivation && inventory.isLoading) {
+    return (
+      <PageFrame title="正在检查插件状态">
+        <div className="grid h-full place-items-center p-6 text-sm text-(--text-secondary)">
+          正在同步插件安装状态...
+        </div>
+      </PageFrame>
+    )
+  }
+
+  if (requiresPluginActivation && inventory.error) {
+    return (
+      <PluginActivationGate
+        command={command}
+        message={inventory.error}
+        stage={stage}
+        onEnable={enablePluginFromRun}
+        onOpenMarket={() => void navigate({ to: '/plugins' })}
+      />
+    )
+  }
+
+  if (requiresPluginActivation && stage !== 'enabled') {
+    return (
+      <PluginActivationGate
+        command={command}
+        isEnabling={isEnabling}
+        stage={stage}
+        onEnable={enablePluginFromRun}
+        onOpenMarket={() => void navigate({ to: '/plugins' })}
+      />
     )
   }
 
@@ -1156,6 +1631,83 @@ function CommandRunView() {
       ) : (
         <HeadlessCommandSurface command={command} />
       )}
+    </PageFrame>
+  )
+}
+
+interface PluginActivationGateProps {
+  command: IndexedCommand
+  stage: PluginLifecycleStage
+  message?: string
+  isEnabling?: boolean
+  onEnable: () => void
+  onOpenMarket: () => void
+}
+
+function PluginActivationGate({
+  command,
+  stage,
+  message,
+  isEnabling = false,
+  onEnable,
+  onOpenMarket,
+}: PluginActivationGateProps) {
+  const title =
+    stage === 'available'
+      ? '插件尚未安装'
+      : stage === 'downloaded'
+        ? '插件等待安装'
+        : '插件尚未启用'
+
+  return (
+    <PageFrame
+      actions={
+        <Button onPress={onOpenMarket} size="sm" variant="secondary">
+          <LayersIcon size={16} />
+          插件市场
+        </Button>
+      }
+      title={title}
+    >
+      <div className="grid h-full place-items-center p-6">
+        <div className="grid max-w-120 gap-4 text-center">
+          <div className="mx-auto">
+            <CommandIcon command={command} />
+          </div>
+          <div>
+            <h2 className="m-0 text-base font-semibold text-(--text-color)">
+              {command.pluginName}
+            </h2>
+            <p className="m-0 mt-2 text-sm leading-relaxed text-(--text-secondary)">
+              {message ??
+                '这个插件需要先完成安装并启用后，才会被桌面运行器加载。'}
+            </p>
+          </div>
+          <div className="flex justify-center gap-1.5">
+            <CapabilityChip icon={LayersIcon}>
+              {getPluginStageLabel(stage)}
+            </CapabilityChip>
+            <CapabilityChip icon={ShieldCheckIcon}>
+              {command.compatibilityLevel}
+            </CapabilityChip>
+          </div>
+          <div className="flex justify-center gap-2">
+            {stage === 'installed' ? (
+              <Button isPending={isEnabling} onPress={onEnable} size="sm">
+                {command.hasUi ? (
+                  <PlayIcon size={16} />
+                ) : (
+                  <CircleCheckIcon size={16} />
+                )}
+                {command.hasUi ? '启用并启动' : '启用插件'}
+              </Button>
+            ) : null}
+            <Button onPress={onOpenMarket} size="sm" variant="secondary">
+              管理插件
+            </Button>
+          </div>
+        </div>
+      </div>
     </PageFrame>
   )
 }

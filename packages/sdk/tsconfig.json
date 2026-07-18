@@ -6,6 +6,7 @@
     "target": "esnext",
     "moduleResolution": "bundler",
     "lib": ["dom", "dom.iterable", "esnext"],
+    "types": ["bun-types"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -13,5 +14,5 @@
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "test/**/*"]
 }

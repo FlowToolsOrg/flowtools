@@ -26,6 +26,10 @@
       "types": "./dist/utils.d.ts",
       "import": "./dist/utils.js"
     },
+    "./utils/capability": {
+      "types": "./dist/utils/capability.d.ts",
+      "import": "./dist/utils/capability.js"
+    },
     "./hooks": {
       "types": "./dist/hooks.d.ts",
       "import": "./dist/hooks.js"

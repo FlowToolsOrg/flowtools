@@ -281,8 +281,9 @@ bun x turbo run lint check-types test build --dry=json
 
 #### P0.1b 修复现有静态检查与构建错误
 
-- 状态：`in-progress`
+- 状态：`done`
 - 负责人：`Codex (Build / Frontend)`
+- 完成日期：`2026-07-18`
 - 依赖：P0.1a
 
 P0.1b 是构建修复的父里程碑，拆分如下：
@@ -330,11 +331,20 @@ P0.1b 是构建修复的父里程碑，拆分如下：
 
 ##### P0.1b5 全仓集成收口
 
-- 状态：`pending`
+- 状态：`done`
+- 负责人：`Codex`
+- 完成日期：`2026-07-18`
 - 范围：根 Turbo 图及剩余跨 workspace 构建问题
 - 依赖：P0.1b1–P0.1b4
 - 验证：根 `lint`、`check-types`、`build`，并确认执行后工作树干净。
 - 退出：P0.1b 父里程碑的全部验证命令通过。
+
+完成内容：
+
+- SDK 所有声明的公开子路径均生成对应 JS/DTS 产物，Desktop 使用的
+  `utils/capability` 具有显式 export。
+- 共享 tsdown 配置迁移到当前 `deps.*` API，并纳入 Turbo 全局输入哈希。
+- 根 lint 覆盖 7 个 workspace 且达到 0 warning；剩余插件类型警告已清零。
 
 交付物：
 
@@ -1128,14 +1138,14 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 
 | ID     | 状态        | 负责人 | 依赖          | Commit / 验证记录                                                                                     |
 | ------ | ----------- | ------ | ------------- | ----------------------------------------------------------------------------------------------------- |
-| P0.1   | in-progress | Codex  | -             | P0.1a 已完成；其余子项待实施                                                                          |
+| P0.1   | in-progress | Codex  | -             | P0.1a–P0.1b 已完成；P0.1c–P0.1d 待实施                                                                |
 | P0.1a  | done        | Codex  | -             | `chore(repo): standardize workspace quality tasks (P0.1a)`；workspace verifier + Turbo dry graph 通过 |
-| P0.1b  | in-progress | Codex  | P0.1a         | P0.1b1–P0.1b5 已拆分                                                                                  |
+| P0.1b  | done        | Codex  | P0.1a         | `fix(repo): close build integration gates (P0.1b5)`；P0.1b1–P0.1b5 全部通过                           |
 | P0.1b1 | done        | Codex  | P0.1a         | `fix(ui): handle icon animation promises (P0.1b1)`；lint + check-types 通过                           |
 | P0.1b2 | done        | Codex  | P0.1a         | `fix(web): restore host quality gates (P0.1b2)`；lint + check-types + build 通过                      |
 | P0.1b3 | done        | Codex  | P0.1a         | `fix(ui-test): restore consumer build gates (P0.1b3)`；lint + check-types + build 通过                |
 | P0.1b4 | done        | Codex  | P0.1a         | `fix(desktop): restore static quality gates (P0.1b4)`；lint + check-types + build + cargo check 通过  |
-| P0.1b5 | pending     | TBD    | P0.1b1–P0.1b4 | -                                                                                                     |
+| P0.1b5 | done        | Codex  | P0.1b1–P0.1b4 | `fix(repo): close build integration gates (P0.1b5)`；根 lint + check-types + build 通过               |
 | P0.1c  | pending     | TBD    | P0.1a, P0.1b  | -                                                                                                     |
 | P0.1d  | pending     | TBD    | P0.1b, P0.1c  | -                                                                                                     |
 | P0.2   | pending     | TBD    | P0.1          | -                                                                                                     |

@@ -18,7 +18,7 @@ export default createPackageTsdownConfig({
     acc[name] = `${name}/index.tsx`
     return acc
   }, {}),
-  external: [
+  neverBundle: [
     'react/jsx-runtime',
     'react/jsx-dev-runtime',
     '@flowtools/sdk',

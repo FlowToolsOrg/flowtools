@@ -17,7 +17,7 @@ interface PackageManifest {
 interface CreatePackageConfigOptions {
   packageDir: string
   entry: EntryOption
-  external?: string[]
+  neverBundle?: string[]
   platform?: 'node' | 'neutral' | 'browser'
 }
 
@@ -27,7 +27,7 @@ const readPackageManifest = (packageDir: string): PackageManifest => {
   return JSON.parse(content) as PackageManifest
 }
 
-const inferExternalDeps = (manifest: PackageManifest): string[] => {
+const inferNeverBundleDeps = (manifest: PackageManifest): string[] => {
   return [
     ...Object.keys(manifest.dependencies ?? {}),
     ...Object.keys(manifest.peerDependencies ?? {}),
@@ -38,11 +38,11 @@ const inferExternalDeps = (manifest: PackageManifest): string[] => {
 export const createPackageTsdownConfig = ({
   packageDir,
   entry,
-  external = [],
+  neverBundle = [],
   platform = 'neutral',
 }: CreatePackageConfigOptions) => {
   const manifest = readPackageManifest(packageDir)
-  const inferredExternal = inferExternalDeps(manifest)
+  const inferredNeverBundle = inferNeverBundleDeps(manifest)
 
   return defineConfig({
     cwd: packageDir,
@@ -52,8 +52,10 @@ export const createPackageTsdownConfig = ({
     dts: true,
     sourcemap: true,
     clean: true,
-    skipNodeModulesBundle: true,
+    deps: {
+      neverBundle: [...new Set([...inferredNeverBundle, ...neverBundle])],
+      skipNodeModulesBundle: true,
+    },
     platform,
-    external: [...new Set([...inferredExternal, ...external])],
   })
 }

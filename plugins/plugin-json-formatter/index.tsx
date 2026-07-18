@@ -66,7 +66,7 @@ export default definePlugin({
         }
 
         try {
-          const parsed = JSON.parse(input)
+          const parsed: unknown = JSON.parse(input)
 
           if (mode === 'validate') {
             setIsValid(true)

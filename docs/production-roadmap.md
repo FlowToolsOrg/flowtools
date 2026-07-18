@@ -281,9 +281,51 @@ bun x turbo run lint check-types test build --dry=json
 
 #### P0.1b 修复现有静态检查与构建错误
 
-- 状态：`pending`
-- 负责人：`TBD (Build / Frontend)`
+- 状态：`in-progress`
+- 负责人：`Codex (Build / Frontend)`
 - 依赖：P0.1a
+
+P0.1b 是构建修复的父里程碑，拆分如下：
+
+##### P0.1b1 修复 UI Promise Lint
+
+- 状态：`pending`
+- 范围：`packages/ui`
+- 验证：`bun run --cwd packages/ui lint`、
+  `bun run --cwd packages/ui check-types`
+- 退出：修复所有已知 `no-floating-promises`，不使用规则 suppression，动画行为
+  不变。
+
+##### P0.1b2 修复 Web Host 构建
+
+- 状态：`pending`
+- 范围：`apps/web-vite`
+- 验证：`bun run --cwd apps/web-vite check-types`、
+  `bun run --cwd apps/web-vite build`
+- 退出：SDK 契约、HeroUI v3、TypeScript 与 Vite 配置错误清零。
+
+##### P0.1b3 修复 UI Test Consumer 构建
+
+- 状态：`pending`
+- 范围：`apps/ui-test`
+- 验证：`bun run --cwd apps/ui-test check-types`、
+  `bun run --cwd apps/ui-test build`
+- 退出：consumer 使用当前 Vite/TypeScript 配置从 workspace 源码成功构建。
+
+##### P0.1b4 修复 Desktop 静态门禁
+
+- 状态：`pending`
+- 范围：`apps/desktop`
+- 验证：Desktop `lint`、`check-types`、`build` 和 Rust `cargo check --locked`
+- 退出：移除失效 TypeScript 配置和真实 lint 错误；前端与 Rust 构建通过。
+
+##### P0.1b5 全仓集成收口
+
+- 状态：`pending`
+- 范围：根 Turbo 图及剩余跨 workspace 构建问题
+- 依赖：P0.1b1–P0.1b4
+- 验证：根 `lint`、`check-types`、`build`，并确认执行后工作树干净。
+- 退出：P0.1b 父里程碑的全部验证命令通过。
 
 交付物：
 
@@ -1075,16 +1117,21 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 
 ### Phase 0
 
-| ID    | 状态        | 负责人 | 依赖         | Commit / 验证记录                                                                                     |
-| ----- | ----------- | ------ | ------------ | ----------------------------------------------------------------------------------------------------- |
-| P0.1  | in-progress | Codex  | -            | P0.1a 已完成；其余子项待实施                                                                          |
-| P0.1a | done        | Codex  | -            | `chore(repo): standardize workspace quality tasks (P0.1a)`；workspace verifier + Turbo dry graph 通过 |
-| P0.1b | pending     | TBD    | P0.1a        | -                                                                                                     |
-| P0.1c | pending     | TBD    | P0.1a, P0.1b | -                                                                                                     |
-| P0.1d | pending     | TBD    | P0.1b, P0.1c | -                                                                                                     |
-| P0.2  | pending     | TBD    | P0.1         | -                                                                                                     |
-| P0.3  | pending     | TBD    | P0.1         | -                                                                                                     |
-| P0.4  | pending     | TBD    | -            | -                                                                                                     |
+| ID     | 状态        | 负责人 | 依赖          | Commit / 验证记录                                                                                     |
+| ------ | ----------- | ------ | ------------- | ----------------------------------------------------------------------------------------------------- |
+| P0.1   | in-progress | Codex  | -             | P0.1a 已完成；其余子项待实施                                                                          |
+| P0.1a  | done        | Codex  | -             | `chore(repo): standardize workspace quality tasks (P0.1a)`；workspace verifier + Turbo dry graph 通过 |
+| P0.1b  | in-progress | Codex  | P0.1a         | P0.1b1–P0.1b5 已拆分                                                                                  |
+| P0.1b1 | pending     | TBD    | P0.1a         | -                                                                                                     |
+| P0.1b2 | pending     | TBD    | P0.1a         | -                                                                                                     |
+| P0.1b3 | pending     | TBD    | P0.1a         | -                                                                                                     |
+| P0.1b4 | pending     | TBD    | P0.1a         | -                                                                                                     |
+| P0.1b5 | pending     | TBD    | P0.1b1–P0.1b4 | -                                                                                                     |
+| P0.1c  | pending     | TBD    | P0.1a, P0.1b  | -                                                                                                     |
+| P0.1d  | pending     | TBD    | P0.1b, P0.1c  | -                                                                                                     |
+| P0.2   | pending     | TBD    | P0.1          | -                                                                                                     |
+| P0.3   | pending     | TBD    | P0.1          | -                                                                                                     |
+| P0.4   | pending     | TBD    | -             | -                                                                                                     |
 
 ### Phase 1
 

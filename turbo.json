@@ -10,11 +10,19 @@
     "lint": {
       "dependsOn": ["^lint"]
     },
+    "lint:fix": {
+      "dependsOn": ["^lint:fix"],
+      "cache": false
+    },
     "format": {
       "dependsOn": ["^format"]
     },
     "check-types": {
       "dependsOn": ["^check-types"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**/*"]
     },
     "dev": {
       "cache": false,

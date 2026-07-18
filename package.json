@@ -41,13 +41,15 @@
     "dev:desktop": "bun run --cwd apps/desktop tauri dev",
     "build:desktop": "bun run --cwd apps/desktop tauri build",
     "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
     "format": "turbo run format",
     "check-types": "turbo run check-types",
-    "test": "bun -e \"console.log('Tests are deprecated for this project; use lint, check-types, builds, and manual validation instead.')\"",
+    "test": "turbo run test",
     "lint:staged": "lint-staged",
     "prepare": "husky",
     "generate:manifests": "bun run scripts/generate-manifests.ts",
-    "inspect:html-plugins": "bun run scripts/inspect-html-plugins.ts"
+    "inspect:html-plugins": "bun run scripts/inspect-html-plugins.ts",
+    "verify:workspace-tasks": "bun run scripts/verify-workspace-tasks.ts"
   },
   "dependencies": {
     "es-toolkit": "catalog:",

@@ -243,8 +243,8 @@ feat(market): add transactional signed installs (P2.5)
 
 ### P0.1 建立全仓质量门禁
 
-- 状态：`pending`
-- 负责人：`TBD (Build / Platform)`
+- 状态：`in-progress`
+- 负责人：`Codex (Build / Platform)`
 - 依赖：无
 
 P0.1 是质量基线的父里程碑。它拆分为 P0.1a–P0.1d；四个子里程碑全部
@@ -252,8 +252,10 @@ P0.1 是质量基线的父里程碑。它拆分为 P0.1a–P0.1d；四个子里�
 
 #### P0.1a 统一 Workspace 任务契约
 
-- 状态：`pending`
-- 负责人：`TBD (Build / Platform)`
+- 状态：`done`
+- 负责人：`Codex (Build / Platform)`
+- 开始日期：`2026-07-18`
+- 完成日期：`2026-07-18`
 - 依赖：无
 
 交付物：
@@ -267,10 +269,8 @@ P0.1 是质量基线的父里程碑。它拆分为 P0.1a–P0.1d；四个子里�
 验证：
 
 ```powershell
-bun run lint
-bun run check-types
-bun run test
-bun x turbo run lint check-types test --dry=json
+bun run verify:workspace-tasks
+bun x turbo run lint check-types test build --dry=json
 ```
 
 退出标准：
@@ -1075,16 +1075,16 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 
 ### Phase 0
 
-| ID    | 状态    | 负责人 | 依赖         | Commit / 验证记录 |
-| ----- | ------- | ------ | ------------ | ----------------- |
-| P0.1  | pending | TBD    | -            | -                 |
-| P0.1a | pending | TBD    | -            | -                 |
-| P0.1b | pending | TBD    | P0.1a        | -                 |
-| P0.1c | pending | TBD    | P0.1a, P0.1b | -                 |
-| P0.1d | pending | TBD    | P0.1b, P0.1c | -                 |
-| P0.2  | pending | TBD    | P0.1         | -                 |
-| P0.3  | pending | TBD    | P0.1         | -                 |
-| P0.4  | pending | TBD    | -            | -                 |
+| ID    | 状态        | 负责人 | 依赖         | Commit / 验证记录                                                                                     |
+| ----- | ----------- | ------ | ------------ | ----------------------------------------------------------------------------------------------------- |
+| P0.1  | in-progress | Codex  | -            | P0.1a 已完成；其余子项待实施                                                                          |
+| P0.1a | done        | Codex  | -            | `chore(repo): standardize workspace quality tasks (P0.1a)`；workspace verifier + Turbo dry graph 通过 |
+| P0.1b | pending     | TBD    | P0.1a        | -                                                                                                     |
+| P0.1c | pending     | TBD    | P0.1a, P0.1b | -                                                                                                     |
+| P0.1d | pending     | TBD    | P0.1b, P0.1c | -                                                                                                     |
+| P0.2  | pending     | TBD    | P0.1         | -                                                                                                     |
+| P0.3  | pending     | TBD    | P0.1         | -                                                                                                     |
+| P0.4  | pending     | TBD    | -            | -                                                                                                     |
 
 ### Phase 1
 

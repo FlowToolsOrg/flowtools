@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsgo -b && vite build",
-    "lint": "oxlint --fix --type-aware --type-check",
+    "lint": "oxlint --type-aware --type-check",
+    "lint:fix": "oxlint --fix --type-aware --type-check",
     "format": "oxfmt",
     "preview": "vite preview",
-    "check:types": "tsgo --noEmit"
+    "check-types": "tsgo -b",
+    "test": "bun test --pass-with-no-tests"
   },
   "dependencies": {
     "@flowtools/plugins": "workspace:*",

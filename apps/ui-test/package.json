@@ -6,12 +6,13 @@
   "scripts": {
     "dev": "vite --port 5174",
     "build": "tsgo -b && vite build",
-    "lint": "oxlint --fix --type-aware --type-check",
+    "lint": "oxlint --type-aware --type-check",
+    "lint:fix": "oxlint --fix --type-aware --type-check",
     "format": "oxfmt",
-    "check-types": "tsgo --noEmit",
-    "test": "bun -e \"console.log('Tests are deprecated for this project; use manual UI validation instead.')\"",
-    "test:watch": "bun -e \"console.log('Tests are deprecated for this project; use manual UI validation instead.')\"",
-    "test:browser": "bun -e \"console.log('Tests are deprecated for this project; use manual UI validation instead.')\""
+    "check-types": "tsgo -b",
+    "test": "vitest run --config vitest.browser.config.ts",
+    "test:watch": "vitest --config vitest.browser.config.ts",
+    "test:browser": "vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {
     "@flowtools/ui": "workspace:*",

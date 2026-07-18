@@ -6,6 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "lint": "oxlint --type-aware --type-check",
+    "lint:fix": "oxlint --fix --type-aware --type-check",
+    "format": "oxfmt",
+    "check-types": "tsc --noEmit",
+    "test": "bun test --pass-with-no-tests",
     "preview": "vite preview",
     "tauri": "tauri"
   },

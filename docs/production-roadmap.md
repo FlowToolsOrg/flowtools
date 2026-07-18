@@ -404,7 +404,9 @@ P0.1c 是自动化回归基线的父里程碑，拆分如下：
 
 ##### P0.1c3 覆盖 CLI 输入、输出与 Runner 契约
 
-- 状态：`pending`
+- 状态：`done`
+- 负责人：`Codex`
+- 完成日期：`2026-07-18`
 - 范围：`packages/cli` 的 schema/flag coercion、formatter、runner、timeout 和失败
   退出码。
 - 实施：把库函数中的 stderr/exit 副作用收敛到 CLI 边界，提供稳定错误类型和
@@ -1207,7 +1209,7 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 | P0.1c  | in-progress | Codex  | P0.1a, P0.1b  | P0.1c1–P0.1c5 已拆分                                                                                  |
 | P0.1c1 | done        | Codex  | P0.1b         | `test(sdk): lock core value contracts (P0.1c1)`；19 tests + 8 package exports 通过                    |
 | P0.1c2 | done        | Codex  | P0.1c1        | `fix(sdk): enforce lifecycle failure contracts (P0.1c2)`；40 tests 覆盖状态、加载与 watchdog          |
-| P0.1c3 | pending     | TBD    | P0.1b         | -                                                                                                     |
+| P0.1c3 | done        | Codex  | P0.1b         | `fix(cli): harden input and runner contracts (P0.1c3)`；25 tests + binary smoke 通过                  |
 | P0.1c4 | pending     | TBD    | P0.1b         | -                                                                                                     |
 | P0.1c5 | pending     | TBD    | P0.1c1–P0.1c4 | -                                                                                                     |
 | P0.1d  | pending     | TBD    | P0.1b, P0.1c  | -                                                                                                     |

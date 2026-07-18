@@ -15,6 +15,7 @@ import { formatStdio } from './format-stdio'
 
 interface CommandResultShape {
   type: string
+  stdio?: string
   text?: string
   value?: unknown
   columns?: readonly { key: string; title: string }[]

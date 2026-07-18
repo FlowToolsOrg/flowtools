@@ -247,6 +247,122 @@ feat(market): add transactional signed installs (P2.5)
 - 负责人：`TBD (Build / Platform)`
 - 依赖：无
 
+P0.1 是质量基线的父里程碑。它拆分为 P0.1a–P0.1d；四个子里程碑全部
+`done` 后，P0.1 才能标记完成。
+
+#### P0.1a 统一 Workspace 任务契约
+
+- 状态：`pending`
+- 负责人：`TBD (Build / Platform)`
+- 依赖：无
+
+交付物：
+
+- SDK、UI、CLI、plugins、web-vite、desktop 和 ui-test 全部暴露名称一致的
+  `lint`、`check-types`、`build` 和 `test` 脚本。
+- 根 `test` 改为 Turbo 任务，不再是 no-op；`turbo.json` 声明测试任务及其依赖。
+- CI 使用的 `lint` 不修改源文件；自动修复仅通过显式 `lint:fix` 暴露。
+- 根任务执行图包含所有应参与的 workspace，不再因任务别名产生假阳性。
+
+验证：
+
+```powershell
+bun run lint
+bun run check-types
+bun run test
+bun x turbo run lint check-types test --dry=json
+```
+
+退出标准：
+
+- 所有 workspace 的标准脚本可被 Turbo 发现。
+- 根 `test` 不包含“deprecated”或只打印信息的实现。
+- 运行只读 gate 后工作树保持干净。
+
+#### P0.1b 修复现有静态检查与构建错误
+
+- 状态：`pending`
+- 负责人：`TBD (Build / Frontend)`
+- 依赖：P0.1a
+
+交付物：
+
+- 修复 `packages/ui` 当前的 Promise 处理 lint 错误。
+- 修复 web-vite 的真实 TypeScript、HeroUI 和 Vite 配置错误。
+- 修复 ui-test 的 TypeScript module 配置和 Vite React 插件配置。
+- 确保 Desktop 前端与 Rust 分别存在可重复的静态检查和构建命令。
+
+验证：
+
+```powershell
+bun run lint
+bun run check-types
+bun run build
+bun run --cwd apps/web-vite build
+bun run --cwd apps/desktop build
+cargo check --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
+```
+
+退出标准：
+
+- 上述命令在支持环境中全部退出 0。
+- 不通过禁用 strict、跳过 workspace 或扩大 lint ignore 来获得绿色结果。
+
+#### P0.1c 恢复核心自动化测试
+
+- 状态：`pending`
+- 负责人：`TBD (SDK / CLI / Desktop)`
+- 依赖：P0.1a、P0.1b
+
+交付物：
+
+- SDK 至少覆盖 Manifest/Result 基础契约和 Registry 关键行为。
+- CLI 至少覆盖参数、schema 校验、输出格式和失败退出码。
+- Desktop Rust 至少覆盖 DTO 验证、repository 约束和迁移入口。
+- 没有测试的 workspace 使用明确的 smoke/contract 测试，而不是 no-op 脚本。
+
+验证：
+
+```powershell
+bun run test
+cargo test --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
+```
+
+退出标准：
+
+- 测试能在引入已知错误时失败。
+- SDK、CLI 与 Rust 的核心失败路径进入 PR 必跑门禁。
+
+#### P0.1d 建立 Windows PR CI
+
+- 状态：`pending`
+- 负责人：`TBD (Build / Release)`
+- 依赖：P0.1b、P0.1c
+
+交付物：
+
+- Windows CI 从干净 checkout 执行 frozen install、lint、type check、test、build
+  和 `cargo check`。
+- 使用 Bun、Rust 与依赖缓存，但缓存不能掩盖缺失产物或 lockfile 漂移。
+- 任一 gate 失败都会使工作流失败并阻止合并。
+
+验证：
+
+```powershell
+bun install --frozen-lockfile
+bun run lint
+bun run check-types
+bun run test
+bun run build
+cargo check --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
+```
+
+退出标准：
+
+- 连续两次 CI 运行结果一致。
+- CI 完成后工作树无生成文件漂移。
+- 工作流日志能明确显示每个 workspace 的参与情况。
+
 交付物：
 
 - 统一所有 workspace 的 `lint`、`check-types`、`build` 和 `test` 任务名。
@@ -959,12 +1075,16 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 
 ### Phase 0
 
-| ID   | 状态    | 负责人 | 依赖 | Commit / 验证记录 |
-| ---- | ------- | ------ | ---- | ----------------- |
-| P0.1 | pending | TBD    | -    | -                 |
-| P0.2 | pending | TBD    | P0.1 | -                 |
-| P0.3 | pending | TBD    | P0.1 | -                 |
-| P0.4 | pending | TBD    | -    | -                 |
+| ID    | 状态    | 负责人 | 依赖         | Commit / 验证记录 |
+| ----- | ------- | ------ | ------------ | ----------------- |
+| P0.1  | pending | TBD    | -            | -                 |
+| P0.1a | pending | TBD    | -            | -                 |
+| P0.1b | pending | TBD    | P0.1a        | -                 |
+| P0.1c | pending | TBD    | P0.1a, P0.1b | -                 |
+| P0.1d | pending | TBD    | P0.1b, P0.1c | -                 |
+| P0.2  | pending | TBD    | P0.1         | -                 |
+| P0.3  | pending | TBD    | P0.1         | -                 |
+| P0.4  | pending | TBD    | -            | -                 |
 
 ### Phase 1
 

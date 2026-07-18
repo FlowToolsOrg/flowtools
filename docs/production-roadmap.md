@@ -321,7 +321,9 @@ P0.1b 是构建修复的父里程碑，拆分如下：
 
 ##### P0.1b4 修复 Desktop 静态门禁
 
-- 状态：`pending`
+- 状态：`done`
+- 负责人：`Codex`
+- 完成日期：`2026-07-18`
 - 范围：`apps/desktop`
 - 验证：Desktop `lint`、`check-types`、`build` 和 Rust `cargo check --locked`
 - 退出：移除失效 TypeScript 配置和真实 lint 错误；前端与 Rust 构建通过。
@@ -1132,7 +1134,7 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 | P0.1b1 | done        | Codex  | P0.1a         | `fix(ui): handle icon animation promises (P0.1b1)`；lint + check-types 通过                           |
 | P0.1b2 | done        | Codex  | P0.1a         | `fix(web): restore host quality gates (P0.1b2)`；lint + check-types + build 通过                      |
 | P0.1b3 | done        | Codex  | P0.1a         | `fix(ui-test): restore consumer build gates (P0.1b3)`；lint + check-types + build 通过                |
-| P0.1b4 | pending     | TBD    | P0.1a         | -                                                                                                     |
+| P0.1b4 | done        | Codex  | P0.1a         | `fix(desktop): restore static quality gates (P0.1b4)`；lint + check-types + build + cargo check 通过  |
 | P0.1b5 | pending     | TBD    | P0.1b1–P0.1b4 | -                                                                                                     |
 | P0.1c  | pending     | TBD    | P0.1a, P0.1b  | -                                                                                                     |
 | P0.1d  | pending     | TBD    | P0.1b, P0.1c  | -                                                                                                     |

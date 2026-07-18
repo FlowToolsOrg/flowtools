@@ -1009,7 +1009,7 @@ function CommandIcon({ command }: { command: IndexedCommand }) {
   return (
     <span className="relative grid size-8 shrink-0 place-items-center rounded-[7px] bg-(--primary-gradient) text-(--text-on-primary)">
       <Icon className="opacity-90" size={18} />
-      <span className="absolute -right-1 -bottom-1 grid h-4 min-w-4 place-items-center rounded-full border border-(--bg-color) bg-(--bg-color) px-1 text-[9px] font-extrabold text-(--text-color) dark:bg-[#48484a] dark:text-(--text-on-primary)">
+      <span className="absolute -right-1 -bottom-1 grid h-4 min-w-4 place-items-center rounded-full border border-(--bg-color) bg-(--bg-color) px-1 text-[9px] font-extrabold text-(--text-color) dark:bg-surface-secondary dark:text-(--text-on-primary)">
         {getInitials(command.pluginName)}
       </span>
     </span>
@@ -1903,8 +1903,7 @@ function PluginLaunchSurface({ command, target }: PluginLaunchSurfaceProps) {
           kind: 'srcDoc',
           value: injectHtmlPluginBridge(html, command, getBaseUrl(target.url)),
         })
-      } catch (error) {
-        console.warn(error)
+      } catch {
         if (cancelled) return
 
         if (isLocalDevelopmentUrl(target.url)) {
@@ -1930,7 +1929,7 @@ function PluginLaunchSurface({ command, target }: PluginLaunchSurfaceProps) {
   }, [command, frameVersion, target.url])
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#111827]">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       <div className="flex min-h-10.5 items-center justify-between gap-3 border-b border-black/20 bg-(--bg-color) px-3 py-2">
         <div className="flex min-w-0 items-center gap-2">
           <CommandIcon command={command} />

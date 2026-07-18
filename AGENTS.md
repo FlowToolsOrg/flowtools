@@ -23,7 +23,8 @@ This repository is a Bun + Turbo monorepo.
   `commands/plugin_commands.rs`; keep Rust DTO fields aligned with frontend
   plugin manifest/state types.
 - `apps/ui-test`: consumer app for manual validation of `@flowtools/ui`.
-  Automated tests are deprecated.
+  Manual UI validation remains required and complements automated coverage; it
+  does not replace it.
 - `plugins/`: local plugin workspace with 12 built-in plugins (all app type,
   all CLI-compatible via `run()` + `inputSchema`).
 - `configs/tsdown`: shared package build config.
@@ -48,6 +49,7 @@ workflows:
 - [Architecture](./architecture.md)
 - [README](./README.md)
 - [Plugin](./docs/plugin.md)
+- [Production Roadmap](./docs/production-roadmap.md)
 
 ## Build, Validation, and Development Commands
 
@@ -57,7 +59,7 @@ Run from repository root:
 - `bun run build`: builds workspaces (`turbo run build`).
 - `bun run lint`: runs workspace lint tasks.
 - `bun run check-types`: runs workspace type checks.
-- `bun run test`: deprecated no-op; do not use tests as a quality gate.
+- `bun run test`: runs required workspace automated tests via Turbo.
 - `bun run format`: formats tracked source/document files.
 - `bun run inspect:html-plugins`: scans a local HTML plugin checkout and
   regenerates `apps/desktop/src/data/html-plugin-catalog.json` plus
@@ -71,6 +73,12 @@ Useful app-level commands:
 - `cd apps/ui-test && bun run dev`
 - `cd apps/desktop && bun run dev`
 
+Every workspace must expose scripts named exactly `lint`, `check-types`,
+`build`, and `test`, even when a task is intentionally lightweight. Root Turbo
+tasks must invoke those names consistently across the monorepo. Do not use
+workspace-only aliases such as `check:types` as substitutes for the standard
+task names.
+
 CLI commands (from repo root):
 
 - `bun run packages/cli/src/cli.ts list` — list CLI-compatible plugins
@@ -78,6 +86,25 @@ CLI commands (from repo root):
 - `bun run packages/cli/src/cli.ts run <plugin-id> --format text` — execute a plugin
 
 If dependencies change, run `bun install`.
+
+## Production Maturity Labels
+
+Use these labels consistently in manifests, catalogs, documentation, UI, and
+the production roadmap:
+
+- `prototype`: validates an idea; interfaces and data may change without a
+  migration path, and production use is unsupported.
+- `experimental`: runnable for controlled evaluation, with explicit known
+  limitations and incomplete compatibility or hardening.
+- `beta`: feature-complete for the declared scope, with automated regression
+  coverage and documented upgrade, security, and recovery constraints.
+- `production`: passes all required automated and manual gates, has secure
+  defaults, compatible data migrations, operational diagnostics, and a
+  documented support policy.
+
+Catalog presence, parsed metadata, command discovery, or a successful build is
+not evidence of compatibility or production readiness. Advance a maturity
+label only when the declared scope has objective validation evidence.
 
 ## Coding Style and Naming Conventions
 
@@ -120,9 +147,27 @@ execution bypassing the SDK:
   runnable from the scanned checkout. Source-only Vite entries such as
   `/src/main.ts` or `/main.tsx` should fall back to `development.main` or a
   built artifact instead of being loaded from the FlowTools dev server root.
-- Do not assume an HTML plugin is fully compatible merely because its metadata
-  appears in `apps/desktop/src/data/html-plugin-catalog.json` or
-  `docs/html-plugin-catalog.json`.
+- Catalog metadata is discovery evidence only. Do not describe a plugin as
+  compatible, runnable, secure, or production-ready merely because it appears
+  in `apps/desktop/src/data/html-plugin-catalog.json` or
+  `docs/html-plugin-catalog.json`. Verify each declared runtime, bridge,
+  capability, platform, and packaged artifact before making compatibility
+  claims.
+
+### Third-Party Plugin Security Defaults
+
+- Treat third-party plugins as untrusted and deny capabilities by default.
+  Grant only explicit, user-approved, least-privilege scopes.
+- Production installation and execution require signed packages plus verified
+  integrity, publisher provenance, and host-version compatibility. Unsigned
+  plugins are limited to an explicit development mode with a visible warning.
+- Never expose raw `native.invoke`, raw SQL, or unscoped filesystem access to a
+  plugin. Use typed allowlisted capability adapters, parameterized and
+  plugin-namespaced database operations, and canonicalized scoped paths.
+- Isolate untrusted plugin code from host secrets and privileged APIs. A
+  manifest capability declaration is a request, not proof of authorization.
+- Persist grants per plugin identity and package version, support revocation,
+  and record security-relevant decisions in an auditable log.
 
 Built-in plugins are declared in `apps/web-vite/src/plugin/manifests.ts`
 and loaded at startup via `bootstrap()`.
@@ -164,15 +209,31 @@ The host includes a `Cmd/Ctrl+K` command palette:
 
 ## Testing Guidelines
 
-Automated tests are deprecated for this project. Do not add new test files and
-do not register test tasks as a required quality gate.
+Automated tests are a required production quality gate. Add regression coverage
+with every behavior change or defect fix in these areas:
+
+- SDK contracts, schemas, result helpers, runtime providers, and capability
+  adapters
+- CLI parsing, generated flags, validation, output formats, exit codes, and
+  failure behavior
+- plugin and command registries, lifecycle transitions, loading races,
+  concurrency, cancellation, and watchdog timeouts
+- permission enforcement and security boundaries, including path traversal,
+  scope isolation, unsafe bridge calls, and injection attempts
+- persisted state, schema and data migrations, rollback or recovery behavior,
+  and compatibility across supported versions
+
+Manual UI validation remains required for visual behavior, accessibility,
+desktop and web routing, and plugin rendering. It complements automated tests
+and is not a substitute for them.
 
 Current validation gate:
 
 1. `bun run lint`
 2. `bun run check-types`
-3. `bun run build` or the relevant app/package build command
-4. Manual validation for changed flows (for web host, verify routes and plugin
+3. `bun run test`
+4. `bun run build` or the relevant app/package build command
+5. Manual validation for changed flows (for web host, verify routes and plugin
    rendering in `apps/web-vite`)
 
 ## Documentation Sync (Required and !Important)
@@ -185,6 +246,7 @@ files in the same change:
 - `architecture.md`
 - `docs/structure.md`
 - `docs/plugin.md`
+- `docs/production-roadmap.md`
 
 ## Commit and Pull Request Guidelines
 
@@ -192,6 +254,11 @@ Use Conventional Commits, for example:
 
 - `feat(ui): add plugin card variants`
 - `fix(sdk): guard missing capability`
+
+Complete production-roadmap milestones incrementally. Each completed milestone
+must be independently validated and recorded in one focused Conventional
+Commit before work begins on the next milestone. Do not bundle multiple
+completed roadmap milestones into one commit.
 
 PRs should include:
 

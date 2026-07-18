@@ -10,7 +10,7 @@
     "lint:fix": "oxlint --fix --type-aware --type-check",
     "format": "oxfmt",
     "check-types": "tsc --noEmit",
-    "test": "bun test --pass-with-no-tests",
+    "test": "cargo test --locked --lib --manifest-path src-tauri/Cargo.toml",
     "preview": "vite preview",
     "tauri": "tauri"
   },

@@ -371,9 +371,63 @@ cargo check --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
 
 #### P0.1c 恢复核心自动化测试
 
-- 状态：`pending`
-- 负责人：`TBD (SDK / CLI / Desktop)`
+- 状态：`in-progress`
+- 负责人：`Codex (SDK / CLI / Desktop)`
+- 开始日期：`2026-07-18`
 - 依赖：P0.1a、P0.1b
+
+P0.1c 是自动化回归基线的父里程碑，拆分如下：
+
+##### P0.1c1 锁定 SDK 值对象与 HTML 兼容契约
+
+- 状态：`pending`
+- 范围：`packages/sdk` 的 Result、`definePlugin`、capability、runtime error、
+  HTML manifest 规范化和公开 package exports。
+- 实施：把 SDK `test` 从 0-test no-op 改为真实 Bun 测试；覆盖成功与拒绝路径，
+  且不引入第三方测试依赖。
+- 验证：SDK `test`、`lint`、`check-types`、`build`；移除测试文件必须导致
+  `test` 失败。
+
+##### P0.1c2 覆盖 SDK Registry、Loader 与异步失败
+
+- 状态：`pending`
+- 依赖：P0.1c1
+- 范围：Plugin/Command Registry、PluginLoader、生命周期和 watchdog。
+- 实施：覆盖订阅、状态事件、MRU、加载隔离、hook 幂等和错误传播；测试暴露的
+  activate/deactivate 状态覆盖问题在同一里程碑修复。
+- 约束：watchdog 只承诺合作式取消；不编写能够终止同步死循环的虚假测试。
+- 验证：SDK `test`、`lint`、`check-types`、`build`。
+
+##### P0.1c3 覆盖 CLI 输入、输出与 Runner 契约
+
+- 状态：`pending`
+- 范围：`packages/cli` 的 schema/flag coercion、formatter、runner、timeout 和失败
+  退出码。
+- 实施：把库函数中的 stderr/exit 副作用收敛到 CLI 边界，提供稳定错误类型和
+  可注入的执行 seam；不冻结现有源码正则发现实现。
+- 验证：CLI `test`、`lint`、`check-types`、`build`，以及构建后 `--version` 和
+  missing-plugin 非零退出 smoke。
+
+##### P0.1c4 覆盖 Desktop Rust DTO 与 Repository 契约
+
+- 状态：`pending`
+- 范围：plugin DTO 校验、默认值、序列化、内存 SQLite repository 往返、隔离和
+  错误路径。
+- 实施：Desktop `test` 运行真实 `cargo test --locked --lib`；使用 Toasty 内存
+  数据库，不访问用户 app-data，不为 Tauri `State` 编写低价值 mock。
+- 验证：`cargo fmt --check`、`cargo test --locked --lib`、
+  `cargo clippy --all-targets -- -D warnings` 和 Desktop `test`。
+
+##### P0.1c5 收口 Workspace 与根测试图
+
+- 状态：`pending`
+- 依赖：P0.1c1–P0.1c4
+- 范围：`packages/ui`、`plugins`、`apps/web-vite`、`apps/ui-test` 及根 Turbo
+  `test` 图。
+- 实施：为剩余 workspace 提供真实 smoke/contract 测试，稳定现有 browser
+  suite，删除全部 `--pass-with-no-tests`；测试不得依赖开发服务器或用户状态。
+- 验证：7 个 workspace 的 `test` 均实际执行断言，根 `bun run test` 退出 0，
+  删除任一测试入口会使对应任务失败。
 
 交付物：
 
@@ -1146,7 +1200,12 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 | P0.1b3 | done        | Codex  | P0.1a         | `fix(ui-test): restore consumer build gates (P0.1b3)`；lint + check-types + build 通过                |
 | P0.1b4 | done        | Codex  | P0.1a         | `fix(desktop): restore static quality gates (P0.1b4)`；lint + check-types + build + cargo check 通过  |
 | P0.1b5 | done        | Codex  | P0.1b1–P0.1b4 | `fix(repo): close build integration gates (P0.1b5)`；根 lint + check-types + build 通过               |
-| P0.1c  | pending     | TBD    | P0.1a, P0.1b  | -                                                                                                     |
+| P0.1c  | in-progress | Codex  | P0.1a, P0.1b  | P0.1c1–P0.1c5 已拆分                                                                                  |
+| P0.1c1 | pending     | TBD    | P0.1b         | -                                                                                                     |
+| P0.1c2 | pending     | TBD    | P0.1c1        | -                                                                                                     |
+| P0.1c3 | pending     | TBD    | P0.1b         | -                                                                                                     |
+| P0.1c4 | pending     | TBD    | P0.1b         | -                                                                                                     |
+| P0.1c5 | pending     | TBD    | P0.1c1–P0.1c4 | -                                                                                                     |
 | P0.1d  | pending     | TBD    | P0.1b, P0.1c  | -                                                                                                     |
 | P0.2   | pending     | TBD    | P0.1          | -                                                                                                     |
 | P0.3   | pending     | TBD    | P0.1          | -                                                                                                     |

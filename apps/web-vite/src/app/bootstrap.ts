@@ -53,28 +53,6 @@ function registerPluginCommands(
 
       commandRegistry.register(cmd)
     }
-
-    if (entry.plugin.commands) {
-      for (const [cmdId, cmdDef] of Object.entries(entry.plugin.commands)) {
-        const fullId = `${pluginId}:${cmdId}`
-
-        const cmd: RegisteredCommand = {
-          id: fullId,
-          title: cmdDef.title,
-          description: cmdDef.description,
-          pluginId,
-          mode: cmdDef.mode,
-          keywords: [cmdDef.title, cmdDef.description ?? ''].filter(Boolean),
-          handler: () => {
-            if (cmdDef.mode === 'panel') {
-              navigate(`/tools/${pluginId}`)
-            }
-          },
-        }
-
-        commandRegistry.register(cmd)
-      }
-    }
   }
 }
 

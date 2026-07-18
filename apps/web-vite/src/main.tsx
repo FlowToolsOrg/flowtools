@@ -20,7 +20,7 @@ const rootElement = document.getElementById('root')!
 
 async function start(): Promise<void> {
   await bootstrap((path: string) => {
-    router.navigate({ to: path })
+    void router.navigate({ to: path })
   })
 
   if (!rootElement.innerHTML) {
@@ -33,4 +33,10 @@ async function start(): Promise<void> {
   }
 }
 
-start()
+void start().catch(() => {
+  rootElement.replaceChildren()
+  const message = document.createElement('p')
+  message.setAttribute('role', 'alert')
+  message.textContent = 'FlowTools failed to start. Reload the page to retry.'
+  rootElement.append(message)
+})

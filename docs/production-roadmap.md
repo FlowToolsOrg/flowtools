@@ -300,7 +300,9 @@ P0.1b 是构建修复的父里程碑，拆分如下：
 
 ##### P0.1b2 修复 Web Host 构建
 
-- 状态：`pending`
+- 状态：`done`
+- 负责人：`Codex`
+- 完成日期：`2026-07-18`
 - 范围：`apps/web-vite`
 - 验证：`bun run --cwd apps/web-vite check-types`、
   `bun run --cwd apps/web-vite build`
@@ -1125,7 +1127,7 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 | P0.1a  | done        | Codex  | -             | `chore(repo): standardize workspace quality tasks (P0.1a)`；workspace verifier + Turbo dry graph 通过 |
 | P0.1b  | in-progress | Codex  | P0.1a         | P0.1b1–P0.1b5 已拆分                                                                                  |
 | P0.1b1 | done        | Codex  | P0.1a         | `fix(ui): handle icon animation promises (P0.1b1)`；lint + check-types 通过                           |
-| P0.1b2 | pending     | TBD    | P0.1a         | -                                                                                                     |
+| P0.1b2 | done        | Codex  | P0.1a         | `fix(web): restore host quality gates (P0.1b2)`；lint + check-types + build 通过                      |
 | P0.1b3 | pending     | TBD    | P0.1a         | -                                                                                                     |
 | P0.1b4 | pending     | TBD    | P0.1a         | -                                                                                                     |
 | P0.1b5 | pending     | TBD    | P0.1b1–P0.1b4 | -                                                                                                     |

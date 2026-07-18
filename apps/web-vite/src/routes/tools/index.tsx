@@ -171,7 +171,7 @@ function ToolsPage() {
                 <ToolCard
                   onPress={() => {
                     setSelectedToolId(tool.id)
-                    navigate({ to: `/tools/${tool.id}` })
+                    void navigate({ to: `/tools/${tool.id}` })
                   }}
                 >
                   <ToolCard.Header>
@@ -213,9 +213,9 @@ function ToolsPage() {
               actions={
                 <>
                   <Button
-                    onPress={() =>
-                      navigate({ to: `/tools/${selectedTool.id}` })
-                    }
+                    onPress={() => {
+                      void navigate({ to: `/tools/${selectedTool.id}` })
+                    }}
                     size="sm"
                   >
                     Open

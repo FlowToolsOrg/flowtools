@@ -53,7 +53,7 @@ function PluginsPage() {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0]
       if (file) {
-        handleLoadFile(file)
+        void handleLoadFile(file)
       }
       // Reset input so same file can be re-selected
       if (inputRef.current) {
@@ -69,7 +69,7 @@ function PluginsPage() {
       setDragOver(false)
       const file = e.dataTransfer.files[0]
       if (file) {
-        handleLoadFile(file)
+        void handleLoadFile(file)
       }
     },
     [handleLoadFile]
@@ -244,7 +244,7 @@ function PluginsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted">External</span>
-                <Chip color="secondary" size="sm" variant="soft">
+                <Chip color="accent" size="sm" variant="soft">
                   {externalPluginIds.length}
                 </Chip>
               </div>
@@ -306,7 +306,7 @@ function PluginRow({
             {state}
           </Chip>
           {isExternal ? (
-            <Chip color="secondary" size="sm" variant="flat">
+            <Chip color="accent" size="sm" variant="soft">
               external
             </Chip>
           ) : null}

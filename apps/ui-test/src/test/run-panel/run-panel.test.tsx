@@ -1,4 +1,4 @@
-import { RunPanel, Button } from '@flowtools/ui'
+import { RunPanel } from '@flowtools/ui'
 import { describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
 import { userEvent } from 'vitest/browser'
@@ -31,7 +31,9 @@ describe('RunPanel', () => {
     const { getByRole } = await render(
       <RunPanel>
         <RunPanel.Footer>
-          <Button onPress={onCancel}>Cancel</Button>
+          <button type="button" onClick={onCancel}>
+            Cancel
+          </button>
         </RunPanel.Footer>
       </RunPanel>
     )

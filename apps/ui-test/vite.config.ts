@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
+const workspaceRoot = fileURLToPath(new URL('../..', import.meta.url))
 const uiSrcDir = fileURLToPath(
   new URL('../../packages/ui/src', import.meta.url)
 )
@@ -12,21 +13,18 @@ const uiSrcIndex = fileURLToPath(
 )
 
 export default defineConfig({
-  plugins: [
-    react({
-      babel: {
-        plugins: [['babel-plugin-react-compiler']],
-      },
-    }),
-    tailwindcss(),
-  ],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: [
-      { find: '@flowtools/ui', replacement: uiSrcIndex },
-      { find: '@flowtools/ui/', replacement: `${uiSrcDir}/` },
+      { find: /^@flowtools\/ui$/, replacement: uiSrcIndex },
+      { find: /^@flowtools\/ui\/(.+)$/, replacement: `${uiSrcDir}/$1` },
     ],
+    dedupe: ['react', 'react-dom'],
   },
   server: {
     port: 5174,
+    fs: {
+      allow: [workspaceRoot],
+    },
   },
 })

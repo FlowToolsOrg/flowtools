@@ -16,9 +16,12 @@
   },
   "dependencies": {
     "@flowtools/ui": "workspace:*",
+    "@heroui/react": "catalog:",
     "@heroui/styles": "catalog:",
+    "motion": "catalog:",
     "react": "catalog:",
-    "react-dom": "catalog:"
+    "react-dom": "catalog:",
+    "tailwindcss": "catalog:"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.4",

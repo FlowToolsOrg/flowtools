@@ -1,4 +1,4 @@
-import { ToolCard, Button, Chip } from '@flowtools/ui'
+import { ToolCard } from '@flowtools/ui'
 import { describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
 import { userEvent } from 'vitest/browser'
@@ -15,12 +15,10 @@ describe('ToolCard', () => {
         </ToolCard.Header>
         <ToolCard.Meta status="beta" version="0.9.1" />
         <ToolCard.Tags>
-          <Chip size="sm" variant="tertiary">
-            security
-          </Chip>
+          <span>security</span>
         </ToolCard.Tags>
         <ToolCard.Actions>
-          <Button size="sm">Install</Button>
+          <button type="button">Install</button>
         </ToolCard.Actions>
       </ToolCard>
     )

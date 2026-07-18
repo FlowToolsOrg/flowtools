@@ -1,4 +1,4 @@
-import { ToolCard, ToolGrid, Button } from '@flowtools/ui'
+import { ToolCard, ToolGrid } from '@flowtools/ui'
 import { describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
 import { userEvent } from 'vitest/browser'
@@ -37,9 +37,9 @@ describe('ToolGrid', () => {
           <ToolCard>
             <ToolCard.Title>Clipboard</ToolCard.Title>
             <ToolCard.Actions>
-              <Button onPress={onInstall} size="sm">
+              <button type="button" onClick={onInstall}>
                 Install
-              </Button>
+              </button>
             </ToolCard.Actions>
           </ToolCard>
         </ToolGrid.Item>

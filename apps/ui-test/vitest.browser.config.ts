@@ -13,16 +13,7 @@ const uiSrcIndex = fileURLToPath(
 )
 
 export default defineConfig({
-  plugins: [
-    // @ts-ignore
-    react({
-      babel: {
-        plugins: [['babel-plugin-react-compiler']],
-      },
-    }),
-    // @ts-ignore
-    tailwindcss(),
-  ],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: [
       { find: '@flowtools/ui', replacement: uiSrcIndex },

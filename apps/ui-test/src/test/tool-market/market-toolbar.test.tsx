@@ -1,4 +1,4 @@
-import { MarketToolbar, Button, Chip } from '@flowtools/ui'
+import { MarketToolbar } from '@flowtools/ui'
 import { describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
 import { userEvent } from 'vitest/browser'
@@ -9,10 +9,10 @@ describe('MarketToolbar', () => {
       <MarketToolbar>
         <MarketToolbar.Search onChange={() => {}} value="" />
         <MarketToolbar.Filters>
-          <Chip size="sm">Installed</Chip>
+          <span>Installed</span>
         </MarketToolbar.Filters>
         <MarketToolbar.Actions>
-          <Button size="sm">Refresh</Button>
+          <button type="button">Refresh</button>
         </MarketToolbar.Actions>
       </MarketToolbar>
     )

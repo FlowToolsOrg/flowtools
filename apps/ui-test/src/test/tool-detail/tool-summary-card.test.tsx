@@ -1,4 +1,4 @@
-import { ToolSummaryCard, Button } from '@flowtools/ui'
+import { ToolSummaryCard } from '@flowtools/ui'
 import { describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
 import { userEvent } from 'vitest/browser'
@@ -27,7 +27,11 @@ describe('ToolSummaryCard', () => {
     const onRun = vi.fn()
     const { getByRole } = await render(
       <ToolSummaryCard
-        actions={<Button onPress={onRun}>Run</Button>}
+        actions={
+          <button type="button" onClick={onRun}>
+            Run
+          </button>
+        }
         title="Clipboard"
       />
     )

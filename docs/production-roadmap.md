@@ -392,7 +392,9 @@ P0.1c 是自动化回归基线的父里程碑，拆分如下：
 
 ##### P0.1c2 覆盖 SDK Registry、Loader 与异步失败
 
-- 状态：`pending`
+- 状态：`done`
+- 负责人：`Codex`
+- 完成日期：`2026-07-18`
 - 依赖：P0.1c1
 - 范围：Plugin/Command Registry、PluginLoader、生命周期和 watchdog。
 - 实施：覆盖订阅、状态事件、MRU、加载隔离、hook 幂等和错误传播；测试暴露的
@@ -1204,7 +1206,7 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 | P0.1b5 | done        | Codex  | P0.1b1–P0.1b4 | `fix(repo): close build integration gates (P0.1b5)`；根 lint + check-types + build 通过               |
 | P0.1c  | in-progress | Codex  | P0.1a, P0.1b  | P0.1c1–P0.1c5 已拆分                                                                                  |
 | P0.1c1 | done        | Codex  | P0.1b         | `test(sdk): lock core value contracts (P0.1c1)`；19 tests + 8 package exports 通过                    |
-| P0.1c2 | pending     | TBD    | P0.1c1        | -                                                                                                     |
+| P0.1c2 | done        | Codex  | P0.1c1        | `fix(sdk): enforce lifecycle failure contracts (P0.1c2)`；40 tests 覆盖状态、加载与 watchdog          |
 | P0.1c3 | pending     | TBD    | P0.1b         | -                                                                                                     |
 | P0.1c4 | pending     | TBD    | P0.1b         | -                                                                                                     |
 | P0.1c5 | pending     | TBD    | P0.1c1–P0.1c4 | -                                                                                                     |

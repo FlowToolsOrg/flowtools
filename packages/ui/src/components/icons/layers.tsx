@@ -57,7 +57,7 @@ const LayersIcon = forwardRef<LayersIconHandle, LayersIconProps>(
         if (isControlledRef.current) {
           onMouseLeave?.(e)
         } else {
-          controls.start('normal')
+          void controls.start('normal')
         }
       },
       [controls, onMouseLeave]

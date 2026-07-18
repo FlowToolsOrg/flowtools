@@ -64,8 +64,8 @@ const BanIcon = forwardRef<BanIconHandle, BanIconProps>(
 
       return {
         startAnimation: () => {
-          controls.start('animate')
-          controls.start('slash', { delay: 0.5 })
+          void controls.start('animate')
+          void controls.start('slash', { delay: 0.5 })
         },
         stopAnimation: () => controls.start('normal'),
       }
@@ -76,8 +76,8 @@ const BanIcon = forwardRef<BanIconHandle, BanIconProps>(
         if (isControlledRef.current) {
           onMouseEnter?.(e)
         } else {
-          controls.start('animate')
-          controls.start('slash', { delay: 0.5 })
+          void controls.start('animate')
+          void controls.start('slash', { delay: 0.5 })
         }
       },
       [controls, onMouseEnter]
@@ -88,7 +88,7 @@ const BanIcon = forwardRef<BanIconHandle, BanIconProps>(
         if (isControlledRef.current) {
           onMouseLeave?.(e)
         } else {
-          controls.start('normal')
+          void controls.start('normal')
         }
       },
       [controls, onMouseLeave]

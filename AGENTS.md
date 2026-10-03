@@ -87,6 +87,17 @@ CLI commands (from repo root):
 
 If dependencies change, run `bun install`.
 
+Before running browser tests on a new machine, run
+`bun run --cwd apps/ui-test test:install-browser`. The Playwright version is
+pinned; do not substitute an arbitrary system browser for the regression gate.
+Root Turbo tests depend on dependency tests (`^test`); package contract tests
+build their own artifacts before assertions. Tests are uncached so a successful
+cached result cannot hide missing build output. Run root `test` and `build`
+sequentially, never concurrently: package tests may clean their own `dist`.
+Test scripts must fail when no tests are collected; never use
+`--pass-with-no-tests` or equivalent flags. Keep Bun test globals in test-only
+type configurations so browser production sources cannot silently use Bun APIs.
+
 ## Production Maturity Labels
 
 Use these labels consistently in manifests, catalogs, documentation, UI, and

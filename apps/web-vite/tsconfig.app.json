@@ -14,12 +14,7 @@
       "@/*": ["./src/*"],
       "@flowtools/plugins/*": ["../../plugins/*"],
       "@flowtools/sdk": ["../../packages/sdk/src/index.ts"],
-      "@flowtools/sdk/*": ["../../packages/sdk/src/*"],
-      "react": ["./node_modules/@types/react/index.d.ts"],
-      "react/jsx-runtime": ["./node_modules/@types/react/jsx-runtime.d.ts"],
-      "react/jsx-dev-runtime": [
-        "./node_modules/@types/react/jsx-dev-runtime.d.ts"
-      ]
+      "@flowtools/sdk/*": ["../../packages/sdk/src/*"]
     },
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
@@ -34,5 +29,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.spec.ts"]
 }

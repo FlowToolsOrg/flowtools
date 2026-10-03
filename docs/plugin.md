@@ -553,11 +553,15 @@ bun run tauri add <plugin-name>
 ```bash
 bun run lint
 bun run check-types
+bun run test
 bun run build
 ```
 
-自动化测试已废弃：不要新增 `*.test.ts` / `*.test.tsx`，也不要把 test task
-作为提交或 PR 的质量门。`bun run test` 只保留为兼容性的废弃提示。
+自动化测试是必需质量门。新机器先执行
+`bun run --cwd apps/ui-test test:install-browser` 安装锁定版本 Chromium。
+插件目录 inventory 与构建入口必须一致；新增插件要更新合约清单，确保 metadata、
+permissions、`run()`、`inputSchema` 和 CLI 执行链路都有对应验证。合约测试不得
+访问外部网络或用户状态；第三方兼容、权限隔离和打包产物按生产路线图单独验收。
 
 并手动验证：
 

@@ -371,9 +371,10 @@ cargo check --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
 
 #### P0.1c 恢复核心自动化测试
 
-- 状态：`in-progress`
+- 状态：`done`
 - 负责人：`Codex (SDK / CLI / Desktop)`
 - 开始日期：`2026-07-18`
+- 完成日期：`2026-10-03`
 - 依赖：P0.1a、P0.1b
 
 P0.1c 是自动化回归基线的父里程碑，拆分如下：
@@ -428,14 +429,33 @@ P0.1c 是自动化回归基线的父里程碑，拆分如下：
 
 ##### P0.1c5 收口 Workspace 与根测试图
 
-- 状态：`pending`
+- 状态：`done`
+- 负责人：`Codex`
+- 开始日期：`2026-07-18`
+- 完成日期：`2026-10-03`
 - 依赖：P0.1c1–P0.1c4
 - 范围：`packages/ui`、`plugins`、`apps/web-vite`、`apps/ui-test` 及根 Turbo
   `test` 图。
 - 实施：为剩余 workspace 提供真实 smoke/contract 测试，稳定现有 browser
   suite，删除全部 `--pass-with-no-tests`；测试不得依赖开发服务器或用户状态。
+- 收口约束：UI package 必须验证构建产物、完整公开导出与声明消费；插件测试必须
+  从真实目录核对 inventory，并穿过 CLI discovery、loader、schema 与 runner；Web
+  Host 必须覆盖 app/tool/非法 runtime 类型；浏览器版本必须显式锁定并由 CI 安装。
+- 防回归：workspace verifier 必须拒绝未知 test runner 和任何
+  `pass-with-no-tests` 变体，不能再用空测试获得绿色结果。
+- 执行顺序：根测试仅依赖 `^test` 且禁用缓存；SDK/UI/plugins 合约测试自行
+  构建产物，消费者等待依赖测试完成。根 `test` 和 `build` 顺序执行，避免
+  `dist` 清理与下游读取竞争。Desktop 先通过 Cargo `--list` 检查非空清单。
+- 缺陷修复：命令面板原执行回调从未初始化，选择命令静默无效；改为调用宿主
+  CommandRegistry，回归测试先复现失败再验证修复与未初始化错误路径。
 - 验证：7 个 workspace 的 `test` 均实际执行断言，根 `bun run test` 退出 0，
   删除任一测试入口会使对应任务失败。
+- 验证记录（2026-10-03）：SDK 40、CLI 25、UI exports 3、plugins 16、Web 6、
+  Chromium 46、Desktop inventory 2 + workspace gate 3 + Rust 10，共 151 tests；另有 UI consumer
+  declarations 独立编译。根 lint（0 warnings）、check-types、test、build 和
+  frozen install 通过。Bun/Vitest 无匹配测试均退出 1；Rust 空清单检查由单元
+  测试验证。浏览器人工复查命令面板搜索/跳转、工具卡片路由、Base64 插件面板
+  `hello → aGVsbG8=` 通过；未据此宣称全量无障碍、桌面 UI 或生产兼容认证。
 
 交付物：
 
@@ -1200,7 +1220,7 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 
 | ID     | 状态        | 负责人 | 依赖          | Commit / 验证记录                                                                                     |
 | ------ | ----------- | ------ | ------------- | ----------------------------------------------------------------------------------------------------- |
-| P0.1   | in-progress | Codex  | -             | P0.1a–P0.1b 已完成；P0.1c–P0.1d 待实施                                                                |
+| P0.1   | in-progress | Codex  | -             | P0.1a–P0.1c 已完成；P0.1d 待实施                                                                      |
 | P0.1a  | done        | Codex  | -             | `chore(repo): standardize workspace quality tasks (P0.1a)`；workspace verifier + Turbo dry graph 通过 |
 | P0.1b  | done        | Codex  | P0.1a         | `fix(repo): close build integration gates (P0.1b5)`；P0.1b1–P0.1b5 全部通过                           |
 | P0.1b1 | done        | Codex  | P0.1a         | `fix(ui): handle icon animation promises (P0.1b1)`；lint + check-types 通过                           |
@@ -1208,12 +1228,12 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 | P0.1b3 | done        | Codex  | P0.1a         | `fix(ui-test): restore consumer build gates (P0.1b3)`；lint + check-types + build 通过                |
 | P0.1b4 | done        | Codex  | P0.1a         | `fix(desktop): restore static quality gates (P0.1b4)`；lint + check-types + build + cargo check 通过  |
 | P0.1b5 | done        | Codex  | P0.1b1–P0.1b4 | `fix(repo): close build integration gates (P0.1b5)`；根 lint + check-types + build 通过               |
-| P0.1c  | in-progress | Codex  | P0.1a, P0.1b  | P0.1c1–P0.1c5 已拆分                                                                                  |
+| P0.1c  | done        | Codex  | P0.1a, P0.1b  | P0.1c1–P0.1c5 完成；7 workspace 自动化基线通过                                                        |
 | P0.1c1 | done        | Codex  | P0.1b         | `test(sdk): lock core value contracts (P0.1c1)`；19 tests + 8 package exports 通过                    |
 | P0.1c2 | done        | Codex  | P0.1c1        | `fix(sdk): enforce lifecycle failure contracts (P0.1c2)`；40 tests 覆盖状态、加载与 watchdog          |
 | P0.1c3 | done        | Codex  | P0.1b         | `fix(cli): harden input and runner contracts (P0.1c3)`；25 tests + binary smoke 通过                  |
 | P0.1c4 | done        | Codex  | P0.1b         | `fix(desktop): enforce plugin persistence contracts (P0.1c4)`；10 Rust tests + clippy 通过            |
-| P0.1c5 | pending     | TBD    | P0.1c1–P0.1c4 | -                                                                                                     |
+| P0.1c5 | done        | Codex  | P0.1c1–P0.1c4 | `test(repo): close workspace regression gates (P0.1c5)`；151 tests + declarations + 人工 Web 复查通过 |
 | P0.1d  | pending     | TBD    | P0.1b, P0.1c  | -                                                                                                     |
 | P0.2   | pending     | TBD    | P0.1          | -                                                                                                     |
 | P0.3   | pending     | TBD    | P0.1          | -                                                                                                     |

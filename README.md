@@ -110,7 +110,7 @@ apps/
   desktop/     # Tauri desktop shell, launcher, settings/run routes
     src/data/  # generated HTML plugin catalog consumed by the launcher
   docs/        # (planned) documentation site
-  ui-test/     # UI package consumer for manual validation; automated tests are deprecated
+  ui-test/     # UI package consumer with browser tests and manual validation
 packages/
   sdk/         # plugin contract, hooks, registry, lifecycle, result helpers
   ui/          # shared React UI primitives (HeroUI-based)
@@ -131,6 +131,7 @@ bun run dev:desktop
 bun run build
 bun run lint
 bun run check-types
+bun run test
 bun run format
 bun run inspect:html-plugins
 ```
@@ -148,11 +149,23 @@ bun run packages/cli/src/cli.ts list
 bun run packages/cli/src/cli.ts run <plugin-id> --format text
 ```
 
-## Testing Deprecated
+## Validation
 
-Automated tests are deprecated for this project. `bun run test` is now a no-op
-that prints the deprecation notice. Use linting, type checks, builds, and manual
-validation for changed UI/runtime flows instead.
+Automated tests are required. After installing dependencies, install the pinned
+Chromium runtime once with `bun run --cwd apps/ui-test test:install-browser`.
+Run `bun run lint`, `bun run check-types`, `bun run test`, and `bun run build`
+from the repository root. `bun run verify:workspace-tasks` checks that all seven
+workspaces expose the standard gates and reject empty-test success flags.
+
+The uncached test graph waits for dependency tests before running consumers;
+package contract tests build their own artifacts. Run root tests and builds
+sequentially because package tests may clean their output. Coverage includes
+SDK and CLI contracts, generated UI exports and
+consumer declarations, built-in plugin inventory and CLI execution, Web Host
+commands, headless Chromium UI interactions, and in-memory Rust persistence.
+Manual routing, rendering, accessibility, and visual validation remain required
+for changed UI flows. Passing these gates does not advance production maturity
+without the remaining security, packaging, and recovery evidence in the roadmap.
 
 ## Plugin Model
 

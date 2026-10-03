@@ -12,7 +12,7 @@ import {
   loadAllPluginFiles,
   removePluginFile,
   savePluginFile,
-} from '@/utils/plugin-storage'
+} from '../utils/plugin-storage'
 
 interface PluginRegistryState {
   plugins: RegisteredPlugin[]

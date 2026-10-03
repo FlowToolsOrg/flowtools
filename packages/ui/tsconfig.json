@@ -6,6 +6,7 @@
     "target": "esnext",
     "moduleResolution": "bundler",
     "lib": ["dom", "dom.iterable", "esnext"],
+    "types": [],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,

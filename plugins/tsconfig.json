@@ -6,18 +6,12 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
+    "types": ["node"],
     "paths": {
       "@flowtools/sdk": ["../packages/sdk/src/index.ts"],
       "@flowtools/sdk/*": ["../packages/sdk/src/*"],
       "@flowtools/ui": ["../packages/ui/src/index.ts"],
-      "@flowtools/ui/*": ["../packages/ui/src/*"],
-      "react": ["../apps/web-vite/node_modules/@types/react/index.d.ts"],
-      "react/jsx-runtime": [
-        "../apps/web-vite/node_modules/@types/react/jsx-runtime.d.ts"
-      ],
-      "react/jsx-dev-runtime": [
-        "../apps/web-vite/node_modules/@types/react/jsx-dev-runtime.d.ts"
-      ]
+      "@flowtools/ui/*": ["../packages/ui/src/*"]
     },
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,

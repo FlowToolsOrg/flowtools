@@ -3,6 +3,8 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const REQUIRED_TASKS = ['build', 'lint', 'check-types', 'test'] as const
+const TEST_RUNNER_PATTERN = /\b(?:bun test|cargo test|vitest)\b/
+const PASS_WITH_NO_TESTS_PATTERN = /pass[-_]?with[-_]?no[-_]?tests/i
 
 interface PackageJson {
   name?: string
@@ -41,7 +43,7 @@ async function findWorkspacePackageFiles(): Promise<string[]> {
   return packageFiles.sort()
 }
 
-function validateWorkspace(
+export function validateWorkspace(
   packageFile: string,
   packageJson: PackageJson
 ): string[] {
@@ -63,8 +65,13 @@ function validateWorkspace(
     errors.push(`${workspaceName}: use "check-types", not "check:types"`)
   }
 
-  if (/deprecated|console\.log/i.test(scripts.test ?? '')) {
-    errors.push(`${workspaceName}: test must invoke a test runner`)
+  const testScript = scripts.test ?? ''
+  if (!TEST_RUNNER_PATTERN.test(testScript)) {
+    errors.push(`${workspaceName}: test must invoke a supported test runner`)
+  }
+
+  if (PASS_WITH_NO_TESTS_PATTERN.test(testScript)) {
+    errors.push(`${workspaceName}: test must fail when no tests are collected`)
   }
 
   return errors
@@ -108,4 +115,6 @@ async function main(): Promise<void> {
   )
 }
 
-await main()
+if (import.meta.main) {
+  await main()
+}

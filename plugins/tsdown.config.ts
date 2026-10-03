@@ -1,23 +1,17 @@
 /// <reference types="node" />
 
-import { readdirSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { createPackageTsdownConfig } from '../configs/tsdown/create-config.ts'
 
-const packageDir = dirname(fileURLToPath(import.meta.url))
+import { getPluginEntries } from './plugin-entries.ts'
 
-const getEntries = () => {
-  return readdirSync(packageDir).filter(file => file.startsWith('plugin-'))
-}
+const packageDir = dirname(fileURLToPath(import.meta.url))
 
 export default createPackageTsdownConfig({
   packageDir,
-  entry: getEntries().reduce((acc: Record<string, string>, name) => {
-    acc[name] = `${name}/index.tsx`
-    return acc
-  }, {}),
+  entry: getPluginEntries(packageDir),
   neverBundle: [
     'react/jsx-runtime',
     'react/jsx-dev-runtime',

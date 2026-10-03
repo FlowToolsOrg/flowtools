@@ -25,7 +25,7 @@
     "lint:fix": "oxlint --fix --type-aware --type-check",
     "format": "oxfmt",
     "check-types": "tsgo --noEmit",
-    "test": "bun test"
+    "test": "bun test src"
   },
   "dependencies": {
     "commander": "^13.1.0",

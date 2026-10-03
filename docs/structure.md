@@ -1,5 +1,24 @@
 # Flow Tools 架构设计规范
 
+## 工程验证结构
+
+所有 workspace 提供统一的 `lint`、`check-types`、`test` 和 `build`。根 Turbo
+测试图依赖 `^test`，package 合约测试自行构建产物后断言，再运行消费者测试；
+禁止空测试成功选项与测试缓存。根 `test` 和 `build` 必须顺序执行。
+
+- `packages/sdk/test`：SDK 值对象、registry、lifecycle、watchdog 与公开导出。
+- `packages/cli/src/*.test.ts`：CLI 参数、schema、formatter 与 runner。
+- `packages/ui/test`：构建后公开导出；`test/consumer` 独立编译声明消费。
+- `plugins/plugin-entries.ts`：构建与合约测试共享目录 inventory；
+  `plugins/test` 验证内置插件和 CLI 执行链路。
+- `apps/web-vite/src/app/*.test.ts`：manifest、加载与命令注册合约。
+- `apps/ui-test/src/test`：固定 Playwright Chromium 的无界面组件交互测试。
+- `apps/desktop/src-tauri/src`：内存数据库 Rust 合约测试，不使用用户 app-data。
+- `apps/desktop/test`：Rust 测试清单非空检查及其回归，防止 Cargo 零测试假绿。
+
+浏览器与插件生产配置不引入 Bun 测试全局类型；测试配置单独类型检查。手动 UI
+验证继续补充视觉、无障碍、路由和插件渲染的自动化覆盖。
+
 ## 1. 核心抽象层 (Abstract Layer)
 
 定义系统核心调度骨架与双端路由机制。

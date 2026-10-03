@@ -1,15 +1,10 @@
 import type { RegisteredCommand } from '@flowtools/sdk'
 import type { CommandPaletteItem } from '@flowtools/ui'
 
-import { pluginRegistryStore } from './plugin-registry-store'
-
-let _executeHandler: ((commandId: string) => Promise<void>) | null = null
-
-export function setCommandExecuteHandler(
-  handler: (commandId: string) => Promise<void>
-): void {
-  _executeHandler = handler
-}
+import {
+  pluginRegistryInternals,
+  pluginRegistryStore,
+} from './plugin-registry-store'
 
 export function getCommandPaletteItems(): CommandPaletteItem[] {
   const { commands } = pluginRegistryStore.getState()
@@ -27,7 +22,10 @@ export function getCommandPaletteItems(): CommandPaletteItem[] {
 }
 
 export async function executeCommand(commandId: string): Promise<void> {
-  if (_executeHandler) {
-    await _executeHandler(commandId)
+  const commandRegistry = pluginRegistryInternals._commandRegistry
+  if (!commandRegistry) {
+    throw new Error('Command registry not initialized')
   }
+
+  await commandRegistry.execute(commandId)
 }

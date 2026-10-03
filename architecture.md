@@ -31,6 +31,21 @@ Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平�
 结论：架构方向是 desktop-first，当前 web 原型已具备注册中心、命令面板、生命周期管理、错误隔离等核心机制。
 CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用插件。HTML 插件兼容层已完成插件元数据与命令入口归一化，并在 desktop 端提供 React/SDK panel 渲染、HTML `main` iframe 启动容器、旧版宿主 API bridge，以及基于 SDK capability contract 的 Tauri 官方插件适配。
 
+### 当前自动化验证边界
+
+根 `bun run test` 调用七个 workspace 的真实测试。SDK/CLI 覆盖核心契约与失败
+路径；UI package 先构建再验证公开导出和独立消费者声明；plugins 使用构建时相同
+的目录 inventory，并通过 CLI discovery、loader、schema 和 runner 验证执行链路；
+Web Host 覆盖 app/tool 命令映射与非法 runtime 类型拒绝；UI consumer 在固定版本
+Chromium 中验证组件交互；Rust repository 使用内存数据库验证隔离与错误路径。
+Desktop 测试任务先验证 Cargo 测试清单非空，避免零测试返回成功。
+
+Turbo 的 `test` 依赖 `^test`，不缓存结果；package 合约测试自行构建产物，
+消费者等待依赖测试完成，避免读取正在被清理的 `dist`。根 `test` 与 `build`
+必须顺序执行，不能并发运行；单独的 `build` 图仍依赖 `^build`。
+测试类型与浏览器生产类型隔离；这些验证不等同于
+第三方插件隔离、签名安装或生产兼容认证，仍按生产路线图分阶段交付。
+
 ## 2. Layered Model（分层模型）
 
 ```text

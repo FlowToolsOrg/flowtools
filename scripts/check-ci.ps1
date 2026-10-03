@@ -11,6 +11,9 @@ try {
   Invoke-QualityCommand 'Workspace task contracts' bun @(
     'run', 'verify:workspace-tasks'
   )
+  Invoke-QualityCommand 'Documentation and threat-model contracts' bun @(
+    'run', 'docs:check'
+  )
   Invoke-QualityCommand 'Pinned Chromium install' bun @(
     'run', '--cwd', 'apps/ui-test', 'test:install-browser'
   )

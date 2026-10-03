@@ -57,6 +57,11 @@ Turbo 保留严格环境模式，显式透传 Windows `PATHEXT` 和 build/test �
 
 ### Windows PR 质量执行链
 
+依赖安装后首先验证 workspace 与 `docs:check` 文档契约。后者只检查核心文档、
+ADR 目标/现状分离、威胁必填项、源码链接路径和 PR 安全评审字段；不验证运行时
+隔离、远程 URL/anchor 或 reviewer 批准。capability/bridge 变更须在 PR 中给出
+对应威胁 ID、scope/身份设计与拒绝路径证据，管理员强制评审配置另行验收。
+
 `windows-quality.yml` 安装 packageManager 指定的 Bun 与 Rust 1.96.0，然后
 调用 `scripts/check-ci.ps1`。该入口先 frozen install、安装固定 Chromium、
 构建 package 声明消费产物、生成 Web/Desktop routes 与 Rust bindings，再顺序

@@ -41,7 +41,7 @@
     "dev:web": "turbo run dev --filter=@flowtools/web",
     "dev:desktop": "bun run --cwd apps/desktop tauri dev",
     "build:desktop": "bun run --cwd apps/desktop tauri build",
-    "lint": "turbo run lint",
+    "lint": "oxlint --type-aware --type-check scripts/docs-check.ts scripts/docs-check.test.ts && turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "format": "turbo run format",
     "check-types": "turbo run check-types",
@@ -51,6 +51,7 @@
     "generate:manifests": "bun run scripts/generate-manifests.ts",
     "generate:hosts": "bun run --cwd apps/web-vite generate:routes && bun run --cwd apps/desktop generate",
     "inspect:html-plugins": "bun run scripts/inspect-html-plugins.ts",
+    "docs:check": "bun run scripts/docs-check.ts",
     "verify:workspace-tasks": "bun run scripts/verify-workspace-tasks.ts"
   },
   "dependencies": {

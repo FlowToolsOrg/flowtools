@@ -14,6 +14,11 @@
 
 ## 工程验证结构
 
+- `scripts/docs-check.ts` / `docs-check.test.ts`：十份核心/ADR/威胁/PR 文档的
+  只读契约，内联本地链接路径与风险字段验证；脚本由 Desktop 测试任务消费。
+  不检查远端 URL、Markdown anchor、运行时安全或 reviewer 批准。
+- `.github/pull_request_template.md`：安全边界变更的 threat/ADR、scope、拒绝
+  回归、撤销恢复与审阅证据；不是仓库强制合并保护配置。
 - `.github/workflows/windows-quality.yml`：固定工具链与 Action SHA 的 Windows
   PR 工作流；只读权限，不缓存 JavaScript 构建产物。
 - `scripts/check-ci.ps1` / `ci-gates.ps1`：本地与 CI 共用的顺序门禁、退出码与

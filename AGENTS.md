@@ -72,6 +72,8 @@ Run from repository root:
 - `bun run lint`: runs workspace lint tasks.
 - `bun run check-types`: runs workspace type checks.
 - `bun run test`: runs required workspace automated tests via Turbo.
+- `bun run docs:check`: read-only core/ADR/threat/PR-template contracts and inline
+  local link path checks; no remote URL, anchor or security certification.
 - `bun run format`: formats tracked source/document files.
 - `bun run inspect:html-plugins`: scans a local HTML plugin checkout and
   regenerates `apps/desktop/src/data/html-plugin-catalog.json` plus
@@ -320,6 +322,15 @@ PRs should include:
 - screenshots/GIFs for UI changes
 - notes on plugin/runtime impact and validation steps
 - documentation sync notes when architecture/runtime behavior changes
+
+Use `.github/pull_request_template.md`. Capability, bridge/IPC, manifest/package,
+isolation, persistence, grant, file/network and update changes require threat
+IDs, ADR impact, host-bound identity/scope, rejection tests, revocation/recovery,
+residual risk and an actual security reviewer/date/conclusion. Explain concrete
+non-applicability for changes outside these boundaries. `docs:check` validates
+the template and threat fields, not reviewer approval or branch protection;
+those require separate maintainer setup and acceptance. Run the document gate
+before lint/type checks; Windows shared CI does the same.
 
 <!-- HEROUI-REACT-AGENTS-MD-START -->
 

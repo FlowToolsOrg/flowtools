@@ -564,9 +564,16 @@ bun run tauri add <plugin-name>
 
 ## 11. 提交前检查
 
+新增/修改 capability 或 bridge 时，填写
+[PR 模板](../.github/pull_request_template.md) 的安全评审部分：威胁 ID、实际
+reviewer、Host 身份/scope、拒绝回归、撤销与恢复、残余风险。无安全边界影响
+也要说明不适用理由。`docs:check` 只检查文档结构与本地链接路径，不代表安全
+评审已经获批、远程 URL/anchor 可用或插件已获得兼容认证。
+
 在仓库根目录执行：
 
 ```bash
+bun run docs:check
 bun run lint
 bun run check-types
 bun run test

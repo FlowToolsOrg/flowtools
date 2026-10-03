@@ -7,6 +7,7 @@
   "include": [
     "test",
     "../../scripts/*.test.ts",
+    "../../scripts/docs-check.ts",
     "../../scripts/verify-workspace-tasks.ts"
   ],
   "references": []

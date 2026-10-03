@@ -87,7 +87,12 @@ test('uses runner-dependent Bun cache paths only in step contexts', () => {
 })
 
 test('runs bounded Windows gates without caching JS build products', async () => {
-  const turbo = await Bun.file(new URL('../turbo.json', import.meta.url)).json()
+  const turbo = (await Bun.file(
+    new URL('../turbo.json', import.meta.url)
+  ).json()) as {
+    globalPassThroughEnv: string[]
+    tasks: Record<'test' | 'build', { passThroughEnv: string[] }>
+  }
   expect(turbo.globalPassThroughEnv).toEqual(['PATHEXT'])
   expect(turbo.tasks.test.passThroughEnv).toEqual(['CARGO_TARGET_DIR'])
   expect(turbo.tasks.build.passThroughEnv).toEqual(['CARGO_TARGET_DIR'])
@@ -116,6 +121,8 @@ test('runs bounded Windows gates without caching JS build products', async () =>
     entry.indexOf("'build', '--force'")
   )
   expect(entry).toContain("'install', '--frozen-lockfile'")
+  expect(entry).toContain("'run', 'docs:check'")
+  expect(entry.indexOf("'docs:check'")).toBeLessThan(entry.indexOf("'lint'"))
   expect(entry).toContain("'check', '--locked'")
 })
 

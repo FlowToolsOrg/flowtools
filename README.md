@@ -160,6 +160,13 @@ bun run packages/cli/src/cli.ts run <plugin-id> --format text
 
 ## Validation
 
+Run `bun run docs:check` to validate the ten core/design/review documents, their
+inline local link paths and required threat fields. This read-only check does
+not certify security, check remote URLs/Markdown anchors, or approve reviewers.
+Capability/bridge changes must complete the security section in the
+[PR template](./.github/pull_request_template.md) with actual review and
+rejection-test evidence; branch protection is a separate administrator gate.
+
 Automated tests are required. After installing dependencies, install the pinned
 Chromium runtime once with `bun run --cwd apps/ui-test test:install-browser`.
 On a fresh checkout, run `bun run build:packages` and `bun run generate:hosts`

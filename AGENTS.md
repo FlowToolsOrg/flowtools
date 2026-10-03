@@ -72,6 +72,8 @@ Run from repository root:
 - `bun run lint`: runs workspace lint tasks.
 - `bun run check-types`: runs workspace type checks.
 - `bun run test`: runs required workspace automated tests via Turbo.
+- `bun run smoke:plugins`: builds prerequisites and validates all twelve actual
+  compiled entries with controlled request/storage, schema rejection and abort.
 - `bun run docs:check`: read-only core/ADR/threat/PR-template contracts and inline
   local link path checks; no remote URL, anchor or security certification.
 - `bun run format`: formats tracked source/document files.
@@ -352,6 +354,13 @@ smoke fixtures before maturity/catalog and production-entry gates. Execution
 tests must call the real plugin implementation; controlled capability adapters
 are permitted, replacing `run()` with synthetic success is not. Keep maturity
 separate from compatibility evidence and do not mark Phase 0 done early.
+
+Keep `plugins/test/smoke-fixtures.ts` exactly aligned with CLI discovery and
+built-in entries; missing fixtures fail the smoke gate. Network fixtures must
+use the SDK request capability and reserved `.invalid` URLs, not global fetch
+or live websites. Todo run and setup share the declared host store; the CLI
+legacy storage key is validated before writes, never silently overwritten on
+corruption. Do not claim this is automatic migration or a persistent grant.
 
 PRs should include:
 

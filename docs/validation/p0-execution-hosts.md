@@ -1,4 +1,4 @@
-# P0.2b2 Windows 宿主验收
+# P0.2b2 / P0.2c Windows 宿主验收
 
 日期：2026-10-03。验证者：Codex；这是工程验收记录，不是独立安全 Reviewer 批准。
 
@@ -19,11 +19,19 @@
   app panel 保留，长页面/原生容器通过滚动访问，不要求单屏显示全部输出。
 - Chromium consumer 回归另测实际抛出异常、不可序列化输出、取消迟到结果与卸载
   abort；异常 fixture 不是替换内置 run() 的虚假成功。
+- P0.2c 在修改后重新构建并复验以上两端流程；网站延迟走 SDK request，仍能
+  实际取消。两端 Todo JSON 加入 `p0 shared-store fixture` 后，真实 app panel
+  立即显示相同待办与 deadline，证明不是仅在 JSON 输出中声称添加。
+- 十二插件 smoke 真实 compiled run/defaults、schema/预取消无副作用、实际 Todo
+  损坏数据异常通过。CLI/Web/Desktop 的实际缺失 network 异常均返回稳定
+  EXECUTION_FAILED，无请求副作用；未向生产 registry 注入异常插件。
 
 ![Web 实际成功](./assets/p0-web-success.png)
 ![Desktop 实际成功](./assets/p0-desktop-success.png)
 ![Web 实际取消](./assets/p0-web-cancel.png)
 ![Desktop 实际取消](./assets/p0-desktop-cancel.png)
+![Web Todo 共享状态](./assets/p0c-web-todo.png)
+![Desktop Todo 共享状态](./assets/p0c-desktop-todo.png)
 
 ## 复现与数据保护
 
@@ -62,5 +70,6 @@ WebView2 临时调试参数见 [Microsoft 文档](https://learn.microsoft.com/en
 - 未验证 macOS/Linux、NVDA、完整对比度/缩放/触屏、OS 外壳焦点与签名安装包。
 - 隐藏原生 WebView 截图/键盘验证不等于人工操作前台 Windows chrome。
 - 不认证第三方插件兼容性、原生权限 broker、强制终止或供应链安全。
-- 官网延迟插件当前直接 fetch 的权限边界仍有缺口；十二插件受控 smoke 在
-  P0.2c 验收。P0.3 状态/生产准入仍未完成，整体仍 prototype。
+- 网站延迟已使用 SDK request，但 adapter 的出站策略和全局 fetch 隔离仍缺失；
+  smoke 和路由验证不认证 grant。截图的旧 stable 标签不代表生产成熟度，P0.3
+  状态/生产准入仍未完成，整体仍 prototype。

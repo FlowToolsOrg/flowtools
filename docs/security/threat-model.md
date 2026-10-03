@@ -92,6 +92,9 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 - 入口：SDK request、插件自身 fetch/资源请求、重定向；高危，open
 - 现状：Desktop/Web/CLI 直接 fetch；Desktop CSP 为空，没有统一 host/port/
   redirect 策略。未证明跨 origin 请求或所有 private 地址都会成功。
+  P0.2c 网站延迟 built-in 的 run/panel 已走 SDK request；缺失能力不会退回 raw
+  fetch，受控 fixture 不访问公网。adapter 最终仍 fetch，同 realm 代码仍可绕过，
+  网络 broker/出站限制并未实现，本风险保持 open。
 - 证据：[Desktop request](../../apps/desktop/src/runtime/desktop-capabilities.ts)、
   [Web context](../../apps/web-vite/src/runtime/ctx.tsx)、
   [Tauri CSP](../../apps/desktop/src-tauri/tauri.conf.json)
@@ -108,6 +111,8 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 - 现状：插件 DB 共享 `sqlite:flowtools.db`，query 接收 raw SQL；storage key
   前缀不是恶意代码边界。Host `app.sqlite` 在 Debug 启动删除；Rust repository
   的元数据校验和内存测试不等于插件数据隔离或生产 migration。
+  P0.2c Todo run 使用面板共享 app store；CLI 保留旧 key，损坏数据拒绝写入，
+  无能力时不伪报保存；这不是通用 migration/备份/隔离。
 - 证据：[DB adapter](../../apps/desktop/src/runtime/desktop-capabilities.ts)、
   [数据库初始化](../../apps/desktop/src-tauri/src/db/init.rs)、
   [repository](../../apps/desktop/src-tauri/src/repositories/plugin_repository.rs)

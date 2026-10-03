@@ -48,6 +48,11 @@
   与 entry 子进程拒绝路径；使用无 React 的 `@flowtools/sdk/execution` 子入口。
 - `plugins/test/cli-execution.test.ts`：真实编译后 CLI 的 generated flags / JSON
   envelope / schema 错误 / 非法 timeout / text 回归；不替换内置插件 `run()`。
+- `plugins/test/smoke-fixtures.ts` / `plugin-smoke.test.ts`：十二个真实 compiled
+  entries 与 CLI discovery 一一对应；注入受控 request/storage，实际 success、
+  schema/abort 拒绝无副作用及异常 envelope。根 `smoke:plugins` 显式构建前置产物。
+- `plugins/test/state-network.test.ts`：SDK request 不能退回 raw fetch；Todo
+  app store/CLI key、缺失 capability 与损坏旧数据的保护回归。
 - `packages/ui/test`：构建后公开导出；`test/consumer` 独立编译声明消费。
 - `plugins/plugin-entries.ts`：构建与合约测试共享目录 inventory；
   `plugins/test` 验证内置插件和 CLI 执行链路。

@@ -1,6 +1,7 @@
 import { expect, test } from 'bun:test'
 
 import base64 from '../../../plugins/plugin-base64-encoder/index.tsx'
+import latency from '../../../plugins/plugin-website-latency/index.tsx'
 import { runDesktopPlugin } from '../src/runtime/plugin-execution'
 
 test('Desktop runs actual app entry through SDK schema and execution envelope', async () => {
@@ -23,4 +24,15 @@ test('Desktop runs actual app entry through SDK schema and execution envelope', 
       { signal: controller.signal }
     )
   ).toMatchObject({ success: false, error: { code: 'ABORTED' } })
+})
+
+test('Desktop exposes an actual built-in capability exception as a failed envelope', async () => {
+  const denied = { ...latency, meta: { ...latency.meta, permissions: [] } }
+  expect(await runDesktopPlugin(denied, { urls: [] })).toMatchObject({
+    success: false,
+    error: {
+      code: 'EXECUTION_FAILED',
+      message: 'Network capability is unavailable',
+    },
+  })
 })

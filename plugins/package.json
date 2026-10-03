@@ -26,7 +26,8 @@
     "lint:fix": "oxlint --fix --type-aware --type-check",
     "format": "oxfmt",
     "check-types": "tsgo --noEmit -p tsconfig.json && tsgo --noEmit -p tsconfig.test.json",
-    "test": "bun run build && bun test test"
+    "test": "bun run build && bun test test",
+    "smoke:plugins": "bun test test/plugin-smoke.test.ts"
   },
   "dependencies": {
     "@flowtools/cli": "workspace:*",

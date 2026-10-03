@@ -170,6 +170,22 @@ async function verifyCancel(page: Page, host: string) {
   })
 }
 
+async function verifyTodo(page: Page, host: string) {
+  const section = page.getByRole('region', { name: 'SDK execution' })
+  await section.waitFor()
+  await section
+    .getByRole('textbox', { name: 'JSON input' })
+    .fill('{"todo":"p0 shared-store fixture","deadline":"2026-10-04"}')
+  await section.getByRole('button', { name: 'Run JSON', exact: true }).click()
+  await waitForText(page, '[role="status"]', 'Success')
+  await page.getByText('p0 shared-store fixture', { exact: true }).waitFor()
+  await page.screenshot({
+    path: resolve(output, host + '-todo.png'),
+    fullPage: true,
+  })
+  receipts.push({ host, plugin: 'plugin-todo-list', sharedAppStore: true })
+}
+
 try {
   const webPage = await web.newPage({ viewport: { width: 1200, height: 900 } })
   await webPage.goto(new URL('/tools/plugin-base64-encoder', webUrl).href)
@@ -178,6 +194,9 @@ try {
   await webPage.goto(new URL('/tools/plugin-website-latency', webUrl).href)
   await webPage.getByRole('tab', { name: 'Run', exact: true }).click()
   await verifyCancel(webPage, 'web')
+  await webPage.goto(new URL('/tools/plugin-todo-list', webUrl).href)
+  await webPage.getByRole('tab', { name: 'Run', exact: true }).click()
+  await verifyTodo(webPage, 'web')
 
   const native = desktop
     .contexts()[0]
@@ -198,6 +217,8 @@ try {
   await verifyExecution(native, 'desktop', 'flowtools-desktop-run-history-v1')
   await openNativePlugin(native, '网站延迟测试')
   await verifyCancel(native, 'desktop')
+  await openNativePlugin(native, 'Todo List')
+  await verifyTodo(native, 'desktop')
   await writeFile(
     resolve(output, 'receipt.json'),
     JSON.stringify({ checkedAt: new Date().toISOString(), receipts }, null, 2)

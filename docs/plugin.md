@@ -85,6 +85,12 @@ Host 必须注入与插件 ID 匹配的 context。CLI/Web/Desktop 已接入（P0
 历史分离，旧 key 不删除；恢复损坏或矛盾记录时显示提示，不伪造成功。
 Windows 验收范围与限制见 [宿主验收](./validation/p0-execution-hosts.md)。
 
+内置插件的 `bun run smoke:plugins` 使用真实编译实现和受控 capability，不访问
+公网/用户数据，也不替换 run()。Todo run 在 app host 读写 panel 共享 store；CLI
+继续使用原 `todos` key，数据先校验、损坏时失败且不覆盖；没有隐式跨 namespace
+迁移。网站延迟 run/panel 都使用 SDK request，缺少能力时实际失败，不回退 global
+fetch。批量测量中单个站点错误仍是返回的诊断数据，并非整个 run() 抛出异常。
+
 ### 结果 helpers（`result.*`）
 
 `run()` 推荐返回结构化的 `CommandResult`，使用 `result.*` helpers：

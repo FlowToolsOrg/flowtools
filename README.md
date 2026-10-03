@@ -76,6 +76,12 @@ are left untouched and excluded from the new history. See the
 [Windows host acceptance record](./docs/validation/p0-execution-hosts.md).
 This helper does not isolate code or stop synchronous loops. Execution
 metadata records input shape only, never raw input values or field names.
+`bun run smoke:plugins` builds package prerequisites and exercises all twelve
+real compiled entries through the CLI SDK runner with controlled in-memory
+storage and scoped fixture responses, not public network or user data. It also
+checks schema rejection, cancellation and actual plugin exceptions.
+Todo JSON runs share the host app store with its panel (CLI retains its existing
+validated `todos` key). Website latency uses SDK request with no raw fetch fallback.
 The HTML catalog is discovery evidence only, not a claim that 125 plugins are
 compatible, secure or production-ready. Signed third-party code remains untrusted.
 

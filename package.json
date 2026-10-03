@@ -46,6 +46,7 @@
     "format": "turbo run format",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
+    "smoke:plugins": "bun run build:packages && bun run --cwd plugins smoke:plugins",
     "lint:staged": "lint-staged",
     "prepare": "husky",
     "generate:manifests": "bun run scripts/generate-manifests.ts",

@@ -52,6 +52,12 @@ SDK 67 tests、Chromium 50 tests 含实际异常/取消/卸载/序列化与恢�
 Windows Web production preview 和独立标识的真实 Tauri Debug WebView 通过
 Base64、schema/JSON 拒绝、键盘运行、历史恢复与网络取消；截图已检查。详见
 [宿主验收](./docs/validation/p0-execution-hosts.md)，不等同正式签名安装或跨平台验收。
+P0.2c 的十二插件 smoke 逐项匹配 CLI inventory，通过真实编译入口/CLI SDK runner
+调用 run()，网络返回与存储均为受控 capability。全部插件的 schema 拒绝和预取消
+不产生新 request/storage 写入；实际 Todo 损坏数据及缺少 network 的异常跨端
+返回 EXECUTION_FAILED。Todo run 优先使用面板共享 app store，CLI 保留并验证旧
+todos key；没有自动合并旧 namespace。网站延迟 run/panel 使用 SDK request，
+不再直接 fetch；这是可信 built-in 修正，不阻止同 realm 恶意代码自行请求。
 该函数不提供 OS 隔离，不终止同 realm 的同步循环，也不撤销已发生的副作用；
 旧 `withWatchdog` 的 cooperative-only 行为未被升级或重新宣称为强制终止。
 

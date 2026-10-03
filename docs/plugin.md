@@ -8,6 +8,19 @@ plugin。
 > 启动器、TanStack Router 路由、React/SDK 插件面板、HTML `main` 启动容器和 Tauri
 > 官方插件驱动的 desktop capability adapter。
 
+### 安全与支持边界
+
+当前是 `prototype`，只适合开发评估，不是第三方生产 sandbox。内置 T1 可以
+共享 React 树；T2 UI、T3 headless 和 TL legacy 的生产执行必须满足
+[信任边界 ADR](./adr/0001-plugin-trust-boundaries.md) 与
+[能力/包策略 ADR](./adr/0002-capability-and-package-policy.md)。签名不等于可信，
+`permissions` 是请求，不等于用户授权；raw native/SQL/任意路径 adapter 不是
+允许第三方使用的生产 API。实际缺口与后续验收见
+[威胁模型](./security/threat-model.md) 和 [路线图](./production-roadmap.md)。
+
+Catalog 索引、API 名称或构建成功不代表兼容认证；v1 不宣称兼容全部 125 个
+HTML 插件，也不提供任意 shell/native binary 或 Node/Electron 私有 API。
+
 ## 1. 先理解插件模型
 
 Flow Tool 目前支持两类插件：
@@ -516,6 +529,8 @@ bun run tauri add <plugin-name>
 - `useUI()` 和 `useEnv()` 不依赖权限声明
 - 若使用了 `useFS/useRequest/useStorage/...`，但未声明对应 permission，会抛
   `MissingCapabilityError`
+- 上表是原型适配行为，不是 grant/scope 授权。DB raw query 未隔离插件数据；
+  同 realm 中的代码可以绕过 SDK，官方插件自身权限也不等于每插件授权。
 
 ## 9. 常见错误与排查
 
@@ -528,7 +543,8 @@ bun run tauri add <plugin-name>
 ### 9.2 `MissingCapabilityError: Capability "xxx" is unavailable`
 
 原因：插件代码调用了某 capability，但 `meta.permissions` 没声明。  
-处理：补充对应 permission，或删除 capability 调用。
+处理：内置开发插件核对声明后补充 permission，或删除不必要调用。第三方
+不能通过修改声明获得生产授权；未来须由 broker 校验实际 grant 与 scope。
 
 ### 9.3 `[flowtools-web-runtime] [dialog/db/native] Not supported on web runtime`
 
@@ -548,16 +564,39 @@ bun run tauri add <plugin-name>
 
 ## 11. 提交前检查
 
+新增/修改 capability 或 bridge 时，填写
+[PR 模板](../.github/pull_request_template.md) 的安全评审部分：威胁 ID、实际
+reviewer、Host 身份/scope、拒绝回归、撤销与恢复、残余风险。无安全边界影响
+也要说明不适用理由。`docs:check` 只检查文档结构与本地链接路径，不代表安全
+评审已经获批、远程 URL/anchor 可用或插件已获得兼容认证。
+
 在仓库根目录执行：
 
 ```bash
+bun run docs:check
 bun run lint
 bun run check-types
+bun run test
 bun run build
 ```
 
-自动化测试已废弃：不要新增 `*.test.ts` / `*.test.tsx`，也不要把 test task
-作为提交或 PR 的质量门。`bun run test` 只保留为兼容性的废弃提示。
+自动化测试是必需质量门。新机器先执行
+`bun run --cwd apps/ui-test test:install-browser` 安装锁定版本 Chromium。
+Web manifest 测试逐插件报告，真实 package 冷加载与批量注册用例限定 30 秒；
+普通单元用例保留默认超时，加载错误、元数据差异或超时仍失败，不自动重试。
+这个集成测试预算不是生产启动性能承诺。
+插件目录 inventory 与构建入口必须一致；新增插件要更新合约清单，确保 metadata、
+permissions、`run()`、`inputSchema` 和 CLI 执行链路都有对应验证。合约测试不得
+访问外部网络或用户状态；第三方兼容、权限隔离和打包产物按生产路线图单独验收。
+
+独立干净 Windows checkout 使用
+`pwsh -NoProfile -File scripts/check-ci.ps1` 复现 PR 门禁；入口先构建 SDK/UI/CLI/
+plugins 声明产物，再执行各 workspace 的完整验证。插件构建不得写入未忽略的
+生成文件，也不得依赖开发机现有 `dist`、用户数据库或 .env 才能通过自动化。
+工作流交付不等于远端 CI / 合并保护已验收，也不构成插件生产认证。
+Desktop command DTO 来源必须是 Rust 生成器，不能维护第二份手写绑定；生成过程
+不加载插件、不启动宿主窗口，也不初始化用户数据库。修改 Rust commands/DTO 时
+重新生成并验证前端类型消费以及非交互生成回归。
 
 并手动验证：
 

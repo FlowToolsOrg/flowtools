@@ -14,5 +14,5 @@ export default createPackageTsdownConfig({
     plugin: 'src/plugin/index.ts',
     icons: 'src/icons.ts',
   },
-  external: ['react/jsx-runtime', 'react/jsx-dev-runtime'],
+  neverBundle: ['react/jsx-runtime', 'react/jsx-dev-runtime'],
 })

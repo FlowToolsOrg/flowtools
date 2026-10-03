@@ -76,7 +76,7 @@ const ScanTextIcon = forwardRef<ScanTextIconHandle, ScanTextIconProps>(
         if (isControlledRef.current) {
           onMouseLeave?.(e)
         } else {
-          controls.start('visible')
+          void controls.start('visible')
         }
       },
       [controls, onMouseLeave]

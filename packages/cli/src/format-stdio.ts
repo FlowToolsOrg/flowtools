@@ -46,6 +46,8 @@ export function formatStdio(result: unknown): string {
 // ─── Value extraction ────────────────────────────────────────────────
 
 function extractValue(result: Record<string, unknown>): unknown {
+  if (typeof result.stdio === 'string') return result.stdio
+
   const type = result.type
 
   switch (type) {

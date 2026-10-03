@@ -401,9 +401,11 @@ async function main() {
     }
   }
 
-  program.parse()
+  await program.parseAsync()
 }
 
-main().catch(() => {
-  process.exit(1)
+main().catch(error => {
+  const message = error instanceof Error ? error.message : String(error)
+  process.stderr.write(`${message}\n`)
+  process.exitCode = 1
 })

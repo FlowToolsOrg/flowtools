@@ -26,6 +26,10 @@
       "types": "./dist/utils.d.ts",
       "import": "./dist/utils.js"
     },
+    "./utils/capability": {
+      "types": "./dist/utils/capability.d.ts",
+      "import": "./dist/utils/capability.js"
+    },
     "./hooks": {
       "types": "./dist/hooks.d.ts",
       "import": "./dist/hooks.js"
@@ -42,10 +46,12 @@
   "scripts": {
     "build": "tsdown --config tsdown.config.ts",
     "dev": "tsdown --config tsdown.config.ts --watch",
-    "lint": "oxlint --fix --type-aware --type-check",
+    "lint": "oxlint --type-aware --type-check",
+    "lint:fix": "oxlint --fix --type-aware --type-check",
     "format": "oxfmt",
     "generate:component": "turbo gen react-component",
-    "check-types": "tsgo --noEmit"
+    "check-types": "tsgo --noEmit",
+    "test": "bun run build && bun test test"
   },
   "dependencies": {
     "sucrase": "^3.35.0",
@@ -55,6 +61,7 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "bun-types": "^1.3.13",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "react": "catalog:",

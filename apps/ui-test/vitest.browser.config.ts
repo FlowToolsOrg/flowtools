@@ -13,16 +13,7 @@ const uiSrcIndex = fileURLToPath(
 )
 
 export default defineConfig({
-  plugins: [
-    // @ts-ignore
-    react({
-      babel: {
-        plugins: [['babel-plugin-react-compiler']],
-      },
-    }),
-    // @ts-ignore
-    tailwindcss(),
-  ],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: [
       { find: '@flowtools/ui', replacement: uiSrcIndex },
@@ -33,6 +24,7 @@ export default defineConfig({
     setupFiles: ['./src/test/browser-setup.ts'],
     browser: {
       enabled: true,
+      headless: true,
       provider: playwright(),
       // https://vitest.dev/config/browser/playwright
       instances: [{ browser: 'chromium' }],

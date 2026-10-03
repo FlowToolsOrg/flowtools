@@ -4,6 +4,20 @@ version = "0.1.0"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
+default-run = "desktop"
+
+[features]
+codegen = ["tauri/test"]
+
+[[bin]]
+name = "export-bindings"
+path = "src/bin/export-bindings.rs"
+required-features = ["codegen"]
+
+[[test]]
+name = "bindings"
+path = "tests/bindings.rs"
+required-features = ["codegen"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

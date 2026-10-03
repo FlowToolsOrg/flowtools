@@ -1,4 +1,4 @@
-import { MarketEmptyState, Button } from '@flowtools/ui'
+import { MarketEmptyState } from '@flowtools/ui'
 import { describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
 import { userEvent } from 'vitest/browser'
@@ -25,7 +25,11 @@ describe('MarketEmptyState', () => {
     const onReset = vi.fn()
     const { getByRole } = await render(
       <MarketEmptyState
-        action={<Button onPress={onReset}>Reset filters</Button>}
+        action={
+          <button type="button" onClick={onReset}>
+            Reset filters
+          </button>
+        }
         title="No data"
       />
     )

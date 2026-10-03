@@ -10,10 +10,14 @@ const packageDir = dirname(fileURLToPath(import.meta.url))
 export default createPackageTsdownConfig({
   packageDir,
   entry: {
+    definePlugin: 'src/compositions/definePlugin.ts',
+    result: 'src/result/index.ts',
+    runtime: 'src/runtime/index.ts',
     index: 'src/index.ts',
     utils: 'src/utils/index.ts',
+    'utils/capability': 'src/utils/capability.ts',
     hooks: 'src/hooks/index.ts',
     types: 'src/types/index.ts',
   },
-  external: ['react/jsx-runtime', 'react/jsx-dev-runtime'],
+  neverBundle: ['react/jsx-runtime', 'react/jsx-dev-runtime'],
 })

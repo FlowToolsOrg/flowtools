@@ -21,9 +21,11 @@
   "scripts": {
     "build": "tsdown --config tsdown.config.ts",
     "dev": "tsdown --config tsdown.config.ts --watch",
-    "lint": "oxlint --fix --type-aware --type-check",
+    "lint": "oxlint --type-aware --type-check",
+    "lint:fix": "oxlint --fix --type-aware --type-check",
     "format": "oxfmt",
-    "check-types": "tsgo --noEmit"
+    "check-types": "tsgo --noEmit",
+    "test": "bun test src"
   },
   "dependencies": {
     "commander": "^13.1.0",
@@ -32,6 +34,7 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "bun-types": "^1.3.13",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "typescript": "catalog:"

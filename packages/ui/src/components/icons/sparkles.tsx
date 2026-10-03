@@ -60,12 +60,12 @@ const SparklesIcon = forwardRef<SparklesIconHandle, SparklesIconProps>(
 
       return {
         startAnimation: () => {
-          sparkleControls.start('hover')
-          starControls.start('blink', { delay: 1 })
+          void sparkleControls.start('hover')
+          void starControls.start('blink', { delay: 1 })
         },
         stopAnimation: () => {
-          sparkleControls.start('initial')
-          starControls.start('initial')
+          void sparkleControls.start('initial')
+          void starControls.start('initial')
         },
       }
     })
@@ -75,8 +75,8 @@ const SparklesIcon = forwardRef<SparklesIconHandle, SparklesIconProps>(
         if (isControlledRef.current) {
           onMouseEnter?.(e)
         } else {
-          sparkleControls.start('hover')
-          starControls.start('blink', { delay: 1 })
+          void sparkleControls.start('hover')
+          void starControls.start('blink', { delay: 1 })
         }
       },
       [onMouseEnter, sparkleControls, starControls]
@@ -87,8 +87,8 @@ const SparklesIcon = forwardRef<SparklesIconHandle, SparklesIconProps>(
         if (isControlledRef.current) {
           onMouseLeave?.(e)
         } else {
-          sparkleControls.start('initial')
-          starControls.start('initial')
+          void sparkleControls.start('initial')
+          void starControls.start('initial')
         }
       },
       [sparkleControls, starControls, onMouseLeave]

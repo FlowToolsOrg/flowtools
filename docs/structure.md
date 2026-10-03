@@ -1,5 +1,49 @@
 # Flow Tools 架构设计规范
 
+## 安全设计来源与实现边界
+
+- `docs/adr/0001-plugin-trust-boundaries.md`：T0/T1/T2/T3/TL 执行位置、身份
+  来源、隔离边界与 v1 非目标；Single React Tree 只适用于可信 T1。
+- `docs/adr/0002-capability-and-package-policy.md`：Rust broker、scope、
+  签名准入、撤销、迁移与恢复的 accepted-design，不是已实现控制。
+- `docs/security/threat-model.md`：稳定 SEC ID、实际入口证据、owner、目标
+  缓解、恶意 fixture 与残余风险；实现验收由 production-roadmap 指定阶段负责。
+
+以下生命周期、权限与消息流水线包含目标设计，不能由流程图推断已强制执行。
+当前原生 adapter/raw SQL/HTML iframe 的具体缺口以威胁模型为准。
+
+## 工程验证结构
+
+- `scripts/docs-check.ts` / `docs-check.test.ts`：十份核心/ADR/威胁/PR 文档的
+  只读契约，内联本地链接路径与风险字段验证；脚本由 Desktop 测试任务消费。
+  不检查远端 URL、Markdown anchor、运行时安全或 reviewer 批准。
+- `.github/pull_request_template.md`：安全边界变更的 threat/ADR、scope、拒绝
+  回归、撤销恢复与审阅证据；不是仓库强制合并保护配置。
+- `.github/workflows/windows-quality.yml`：固定工具链与 Action SHA 的 Windows
+  PR 工作流；只读权限，不缓存 JavaScript 构建产物。
+- `scripts/check-ci.ps1` / `ci-gates.ps1`：本地与 CI 共用的顺序门禁、退出码与
+  工作树漂移检查；`ci-contracts.test.ts` 验证工作流和 PowerShell 失败传播。
+- Web/Desktop `generate:routes` 使用锁定的官方 TanStack CLI；Desktop
+  `src-tauri/src/bin/export-bindings.rs` 使用同一命令构造器导出 Rust bindings。
+  两者均在 fresh checkout 的类型检查前生成，不依赖一次手动桌面启动。
+  所有 workspace 提供统一的 `lint`、`check-types`、`test` 和 `build`。根 Turbo
+  测试图依赖 `^test`，package 合约测试自行构建产物后断言，再运行消费者测试；
+  禁止空测试成功选项与测试缓存。根 `test` 和 `build` 必须顺序执行。
+
+- `packages/sdk/test`：SDK 值对象、registry、lifecycle、watchdog 与公开导出。
+- `packages/cli/src/*.test.ts`：CLI 参数、schema、formatter 与 runner。
+- `packages/ui/test`：构建后公开导出；`test/consumer` 独立编译声明消费。
+- `plugins/plugin-entries.ts`：构建与合约测试共享目录 inventory；
+  `plugins/test` 验证内置插件和 CLI 执行链路。
+- `apps/web-vite/src/app/*.test.ts`：逐插件 manifest、真实加载与命令注册合约；
+  冷加载/批量注册集成测试使用有限 30 秒预算，普通用例保留默认超时，不重试。
+- `apps/ui-test/src/test`：固定 Playwright Chromium 的无界面组件交互测试。
+- `apps/desktop/src-tauri/src`：内存数据库 Rust 合约测试，不使用用户 app-data。
+- `apps/desktop/test`：Rust 测试清单非空检查及其回归，防止 Cargo 零测试假绿。
+
+浏览器与插件生产配置不引入 Bun 测试全局类型；测试配置单独类型检查。手动 UI
+验证继续补充视觉、无障碍、路由和插件渲染的自动化覆盖。
+
 ## 1. 核心抽象层 (Abstract Layer)
 
 定义系统核心调度骨架与双端路由机制。

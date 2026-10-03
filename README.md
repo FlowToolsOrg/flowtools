@@ -7,8 +7,8 @@ Flow Tool is a plugin-driven utility platform focused on capability injection,
 permission gating, and a unified React UI runtime.
 
 The target production host is desktop (Tauri + Rust).
-This repository currently contains a web runtime prototype used to validate the
-SDK, plugin contracts, and capability model before desktop host implementation.
+This repository currently contains a web runtime prototype and a desktop host
+prototype. Neither is a production sandbox for untrusted plugins.
 
 ## ✨ Vision
 
@@ -51,13 +51,22 @@ Flow Tool is built in layered form:
 
 Core principles:
 
-- Single React tree
+- Single React tree for trusted built-ins, not third-party isolation
 - Capability injection via runtime context
 - Permission-gated resource access
-- Namespaced storage & database
+- Namespaced storage conventions; enforced database isolation remains planned
 - Plugin lifecycle management
 
-## Current Status (June 2026)
+## Current Status (October 2026)
+
+Current maturity is `prototype`. The accepted design separates Host/built-ins
+from third-party UI, headless and legacy execution; its security controls are
+not yet implemented. See [trust boundaries](./docs/adr/0001-plugin-trust-boundaries.md),
+[capability/package policy](./docs/adr/0002-capability-and-package-policy.md),
+[open threat register](./docs/security/threat-model.md) and the
+[production roadmap](./docs/production-roadmap.md).
+The HTML catalog is discovery evidence only, not a claim that 125 plugins are
+compatible, secure or production-ready. Signed third-party code remains untrusted.
 
 - Product direction: desktop-first, cross-platform ready.
 - Current runnable hosts:
@@ -110,7 +119,7 @@ apps/
   desktop/     # Tauri desktop shell, launcher, settings/run routes
     src/data/  # generated HTML plugin catalog consumed by the launcher
   docs/        # (planned) documentation site
-  ui-test/     # UI package consumer for manual validation; automated tests are deprecated
+  ui-test/     # UI package consumer with browser tests and manual validation
 packages/
   sdk/         # plugin contract, hooks, registry, lifecycle, result helpers
   ui/          # shared React UI primitives (HeroUI-based)
@@ -131,6 +140,7 @@ bun run dev:desktop
 bun run build
 bun run lint
 bun run check-types
+bun run test
 bun run format
 bun run inspect:html-plugins
 ```
@@ -148,11 +158,53 @@ bun run packages/cli/src/cli.ts list
 bun run packages/cli/src/cli.ts run <plugin-id> --format text
 ```
 
-## Testing Deprecated
+## Validation
 
-Automated tests are deprecated for this project. `bun run test` is now a no-op
-that prints the deprecation notice. Use linting, type checks, builds, and manual
-validation for changed UI/runtime flows instead.
+Run `bun run docs:check` to validate the ten core/design/review documents, their
+inline local link paths and required threat fields. This read-only check does
+not certify security, check remote URLs/Markdown anchors, or approve reviewers.
+Capability/bridge changes must complete the security section in the
+[PR template](./.github/pull_request_template.md) with actual review and
+rejection-test evidence; branch protection is a separate administrator gate.
+
+Automated tests are required. After installing dependencies, install the pinned
+Chromium runtime once with `bun run --cwd apps/ui-test test:install-browser`.
+On a fresh checkout, run `bun run build:packages` and `bun run generate:hosts`
+before lint/type checks to generate their declaration, route, and IPC inputs.
+Run `bun run lint`, `bun run check-types`, `bun run test`, and `bun run build`
+from the repository root. `bun run verify:workspace-tasks` checks that all seven
+workspaces expose the standard gates and reject empty-test success flags.
+
+The uncached test graph waits for dependency tests before running consumers;
+package contract tests build their own artifacts. Run root tests and builds
+sequentially because package tests may clean their output. Coverage includes
+SDK and CLI contracts, generated UI exports and
+consumer declarations, built-in plugin inventory and CLI execution, Web Host
+commands, headless Chromium UI interactions, and in-memory Rust persistence.
+Manual routing, rendering, accessibility, and visual validation remain required
+for changed UI flows. Passing these gates does not advance production maturity
+without the remaining security, packaging, and recovery evidence in the roadmap.
+
+Web manifest contracts run once per built-in plugin with a bounded 30-second
+cold-import budget; bulk registration uses the same integration-test budget.
+Ordinary unit tests keep their default timeout. Loading errors and contract
+mismatches still fail without retries; these tests are not startup benchmarks.
+
+Windows PR validation is defined in `.github/workflows/windows-quality.yml`.
+From a clean checkout, run `pwsh -NoProfile -File scripts/check-ci.ps1` for the
+same frozen install, browser setup, package/host prerequisites, seven-workspace gates,
+Rust format/check/clippy, and clean-worktree checks. Package prerequisites are
+also available as `bun run build:packages`; declaration consumers require these
+artifacts before lint/type checks on a fresh checkout. `bun run generate:hosts`
+generates Web/Desktop route trees and Rust-derived Desktop bindings without
+launching a window or initializing user data. Host builds run their generators
+before TypeScript checks. Bun is pinned by
+`packageManager`; CI uses Rust 1.96.0. Actions use immutable commit references,
+read-only permissions, and dependency/native compilation caches, not JS build
+outputs or Turbo results. A repository administrator must separately require
+the `Windows quality gates` check; a workflow file alone does not block merging.
+Turbo keeps strict environment filtering, with explicit `PATHEXT` and native
+build/test `CARGO_TARGET_DIR` passthrough for Windows tool discovery and caches.
 
 ## Plugin Model
 
@@ -309,20 +361,15 @@ Plugins declare required capabilities:
 permissions: ['fs', 'network', 'db']
 ```
 
-Runtime enforces:
+The current runtime provides cooperative SDK capability injection and storage
+key prefixes based on manifest declarations. It does not enforce per-package
+user grants or protect the host realm against hostile plugin code.
 
-- Capability injection
-- Namespace isolation
-- Access restriction
-- Future user authorization prompts
-
-Plugins cannot directly access:
-
-- Tauri APIs
-- Node APIs
-- Native bindings
-
-All access must go through the Flow Tool runtime.
+The production design requires isolated execution plus Rust-side identity,
+grant and scope validation on every sensitive operation. Raw `native.invoke`,
+SQL and path adapters currently present are prototype gaps, not supported
+third-party production APIs. SDK-only imports are a development convention;
+they do not prevent same-realm code from bypassing the SDK.
 
 ## 💾 State & Database
 
@@ -384,11 +431,10 @@ export default definePlugin({
 Flow Tool uses SQLite for desktop-hosted plugin metadata and plugin-facing
 database capability work.
 
-Each plugin:
-
-- Has isolated table namespace
-- Cannot access other plugins’ data
-- Managed migrations (future roadmap)
+The current plugin-facing adapter shares a SQLite connection and accepts raw
+SQL; cross-plugin database isolation is not enforced. Host metadata repository
+tests do not certify plugin data access. Enforced namespaces, versioned
+migrations, backup and recovery are required future gates.
 
 Desktop plugin metadata is moving into the Tauri/Rust backend. The Rust side
 stores FlowTools-compatible manifest fields such as `id`, `name`, `version`,
@@ -505,6 +551,8 @@ The focus is on:
 - Architecture details: [`architecture.md`](./architecture.md)
 - Contributor/agent guide: [`AGENTS.md`](./AGENTS.md)
 - Plugin development: [`plugin.md`](./docs/plugin.md)
+- Security baseline: [threat model](./docs/security/threat-model.md) and
+  [production roadmap](./docs/production-roadmap.md)
 
 ## License
 

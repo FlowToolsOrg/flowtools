@@ -36,9 +36,9 @@ export class PluginLoader {
 
       this.registry.updateState(pluginId, {
         plugin,
-        state: 'loaded',
         loadedAt: Date.now(),
       })
+      this.registry.transition(pluginId, 'loaded')
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error))
 
@@ -85,19 +85,18 @@ export class PluginLoader {
       )
     }
 
-    this.registry.updateState(pluginId, {
-      state: 'enabled',
-      enabledAt: Date.now(),
-    })
-
     try {
       await updated.plugin?.lifecycle?.onActivate?.()
     } catch (error) {
-      this.registry.markError(
-        pluginId,
-        error instanceof Error ? error : new Error(String(error))
-      )
+      const err = error instanceof Error ? error : new Error(String(error))
+      this.registry.markError(pluginId, err)
+      throw err
     }
+
+    this.registry.updateState(pluginId, {
+      enabledAt: Date.now(),
+    })
+    this.registry.transition(pluginId, 'enabled')
   }
 
   /**
@@ -118,10 +117,9 @@ export class PluginLoader {
     try {
       await entry.plugin?.lifecycle?.onDeactivate?.()
     } catch (error) {
-      this.registry.markError(
-        pluginId,
-        error instanceof Error ? error : new Error(String(error))
-      )
+      const err = error instanceof Error ? error : new Error(String(error))
+      this.registry.markError(pluginId, err)
+      throw err
     }
 
     this.registry.transition(pluginId, 'disabled')

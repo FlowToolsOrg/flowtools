@@ -36,24 +36,30 @@
   "type": "module",
   "scripts": {
     "build": "turbo run build",
+    "build:packages": "turbo run build --filter=@flowtools/sdk --filter=@flowtools/ui --filter=@flowtools/cli --filter=@flowtools/plugins",
     "dev": "turbo run dev",
     "dev:web": "turbo run dev --filter=@flowtools/web",
     "dev:desktop": "bun run --cwd apps/desktop tauri dev",
     "build:desktop": "bun run --cwd apps/desktop tauri build",
-    "lint": "turbo run lint",
+    "lint": "oxlint --type-aware --type-check scripts/docs-check.ts scripts/docs-check.test.ts && turbo run lint",
+    "lint:fix": "turbo run lint:fix",
     "format": "turbo run format",
     "check-types": "turbo run check-types",
-    "test": "bun -e \"console.log('Tests are deprecated for this project; use lint, check-types, builds, and manual validation instead.')\"",
+    "test": "turbo run test",
     "lint:staged": "lint-staged",
     "prepare": "husky",
     "generate:manifests": "bun run scripts/generate-manifests.ts",
-    "inspect:html-plugins": "bun run scripts/inspect-html-plugins.ts"
+    "generate:hosts": "bun run --cwd apps/web-vite generate:routes && bun run --cwd apps/desktop generate",
+    "inspect:html-plugins": "bun run scripts/inspect-html-plugins.ts",
+    "docs:check": "bun run scripts/docs-check.ts",
+    "verify:workspace-tasks": "bun run scripts/verify-workspace-tasks.ts"
   },
   "dependencies": {
     "es-toolkit": "catalog:",
     "motion": "catalog:"
   },
   "devDependencies": {
+    "@tanstack/router-cli": "1.167.17",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
@@ -81,5 +87,5 @@
   "engines": {
     "node": ">=20.19.0"
   },
-  "packageManager": "bun@1.3.1"
+  "packageManager": "bun@1.3.14"
 }

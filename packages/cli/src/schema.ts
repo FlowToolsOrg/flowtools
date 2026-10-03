@@ -31,6 +31,25 @@ export interface FieldMeta {
   itemType?: 'string' | 'number'
 }
 
+export type CLIInputErrorCode =
+  | 'INVALID_JSON'
+  | 'INVALID_INPUT_SHAPE'
+  | 'SCHEMA_VALIDATION'
+
+/**
+ * Stable library error for invalid CLI input.
+ * Presentation and process exit behavior belong to the CLI entry point.
+ */
+export class CLIInputError extends Error {
+  readonly code: CLIInputErrorCode
+
+  constructor(code: CLIInputErrorCode, message: string) {
+    super(message)
+    this.name = 'CLIInputError'
+    this.code = code
+  }
+}
+
 /**
  * Convert a Zod schema to a JSON Schema and extract field metadata.
  */
@@ -106,7 +125,7 @@ export function addSchemaFlags(
         command.option(flag, desc, def.default ? true : false)
         break
       case 'number':
-        command.option(`${flag} <number>`, desc, String(def.default))
+        command.option(`${flag} <number>`, desc, defaultToString(def.default))
         break
       case 'enum': {
         const choices = def.enum ?? []
@@ -122,7 +141,7 @@ export function addSchemaFlags(
           `${flag} <value>`,
           `${desc} (repeatable)`,
           (val: string, prev: string[]) => [...prev, val],
-          []
+          Array.isArray(def.default) ? def.default.map(String) : []
         )
         break
       default:
@@ -146,7 +165,10 @@ export function buildInputFromOptions(
 
   for (const [key, def] of Object.entries(fields)) {
     const kebabKey = toKebab(key)
-    const value = opts[kebabKey]
+    const commanderKey = kebabKey.replace(/-([a-z0-9])/g, (_, char: string) =>
+      char.toUpperCase()
+    )
+    const value = opts[kebabKey] ?? opts[commanderKey]
 
     if (value !== undefined) {
       // Coerce types
@@ -252,22 +274,24 @@ export function parseJsonInput(
     parsed = JSON.parse(jsonStr)
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    process.stderr.write(`Invalid JSON input: ${message}\n`)
-    process.exit(1)
+    throw new CLIInputError('INVALID_JSON', `Invalid JSON input: ${message}`)
   }
 
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-    return { value: parsed }
+    throw new CLIInputError(
+      'INVALID_INPUT_SHAPE',
+      'JSON input must be an object.'
+    )
   }
 
   if (schema) {
     const result = schema.safeParse(parsed)
     if (!result.success) {
-      for (const issue of result.error.issues) {
+      const messages = result.error.issues.map(issue => {
         const path = issue.path.length ? `${issue.path.join('.')}: ` : ''
-        process.stderr.write(`${path}${issue.message}\n`)
-      }
-      process.exit(1)
+        return `${path}${issue.message}`
+      })
+      throw new CLIInputError('SCHEMA_VALIDATION', messages.join('\n'))
     }
     return result.data as Record<string, unknown>
   }

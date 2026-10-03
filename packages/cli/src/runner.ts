@@ -14,6 +14,86 @@ export interface RunResult {
   error?: string
 }
 
+interface RunnablePlugin {
+  run?: (context: unknown, input: Record<string, unknown>) => unknown
+}
+
+export interface PluginRunnerDependencies {
+  loadPlugin: (pluginId: string) => Promise<RunnablePlugin | null>
+  createContext: (pluginId: string) => object
+  startTimeout?: (callback: () => void, delayMs: number) => () => void
+}
+
+type PluginRunner = (
+  pluginId: string,
+  input: Record<string, unknown>,
+  options?: { timeout?: number }
+) => Promise<RunResult>
+
+/**
+ * Create an isolated runner with injectable discovery and context boundaries.
+ */
+export function createPluginRunner(
+  dependencies: PluginRunnerDependencies
+): PluginRunner {
+  return async (pluginId, input, options) => {
+    let cancelTimeout: (() => void) | undefined
+
+    try {
+      const plugin = await dependencies.loadPlugin(pluginId)
+      if (!plugin) {
+        return { success: false, error: `Plugin not found: ${pluginId}` }
+      }
+
+      if (!plugin.run) {
+        return {
+          success: false,
+          error: `Plugin ${pluginId} has no run() function`,
+        }
+      }
+
+      const ctx = dependencies.createContext(pluginId)
+      const timeoutMs = options?.timeout ?? 30_000
+      const controller = new AbortController()
+      const startTimeout =
+        dependencies.startTimeout ??
+        ((callback: () => void, delayMs: number) => {
+          const timeout = setTimeout(callback, delayMs)
+          return () => clearTimeout(timeout)
+        })
+      cancelTimeout = startTimeout(() => controller.abort(), timeoutMs)
+      const execCtx = { ...ctx, signal: controller.signal }
+
+      const result = await Promise.race([
+        Promise.resolve(plugin.run(execCtx, input)),
+        new Promise<never>((_, reject) => {
+          controller.signal.addEventListener(
+            'abort',
+            () => {
+              reject(
+                new Error(`Plugin execution timed out after ${timeoutMs}ms`)
+              )
+            },
+            { once: true }
+          )
+        }),
+      ])
+
+      return { success: true, data: result }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      return { success: false, error: message }
+    } finally {
+      cancelTimeout?.()
+    }
+  }
+}
+
+const defaultPluginRunner = createPluginRunner({
+  loadPlugin,
+  createContext: createCLIToolContext,
+})
+
 /**
  * Run a plugin by id with the given input.
  * Returns the structured result.
@@ -25,45 +105,7 @@ export async function runPlugin(
     timeout?: number
   }
 ): Promise<RunResult> {
-  const plugin = await loadPlugin(pluginId)
-  if (!plugin) {
-    return { success: false, error: `Plugin not found: ${pluginId}` }
-  }
-
-  if (!plugin.run) {
-    return {
-      success: false,
-      error: `Plugin ${pluginId} has no run() function`,
-    }
-  }
-
-  const ctx = createCLIToolContext(pluginId)
-
-  // Apply timeout
-  const timeoutMs = options?.timeout ?? 30_000
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), timeoutMs)
-
-  // Override signal with custom timeout
-  const execCtx = { ...ctx, signal: controller.signal }
-
-  try {
-    const result = await Promise.race([
-      Promise.resolve(plugin.run(execCtx, input)),
-      new Promise<never>((_, reject) => {
-        controller.signal.addEventListener('abort', () => {
-          reject(new Error(`Plugin execution timed out after ${timeoutMs}ms`))
-        })
-      }),
-    ])
-
-    clearTimeout(timeout)
-    return { success: true, data: result }
-  } catch (err) {
-    clearTimeout(timeout)
-    const message = err instanceof Error ? err.message : String(err)
-    return { success: false, error: message }
-  }
+  return defaultPluginRunner(pluginId, input, options)
 }
 
 /**

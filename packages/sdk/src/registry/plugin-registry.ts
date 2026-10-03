@@ -113,13 +113,42 @@ export class PluginRegistry {
    * Transition a plugin to a new lifecycle state.
    */
   transition(pluginId: string, state: PluginState): void {
+    const entry = this.plugins.get(pluginId)
+    if (!entry || entry.state === state) {
+      return
+    }
+
     this.updateState(pluginId, { state })
+
+    switch (state) {
+      case 'registered':
+        this.emit({ type: 'registered', pluginId })
+        break
+      case 'loading':
+        this.emit({ type: 'loading', pluginId })
+        break
+      case 'loaded':
+        this.emit({ type: 'loaded', pluginId })
+        break
+      case 'enabled':
+        this.emit({ type: 'enabled', pluginId })
+        break
+      case 'disabled':
+        this.emit({ type: 'disabled', pluginId })
+        break
+      case 'error':
+        break
+    }
   }
 
   /**
    * Mark a plugin as errored.
    */
   markError(pluginId: string, error: Error): void {
+    if (!this.plugins.has(pluginId)) {
+      return
+    }
+
     this.updateState(pluginId, { state: 'error', error })
     this.emit({ type: 'error', pluginId, error })
   }

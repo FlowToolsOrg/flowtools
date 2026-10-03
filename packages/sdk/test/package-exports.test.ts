@@ -1,0 +1,56 @@
+import { describe, expect, test } from 'bun:test'
+
+interface ExportTarget {
+  types: string
+  import: string
+}
+
+interface PackageManifest {
+  name: string
+  exports: Record<string, ExportTarget>
+}
+
+const expectedSymbols: Record<string, readonly string[]> = {
+  '.': ['definePlugin', 'result'],
+  './definePlugin': ['definePlugin'],
+  './result': ['result'],
+  './utils': ['extractMeta', 'pickCapability'],
+  './utils/capability': ['pickCapability'],
+  './hooks': ['useEnv'],
+  './runtime': ['FlowToolRuntimeContext', 'FlowToolRuntimeProvider'],
+  './types': [],
+}
+
+describe('package exports', () => {
+  test('points every public subpath at consumable JS and declaration files', async () => {
+    const packageRoot = new URL('../', import.meta.url)
+    const manifest = (await Bun.file(
+      new URL('package.json', packageRoot)
+    ).json()) as PackageManifest
+
+    expect(Object.keys(manifest.exports).sort()).toEqual(
+      Object.keys(expectedSymbols).sort()
+    )
+
+    for (const [subpath, target] of Object.entries(manifest.exports)) {
+      expect(target.import.startsWith('./dist/')).toBe(true)
+      expect(target.types.startsWith('./dist/')).toBe(true)
+
+      for (const filePath of [target.import, target.types]) {
+        const output = Bun.file(
+          new URL(filePath.replace(/^\.\//, ''), packageRoot)
+        )
+        expect(await output.exists()).toBe(true)
+        expect(output.size).toBeGreaterThan(0)
+      }
+
+      const specifier =
+        subpath === '.' ? manifest.name : `${manifest.name}/${subpath.slice(2)}`
+      const loaded = (await import(specifier)) as Record<string, unknown>
+
+      for (const symbol of expectedSymbols[subpath] ?? []) {
+        expect(loaded).toHaveProperty(symbol)
+      }
+    }
+  })
+})

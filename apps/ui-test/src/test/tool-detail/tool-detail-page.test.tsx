@@ -1,4 +1,4 @@
-import { ToolDetailPage, Button } from '@flowtools/ui'
+import { ToolDetailPage } from '@flowtools/ui'
 import { describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
 import { userEvent } from 'vitest/browser'
@@ -29,7 +29,9 @@ describe('ToolDetailPage', () => {
     const { getByRole } = await render(
       <ToolDetailPage>
         <ToolDetailPage.Header>
-          <Button onPress={onInstall}>Install</Button>
+          <button type="button" onClick={onInstall}>
+            Install
+          </button>
         </ToolDetailPage.Header>
         <ToolDetailPage.Content />
       </ToolDetailPage>

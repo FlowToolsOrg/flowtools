@@ -1,20 +1,33 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
+  "globalDependencies": ["configs/tsdown/**"],
+  "globalPassThroughEnv": ["PATHEXT"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "passThroughEnv": ["CARGO_TARGET_DIR"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**/*"]
     },
     "lint": {
       "dependsOn": ["^lint"]
     },
+    "lint:fix": {
+      "dependsOn": ["^lint:fix"],
+      "cache": false
+    },
     "format": {
       "dependsOn": ["^format"]
     },
     "check-types": {
       "dependsOn": ["^check-types"]
+    },
+    "test": {
+      "dependsOn": ["^test"],
+      "passThroughEnv": ["CARGO_TARGET_DIR"],
+      "cache": false,
+      "outputs": []
     },
     "dev": {
       "cache": false,

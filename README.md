@@ -65,6 +65,11 @@ not yet implemented. See [trust boundaries](./docs/adr/0001-plugin-trust-boundar
 [capability/package policy](./docs/adr/0002-capability-and-package-policy.md),
 [open threat register](./docs/security/threat-model.md) and the
 [production roadmap](./docs/production-roadmap.md).
+The SDK now exports `executePlugin()` for real app/tool `run()` calls with
+schema validation/defaults, versioned execution metadata, stable failure codes,
+cancellation and bounded asynchronous waiting. Host integration is tracked in
+P0.2b; this helper does not isolate code or stop synchronous loops. Execution
+metadata records input shape only, never raw input values or field names.
 The HTML catalog is discovery evidence only, not a claim that 125 plugins are
 compatible, secure or production-ready. Signed third-party code remains untrusted.
 

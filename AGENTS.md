@@ -176,6 +176,10 @@ Plugins are managed through a central registry system:
 - `PluginLifecycleManager`: orchestrates `onLoad/onUnload/onActivate/onDeactivate`.
 - `PluginErrorBoundary`: catches rendering errors from plugin panels.
 - `withWatchdog`: wraps tool execution with timeout detection.
+- `executePlugin`: shared app/tool schema-validation and execution envelope;
+  use it for new run adapters instead of fabricating success or timing. It
+  bounds asynchronous waiting and forwards cancellation, but is not a sandbox
+  or a hard stop for synchronous code. Persist only safe input-shape metadata.
 
 HTML plugin compatibility is handled as an import/compatibility layer, not as direct
 execution bypassing the SDK:

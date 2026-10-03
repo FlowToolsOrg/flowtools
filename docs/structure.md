@@ -14,6 +14,10 @@
 
 ## 工程验证结构
 
+- `packages/sdk/src/execution/executor.ts` / `test/executor.test.ts`：共享真实
+  `run()` 执行边界，校验/defaults、稳定 envelope、取消/异步等待上限与资源清理。
+  输入摘要只保留类型和大小；宿主接入在 P0.2b 验收，执行器不是 sandbox。
+
 - `scripts/docs-check.ts` / `docs-check.test.ts`：十份核心/ADR/威胁/PR 文档的
   只读契约，内联本地链接路径与风险字段验证；脚本由 Desktop 测试任务消费。
   不检查远端 URL、Markdown anchor、运行时安全或 reviewer 批准。

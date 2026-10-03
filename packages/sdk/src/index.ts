@@ -6,6 +6,7 @@ export * from './registry'
 export * from './services'
 export * from './constants'
 export * from './compat/html-plugin'
+export * from './execution/executor'
 
 export * from './compositions/definePlugin'
 export * from './compositions/definePluginStore'

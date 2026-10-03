@@ -667,13 +667,18 @@ cargo check --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
 
 #### P0.2a 统一 SDK 执行结果与失败边界
 
-- 状态：`pending`
+- 状态：`done`
+- 完成日期：`2026-10-03`
 - 范围：SDK app/tool 的实际 `run()`、inputSchema 默认值与验证、版本/耗时/
   输入摘要、稳定错误码、取消与有限超时。
 - 验收：先写失败回归，再实现；成功、schema 错误、身份不符、异常、预取消、
   执行中取消、超时、迟到结果与 timer/listener 清理均有确定性测试。
 - 边界：取消可使 Host 不再接收迟到结果并通知 cooperative plugin；不宣称能
   终止同 realm 同步死循环或撤回插件已发生的副作用。
+- 交付：`packages/sdk/src/execution/executor.ts` 与公开 SDK export，21 个新增
+  回归；校验期间取消先出现失败测试，再补 listener 注册后的 abort 状态检查。
+- 验证：SDK lint、check-types、build、全部 61 个 test 通过；纯 SDK 无 UI 变化，
+  不产生三端运行或人工 UI 已通过的结论，P0.2b/c 仍待完成。
 
 #### P0.2b 接通三端运行与真实历史
 
@@ -1475,7 +1480,7 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 | P0.1d1 | done        | Codex      | P0.1b, P0.1c  | `ci(repo): add reproducible Windows quality gates (P0.1d1)`；两轮本地完整门禁、156 tests、无生成漂移          |
 | P0.1d2 | done        | Maintainer | P0.1d1        | `docs(roadmap): close remote quality gate acceptance (P0.1d2)`；PR #2 BLOCKED → CLEAN、c2180f8 两轮 175 tests |
 | P0.2   | in-progress | Codex      | P0.1          | 2026-10-03 拆分 P0.2a/b/c；按 SDK → 三端运行/历史 → 十二插件验收执行                                          |
-| P0.2a  | pending     | Codex      | P0.1          | SDK executor/schema/取消/超时/稳定 envelope                                                                   |
+| P0.2a  | done        | Codex      | P0.1          | 2026-10-03；共享 SDK executor、21 新回归；SDK lint/types/build 与 61 tests 通过                               |
 | P0.2b  | pending     | Codex      | P0.2a         | CLI/Web/Desktop 真实运行与历史                                                                                |
 | P0.2c  | pending     | Codex      | P0.2b         | 十二插件 smoke、跨端与人工验收                                                                                |
 | P0.3   | pending     | TBD        | P0.1          | -                                                                                                             |

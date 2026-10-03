@@ -69,6 +69,14 @@ const inputSchema = z.object({
 
 若未提供 `inputSchema`，CLI 仍可通过 `--input '{"key":"value"}'` 传入原始 JSON。
 
+SDK 共享执行入口为 `executePlugin(plugin, input, toolContext, options)`，对 app
+和 tool 的实际 `run()` 应用 schema 默认值与校验，返回 `PluginExecutionResult`。
+结果含插件 ID/版本、真实开始/完成时间、耗时和仅类型/大小的输入摘要；失败含
+稳定 `error.code`，如 `INPUT_INVALID`、`EXECUTION_FAILED`、`ABORTED`、`TIMEOUT`。
+默认异步等待上限 30 秒，可传 `signal` 与正整数 `timeoutMs`；取消通知插件并
+丢弃迟到结果，但插件必须合作停止副作用，同步死循环无法在共享 realm 内终止。
+Host 必须注入与插件 ID 匹配的 context。三端迁移由 P0.2b 单独验收。
+
 ### 结果 helpers（`result.*`）
 
 `run()` 推荐返回结构化的 `CommandResult`，使用 `result.*` helpers：

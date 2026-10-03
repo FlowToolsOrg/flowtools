@@ -34,6 +34,13 @@ CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用插�
 
 ### 当前自动化验证边界
 
+P0.2a 已交付 `packages/sdk/src/execution/executor.ts`：`executePlugin()` 对
+真实 app/tool `run()` 统一 schema/defaults、版本/时间戳/耗时、输入形状摘要、
+稳定失败码、取消及异步超时。21 个新增回归覆盖校验期取消竞争、迟到结果和
+timer/listener 清理；SDK 全部 61 个测试通过。宿主迁移仍属于 P0.2b。
+该函数不提供 OS 隔离，不终止同 realm 的同步循环，也不撤销已发生的副作用；
+旧 `withWatchdog` 的 cooperative-only 行为未被升级或重新宣称为强制终止。
+
 安全设计与现状以 [ADR-0001](./docs/adr/0001-plugin-trust-boundaries.md)、
 [ADR-0002](./docs/adr/0002-capability-and-package-policy.md) 和
 [威胁模型](./docs/security/threat-model.md) 为准。T0/T1/T2/T3/TL 的目标边界已

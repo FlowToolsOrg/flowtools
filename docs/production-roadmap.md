@@ -478,9 +478,37 @@ cargo test --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
 
 #### P0.1d 建立 Windows PR CI
 
-- 状态：`pending`
-- 负责人：`TBD (Build / Release)`
+- 状态：`in-progress`
+- 负责人：`Codex (Build / Release)`
+- 开始日期：`2026-10-03`
 - 依赖：P0.1b、P0.1c
+
+P0.1d 分为仓库交付与远端验收，不把工作流文件存在当作 CI 已生效：
+
+##### P0.1d1 交付可复现的 Windows 质量工作流
+
+- 状态：`in-progress`
+- 负责人：`Codex`
+- 开始日期：`2026-10-03`
+- 范围：PR / push / 手动触发的 Windows workflow、锁定工具链、依赖缓存、
+  统一 PowerShell 验证入口和工作流安全/门禁回归。
+- 约束：Actions 固定完整 SHA、最小只读权限、不使用 `pull_request_target`，
+  不允许失败继续、不缓存 JS 构建产物或 Turbo 结果。
+- 实施：先构建声明消费需要的 package 产物，再执行 lint、type check、test、
+  build、Rust check 和工作树漂移检查；每条原生命令的非零退出码必须终止任务。
+- 验证：在独立干净 checkout 执行同一入口，确认所有 workspace 参与且无
+  tracked/untracked 生成文件漂移；验证工作流契约和失败传播。
+
+##### P0.1d2 验收远端 CI 与合并保护
+
+- 状态：`pending`
+- 负责人：`Repository maintainer + Codex`
+- 依赖：P0.1d1
+- 所需授权：将提交推送到 `codex/` 分支以触发 GitHub Actions；设置合并保护
+  需要另行明确授权，不能从允许本地 commit 推断。
+- 验证：连续两次 GitHub Windows run 通过，记录 run URL、SHA 与 gate 日志；
+  仓库管理员把固定质量 job 设置为 required status check 并验证失败阻止合并。
+- 退出标准：远端运行与合并保护均有真实证据后，P0.1d 与父 P0.1 才能标记 done。
 
 交付物：
 

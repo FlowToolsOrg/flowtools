@@ -320,6 +320,13 @@ must be independently validated and recorded in one focused Conventional
 Commit before work begins on the next milestone. Do not bundle multiple
 completed roadmap milestones into one commit.
 
+Phase 0 continuation uses P0.2a/b/c and P0.3a/b/c from the roadmap. Implement
+the shared SDK executor before changing host execution, then validate built-in
+smoke fixtures before maturity/catalog and production-entry gates. Execution
+tests must call the real plugin implementation; controlled capability adapters
+are permitted, replacing `run()` with synthetic success is not. Keep maturity
+separate from compatibility evidence and do not mark Phase 0 done early.
+
 PRs should include:
 
 - clear summary and scope

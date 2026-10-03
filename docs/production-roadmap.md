@@ -658,9 +658,41 @@ cargo check --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
 
 ### P0.2 接通真实插件执行链
 
-- 状态：`pending`
-- 负责人：`TBD (SDK / Host)`
+- 状态：`in-progress`
+- 负责人：`Codex (SDK / Host)`
+- 开始日期：`2026-10-03`
 - 依赖：P0.1
+
+按以下顺序独立验收和提交；父项只能在三个子项全部完成后收口：
+
+#### P0.2a 统一 SDK 执行结果与失败边界
+
+- 状态：`pending`
+- 范围：SDK app/tool 的实际 `run()`、inputSchema 默认值与验证、版本/耗时/
+  输入摘要、稳定错误码、取消与有限超时。
+- 验收：先写失败回归，再实现；成功、schema 错误、身份不符、异常、预取消、
+  执行中取消、超时、迟到结果与 timer/listener 清理均有确定性测试。
+- 边界：取消可使 Host 不再接收迟到结果并通知 cooperative plugin；不宣称能
+  终止同 realm 同步死循环或撤回插件已发生的副作用。
+
+#### P0.2b 接通三端运行与真实历史
+
+- 状态：`pending`
+- 依赖：P0.2a
+- 范围：CLI 使用 SDK executor；Web 与 Desktop 提供真实 JSON/schema 运行、
+  取消与错误显示；保留 app panel；历史仅来自实际 execution envelope，迁移或
+  排除旧的未验证记录，不持久化原始敏感输入。
+- 验收：三端同一确定性输入结果一致；错误/取消不会变为 success；CLI 子进程
+  输出和退出码回归，Host 行为回归与人工路由/插件渲染验证。
+
+#### P0.2c 十二插件 Smoke 与跨端验收
+
+- 状态：`pending`
+- 依赖：P0.2b
+- 范围：共享 12 个内置插件真实实现 fixture；网络/存储使用明确受控 capability
+  adapter，不访问公网或用户数据库，也不替换插件 `run()`。
+- 验收：`bun run smoke:plugins` 与根 lint/types/test/build；覆盖 schema 错误、
+  实际插件异常、取消和三端 envelope；记录人工验证范围与未验证平台。
 
 交付物：
 
@@ -698,9 +730,44 @@ bun run --cwd apps/desktop build
 - 负责人：`TBD (Product / Plugin Platform)`
 - 依赖：P0.1
 
+按以下三个子项独立实施；P0.2 的执行基线完成后再开始实现：
+
+#### P0.3a 统一成熟度与 Catalog 证据
+
+- 状态：`pending`
+- 范围：`prototype` / `experimental` / `beta` / `production` 一套成熟度；
+  `indexed` / `entry-resolved` / `api-verified` / `production-certified` 为
+  独立兼容证据，缺失验证不得默认升级。
+- 验收：SDK schema/types、内置 metadata/manifests、CLI/Host UI 与生成 Catalog
+  一致；Catalog 不含开发机绝对路径，资源以 package identity/相对入口描述；
+  非法路径、假认证与 fixture 缺失都会使 Catalog gate 失败。
+
+#### P0.3b 生产入口默认拒绝未认证外部代码
+
+- 状态：`pending`
+- 依赖：P0.3a
+- 范围：生产构建不暴露源码转译/导入、remote HTML 和 Legacy 自动执行；开发
+  入口只在显式开发环境可见并有未签名警告。未实现签名准入前不允许以布尔
+  certified 标记开启第三方生产执行；执行与导入两个边界都必须拒绝。
+- 验收：生产/开发模式矩阵、直接绕过 UI 的调用、持久恢复、native/HTML runner
+  和最终构建产物的负面测试；检查 production bundle 无源码 loader 或本机路径。
+- 边界：这是 Phase 0 的停用/准入 gate，不代替 Phase 2 的 OS 隔离、grant 或
+  每次原生操作授权；相关 SEC 风险只能更新缓解证据，不能全部关闭。
+
+#### P0.3c 诚实市场状态与 P0 总验收
+
+- 状态：`pending`
+- 依赖：P0.3b
+- 范围：市场目录、元数据保存、开发预览与真实安装分开；没有包安装链时按钮
+  不宣称安装成功；权限中心不宣称已具备 sandbox/grant。
+- 验收：UI/CLI/Catalog 状态一致、拒绝理由可见、取消与错误人工验证；六份
+  核心文档及威胁现状同步；完整根 gate 和 production bundle 检查通过后，
+  P0.2/P0.3 与 Phase 0 才能收口，成熟度仍按证据判定。
+
 交付物：
 
-- 为功能和插件定义 `demo`、`experimental`、`verified`、`production` 状态。
+- 为功能和插件统一 `prototype`、`experimental`、`beta`、`production` 成熟度；
+  兼容验证证据独立记录，不把 `verified` 当作成熟度或安全认证。
 - 生产构建关闭任意源码导入、remote HTML 和未隔离的 Legacy 自动启动。
 - HTML Catalog 使用可发布相对资源或 package identity，不再保存开发机绝对路径。
 - Catalog 区分 `indexed`、`entry-resolved`、`api-verified` 和
@@ -1388,30 +1455,36 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 
 ### Phase 0
 
-| ID     | 状态    | 负责人     | 依赖          | Commit / 验证记录                                                                                             |
-| ------ | ------- | ---------- | ------------- | ------------------------------------------------------------------------------------------------------------- |
-| P0.1   | done    | Codex      | -             | P0.1a–P0.1d 全部完成；175 tests、真实 PR 失败阻断与恢复已验收                                                 |
-| P0.1a  | done    | Codex      | -             | `chore(repo): standardize workspace quality tasks (P0.1a)`；workspace verifier + Turbo dry graph 通过         |
-| P0.1b  | done    | Codex      | P0.1a         | `fix(repo): close build integration gates (P0.1b5)`；P0.1b1–P0.1b5 全部通过                                   |
-| P0.1b1 | done    | Codex      | P0.1a         | `fix(ui): handle icon animation promises (P0.1b1)`；lint + check-types 通过                                   |
-| P0.1b2 | done    | Codex      | P0.1a         | `fix(web): restore host quality gates (P0.1b2)`；lint + check-types + build 通过                              |
-| P0.1b3 | done    | Codex      | P0.1a         | `fix(ui-test): restore consumer build gates (P0.1b3)`；lint + check-types + build 通过                        |
-| P0.1b4 | done    | Codex      | P0.1a         | `fix(desktop): restore static quality gates (P0.1b4)`；lint + check-types + build + cargo check 通过          |
-| P0.1b5 | done    | Codex      | P0.1b1–P0.1b4 | `fix(repo): close build integration gates (P0.1b5)`；根 lint + check-types + build 通过                       |
-| P0.1c  | done    | Codex      | P0.1a, P0.1b  | P0.1c1–P0.1c5 完成；7 workspace 自动化基线通过                                                                |
-| P0.1c1 | done    | Codex      | P0.1b         | `test(sdk): lock core value contracts (P0.1c1)`；19 tests + 8 package exports 通过                            |
-| P0.1c2 | done    | Codex      | P0.1c1        | `fix(sdk): enforce lifecycle failure contracts (P0.1c2)`；40 tests 覆盖状态、加载与 watchdog                  |
-| P0.1c3 | done    | Codex      | P0.1b         | `fix(cli): harden input and runner contracts (P0.1c3)`；25 tests + binary smoke 通过                          |
-| P0.1c4 | done    | Codex      | P0.1b         | `fix(desktop): enforce plugin persistence contracts (P0.1c4)`；10 Rust tests + clippy 通过                    |
-| P0.1c5 | done    | Codex      | P0.1c1–P0.1c4 | `test(repo): close workspace regression gates (P0.1c5)`；151 tests + declarations + 人工 Web 复查通过         |
-| P0.1d  | done    | Codex      | P0.1b, P0.1c  | P0.1d1/d2 完成；Windows CI、保护配置、真实失败与恢复通过                                                      |
-| P0.1d1 | done    | Codex      | P0.1b, P0.1c  | `ci(repo): add reproducible Windows quality gates (P0.1d1)`；两轮本地完整门禁、156 tests、无生成漂移          |
-| P0.1d2 | done    | Maintainer | P0.1d1        | `docs(roadmap): close remote quality gate acceptance (P0.1d2)`；PR #2 BLOCKED → CLEAN、c2180f8 两轮 175 tests |
-| P0.2   | pending | TBD        | P0.1          | -                                                                                                             |
-| P0.3   | pending | TBD        | P0.1          | -                                                                                                             |
-| P0.4   | done    | Codex      | -             | P0.4a/b 完成；仅设计与评审契约，12 项安全风险保持 open                                                        |
-| P0.4a  | done    | Codex      | -             | `docs(security): define plugin trust and threat baseline (P0.4a)`；12 open 风险、80 链接、lint 7/7            |
-| P0.4b  | done    | Codex      | P0.4a         | `ci(docs): enforce security design and review contracts (P0.4b)`；docs gate、164 tests、七 workspace 全门禁   |
+| ID     | 状态        | 负责人     | 依赖          | Commit / 验证记录                                                                                             |
+| ------ | ----------- | ---------- | ------------- | ------------------------------------------------------------------------------------------------------------- |
+| P0.1   | done        | Codex      | -             | P0.1a–P0.1d 全部完成；175 tests、真实 PR 失败阻断与恢复已验收                                                 |
+| P0.1a  | done        | Codex      | -             | `chore(repo): standardize workspace quality tasks (P0.1a)`；workspace verifier + Turbo dry graph 通过         |
+| P0.1b  | done        | Codex      | P0.1a         | `fix(repo): close build integration gates (P0.1b5)`；P0.1b1–P0.1b5 全部通过                                   |
+| P0.1b1 | done        | Codex      | P0.1a         | `fix(ui): handle icon animation promises (P0.1b1)`；lint + check-types 通过                                   |
+| P0.1b2 | done        | Codex      | P0.1a         | `fix(web): restore host quality gates (P0.1b2)`；lint + check-types + build 通过                              |
+| P0.1b3 | done        | Codex      | P0.1a         | `fix(ui-test): restore consumer build gates (P0.1b3)`；lint + check-types + build 通过                        |
+| P0.1b4 | done        | Codex      | P0.1a         | `fix(desktop): restore static quality gates (P0.1b4)`；lint + check-types + build + cargo check 通过          |
+| P0.1b5 | done        | Codex      | P0.1b1–P0.1b4 | `fix(repo): close build integration gates (P0.1b5)`；根 lint + check-types + build 通过                       |
+| P0.1c  | done        | Codex      | P0.1a, P0.1b  | P0.1c1–P0.1c5 完成；7 workspace 自动化基线通过                                                                |
+| P0.1c1 | done        | Codex      | P0.1b         | `test(sdk): lock core value contracts (P0.1c1)`；19 tests + 8 package exports 通过                            |
+| P0.1c2 | done        | Codex      | P0.1c1        | `fix(sdk): enforce lifecycle failure contracts (P0.1c2)`；40 tests 覆盖状态、加载与 watchdog                  |
+| P0.1c3 | done        | Codex      | P0.1b         | `fix(cli): harden input and runner contracts (P0.1c3)`；25 tests + binary smoke 通过                          |
+| P0.1c4 | done        | Codex      | P0.1b         | `fix(desktop): enforce plugin persistence contracts (P0.1c4)`；10 Rust tests + clippy 通过                    |
+| P0.1c5 | done        | Codex      | P0.1c1–P0.1c4 | `test(repo): close workspace regression gates (P0.1c5)`；151 tests + declarations + 人工 Web 复查通过         |
+| P0.1d  | done        | Codex      | P0.1b, P0.1c  | P0.1d1/d2 完成；Windows CI、保护配置、真实失败与恢复通过                                                      |
+| P0.1d1 | done        | Codex      | P0.1b, P0.1c  | `ci(repo): add reproducible Windows quality gates (P0.1d1)`；两轮本地完整门禁、156 tests、无生成漂移          |
+| P0.1d2 | done        | Maintainer | P0.1d1        | `docs(roadmap): close remote quality gate acceptance (P0.1d2)`；PR #2 BLOCKED → CLEAN、c2180f8 两轮 175 tests |
+| P0.2   | in-progress | Codex      | P0.1          | 2026-10-03 拆分 P0.2a/b/c；按 SDK → 三端运行/历史 → 十二插件验收执行                                          |
+| P0.2a  | pending     | Codex      | P0.1          | SDK executor/schema/取消/超时/稳定 envelope                                                                   |
+| P0.2b  | pending     | Codex      | P0.2a         | CLI/Web/Desktop 真实运行与历史                                                                                |
+| P0.2c  | pending     | Codex      | P0.2b         | 十二插件 smoke、跨端与人工验收                                                                                |
+| P0.3   | pending     | TBD        | P0.1          | -                                                                                                             |
+| P0.3a  | pending     | Codex      | P0.2          | 成熟度、兼容证据与便携 Catalog                                                                                |
+| P0.3b  | pending     | Codex      | P0.3a         | 默认拒绝未认证第三方生产执行                                                                                  |
+| P0.3c  | pending     | Codex      | P0.3b         | 市场状态、production bundle 与 P0 总验收                                                                      |
+| P0.4   | done        | Codex      | -             | P0.4a/b 完成；仅设计与评审契约，12 项安全风险保持 open                                                        |
+| P0.4a  | done        | Codex      | -             | `docs(security): define plugin trust and threat baseline (P0.4a)`；12 open 风险、80 链接、lint 7/7            |
+| P0.4b  | done        | Codex      | P0.4a         | `ci(docs): enforce security design and review contracts (P0.4b)`；docs gate、164 tests、七 workspace 全门禁   |
 
 ### Phase 1
 

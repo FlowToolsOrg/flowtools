@@ -114,6 +114,9 @@ Do not use `pull_request_target` for executing contributor code. Never cache
 CI uses the Bun version in root `packageManager` and pinned Rust 1.96.0. Changes
 to triggers, tooling, caches, failure propagation, or drift checks require
 regression coverage in `scripts/ci-contracts.test.ts`, run by Desktop tests.
+Validate workflow expression context availability as well as YAML syntax:
+`runner` is unavailable in job-level `env`; use step-level `env` for paths
+derived from `runner.temp`. Check workflow changes with actionlint before push.
 Keep Turbo strict environment mode. Pass through Windows `PATHEXT` for native
 command discovery and `CARGO_TARGET_DIR` for build/test native cache placement;
 do not pass through host secrets or switch to loose mode to fix tool discovery.

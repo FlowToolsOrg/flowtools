@@ -11,6 +11,7 @@ interface WorkflowStep {
   uses?: string
   run?: string
   if?: string
+  env?: Record<string, string>
   with?: { path?: string; 'persist-credentials'?: boolean }
   'continue-on-error'?: boolean
 }
@@ -24,6 +25,7 @@ interface Workflow {
       'runs-on': string
       'timeout-minutes': number
       defaults: { run: { shell: string } }
+      env: Record<string, string>
       steps: WorkflowStep[]
       'continue-on-error'?: boolean
     }
@@ -70,6 +72,18 @@ test('uses unprivileged PR events and immutable action references', () => {
   expect(workflow.jobs.quality.steps[0]?.with?.['persist-credentials']).toBe(
     false
   )
+})
+
+test('uses runner-dependent Bun cache paths only in step contexts', () => {
+  const job = workflow.jobs.quality
+  expect(job.env.BUN_INSTALL_CACHE_DIR).toBeUndefined()
+  for (const value of Object.values(job.env)) {
+    expect(value).not.toMatch(/\$\{\{[^}]*\b(runner|env|steps|job)\./)
+  }
+  const cachePath = '${{ runner.temp }}/flowtools-bun-cache'
+  expect(job.steps.some(step => step.with?.path === cachePath)).toBe(true)
+  const gates = job.steps.find(step => step.run === './scripts/check-ci.ps1')
+  expect(gates?.env?.BUN_INSTALL_CACHE_DIR).toBe(cachePath)
 })
 
 test('runs bounded Windows gates without caching JS build products', async () => {

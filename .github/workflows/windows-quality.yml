@@ -23,7 +23,6 @@ jobs:
         shell: pwsh
     env:
       CI: 'true'
-      BUN_INSTALL_CACHE_DIR: ${{ runner.temp }}/flowtools-bun-cache
       CARGO_TARGET_DIR: ${{ github.workspace }}/apps/desktop/src-tauri/target
       RUST_TOOLCHAIN: '1.96.0'
     steps:
@@ -46,7 +45,7 @@ jobs:
       - name: Cache Bun dependency downloads
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
-          path: ${{ env.BUN_INSTALL_CACHE_DIR }}
+          path: ${{ runner.temp }}/flowtools-bun-cache
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock', 'package.json') }}
           restore-keys: bun-${{ runner.os }}-
 
@@ -61,6 +60,8 @@ jobs:
           restore-keys: rust-${{ runner.os }}-${{ env.RUST_TOOLCHAIN }}-
 
       - name: Run all quality gates
+        env:
+          BUN_INSTALL_CACHE_DIR: ${{ runner.temp }}/flowtools-bun-cache
         run: ./scripts/check-ci.ps1
 
       - name: Verify clean worktree even after a failed gate

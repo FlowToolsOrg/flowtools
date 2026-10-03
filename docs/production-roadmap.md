@@ -517,11 +517,18 @@ P0.1d 分为仓库交付与远端验收，不把工作流文件存在当作 CI �
 
 ##### P0.1d2 验收远端 CI 与合并保护
 
-- 状态：`pending`
+- 状态：`in-progress`
 - 负责人：`Repository maintainer + Codex`
+- 开始日期：`2026-10-03`
 - 依赖：P0.1d1
 - 所需授权：将提交推送到 `codex/` 分支以触发 GitHub Actions；设置合并保护
   需要另行明确授权，不能从允许本地 commit 推断。
+- 授权进展：用户已允许推送 `codex/production-quality-gates` 并验收两次 CI；
+  不包含更改仓库可见性或合并保护设置。
+- 首次远端发现：[run 37116034446](https://github.com/FlowToolsOrg/flowtools/actions/runs/37116034446)
+  在创建 job 前失败；actionlint 1.7.12 复现 job `env` 中 `runner.temp` 上下文
+  无效。将 Bun 缓存路径移到 step-level env，并新增 1 项上下文回归；原本的
+  YAML 解析与两轮本地 gate 不能证明 GitHub workflow 表达式合法。
 - 已知限制（2026-10-03 只读检查）：私有仓库的 main branch protection API
   返回 403，要求升级套餐或公开仓库。不能擅自更改可见性、套餐或绕过验收项；
   需要维护者确定可行的合并保护方案。
@@ -1281,7 +1288,7 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 | P0.1c5 | done        | Codex      | P0.1c1–P0.1c4 | `test(repo): close workspace regression gates (P0.1c5)`；151 tests + declarations + 人工 Web 复查通过 |
 | P0.1d  | in-progress | Codex      | P0.1b, P0.1c  | 已拆分工作流交付与远端验收；不把本地成功记为远端 CI 生效                                              |
 | P0.1d1 | done        | Codex      | P0.1b, P0.1c  | `ci(repo): add reproducible Windows quality gates (P0.1d1)`；两轮本地完整门禁、156 tests、无生成漂移  |
-| P0.1d2 | pending     | Maintainer | P0.1d1        | 等待 push 授权；私有仓库 branch protection API 返回套餐限制 403                                       |
+| P0.1d2 | in-progress | Maintainer | P0.1d1        | 已获 push/CI 验收授权；修复首次 workflow 解析失败；合并保护仍受套餐限制 403                           |
 | P0.2   | pending     | TBD        | P0.1          | -                                                                                                     |
 | P0.3   | pending     | TBD        | P0.1          | -                                                                                                     |
 | P0.4   | pending     | TBD        | -             | -                                                                                                     |

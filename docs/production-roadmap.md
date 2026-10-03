@@ -670,9 +670,40 @@ bun run --cwd apps/desktop build
 
 ### P0.4 固化威胁模型与架构决策
 
-- 状态：`pending`
-- 负责人：`TBD (Architecture / Security)`
+- 状态：`in-progress`
+- 负责人：`Codex (Design delivery)`；实现与发布风险由对应模块 Maintainer 承接
 - 依赖：无；必须在 Phase 0 结束前完成
+
+2026-10-03 拆分为两个独立提交的子里程碑；本项只交付设计与评审契约，
+不代表 Phase 2 安全控制已经实现，也不解除 P0.1 的合并保护待验收状态。
+
+#### P0.4a 信任边界 ADR 与可追踪威胁模型
+
+- 状态：`pending`
+- 依赖：无
+- 交付：`docs/adr/0001-plugin-trust-boundaries.md`、
+  `docs/adr/0002-capability-and-package-policy.md` 和
+  `docs/security/threat-model.md`；同步六份核心文档。
+- 范围：明确 T0/T1/T2/T3/TL 的运行位置、身份来源、能力边界和非目标；按
+  实际源码记录插件包、加载、IPC、文件、网络、数据库、授权、更新、日志与
+  拒绝服务入口的现状、owner、缓解措施、验收 fixture 和残余风险。
+- 验证：人工逐项交叉检查源码证据与 Phase 1–3 的实现依赖；
+  `bunx oxfmt --check <本项文档>`、`bun run lint`、`git diff --check`。
+- 退出：风险无空白 owner/验证项；设计决策与未实现控制清晰分离；不宣称
+  125 个目录插件兼容、签名即可信、Worker 即 OS sandbox 或单 React 树隔离。
+
+#### P0.4b 文档质量门与安全变更评审契约
+
+- 状态：`pending`
+- 依赖：P0.4a
+- 交付：`bun run docs:check`、缺失文件/链接/风险字段的回归测试、Windows
+  共用 CI 入口中的文档 gate，以及 `.github/pull_request_template.md`。
+- 范围：新增 capability/bridge API 的 PR 必须列明威胁 ID、授权 scope、身份
+  校验、拒绝路径测试、撤销/恢复与安全 reviewer；不修改仓库保护设置。
+- 验证：`bun run docs:check`、文档 checker 回归、根 lint/types/test/build；
+  人工审阅 PR 模板。模板与文档检查不等于已启用强制 reviewer/合并保护。
+- 退出：删去风险 owner、残余风险或有效证据链接会使 gate 失败；父项只有在
+  P0.4a/b 均独立验证提交后才可标记 `done`。
 
 交付物：
 
@@ -1307,7 +1338,9 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 | P0.1d2 | in-progress | Maintainer | P0.1d1        | `da777b4` 两轮远端 CI、157 tests 通过；合并保护仍受套餐限制 403，未更改仓库设置                       |
 | P0.2   | pending     | TBD        | P0.1          | -                                                                                                     |
 | P0.3   | pending     | TBD        | P0.1          | -                                                                                                     |
-| P0.4   | pending     | TBD        | -             | -                                                                                                     |
+| P0.4   | in-progress | Codex      | -             | 拆分 P0.4a/b；仅设计与评审契约，不代表安全控制实现                                                    |
+| P0.4a  | pending     | Codex      | -             | 信任边界 ADR 与可追踪威胁模型                                                                         |
+| P0.4b  | pending     | Codex      | P0.4a         | 文档 gate 与安全 PR 评审契约                                                                          |
 
 ### Phase 1
 

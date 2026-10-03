@@ -530,7 +530,9 @@ P0.1d 分为仓库交付与远端验收，不把工作流文件存在当作 CI �
 - 所需授权：将提交推送到 `codex/` 分支以触发 GitHub Actions；设置合并保护
   需要另行明确授权，不能从允许本地 commit 推断。
 - 授权进展：用户已允许推送 `codex/production-quality-gates` 并验收两次 CI；
-  不包含更改仓库可见性或合并保护设置。
+  最初不包含更改仓库可见性或合并保护设置。2026-10-03 用户自行将仓库改为
+  public，并明确授权配置 main 的 PR/必需 CI/严格同步/管理员约束/禁强推与
+  删除规则；不包含创建或合并 PR、实际强推/删除验证。
 - 首次远端发现：[run 37116034446](https://github.com/FlowToolsOrg/flowtools/actions/runs/37116034446)
   在创建 job 前失败；actionlint 1.7.12 复现 job `env` 中 `runner.temp` 上下文
   无效。将 Bun 缓存路径移到 step-level env，并新增 1 项上下文回归；原本的
@@ -548,14 +550,23 @@ P0.1d 分为仓库交付与远端验收，不把工作流文件存在当作 CI �
     均成功。157 tests = Bun 100 + Chromium 46 + Rust 11；JS/Turbo gate 日志
     均为 0 cached，不把依赖/原生编译缓存命中当作测试结果。
   - 已核对两轮完整 job 日志；Vite 大 chunk 提示仍保留为性能待办。
-- 已知限制（2026-10-03 只读检查）：私有仓库的 main branch protection API
-  返回 403，要求升级套餐或公开仓库。不能擅自更改可见性、套餐或绕过验收项；
-  需要维护者确定可行的合并保护方案。
+- 历史阻断（2026-10-03，现已解除）：私有仓库 main protection API 曾返回
+  套餐限制 403。用户公开仓库后，查询转为 404（尚未保护），随后在明确授权下
+  设置保护；未由 Codex 更改可见性或套餐。
+- main 配置证据（2026-10-03）：REST protection PUT 成功，随后 GET 回读并
+  逐项断言 `strict: true`、`enforce_admins.enabled: true`、
+  `allow_force_pushes.enabled: false`、`allow_deletions.enabled: false`。
+  唯一必需检查为 `Windows quality gates`，绑定实测 GitHub Actions
+  `app_id: 15368`，不接受任意来源同名 status。
+  PR 规则已启用，审批人数为 0（没有额外授权强制人工批准）；独立 branch
+  查询返回 `protected: true`；GraphQL 独立回读同样确认 PR、strict check、
+  administrator enforcement 与禁强推/删除。没有创建 bypass 名单或修改 main
+  的 commit。
 - 验证：连续两次 GitHub Windows run 通过，记录 run URL、SHA 与 gate 日志；
   仓库管理员把固定质量 job 设置为 required status check 并验证失败阻止合并。
-- 尚未验收：main 的 required status check 与失败阻止合并，受上述 403 和设置
-  授权边界限制。未改仓库可见性、套餐、保护规则，未创建 PR 或合并 main；
-  P0.1d2、P0.1d 和 P0.1 保持 `in-progress`，等待维护者确定合并保护方案。
+- 尚未验收：真实失败 PR 的阻断与恢复结果；当前无 open PR，未通过真实合并
+  尝试或 main ref 写入验证。配置回读不代替行为验收；需另行允许创建验证 PR，
+  不实际合并。P0.1d2、P0.1d 和 P0.1 保持 `in-progress`，仅此验收项待完成。
 - 退出标准：远端运行与合并保护均有真实证据后，P0.1d 与父 P0.1 才能标记 done。
 
 交付物：
@@ -1340,7 +1351,7 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 
 | ID     | 状态        | 负责人     | 依赖          | Commit / 验证记录                                                                                           |
 | ------ | ----------- | ---------- | ------------- | ----------------------------------------------------------------------------------------------------------- |
-| P0.1   | in-progress | Codex      | -             | P0.1a–P0.1c、P0.1d1 已完成；远端两轮 CI 通过，合并保护待验收                                                |
+| P0.1   | in-progress | Codex      | -             | P0.1a–P0.1c、P0.1d1 已完成；远端两轮 CI 和保护配置通过，真实失败 PR 阻断待验收                              |
 | P0.1a  | done        | Codex      | -             | `chore(repo): standardize workspace quality tasks (P0.1a)`；workspace verifier + Turbo dry graph 通过       |
 | P0.1b  | done        | Codex      | P0.1a         | `fix(repo): close build integration gates (P0.1b5)`；P0.1b1–P0.1b5 全部通过                                 |
 | P0.1b1 | done        | Codex      | P0.1a         | `fix(ui): handle icon animation promises (P0.1b1)`；lint + check-types 通过                                 |
@@ -1354,9 +1365,9 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 | P0.1c3 | done        | Codex      | P0.1b         | `fix(cli): harden input and runner contracts (P0.1c3)`；25 tests + binary smoke 通过                        |
 | P0.1c4 | done        | Codex      | P0.1b         | `fix(desktop): enforce plugin persistence contracts (P0.1c4)`；10 Rust tests + clippy 通过                  |
 | P0.1c5 | done        | Codex      | P0.1c1–P0.1c4 | `test(repo): close workspace regression gates (P0.1c5)`；151 tests + declarations + 人工 Web 复查通过       |
-| P0.1d  | in-progress | Codex      | P0.1b, P0.1c  | 工作流与远端两轮运行已通过；required check / 失败阻止合并尚未验收                                           |
+| P0.1d  | in-progress | Codex      | P0.1b, P0.1c  | 工作流、两轮运行、main required check 已通过；真实失败 PR 阻断待验收                                        |
 | P0.1d1 | done        | Codex      | P0.1b, P0.1c  | `ci(repo): add reproducible Windows quality gates (P0.1d1)`；两轮本地完整门禁、156 tests、无生成漂移        |
-| P0.1d2 | in-progress | Maintainer | P0.1d1        | `da777b4` 两轮远端 CI、157 tests 通过；合并保护仍受套餐限制 403，未更改仓库设置                             |
+| P0.1d2 | in-progress | Maintainer | P0.1d1        | `da777b4` 两轮远端 CI 通过；public main 保护配置回读通过，真实失败 PR 阻断待验收                            |
 | P0.2   | pending     | TBD        | P0.1          | -                                                                                                           |
 | P0.3   | pending     | TBD        | P0.1          | -                                                                                                           |
 | P0.4   | done        | Codex      | -             | P0.4a/b 完成；仅设计与评审契约，12 项安全风险保持 open                                                      |

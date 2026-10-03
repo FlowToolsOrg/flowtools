@@ -4,14 +4,15 @@ Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平�
 当前仓库代码处于“先验证插件运行时，再落地桌面宿主”的阶段。
 
 - 目标：以最小宿主内核 + 可扩展插件生态交付能力
-- 核心机制：Capability Injection / Permission Gating / Single React Tree
+- 当前机制：Capability Injection / 声明裁剪 / 内置插件共享 React Tree
+- 生产目标：按信任等级隔离执行，Rust broker 强制验证身份、grant 与 scope
 - 插件形态：`app`（长期 UI）与 `tool`（即时执行）
 
 > 关键词：Capability Injection / Plugin Runtime / Permission Gating / Namespacing / Single React Tree
 
 ## 1. Reality Check（当前实现状态）
 
-截至 2026-06，仓库中的实现状态：
+截至 2026-10-03，仓库中的实现状态（prototype）：
 
 - 已实现：
   - `packages/sdk`：插件契约、hooks（工厂模式）、runtime provider、结果类型、Zod-based `inputSchema`
@@ -32,6 +33,12 @@ Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平�
 CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用插件。HTML 插件兼容层已完成插件元数据与命令入口归一化，并在 desktop 端提供 React/SDK panel 渲染、HTML `main` iframe 启动容器、旧版宿主 API bridge，以及基于 SDK capability contract 的 Tauri 官方插件适配。
 
 ### 当前自动化验证边界
+
+安全设计与现状以 [ADR-0001](./docs/adr/0001-plugin-trust-boundaries.md)、
+[ADR-0002](./docs/adr/0002-capability-and-package-policy.md) 和
+[威胁模型](./docs/security/threat-model.md) 为准。T0/T1/T2/T3/TL 的目标边界已
+固定，但独立执行、持久 grant、签名准入及恢复仍待实现；不得以文档或测试
+通过推断这些控制已经生效。
 
 根 `bun run test` 调用七个 workspace 的真实测试。SDK/CLI 覆盖核心契约与失败
 路径；UI package 先构建再验证公开导出和独立消费者声明；plugins 使用构建时相同
@@ -141,7 +148,7 @@ ctx(context) 是 runtime 内部对象，代表“插件能力实例集合”。�
 ctx 的职责：
 
 - 权限裁剪：按 permissions 注入能力
-- 命名空间隔离：store/db/cache 都与 pluginId 绑定
+- 当前命名空间：storage/store key 与 pluginId 关联；DB raw query 尚未隔离
 - 多平台适配：desktop/web 的实现不同，但 ctx contract 不变
 
 `@flowtools/sdk` 暴露：
@@ -179,6 +186,11 @@ Host runtime 用 `pickCapability(...)` 做权限裁剪：
 
 - 已声明权限 -> 注入 capability 实现
 - 未声明权限 -> 对应 capability 为 `undefined`
+
+这是合作代码的 API 裁剪，不是用户 grant 或恶意代码边界。当前同 realm
+外部代码可绕过 SDK，Desktop 原生 adapter 仍提供通用 invoke/raw SQL。
+生产要求见 ADR-0002：由 Host 会话绑定 package identity，每次 Rust 操作重新
+验证声明、持久 grant、scope 与撤销状态，拒绝不能只发生在前端。
 
 ## 6. Web Runtime Prototype（当前宿主实现）
 
@@ -333,16 +345,22 @@ SDK 已定义命令与结果契约：
 
 - 默认 30 秒超时
 - 超时后触发 AbortSignal
-- 防止长时间运行的 tool 阻塞宿主
+- 提供 cooperative abort；不能终止同步循环或忽略 signal 的任务
 
 ## 10. Non-Goals / Current Limits
 
-当前版本明确限制：
+当前版本的缺口（不是生产非目标）：
 
-- 不做 iframe/worker 沙箱隔离（同线程模型）
-- 不支持运行时编译插件（插件需预构建）
-- 不允许插件直接调用宿主私有 API
-- 不追求“运行不可信插件”的强安全模型
+- 没有经过安全认证的第三方隔离；现有 HTML iframe 不是生产 sandbox。
+- Web 文件 loader 可在 Host realm 转译并执行 TS/TSX；生产目标禁止该路径。
+- 没有强制 Rust plugin identity/grant broker，不能阻止同 realm 绕过 SDK。
+- 生产准入、签名安装、scope 隔离与恢复尚未完成。
+
+v1 的显式非目标：不宣称兼容全部 125 个 HTML 插件；不提供任意 shell、
+raw invoke/SQL/绝对路径、外部 native binary 或 Node/Electron 私有 API；
+不承诺抵抗已控制 OS/Host Rust 的攻击者。T1 可共用 React 树，T2/TL 必须独立
+origin/session，T3 必须具备受限、可终止执行边界。普通 Worker/subprocess
+不能自动获得 sandbox 资格，未验证的平台应拒绝第三方执行。
 
 ## 11. Path to Desktop (Tauri)
 
@@ -472,7 +490,7 @@ Tool 插件默认不提供 store。
 原则：插件不能直接操作 sqlite 连接，平台托管 db。
 
 - 统一 SQLite 数据库（desktop）
-- 插件数据通过 pluginId namespace 隔离
+- 当前插件 adapter 共享连接并接受 raw SQL，尚未强制 namespace 授权
 - 表名策略：
   - `${pluginId}__${tableName}`
 - 迁移策略（future）：

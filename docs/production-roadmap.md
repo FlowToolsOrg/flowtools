@@ -135,14 +135,20 @@ ZTools 的产品闭环比当前 FlowTools 完整：它已经覆盖启动器搜�
   使用标准 SDK 契约，以避免形成第二套实现。
 - `T2 Third-party UI`：签名的第三方 UI 插件。每个插件在独立 Tauri webview
   或 window 中运行，拥有独立 origin、CSP、身份、存储 namespace 和能力集。
-- `T3 Headless`：无 UI 的第三方工具。运行在 Worker、受限子进程或等价的
-  可终止边界中，并设置时间、内存、输出和并发预算。
+- `T3 Headless`：无 UI 的第三方工具。Desktop/CLI 默认要求受限、可终止的
+  子进程，落实 OS/runtime 资源与网络限制；普通 Worker/subprocess 不等于
+  sandbox。仅经单独平台评审的等价执行边界可替代，见 ADR-0001。
 - `TL Legacy`：ZTools HTML 兼容层。必须置于独立隔离区，只开放经过认证的
   API；未认证插件只能进入显式的开发模式。
 
 第三方 React 插件不能作为任意源码注入主 React 树。需要同级 UI 体验时，使用
 SDK 定义的视图协议、受控组件描述或隔离 webview，而不是共享宿主 JavaScript
 realm。
+
+决策细节与当前缺口见 [ADR-0001](./adr/0001-plugin-trust-boundaries.md)、
+[ADR-0002](./adr/0002-capability-and-package-policy.md) 和
+[威胁模型](./security/threat-model.md)。它们是目标设计，不是 Phase 2 已实现的
+证明；签名仍不把第三方升级为 T1。
 
 ### 4.2 目标数据流
 
@@ -679,7 +685,7 @@ bun run --cwd apps/desktop build
 
 #### P0.4a 信任边界 ADR 与可追踪威胁模型
 
-- 状态：`pending`
+- 状态：`done`
 - 依赖：无
 - 交付：`docs/adr/0001-plugin-trust-boundaries.md`、
   `docs/adr/0002-capability-and-package-policy.md` 和
@@ -691,6 +697,11 @@ bun run --cwd apps/desktop build
   `bunx oxfmt --check <本项文档>`、`bun run lint`、`git diff --check`。
 - 退出：风险无空白 owner/验证项；设计决策与未实现控制清晰分离；不宣称
   125 个目录插件兼容、签名即可信、Worker 即 OS sandbox 或单 React 树隔离。
+- 2026-10-03 验证：两份 ADR、12 项 open 威胁与六份文档同步；已逐项核对
+  文件 loader、CLI context/runner、Desktop adapter/HTML runner、Tauri
+  config/build/capability、DB init、Catalog 与 Release 入口，并核对官方 Tauri
+  安全机制。80 个文档本地链接、9 份文档格式、`git diff --check` 通过；
+  根 lint 强制执行 7/7、0 warnings/errors。没有关闭安全风险或改变 runtime。
 
 #### P0.4b 文档质量门与安全变更评审契约
 
@@ -1339,7 +1350,7 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 | P0.2   | pending     | TBD        | P0.1          | -                                                                                                     |
 | P0.3   | pending     | TBD        | P0.1          | -                                                                                                     |
 | P0.4   | in-progress | Codex      | -             | 拆分 P0.4a/b；仅设计与评审契约，不代表安全控制实现                                                    |
-| P0.4a  | pending     | Codex      | -             | 信任边界 ADR 与可追踪威胁模型                                                                         |
+| P0.4a  | done        | Codex      | -             | `docs(security): define plugin trust and threat baseline (P0.4a)`；12 open 风险、80 链接、lint 7/7    |
 | P0.4b  | pending     | Codex      | P0.4a         | 文档 gate 与安全 PR 评审契约                                                                          |
 
 ### Phase 1

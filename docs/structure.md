@@ -1,5 +1,17 @@
 # Flow Tools 架构设计规范
 
+## 安全设计来源与实现边界
+
+- `docs/adr/0001-plugin-trust-boundaries.md`：T0/T1/T2/T3/TL 执行位置、身份
+  来源、隔离边界与 v1 非目标；Single React Tree 只适用于可信 T1。
+- `docs/adr/0002-capability-and-package-policy.md`：Rust broker、scope、
+  签名准入、撤销、迁移与恢复的 accepted-design，不是已实现控制。
+- `docs/security/threat-model.md`：稳定 SEC ID、实际入口证据、owner、目标
+  缓解、恶意 fixture 与残余风险；实现验收由 production-roadmap 指定阶段负责。
+
+以下生命周期、权限与消息流水线包含目标设计，不能由流程图推断已强制执行。
+当前原生 adapter/raw SQL/HTML iframe 的具体缺口以威胁模型为准。
+
 ## 工程验证结构
 
 - `.github/workflows/windows-quality.yml`：固定工具链与 Action SHA 的 Windows

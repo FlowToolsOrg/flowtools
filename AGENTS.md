@@ -50,6 +50,9 @@ workflows:
 - [README](./README.md)
 - [Plugin](./docs/plugin.md)
 - [Production Roadmap](./docs/production-roadmap.md)
+- [Trust Boundaries ADR](./docs/adr/0001-plugin-trust-boundaries.md)
+- [Capability and Package Policy ADR](./docs/adr/0002-capability-and-package-policy.md)
+- [Threat Model](./docs/security/threat-model.md)
 
 ## Build, Validation, and Development Commands
 
@@ -195,6 +198,17 @@ execution bypassing the SDK:
 
 ### Third-Party Plugin Security Defaults
 
+ADR-0001/0002 are accepted production designs, not evidence that isolation,
+grants, signed installation or recovery already work. The threat register tracks
+current gaps and their implementation owners. Keep threat IDs stable; add source
+and rejection-test evidence when changing an entry point. Do not close a risk or
+advance maturity merely because documentation or CI passes.
+
+- T1 built-ins may share the main React tree. T2 UI and TL legacy code require
+  isolated origins and sessions; T3 requires a restricted terminable runner.
+  Workers and ordinary child processes are not automatically OS sandboxes.
+- Derive plugin identity from host-bound sessions, not request payloads. A
+  signature proves package/publisher identity, not trust or authorization.
 - Treat third-party plugins as untrusted and deny capabilities by default.
   Grant only explicit, user-approved, least-privilege scopes.
 - Production installation and execution require signed packages plus verified

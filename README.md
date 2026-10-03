@@ -7,8 +7,8 @@ Flow Tool is a plugin-driven utility platform focused on capability injection,
 permission gating, and a unified React UI runtime.
 
 The target production host is desktop (Tauri + Rust).
-This repository currently contains a web runtime prototype used to validate the
-SDK, plugin contracts, and capability model before desktop host implementation.
+This repository currently contains a web runtime prototype and a desktop host
+prototype. Neither is a production sandbox for untrusted plugins.
 
 ## ✨ Vision
 
@@ -51,13 +51,22 @@ Flow Tool is built in layered form:
 
 Core principles:
 
-- Single React tree
+- Single React tree for trusted built-ins, not third-party isolation
 - Capability injection via runtime context
 - Permission-gated resource access
-- Namespaced storage & database
+- Namespaced storage conventions; enforced database isolation remains planned
 - Plugin lifecycle management
 
-## Current Status (June 2026)
+## Current Status (October 2026)
+
+Current maturity is `prototype`. The accepted design separates Host/built-ins
+from third-party UI, headless and legacy execution; its security controls are
+not yet implemented. See [trust boundaries](./docs/adr/0001-plugin-trust-boundaries.md),
+[capability/package policy](./docs/adr/0002-capability-and-package-policy.md),
+[open threat register](./docs/security/threat-model.md) and the
+[production roadmap](./docs/production-roadmap.md).
+The HTML catalog is discovery evidence only, not a claim that 125 plugins are
+compatible, secure or production-ready. Signed third-party code remains untrusted.
 
 - Product direction: desktop-first, cross-platform ready.
 - Current runnable hosts:
@@ -340,20 +349,15 @@ Plugins declare required capabilities:
 permissions: ['fs', 'network', 'db']
 ```
 
-Runtime enforces:
+The current runtime provides cooperative SDK capability injection and storage
+key prefixes based on manifest declarations. It does not enforce per-package
+user grants or protect the host realm against hostile plugin code.
 
-- Capability injection
-- Namespace isolation
-- Access restriction
-- Future user authorization prompts
-
-Plugins cannot directly access:
-
-- Tauri APIs
-- Node APIs
-- Native bindings
-
-All access must go through the Flow Tool runtime.
+The production design requires isolated execution plus Rust-side identity,
+grant and scope validation on every sensitive operation. Raw `native.invoke`,
+SQL and path adapters currently present are prototype gaps, not supported
+third-party production APIs. SDK-only imports are a development convention;
+they do not prevent same-realm code from bypassing the SDK.
 
 ## 💾 State & Database
 
@@ -415,11 +419,10 @@ export default definePlugin({
 Flow Tool uses SQLite for desktop-hosted plugin metadata and plugin-facing
 database capability work.
 
-Each plugin:
-
-- Has isolated table namespace
-- Cannot access other plugins’ data
-- Managed migrations (future roadmap)
+The current plugin-facing adapter shares a SQLite connection and accepts raw
+SQL; cross-plugin database isolation is not enforced. Host metadata repository
+tests do not certify plugin data access. Enforced namespaces, versioned
+migrations, backup and recovery are required future gates.
 
 Desktop plugin metadata is moving into the Tauri/Rust backend. The Rust side
 stores FlowTools-compatible manifest fields such as `id`, `name`, `version`,
@@ -536,6 +539,8 @@ The focus is on:
 - Architecture details: [`architecture.md`](./architecture.md)
 - Contributor/agent guide: [`AGENTS.md`](./AGENTS.md)
 - Plugin development: [`plugin.md`](./docs/plugin.md)
+- Security baseline: [threat model](./docs/security/threat-model.md) and
+  [production roadmap](./docs/production-roadmap.md)
 
 ## License
 

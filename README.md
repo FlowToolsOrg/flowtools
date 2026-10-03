@@ -185,6 +185,11 @@ Manual routing, rendering, accessibility, and visual validation remain required
 for changed UI flows. Passing these gates does not advance production maturity
 without the remaining security, packaging, and recovery evidence in the roadmap.
 
+Web manifest contracts run once per built-in plugin with a bounded 30-second
+cold-import budget; bulk registration uses the same integration-test budget.
+Ordinary unit tests keep their default timeout. Loading errors and contract
+mismatches still fail without retries; these tests are not startup benchmarks.
+
 Windows PR validation is defined in `.github/workflows/windows-quality.yml`.
 From a clean checkout, run `pwsh -NoProfile -File scripts/check-ci.ps1` for the
 same frozen install, browser setup, package/host prerequisites, seven-workspace gates,

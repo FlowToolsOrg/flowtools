@@ -12,6 +12,10 @@ import { pluginRegistryInternals } from '../stores/plugin-registry-store'
 
 import { registerPluginCommands } from './plugin-commands'
 
+// These integration cases import built packages and their UI dependency graph.
+// Cold Windows runners need an explicit bound, not an execution-speed assertion.
+const pluginLoadTimeoutMs = 30_000
+
 function registerEnabledFixture(
   registry: PluginRegistry,
   plugin: FlowToolPlugin,
@@ -146,8 +150,9 @@ describe('built-in plugin contracts', () => {
     }
   })
 
-  test('manifest metadata matches the loaded SDK plugin contract', async () => {
-    for (const manifest of builtInManifests) {
+  test.each(builtInManifests)(
+    'manifest $id metadata matches the loaded SDK plugin contract',
+    async manifest => {
       const { default: plugin } = await manifest.loader()
 
       expect({
@@ -171,44 +176,49 @@ describe('built-in plugin contracts', () => {
         category: manifest.category,
         cliAvailable: manifest.cliAvailable ?? false,
       })
-    }
-  })
+    },
+    pluginLoadTimeoutMs
+  )
 
-  test('enabled plugins register one executable host command each', async () => {
-    const registry = new PluginRegistry()
-    const commandRegistry = new CommandRegistry()
-    const loader = new PluginLoader(registry)
-    const navigations: string[] = []
+  test(
+    'enabled plugins register one executable host command each',
+    async () => {
+      const registry = new PluginRegistry()
+      const commandRegistry = new CommandRegistry()
+      const loader = new PluginLoader(registry)
+      const navigations: string[] = []
 
-    registry.registerAll(builtInManifests)
-    await loader.loadAll()
-    await loader.enableAll()
-    registerPluginCommands(registry, commandRegistry, path => {
-      navigations.push(path)
-    })
+      registry.registerAll(builtInManifests)
+      await loader.loadAll()
+      await loader.enableAll()
+      registerPluginCommands(registry, commandRegistry, path => {
+        navigations.push(path)
+      })
 
-    const commands = commandRegistry.getAll()
-    expect(commands).toHaveLength(builtInManifests.length)
-    expect(commands.map(command => command.id)).toEqual(
-      builtInManifests.map(manifest => `plugin:${manifest.id}`)
-    )
+      const commands = commandRegistry.getAll()
+      expect(commands).toHaveLength(builtInManifests.length)
+      expect(commands.map(command => command.id)).toEqual(
+        builtInManifests.map(manifest => `plugin:${manifest.id}`)
+      )
 
-    for (const command of commands) {
-      const plugin = registry.get(command.pluginId)?.plugin
-      if (!plugin) {
-        throw new Error(`Command references unloaded plugin: ${command.id}`)
+      for (const command of commands) {
+        const plugin = registry.get(command.pluginId)?.plugin
+        if (!plugin) {
+          throw new Error(`Command references unloaded plugin: ${command.id}`)
+        }
+
+        expect(command.title).toBe(plugin.meta.name)
+        expect(command.mode).toBe(plugin.type === 'app' ? 'panel' : 'headless')
       }
 
-      expect(command.title).toBe(plugin.meta.name)
-      expect(command.mode).toBe(plugin.type === 'app' ? 'panel' : 'headless')
-    }
+      const firstCommand = commands[0]
+      if (!firstCommand) {
+        throw new Error('Expected at least one built-in command')
+      }
 
-    const firstCommand = commands[0]
-    if (!firstCommand) {
-      throw new Error('Expected at least one built-in command')
-    }
-
-    await commandRegistry.execute(firstCommand.id)
-    expect(navigations).toEqual([`/tools/${firstCommand.pluginId}`])
-  })
+      await commandRegistry.execute(firstCommand.id)
+      expect(navigations).toEqual([`/tools/${firstCommand.pluginId}`])
+    },
+    pluginLoadTimeoutMs
+  )
 })

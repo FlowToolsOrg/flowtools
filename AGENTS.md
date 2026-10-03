@@ -264,6 +264,11 @@ The host includes a `Cmd/Ctrl+K` command palette:
 
 ## Testing Guidelines
 
+Web built-in manifest contracts must report each plugin separately. Actual
+package imports and bulk registration have a bounded 30-second integration-test
+timeout to accommodate cold Windows runners. Keep normal unit-test timeouts;
+do not skip assertions, retry failures, or treat this budget as a startup SLA.
+
 Automated tests are a required production quality gate. Add regression coverage
 with every behavior change or defect fix in these areas:
 

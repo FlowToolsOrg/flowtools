@@ -582,6 +582,9 @@ bun run build
 
 自动化测试是必需质量门。新机器先执行
 `bun run --cwd apps/ui-test test:install-browser` 安装锁定版本 Chromium。
+Web manifest 测试逐插件报告，真实 package 冷加载与批量注册用例限定 30 秒；
+普通单元用例保留默认超时，加载错误、元数据差异或超时仍失败，不自动重试。
+这个集成测试预算不是生产启动性能承诺。
 插件目录 inventory 与构建入口必须一致；新增插件要更新合约清单，确保 metadata、
 permissions、`run()`、`inputSchema` 和 CLI 执行链路都有对应验证。合约测试不得
 访问外部网络或用户状态；第三方兼容、权限隔离和打包产物按生产路线图单独验收。

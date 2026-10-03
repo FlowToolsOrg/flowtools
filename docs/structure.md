@@ -35,7 +35,8 @@
 - `packages/ui/test`：构建后公开导出；`test/consumer` 独立编译声明消费。
 - `plugins/plugin-entries.ts`：构建与合约测试共享目录 inventory；
   `plugins/test` 验证内置插件和 CLI 执行链路。
-- `apps/web-vite/src/app/*.test.ts`：manifest、加载与命令注册合约。
+- `apps/web-vite/src/app/*.test.ts`：逐插件 manifest、真实加载与命令注册合约；
+  冷加载/批量注册集成测试使用有限 30 秒预算，普通用例保留默认超时，不重试。
 - `apps/ui-test/src/test`：固定 Playwright Chromium 的无界面组件交互测试。
 - `apps/desktop/src-tauri/src`：内存数据库 Rust 合约测试，不使用用户 app-data。
 - `apps/desktop/test`：Rust 测试清单非空检查及其回归，防止 Cargo 零测试假绿。

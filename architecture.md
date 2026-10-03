@@ -47,6 +47,10 @@ Web Host 覆盖 app/tool 命令映射与非法 runtime 类型拒绝；UI consume
 Chromium 中验证组件交互；Rust repository 使用内存数据库验证隔离与错误路径。
 Desktop 测试任务先验证 Cargo 测试清单非空，避免零测试返回成功。
 
+Web manifest 元数据逐插件验证真实构建入口，冷加载与批量注册集成用例显式限定
+30 秒；普通单元测试保留默认超时。加载错误、契约不匹配或超时仍失败，不自动
+重试。这个 runner 容量预算不构成插件启动性能 SLA。
+
 Turbo 的 `test` 依赖 `^test`，不缓存结果；package 合约测试自行构建产物，
 消费者等待依赖测试完成，避免读取正在被清理的 `dist`。根 `test` 与 `build`
 必须顺序执行，不能并发运行；单独的 `build` 图仍依赖 `^build`。

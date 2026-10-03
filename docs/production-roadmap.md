@@ -532,7 +532,8 @@ P0.1d 分为仓库交付与远端验收，不把工作流文件存在当作 CI �
 - 授权进展：用户已允许推送 `codex/production-quality-gates` 并验收两次 CI；
   最初不包含更改仓库可见性或合并保护设置。2026-10-03 用户自行将仓库改为
   public，并明确授权配置 main 的 PR/必需 CI/严格同步/管理员约束/禁强推与
-  删除规则；不包含创建或合并 PR、实际强推/删除验证。
+  删除规则；当时不包含创建或合并 PR、实际强推/删除验证。随后用户明确要求
+  创建真实 PR 并合并该分支；允许在该 PR 上修复检查失败，不允许绕过保护。
 - 首次远端发现：[run 37116034446](https://github.com/FlowToolsOrg/flowtools/actions/runs/37116034446)
   在创建 job 前失败；actionlint 1.7.12 复现 job `env` 中 `runner.temp` 上下文
   无效。将 Bun 缓存路径移到 step-level env，并新增 1 项上下文回归；原本的
@@ -564,9 +565,24 @@ P0.1d 分为仓库交付与远端验收，不把工作流文件存在当作 CI �
   的 commit。
 - 验证：连续两次 GitHub Windows run 通过，记录 run URL、SHA 与 gate 日志；
   仓库管理员把固定质量 job 设置为 required status check 并验证失败阻止合并。
-- 尚未验收：真实失败 PR 的阻断与恢复结果；当前无 open PR，未通过真实合并
-  尝试或 main ref 写入验证。配置回读不代替行为验收；需另行允许创建验证 PR，
-  不实际合并。P0.1d2、P0.1d 和 P0.1 保持 `in-progress`，仅此验收项待完成。
+- 真实 PR 失败阻断证据（2026-10-03）：[PR #2](https://github.com/FlowToolsOrg/flowtools/pull/2)
+  的 head 为 `a3ae502515a266902c31fe5a77c33591f16eff88`；同 SHA push run
+  `37123132478` 成功，但 [PR run 37123492550](https://github.com/FlowToolsOrg/flowtools/actions/runs/37123492550)
+  失败，GitHub 返回 `mergeable: MERGEABLE`、`mergeStateStatus: BLOCKED`。
+  没有冲突而 required check 失败，实际阻止合并；未尝试管理员 bypass 或修改规则。
+- 失败根因与修复：Web manifest 契约原先把 12 次真实动态加载串行放进一个
+  默认 5 秒用例，runner 上 5318.83ms 超时；不是 PowerShell wrapper 自身缺陷。
+  改为逐插件命名用例，真实冷加载/批量注册限定 30 秒，其他用例保留默认预算；
+  不 mock 构建入口、不跳过断言、不重试，也不把该预算宣称为启动性能指标。
+  Web 测试由 6 项变为 17 项，原 12 个插件元数据断言完整保留。
+- 定向验证：17 项 Web 契约、Web lint/types 与 `docs:check` 已通过；临时 preload
+  注入 5500ms 冷加载延时后用例 6124ms 成功，注入 version 不匹配和 loader 异常
+  分别得到退出码 1，验证预算调整没有吞掉真正失败。探针未进入产品或 CI 配置，
+  验证后已删除。七 workspace lint（0 warnings/errors）、types、175 tests、
+  build 与 `docs:check` 均通过；Turbo 为 0 cached，175 = Bun 118 + Chromium 46
+  - Rust 11。没有 UI/runtime 行为改动，不以本轮测试替代新增人工验收。
+- 尚未验收：修复后的 PR required check 恢复；在新 head 通过前不合并。
+  P0.1d2、P0.1d 和 P0.1 暂保持 `in-progress`。
 - 退出标准：远端运行与合并保护均有真实证据后，P0.1d 与父 P0.1 才能标记 done。
 
 交付物：

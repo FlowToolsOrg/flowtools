@@ -563,6 +563,15 @@ bun run build
 permissions、`run()`、`inputSchema` 和 CLI 执行链路都有对应验证。合约测试不得
 访问外部网络或用户状态；第三方兼容、权限隔离和打包产物按生产路线图单独验收。
 
+独立干净 Windows checkout 使用
+`pwsh -NoProfile -File scripts/check-ci.ps1` 复现 PR 门禁；入口先构建 SDK/UI/CLI/
+plugins 声明产物，再执行各 workspace 的完整验证。插件构建不得写入未忽略的
+生成文件，也不得依赖开发机现有 `dist`、用户数据库或 .env 才能通过自动化。
+工作流交付不等于远端 CI / 合并保护已验收，也不构成插件生产认证。
+Desktop command DTO 来源必须是 Rust 生成器，不能维护第二份手写绑定；生成过程
+不加载插件、不启动宿主窗口，也不初始化用户数据库。修改 Rust commands/DTO 时
+重新生成并验证前端类型消费以及非交互生成回归。
+
 并手动验证：
 
 - 插件页面能正常渲染

@@ -16,9 +16,8 @@ use tauri::Manager;
 use tauri_specta::{collect_commands, Builder};
 use tokio::sync::Mutex;
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
-    let commands_builder = Builder::<tauri::Wry>::new().commands(collect_commands![
+fn command_builder<R: tauri::Runtime>() -> Builder<R> {
+    Builder::<R>::new().commands(collect_commands![
         get_plugins,
         get_plugin,
         add_plugin,
@@ -26,11 +25,28 @@ pub fn run() {
         enable_plugin,
         disable_plugin,
         remove_plugin
-    ]);
+    ])
+}
+
+#[cfg(feature = "codegen")]
+pub fn export_bindings(
+    path: impl AsRef<std::path::Path>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    command_builder::<tauri::test::MockRuntime>()
+        .export(Typescript::default(), path)
+        .map_err(Into::into)
+}
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    let commands_builder = command_builder::<tauri::Wry>();
 
     #[cfg(debug_assertions)]
     commands_builder
-        .export(Typescript::default(), "../src/utils/bindings.ts")
+        .export(
+            Typescript::default(),
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../src/utils/bindings.ts"),
+        )
         .expect("Failed to export typescript bindings");
 
     #[allow(unused_mut)]

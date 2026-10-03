@@ -2,9 +2,16 @@
 
 ## 工程验证结构
 
-所有 workspace 提供统一的 `lint`、`check-types`、`test` 和 `build`。根 Turbo
-测试图依赖 `^test`，package 合约测试自行构建产物后断言，再运行消费者测试；
-禁止空测试成功选项与测试缓存。根 `test` 和 `build` 必须顺序执行。
+- `.github/workflows/windows-quality.yml`：固定工具链与 Action SHA 的 Windows
+  PR 工作流；只读权限，不缓存 JavaScript 构建产物。
+- `scripts/check-ci.ps1` / `ci-gates.ps1`：本地与 CI 共用的顺序门禁、退出码与
+  工作树漂移检查；`ci-contracts.test.ts` 验证工作流和 PowerShell 失败传播。
+- Web/Desktop `generate:routes` 使用锁定的官方 TanStack CLI；Desktop
+  `src-tauri/src/bin/export-bindings.rs` 使用同一命令构造器导出 Rust bindings。
+  两者均在 fresh checkout 的类型检查前生成，不依赖一次手动桌面启动。
+  所有 workspace 提供统一的 `lint`、`check-types`、`test` 和 `build`。根 Turbo
+  测试图依赖 `^test`，package 合约测试自行构建产物后断言，再运行消费者测试；
+  禁止空测试成功选项与测试缓存。根 `test` 和 `build` 必须顺序执行。
 
 - `packages/sdk/test`：SDK 值对象、registry、lifecycle、watchdog 与公开导出。
 - `packages/cli/src/*.test.ts`：CLI 参数、schema、formatter 与 runner。

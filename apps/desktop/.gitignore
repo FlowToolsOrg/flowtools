@@ -24,4 +24,5 @@ dist-ssr
 *.sw?
 
 routeTree.gen.ts
+.tanstack
 src/utils/bindings.ts

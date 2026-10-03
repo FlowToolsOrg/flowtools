@@ -487,17 +487,33 @@ P0.1d 分为仓库交付与远端验收，不把工作流文件存在当作 CI �
 
 ##### P0.1d1 交付可复现的 Windows 质量工作流
 
-- 状态：`in-progress`
+- 状态：`done`
 - 负责人：`Codex`
 - 开始日期：`2026-10-03`
+- 完成日期：`2026-10-03`
+- Commit：`ci(repo): add reproducible Windows quality gates (P0.1d1)`
 - 范围：PR / push / 手动触发的 Windows workflow、锁定工具链、依赖缓存、
   统一 PowerShell 验证入口和工作流安全/门禁回归。
 - 约束：Actions 固定完整 SHA、最小只读权限、不使用 `pull_request_target`，
   不允许失败继续、不缓存 JS 构建产物或 Turbo 结果。
 - 实施：先构建声明消费需要的 package 产物，再执行 lint、type check、test、
   build、Rust check 和工作树漂移检查；每条原生命令的非零退出码必须终止任务。
+- 干净环境修复：显式生成 Web/Desktop route trees 和 Rust bindings；绑定生成
+  使用 codegen-only console binary + MockRuntime，不启动窗口或用户数据库。
+  Windows binding integration test 单独嵌入 Common Controls v6 manifest，
+  既覆盖生成成功/重复一致/写入失败，也避免应用资源重复。
+- Windows 环境修复：Turbo 保留 strict mode，仅显式透传 `PATHEXT` 与
+  build/test 的 `CARGO_TARGET_DIR`；避免原生命令发现失败，不透传宿主密钥。
 - 验证：在独立干净 checkout 执行同一入口，确认所有 workspace 参与且无
   tracked/untracked 生成文件漂移；验证工作流契约和失败传播。
+- 验证结果（2026-10-03）：独立 Windows worktree 连续两轮完整入口通过；
+  第一轮从没有 node_modules、JS dist、host routes/bindings 的 checkout 开始，
+  使用已有依赖下载、Chromium 与 Rust 编译缓存。两轮所有 JS gate 强制执行，
+  frozen install、7-workspace lint（0 warnings/errors）、types、156 tests、
+  build、Rust fmt/check/clippy 和最终工作树检查均成功。156 tests 包含原 151
+  项，加 4 项 workflow/PowerShell 回归和 1 项 Rust binding integration test。
+  Vite 大 chunk 提示仍是性能待办；本地 Windows 通过不替代 GitHub Windows
+  runner 实测，不推进 P0.1d2 或生产成熟度。
 
 ##### P0.1d2 验收远端 CI 与合并保护
 
@@ -506,6 +522,9 @@ P0.1d 分为仓库交付与远端验收，不把工作流文件存在当作 CI �
 - 依赖：P0.1d1
 - 所需授权：将提交推送到 `codex/` 分支以触发 GitHub Actions；设置合并保护
   需要另行明确授权，不能从允许本地 commit 推断。
+- 已知限制（2026-10-03 只读检查）：私有仓库的 main branch protection API
+  返回 403，要求升级套餐或公开仓库。不能擅自更改可见性、套餐或绕过验收项；
+  需要维护者确定可行的合并保护方案。
 - 验证：连续两次 GitHub Windows run 通过，记录 run URL、SHA 与 gate 日志；
   仓库管理员把固定质量 job 设置为 required status check 并验证失败阻止合并。
 - 退出标准：远端运行与合并保护均有真实证据后，P0.1d 与父 P0.1 才能标记 done。
@@ -515,17 +534,12 @@ P0.1d 分为仓库交付与远端验收，不把工作流文件存在当作 CI �
 - Windows CI 从干净 checkout 执行 frozen install、lint、type check、test、build
   和 `cargo check`。
 - 使用 Bun、Rust 与依赖缓存，但缓存不能掩盖缺失产物或 lockfile 漂移。
-- 任一 gate 失败都会使工作流失败并阻止合并。
+- 任一 gate 失败都会使工作流失败；配置 required check 后才会阻止合并。
 
 验证：
 
 ```powershell
-bun install --frozen-lockfile
-bun run lint
-bun run check-types
-bun run test
-bun run build
-cargo check --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
+pwsh -NoProfile -File scripts/check-ci.ps1
 ```
 
 退出标准：
@@ -546,6 +560,9 @@ cargo check --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
 
 ```powershell
 bun install --frozen-lockfile
+bun run --cwd apps/ui-test test:install-browser
+bun run build:packages
+bun run generate:hosts
 bun run lint
 bun run check-types
 bun run test
@@ -1246,26 +1263,28 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 
 ### Phase 0
 
-| ID     | 状态        | 负责人 | 依赖          | Commit / 验证记录                                                                                     |
-| ------ | ----------- | ------ | ------------- | ----------------------------------------------------------------------------------------------------- |
-| P0.1   | in-progress | Codex  | -             | P0.1a–P0.1c 已完成；P0.1d 待实施                                                                      |
-| P0.1a  | done        | Codex  | -             | `chore(repo): standardize workspace quality tasks (P0.1a)`；workspace verifier + Turbo dry graph 通过 |
-| P0.1b  | done        | Codex  | P0.1a         | `fix(repo): close build integration gates (P0.1b5)`；P0.1b1–P0.1b5 全部通过                           |
-| P0.1b1 | done        | Codex  | P0.1a         | `fix(ui): handle icon animation promises (P0.1b1)`；lint + check-types 通过                           |
-| P0.1b2 | done        | Codex  | P0.1a         | `fix(web): restore host quality gates (P0.1b2)`；lint + check-types + build 通过                      |
-| P0.1b3 | done        | Codex  | P0.1a         | `fix(ui-test): restore consumer build gates (P0.1b3)`；lint + check-types + build 通过                |
-| P0.1b4 | done        | Codex  | P0.1a         | `fix(desktop): restore static quality gates (P0.1b4)`；lint + check-types + build + cargo check 通过  |
-| P0.1b5 | done        | Codex  | P0.1b1–P0.1b4 | `fix(repo): close build integration gates (P0.1b5)`；根 lint + check-types + build 通过               |
-| P0.1c  | done        | Codex  | P0.1a, P0.1b  | P0.1c1–P0.1c5 完成；7 workspace 自动化基线通过                                                        |
-| P0.1c1 | done        | Codex  | P0.1b         | `test(sdk): lock core value contracts (P0.1c1)`；19 tests + 8 package exports 通过                    |
-| P0.1c2 | done        | Codex  | P0.1c1        | `fix(sdk): enforce lifecycle failure contracts (P0.1c2)`；40 tests 覆盖状态、加载与 watchdog          |
-| P0.1c3 | done        | Codex  | P0.1b         | `fix(cli): harden input and runner contracts (P0.1c3)`；25 tests + binary smoke 通过                  |
-| P0.1c4 | done        | Codex  | P0.1b         | `fix(desktop): enforce plugin persistence contracts (P0.1c4)`；10 Rust tests + clippy 通过            |
-| P0.1c5 | done        | Codex  | P0.1c1–P0.1c4 | `test(repo): close workspace regression gates (P0.1c5)`；151 tests + declarations + 人工 Web 复查通过 |
-| P0.1d  | pending     | TBD    | P0.1b, P0.1c  | -                                                                                                     |
-| P0.2   | pending     | TBD    | P0.1          | -                                                                                                     |
-| P0.3   | pending     | TBD    | P0.1          | -                                                                                                     |
-| P0.4   | pending     | TBD    | -             | -                                                                                                     |
+| ID     | 状态        | 负责人     | 依赖          | Commit / 验证记录                                                                                     |
+| ------ | ----------- | ---------- | ------------- | ----------------------------------------------------------------------------------------------------- |
+| P0.1   | in-progress | Codex      | -             | P0.1a–P0.1c、P0.1d1 已完成；P0.1d2 待远端验收                                                         |
+| P0.1a  | done        | Codex      | -             | `chore(repo): standardize workspace quality tasks (P0.1a)`；workspace verifier + Turbo dry graph 通过 |
+| P0.1b  | done        | Codex      | P0.1a         | `fix(repo): close build integration gates (P0.1b5)`；P0.1b1–P0.1b5 全部通过                           |
+| P0.1b1 | done        | Codex      | P0.1a         | `fix(ui): handle icon animation promises (P0.1b1)`；lint + check-types 通过                           |
+| P0.1b2 | done        | Codex      | P0.1a         | `fix(web): restore host quality gates (P0.1b2)`；lint + check-types + build 通过                      |
+| P0.1b3 | done        | Codex      | P0.1a         | `fix(ui-test): restore consumer build gates (P0.1b3)`；lint + check-types + build 通过                |
+| P0.1b4 | done        | Codex      | P0.1a         | `fix(desktop): restore static quality gates (P0.1b4)`；lint + check-types + build + cargo check 通过  |
+| P0.1b5 | done        | Codex      | P0.1b1–P0.1b4 | `fix(repo): close build integration gates (P0.1b5)`；根 lint + check-types + build 通过               |
+| P0.1c  | done        | Codex      | P0.1a, P0.1b  | P0.1c1–P0.1c5 完成；7 workspace 自动化基线通过                                                        |
+| P0.1c1 | done        | Codex      | P0.1b         | `test(sdk): lock core value contracts (P0.1c1)`；19 tests + 8 package exports 通过                    |
+| P0.1c2 | done        | Codex      | P0.1c1        | `fix(sdk): enforce lifecycle failure contracts (P0.1c2)`；40 tests 覆盖状态、加载与 watchdog          |
+| P0.1c3 | done        | Codex      | P0.1b         | `fix(cli): harden input and runner contracts (P0.1c3)`；25 tests + binary smoke 通过                  |
+| P0.1c4 | done        | Codex      | P0.1b         | `fix(desktop): enforce plugin persistence contracts (P0.1c4)`；10 Rust tests + clippy 通过            |
+| P0.1c5 | done        | Codex      | P0.1c1–P0.1c4 | `test(repo): close workspace regression gates (P0.1c5)`；151 tests + declarations + 人工 Web 复查通过 |
+| P0.1d  | in-progress | Codex      | P0.1b, P0.1c  | 已拆分工作流交付与远端验收；不把本地成功记为远端 CI 生效                                              |
+| P0.1d1 | done        | Codex      | P0.1b, P0.1c  | `ci(repo): add reproducible Windows quality gates (P0.1d1)`；两轮本地完整门禁、156 tests、无生成漂移  |
+| P0.1d2 | pending     | Maintainer | P0.1d1        | 等待 push 授权；私有仓库 branch protection API 返回套餐限制 403                                       |
+| P0.2   | pending     | TBD        | P0.1          | -                                                                                                     |
+| P0.3   | pending     | TBD        | P0.1          | -                                                                                                     |
+| P0.4   | pending     | TBD        | -             | -                                                                                                     |
 
 ### Phase 1
 

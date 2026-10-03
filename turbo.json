@@ -2,9 +2,11 @@
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
   "globalDependencies": ["configs/tsdown/**"],
+  "globalPassThroughEnv": ["PATHEXT"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "passThroughEnv": ["CARGO_TARGET_DIR"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**/*"]
     },
@@ -23,6 +25,7 @@
     },
     "test": {
       "dependsOn": ["^test"],
+      "passThroughEnv": ["CARGO_TARGET_DIR"],
       "cache": false,
       "outputs": []
     },

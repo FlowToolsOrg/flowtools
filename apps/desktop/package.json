@@ -5,12 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "bun run generate && tsc && vite build",
+    "generate": "bun run generate:routes && bun run generate:bindings",
+    "generate:routes": "bun --bun run tsr generate",
+    "generate:bindings": "cargo run --locked --manifest-path src-tauri/Cargo.toml --features codegen --bin export-bindings",
     "lint": "oxlint --type-aware --type-check",
     "lint:fix": "oxlint --fix --type-aware --type-check",
     "format": "oxfmt",
     "check-types": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
-    "test": "bun test test ../../scripts/verify-workspace-tasks.test.ts && bun run test/rust-test-inventory.ts && cargo test --locked --lib --manifest-path src-tauri/Cargo.toml",
+    "test": "bun test test ../../scripts && bun run test/rust-test-inventory.ts && cargo test --locked --features codegen --lib --test bindings --manifest-path src-tauri/Cargo.toml",
     "preview": "vite preview",
     "tauri": "tauri"
   },

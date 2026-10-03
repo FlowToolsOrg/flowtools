@@ -153,6 +153,8 @@ bun run packages/cli/src/cli.ts run <plugin-id> --format text
 
 Automated tests are required. After installing dependencies, install the pinned
 Chromium runtime once with `bun run --cwd apps/ui-test test:install-browser`.
+On a fresh checkout, run `bun run build:packages` and `bun run generate:hosts`
+before lint/type checks to generate their declaration, route, and IPC inputs.
 Run `bun run lint`, `bun run check-types`, `bun run test`, and `bun run build`
 from the repository root. `bun run verify:workspace-tasks` checks that all seven
 workspaces expose the standard gates and reject empty-test success flags.
@@ -166,6 +168,22 @@ commands, headless Chromium UI interactions, and in-memory Rust persistence.
 Manual routing, rendering, accessibility, and visual validation remain required
 for changed UI flows. Passing these gates does not advance production maturity
 without the remaining security, packaging, and recovery evidence in the roadmap.
+
+Windows PR validation is defined in `.github/workflows/windows-quality.yml`.
+From a clean checkout, run `pwsh -NoProfile -File scripts/check-ci.ps1` for the
+same frozen install, browser setup, package/host prerequisites, seven-workspace gates,
+Rust format/check/clippy, and clean-worktree checks. Package prerequisites are
+also available as `bun run build:packages`; declaration consumers require these
+artifacts before lint/type checks on a fresh checkout. `bun run generate:hosts`
+generates Web/Desktop route trees and Rust-derived Desktop bindings without
+launching a window or initializing user data. Host builds run their generators
+before TypeScript checks. Bun is pinned by
+`packageManager`; CI uses Rust 1.96.0. Actions use immutable commit references,
+read-only permissions, and dependency/native compilation caches, not JS build
+outputs or Turbo results. A repository administrator must separately require
+the `Windows quality gates` check; a workflow file alone does not block merging.
+Turbo keeps strict environment filtering, with explicit `PATHEXT` and native
+build/test `CARGO_TARGET_DIR` passthrough for Windows tool discovery and caches.
 
 ## Plugin Model
 

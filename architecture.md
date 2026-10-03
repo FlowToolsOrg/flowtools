@@ -43,8 +43,27 @@ Desktop 测试任务先验证 Cargo 测试清单非空，避免零测试返回�
 Turbo 的 `test` 依赖 `^test`，不缓存结果；package 合约测试自行构建产物，
 消费者等待依赖测试完成，避免读取正在被清理的 `dist`。根 `test` 与 `build`
 必须顺序执行，不能并发运行；单独的 `build` 图仍依赖 `^build`。
+Turbo 保留严格环境模式，显式透传 Windows `PATHEXT` 和 build/test 使用的
+`CARGO_TARGET_DIR`，避免 PowerShell 命令发现失败及原生缓存路径被过滤。
 测试类型与浏览器生产类型隔离；这些验证不等同于
 第三方插件隔离、签名安装或生产兼容认证，仍按生产路线图分阶段交付。
+
+### Windows PR 质量执行链
+
+`windows-quality.yml` 安装 packageManager 指定的 Bun 与 Rust 1.96.0，然后
+调用 `scripts/check-ci.ps1`。该入口先 frozen install、安装固定 Chromium、
+构建 package 声明消费产物、生成 Web/Desktop routes 与 Rust bindings，再顺序
+执行七 workspace 的 lint/types/test/build
+与 Rust fmt/check/clippy。Turbo gate 强制重新执行，缓存仅用于依赖下载及原生
+编译；每条原生命令显式检查退出码，失败立即终止，工作树漂移仍由 always 步骤
+检查。工作流使用只读权限和 Action SHA；远端成功与 required check 启用需独立
+验收，不能由本地构建成功推断。
+
+Desktop 的 runtime 与生成器共享命令注册构造器。`codegen` feature 下的
+`export-bindings` console binary 使用 MockRuntime，只导出类型，不启动 WebView
+或用户数据库；生产默认构建不包含该 binary。Windows build script 显式加入
+Common Controls v6 manifest，覆盖 Tauri 应用资源未覆盖的 binding integration
+test；linker directives 限定于 test target，避免与应用已有 manifest 重复。
 
 ## 2. Layered Model（分层模型）
 

@@ -55,6 +55,15 @@ workflows:
 
 Run from repository root:
 
+- `pwsh -NoProfile -File scripts/check-ci.ps1`: run the Windows CI gates from a
+  clean checkout; each native nonzero exit terminates the task and generated
+  tracked/untracked file drift fails validation.
+- `bun run build:packages`: bootstrap SDK/UI/CLI/plugins declaration artifacts
+  before lint/type checks in a fresh checkout.
+- `bun run generate:hosts`: generate Web/Desktop route trees and Desktop Rust
+  command bindings before lint/type checks in a fresh checkout. Never replace
+  Rust-derived bindings with handwritten DTO copies. Bindings generation uses
+  a codegen-only binary and mock runtime, not desktop launch or user databases.
 - `bun run dev`: starts workspace `dev` tasks via Turbo.
 - `bun run build`: builds workspaces (`turbo run build`).
 - `bun run lint`: runs workspace lint tasks.
@@ -97,6 +106,22 @@ sequentially, never concurrently: package tests may clean their own `dist`.
 Test scripts must fail when no tests are collected; never use
 `--pass-with-no-tests` or equivalent flags. Keep Bun test globals in test-only
 type configurations so browser production sources cannot silently use Bun APIs.
+
+Windows PR CI lives in `.github/workflows/windows-quality.yml`. Keep Actions
+pinned to full commit SHAs, PR permissions read-only, and gate failures fatal.
+Do not use `pull_request_target` for executing contributor code. Never cache
+`node_modules`, JavaScript `dist`, or `.turbo` results as a substitute for gates.
+CI uses the Bun version in root `packageManager` and pinned Rust 1.96.0. Changes
+to triggers, tooling, caches, failure propagation, or drift checks require
+regression coverage in `scripts/ci-contracts.test.ts`, run by Desktop tests.
+Keep Turbo strict environment mode. Pass through Windows `PATHEXT` for native
+command discovery and `CARGO_TARGET_DIR` for build/test native cache placement;
+do not pass through host secrets or switch to loose mode to fix tool discovery.
+Remote CI acceptance and required status-check settings are separate roadmap
+work; local commit permission does not authorize pushes or repository settings.
+Windows MSVC binding integration tests require the Common Controls v6 manifest
+directives in `src-tauri/build.rs`; Tauri's app manifest does not cover them.
+Keep these directives test-target scoped to avoid duplicate app manifests.
 
 ## Production Maturity Labels
 

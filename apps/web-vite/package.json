@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsgo -b && vite build",
+    "build": "bun run generate:routes && tsgo -b && vite build",
+    "generate:routes": "bun --bun run tsr generate",
     "lint": "oxlint --type-aware --type-check",
     "lint:fix": "oxlint --fix --type-aware --type-check",
     "format": "oxfmt",

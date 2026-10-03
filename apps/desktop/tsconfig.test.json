@@ -1,6 +1,13 @@
 {
   "extends": "./tsconfig.json",
-  "compilerOptions": { "types": ["bun-types"] },
-  "include": ["test", "../../scripts/verify-workspace-tasks*.ts"],
+  "compilerOptions": {
+    "types": ["bun-types"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+  },
+  "include": [
+    "test",
+    "../../scripts/*.test.ts",
+    "../../scripts/verify-workspace-tasks.ts"
+  ],
   "references": []
 }

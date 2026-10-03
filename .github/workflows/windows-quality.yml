@@ -1,0 +1,70 @@
+name: Windows quality
+
+on:
+  pull_request:
+  push:
+    branches: [main, 'codex/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Windows quality gates
+    runs-on: windows-2022
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      CI: 'true'
+      BUN_INSTALL_CACHE_DIR: ${{ runner.temp }}/flowtools-bun-cache
+      CARGO_TARGET_DIR: ${{ github.workspace }}/apps/desktop/src-tauri/target
+      RUST_TOOLCHAIN: '1.96.0'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Install pinned Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version-file: package.json
+
+      - name: Install pinned Rust
+        uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          components: rustfmt, clippy
+
+      - name: Cache Bun dependency downloads
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: ${{ env.BUN_INSTALL_CACHE_DIR }}
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock', 'package.json') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      - name: Cache Rust dependencies and compilation
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git/db
+            ${{ env.CARGO_TARGET_DIR }}
+          key: rust-${{ runner.os }}-${{ env.RUST_TOOLCHAIN }}-${{ hashFiles('apps/desktop/src-tauri/Cargo.lock') }}
+          restore-keys: rust-${{ runner.os }}-${{ env.RUST_TOOLCHAIN }}-
+
+      - name: Run all quality gates
+        run: ./scripts/check-ci.ps1
+
+      - name: Verify clean worktree even after a failed gate
+        if: always()
+        run: |
+          . ./scripts/ci-gates.ps1
+          Assert-CleanWorktree

@@ -2,6 +2,8 @@ import type { ComponentProps } from 'react'
 
 import {
   CommandPalette,
+  ExecutionPanel,
+  type ExecutionPanelProps,
   ToolLayoutMain,
   ToolLayoutSidebar,
   type CommandPaletteItem,
@@ -20,6 +22,7 @@ import {
 
 export const runtimeExports = [
   CommandPalette,
+  ExecutionPanel,
   ToolLayoutMain,
   ToolLayoutSidebar,
   Button,
@@ -42,6 +45,8 @@ export const toolEntity: ToolEntity = {
 }
 
 export interface ConsumerTypeContract {
+  executionProps: ExecutionPanelProps
+  inferredExecutionProps: ComponentProps<typeof ExecutionPanel>
   rootProps: ToolLayoutMainProps
   inferredRootProps: ComponentProps<typeof ToolLayoutMain>
   pluginButtonProps: ComponentProps<typeof Button>

@@ -12,7 +12,7 @@
     "format": "oxfmt",
     "preview": "vite preview",
     "check-types": "tsgo -b",
-    "test": "bun test src/app/plugin-contracts.test.ts"
+    "test": "bun test src/app"
   },
   "dependencies": {
     "@flowtools/plugins": "workspace:*",

@@ -70,6 +70,8 @@
       "name": "@flowtools/ui-test",
       "version": "0.0.0",
       "dependencies": {
+        "@flowtools/plugins": "workspace:*",
+        "@flowtools/sdk": "workspace:*",
         "@flowtools/ui": "workspace:*",
         "@heroui/react": "catalog:",
         "@heroui/styles": "catalog:",
@@ -176,6 +178,9 @@
     "packages/ui": {
       "name": "@flowtools/ui",
       "version": "0.0.0",
+      "dependencies": {
+        "@flowtools/sdk": "workspace:*",
+      },
       "devDependencies": {
         "@heroui/react": "catalog:",
         "@heroui/styles": "catalog:",

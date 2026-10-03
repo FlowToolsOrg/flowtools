@@ -16,7 +16,16 @@
 
 - `packages/sdk/src/execution/executor.ts` / `test/executor.test.ts`：共享真实
   `run()` 执行边界，校验/defaults、稳定 envelope、取消/异步等待上限与资源清理。
-  输入摘要只保留类型和大小；宿主接入在 P0.2b 验收，执行器不是 sandbox。
+  输入摘要只保留类型和大小；CLI/Web/Desktop 已接入，执行器不是 sandbox。
+- `packages/sdk/src/execution/history.ts`：versioned 元数据-only external store，
+  bounded records、失败/取消、刷新恢复与非法记录拒绝；不导入旧未验证 key。
+- `packages/ui/src/components/run-panel/execution-panel.tsx`：三态操作、JSON/schema、
+  实际 envelope、取消/卸载清理与不可序列化输出失败；不制造演示结果。
+- `apps/web-vite/src/runtime/plugin-runtime.tsx` / Desktop
+  `src/runtime/plugin-execution.ts`：宿主真实能力 context + SDK executor。
+- `apps/ui-test/scripts/validate-execution-hosts.ts`：真实 Web/Tauri 验收，Node
+  Playwright + 独立测试 identity/CDP，不 mock 原生 IPC；记录与截图在
+  [宿主验收](./validation/p0-execution-hosts.md)。
 
 - `scripts/docs-check.ts` / `docs-check.test.ts`：十份核心/ADR/威胁/PR 文档的
   只读契约，内联本地链接路径与风险字段验证；脚本由 Desktop 测试任务消费。

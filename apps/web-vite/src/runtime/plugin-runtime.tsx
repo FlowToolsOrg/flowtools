@@ -1,13 +1,10 @@
-import type { AppPlugin, ToolPlugin } from '@flowtools/sdk'
+import type { AppPlugin, FlowToolPlugin } from '@flowtools/sdk'
+import type { ExecutePluginOptions } from '@flowtools/sdk/execution'
 
-import { PluginErrorBoundary, withWatchdog } from '@flowtools/sdk'
+import { PluginErrorBoundary } from '@flowtools/sdk'
+import { createExecutionFailure, executePlugin } from '@flowtools/sdk/execution'
 
 import { createWebToolContext, WebPluginRuntimeProvider } from './ctx'
-
-interface RunWebToolPluginOptions {
-  signal?: AbortSignal
-  timeoutMs?: number
-}
 
 /**
  * Wrap an app plugin panel with runtime ctx provider and error boundary.
@@ -18,7 +15,6 @@ export function renderWebAppPlugin(plugin: AppPlugin) {
   return (
     <PluginErrorBoundary pluginId={plugin.meta.id}>
       <WebPluginRuntimeProvider
-        mode="development"
         permissions={plugin.meta.permissions}
         storeShape={plugin.store}
         pluginId={plugin.meta.id}
@@ -31,23 +27,30 @@ export function renderWebAppPlugin(plugin: AppPlugin) {
 }
 
 /**
- * Execute a tool plugin with web runtime ctx and watchdog.
+ * Execute real app/tool run() with the shared SDK outcome boundary.
  */
-export function runWebToolPlugin<TPlugin extends ToolPlugin<never, unknown>>(
-  plugin: TPlugin,
-  input: Parameters<TPlugin['run']>[1],
-  options?: RunWebToolPluginOptions
-): ReturnType<TPlugin['run']> {
-  const ctx = createWebToolContext({
-    mode: 'development',
-    permissions: plugin.meta.permissions,
-    pluginId: plugin.meta.id,
-    signal: options?.signal,
-  })
-
-  const guardedRun = withWatchdog(plugin, {
-    timeoutMs: options?.timeoutMs,
-  })
-
-  return guardedRun(ctx, input) as ReturnType<TPlugin['run']>
+export async function runWebPlugin(
+  plugin: FlowToolPlugin,
+  input: unknown,
+  options: ExecutePluginOptions = {}
+) {
+  let ctx
+  try {
+    ctx = createWebToolContext({
+      permissions: plugin.meta.permissions,
+      pluginId: plugin.meta.id,
+      pluginType: plugin.type,
+      storeShape: plugin.type === 'app' ? plugin.store : undefined,
+      signal: options.signal,
+      log: () => {},
+    })
+  } catch {
+    return createExecutionFailure(plugin.meta.id, plugin.meta.version, input, {
+      code: 'CONTEXT_FAILED',
+      message: 'Web runtime context could not be created',
+    })
+  }
+  return executePlugin(plugin, input, ctx, options)
 }
+
+export const runWebToolPlugin = runWebPlugin

@@ -682,7 +682,8 @@ cargo check --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
 
 #### P0.2b 接通三端运行与真实历史
 
-- 状态：`in-progress`
+- 状态：`done`
+- 完成日期：`2026-10-03`
 - 依赖：P0.2a
 - 范围：CLI 使用 SDK executor；Web 与 Desktop 提供真实 JSON/schema 运行、
   取消与错误显示；保留 app panel；历史仅来自实际 execution envelope，迁移或
@@ -700,7 +701,17 @@ cargo check --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
   lint/types/build/20 tests；真实 compiled CLI 子进程覆盖成功/校验失败/非法 timeout/
   text，序列化失败明确 OUTPUT_INVALID；无 UI 改动，人工 UI 在 b2 验收。
 - **P0.2b2 Web/Desktop 与历史**：共享运行 UI、JSON/schema、取消/失败、真实历史、
-  跨宿主回归和人工路由/插件渲染；b1/b2 均通过后 P0.2b 才能关闭。
+  跨宿主回归和人工路由/插件渲染；`done`（2026-10-03）。Web 删除伪延时/大写结果
+  与假版本时间线；两端保留 app panel，app/tool 都调用共享 SDK executor。
+  新历史格式最多 200 条 metadata-only 尝试，无原始 input/output/message；旧 key
+  保留但不导入，损坏/矛盾记录拒绝，写失败提示。共享 UI 覆盖实际异常、取消、
+  迟到结果、卸载 abort 与 OUTPUT_INVALID，序列化失败不会显示 success。
+  验证：根 docs/lint/types/test/build（7/7 workspace、无缓存）；SDK 67 tests、
+  Chromium 50 tests；Windows Web production preview 与独立标识的实际 Tauri
+  WebView/原生 IPC，Base64 相同结果、schema/JSON 拒绝、键盘运行、脱敏历史
+  刷新/清空、受控网络任务取消全部通过，截图已检查。
+  [复现、截图及未验证平台](./validation/p0-execution-hosts.md)。这是 prototype
+  执行基线，不等于第三方隔离/权限安全、签名安装或完整辅助技术认证。
 
 #### P0.2c 十二插件 Smoke 与跨端验收
 
@@ -715,7 +726,8 @@ cargo check --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
 
 - 删除 Web 工具页中的演示延时、字符串变换和硬编码运行结果。
 - Web、Desktop 和 CLI 都通过 SDK executor 调用真实 `run()`。
-- Run history 只记录实际执行的版本、输入摘要、耗时、结果和错误码。
+- Run history 只记录实际尝试的版本、输入类型/大小摘要、耗时、结果类型和错误码，
+  不持久化原始输入、输出或异常 message。
 - 为 12 个内置插件建立无 UI smoke fixture，确保 `list` 与 `run` 一致。
 - 运行失败向用户返回稳定错误，而不是静默 `process.exit(1)`。
 
@@ -1493,9 +1505,9 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 | P0.1d2 | done        | Maintainer | P0.1d1        | `docs(roadmap): close remote quality gate acceptance (P0.1d2)`；PR #2 BLOCKED → CLEAN、c2180f8 两轮 175 tests |
 | P0.2   | in-progress | Codex      | P0.1          | 2026-10-03 拆分 P0.2a/b/c；按 SDK → 三端运行/历史 → 十二插件验收执行                                          |
 | P0.2a  | done        | Codex      | P0.1          | 2026-10-03；共享 SDK executor、21 新回归；SDK lint/types/build 与 61 tests 通过                               |
-| P0.2b  | in-progress | Codex      | P0.2a         | b1 CLI done；b2 Web/Desktop 真实运行与历史待完成                                                              |
+| P0.2b  | done        | Codex      | P0.2a         | b1/b2 done；三端共享实际执行与 versioned 元数据-only 历史                                                     |
 | P0.2b1 | done        | Codex      | P0.2a         | 2026-10-03；SDK 62 / CLI 33 / plugins 20 tests；compiled CLI 子进程回归与 lint/types/build 通过               |
-| P0.2b2 | pending     | Codex      | P0.2b1        | 共享运行 UI、宿主 adapter 与脱敏真实历史、跨端与人工回归                                                      |
+| P0.2b2 | done        | Codex      | P0.2b1        | 2026-10-03；根七 workspace 全 gate；SDK 67/Chromium 50 tests；真实 Web/Tauri 验收与截图                       |
 | P0.2c  | pending     | Codex      | P0.2b         | 十二插件 smoke、跨端与人工验收                                                                                |
 | P0.3   | pending     | TBD        | P0.1          | -                                                                                                             |
 | P0.3a  | pending     | Codex      | P0.2          | 成熟度、兼容证据与便携 Catalog                                                                                |

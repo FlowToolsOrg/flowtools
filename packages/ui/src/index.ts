@@ -1,5 +1,9 @@
 export { cn } from './utils/class-name'
 export {
+  ExecutionPanel,
+  type ExecutionPanelProps,
+} from './components/run-panel/execution-panel'
+export {
   CommandPalette,
   type CommandPaletteItem,
   type CommandPaletteRootProps,

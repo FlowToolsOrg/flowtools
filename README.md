@@ -67,9 +67,14 @@ not yet implemented. See [trust boundaries](./docs/adr/0001-plugin-trust-boundar
 [production roadmap](./docs/production-roadmap.md).
 The SDK now exports `executePlugin()` for real app/tool `run()` calls with
 schema validation/defaults, versioned execution metadata, stable failure codes,
-cancellation and bounded asynchronous waiting. CLI integration is complete
-(P0.2b1); Web/Desktop integration remains P0.2b2. This helper does not isolate
-code or stop synchronous loops. Execution
+cancellation and bounded asynchronous waiting. CLI, Web and Desktop use this
+same boundary (P0.2b). Web/Desktop retain app panels and provide a shared
+`ExecutionPanel` for actual JSON runs, errors and cancellation. Versioned
+history stores at most 200 metadata-only attempts, including failures; inputs,
+output values and exception messages remain transient. Unverified legacy keys
+are left untouched and excluded from the new history. See the
+[Windows host acceptance record](./docs/validation/p0-execution-hosts.md).
+This helper does not isolate code or stop synchronous loops. Execution
 metadata records input shape only, never raw input values or field names.
 The HTML catalog is discovery evidence only, not a claim that 125 plugins are
 compatible, secure or production-ready. Signed third-party code remains untrusted.

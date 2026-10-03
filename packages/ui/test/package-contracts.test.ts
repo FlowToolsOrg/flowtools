@@ -19,6 +19,7 @@ type PublicSubpath = (typeof expectedSubpaths)[number]
 
 const rootExports = [
   'CommandPalette',
+  'ExecutionPanel',
   'HeroSection',
   'MarketEmptyState',
   'MarketToolbar',

@@ -10,7 +10,7 @@ const packageDir = dirname(fileURLToPath(import.meta.url))
 export default createPackageTsdownConfig({
   packageDir,
   entry: {
-    execution: 'src/execution/executor.ts',
+    execution: 'src/execution/index.ts',
     definePlugin: 'src/compositions/definePlugin.ts',
     result: 'src/result/index.ts',
     runtime: 'src/runtime/index.ts',

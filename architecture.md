@@ -37,13 +37,21 @@ CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用插�
 P0.2a 已交付 `packages/sdk/src/execution/executor.ts`：`executePlugin()` 对
 真实 app/tool `run()` 统一 schema/defaults、版本/时间戳/耗时、输入形状摘要、
 稳定失败码、取消及异步超时。21 个新增回归覆盖校验期取消竞争、迟到结果和
-timer/listener 清理；SDK 全部 61 个测试通过。宿主迁移仍属于 P0.2b。
+timer/listener 清理；SDK 初始全部 61 个测试通过。
 P0.2b1 已将 CLI runner 接入 SDK；JSON 输出变为共享 envelope，text formatter
 保持原行为。CLI context 与 SDK 类型对齐，只提供已声明的内置插件 storage/network，
 移除重复计时器与原始插件日志输出，storage 使用 `remove/zustand` 并拒绝路径键。
 这不是持久用户 grant 或 canonical/symlink 隔离；源码/headless fallback 的生产
-准入仍属 P0.3。SDK 当前 62 tests、CLI 33 tests、plugins 20 tests 通过，后者包含
-真实编译后 CLI 的子进程成功/校验失败/非法超时/text 回归。Web/Desktop 仍待 b2。
+准入仍属 P0.3。CLI 33 tests、plugins 20 tests 包含真实编译后 CLI 的子进程
+成功/校验失败/非法超时/text 回归。
+P0.2b2 已接通 Web/Desktop app/tool 实际运行，共享 `ExecutionPanel` 并保留 app
+panel。SDK `execution/history.ts` 使用 versioned external store，最多 200 条真实
+尝试元数据；原始输入、输出和异常 message 不落历史，旧 key 原样保留但不导入。
+不可序列化输出标记 OUTPUT_INVALID，不显示成功；卸载取消且忽略迟到 UI 更新。
+SDK 67 tests、Chromium 50 tests 含实际异常/取消/卸载/序列化与恢复拒绝回归。
+Windows Web production preview 和独立标识的真实 Tauri Debug WebView 通过
+Base64、schema/JSON 拒绝、键盘运行、历史恢复与网络取消；截图已检查。详见
+[宿主验收](./docs/validation/p0-execution-hosts.md)，不等同正式签名安装或跨平台验收。
 该函数不提供 OS 隔离，不终止同 realm 的同步循环，也不撤销已发生的副作用；
 旧 `withWatchdog` 的 cooperative-only 行为未被升级或重新宣称为强制终止。
 

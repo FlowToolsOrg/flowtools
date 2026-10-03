@@ -39,6 +39,7 @@ import { convertFileSrc } from '@tauri-apps/api/core'
 
 import htmlPluginIndexData from './data/html-plugin-catalog.json'
 import { builtInManifests } from './plugin/manifests'
+import { BuiltinExecutionPanel } from './runtime/builtin-execution-panel'
 import { createDesktopRuntimeContext } from './runtime/desktop-capabilities'
 import {
   handleHtmlPluginBridgeRequest,
@@ -1769,7 +1770,11 @@ function ReactPluginSurface({ command }: { command: IndexedCommand }) {
   }
 
   if (!isAppPlugin(plugin)) {
-    return <HeadlessCommandSurface command={command} />
+    return (
+      <div className="h-full overflow-auto p-4">
+        <BuiltinExecutionPanel key={plugin.meta.id} plugin={plugin} />
+      </div>
+    )
   }
 
   return <ReactAppPluginPanel plugin={plugin} />
@@ -1795,6 +1800,9 @@ function ReactAppPluginPanel({ plugin }: { plugin: AppPlugin }) {
           <Panel />
         </FlowToolRuntimeProvider>
       </PluginErrorBoundary>
+      <div className="mt-4">
+        <BuiltinExecutionPanel key={plugin.meta.id} plugin={plugin} />
+      </div>
     </div>
   )
 }

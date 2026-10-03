@@ -238,12 +238,19 @@ advance maturity merely because documentation or CI passes.
 Built-in plugins are declared in `apps/web-vite/src/plugin/manifests.ts`
 and loaded at startup via `bootstrap()`.
 
-Host UI reads plugin/command state from Zustand stores:
+Host UI reads plugin/command/settings state from Zustand stores:
 
 - `pluginRegistryStore`: reactive plugin list
 - `commandStore`: command palette items + execution
-- `runHistoryStore`: persisted tool execution history
 - `settingsStore`: persisted host settings
+
+Execution UI uses `ExecutionPanel` from `@flowtools/ui`, bound to the real
+host adapter and `executePlugin()` from `@flowtools/sdk/execution`. Use
+`createExecutionHistory()` for stable external-store snapshots, formatVersion 1,
+bounded metadata-only records and visible persistence errors. Web uses
+`flowtools-web-run-history-v1`; Desktop uses `flowtools-desktop-run-history-v1`.
+Never persist raw input/output or exception messages. Do not import/delete
+unverified legacy history; preserve the old key for deliberate recovery.
 
 Desktop routes are owned by `apps/desktop` and should use TanStack Router. The
 current routes are `/`, `/settings`, `/plugins`, `/permissions`, and
@@ -306,6 +313,14 @@ Current validation gate:
 4. `bun run build` or the relevant app/package build command
 5. Manual validation for changed flows (for web host, verify routes and plugin
    rendering in `apps/web-vite`)
+
+The reproducible Web/Tauri execution acceptance harness is
+`apps/ui-test/scripts/validate-execution-hosts.ts` (run with Node, not Bun).
+Follow `docs/validation/p0-execution-hosts.md`. Never launch the default Debug
+desktop against user data: startup currently resets its database. Use the
+dedicated validation config, fresh test identity/profile and loopback-only
+child-process CDP; never persist remote debugging in production configuration.
+Screenshot inspection and keyboard checks do not certify NVDA or other platforms.
 
 ## Documentation Sync (Required and !Important)
 

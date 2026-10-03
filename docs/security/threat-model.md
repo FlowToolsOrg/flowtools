@@ -152,6 +152,8 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 - 入口：ctx.log、bridge error、CLI stderr、history/诊断导出；高危，open
 - 现状：P0.2b1 CLI 不再自动输出插件 log/details，执行元数据只有输入形状；
   JSON/parser 和输出序列化错误不回显原文，runner 仍返回实际异常 message。
+  P0.2b2 Web/Desktop 使用 versioned、限额 200 的元数据-only 历史，不保存原始
+  input/output/message；旧未验证 key 保留且不导入，损坏记录与写失败可见。
   缺少统一脱敏审计与保留/配额策略，普通运行历史不能证明授权决定，仍 open。
 - 证据：[CLI logger](../../packages/cli/src/context.ts)、
   [bridge error](../../apps/desktop/src/App.tsx)、
@@ -167,7 +169,8 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 
 - 入口：UI setup/run、CLI import/run、HTML bridge 洪泛；高危，open
 - 现状：旧 SDK watchdog 只触发 abort；新 SDK executor/CLI race 可界定异步等待、
-  转发取消并丢弃迟到输出，但不能抢占同步循环或撤回已发生副作用；
+  转发取消并丢弃迟到输出，Web/Desktop 同样接入，UI 卸载会取消当前尝试；
+  但不能抢占同步循环或撤回已发生副作用；
   UI/Headless 同进程没有完整 CPU/内存/输出/并发硬配额。
 - 证据：[SDK watchdog](../../packages/sdk/src/registry/watchdog.ts)、
   [CLI runner](../../packages/cli/src/runner.ts)、

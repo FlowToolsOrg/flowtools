@@ -75,8 +75,15 @@ SDK 共享执行入口为 `executePlugin(plugin, input, toolContext, options)`�
 稳定 `error.code`，如 `INPUT_INVALID`、`EXECUTION_FAILED`、`ABORTED`、`TIMEOUT`。
 默认异步等待上限 30 秒，可传 `signal` 与正整数 `timeoutMs`；取消通知插件并
 丢弃迟到结果，但插件必须合作停止副作用，同步死循环无法在共享 realm 内终止。
-Host 必须注入与插件 ID 匹配的 context。CLI 已接入（P0.2b1），Web/Desktop 接入
-属于 P0.2b2。非 React 调用可从 `@flowtools/sdk/execution` 导入执行器。
+Host 必须注入与插件 ID 匹配的 context。CLI/Web/Desktop 已接入（P0.2b）。
+非 React 调用可从 `@flowtools/sdk/execution` 导入执行器。Web 工具页 Run tab
+与 Desktop React app/tool runner 使用共享 `ExecutionPanel`；app panel 保留。
+输入 JSON/schema 错误、实际异常、取消与输出序列化失败都显示稳定失败码。
+历史使用 SDK `createExecutionHistory()`，formatVersion 1、最多 200 条 metadata，
+仅保存 ID/名称/版本、输入类型/大小、真实时间/耗时、status/resultType/errorCode。
+原始输入、输出和异常 message 只展示在本次结果中，不持久化。新 key 与旧未验证
+历史分离，旧 key 不删除；恢复损坏或矛盾记录时显示提示，不伪造成功。
+Windows 验收范围与限制见 [宿主验收](./validation/p0-execution-hosts.md)。
 
 ### 结果 helpers（`result.*`）
 

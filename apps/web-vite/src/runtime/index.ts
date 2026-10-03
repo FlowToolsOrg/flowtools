@@ -8,4 +8,8 @@ export type {
   CreateWebToolContextOptions,
   WebPluginRuntimeProviderProps,
 } from './ctx'
-export { renderWebAppPlugin, runWebToolPlugin } from './plugin-runtime'
+export {
+  renderWebAppPlugin,
+  runWebPlugin,
+  runWebToolPlugin,
+} from './plugin-runtime'

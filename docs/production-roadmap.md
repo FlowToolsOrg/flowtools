@@ -529,11 +529,27 @@ P0.1d 分为仓库交付与远端验收，不把工作流文件存在当作 CI �
   在创建 job 前失败；actionlint 1.7.12 复现 job `env` 中 `runner.temp` 上下文
   无效。将 Bun 缓存路径移到 step-level env，并新增 1 项上下文回归；原本的
   YAML 解析与两轮本地 gate 不能证明 GitHub workflow 表达式合法。
+- 上下文修复 Commit：`da777b4`（`fix(ci): scope runner cache paths to workflow steps`）。
+- 远端 CI 已验收（2026-10-03）：同一完整 SHA
+  `da777b4b653fbdf3ee069e7f8912e03107da6a5c`，Windows `windows-2022` runner，
+  run `37116277526` 的 attempts 1 和 2 连续成功：
+  - [首轮 job / attempt 1](https://github.com/FlowToolsOrg/flowtools/actions/runs/37116277526/job/111183603830)：
+    24m03s；Bun 依赖和 Rust 编译缓存未命中，完整 gate 用时 18m36s。
+  - [复跑 job / attempt 2](https://github.com/FlowToolsOrg/flowtools/actions/runs/37116277526/job/111187425079)：
+    9m10s；Bun 依赖和 Rust 编译缓存命中同一主 key，完整 gate 用时 6m39s。
+  - 两轮 frozen install、7-workspace lint（0 warnings/errors）、type checks、
+    157 tests、build、Rust fmt/locked check/clippy 和 always 工作树漂移检查
+    均成功。157 tests = Bun 100 + Chromium 46 + Rust 11；JS/Turbo gate 日志
+    均为 0 cached，不把依赖/原生编译缓存命中当作测试结果。
+  - 已核对两轮完整 job 日志；Vite 大 chunk 提示仍保留为性能待办。
 - 已知限制（2026-10-03 只读检查）：私有仓库的 main branch protection API
   返回 403，要求升级套餐或公开仓库。不能擅自更改可见性、套餐或绕过验收项；
   需要维护者确定可行的合并保护方案。
 - 验证：连续两次 GitHub Windows run 通过，记录 run URL、SHA 与 gate 日志；
   仓库管理员把固定质量 job 设置为 required status check 并验证失败阻止合并。
+- 尚未验收：main 的 required status check 与失败阻止合并，受上述 403 和设置
+  授权边界限制。未改仓库可见性、套餐、保护规则，未创建 PR 或合并 main；
+  P0.1d2、P0.1d 和 P0.1 保持 `in-progress`，等待维护者确定合并保护方案。
 - 退出标准：远端运行与合并保护均有真实证据后，P0.1d 与父 P0.1 才能标记 done。
 
 交付物：
@@ -1272,7 +1288,7 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 
 | ID     | 状态        | 负责人     | 依赖          | Commit / 验证记录                                                                                     |
 | ------ | ----------- | ---------- | ------------- | ----------------------------------------------------------------------------------------------------- |
-| P0.1   | in-progress | Codex      | -             | P0.1a–P0.1c、P0.1d1 已完成；P0.1d2 待远端验收                                                         |
+| P0.1   | in-progress | Codex      | -             | P0.1a–P0.1c、P0.1d1 已完成；远端两轮 CI 通过，合并保护待验收                                          |
 | P0.1a  | done        | Codex      | -             | `chore(repo): standardize workspace quality tasks (P0.1a)`；workspace verifier + Turbo dry graph 通过 |
 | P0.1b  | done        | Codex      | P0.1a         | `fix(repo): close build integration gates (P0.1b5)`；P0.1b1–P0.1b5 全部通过                           |
 | P0.1b1 | done        | Codex      | P0.1a         | `fix(ui): handle icon animation promises (P0.1b1)`；lint + check-types 通过                           |
@@ -1286,9 +1302,9 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 | P0.1c3 | done        | Codex      | P0.1b         | `fix(cli): harden input and runner contracts (P0.1c3)`；25 tests + binary smoke 通过                  |
 | P0.1c4 | done        | Codex      | P0.1b         | `fix(desktop): enforce plugin persistence contracts (P0.1c4)`；10 Rust tests + clippy 通过            |
 | P0.1c5 | done        | Codex      | P0.1c1–P0.1c4 | `test(repo): close workspace regression gates (P0.1c5)`；151 tests + declarations + 人工 Web 复查通过 |
-| P0.1d  | in-progress | Codex      | P0.1b, P0.1c  | 已拆分工作流交付与远端验收；不把本地成功记为远端 CI 生效                                              |
+| P0.1d  | in-progress | Codex      | P0.1b, P0.1c  | 工作流与远端两轮运行已通过；required check / 失败阻止合并尚未验收                                     |
 | P0.1d1 | done        | Codex      | P0.1b, P0.1c  | `ci(repo): add reproducible Windows quality gates (P0.1d1)`；两轮本地完整门禁、156 tests、无生成漂移  |
-| P0.1d2 | in-progress | Maintainer | P0.1d1        | 已获 push/CI 验收授权；修复首次 workflow 解析失败；合并保护仍受套餐限制 403                           |
+| P0.1d2 | in-progress | Maintainer | P0.1d1        | `da777b4` 两轮远端 CI、157 tests 通过；合并保护仍受套餐限制 403，未更改仓库设置                       |
 | P0.2   | pending     | TBD        | P0.1          | -                                                                                                     |
 | P0.3   | pending     | TBD        | P0.1          | -                                                                                                     |
 | P0.4   | pending     | TBD        | -             | -                                                                                                     |

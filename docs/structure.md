@@ -35,7 +35,10 @@
   禁止空测试成功选项与测试缓存。根 `test` 和 `build` 必须顺序执行。
 
 - `packages/sdk/test`：SDK 值对象、registry、lifecycle、watchdog 与公开导出。
-- `packages/cli/src/*.test.ts`：CLI 参数、schema、formatter 与 runner。
+- `packages/cli/src/*.test.ts`：CLI 参数、schema、formatter、SDK runner/context
+  与 entry 子进程拒绝路径；使用无 React 的 `@flowtools/sdk/execution` 子入口。
+- `plugins/test/cli-execution.test.ts`：真实编译后 CLI 的 generated flags / JSON
+  envelope / schema 错误 / 非法 timeout / text 回归；不替换内置插件 `run()`。
 - `packages/ui/test`：构建后公开导出；`test/consumer` 独立编译声明消费。
 - `plugins/plugin-entries.ts`：构建与合约测试共享目录 inventory；
   `plugins/test` 验证内置插件和 CLI 执行链路。

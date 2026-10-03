@@ -75,7 +75,8 @@ SDK 共享执行入口为 `executePlugin(plugin, input, toolContext, options)`�
 稳定 `error.code`，如 `INPUT_INVALID`、`EXECUTION_FAILED`、`ABORTED`、`TIMEOUT`。
 默认异步等待上限 30 秒，可传 `signal` 与正整数 `timeoutMs`；取消通知插件并
 丢弃迟到结果，但插件必须合作停止副作用，同步死循环无法在共享 realm 内终止。
-Host 必须注入与插件 ID 匹配的 context。三端迁移由 P0.2b 单独验收。
+Host 必须注入与插件 ID 匹配的 context。CLI 已接入（P0.2b1），Web/Desktop 接入
+属于 P0.2b2。非 React 调用可从 `@flowtools/sdk/execution` 导入执行器。
 
 ### 结果 helpers（`result.*`）
 
@@ -481,6 +482,14 @@ bun run packages/cli/src/cli.ts run plugin-uuid-generator --count 3 \
 CLI 入口设计为机器可读：`--format json` 输出结构化结果，
 桌面端 Tauri host 可通过 `Command::new("flowtools")` 调用 CLI，
 将输出解析后反馈给 AI agent。
+
+JSON 输出现在是 `PluginExecutionResult`：成功读取 `data` 中的真实 `CommandResult`，
+失败读取 `error.code/message`，两者均有真实版本、时间和输入形状摘要。失败同时
+输出 JSON 到 stdout、稳定码到 stderr，退出码 1；无效输出序列化为 `OUTPUT_INVALID`。
+text formatter 保留现有展示。此为 prototype 接口变更，不再输出裸结果 JSON。
+CLI adapter 不自动记录原始插件日志；storage/network 仅按内置插件声明提供，
+不是第三方用户授权。存储使用 SDK `remove/zustand`，保留合法现有键的文件位置，
+路径和设备保留名键会拒绝；canonical/symlink 强制隔离仍待安全阶段。
 
 ### 7.5 子路径导入
 

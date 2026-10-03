@@ -38,6 +38,12 @@ P0.2a 已交付 `packages/sdk/src/execution/executor.ts`：`executePlugin()` 对
 真实 app/tool `run()` 统一 schema/defaults、版本/时间戳/耗时、输入形状摘要、
 稳定失败码、取消及异步超时。21 个新增回归覆盖校验期取消竞争、迟到结果和
 timer/listener 清理；SDK 全部 61 个测试通过。宿主迁移仍属于 P0.2b。
+P0.2b1 已将 CLI runner 接入 SDK；JSON 输出变为共享 envelope，text formatter
+保持原行为。CLI context 与 SDK 类型对齐，只提供已声明的内置插件 storage/network，
+移除重复计时器与原始插件日志输出，storage 使用 `remove/zustand` 并拒绝路径键。
+这不是持久用户 grant 或 canonical/symlink 隔离；源码/headless fallback 的生产
+准入仍属 P0.3。SDK 当前 62 tests、CLI 33 tests、plugins 20 tests 通过，后者包含
+真实编译后 CLI 的子进程成功/校验失败/非法超时/text 回归。Web/Desktop 仍待 b2。
 该函数不提供 OS 隔离，不终止同 realm 的同步循环，也不撤销已发生的副作用；
 旧 `withWatchdog` 的 cooperative-only 行为未被升级或重新宣称为强制终止。
 

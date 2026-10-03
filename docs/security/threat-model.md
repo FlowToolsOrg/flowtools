@@ -73,8 +73,10 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 ### SEC-004 文件 scope 越界与 TOCTOU
 
 - 入口：fs 路径、dialog 返回路径、CLI storage key；高危，open
-- 现状：Desktop 将路径交给官方 FS 插件，未绑定 per-plugin scope；CLI storage
-  用 `join(dir, key + '.json')`。本记录不证明官方插件能读取所有系统文件。
+- 现状：Desktop 将路径交给官方 FS 插件，未绑定 per-plugin scope；P0.2b1 CLI
+  验证 kebab-case 插件 ID、限制 storage key 字符并拒绝 Windows 设备保留名，
+  合法已有键文件位置不变。未实现 canonical/symlink/reparse/TOCTOU 防护，仍 open。
+  本记录不证明官方插件能读取所有系统文件。
 - 证据：[Desktop FS](../../apps/desktop/src/runtime/desktop-capabilities.ts)、
   [CLI context](../../packages/cli/src/context.ts)、
   [主窗口 capability](../../apps/desktop/src-tauri/capabilities/default.json)
@@ -148,8 +150,9 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 ### SEC-009 日志、错误与历史泄露
 
 - 入口：ctx.log、bridge error、CLI stderr、history/诊断导出；高危，open
-- 现状：CLI log 写入 details，runner 返回异常 message；缺少统一脱敏审计与
-  保留/配额策略，普通运行历史不能证明授权决定。
+- 现状：P0.2b1 CLI 不再自动输出插件 log/details，执行元数据只有输入形状；
+  JSON/parser 和输出序列化错误不回显原文，runner 仍返回实际异常 message。
+  缺少统一脱敏审计与保留/配额策略，普通运行历史不能证明授权决定，仍 open。
 - 证据：[CLI logger](../../packages/cli/src/context.ts)、
   [bridge error](../../apps/desktop/src/App.tsx)、
   [Web history](../../apps/web-vite/src/stores/run-history-store.ts)
@@ -163,7 +166,8 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 ### SEC-010 无限循环、灾难正则与资源耗尽
 
 - 入口：UI setup/run、CLI import/run、HTML bridge 洪泛；高危，open
-- 现状：SDK watchdog 只触发 abort，CLI Promise deadline 不能抢占同步循环；
+- 现状：旧 SDK watchdog 只触发 abort；新 SDK executor/CLI race 可界定异步等待、
+  转发取消并丢弃迟到输出，但不能抢占同步循环或撤回已发生副作用；
   UI/Headless 同进程没有完整 CPU/内存/输出/并发硬配额。
 - 证据：[SDK watchdog](../../packages/sdk/src/registry/watchdog.ts)、
   [CLI runner](../../packages/cli/src/runner.ts)、

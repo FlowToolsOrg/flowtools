@@ -5,6 +5,7 @@
  */
 
 import type { CLIPluginInfo } from './types'
+import type { FlowToolPlugin } from '@flowtools/sdk/types'
 
 import { createHash } from 'node:crypto'
 import {
@@ -20,22 +21,7 @@ import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 interface PluginModule {
-  default: {
-    type: 'app' | 'tool'
-    meta: {
-      id: string
-      name: string
-      version: string
-      description?: string
-      permissions?: string[]
-      tags?: string[]
-      category?: string
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    inputSchema?: { shape: unknown; safeParse?: (data: unknown) => unknown }
-    run?: (...args: unknown[]) => unknown
-    setup?: () => unknown
-  }
+  default: FlowToolPlugin
 }
 
 const PLUGINS_DIR = resolve(import.meta.dir, '..', '..', '..', 'plugins')

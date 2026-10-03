@@ -157,8 +157,12 @@ describe('CLI integration contract', () => {
       throw new Error('Expected the loaded plugin schema to parse CLI input')
     }
 
-    expect(await runPlugin(pluginId, parsed.data, { timeout: 1_000 })).toEqual({
+    expect(
+      await runPlugin(pluginId, parsed.data, { timeout: 1_000 })
+    ).toMatchObject({
       success: true,
+      pluginId,
+      pluginVersion: loaded?.meta.version,
       data: {
         type: 'json',
         value: { result: 'aGVsbG8=', mode: 'encode', input: 'hello' },

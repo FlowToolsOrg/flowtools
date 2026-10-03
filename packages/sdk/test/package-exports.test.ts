@@ -13,6 +13,11 @@ interface PackageManifest {
 const expectedSymbols: Record<string, readonly string[]> = {
   '.': ['definePlugin', 'result'],
   './definePlugin': ['definePlugin'],
+  './execution': [
+    'executePlugin',
+    'createExecutionFailure',
+    'summarizeExecutionInput',
+  ],
   './result': ['result'],
   './utils': ['extractMeta', 'pickCapability'],
   './utils/capability': ['pickCapability'],
@@ -22,6 +27,12 @@ const expectedSymbols: Record<string, readonly string[]> = {
 }
 
 describe('package exports', () => {
+  test('execution subpath is usable without React or source transpilers', async () => {
+    const source = await Bun.file(
+      new URL('../dist/execution.js', import.meta.url)
+    ).text()
+    expect(source).not.toMatch(/(?:from|import)\s*['"](?:react|sucrase)/)
+  })
   test('points every public subpath at consumable JS and declaration files', async () => {
     const packageRoot = new URL('../', import.meta.url)
     const manifest = (await Bun.file(

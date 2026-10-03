@@ -95,6 +95,13 @@ task names.
 
 CLI commands (from repo root):
 
+CLI `--format json` returns `PluginExecutionResult`, not bare `CommandResult`;
+read actual results from `data` and stable failures from `error.code`. Failures
+must emit JSON to stdout and exit nonzero. Preserve text formatter behavior.
+Use `@flowtools/sdk/execution` for non-React execution; CLI context construction
+must not own a timeout or expose undeclared built-in capabilities. Declarations
+are not user grants; do not describe this adapter as third-party isolation.
+
 - `bun run packages/cli/src/cli.ts list` — list CLI-compatible plugins
 - `bun run packages/cli/src/cli.ts info <plugin-id>` — show plugin details
 - `bun run packages/cli/src/cli.ts run <plugin-id> --format text` — execute a plugin

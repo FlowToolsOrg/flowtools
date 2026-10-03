@@ -1,132 +1,146 @@
+import type { ToolContext } from '@flowtools/sdk/types'
+
 import { describe, expect, test } from 'bun:test'
+
+import { z } from 'zod'
 
 import { createPluginRunner } from './runner'
 
-const createContext = () => ({ source: 'test' })
+const meta = { id: 'runner-fixture', version: '1.2.3' }
+const createContext = (pluginId: string): ToolContext => ({
+  env: { pluginId, pluginType: 'app', platform: 'desktop', mode: 'test' },
+  signal: new AbortController().signal,
+  ui: { toast: () => {}, openPanel: () => {}, closePanel: () => {} },
+  log: () => {},
+  utils: { now: Date.now },
+})
 
-describe('createPluginRunner', () => {
-  test('returns successful plugin data', async () => {
-    let cancelCalls = 0
-    const runPlugin = createPluginRunner({
-      startTimeout: (callback, delayMs) => {
-        const timeout = setTimeout(callback, delayMs)
-        return () => {
-          cancelCalls += 1
-          clearTimeout(timeout)
-        }
-      },
+describe('createPluginRunner SDK adapter', () => {
+  test('validates defaults and returns the shared versioned envelope', async () => {
+    let cleanups = 0
+    const run = createPluginRunner({
       createContext,
+      startTimeout: () => () => {
+        cleanups += 1
+      },
       loadPlugin: async () => ({
-        run: (context, input) => ({ context, input }),
+        meta,
+        inputSchema: z.object({ count: z.number().default(2) }),
+        run: (_ctx, input: { count: number }) => input.count,
       }),
     })
+    expect(await run(meta.id, {})).toMatchObject({
+      success: true,
+      data: 2,
+      pluginId: meta.id,
+      pluginVersion: '1.2.3',
+      inputSummary: { kind: 'object', size: 0 },
+    })
+    expect(cleanups).toBe(1)
+  })
 
-    const result = await runPlugin('success-plugin', { value: 2 })
+  test('rejects schema input without running', async () => {
+    let calls = 0
+    const run = createPluginRunner({
+      createContext,
+      loadPlugin: async () => ({
+        meta,
+        inputSchema: z.object({ count: z.number() }),
+        run: () => {
+          calls += 1
+        },
+      }),
+    })
+    expect(await run(meta.id, { count: 'bad' })).toMatchObject({
+      success: false,
+      error: { code: 'INPUT_INVALID' },
+    })
+    expect(calls).toBe(0)
+  })
 
-    expect(result.success).toBe(true)
-    const data = result.data as {
-      context: { source: string; signal: AbortSignal }
-      input: Record<string, unknown>
+  test.each([new Error('plugin exploded'), 'plugin exploded'])(
+    'normalizes actual thrown failures',
+    async failure => {
+      const run = createPluginRunner({
+        createContext,
+        loadPlugin: async () => ({
+          meta,
+          run: () => {
+            throw failure
+          },
+        }),
+      })
+      expect(await run(meta.id, {})).toMatchObject({
+        success: false,
+        error: { code: 'EXECUTION_FAILED', message: 'plugin exploded' },
+      })
     }
-    expect(data.context.source).toBe('test')
-    expect(data.context.signal).toBeInstanceOf(AbortSignal)
-    expect(data.input).toEqual({ value: 2 })
-    expect(cancelCalls).toBe(1)
-  })
+  )
 
-  test('normalizes thrown plugin errors', async () => {
-    let cancelCalls = 0
-    const runPlugin = createPluginRunner({
-      startTimeout: (callback, delayMs) => {
-        const timeout = setTimeout(callback, delayMs)
-        return () => {
-          cancelCalls += 1
-          clearTimeout(timeout)
-        }
-      },
-      createContext,
-      loadPlugin: async () => ({
-        run: () => {
-          throw new Error('plugin exploded')
-        },
-      }),
-    })
-
-    const result = await runPlugin('error-plugin', {})
-
-    expect(result).toEqual({
-      success: false,
-      error: 'plugin exploded',
-    })
-    expect(cancelCalls).toBe(1)
-  })
-
-  test('normalizes non-Error plugin failures', async () => {
-    const runPlugin = createPluginRunner({
-      createContext,
-      loadPlugin: async () => ({
-        run: () => {
-          throw 'plugin failed'
-        },
-      }),
-    })
-
-    expect(await runPlugin('error-plugin', {})).toEqual({
-      success: false,
-      error: 'plugin failed',
-    })
-  })
-
-  test('normalizes loader failures', async () => {
-    const runPlugin = createPluginRunner({
+  test('normalizes loader failures separately', async () => {
+    const run = createPluginRunner({
       createContext,
       loadPlugin: async () => {
         throw new Error('load failed')
       },
     })
-
-    expect(await runPlugin('broken-plugin', {})).toEqual({
+    expect(await run(meta.id, {})).toMatchObject({
       success: false,
-      error: 'load failed',
+      pluginVersion: null,
+      error: { code: 'LOAD_FAILED', message: 'load failed' },
     })
   })
 
-  test('times out a non-settling plugin', async () => {
-    let cancelCalls = 0
-    const runPlugin = createPluginRunner({
-      startTimeout: (callback, delayMs) => {
-        const timeout = setTimeout(callback, delayMs)
-        return () => {
-          cancelCalls += 1
-          clearTimeout(timeout)
-        }
-      },
+  test('bounds a non-settling run', async () => {
+    const run = createPluginRunner({
       createContext,
       loadPlugin: async () => ({
+        meta,
         run: () => new Promise<never>(() => {}),
       }),
     })
-
-    const result = await runPlugin('slow-plugin', {}, { timeout: 5 })
-
-    expect(result).toEqual({
+    expect(await run(meta.id, {}, { timeout: 5 })).toMatchObject({
       success: false,
-      error: 'Plugin execution timed out after 5ms',
+      error: { code: 'TIMEOUT' },
     })
-    expect(cancelCalls).toBe(1)
   })
 
-  test('reports a loaded plugin without run()', async () => {
-    const runPlugin = createPluginRunner({
+  test('reports missing plugin and missing run truthfully', async () => {
+    const missing = createPluginRunner({
       createContext,
-      loadPlugin: async () => ({}),
+      loadPlugin: async () => null,
     })
-
-    const result = await runPlugin('panel-only', {})
-
-    expect(result).toEqual({
+    const panel = createPluginRunner({
+      createContext,
+      loadPlugin: async () => ({ meta }),
+    })
+    expect(await missing(meta.id, {})).toMatchObject({
       success: false,
-      error: 'Plugin panel-only has no run() function',
+      error: { code: 'PLUGIN_NOT_FOUND' },
     })
+    expect(await panel(meta.id, {})).toMatchObject({
+      success: false,
+      error: { code: 'NOT_RUNNABLE' },
+    })
+  })
+
+  test('honors cancellation without invoking run', async () => {
+    const controller = new AbortController()
+    controller.abort()
+    const run = createPluginRunner({
+      createContext,
+      loadPlugin: async () => ({
+        meta,
+        run: () => {
+          throw new Error('must not run')
+        },
+      }),
+    })
+    expect(await run(meta.id, {}, { signal: controller.signal })).toMatchObject(
+      {
+        success: false,
+        error: { code: 'ABORTED' },
+      }
+    )
   })
 })

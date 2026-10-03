@@ -682,13 +682,25 @@ cargo check --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
 
 #### P0.2b 接通三端运行与真实历史
 
-- 状态：`pending`
+- 状态：`in-progress`
 - 依赖：P0.2a
 - 范围：CLI 使用 SDK executor；Web 与 Desktop 提供真实 JSON/schema 运行、
   取消与错误显示；保留 app panel；历史仅来自实际 execution envelope，迁移或
   排除旧的未验证记录，不持久化原始敏感输入。
 - 验收：三端同一确定性输入结果一致；错误/取消不会变为 success；CLI 子进程
   输出和退出码回归，Host 行为回归与人工路由/插件渲染验证。
+
+该子项继续按可独立审查的范围拆分，先完成并提交 b1，再开始 b2：
+
+- **P0.2b1 CLI adapter**：SDK context/executor、JSON envelope 与非零失败退出码；
+  `done`（2026-10-03）；SDK 无 React execution 子入口，实际 run/defaults/校验/
+  取消/超时、稳定 JSON failures 与 text formatter。CLI context 无额外 timer，
+  storage SDK 对齐，保留合法已有键文件并拒绝路径键；不是生产权限 broker。
+  验证：SDK lint/types/build/62 tests、CLI lint/types/build/33 tests、plugins
+  lint/types/build/20 tests；真实 compiled CLI 子进程覆盖成功/校验失败/非法 timeout/
+  text，序列化失败明确 OUTPUT_INVALID；无 UI 改动，人工 UI 在 b2 验收。
+- **P0.2b2 Web/Desktop 与历史**：共享运行 UI、JSON/schema、取消/失败、真实历史、
+  跨宿主回归和人工路由/插件渲染；b1/b2 均通过后 P0.2b 才能关闭。
 
 #### P0.2c 十二插件 Smoke 与跨端验收
 
@@ -1481,7 +1493,9 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 | P0.1d2 | done        | Maintainer | P0.1d1        | `docs(roadmap): close remote quality gate acceptance (P0.1d2)`；PR #2 BLOCKED → CLEAN、c2180f8 两轮 175 tests |
 | P0.2   | in-progress | Codex      | P0.1          | 2026-10-03 拆分 P0.2a/b/c；按 SDK → 三端运行/历史 → 十二插件验收执行                                          |
 | P0.2a  | done        | Codex      | P0.1          | 2026-10-03；共享 SDK executor、21 新回归；SDK lint/types/build 与 61 tests 通过                               |
-| P0.2b  | pending     | Codex      | P0.2a         | CLI/Web/Desktop 真实运行与历史                                                                                |
+| P0.2b  | in-progress | Codex      | P0.2a         | b1 CLI done；b2 Web/Desktop 真实运行与历史待完成                                                              |
+| P0.2b1 | done        | Codex      | P0.2a         | 2026-10-03；SDK 62 / CLI 33 / plugins 20 tests；compiled CLI 子进程回归与 lint/types/build 通过               |
+| P0.2b2 | pending     | Codex      | P0.2b1        | 共享运行 UI、宿主 adapter 与脱敏真实历史、跨端与人工回归                                                      |
 | P0.2c  | pending     | Codex      | P0.2b         | 十二插件 smoke、跨端与人工验收                                                                                |
 | P0.3   | pending     | TBD        | P0.1          | -                                                                                                             |
 | P0.3a  | pending     | Codex      | P0.2          | 成熟度、兼容证据与便携 Catalog                                                                                |

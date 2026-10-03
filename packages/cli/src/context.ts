@@ -1,144 +1,93 @@
-/**
- * CLI ToolContext factory.
- * Creates a lightweight context for running plugins in CLI mode.
- * No React dependency — only provides non-UI capabilities.
- */
+import type {
+  Permission,
+  StorageCapability,
+  ToolContext,
+} from '@flowtools/sdk/types'
 
+import { createHash } from 'node:crypto'
 import {
   existsSync,
   mkdirSync,
   readFileSync,
-  rmSync,
   unlinkSync,
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-interface ToolContextShape {
-  env: {
-    pluginId: string
-    pluginType: 'app' | 'tool'
-    platform: 'desktop'
-    mode: 'production'
-  }
-  ui: {
-    toast: () => void
-    openPanel: () => void
-    closePanel: () => void
-    log: () => void
-  }
-  signal: AbortSignal
-  log: (
-    level: string,
-    message: string,
-    details?: Record<string, unknown>
-  ) => void
-  storage: {
-    get: (key: string) => unknown
-    set: (key: string, value: unknown) => void
-    delete: (key: string) => void
-    clear: () => void
-  }
-  request: typeof fetch
-  utils: { now: () => number }
-  fs: undefined
-  clipboard: undefined
-  dialog: undefined
-  notification: undefined
-  db: undefined
-  native: undefined
+interface CLIContextOptions {
+  pluginType?: 'app' | 'tool'
+  permissions?: readonly Permission[]
+  signal?: AbortSignal
 }
 
-function getStorageDir(pluginId: string): string {
+function createCLIStorage(pluginId: string): StorageCapability {
   const dir = join(tmpdir(), 'flowtools', pluginId, 'storage')
   mkdirSync(dir, { recursive: true })
-  return dir
-}
-
-function createCLIStorage(pluginId: string) {
-  const dir = getStorageDir(pluginId)
-
-  return {
-    get(key: string): unknown {
-      const file = join(dir, `${key}.json`)
+  const fileFor = (key: string) => {
+    if (
+      !/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(key) ||
+      /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i.test(key)
+    ) {
+      throw new Error('Invalid storage key')
+    }
+    return join(dir, key + '.json')
+  }
+  const storage: StorageCapability = {
+    get<T>(key: string): T | undefined {
+      const file = fileFor(key)
       if (!existsSync(file)) return undefined
-      try {
-        const raw = readFileSync(file, 'utf-8')
-        return JSON.parse(raw) as unknown
-      } catch {
-        return undefined
-      }
+      return JSON.parse(readFileSync(file, 'utf-8')) as T
     },
-    set(key: string, value: unknown): void {
-      const file = join(dir, `${key}.json`)
-      writeFileSync(file, JSON.stringify(value, null, 2), 'utf-8')
+    set(key, value) {
+      const serialized = JSON.stringify(value)
+      if (serialized === undefined)
+        throw new Error('Storage value must be JSON serializable')
+      writeFileSync(fileFor(key), serialized, 'utf-8')
     },
-    delete(key: string): void {
-      const file = join(dir, `${key}.json`)
-      if (existsSync(file)) {
-        unlinkSync(file)
-      }
+    remove(key) {
+      const file = fileFor(key)
+      if (existsSync(file)) unlinkSync(file)
     },
-    clear(): void {
-      if (existsSync(dir)) {
-        rmSync(dir, { recursive: true, force: true })
-        mkdirSync(dir, { recursive: true })
+    zustand(namespace = '') {
+      const keyFor = (name: string) =>
+        'zustand-' +
+        createHash('sha256')
+          .update(JSON.stringify([namespace, name]))
+          .digest('hex')
+      return {
+        getItem: name => storage.get<string>(keyFor(name)) ?? null,
+        setItem: (name, value) => storage.set(keyFor(name), value),
+        removeItem: name => storage.remove(keyFor(name)),
       }
     },
   }
+  return storage
 }
 
-/**
- * Create a ToolContext for CLI execution.
- * Provides storage, fetch, and logging. UI capabilities are no-ops.
- */
-export function createCLIToolContext(pluginId: string): ToolContextShape {
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 30_000)
-
-  // Clear timeout when signal fires
-  controller.signal.addEventListener('abort', () => clearTimeout(timeout), {
-    once: true,
-  })
-
+/** Trusted built-in adapter, not an authorization broker or OS sandbox. */
+export function createCLIToolContext(
+  pluginId: string,
+  options: CLIContextOptions = {}
+): ToolContext {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(pluginId))
+    throw new Error('Invalid plugin id')
+  const permissions = new Set(options.permissions ?? [])
   return {
     env: {
       pluginId,
-      pluginType: 'app',
+      pluginType: options.pluginType ?? 'app',
       platform: 'desktop',
       mode: 'production',
     },
-    ui: {
-      toast: () => {},
-      openPanel: () => {},
-      closePanel: () => {},
-      log: () => {},
-    },
-    signal: controller.signal,
-    log: (
-      level: string,
-      message: string,
-      details?: Record<string, unknown>
-    ) => {
-      const prefix = `[${pluginId}] [${level}]`
-      if (details) {
-        process.stderr.write(
-          `${prefix} ${message} ${JSON.stringify(details)}\n`
-        )
-      } else {
-        process.stderr.write(`${prefix} ${message}\n`)
-      }
-    },
-    storage: createCLIStorage(pluginId),
-    request: ((url: string | URL | Request, init?: RequestInit) =>
-      fetch(url, init)) as typeof fetch,
-    utils: { now: () => Date.now() },
-    fs: undefined,
-    clipboard: undefined,
-    dialog: undefined,
-    notification: undefined,
-    db: undefined,
-    native: undefined,
+    ui: { toast: () => {}, openPanel: () => {}, closePanel: () => {} },
+    // Execution owns timers; constructing a context must not keep the CLI alive.
+    signal: options.signal ?? new AbortController().signal,
+    log: () => {},
+    storage: permissions.has('storage')
+      ? createCLIStorage(pluginId)
+      : undefined,
+    request: permissions.has('network') ? fetch : undefined,
+    utils: { now: Date.now },
   }
 }

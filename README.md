@@ -67,8 +67,9 @@ not yet implemented. See [trust boundaries](./docs/adr/0001-plugin-trust-boundar
 [production roadmap](./docs/production-roadmap.md).
 The SDK now exports `executePlugin()` for real app/tool `run()` calls with
 schema validation/defaults, versioned execution metadata, stable failure codes,
-cancellation and bounded asynchronous waiting. Host integration is tracked in
-P0.2b; this helper does not isolate code or stop synchronous loops. Execution
+cancellation and bounded asynchronous waiting. CLI integration is complete
+(P0.2b1); Web/Desktop integration remains P0.2b2. This helper does not isolate
+code or stop synchronous loops. Execution
 metadata records input shape only, never raw input values or field names.
 The HTML catalog is discovery evidence only, not a claim that 125 plugins are
 compatible, secure or production-ready. Signed third-party code remains untrusted.
@@ -293,13 +294,23 @@ bun run packages/cli/src/cli.ts run plugin-uuid-generator --count 5
 bun run packages/cli/src/cli.ts run plugin-uuid-generator \
   --input '{"count": 5}'
 
-# Output as text (default is JSON)
+# Output as text (flags default to text; --input defaults to JSON)
 bun run packages/cli/src/cli.ts run plugin-uuid-generator --count 3 \
   --format text
 ```
 
 CLI flags are auto-generated from each plugin's `inputSchema` (Zod).
 Input is validated with `z.safeParse()` before execution.
+CLI JSON now returns the shared execution envelope: success has `data` containing
+the actual `CommandResult`; failure has `error.code/message`, is printed as JSON
+to stdout and exits with status 1. Both include real plugin version/timing and
+safe input-shape metadata. This is a prototype API change from bare result JSON;
+text output keeps its formatter. Non-serializable JSON output fails explicitly
+with `OUTPUT_INVALID`. `@flowtools/sdk/execution` is a non-React runtime subpath.
+The CLI context exposes only declared built-in storage/network capabilities,
+uses SDK `remove/zustand`, does not create its own execution timer, and does not
+emit raw plugin logs. Existing valid storage filenames remain unchanged; invalid
+path/reserved-device keys fail. This is not third-party authorization/isolation.
 Desktop Tauri host can invoke CLI via `Command::new("flowtools")` and parse JSON output for AI agent integration.
 
 ## SDK Hooks

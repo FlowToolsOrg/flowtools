@@ -8,6 +8,7 @@ export type ExecutionErrorCode =
   | 'LOAD_FAILED'
   | 'CONTEXT_FAILED'
   | 'EXECUTION_FAILED'
+  | 'OUTPUT_INVALID'
   | 'ABORTED'
   | 'TIMEOUT'
   | 'TIMEOUT_INVALID'

@@ -14,10 +14,11 @@
 import type { OutputFormat } from './types'
 import type { ZodObject } from 'zod'
 
+import { createExecutionFailure } from '@flowtools/sdk/execution'
 import { Command } from 'commander'
 
 import { scanPlugins, loadPlugin } from './discovery'
-import { runPluginAndPrint } from './runner'
+import { printExecutionResult, runPluginAndPrint } from './runner'
 import {
   buildInputFromOptions,
   parseJsonInput,
@@ -25,6 +26,7 @@ import {
   toKebab,
   generateMockFromSchema,
   buildFlagExample,
+  CLIInputError,
 } from './schema'
 
 const program = new Command()
@@ -112,60 +114,79 @@ program
       pluginId: string,
       opts: { format?: string; input?: string; timeout: string }
     ) => {
-      const plugins = scanPlugins()
-      const pluginInfo = plugins.find(p => p.id === pluginId)
-
-      if (!pluginInfo) {
-        process.stderr.write(`Plugin not found: ${pluginId}\n`)
-        process.exit(1)
-      }
-
-      if (!pluginInfo.hasRun) {
-        process.stderr.write(`Plugin has no run() function: ${pluginId}\n`)
-        process.exit(1)
-      }
-
-      const plugin = await loadPlugin(pluginId)
-      if (!plugin) {
-        process.stderr.write(`Failed to load plugin: ${pluginId}\n`)
-        process.exit(1)
-      }
-
-      let input: Record<string, unknown> = {}
-
-      if (opts.input) {
-        input = parseJsonInput(
-          opts.input,
-          plugin.inputSchema as Parameters<typeof parseJsonInput>[1]
-        )
-      } else if (plugin.inputSchema) {
-        const pluginArgs = getPluginArgs()
-        const unknownOpts = parseUnknownArgs(pluginArgs)
-        input = buildInputFromOptions(
-          unknownOpts,
-          plugin.inputSchema as Parameters<typeof buildInputFromOptions>[1]
-        )
-
-        const schema = plugin.inputSchema as Parameters<
-          typeof parseJsonInput
-        >[1]
-        if (schema?.safeParse) {
-          const result = schema.safeParse(input)
-          if (!result.success) {
-            printIssues((result as any).error.issues)
-            process.exit(1)
-          }
-          input = result.data as Record<string, unknown>
-        }
-      }
-
-      const timeout = Number(opts.timeout)
-      const exitCode = await runPluginAndPrint(
-        pluginId,
-        input,
-        normalizeFormat(opts.format ?? (opts.input ? 'json' : 'text')),
-        { timeout: Number.isFinite(timeout) ? timeout : undefined }
+      const format = normalizeFormat(
+        opts.format ?? (opts.input !== undefined ? 'json' : 'text')
       )
+      const startedAt = Date.now()
+      let version: string | null = null
+      let input: Record<string, unknown> = {}
+      let exitCode: number
+      try {
+        // Parse before discovery; JSON errors must not execute or load code.
+        if (opts.input !== undefined) input = parseJsonInput(opts.input)
+        const pluginInfo = scanPlugins().find(p => p.id === pluginId)
+        if (!pluginInfo) {
+          exitCode = printExecutionResult(
+            createExecutionFailure(
+              pluginId,
+              null,
+              input,
+              {
+                code: 'PLUGIN_NOT_FOUND',
+                message: `Plugin not found: ${pluginId}`,
+              },
+              startedAt
+            ),
+            format
+          )
+        } else {
+          version = pluginInfo.version
+          const plugin = await loadPlugin(pluginId)
+          if (!plugin) {
+            exitCode = printExecutionResult(
+              createExecutionFailure(
+                pluginId,
+                version,
+                input,
+                {
+                  code: 'LOAD_FAILED',
+                  message: `Failed to load plugin: ${pluginId}`,
+                },
+                startedAt
+              ),
+              format
+            )
+          } else {
+            if (opts.input === undefined && plugin.inputSchema) {
+              input = buildInputFromOptions(
+                parseUnknownArgs(getPluginArgs()),
+                plugin.inputSchema
+              )
+            }
+            exitCode = await runPluginAndPrint(pluginId, input, format, {
+              timeout: Number(opts.timeout),
+            })
+          }
+        }
+      } catch (error) {
+        const invalid = error instanceof CLIInputError
+        exitCode = printExecutionResult(
+          createExecutionFailure(
+            pluginId,
+            version,
+            opts.input ?? input,
+            {
+              code: invalid ? 'INPUT_INVALID' : 'LOAD_FAILED',
+              // Parser diagnostics can contain raw input; never echo them.
+              message: invalid
+                ? 'Input must be valid JSON matching the plugin schema'
+                : 'Failed to prepare plugin execution',
+            },
+            startedAt
+          ),
+          format
+        )
+      }
       process.exit(exitCode)
     }
   )
@@ -304,15 +325,6 @@ function normalizeFormat(format: string): OutputFormat {
 
 function writeJson(value: unknown): void {
   process.stdout.write(`${JSON.stringify(value, null, 2)}\n`)
-}
-
-function printIssues(
-  issues: readonly { path?: readonly unknown[]; message: string }[]
-): void {
-  for (const issue of issues) {
-    const path = issue.path?.length ? `${issue.path.join('.')}: ` : ''
-    process.stderr.write(`${path}${issue.message}\n`)
-  }
 }
 
 /**

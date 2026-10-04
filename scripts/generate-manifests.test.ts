@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test'
 import { resolve } from 'node:path'
 
-test('both formatted manifests exactly match the sorted built-in metadata', async () => {
+test('Web, Desktop and CLI inventories exactly match sorted built-in metadata', async () => {
   const child = Bun.spawn(
     [
       process.execPath,

@@ -17,7 +17,7 @@ import type { ZodObject } from 'zod'
 import { createExecutionFailure } from '@flowtools/sdk/execution'
 import { Command } from 'commander'
 
-import { scanPlugins, loadPlugin } from './discovery'
+import { getBuiltinPluginInfo, scanPlugins, loadPlugin } from './discovery'
 import { printExecutionResult, runPluginAndPrint } from './runner'
 import {
   buildInputFromOptions,
@@ -45,9 +45,14 @@ program
   .option('-f, --format <format>', 'Output format: json or text', 'text')
   .option('-a, --all', 'Show all plugins (including non-CLI)', false)
   .action((opts: { format: string; all: boolean }) => {
-    const plugins = scanPlugins()
-    const filtered = opts.all ? plugins : plugins.filter(p => p.hasRun)
     const format = normalizeFormat(opts.format)
+    let plugins
+    try {
+      plugins = scanPlugins()
+    } catch {
+      failPreparation('builtin-inventory', 'LOAD_FAILED', format)
+    }
+    const filtered = opts.all ? plugins : plugins.filter(p => p.hasRun)
 
     if (format === 'json') {
       writeJson(filtered)
@@ -79,9 +84,17 @@ program
       pluginId: string | undefined,
       opts: { format: string; all: boolean }
     ) => {
-      const plugins = scanPlugins()
-
       if (opts.all) {
+        let plugins
+        try {
+          plugins = scanPlugins()
+        } catch {
+          failPreparation(
+            'builtin-inventory',
+            'LOAD_FAILED',
+            normalizeFormat(opts.format)
+          )
+        }
         for (const p of plugins) {
           await printPluginInfo(p.id, opts.format)
         }
@@ -124,7 +137,7 @@ program
       try {
         // Parse before discovery; JSON errors must not execute or load code.
         if (opts.input !== undefined) input = parseJsonInput(opts.input)
-        const pluginInfo = scanPlugins().find(p => p.id === pluginId)
+        const pluginInfo = getBuiltinPluginInfo(pluginId)
         if (!pluginInfo) {
           exitCode = printExecutionResult(
             createExecutionFailure(
@@ -197,21 +210,18 @@ async function printPluginInfo(
   pluginId: string,
   format: string
 ): Promise<void> {
-  const plugins = scanPlugins()
-  const pluginInfo = plugins.find(p => p.id === pluginId)
-
-  if (!pluginInfo) {
-    process.stderr.write(`Plugin not found: ${pluginId}\n`)
-    process.exit(1)
-  }
+  const outputFormat = normalizeFormat(format)
+  const pluginInfo = getBuiltinPluginInfo(pluginId)
+  if (!pluginInfo) failPreparation(pluginId, 'PLUGIN_NOT_FOUND', outputFormat)
+  const plugin = await loadPlugin(pluginId)
+  if (!plugin) failPreparation(pluginId, 'LOAD_FAILED', outputFormat)
 
   if (format === 'json') {
-    const plugin = pluginInfo.hasSchema ? await loadPlugin(pluginId) : null
     const schema = plugin?.inputSchema
       ? introspectSchema(plugin.inputSchema as ZodObject<any>)
       : null
     const mock = schema
-      ? await generateMockFromSchema(plugin!.inputSchema as ZodObject<any>)
+      ? await generateMockFromSchema(plugin.inputSchema as ZodObject<any>)
       : null
 
     writeJson({ ...pluginInfo, schema, example: schema ? mock : null })
@@ -231,8 +241,7 @@ async function printPluginInfo(
 
   if (pluginInfo.hasSchema) {
     try {
-      const plugin = await loadPlugin(pluginId)
-      if (plugin?.inputSchema) {
+      if (plugin.inputSchema) {
         const fields = introspectSchema(plugin.inputSchema as ZodObject<any>)
 
         process.stdout.write('\nOptions:\n')
@@ -248,9 +257,8 @@ async function printPluginInfo(
           )
         }
       }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      process.stderr.write(`Failed to load schema: ${message}\n`)
+    } catch {
+      failPreparation(pluginId, 'LOAD_FAILED', outputFormat)
     }
   }
 }
@@ -275,13 +283,10 @@ function printSchemaFlags(
 }
 
 async function showPluginHelp(pluginId: string): Promise<void> {
-  const plugins = scanPlugins()
-  const pluginInfo = plugins.find(p => p.id === pluginId)
-
-  if (!pluginInfo) {
-    process.stderr.write(`Plugin not found: ${pluginId}\n`)
-    process.exit(1)
-  }
+  const pluginInfo = getBuiltinPluginInfo(pluginId)
+  if (!pluginInfo) failPreparation(pluginId, 'PLUGIN_NOT_FOUND', 'text')
+  const plugin = await loadPlugin(pluginId)
+  if (!plugin) failPreparation(pluginId, 'LOAD_FAILED', 'text')
 
   process.stdout.write(`Usage: flowtools run ${pluginId} [options]\n`)
   process.stdout.write(`\n${pluginInfo.name}\n`)
@@ -291,8 +296,7 @@ async function showPluginHelp(pluginId: string): Promise<void> {
 
   if (pluginInfo.hasSchema) {
     try {
-      const plugin = await loadPlugin(pluginId)
-      if (plugin?.inputSchema) {
+      if (plugin.inputSchema) {
         const fields = introspectSchema(plugin.inputSchema as ZodObject<any>)
 
         printSchemaFlags(fields)
@@ -307,13 +311,33 @@ async function showPluginHelp(pluginId: string): Promise<void> {
           )
         }
       }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      process.stderr.write(`Failed to load schema: ${message}\n`)
+    } catch {
+      failPreparation(pluginId, 'LOAD_FAILED', 'text')
     }
   } else {
     process.stdout.write('\nThis plugin does not declare input options.\n')
   }
+}
+
+function failPreparation(
+  pluginId: string,
+  code: 'LOAD_FAILED' | 'PLUGIN_NOT_FOUND',
+  format: OutputFormat
+): never {
+  const info = getBuiltinPluginInfo(pluginId)
+  const result = createExecutionFailure(
+    pluginId,
+    info?.version ?? null,
+    {},
+    {
+      code,
+      message:
+        code === 'PLUGIN_NOT_FOUND'
+          ? 'Plugin is not in the host built-in inventory'
+          : 'Built-in compiled artifact unavailable; run bun run build:packages',
+    }
+  )
+  process.exit(printExecutionResult(result, format))
 }
 
 function normalizeFormat(format: string): OutputFormat {

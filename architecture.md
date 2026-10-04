@@ -37,7 +37,7 @@ CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用插�
 P0.3a1 在 SDK types 定义 maturity schema/type（prototype/experimental/beta/
 production），缺失 metadata 仅默认 prototype；compatibility evidence 独立。
 12 个内置 meta、Web/Desktop manifest、CLI list/info JSON/text 同步声明 prototype。
-生成器按排序 inventory 同时更新两端；Desktop 补显式 plugins workspace 依赖，
+生成器按排序 inventory 同时更新两端与 CLI 固定清单；Desktop 补显式 plugins workspace 依赖，
 根 Turbo 的依赖 tests/build 顺序随真实 dependency graph 推导。该标签不是签名、
 API 认证或 grant，不能据此宣称 P0 done。
 
@@ -62,7 +62,15 @@ import-map 导出。危险实现分离到 `@flowtools/sdk/development`，只接�
 生产 bundle 不包含它。Web 文件/enable/reload 服务在副作用前拒绝外部入口，
 IndexedDB 源码在所有模式都不自动恢复、不静默删除；内置 compiled manifest 的
 加载与运行保留。开发预览仍共 realm、无签名/隔离/grant，仅限受控测试数据。
-CLI 与 Desktop 关闭分别由 P0.3b2/b3 验收；SEC-002 仍 open，不能由此关闭整体风险。
+Desktop 关闭仍待 P0.3b3；SEC-002 仍 open，不能由此关闭整体风险。
+
+P0.3b2 将 CLI inventory 固化为构建内嵌的生成清单；运行时不扫描源码目录，
+未知 ID/路径在 IO 前拒绝。仅加载固定 plugins/dist 内普通编译文件，拒绝缺失、
+破损、junction/symlink 重定向与身份/版本/maturity/type/run/schema 不一致。
+取消 TSX 直接导入与正则 headless rewrite；list/info/run/help 缺产物明确失败。
+清单证明 Host T1 构建一致性，不证明 publisher/签名或 TOCTOU 防护；仍在 CLI
+自身进程 import。真实十二内置 run() smoke 和临时 compiled CLI 拒绝 fixture
+分别验证正向行为与入口限制，不以假成功替代真实插件执行。
 
 P0.2a 已交付 `packages/sdk/src/execution/executor.ts`：`executePlugin()` 对
 真实 app/tool `run()` 统一 schema/defaults、版本/时间戳/耗时、输入形状摘要、
@@ -71,8 +79,8 @@ timer/listener 清理；SDK 初始全部 61 个测试通过。
 P0.2b1 已将 CLI runner 接入 SDK；JSON 输出变为共享 envelope，text formatter
 保持原行为。CLI context 与 SDK 类型对齐，只提供已声明的内置插件 storage/network，
 移除重复计时器与原始插件日志输出，storage 使用 `remove/zustand` 并拒绝路径键。
-这不是持久用户 grant 或 canonical/symlink 隔离；源码/headless fallback 的生产
-准入仍属 P0.3。CLI 33 tests、plugins 20 tests 包含真实编译后 CLI 的子进程
+这不是持久用户 grant 或 storage canonical/symlink 隔离；源码/headless fallback
+已由 P0.3b2 删除。P0.2b1 当时的 CLI 33 tests、plugins 20 tests 包含真实编译后 CLI 的子进程
 成功/校验失败/非法超时/text 回归。
 P0.2b2 已接通 Web/Desktop app/tool 实际运行，共享 `ExecutionPanel` 并保留 app
 panel。SDK `execution/history.ts` 使用 versioned external store，最多 200 条真实

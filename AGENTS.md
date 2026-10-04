@@ -98,6 +98,16 @@ tasks must invoke those names consistently across the monorepo. Do not use
 workspace-only aliases such as `check:types` as substitutes for the standard
 task names.
 
+CLI discovery/loading is bound to generated `packages/cli/src/builtin-manifests.ts`,
+embedded in the CLI build. Never restore runtime source scans, arbitrary ID/path
+imports, TSX fallback or regex headless rewriting. Only fixed regular-file
+`plugins/dist/<known-id>.js` artifacts are accepted; unknown IDs fail before IO,
+missing/broken entries fail without source execution, and junction/symlink
+redirection is rejected. This T1 consistency check is not signing, a sandbox or
+protection against replacing trusted compiled files. CLI tests build their own
+CLI artifacts and run disposable compiled-entry rejection fixtures. Build the
+plugin artifacts before using `list/info/run/help`; missing builds are errors.
+
 CLI commands (from repo root):
 
 CLI `--format json` returns `PluginExecutionResult`, not bare `CommandResult`;
@@ -167,7 +177,7 @@ Use SDK `PluginMeta.maturity` / `PluginManifestEntry.maturity` and
 `prototype` via `resolvePluginMaturity`, never stable. The old PluginMeta
 `status: stable/deprecated` vocabulary is removed. Compatibility evidence uses
 its own schema and does not authorize execution or certify security.
-`bun run generate:manifests` now regenerates both Web and Desktop manifests
+`bun run generate:manifests` regenerates Web/Desktop manifests and CLI inventory
 from the same built-in metadata in sorted order. Desktop directly depends on
 the plugins workspace; retain that dependency so types/tests do not rely on an
 undeclared resolution side effect. Catalog/UI consume this SDK maturity contract.
@@ -177,7 +187,7 @@ displays Prototype) and `PluginCompatibilityBadge` for independent evidence.
 Support/bridge requirements are not evidence or security approval. Never restore
 hardcoded stable labels. Keep real metadata, default and evidence UI regressions.
 `bun run scripts/generate-manifests.ts --check` is a read-only generated-content
-gate; the generator formats output before comparing or writing both hosts.
+gate; the generator formats output before comparing or writing all three outputs.
 
 ## Coding Style and Naming Conventions
 
@@ -243,7 +253,8 @@ guard and displays the unsigned, same-realm risk. Never statically import that
 subpath into a host. Web does not automatically restore external source in any
 mode; preserve the old IndexedDB records without executing or deleting them.
 Service-level rejection and build-mode regressions are required, not only a
-hidden upload button. CLI/Desktop entry gates are separate roadmap milestones.
+hidden upload button. CLI accepts only its fixed compiled T1 inventory (P0.3b2);
+Desktop entry closure remains separate P0.3b3 work.
 
 Portable catalogs use `@flowtools/sdk/compat/catalog`, logical source identity,
 package-relative paths and scan SHA-256 values. All current HTML entries remain

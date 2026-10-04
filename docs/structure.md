@@ -21,7 +21,7 @@
 - Web `src/app/development-policy.ts` 与 registry store 在读文件/持久化之前
   拒绝；bootstrap 不恢复外部源码，旧 IndexedDB 数据保留。对应
   `src/app/external-code-gate.test.ts` 覆盖绕过 UI 和恢复/状态无副作用。
-  此为 P0.3b1 停用策略，不是第三方隔离；CLI/Desktop gate 分别独立实施。
+  此为 P0.3b1 停用策略，不是第三方隔离；Desktop gate 仍待后继独立实施。
   `apps/ui-test/scripts/validate-web-source-gate.ts` 用三个真实 Web server 与临时
   Chromium context 验证默认拒绝、显式预览、键盘及旧源码保留；见
   [源码入口验收](./validation/p0-web-source-gate.md)。
@@ -43,9 +43,15 @@
 
 - `packages/sdk/src/types/maturity.ts` / `test/maturity.test.ts`：成熟度统一词表、
   prototype 默认与独立 compatibility evidence enum；不执行安全认证。
-- `scripts/generate-manifests.ts`：排序扫描内置 metadata，生成 Web/Desktop 两份
-  manifest；`plugins/test/maturity-contract.test.ts` 通过实际 compiled imports 和
+- `scripts/generate-manifests.ts`：构建时排序扫描内置 metadata，生成 Web/Desktop
+  manifest 与 `packages/cli/src/builtin-manifests.ts` 固定清单；read-only --check
+  检查三个输出。`plugins/test/maturity-contract.test.ts` 通过实际 compiled imports 和
   CLI 子进程 list/info 验证 maturity 一致。源码正则扫描仍不是完整 manifest 验证。
+- `packages/cli/src/discovery.ts`：只读构建内嵌清单，未知 ID 在 IO 前拒绝；仅加载
+  固定 dist 普通文件，拒绝缺失/破损、junction/symlink 与 metadata 不一致，不再
+  扫描或改写源码。`src/discovery.test.ts` 复制真实 compiled CLI 到临时隔离目录，
+  执行未知入口、坏产物与顶层源码 canary 拒绝回归；CLI test 自行构建 CLI，
+  十二真实内置执行仍由 plugins smoke 验证，不新增循环 workspace 依赖。
 
 - `packages/sdk/src/execution/executor.ts` / `test/executor.test.ts`：共享真实
   `run()` 执行边界，校验/defaults、稳定 envelope、取消/异步等待上限与资源清理。

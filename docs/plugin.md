@@ -28,7 +28,11 @@ Web 默认及生产构建均不可导入源码；受控开发评估须同时使�
 `@flowtools/sdk/development` 在 DEV 分支动态导入，并显示未签名、同 realm 风险，
 不得在宿主静态导入该子入口或当作安装/隔离/grant。已有 IndexedDB 源码保留，
 任何模式都不自动恢复；需要预览时重新主动选择审阅过的文件，仅使用可丢弃数据。
-CLI 与 Desktop 的生产入口仍待 P0.3b2/b3；不得把 Web gate 解释为全宿主已关闭。
+P0.3b2 CLI 只执行构建内嵌清单中的内置 compiled artifact，运行时目录新增项、
+任意路径、直接 TSX 与 headless rewrite 不再支持。更新内置 metadata 后运行
+`bun run generate:manifests`，随后 `bun run build:packages`；list/info/run/help
+缺编译产物会失败，不回退源码。这是 T1 构建一致性，不是包签名或 sandbox。
+Desktop 入口仍待 P0.3b3；不得把 SDK/Web/CLI gate 解释为全宿主已关闭。
 
 ## 1. 先理解插件模型
 
@@ -477,7 +481,8 @@ console.log(output)
 
 ## 7. 从 CLI 调用插件
 
-`packages/cli` 提供统一的 CLI 入口，可直接调用任何提供了 `run()` 的插件。
+`packages/cli` 提供统一的 CLI 入口，只调用固定 Host inventory 中提供 `run()`
+的内置编译插件；增加源码目录本身不会开放 CLI 执行。
 
 ### 7.1 列出可调用插件
 

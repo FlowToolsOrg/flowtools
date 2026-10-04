@@ -111,8 +111,19 @@ development server and explicit `VITE_ENABLE_UNSAFE_PLUGIN_PREVIEW=1`; its unsaf
 implementation is dynamically imported from `@flowtools/sdk/development` and
 absent from the Web production bundle. The UI warns that unsigned code shares
 the host realm and is not installed, isolated or granted. Old IndexedDB source
-records are preserved, never automatically restored in any mode. CLI and Desktop
-entry closure remains separate P0.3b2/b3 work; this is not a production sandbox.
+records are preserved, never automatically restored in any mode.
+
+P0.3b2 binds CLI discovery/loading to a tracked, generated built-in inventory,
+embedded in the CLI build and generated alongside Web/Desktop manifests. Runtime
+directory additions and caller paths cannot add entries. Only fixed regular-file
+`plugins/dist/<built-in-id>.js` artifacts are loaded; missing/broken artifacts,
+directory junctions and inconsistent metadata fail closed. `list/info/run/help`
+report missing builds instead of importing TSX or rewriting headless source.
+Regenerate all three inventories with `bun run generate:manifests`, then run
+`bun run build:packages` after changing built-ins. This is T1 build consistency,
+not package authentication, TOCTOU protection or a third-party sandbox. Desktop
+entry closure remains P0.3b3 work. See the
+[compiled CLI acceptance record](./docs/validation/p0-cli-compiled-inventory.md).
 
 - Product direction: desktop-first, cross-platform ready.
 - Current runnable hosts:

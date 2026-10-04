@@ -850,10 +850,16 @@ bun run --cwd apps/desktop build
   仍与普通 production artifact 字节一致。截图与边界见
   [源码入口记录](./validation/p0-web-source-gate.md)。此项不关闭 CLI/Desktop gate
   或 SEC-002，也不构成独立安全 Reviewer 批准。
-- **P0.3b2 CLI 固定 compiled inventory**：`pending`。只执行随仓库构建的内置
+- **P0.3b2 CLI 固定 compiled inventory**：`done`（2026-10-04）。只执行随仓库构建的内置
   inventory；取消 TSX 源码导入、正则 headless rewrite 和任意 ID 路径 fallback。
   未知/路径 ID 与缺失 compiled artifact 在 import 前失败；真实十二插件 smoke、
   CLI list/info/run 和 compiled CLI 子进程回归。
+  验收：旧版 9 项回归中 8 项失败；修复后 CLI 48 项（含 15 项固定产物/拒绝回归）
+  全部通过。七 workspace lint/types/test/build 强制重跑通过；实际十二 compiled
+  smoke 15 项通过，CLI text 与 help 实际调用复核。三份清单由同一生成器同步，
+  formatter API 消除三次冷启动导致的 Windows 超时，不增加 30 秒测试预算。
+  此项只是 T1 构建一致性，不认证可写 compiled artifact、publisher 或 TOCTOU；
+  SEC-001/002 仍 open。完整证据见 [CLI 验收](./validation/p0-cli-compiled-inventory.md)。
 - **P0.3b3 Desktop HTML / Legacy gate**：`pending`。生产不启动外部 HTML/remote/
   preload，不因 Catalog、持久 metadata 或伪认证放行；开发预览要求显式 DEV
   opt-in 与警告，runner/bridge 在副作用前独立拒绝。覆盖路由绕过、持久恢复与
@@ -1595,7 +1601,7 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 | P0.3a3 | done        | Codex      | P0.3a2        | 2026-10-04；根 gate / Chromium 59 / Desktop 25 + Rust 13；Web 实验与维护者独立 r2 包实窗确认、截图归档        |
 | P0.3b  | in-progress | Codex      | P0.3a         | b1 SDK/Web → b2 CLI → b3 Desktop → b4 production artifact 分开实施                                            |
 | P0.3b1 | done        | Codex      | P0.3a         | 2026-10-04；根 gate / SDK 86 / Web 22；三种实际 Web 模式、旧源码保留、production opt-in artifact 一致通过     |
-| P0.3b2 | pending     | Codex      | P0.3b1        | CLI 只执行固定 compiled built-in inventory                                                                    |
+| P0.3b2 | done        | Codex      | P0.3b1        | 2026-10-04；CLI 48 / 七 workspace 全 gate / 十二真实 compiled smoke 15 / 三份清单检查通过                     |
 | P0.3b3 | pending     | Codex      | P0.3b2        | Desktop runner/bridge 的生产拒绝与显式开发预览                                                                |
 | P0.3b4 | pending     | Codex      | P0.3b3        | 实际发布产物与跨入口拒绝矩阵                                                                                  |
 | P0.3c  | pending     | Codex      | P0.3b         | 市场状态、production bundle 与 P0 总验收                                                                      |

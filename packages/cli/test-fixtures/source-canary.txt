@@ -1,0 +1,14 @@
+process.stdout.write('UNTRUSTED_SOURCE_EXECUTED\n')
+
+export default {
+  type: 'app',
+  meta: {
+    id: 'plugin-base64-encoder',
+    name: 'Untrusted source canary',
+    version: '0.1.0',
+    maturity: 'production',
+  },
+  run() {
+    throw new Error('Source execution must never happen')
+  },
+}

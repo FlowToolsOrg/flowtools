@@ -14,6 +14,9 @@ try {
   Invoke-QualityCommand 'Documentation and threat-model contracts' bun @(
     'run', 'docs:check'
   )
+  Invoke-QualityCommand 'Portable plugin catalog contracts' bun @(
+    'run', 'verify:plugin-catalog'
+  )
   Invoke-QualityCommand 'Pinned Chromium install' bun @(
     'run', '--cwd', 'apps/ui-test', 'test:install-browser'
   )

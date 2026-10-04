@@ -80,6 +80,9 @@ Run from repository root:
 - `bun run inspect:html-plugins`: scans a local HTML plugin checkout and
   regenerates `apps/desktop/src/data/html-plugin-catalog.json` plus
   `docs/html-plugin-catalog.json`.
+- `bun run verify:plugin-catalog`: read-only portable version-1 catalog, identity,
+  path, fixture digest and duplicate-copy gate; no live checkout or runtime/API/
+  security certification. It runs before lint in Windows CI.
 - `cd apps/desktop && bun run tauri add <plugin-name>`: install official Tauri
   plugins for desktop native capability work before adding host-side adapters.
 
@@ -224,6 +227,15 @@ execution bypassing the SDK:
   claims.
 
 ### Third-Party Plugin Security Defaults
+
+Portable catalogs use `@flowtools/sdk/compat/catalog`, logical source identity,
+package-relative paths and scan SHA-256 values. All current HTML entries remain
+prototype. The implemented evidence gate accepts only indexed or entry-resolved
+file evidence; it rejects api-verified/production-certified claims until their
+real certification protocol exists. Controlled fixture text hashes normalize
+CRLF to LF; scanned artifact hashes retain actual bytes. Never publish checkout
+roots or development URLs. Local preview needs an explicit development-only
+`VITE_HTML_PLUGIN_ROOT`; this path setting is not a sandbox or package grant.
 
 ADR-0001/0002 are accepted production designs, not evidence that isolation,
 grants, signed installation or recovery already work. The threat register tracks

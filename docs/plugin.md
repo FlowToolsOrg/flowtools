@@ -53,7 +53,15 @@ FlowTools 插件，而是先把 `main`、`preload`、`features`、`cmds` 归一�
 SDK 从 `@flowtools/sdk/types` 导出 `pluginMaturitySchema`、`resolvePluginMaturity`
 和独立 `compatibilityEvidenceStatusSchema`。内置插件、两端 manifest 与 CLI
 list/info 当前都为 prototype；生成两端 metadata 使用 `bun run generate:manifests`。
-Catalog/UI 全量传播由 P0.3a2/a3 验收，旧 stable UI 标签不是生产证据。
+Catalog 已使用相同 prototype 词表；UI 全量传播由 P0.3a3 验收，旧 stable UI
+标签不是生产证据。Portable Catalog formatVersion 1 记录 logical source、package
+identity/相对路径与扫描 hash，不保存本机根路径或 development URL。重新扫描使用
+`bun run inspect:html-plugins [checkout-path]`，随后运行 `bun run verify:plugin-catalog`。
+当前仅接受 indexed/entry-resolved；后者是入口文件存在/hash，不认证资源依赖、
+runtime、bridge、平台、签名或安全，也不允许生产执行。47 项 entry-resolved、
+78 项 indexed，全部 prototype；API/production 认证仍待 P3.4。
+本地预览需在开发服务器显式配置 VITE_HTML_PLUGIN_ROOT 指向自己的 checkout，
+不能把该路径写回目录或嵌入发布产物；该配置不是隔离/授权。
 
 插件推荐通过 `inputSchema` 声明输入参数。使用 Zod `z.object({...})` 定义，
 SDK 重新导出了 `z`，也可以从 `@flowtools/sdk` 直接导入：

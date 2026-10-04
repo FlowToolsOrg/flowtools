@@ -1,6 +1,13 @@
 {
-  "generatedAt": "2026-06-28T04:52:40.643Z",
-  "source": "D:\\code\\projects\\flowtools\\\u005a\u0054ools-plugins",
+  "formatVersion": 1,
+  "source": "legacy-html-checkout",
+  "fixtures": [
+    {
+      "id": "static-entry-v1",
+      "path": "scripts/fixtures/html-catalog/static-entry-v1.json",
+      "sha256": "f4673dd20817242666c6ad5ca503f1ee71fb85f70d3f1fa09c3869503af42814"
+    }
+  ],
   "totals": {
     "plugins": 125,
     "commands": 723,
@@ -28,6 +35,7 @@
       "id": "2048",
       "name": "2048",
       "version": "1.0.5",
+      "maturity": "prototype",
       "description": "纯正2048小游戏。",
       "author": "Johu",
       "type": "app",
@@ -44,11 +52,24 @@
       "tags": ["2048", "2048小游戏"],
       "category": "游戏娱乐",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "2048",
+        "root": "plugins/2048",
+        "manifestSha256": "683e5003be8c8662aec8adb84d556af8667e0b354cfbb7f64c57d7ca4b843715"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "2048-master/index.html",
+        "sha256": "3b0b5d2efefa23bdba0deeaf8aac43aab224a8c1cc607554495094eab2c8b743"
+      },
       "html": {
         "sourceDir": "2048",
         "main": "2048-master/index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "2048:text:2048:0",
@@ -81,6 +102,7 @@
       "id": "ai-helper",
       "name": "AI助手",
       "version": "1.1.0",
+      "maturity": "prototype",
       "description": "轻量级 AI 聊天助手",
       "author": "Zing",
       "type": "app",
@@ -104,12 +126,21 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "ai-helper",
+        "root": "plugins/ai-helper",
+        "manifestSha256": "816ec1d8edcdbba8481f353763c2ded37b457d1d4d99963c6e796e292352609e"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "ai-helper",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "chat:text:ai:0",
@@ -182,6 +213,7 @@
       "id": "ai-skills-manager",
       "name": "AI-Skills管理器",
       "version": "1.0.1",
+      "maturity": "prototype",
       "description": "快捷安装、更新、卸载AI Agent的技能",
       "type": "app",
       "permissions": [
@@ -207,11 +239,21 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "ai-skills-manager",
+        "root": "plugins/ai-skills-manager",
+        "manifestSha256": "be09a8df2fdf22203809930599d6b8101cfca069eb197f9f2357ee25d3b53e72"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "ai-skills-manager",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "manage:text:skills:0",
@@ -277,6 +319,7 @@
       "id": "anywhere",
       "name": "AI Anywhere",
       "version": "2.4.14",
+      "maturity": "prototype",
       "description": "随时随地，丝滑召唤，您的AI快捷助手(支持MCP)",
       "author": "Komorebi-yaodong",
       "link": "https://github.com/Komorebi-yaodong",
@@ -301,11 +344,21 @@
       ],
       "category": "效率工具",
       "icon": "favicon.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "anywhere",
+        "root": "plugins/anywhere",
+        "manifestSha256": "e56f4e7484dae1aa06301a46b0fc4aaed915f4b659910fda6af7498ef9fa0e27"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "unsafe"
+      },
       "html": {
         "sourceDir": "anywhere",
-        "main": "/main/index.html",
         "mainAvailable": false,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "anywhere-settings:text:anywhere-settings:0",
@@ -324,8 +377,8 @@
             "matcher": {
               "type": "files",
               "label": "恢复聊天",
-              "fileType": "file",
-              "match": "/\\.(json)$/i"
+              "match": "/\\.(json)$/i",
+              "fileType": "file"
             },
             "icon": "history.png"
           },
@@ -352,21 +405,21 @@
           {
             "code": "Resume Conversation",
             "explain": "恢复聊天",
+            "icon": "history.png",
+            "mainHide": true,
             "cmds": [
               {
                 "type": "files",
                 "label": "恢复聊天",
-                "fileType": "file",
-                "match": "/\\.(json)$/i"
+                "match": "/\\.(json)$/i",
+                "fileType": "file"
               },
               {
                 "type": "over",
                 "label": "恢复聊天",
                 "maxLength": 99999999999
               }
-            ],
-            "mainHide": true,
-            "icon": "history.png"
+            ]
           }
         ],
         "compatibility": {
@@ -386,6 +439,7 @@
       "id": "ascii-tree",
       "name": "ASCII Tree",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "将分级文本转换为 ASCII Tree，并支持复制与导出。",
       "author": "fetasty",
       "type": "app",
@@ -410,11 +464,24 @@
       ],
       "category": "文本处理",
       "icon": "logo.jpg",
+      "package": {
+        "kind": "legacy-html",
+        "id": "ascii-tree",
+        "root": "plugins/ascii-tree",
+        "manifestSha256": "521caf3396cae63addb60a7c61d56d18c6aece23955914e436d4a82ed42466e4"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "607cf0040d72ec8182d13cfff32301d539b90d5aeae23dba725e53e826ff908d"
+      },
       "html": {
         "sourceDir": "ascii-tree",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "ascii-tree-open:text:ascii-tree:0",
@@ -476,6 +543,7 @@
       "id": "ascll-art-font",
       "name": "ASCII Art Font",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "ASCII 艺术字体生成器，输入文字即刻转换为酷炫的 ASCII 艺术字",
       "author": "Zing",
       "type": "app",
@@ -502,12 +570,21 @@
       ],
       "category": "文本处理",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "ascll-art-font",
+        "root": "plugins/ascll-art-font",
+        "manifestSha256": "4617d76d2d745a8ab69d11eb8908cc2725ece041e1f496c836268600dc56621c"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "ascll-art-font",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "ascii-art:text:ascii:0",
@@ -578,6 +655,7 @@
       "id": "automode",
       "name": "主题自动切换",
       "version": "1.0.1",
+      "maturity": "prototype",
       "description": "定时自动切换 Windows 系统深浅色主题",
       "author": "AutoMode",
       "type": "app",
@@ -604,11 +682,24 @@
       ],
       "category": "系统工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "automode",
+        "root": "plugins/automode",
+        "manifestSha256": "ae6eb02b0056770953957a139a1da7ab34cb75879cff6325a135585823a62d96"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "9f0eeece3d3f49867e285b44e4d3094694debc56b1720de3458f4db62d6fd8be"
+      },
       "html": {
         "sourceDir": "automode",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "theme-scheduler:text:command:0",
@@ -679,7 +770,8 @@
       "id": "bad-bear",
       "name": "邪恶的熊",
       "version": "1.0.0",
-      "description": "轻松分享你的\u005a\u0054ools插件",
+      "maturity": "prototype",
+      "description": "轻松分享你的ZTools插件",
       "author": "皮皮虾我们走",
       "type": "app",
       "permissions": [
@@ -694,12 +786,21 @@
       ],
       "tags": ["bad-bear", "邪恶的熊", "bad bear", "插件市场", "badbear"],
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "bad-bear",
+        "root": "plugins/bad-bear",
+        "manifestSha256": "4ba3e2a718593719ac201c61cba19fc9259c896253a2bcf52c7ce3cfeab1bb5c"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "bad-bear",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "bad-bear:text:badbear:0",
@@ -752,6 +853,7 @@
       "id": "bookmarks",
       "name": "浏览器书签搜索",
       "version": "2.1.2",
+      "maturity": "prototype",
       "description": "Chrome、Edge 浏览器书签搜索",
       "type": "tool",
       "permissions": [
@@ -774,10 +876,21 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "bookmarks",
+        "root": "plugins/bookmarks",
+        "manifestSha256": "f23f1e78187185be03c7be1dcc2150830c89e4f3c6b096e3e99d9e71259592cf"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "absent"
+      },
       "html": {
         "sourceDir": "bookmarks",
         "mainAvailable": false,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "bookmarks:text:command:0",
@@ -795,8 +908,8 @@
             "type": "over",
             "matcher": {
               "type": "over",
-              "maxLength": 40,
-              "label": "浏览器书签搜索"
+              "label": "浏览器书签搜索",
+              "maxLength": 40
             }
           }
         ],
@@ -813,8 +926,8 @@
             "cmds": [
               {
                 "type": "over",
-                "maxLength": 40,
-                "label": "浏览器书签搜索"
+                "label": "浏览器书签搜索",
+                "maxLength": 40
               }
             ]
           }
@@ -834,6 +947,7 @@
       "id": "calculation-paper",
       "name": "计算稿纸",
       "version": "1.4.2",
+      "maturity": "prototype",
       "description": "像打草稿一样计算",
       "author": "福州猿力信息科技有限公司",
       "link": "https://u.tools",
@@ -856,10 +970,23 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "calculation-paper",
+        "root": "plugins/calculation-paper",
+        "manifestSha256": "dfccd1a0f79e68745d2a418a8baecd2315922390ddf9bc544f685d27ec514c1d"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "d776b6d7eb19b9cecf2319ce529a2d17dbf8c0a03de954bb1f18b6197ef7add0"
+      },
       "html": {
         "sourceDir": "calculation-paper",
         "main": "index.html",
         "mainAvailable": true,
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "calc:text:command:0",
@@ -877,8 +1004,8 @@
             "type": "regex",
             "matcher": {
               "type": "regex",
-              "match": "/^[+-]?(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?$/",
-              "label": "计算稿纸"
+              "label": "计算稿纸",
+              "match": "/^[+-]?(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?$/"
             }
           },
           {
@@ -889,8 +1016,8 @@
             "type": "regex",
             "matcher": {
               "type": "regex",
-              "match": "/^\\(*[+-]?(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?%?\\)*(?:\\s*[+*/^%-]\\s*\\(*[+-]?(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?%?\\)*)+$/",
-              "label": "计算"
+              "label": "计算",
+              "match": "/^\\(*[+-]?(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?%?\\)*(?:\\s*[+*/^%-]\\s*\\(*[+-]?(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?%?\\)*)+$/"
             }
           },
           {
@@ -901,8 +1028,8 @@
             "type": "regex",
             "matcher": {
               "type": "regex",
-              "match": "/^\\s*(?:(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?\\s+)+(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?\\s*$/",
-              "label": "求和"
+              "label": "求和",
+              "match": "/^\\s*(?:(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?\\s+)+(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?\\s*$/"
             }
           },
           {
@@ -913,8 +1040,8 @@
             "type": "regex",
             "matcher": {
               "type": "regex",
-              "match": "/^\\s*(?:(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?\\s+)+(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?\\s*$/",
-              "label": "求平均值"
+              "label": "求平均值",
+              "match": "/^\\s*(?:(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?\\s+)+(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?\\s*$/"
             }
           }
         ],
@@ -926,8 +1053,8 @@
               "计算稿纸",
               {
                 "type": "regex",
-                "match": "/^[+-]?(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?$/",
-                "label": "计算稿纸"
+                "label": "计算稿纸",
+                "match": "/^[+-]?(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?$/"
               }
             ]
           },
@@ -938,8 +1065,8 @@
             "cmds": [
               {
                 "type": "regex",
-                "match": "/^\\(*[+-]?(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?%?\\)*(?:\\s*[+*/^%-]\\s*\\(*[+-]?(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?%?\\)*)+$/",
-                "label": "计算"
+                "label": "计算",
+                "match": "/^\\(*[+-]?(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?%?\\)*(?:\\s*[+*/^%-]\\s*\\(*[+-]?(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?%?\\)*)+$/"
               }
             ]
           },
@@ -950,8 +1077,8 @@
             "cmds": [
               {
                 "type": "regex",
-                "match": "/^\\s*(?:(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?\\s+)+(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?\\s*$/",
-                "label": "求和"
+                "label": "求和",
+                "match": "/^\\s*(?:(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?\\s+)+(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?\\s*$/"
               }
             ]
           },
@@ -962,8 +1089,8 @@
             "cmds": [
               {
                 "type": "regex",
-                "match": "/^\\s*(?:(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?\\s+)+(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?\\s*$/",
-                "label": "求平均值"
+                "label": "求平均值",
+                "match": "/^\\s*(?:(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?\\s+)+(?:\\d{1,15}|\\d{1,3}(?:,\\d\\d\\d){1,4})(?:\\.\\d{1,15})?\\s*$/"
               }
             ]
           }
@@ -980,6 +1107,7 @@
       "id": "chrome-history",
       "name": "浏览器历史记录搜索",
       "version": "v2.2.0",
+      "maturity": "prototype",
       "description": "快速搜索Chrome系列浏览器历史记录，例如 Chrome/Edge 支持多个关键词筛选",
       "author": "莫回首",
       "link": "https://github.com/mohuishou/utools",
@@ -1009,10 +1137,21 @@
       ],
       "category": "效率工具",
       "icon": "icon/browser.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "chrome-history",
+        "root": "plugins/chrome-history",
+        "manifestSha256": "9661adfd96c8de6f07766ee2648e79fc985f836a1fd3dbfe34ee94daf7f0e101"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "absent"
+      },
       "html": {
         "sourceDir": "chrome-history",
         "mainAvailable": false,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "ch:text:ch:0",
@@ -1071,9 +1210,7 @@
             "matcher": {
               "type": "files",
               "label": "设置为 Chrome Profile 目录",
-              "fileType": "directory",
-              "minNum": 1,
-              "maxNum": 1
+              "fileType": "directory"
             },
             "icon": "icon/browser.png"
           }
@@ -1082,6 +1219,8 @@
           {
             "code": "ch",
             "explain": "Chrome/Edge 历史记录搜索",
+            "icon": "icon/browser.png",
+            "mainPush": true,
             "cmds": [
               "ch",
               "edge",
@@ -1091,23 +1230,19 @@
                 "type": "over",
                 "label": "搜索浏览器历史记录"
               }
-            ],
-            "icon": "icon/browser.png",
-            "mainPush": true
+            ]
           },
           {
             "code": "ch-setting",
             "explain": "Chrome Profile 目录设置",
+            "icon": "icon/browser.png",
             "cmds": [
               {
                 "type": "files",
                 "label": "设置为 Chrome Profile 目录",
-                "fileType": "directory",
-                "minNum": 1,
-                "maxNum": 1
+                "fileType": "directory"
               }
-            ],
-            "icon": "icon/browser.png"
+            ]
           }
         ],
         "compatibility": {
@@ -1127,6 +1262,7 @@
       "id": "clipboard",
       "name": "剪贴板",
       "version": "1.2.7",
+      "maturity": "prototype",
       "description": "剪贴板",
       "type": "app",
       "permissions": [
@@ -1142,13 +1278,25 @@
       "tags": ["clipboard", "剪贴板"],
       "category": "效率工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "clipboard",
+        "root": "plugins/clipboard",
+        "manifestSha256": "9f27d0f1269b1b90aa87ef007731fcdcf2b8e0e7eaef6d5d56164639013a65b7"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "public/index.html",
+        "sha256": "c31289672cf3eb401c12c187c124b4c24fd0ed261aba26cd85304ca9be97eb48"
+      },
       "html": {
         "sourceDir": "clipboard",
         "assetDir": "public",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
-        "developmentMain": "http://localhost:5178/",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "clipboard:text:command:0",
@@ -1189,6 +1337,7 @@
       "id": "clipboard-image-paintbrush",
       "name": "剪贴板图片涂改",
       "version": "1.1.0",
+      "maturity": "prototype",
       "description": "把剪贴板图片用悬浮窗显示，画笔涂改 / 加箭头 / 加文字 / 马赛克，并可一键保存或回写剪贴板",
       "author": "leco",
       "link": "",
@@ -1236,10 +1385,21 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "clipboard-image-paintbrush",
+        "root": "plugins/clipboard-image-paintbrush",
+        "manifestSha256": "86bab1b69afa3e61347ac83dc5aa8b3163407a21d10c1ae126e885837a41d6d0"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "absent"
+      },
       "html": {
         "sourceDir": "clipboard-image-paintbrush",
         "mainAvailable": false,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "annotate-clipboard:text:command:0",
@@ -1352,10 +1512,10 @@
             "matcher": {
               "type": "files",
               "label": "涂改图片",
-              "fileType": "file",
-              "extensions": ["png", "jpg", "jpeg", "gif", "bmp", "webp"],
               "minLength": 1,
-              "maxLength": 1
+              "maxLength": 1,
+              "fileType": "file",
+              "extensions": ["png", "jpg", "jpeg", "gif", "bmp", "webp"]
             }
           },
           {
@@ -1367,10 +1527,10 @@
             "matcher": {
               "type": "files",
               "label": "💾 另存为...",
-              "fileType": "file",
-              "extensions": ["png", "jpg", "jpeg", "gif", "bmp", "webp"],
               "minLength": 1,
-              "maxLength": 1
+              "maxLength": 1,
+              "fileType": "file",
+              "extensions": ["png", "jpg", "jpeg", "gif", "bmp", "webp"]
             }
           },
           {
@@ -1437,10 +1597,10 @@
               {
                 "type": "files",
                 "label": "涂改图片",
-                "fileType": "file",
-                "extensions": ["png", "jpg", "jpeg", "gif", "bmp", "webp"],
                 "minLength": 1,
-                "maxLength": 1
+                "maxLength": 1,
+                "fileType": "file",
+                "extensions": ["png", "jpg", "jpeg", "gif", "bmp", "webp"]
               }
             ]
           },
@@ -1451,10 +1611,10 @@
               {
                 "type": "files",
                 "label": "💾 另存为...",
-                "fileType": "file",
-                "extensions": ["png", "jpg", "jpeg", "gif", "bmp", "webp"],
                 "minLength": 1,
-                "maxLength": 1
+                "maxLength": 1,
+                "fileType": "file",
+                "extensions": ["png", "jpg", "jpeg", "gif", "bmp", "webp"]
               }
             ]
           },
@@ -1488,6 +1648,7 @@
       "id": "code-screenshot",
       "name": "代码截图",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "代码截图是一款专业的代码展示工具，能够将源代码转换成精美的图片，让代码分享更加优雅直观",
       "author": "nichijoux",
       "type": "app",
@@ -1511,12 +1672,21 @@
       ],
       "category": "开发工具",
       "icon": "logo.svg",
+      "package": {
+        "kind": "legacy-html",
+        "id": "code-screenshot",
+        "root": "plugins/code-screenshot",
+        "manifestSha256": "746051105abf3705d3f4ee0af1ea937a91b624d0d80490e835f00c4ce224a50a"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "code-screenshot",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "code-screenshot:text:code-screenshot:0",
@@ -1548,6 +1718,8 @@
             "matcher": {
               "type": "files",
               "label": "代码文件截图",
+              "minLength": 1,
+              "maxLength": 50,
               "fileType": "file",
               "extensions": [
                 "js",
@@ -1584,9 +1756,7 @@
                 "zsh",
                 "ps1",
                 "dockerfile"
-              ],
-              "minLength": 1,
-              "maxLength": 50
+              ]
             },
             "icon": "logo.svg"
           }
@@ -1612,6 +1782,8 @@
               {
                 "type": "files",
                 "label": "代码文件截图",
+                "minLength": 1,
+                "maxLength": 50,
                 "fileType": "file",
                 "extensions": [
                   "js",
@@ -1648,9 +1820,7 @@
                   "zsh",
                   "ps1",
                   "dockerfile"
-                ],
-                "minLength": 1,
-                "maxLength": 50
+                ]
               }
             ]
           }
@@ -1672,6 +1842,7 @@
       "id": "code-snippets",
       "name": "代码模板",
       "version": "1.1.1",
+      "maturity": "prototype",
       "description": "保存和管理常用代码模板，支持一键复制、搜索过滤、按使用频率排序、导入导出 JSON 文件。",
       "author": "咖啡八杯",
       "type": "app",
@@ -1696,12 +1867,21 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "code-snippets",
+        "root": "plugins/code-snippets",
+        "manifestSha256": "43faa5a89d917618d0e2a7d26853733381941718929cd8e111aff4d7c1172cc7"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "code-snippets",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "snippets:text:command:0",
@@ -1763,6 +1943,7 @@
       "id": "color-helper",
       "name": "颜色助手",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "颜色、AI 配色、图片色卡、UI 色卡、传统色、渐变色、收藏颜色",
       "author": "mylesy",
       "type": "app",
@@ -1801,11 +1982,21 @@
         "AI 配色"
       ],
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "color-helper",
+        "root": "plugins/color-helper",
+        "manifestSha256": "a51365cc70ebec308fa9c008416197da455daaed2fd3b7c2f1b0e0731f636d9a"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "color-helper",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload.cjs",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "color:text:color:0",
@@ -1831,9 +2022,9 @@
             "type": "regex",
             "matcher": {
               "type": "regex",
-              "maxLength": 50,
+              "label": "颜色",
               "match": "/^(?:#[a-f0-9]{3}|#?[a-f0-9]{6}|#[a-f0-9]{8});?$|^(?:(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})(?:, *| +)){2}(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})$|^rgba?\\((?:(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})(?:, *| +)){2}(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})|^hs[liv]a?\\((?:360|(?:(?:3[0-5]\\d|[1-2]\\d{2}|\\d{1,2})(?:\\.\\d{1,15})?))(?:deg)?(?:, *| +)(?:100|\\d{1,2}(?:\\.\\d{1,15})?)%?(?:, *| +)(?:100|\\d{1,2}(?:\\.\\d{1,15})?)%?/i",
-              "label": "颜色"
+              "maxLength": 50
             }
           },
           {
@@ -1886,10 +2077,10 @@
             "type": "files",
             "matcher": {
               "type": "files",
-              "fileType": "file",
+              "label": "图片色卡",
               "match": "/\\.(?:jpg|jpeg|png)$/i",
               "maxLength": 1,
-              "label": "图片色卡"
+              "fileType": "file"
             }
           },
           {
@@ -1924,9 +2115,9 @@
             "type": "regex",
             "matcher": {
               "type": "regex",
-              "maxLength": 50,
+              "label": "AI 配色",
               "match": "/^(?:#[a-f0-9]{3}|#?[a-f0-9]{6}|#[a-f0-9]{8});?$|^(?:(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})(?:, *| +)){2}(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})$|^rgba?\\((?:(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})(?:, *| +)){2}(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})|^hs[liv]a?\\((?:360|(?:(?:3[0-5]\\d|[1-2]\\d{2}|\\d{1,2})(?:\\.\\d{1,15})?))(?:deg)?(?:, *| +)(?:100|\\d{1,2}(?:\\.\\d{1,15})?)%?(?:, *| +)(?:100|\\d{1,2}(?:\\.\\d{1,15})?)%?/i",
-              "label": "AI 配色"
+              "maxLength": 50
             }
           }
         ],
@@ -1939,9 +2130,9 @@
               "颜色",
               {
                 "type": "regex",
-                "maxLength": 50,
+                "label": "颜色",
                 "match": "/^(?:#[a-f0-9]{3}|#?[a-f0-9]{6}|#[a-f0-9]{8});?$|^(?:(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})(?:, *| +)){2}(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})$|^rgba?\\((?:(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})(?:, *| +)){2}(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})|^hs[liv]a?\\((?:360|(?:(?:3[0-5]\\d|[1-2]\\d{2}|\\d{1,2})(?:\\.\\d{1,15})?))(?:deg)?(?:, *| +)(?:100|\\d{1,2}(?:\\.\\d{1,15})?)%?(?:, *| +)(?:100|\\d{1,2}(?:\\.\\d{1,15})?)%?/i",
-                "label": "颜色"
+                "maxLength": 50
               }
             ]
           },
@@ -1970,10 +2161,10 @@
               },
               {
                 "type": "files",
-                "fileType": "file",
+                "label": "图片色卡",
                 "match": "/\\.(?:jpg|jpeg|png)$/i",
                 "maxLength": 1,
-                "label": "图片色卡"
+                "fileType": "file"
               }
             ]
           },
@@ -1994,9 +2185,9 @@
               "AI 配色",
               {
                 "type": "regex",
-                "maxLength": 50,
+                "label": "AI 配色",
                 "match": "/^(?:#[a-f0-9]{3}|#?[a-f0-9]{6}|#[a-f0-9]{8});?$|^(?:(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})(?:, *| +)){2}(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})$|^rgba?\\((?:(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})(?:, *| +)){2}(?:25[0-5]|2[0-4]\\d|1?\\d{1,2})|^hs[liv]a?\\((?:360|(?:(?:3[0-5]\\d|[1-2]\\d{2}|\\d{1,2})(?:\\.\\d{1,15})?))(?:deg)?(?:, *| +)(?:100|\\d{1,2}(?:\\.\\d{1,15})?)%?(?:, *| +)(?:100|\\d{1,2}(?:\\.\\d{1,15})?)%?/i",
-                "label": "AI 配色"
+                "maxLength": 50
               }
             ]
           }
@@ -2018,6 +2209,7 @@
       "id": "colors",
       "name": "调色板",
       "version": "1.5.0",
+      "maturity": "prototype",
       "description": "这是一个快速选择生成颜色的插件，提供了常用的颜色选择和生成工具，帮助用户轻松获取所需的颜色值。之前叫颜色助手，由于与utools移植的颜色助手冲突打算更名为调色板。搜索匹配词：颜色助手、color helper、color palette、调色板,颜色生成器，色彩助手，色彩生成器，Ai配色，配色，颜色收藏器，颜色空间，颜色选择器",
       "author": "mekefly",
       "type": "app",
@@ -2048,12 +2240,21 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "colors",
+        "root": "plugins/colors",
+        "manifestSha256": "5c5cb87f66b58d582c3c982f68f7141d9ed875356ffa7bf71f12bfc732c31829"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "colors",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "command:text:command:0",
@@ -2074,7 +2275,7 @@
             "icon": "logo.png"
           },
           {
-            "id": "command:text:command:0",
+            "id": "command:text:command:0:duplicate:1",
             "title": "选择颜色",
             "description": "打开插件选择一个颜色",
             "featureCode": "选择颜色",
@@ -2169,15 +2370,16 @@
       }
     },
     {
-      "id": "com-\u007a\u0074ools-timestamp",
+      "id": "com-ztools-timestamp",
       "name": "时间戳转换",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "时间戳与日期相互转换、多时区支持、实时时间戳显示、自动识别单位",
       "author": "bugless",
       "type": "app",
       "permissions": ["storage"],
       "tags": [
-        "com-\u007a\u0074ools-timestamp",
+        "com-ztools-timestamp",
         "时间戳转换",
         "时间戳与日期互转",
         "时间戳",
@@ -2189,71 +2391,80 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "com-ztools-timestamp",
+        "root": "plugins/com-ztools-timestamp",
+        "manifestSha256": "7a9b8f2fffc2c84a7959996e1d7fe642e748add2589262392020ab4cf77f7120"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
-        "sourceDir": "com-\u007a\u0074ools-timestamp",
-        "main": "index.html",
+        "sourceDir": "com-ztools-timestamp",
         "mainAvailable": false,
-        "developmentMain": "http://localhost:5178",
+        "hasDevelopmentMain": true,
         "commands": [
           {
-            "id": "com-\u007a\u0074ools-timestamp:text:command:0",
+            "id": "com-ztools-timestamp:text:command:0",
             "title": "时间戳",
             "description": "时间戳与日期互转",
-            "featureCode": "com-\u007a\u0074ools-timestamp",
+            "featureCode": "com-ztools-timestamp",
             "type": "text",
             "matcher": "时间戳",
             "icon": "logo.png"
           },
           {
-            "id": "com-\u007a\u0074ools-timestamp:text:timestamp:1",
+            "id": "com-ztools-timestamp:text:timestamp:1",
             "title": "timestamp",
             "description": "时间戳与日期互转",
-            "featureCode": "com-\u007a\u0074ools-timestamp",
+            "featureCode": "com-ztools-timestamp",
             "type": "text",
             "matcher": "timestamp",
             "icon": "logo.png"
           },
           {
-            "id": "com-\u007a\u0074ools-timestamp:text:command:2",
+            "id": "com-ztools-timestamp:text:command:2",
             "title": "时间戳转换",
             "description": "时间戳与日期互转",
-            "featureCode": "com-\u007a\u0074ools-timestamp",
+            "featureCode": "com-ztools-timestamp",
             "type": "text",
             "matcher": "时间戳转换",
             "icon": "logo.png"
           },
           {
-            "id": "com-\u007a\u0074ools-timestamp:text:unix:3",
+            "id": "com-ztools-timestamp:text:unix:3",
             "title": "unix时间",
             "description": "时间戳与日期互转",
-            "featureCode": "com-\u007a\u0074ools-timestamp",
+            "featureCode": "com-ztools-timestamp",
             "type": "text",
             "matcher": "unix时间",
             "icon": "logo.png"
           },
           {
-            "id": "com-\u007a\u0074ools-timestamp:text:command:4",
+            "id": "com-ztools-timestamp:text:command:4",
             "title": "日期转换",
             "description": "时间戳与日期互转",
-            "featureCode": "com-\u007a\u0074ools-timestamp",
+            "featureCode": "com-ztools-timestamp",
             "type": "text",
             "matcher": "日期转换",
             "icon": "logo.png"
           },
           {
-            "id": "com-\u007a\u0074ools-timestamp:text:command:5",
+            "id": "com-ztools-timestamp:text:command:5",
             "title": "时间",
             "description": "时间戳与日期互转",
-            "featureCode": "com-\u007a\u0074ools-timestamp",
+            "featureCode": "com-ztools-timestamp",
             "type": "text",
             "matcher": "时间",
             "icon": "logo.png"
           },
           {
-            "id": "com-\u007a\u0074ools-timestamp:text:command:6",
+            "id": "com-ztools-timestamp:text:command:6",
             "title": "日期",
             "description": "时间戳与日期互转",
-            "featureCode": "com-\u007a\u0074ools-timestamp",
+            "featureCode": "com-ztools-timestamp",
             "type": "text",
             "matcher": "日期",
             "icon": "logo.png"
@@ -2261,7 +2472,7 @@
         ],
         "features": [
           {
-            "code": "com-\u007a\u0074ools-timestamp",
+            "code": "com-ztools-timestamp",
             "explain": "时间戳与日期互转",
             "icon": "logo.png",
             "cmds": [
@@ -2287,6 +2498,7 @@
       "id": "cron",
       "name": "cron在线表达式",
       "version": "1.0.6",
+      "maturity": "prototype",
       "description": "简单，实用的cron表达式生成小工具，好用请给我一个 5 星好评，甚是感谢",
       "author": "Evan",
       "type": "app",
@@ -2304,10 +2516,23 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "cron",
+        "root": "plugins/cron",
+        "manifestSha256": "b256c568bd05b9a07b85d76976ae64a19f08e41ca27a62505557afe426cd6446"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "24654403d1ef3207f3b78d4cc1819aa0cbb85a7775645d592be484aab582ef87"
+      },
       "html": {
         "sourceDir": "cron",
         "main": "index.html",
         "mainAvailable": true,
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "cron:text:cron:0",
@@ -2369,6 +2594,7 @@
         "features": [
           {
             "code": "cron",
+            "explain": "Cron 表达式生成器",
             "cmds": [
               "cron",
               "cron生成",
@@ -2377,8 +2603,7 @@
               "quartz",
               "spring cron",
               "java cron"
-            ],
-            "explain": "Cron 表达式生成器"
+            ]
           }
         ],
         "compatibility": {
@@ -2393,7 +2618,8 @@
       "id": "curl-tool",
       "name": "Curl Tool",
       "version": "1.0.0",
-      "description": "在 \u005a\u0054ools 中解析 curl 指令并发送 HTTP 请求的接口调试工具",
+      "maturity": "prototype",
+      "description": "在 ZTools 中解析 curl 指令并发送 HTTP 请求的接口调试工具",
       "author": "qin54",
       "type": "app",
       "permissions": [
@@ -2419,12 +2645,21 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "curl-tool",
+        "root": "plugins/curl-tool",
+        "manifestSha256": "5ba80717122b000af7f51ec3493abf570ca3978c2735d5835a70d4a3f5d042f3"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "curl-tool",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "curl:text:curl-tool:0",
@@ -2540,7 +2775,8 @@
       "id": "deepread",
       "name": "DeepRead 深读",
       "version": "1.1.3",
-      "description": "一个面向 \u005a\u0054ools 的低调本地小说阅读插件，支持书架、分页、进度保存、章节/搜索跳转和快速隐藏。",
+      "maturity": "prototype",
+      "description": "一个面向 ZTools 的低调本地小说阅读插件，支持书架、分页、进度保存、章节/搜索跳转和快速隐藏。",
       "author": "DeepRead",
       "type": "app",
       "permissions": [
@@ -2563,11 +2799,22 @@
         "阅读"
       ],
       "icon": "dist/logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "deepread",
+        "root": "plugins/deepread",
+        "manifestSha256": "ec8b4d8474a4d3c058cd1823a89b041c8e4f6101e0c75c6111a18dddc0d54c3e"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "missing"
+      },
       "html": {
         "sourceDir": "deepread",
         "main": "dist/index.html",
         "mainAvailable": false,
         "preload": "dist/preload/services.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "deepread:text:command:0",
@@ -2629,6 +2876,7 @@
       "id": "devbox",
       "name": "开发百宝箱",
       "version": "2.3.3",
+      "maturity": "prototype",
       "description": "开发百宝箱，提供随机生成、编码转换、文本压缩、开发辅助等常用工具集",
       "author": "咖啡八杯",
       "type": "app",
@@ -2737,12 +2985,21 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "devbox",
+        "root": "plugins/devbox",
+        "manifestSha256": "167a795739174d650e05721c508444e37d089237e6126a26531eed2166620fa9"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "devbox",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "identity:text:identity:0",
@@ -3606,6 +3863,7 @@
       "id": "developer-codec-tools",
       "name": "开发加解密编码工具",
       "version": "0.1.0",
+      "maturity": "prototype",
       "description": "常用开发加密、解密、哈希、HMAC、JWT、编码和文本转换工具",
       "author": "Pamali",
       "type": "app",
@@ -3627,11 +3885,23 @@
       ],
       "category": "开发工具",
       "icon": "logo.svg",
+      "package": {
+        "kind": "legacy-html",
+        "id": "developer-codec-tools",
+        "root": "plugins/developer-codec-tools",
+        "manifestSha256": "847106ddc73c10a513d9041d89a8eb7d586b683099ee21abb8d0bd0b7d1ed4e5"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "1aa27d17105af3bdd948a5163883bfe917383f521d4c6d7db4bddfdcd9bf0ed8"
+      },
       "html": {
         "sourceDir": "developer-codec-tools",
         "main": "index.html",
         "mainAvailable": true,
-        "developmentMain": "http://localhost:5178",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "codec-tools:text:command:0",
@@ -3745,6 +4015,7 @@
       "id": "diff-compare",
       "name": "对比助手",
       "version": "1.0.1",
+      "maturity": "prototype",
       "description": "多模态差异对比工具。支持文本代码、图片、Excel 表格、Word 文档及 PDF 文档的实时对比与差异高亮。",
       "author": "nichijoux",
       "type": "app",
@@ -3782,12 +4053,21 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "diff-compare",
+        "root": "plugins/diff-compare",
+        "manifestSha256": "245a59fe1f72d02d2d8d967ffd8dc02af939817a334dc76540231610310e86e7"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "diff-compare",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:8080",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "diff-main:text:diff:0",
@@ -3857,9 +4137,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
-              "fileType": "file",
-              "maxLength": 2,
               "label": "图片对比",
+              "maxLength": 2,
+              "fileType": "file",
               "extensions": ["png", "jpg", "jpeg", "bmp", "gif", "webp"]
             },
             "icon": "logo.png"
@@ -3881,9 +4161,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
-              "fileType": "file",
-              "maxLength": 2,
               "label": "Excel对比",
+              "maxLength": 2,
+              "fileType": "file",
               "extensions": ["xlsx", "xls", "csv"]
             },
             "icon": "logo.png"
@@ -3905,9 +4185,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
-              "fileType": "file",
-              "maxLength": 2,
               "label": "Word对比",
+              "maxLength": 2,
+              "fileType": "file",
               "extensions": ["docx"]
             },
             "icon": "logo.png"
@@ -3929,9 +4209,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
-              "fileType": "file",
-              "maxLength": 2,
               "label": "PDF对比",
+              "maxLength": 2,
+              "fileType": "file",
               "extensions": ["pdf"]
             },
             "icon": "logo.png"
@@ -3968,9 +4248,9 @@
               },
               {
                 "type": "files",
-                "fileType": "file",
-                "maxLength": 2,
                 "label": "图片对比",
+                "maxLength": 2,
+                "fileType": "file",
                 "extensions": ["png", "jpg", "jpeg", "bmp", "gif", "webp"]
               }
             ]
@@ -3983,9 +4263,9 @@
               "diff-excel",
               {
                 "type": "files",
-                "fileType": "file",
-                "maxLength": 2,
                 "label": "Excel对比",
+                "maxLength": 2,
+                "fileType": "file",
                 "extensions": ["xlsx", "xls", "csv"]
               }
             ]
@@ -3998,9 +4278,9 @@
               "diff-word",
               {
                 "type": "files",
-                "fileType": "file",
-                "maxLength": 2,
                 "label": "Word对比",
+                "maxLength": 2,
+                "fileType": "file",
                 "extensions": ["docx"]
               }
             ]
@@ -4013,9 +4293,9 @@
               "diff-pdf",
               {
                 "type": "files",
-                "fileType": "file",
-                "maxLength": 2,
                 "label": "PDF对比",
+                "maxLength": 2,
+                "fileType": "file",
                 "extensions": ["pdf"]
               }
             ]
@@ -4038,6 +4318,7 @@
       "id": "domain-helper",
       "name": "域名助手",
       "version": "3.3.12",
+      "maturity": "prototype",
       "description": "多平台域名解析记录管理工具",
       "author": "imxiny",
       "link": "https://github.com/imxiny/domain-helper",
@@ -4061,12 +4342,21 @@
       ],
       "category": "网络工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "domain-helper",
+        "root": "plugins/domain-helper",
+        "manifestSha256": "9db69df3b69b68089157a1702836173c1b442dd8311f87e94677bcc48513261e"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "domain-helper",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload.js",
-        "developmentMain": "http://localhost:5173/",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "command:text:command:0",
@@ -4115,6 +4405,7 @@
       "id": "doutu",
       "name": "斗图表情包",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "在线搜索表情包图片，助你高效斗图",
       "author": "被时间思牵",
       "type": "app",
@@ -4131,12 +4422,21 @@
       "tags": ["doutu", "斗图表情包", "表情包搜索插件", "emo"],
       "category": "图像媒体",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "doutu",
+        "root": "plugins/doutu",
+        "manifestSha256": "dba1a58a315a99fc6a3f7cbcf849b36a05a1a45640a0241cb136900361dbc3ce"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "doutu",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "doutu:text:doutu:0",
@@ -4180,6 +4480,7 @@
       "id": "english-typing-practice",
       "name": "英语单词肌肉记忆打字练习",
       "version": "3.3.1",
+      "maturity": "prototype",
       "description": "为键盘工作者设计的单词记忆与英语肌肉记忆锻炼软件",
       "author": "Oct1a & YeeeeRQ",
       "link": "https://oct1a.cn/",
@@ -4205,10 +4506,21 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "english-typing-practice",
+        "root": "plugins/english-typing-practice",
+        "manifestSha256": "ba69e463c80966f7c05a5d2b8cc7278c553ce13953e68b6ce308e852910ed366"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "absent"
+      },
       "html": {
         "sourceDir": "english-typing-practice",
         "mainAvailable": false,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "typing:text:tp:0",
@@ -4265,6 +4577,7 @@
       "id": "everything",
       "name": "本地搜索",
       "version": "2.7.3",
+      "maturity": "prototype",
       "description": "基于 Everything 更便捷的本地文件搜索 + 文件预览",
       "author": "uTools 团队",
       "link": "https://u.tools",
@@ -4291,11 +4604,24 @@
       ],
       "category": "系统工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "everything",
+        "root": "plugins/everything",
+        "manifestSha256": "af9efadc2cdf415910fd84ff0c2f5c279a1b554c65df4ae8885d7eaa4ccbd3ea"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "5acc39494bcdf77c318db8e454e3eae534f28e6664cbd462f6551ea9ae049fa9"
+      },
       "html": {
         "sourceDir": "everything",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload/preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "find:text:command:0",
@@ -4329,9 +4655,8 @@
             "type": "over",
             "matcher": {
               "type": "over",
-              "maxLength": 40,
-              "exclude": "/[\\\\\\/\\t\\n]/",
-              "label": "文件搜索"
+              "label": "文件搜索",
+              "maxLength": 40
             }
           }
         ],
@@ -4348,9 +4673,8 @@
             "cmds": [
               {
                 "type": "over",
-                "maxLength": 40,
-                "exclude": "/[\\\\\\/\\t\\n]/",
-                "label": "文件搜索"
+                "label": "文件搜索",
+                "maxLength": 40
               }
             ]
           }
@@ -4370,6 +4694,7 @@
       "id": "fidget",
       "name": "指针蜗牛",
       "version": "1.0.2",
+      "maturity": "prototype",
       "description": "指针蜗牛",
       "author": "浮小云",
       "type": "tool",
@@ -4395,10 +4720,21 @@
       ],
       "category": "游戏娱乐",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "fidget",
+        "root": "plugins/fidget",
+        "manifestSha256": "1d13c1819b34273c05f5dce7ba737ad80a94c3cbfa9215652aed3924310b726f"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "absent"
+      },
       "html": {
         "sourceDir": "fidget",
         "mainAvailable": false,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "fidget:text:command:0",
@@ -4487,6 +4823,7 @@
       "id": "file-renamer",
       "name": "文件批量重命名",
       "version": "1.0.2",
+      "maturity": "prototype",
       "description": "批量文件重命名工具，支持多种重命名规则，包括替换、前缀/后缀、大小写转换、序列号、模板、时间戳等",
       "author": "nichijoux",
       "type": "app",
@@ -4510,12 +4847,21 @@
       ],
       "category": "系统工具",
       "icon": "logo.svg",
+      "package": {
+        "kind": "legacy-html",
+        "id": "file-renamer",
+        "root": "plugins/file-renamer",
+        "manifestSha256": "f7c19f39b7a763857fb930aa4384c3818e55ded57c33c5bc58e5adbd03904661"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "file-renamer",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "rename:text:command:0",
@@ -4543,9 +4889,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
-              "fileType": "file",
+              "label": "批量重命名",
               "maxLength": 100,
-              "label": "批量重命名"
+              "fileType": "file"
             },
             "icon": "logo.svg"
           }
@@ -4560,9 +4906,9 @@
               "批量重命名",
               {
                 "type": "files",
-                "fileType": "file",
+                "label": "批量重命名",
                 "maxLength": 100,
-                "label": "批量重命名"
+                "fileType": "file"
               }
             ]
           }
@@ -4584,6 +4930,7 @@
       "id": "file-tree",
       "name": "目录树生成器",
       "version": "1.0.5",
+      "maturity": "prototype",
       "description": "生成文件夹的树形结构图，支持编辑注释，复制和导出成图片",
       "author": "aiyakuaile",
       "link": "https://github.com/aiyakuaile/file-tree",
@@ -4609,11 +4956,24 @@
       ],
       "category": "文本处理",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "file-tree",
+        "root": "plugins/file-tree",
+        "manifestSha256": "62835c4400d7b5e6ada936f361e06373da8f86b341547453d7c049f576daf585"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "8930f453886674cb5509011a02f1b42360331dc73ead5f44c9b0edb1e27eb7d4"
+      },
       "html": {
         "sourceDir": "file-tree",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "file-tree:text:tree:0",
@@ -4656,9 +5016,9 @@
             "matcher": {
               "type": "files",
               "label": "生成目录树",
-              "fileType": "directory",
+              "minLength": 1,
               "maxLength": 1,
-              "minLength": 1
+              "fileType": "directory"
             }
           }
         ],
@@ -4674,9 +5034,9 @@
               {
                 "type": "files",
                 "label": "生成目录树",
-                "fileType": "directory",
+                "minLength": 1,
                 "maxLength": 1,
-                "minLength": 1
+                "fileType": "directory"
               }
             ]
           }
@@ -4698,6 +5058,7 @@
       "id": "floating",
       "name": "悬浮",
       "version": "1.2.13",
+      "maturity": "prototype",
       "description": "将截图、图片文件置顶悬浮，同时支持缩放、旋转、翻转、增减透明度",
       "author": "qinyongliang",
       "link": "https://github.com/qinyongliang/",
@@ -4715,10 +5076,21 @@
       "tags": ["floating", "悬浮", "suspend-screenshot", "截图并悬浮"],
       "category": "其他工具",
       "icon": "icon.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "floating",
+        "root": "plugins/floating",
+        "manifestSha256": "41e613410eb84a0ba9b34c9c7686c125990fd2c578a51cdb74c05791f2bf4cfe"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "absent"
+      },
       "html": {
         "sourceDir": "floating",
         "mainAvailable": false,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "suspend-screenshot:text:command:0",
@@ -4749,6 +5121,7 @@
       "id": "flyfont",
       "name": "打飞字",
       "version": "1.0.2",
+      "maturity": "prototype",
       "description": "打飞字小游戏",
       "author": "林中山野",
       "type": "app",
@@ -4765,11 +5138,24 @@
       "tags": ["flyfont", "打飞字", "font", "飞字"],
       "category": "游戏娱乐",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "flyfont",
+        "root": "plugins/flyfont",
+        "manifestSha256": "edb7e39649a531d51343e431e65b16658af678330e67edd07a46cae47b76c6bd"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "static/index.html",
+        "sha256": "2aa37d6443c195df3f4f3cf3a7e9ddab62937e462d6a22453887c3a2d9b6d459"
+      },
       "html": {
         "sourceDir": "flyfont",
         "main": "static/index.html",
         "mainAvailable": true,
         "preload": "static/preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "flyfont:text:flyfont:0",
@@ -4818,6 +5204,7 @@
       "id": "githubproxy",
       "name": "GitHubProxy",
       "version": "1.0.4",
+      "maturity": "prototype",
       "description": "GitHub 文件代理加速工具",
       "author": "thinkw",
       "type": "app",
@@ -4843,12 +5230,21 @@
       ],
       "category": "网络工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "githubproxy",
+        "root": "plugins/githubproxy",
+        "manifestSha256": "04eca9469fcbb284362debf12e3908c72815030411af706c8ca64f69d326d916"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "githubproxy",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "download:text:git-hub:0",
@@ -4867,8 +5263,8 @@
             "type": "regex",
             "matcher": {
               "type": "regex",
-              "match": "/https:\\/\\/github\\.com/i",
-              "label": "GitHub文件代理加速，下载文件"
+              "label": "GitHub文件代理加速，下载文件",
+              "match": "/https:\\/\\/github\\.com/i"
             },
             "icon": "logo.png"
           },
@@ -4889,8 +5285,8 @@
             "type": "regex",
             "matcher": {
               "type": "regex",
-              "match": "/https:\\/\\/github\\.com/i",
-              "label": "GitHub文件代理加速，复制Git Clone地址"
+              "label": "GitHub文件代理加速，复制Git Clone地址",
+              "match": "/https:\\/\\/github\\.com/i"
             },
             "icon": "logo.png"
           },
@@ -4911,8 +5307,8 @@
             "type": "regex",
             "matcher": {
               "type": "regex",
-              "match": "/https:\\/\\/github\\.com/i",
-              "label": "GitHub文件代理加速，复制Git代理后地址"
+              "label": "GitHub文件代理加速，复制Git代理后地址",
+              "match": "/https:\\/\\/github\\.com/i"
             },
             "icon": "logo.png"
           }
@@ -4926,8 +5322,8 @@
               "GitHub文件代理加速，下载文件",
               {
                 "type": "regex",
-                "match": "/https:\\/\\/github\\.com/i",
-                "label": "GitHub文件代理加速，下载文件"
+                "label": "GitHub文件代理加速，下载文件",
+                "match": "/https:\\/\\/github\\.com/i"
               }
             ]
           },
@@ -4939,8 +5335,8 @@
               "GitHub文件代理加速，复制Git Clone地址",
               {
                 "type": "regex",
-                "match": "/https:\\/\\/github\\.com/i",
-                "label": "GitHub文件代理加速，复制Git Clone地址"
+                "label": "GitHub文件代理加速，复制Git Clone地址",
+                "match": "/https:\\/\\/github\\.com/i"
               }
             ]
           },
@@ -4952,8 +5348,8 @@
               "GitHub文件代理加速，复制Git代理后地址",
               {
                 "type": "regex",
-                "match": "/https:\\/\\/github\\.com/i",
-                "label": "GitHub文件代理加速，复制Git代理后地址"
+                "label": "GitHub文件代理加速，复制Git代理后地址",
+                "match": "/https:\\/\\/github\\.com/i"
               }
             ]
           }
@@ -4973,6 +5369,7 @@
       "id": "goose-note",
       "name": "鹅的笔记",
       "version": "2.0.1",
+      "maturity": "prototype",
       "description": "Notion 编写体验，多笔记本 + 无限文件层级 +  支持图片等",
       "author": "Eachann",
       "type": "app",
@@ -5003,11 +5400,24 @@
       ],
       "category": "文本处理",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "goose-note",
+        "root": "plugins/goose-note",
+        "manifestSha256": "7b5203473571c2d59b964e3e114eed726e333d149ccc0164b71dd7bf9864c633"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "e374171a0f1edd1267e53b7d612b0aa3947c67d05764c5557966c655a781d4c7"
+      },
       "html": {
         "sourceDir": "goose-note",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "gn:text:goose-note:0",
@@ -5068,9 +5478,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
-              "fileType": "directory",
               "label": "用鹅的笔记打开",
-              "maxLength": 1
+              "maxLength": 1,
+              "fileType": "directory"
             }
           }
         ],
@@ -5096,9 +5506,9 @@
             "cmds": [
               {
                 "type": "files",
-                "fileType": "directory",
                 "label": "用鹅的笔记打开",
-                "maxLength": 1
+                "maxLength": 1,
+                "fileType": "directory"
               }
             ]
           }
@@ -5120,6 +5530,7 @@
       "id": "he-calendar",
       "name": "合社日历",
       "version": "1.3.0",
+      "maturity": "prototype",
       "description": "有温度的中国风日历🍵",
       "author": "scutken",
       "link": "https://github.com/scutken/he-calendar",
@@ -5145,12 +5556,21 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "he-calendar",
+        "root": "plugins/he-calendar",
+        "manifestSha256": "5b53a46ca8e7a3a35357c651386ead5e22f7e72cc07196248b0afb5cee861053"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "he-calendar",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "calendar:text:command:0",
@@ -5207,6 +5627,7 @@
       "id": "hooost",
       "name": "hooost",
       "version": "1.0.1",
+      "maturity": "prototype",
       "description": "本地 hosts 配置管理，支持预设切换、备份与回滚",
       "author": "皮皮虾我们走",
       "type": "app",
@@ -5229,12 +5650,21 @@
       ],
       "category": "网络工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "hooost",
+        "root": "plugins/hooost",
+        "manifestSha256": "e00ebea0b42184ffc7415800f7f4e80e9c78a342adadad69c2a447c23bbc2f45"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "hooost",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5179",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "hosts:text:hosts:0",
@@ -5287,7 +5717,8 @@
       "id": "hushreader",
       "name": "隐阅盒",
       "version": "1.3.3",
-      "description": "\u005a\u0054ools自己的摸鱼阅读，支持TXT/EPUB/MOBI格式，沉浸式阅读",
+      "maturity": "prototype",
+      "description": "ZTools自己的摸鱼阅读，支持TXT/EPUB/MOBI格式，沉浸式阅读",
       "author": "meidlinger",
       "type": "app",
       "permissions": [
@@ -5317,12 +5748,21 @@
         "导入到 隐阅盒"
       ],
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "hushreader",
+        "root": "plugins/hushreader",
+        "manifestSha256": "1f803668efbaf9852c22f10dafafcb917b61001b9a82704c5c5f6f2733f1ca28"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "hushreader",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "bookshelf:text:command:0",
@@ -5395,10 +5835,10 @@
             "type": "files",
             "matcher": {
               "type": "files",
-              "fileType": "file",
-              "extensions": ["txt", "epub", "mobi"],
+              "label": "导入到 隐阅盒",
               "maxLength": 1,
-              "label": "导入到 隐阅盒"
+              "fileType": "file",
+              "extensions": ["txt", "epub", "mobi"]
             },
             "icon": "logo.png"
           }
@@ -5424,10 +5864,10 @@
               "导入书籍",
               {
                 "type": "files",
-                "fileType": "file",
-                "extensions": ["txt", "epub", "mobi"],
+                "label": "导入到 隐阅盒",
                 "maxLength": 1,
-                "label": "导入到 隐阅盒"
+                "fileType": "file",
+                "extensions": ["txt", "epub", "mobi"]
               }
             ]
           }
@@ -5449,6 +5889,7 @@
       "id": "image-batch-studio",
       "name": "图片批处理",
       "version": "0.1.0",
+      "maturity": "prototype",
       "description": "图片批处理：压缩、水印、格式转换、尺寸、裁剪、旋转、翻转、边框、圆角、PDF 合并、图片合并和 GIF 合成。",
       "author": "harris",
       "type": "app",
@@ -5473,12 +5914,21 @@
         "批量处理文件夹图片"
       ],
       "icon": "logo.svg",
+      "package": {
+        "kind": "legacy-html",
+        "id": "image-batch-studio",
+        "root": "plugins/image-batch-studio",
+        "manifestSha256": "806d77d4b661c401d3a1fa8c5dbd37354396b9a57d7e431f2b5a2e92705f9b3c"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "image-batch-studio",
-        "main": "index.html",
-        "mainAvailable": true,
+        "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://127.0.0.1:5177",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "image-batch:text:command:0",
@@ -5536,8 +5986,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
-              "fileType": "file",
               "label": "批量处理图片",
+              "maxLength": 300,
+              "fileType": "file",
               "extensions": [
                 "jpg",
                 "jpeg",
@@ -5549,8 +6000,7 @@
                 "tiff",
                 "gif",
                 "pdf"
-              ],
-              "maxLength": 300
+              ]
             },
             "icon": "logo.svg"
           },
@@ -5562,9 +6012,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
-              "fileType": "directory",
               "label": "批量处理文件夹图片",
-              "maxLength": 20
+              "maxLength": 20,
+              "fileType": "directory"
             },
             "icon": "logo.svg"
           }
@@ -5585,8 +6035,9 @@
               },
               {
                 "type": "files",
-                "fileType": "file",
                 "label": "批量处理图片",
+                "maxLength": 300,
+                "fileType": "file",
                 "extensions": [
                   "jpg",
                   "jpeg",
@@ -5598,14 +6049,13 @@
                   "tiff",
                   "gif",
                   "pdf"
-                ],
-                "maxLength": 300
+                ]
               },
               {
                 "type": "files",
-                "fileType": "directory",
                 "label": "批量处理文件夹图片",
-                "maxLength": 20
+                "maxLength": 20,
+                "fileType": "directory"
               }
             ]
           }
@@ -5627,6 +6077,7 @@
       "id": "image-stitch",
       "name": "图片拼接",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "将多张图片拼接为一张长图，支持横向/纵向拼接、间距和背景色设置",
       "author": "Ethan0x0000",
       "type": "app",
@@ -5643,10 +6094,23 @@
         "拼接剪贴板图片"
       ],
       "icon": "logo.svg",
+      "package": {
+        "kind": "legacy-html",
+        "id": "image-stitch",
+        "root": "plugins/image-stitch",
+        "manifestSha256": "57ff130b84cb346225723ea6cd9fa4c66498acaf8685a26bd5f7d4d68b47c3cb"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "dbc0448a83c3d6df03c65a9f3d7511affd97e60a020109d792044a22143e2530"
+      },
       "html": {
         "sourceDir": "image-stitch",
         "main": "index.html",
         "mainAvailable": true,
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "image-stitch:text:command:0",
@@ -5684,10 +6148,10 @@
             "matcher": {
               "type": "files",
               "label": "拼接图片",
-              "fileType": "file",
               "match": "/\\.(png|jpe?g|gif|bmp|webp|svg)$/i",
               "minLength": 1,
-              "maxLength": 99
+              "maxLength": 99,
+              "fileType": "file"
             },
             "icon": "logo.svg"
           },
@@ -5719,10 +6183,10 @@
               {
                 "type": "files",
                 "label": "拼接图片",
-                "fileType": "file",
                 "match": "/\\.(png|jpe?g|gif|bmp|webp|svg)$/i",
                 "minLength": 1,
-                "maxLength": 99
+                "maxLength": 99,
+                "fileType": "file"
               }
             ]
           },
@@ -5754,6 +6218,7 @@
       "id": "imgbatch",
       "name": "Imgbatch",
       "version": "0.1.8",
+      "maturity": "prototype",
       "description": "图片批量处理插件，支持压缩、格式转换、加水印、圆角、补边、裁剪、旋转、翻转，以及合并为 PDF、图片和 GIF。",
       "author": "readerc",
       "link": "https://github.com/ReaderC",
@@ -5778,11 +6243,24 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "imgbatch",
+        "root": "plugins/imgbatch",
+        "manifestSha256": "eefb088af13c84c63248808b32a0bc3252f3b75ec48eff41570c452e6e1c685c"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "fd5082ff277171917d73443fcf04874fcc33c6fd5aaeb2377f59d3574a29b9f0"
+      },
       "html": {
         "sourceDir": "imgbatch",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "image-batch:text:command:0",
@@ -5814,6 +6292,7 @@
             "matcher": {
               "type": "files",
               "label": "图片批量处理",
+              "minLength": 1,
               "fileType": "file",
               "extensions": [
                 "jpg",
@@ -5827,8 +6306,7 @@
                 "avif",
                 "heic",
                 "heif"
-              ],
-              "minLength": 1
+              ]
             },
             "icon": "logo.png"
           }
@@ -5847,6 +6325,7 @@
               {
                 "type": "files",
                 "label": "图片批量处理",
+                "minLength": 1,
                 "fileType": "file",
                 "extensions": [
                   "jpg",
@@ -5860,8 +6339,7 @@
                   "avif",
                   "heic",
                   "heif"
-                ],
-                "minLength": 1
+                ]
               }
             ]
           }
@@ -5883,6 +6361,7 @@
       "id": "ip-switcher",
       "name": "IP 地址切换",
       "version": "0.0.5",
+      "maturity": "prototype",
       "description": "快捷修改本机 IP 地址，保存多套 IP 方案，一键切换。",
       "author": "皮皮虾我们走",
       "type": "app",
@@ -5907,12 +6386,21 @@
       ],
       "category": "网络工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "ip-switcher",
+        "root": "plugins/ip-switcher",
+        "manifestSha256": "bc2751a918161b7e28ccaf635d191702fae781578def93abf35d1dbfcb374863"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "ip-switcher",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload.js",
-        "developmentMain": "http://localhost:8000/",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "default:text:ip:0",
@@ -5961,7 +6449,8 @@
       "id": "jet-plugin",
       "name": "jet plugin",
       "version": "1.0.3",
-      "description": "A \u005a\u0054ools plugin",
+      "maturity": "prototype",
+      "description": "A ZTools plugin",
       "author": "zl",
       "type": "tool",
       "permissions": [
@@ -5989,10 +6478,21 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "jet-plugin",
+        "root": "plugins/jet-plugin",
+        "manifestSha256": "ba4bfd82adeff85e58def7e17674d16921a5a880fc8f066047983dbdb4ae393e"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "absent"
+      },
       "html": {
         "sourceDir": "jet-plugin",
         "mainAvailable": false,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "all:text:ide:0",
@@ -6081,6 +6581,7 @@
       "id": "json-editor",
       "name": "json-editor",
       "version": "1.7.1",
+      "maturity": "prototype",
       "description": "JSON 编辑器",
       "type": "app",
       "permissions": [
@@ -6096,11 +6597,24 @@
       "tags": ["json-editor", "clean-cache", "Json 格式化编辑", "Json"],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "json-editor",
+        "root": "plugins/json-editor",
+        "manifestSha256": "0ba90f9b561337f7cbc48ae8dc67ccf18391d906bf4002823d1d6e4f848d0978"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "d776b6d7eb19b9cecf2319ce529a2d17dbf8c0a03de954bb1f18b6197ef7add0"
+      },
       "html": {
         "sourceDir": "json-editor",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "clean-cache:text:json:0",
@@ -6118,9 +6632,9 @@
             "type": "regex",
             "matcher": {
               "type": "regex",
-              "minLength": 2,
+              "label": "Json",
               "match": "/^\\s*(\\{[\\s\\S]*\\}|\\[[\\s\\S]*\\])\\s*$/",
-              "label": "Json"
+              "minLength": 2
             }
           }
         ],
@@ -6132,9 +6646,9 @@
               "Json",
               {
                 "type": "regex",
-                "minLength": 2,
+                "label": "Json",
                 "match": "/^\\s*(\\{[\\s\\S]*\\}|\\[[\\s\\S]*\\])\\s*$/",
-                "label": "Json"
+                "minLength": 2
               }
             ]
           }
@@ -6154,6 +6668,7 @@
       "id": "json-tools",
       "name": "JSON Tools",
       "version": "1.22.0",
+      "maturity": "prototype",
       "type": "app",
       "permissions": [
         "storage",
@@ -6175,11 +6690,21 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "json-tools",
+        "root": "plugins/json-tools",
+        "manifestSha256": "46b1030ecda5ce0fa7b4922e1ea49b32aab80da4a2d9bc7be4b4c360b6196e01"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "json-tools",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "json:text:json:0",
@@ -6251,6 +6776,7 @@
       "id": "killprocess",
       "name": "killprocess",
       "version": "1.0.1",
+      "maturity": "prototype",
       "description": "killprocess",
       "author": "zundaren",
       "type": "app",
@@ -6267,12 +6793,21 @@
       "tags": ["killprocess", "结束指定进程", "结束进程", "kill process"],
       "category": "系统工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "killprocess",
+        "root": "plugins/killprocess",
+        "manifestSha256": "167b567823c3af391a428544b597e2aa2128d74732ac4bbc08e4b02b29a767a7"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "killprocess",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "killprocess:text:command:0",
@@ -6316,6 +6851,7 @@
       "id": "kuke-ai-agent",
       "name": "Kuke AI Agent",
       "version": "1.1.0",
+      "maturity": "prototype",
       "description": "本地全能 AI Agent，支持读写本地文件、执行终端命令、联网搜索、Todo；具备强大的 AI Coding 能力，支持 OpenAI / Anthropic (Claude) 多种模型自由切换，美观的 UI 和动效，多种安全机制。",
       "author": "kukemc",
       "link": "https://github.com/kukemc",
@@ -6344,12 +6880,21 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "kuke-ai-agent",
+        "root": "plugins/kuke-ai-agent",
+        "manifestSha256": "2d514f01083ba6ad68bd247bedde7d83f24f8f53d5d2b8e0f30ce83ededc846d"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "kuke-ai-agent",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "chat:text:kuke:0",
@@ -6435,9 +6980,10 @@
       "id": "latex-ocr",
       "name": "LaTeX公式编辑&识别",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "LaTeX 公式编辑器，支持 SimpleTex api 识别图片转 LaTeX 公式",
       "author": "paxton",
-      "link": "https://github.com/Paxton-PKJ/\u007a\u0074ools-LaTeX-OCR",
+      "link": "https://github.com/Paxton-PKJ/ztools-LaTeX-OCR",
       "type": "app",
       "permissions": [
         "storage",
@@ -6464,11 +7010,24 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "latex-ocr",
+        "root": "plugins/latex-ocr",
+        "manifestSha256": "411988512bba530272ebe53495c10bd87825ae4b0392adcfe60d527280190600"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "html/index.html",
+        "sha256": "8cb02338491477119d2e5cb9ca90731addb7b9bbc545a1770984f76f1402c3be"
+      },
       "html": {
         "sourceDir": "latex-ocr",
         "main": "html/index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "latex-editor:text:latex:0",
@@ -6556,6 +7115,7 @@
       "id": "lihua",
       "name": "礼花",
       "version": "1.1.1",
+      "maturity": "prototype",
       "description": "庆祝高光时刻！一键发射全屏五彩纸屑 confetti",
       "author": "Aaron",
       "type": "tool",
@@ -6572,10 +7132,21 @@
       "tags": ["lihua", "礼花", "confetti", "发射全屏五彩纸屑", "撒花", "庆祝"],
       "category": "其他工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "lihua",
+        "root": "plugins/lihua",
+        "manifestSha256": "64a3970a7fd4b8308ca9b55b2f5cb41d4192bc4ffb47b8d2ab72c700e0474b87"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "absent"
+      },
       "html": {
         "sourceDir": "lihua",
         "mainAvailable": false,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "confetti:text:command:0",
@@ -6614,8 +7185,8 @@
           {
             "code": "confetti",
             "explain": "发射全屏五彩纸屑",
-            "cmds": ["礼花", "撒花", "庆祝", "confetti"],
-            "mainHide": true
+            "mainHide": true,
+            "cmds": ["礼花", "撒花", "庆祝", "confetti"]
           }
         ],
         "compatibility": {
@@ -6633,6 +7204,7 @@
       "id": "linuxcmddoc",
       "name": "linux命令文档",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "linux命令文档快速查询",
       "author": "zundaren",
       "type": "app",
@@ -6656,12 +7228,21 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "linuxcmddoc",
+        "root": "plugins/linuxcmddoc",
+        "manifestSha256": "e7a81b1fd35b01956c113bfb7fe9eddfb39b94dedea72e62ad56603d3d898523"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "linuxcmddoc",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "linuxcmddoc:text:linux:0",
@@ -6714,6 +7295,7 @@
       "id": "local-ip",
       "name": "内网 IP",
       "version": "0.1.0",
+      "maturity": "prototype",
       "description": "一键复制本机内网 IPv4 地址到剪贴板",
       "type": "app",
       "permissions": [
@@ -6736,11 +7318,24 @@
       ],
       "category": "网络工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "local-ip",
+        "root": "plugins/local-ip",
+        "manifestSha256": "6d1cb8b305b233d50f525aac08bb90db0e67ecb5b70c973be643588ea10c3eb1"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "2d852bb5fbbf5e03965ecd822a1595e79bd73201cbb9013e027ff91162e7f662"
+      },
       "html": {
         "sourceDir": "local-ip",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "ip:text:ip:0",
@@ -6789,6 +7384,7 @@
       "id": "local-search-neo",
       "name": "本地搜索Neo",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "借助 Everything 来进行文件搜索",
       "author": "the_tree",
       "type": "app",
@@ -6813,13 +7409,25 @@
         "文件搜索"
       ],
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "local-search-neo",
+        "root": "plugins/local-search-neo",
+        "manifestSha256": "0fef12cc898cde4fa11a882380097432249c7846baa069582dba1d747b3335a1"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "public/index.html",
+        "sha256": "c514d2e0b99b28f36d6ad37f1b65c0eb972d0abae60506814b16beea2fc67f77"
+      },
       "html": {
         "sourceDir": "local-search-neo",
         "assetDir": "public",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "finder:text:command:0",
@@ -6838,9 +7446,8 @@
             "type": "over",
             "matcher": {
               "type": "over",
-              "maxLength": 40,
-              "exclude": "/[\\\\\\/\\t\\n]/",
-              "label": "文件搜索"
+              "label": "文件搜索",
+              "maxLength": 40
             }
           }
         ],
@@ -6848,21 +7455,18 @@
           {
             "code": "finder",
             "explain": "使用 Everything 查找本地文件",
-            "platform": ["win32"],
             "icon": "logo.png",
             "cmds": ["打开搜索"]
           },
           {
             "code": "oversearch",
             "explain": "本地文件搜索",
-            "platform": ["win32"],
             "mainPush": true,
             "cmds": [
               {
                 "type": "over",
-                "maxLength": 40,
-                "exclude": "/[\\\\\\/\\t\\n]/",
-                "label": "文件搜索"
+                "label": "文件搜索",
+                "maxLength": 40
               }
             ]
           }
@@ -6882,6 +7486,7 @@
       "id": "long-screenshot",
       "name": "长截图",
       "version": "3.0.4",
+      "maturity": "prototype",
       "description": "长截图",
       "author": "李不烦",
       "link": "lbfnote.com",
@@ -6899,10 +7504,21 @@
       "tags": ["long-screenshot", "长截图"],
       "category": "图像媒体",
       "icon": "assets/logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "long-screenshot",
+        "root": "plugins/long-screenshot",
+        "manifestSha256": "7e1ae986fab7447e3455bc9e1e9d8696f898b567ba556998b2c36fc093560af6"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "absent"
+      },
       "html": {
         "sourceDir": "long-screenshot",
         "mainAvailable": false,
         "preload": "core/preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "command:text:command:0",
@@ -6917,8 +7533,8 @@
           {
             "code": "长截图",
             "explain": "长截图",
-            "cmds": ["长截图"],
-            "mainHide": true
+            "mainHide": true,
+            "cmds": ["长截图"]
           }
         ],
         "compatibility": {
@@ -6936,6 +7552,7 @@
       "id": "mac-file-search",
       "name": "Mac 文件搜索",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "在 macOS 上快速搜索本地文件与文件夹",
       "author": "Quentin",
       "type": "app",
@@ -6964,11 +7581,24 @@
       ],
       "category": "系统工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "mac-file-search",
+        "root": "plugins/mac-file-search",
+        "manifestSha256": "270cbd8c6ff118befb792fcb7ed1249dda4d402dd46539c683bf07a8e48bcce7"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "8bdef738adced71efe485c1a64f7b01fc12d6e337cd49810207d9ee1466e0bb5"
+      },
       "html": {
         "sourceDir": "mac-file-search",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "find:text:find:0",
@@ -7021,9 +7651,9 @@
             "matcher": {
               "type": "files",
               "label": "在此目录搜索",
-              "fileType": "directory",
               "minLength": 1,
-              "maxLength": 1
+              "maxLength": 1,
+              "fileType": "directory"
             },
             "icon": "logo.png"
           },
@@ -7051,7 +7681,6 @@
             "matcher": {
               "type": "over",
               "label": "搜索文件",
-              "exclude": "/[\\t\\n]/",
               "minLength": 1,
               "maxLength": 120
             },
@@ -7078,7 +7707,6 @@
             "code": "find",
             "explain": "搜索 Mac 本地文件",
             "icon": "logo.png",
-            "platform": ["darwin"],
             "cmds": [
               "find",
               "文件搜索",
@@ -7093,9 +7721,9 @@
               {
                 "type": "files",
                 "label": "在此目录搜索",
-                "fileType": "directory",
                 "minLength": 1,
-                "maxLength": 1
+                "maxLength": 1,
+                "fileType": "directory"
               },
               {
                 "type": "regex",
@@ -7107,7 +7735,6 @@
               {
                 "type": "over",
                 "label": "搜索文件",
-                "exclude": "/[\\t\\n]/",
                 "minLength": 1,
                 "maxLength": 120
               }
@@ -7115,10 +7742,9 @@
           },
           {
             "code": "find-push",
-            "mainPush": true,
             "explain": "主搜索快速搜索文件",
             "icon": "logo.png",
-            "platform": ["darwin"],
+            "mainPush": true,
             "cmds": [
               {
                 "type": "regex",
@@ -7144,9 +7770,10 @@
       }
     },
     {
-      "id": "mac-system-preference-\u007a\u0074ools-plugin",
+      "id": "mac-system-preference-ztools-plugin",
       "name": "系统设置",
       "version": "26.307.0",
+      "maturity": "prototype",
       "description": "MacOS 系统设置快捷打开",
       "type": "tool",
       "permissions": [
@@ -7160,7 +7787,7 @@
         "db"
       ],
       "tags": [
-        "mac-system-preference-\u007a\u0074ools-plugin",
+        "mac-system-preference-ztools-plugin",
         "系统设置",
         "preference.general",
         "通用设置",
@@ -7253,10 +7880,21 @@
       ],
       "category": "系统工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "mac-system-preference-ztools-plugin",
+        "root": "plugins/mac-system-preference-ztools-plugin",
+        "manifestSha256": "ad68cfaddfd282d606e70837626c7c78f8cb5c30614e5807aa959d5cdc339d08"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "absent"
+      },
       "html": {
-        "sourceDir": "mac-system-preference-\u007a\u0074ools-plugin",
+        "sourceDir": "mac-system-preference-ztools-plugin",
         "mainAvailable": false,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "preference-general:text:command:0",
@@ -7503,175 +8141,146 @@
           {
             "code": "preference.general",
             "explain": "通用设置",
-            "platform": ["darwin"],
             "cmds": ["通用"]
           },
           {
             "code": "preference.bluetooth",
             "explain": "蓝牙设置",
-            "platform": ["darwin"],
             "cmds": ["蓝牙"]
           },
           {
             "code": "preference.network",
             "explain": "网络设置",
-            "platform": ["darwin"],
             "cmds": ["网络"]
           },
           {
             "code": "preference.battery",
             "explain": "电池设置",
-            "platform": ["darwin"],
             "cmds": ["电池"]
           },
           {
             "code": "preference.universalaccess",
             "explain": "辅助功能设置",
-            "platform": ["darwin"],
             "cmds": ["辅助功能"]
           },
           {
             "code": "preference.spotlight",
             "explain": "聚焦设置",
-            "platform": ["darwin"],
             "cmds": ["聚焦"]
           },
           {
             "code": "preference.desktop",
             "explain": "墙纸设置",
-            "platform": ["darwin"],
             "cmds": ["墙纸"]
           },
           {
             "code": "preference.appearance",
             "explain": "外观设置",
-            "platform": ["darwin"],
             "cmds": ["外观"]
           },
           {
             "code": "preference.displays",
             "explain": "显示器设置",
-            "platform": ["darwin"],
             "cmds": ["显示器"]
           },
           {
             "code": "preference.dock",
             "explain": "桌面与程序坞设置",
-            "platform": ["darwin"],
             "cmds": ["桌面与程序坞"]
           },
           {
             "code": "preference.siri",
             "explain": "Siri 设置",
-            "platform": ["darwin"],
             "cmds": ["Siri"]
           },
           {
             "code": "preference.notifications",
             "explain": "通知设置",
-            "platform": ["darwin"],
             "cmds": ["通知"]
           },
           {
             "code": "preference.sound",
             "explain": "声音设置",
-            "platform": ["darwin"],
             "cmds": ["声音"]
           },
           {
             "code": "preference.screentime",
             "explain": "屏幕时间设置",
-            "platform": ["darwin"],
             "cmds": ["屏幕时间"]
           },
           {
             "code": "preference.lock.screen",
             "explain": "锁定屏幕设置",
-            "platform": ["darwin"],
             "cmds": ["锁定屏幕"]
           },
           {
             "code": "preference.security",
             "explain": "隐私与安全性设置",
-            "platform": ["darwin"],
             "cmds": ["隐私与安全性"]
           },
           {
             "code": "preference.security.touchid",
             "explain": "触控 ID 与密码设置",
-            "platform": ["darwin"],
             "cmds": ["触控 ID 与密码"]
           },
           {
             "code": "preference.users",
             "explain": "用户与群组设置",
-            "platform": ["darwin"],
             "cmds": ["用户与群组"]
           },
           {
             "code": "preference.internetaccounts",
             "explain": "互联网账户设置",
-            "platform": ["darwin"],
             "cmds": ["互联网账户"]
           },
           {
             "code": "preference.gamecenter",
             "explain": "Game Center 设置",
-            "platform": ["darwin"],
             "cmds": ["Game Center"]
           },
           {
             "code": "preference.appleid",
             "explain": "Apple 账户设置",
-            "platform": ["darwin"],
             "cmds": ["Apple 账户"]
           },
           {
             "code": "preference.keyboard",
             "explain": "键盘设置",
-            "platform": ["darwin"],
             "cmds": ["键盘"]
           },
           {
             "code": "preference.trackpad",
             "explain": "触控板设置",
-            "platform": ["darwin"],
             "cmds": ["触控板"]
           },
           {
             "code": "preference.printfax",
             "explain": "打印机与扫描仪设置",
-            "platform": ["darwin"],
             "cmds": ["打印机与扫描仪"]
           },
           {
             "code": "settings.Storage",
             "explain": "储存空间",
-            "platform": ["darwin"],
             "cmds": ["通用/储存空间"]
           },
           {
             "code": "settings.SoftwareUpdate",
             "explain": "软件更新",
-            "platform": ["darwin"],
             "cmds": ["通用/软件更新"]
           },
           {
             "code": "settings.LoginItems",
             "explain": "登录项",
-            "platform": ["darwin"],
             "cmds": ["通用/登录项与拓展"]
           },
           {
             "code": "about",
             "explain": "关于本机",
-            "platform": ["darwin"],
             "cmds": ["通用/关于本机"]
           },
           {
             "code": "preference.network.wifi",
             "explain": "Wi-Fi 设置",
-            "platform": ["darwin"],
             "cmds": ["Wi-Fi", "Wifi"]
           }
         ],
@@ -7690,6 +8299,7 @@
       "id": "markdown",
       "name": "markdown",
       "version": "1.7.1",
+      "maturity": "prototype",
       "description": "Markdown",
       "type": "app",
       "permissions": [
@@ -7705,13 +8315,25 @@
       "tags": ["markdown", "Markdown"],
       "category": "文本处理",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "markdown",
+        "root": "plugins/markdown",
+        "manifestSha256": "cb8c294c9e34d399255bcd9fccad8c85ab0cfaf305d1ff3d9c2f7598ac8b5c08"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "public/index.html",
+        "sha256": "c31289672cf3eb401c12c187c124b4c24fd0ed261aba26cd85304ca9be97eb48"
+      },
       "html": {
         "sourceDir": "markdown",
         "assetDir": "public",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
-        "developmentMain": "http://localhost:5178/",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "markdown:text:markdown:0",
@@ -7744,6 +8366,7 @@
       "id": "memo-quick-paste",
       "name": "备忘快贴",
       "version": "4.1.0",
+      "maturity": "prototype",
       "description": "记录「文本」「代码」「图片」，快捷输出",
       "author": "福州猿力信息科技有限公司",
       "link": "https://u.tools",
@@ -7775,11 +8398,24 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "memo-quick-paste",
+        "root": "plugins/memo-quick-paste",
+        "manifestSha256": "3e7129315a860bacd228732bd917e209e46de8f2ce888f28f20fc61711353056"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "bf1023bbce50a9c91aa0bde51808acf0beb84a65f810461d4136e6ccc268bead"
+      },
       "html": {
         "sourceDir": "memo-quick-paste",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "collection:text:command:0",
@@ -7816,10 +8452,10 @@
             "type": "files",
             "matcher": {
               "type": "files",
-              "fileType": "file",
+              "label": "备忘记录",
               "match": "/\\.(?:jpg|jpeg|png)$/i",
               "maxLength": 1,
-              "label": "备忘记录"
+              "fileType": "file"
             }
           },
           {
@@ -7852,9 +8488,8 @@
             "type": "over",
             "matcher": {
               "type": "over",
-              "maxLength": 40,
-              "exclude": "/[\\\\\\/\\t\\n]/",
-              "label": "备忘搜索"
+              "label": "备忘搜索",
+              "maxLength": 40
             }
           }
         ],
@@ -7871,10 +8506,10 @@
               },
               {
                 "type": "files",
-                "fileType": "file",
+                "label": "备忘记录",
                 "match": "/\\.(?:jpg|jpeg|png)$/i",
                 "maxLength": 1,
-                "label": "备忘记录"
+                "fileType": "file"
               },
               {
                 "type": "img",
@@ -7899,9 +8534,8 @@
             "cmds": [
               {
                 "type": "over",
-                "maxLength": 40,
-                "exclude": "/[\\\\\\/\\t\\n]/",
-                "label": "备忘搜索"
+                "label": "备忘搜索",
+                "maxLength": 40
               }
             ]
           }
@@ -7923,6 +8557,7 @@
       "id": "mt-ocr",
       "name": "馒头OCR",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "支持腾讯云/百度云/阿里云的多引擎 OCR 文字识别工具",
       "author": "menghaohao",
       "type": "app",
@@ -7949,12 +8584,21 @@
       ],
       "category": "效率工具",
       "icon": "logo.svg",
+      "package": {
+        "kind": "legacy-html",
+        "id": "mt-ocr",
+        "root": "plugins/mt-ocr",
+        "manifestSha256": "8a44ac7d1ddbd900541a2ce06178a37d7054f4780b5b254403ff42fc69e97b2c"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "mt-ocr",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "ocr:text:ocr:0",
@@ -8021,9 +8665,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
-              "fileType": "file",
+              "label": "OCR 文字识别",
               "maxLength": 1,
-              "label": "OCR 文字识别"
+              "fileType": "file"
             },
             "icon": "logo.svg"
           }
@@ -8045,9 +8689,9 @@
               },
               {
                 "type": "files",
-                "fileType": "file",
+                "label": "OCR 文字识别",
                 "maxLength": 1,
-                "label": "OCR 文字识别"
+                "fileType": "file"
               }
             ]
           }
@@ -8069,6 +8713,7 @@
       "id": "musicsquare",
       "name": "皮卡丘的音乐站",
       "version": "1.0.2",
+      "maturity": "prototype",
       "description": "基于 Migu/Netease/QQ/Kuwo 的高颜值极简音乐搜索与播放工具",
       "author": "wangtao",
       "link": "https://github.com/CharlesPikachu/musicsquare",
@@ -8096,11 +8741,24 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "musicsquare",
+        "root": "plugins/musicsquare",
+        "manifestSha256": "998b8ed13c7ea581661b840a736ad2619183e7cc9717cc2de9da41e78270eef5"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "334f3abb2dffae2117d433df58c99602689f1900b800124c13c93f7441283291"
+      },
       "html": {
         "sourceDir": "musicsquare",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "music-search:text:music:0",
@@ -8181,6 +8839,7 @@
       "id": "my-calculator",
       "name": "计算器",
       "version": "1.0.1",
+      "maturity": "prototype",
       "description": "计算器",
       "author": "scc",
       "type": "app",
@@ -8203,12 +8862,21 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "my-calculator",
+        "root": "plugins/my-calculator",
+        "manifestSha256": "01ad28fecf1eada1d7023da1b7c955a2e9db0f000db714d9d35df11f1e3a5e8d"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "my-calculator",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "calculator:text:command:0",
@@ -8261,6 +8929,7 @@
       "id": "my-hash-tool",
       "name": "哈希计算器",
       "version": "1.3.2",
+      "maturity": "prototype",
       "description": "计算文件或字符 Hash：默认 MD5、SHA1、SHA256，可选 CRC32、SHA384、SHA512",
       "author": "Evan Cui",
       "type": "app",
@@ -8296,12 +8965,21 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "my-hash-tool",
+        "root": "plugins/my-hash-tool",
+        "manifestSha256": "b8a4bf416efbb2f2f60438c345c61f7592df3301188570984c5e29c5ea5a1e49"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "my-hash-tool",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "file-hash:text:hash:0",
@@ -8428,9 +9106,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
-              "fileType": "file",
+              "label": "计算文件 Hash",
               "maxLength": 10000,
-              "label": "计算文件 Hash"
+              "fileType": "file"
             },
             "icon": "logo.png"
           }
@@ -8456,9 +9134,9 @@
               "文本哈希",
               {
                 "type": "files",
-                "fileType": "file",
+                "label": "计算文件 Hash",
                 "maxLength": 10000,
-                "label": "计算文件 Hash"
+                "fileType": "file"
               }
             ]
           }
@@ -8480,6 +9158,7 @@
       "id": "mybatis-sql-formatter",
       "name": "MyBatis SQL 日志格式化",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "将 MyBatis SQL 日志中的 Preparing 和 Parameters 合并并格式化为可执行的 SQL 语句",
       "type": "app",
       "permissions": [
@@ -8505,11 +9184,24 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "mybatis-sql-formatter",
+        "root": "plugins/mybatis-sql-formatter",
+        "manifestSha256": "ff354fea271a2c0b32e3b263dbf55e03bf5fce7f64f881894c9818e508b53f50"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "41c6ba685f83b82c57040f51373a026137dc139f925853a5bdbb2da47fa317d6"
+      },
       "html": {
         "sourceDir": "mybatis-sql-formatter",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "format-sql-log:text:sql:0",
@@ -8599,6 +9291,7 @@
       "id": "ocr-new",
       "name": "OCR 翻译",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "识别图片文字并跳转到翻译插件",
       "author": "FAR",
       "type": "app",
@@ -8648,12 +9341,21 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "ocr-new",
+        "root": "plugins/ocr-new",
+        "manifestSha256": "e325085279457b2613cc8e5e5e2fa8b88282585c7a73f5b97ffe32554b70d898"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "ocr-new",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "ocr:text:ocr:0",
@@ -8699,8 +9401,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
-              "fileType": "file",
+              "label": "识别图片文字",
               "maxLength": 1,
+              "fileType": "file",
               "extensions": [
                 "png",
                 "jpg",
@@ -8711,8 +9414,7 @@
                 "tif",
                 "tiff",
                 "avif"
-              ],
-              "label": "识别图片文字"
+              ]
             },
             "icon": "logo.png"
           },
@@ -8855,8 +9557,9 @@
               "图片翻译",
               {
                 "type": "files",
-                "fileType": "file",
+                "label": "识别图片文字",
                 "maxLength": 1,
+                "fileType": "file",
                 "extensions": [
                   "png",
                   "jpg",
@@ -8867,8 +9570,7 @@
                   "tif",
                   "tiff",
                   "avif"
-                ],
-                "label": "识别图片文字"
+                ]
               },
               {
                 "type": "img",
@@ -8884,9 +9586,9 @@
           },
           {
             "code": "ocr-copy",
-            "mainHide": true,
             "explain": "OCR 文字识别后自动复制识别内容",
             "icon": "logo.png",
+            "mainHide": true,
             "cmds": [
               "OCR 文字识别+复制",
               {
@@ -8897,9 +9599,9 @@
           },
           {
             "code": "ocr-translate",
-            "mainHide": true,
             "explain": "OCR 文字识别后自动前往翻译识别内容",
             "icon": "logo.png",
+            "mainHide": true,
             "cmds": [
               "OCR 文字识别+翻译",
               {
@@ -8910,23 +9612,23 @@
           },
           {
             "code": "ocr-screenshot",
-            "mainHide": true,
             "explain": "截图 OCR 文字识别",
             "icon": "logo.png",
+            "mainHide": true,
             "cmds": ["截图文字识别", "截图 OCR 识别"]
           },
           {
             "code": "ocr-screenshot-copy",
-            "mainHide": true,
             "explain": "截图 OCR 文字识别后自动复制识别内容",
             "icon": "logo.png",
+            "mainHide": true,
             "cmds": ["截图文字识别+复制", "截图 OCR 复制"]
           },
           {
             "code": "ocr-screenshot-translate",
-            "mainHide": true,
             "explain": "截图 OCR 文字识别后自动前往翻译识别内容",
             "icon": "logo.png",
+            "mainHide": true,
             "cmds": ["截图文字识别+翻译", "截图 OCR 翻译"]
           }
         ],
@@ -8947,9 +9649,10 @@
       "id": "otp-2fa",
       "name": "2FA动态验证码",
       "version": "1.3.0",
+      "maturity": "prototype",
       "description": "安全、简约且高效的 2FA 令牌管理器，支持 TOTP/HOTP/Steam 多种协议。",
       "author": "狄硕",
-      "link": "https://github.com/dishuo183/\u005a\u0054ools-plugins",
+      "link": "https://github.com/dishuo183/ZTools-plugins",
       "type": "app",
       "permissions": [
         "storage",
@@ -8975,12 +9678,21 @@
       ],
       "category": "其他工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "otp-2fa",
+        "root": "plugins/otp-2fa",
+        "manifestSha256": "92038636f3a4bccb6dcbfc96087a04d470fe9cfe1ad36c9a3bf4d141e8cb31ec"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "otp-2fa",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "otp-2fa:text:2fa:0",
@@ -9087,6 +9799,7 @@
       "id": "piclist-plugin",
       "name": "piclist 的插件",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "piclist 的插件",
       "author": "thinkw",
       "type": "app",
@@ -9110,12 +9823,21 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "piclist-plugin",
+        "root": "plugins/piclist-plugin",
+        "manifestSha256": "0db2a021f117c56ef25432f125fb2526cad7a4017e7d053f60aed5d18861dfcb"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "piclist-plugin",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "piclist-img:text:command:0",
@@ -9250,6 +9972,7 @@
       "id": "plain-text",
       "name": "纯文本编辑",
       "version": "1.0.2",
+      "maturity": "prototype",
       "description": "即开即写的轻量文本编辑器，支持纯文本和 Markdown 双模式。自动保存、多文稿管理、一键导出 .txt/.md 文件。",
       "author": "Muerzy",
       "type": "app",
@@ -9279,11 +10002,24 @@
       ],
       "category": "文本处理",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "plain-text",
+        "root": "plugins/plain-text",
+        "manifestSha256": "f43bcf371afa52172b55ff9dfbc3c324851c7ded762568f5cdcf866421ec670a"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "c2d1c68b413019634e815fda57b874b89f6dea9f9bd14217bddedb0e30f814d8"
+      },
       "html": {
         "sourceDir": "plain-text",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload/services.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "editor:text:wb:0",
@@ -9464,6 +10200,7 @@
       "id": "pomodoro-timer",
       "name": "超级番茄",
       "version": "1.0.2",
+      "maturity": "prototype",
       "description": "番茄钟、长短目标管理、成就感设计，让你对现实上瘾",
       "author": "李不烦",
       "link": "https://lbfnote.com",
@@ -9481,11 +10218,24 @@
       "tags": ["pomodoro-timer", "超级番茄", "tomato", "番茄钟"],
       "category": "效率工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "pomodoro-timer",
+        "root": "plugins/pomodoro-timer",
+        "manifestSha256": "98a40f8f14fb6dee3ee381babcfd3d68eb000e7ee4942c176495d77b6dcc1a79"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "page/index/index.html",
+        "sha256": "5042cca196c1b0af9beb199f2aa9ea2882c6c0b7b5a27a89b852393225df5c77"
+      },
       "html": {
         "sourceDir": "pomodoro-timer",
         "main": "page/index/index.html",
         "mainAvailable": true,
         "preload": "base/js/preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "tomato:text:command:0",
@@ -9526,6 +10276,7 @@
       "id": "port-use",
       "name": "port-use",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "端口占用",
       "type": "app",
       "permissions": [
@@ -9541,13 +10292,25 @@
       "tags": ["port-use", "端口占用"],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "port-use",
+        "root": "plugins/port-use",
+        "manifestSha256": "31199ae349b9344bee77bd97f7f1cebe90b90a3ca6288e8c110bfae39e86f9a4"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "public/index.html",
+        "sha256": "c31289672cf3eb401c12c187c124b4c24fd0ed261aba26cd85304ca9be97eb48"
+      },
       "html": {
         "sourceDir": "port-use",
         "assetDir": "public",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
-        "developmentMain": "http://localhost:5179/",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "port-use:text:command:0",
@@ -9580,6 +10343,7 @@
       "id": "port-use-win",
       "name": "Windows 端口占用",
       "version": "1.0.1",
+      "maturity": "prototype",
       "description": "使用 PowerShell 查询 Windows 端口占用并支持搜索进程名、PID、地址和端口",
       "author": "rainow",
       "type": "app",
@@ -9602,12 +10366,21 @@
         "端口使用情况"
       ],
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "port-use-win",
+        "root": "plugins/port-use-win",
+        "manifestSha256": "5cdd27bbbcb26e34bcdcc9a8530166c882e0e853761afee98b016714713138cb"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "port-use-win",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "port-use-win:text:command:0",
@@ -9660,6 +10433,7 @@
       "id": "project-manager",
       "name": "项目管理器",
       "version": "1.3.1",
+      "maturity": "prototype",
       "description": "项目管理器 - 管理项目脚本、Node.js 版本和 Git 仓库，内置 Git 图形界面与 AI 提交信息生成",
       "author": "cuteyuchen",
       "type": "app",
@@ -9688,11 +10462,21 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "project-manager",
+        "root": "plugins/project-manager",
+        "manifestSha256": "4f0ca7f472fee20e851176a2f0ae9fe053e48a45a5fb14fd000b5e30b96f4925"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "project-manager",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "main:text:command:0",
@@ -9759,9 +10543,9 @@
             "matcher": {
               "type": "files",
               "label": "导入项目",
-              "fileType": "directory",
               "match": "/.*/",
-              "minLength": 1
+              "minLength": 1,
+              "fileType": "directory"
             }
           }
         ],
@@ -9786,9 +10570,9 @@
               {
                 "type": "files",
                 "label": "导入项目",
-                "fileType": "directory",
                 "match": "/.*/",
-                "minLength": 1
+                "minLength": 1,
+                "fileType": "directory"
               }
             ]
           }
@@ -9810,6 +10594,7 @@
       "id": "qrcode-helper",
       "name": "QRCode",
       "version": "3.0.0",
+      "maturity": "prototype",
       "description": "二维码生成、二维码识别",
       "author": "福州猿力信息科技有限公司",
       "link": "https://u.tools",
@@ -9836,11 +10621,24 @@
       ],
       "category": "其他工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "qrcode-helper",
+        "root": "plugins/qrcode-helper",
+        "manifestSha256": "44d5284418f77cc4ce0b4ffca9efd4085a886c239eaf983aa39f8eacf7f5ce44"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "bf1023bbce50a9c91aa0bde51808acf0beb84a65f810461d4136e6ccc268bead"
+      },
       "html": {
         "sourceDir": "qrcode-helper",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "qrcode:text:qrcode:0",
@@ -9874,8 +10672,8 @@
             "type": "regex",
             "matcher": {
               "type": "regex",
-              "match": "/^https?:\\/\\/(?:(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3})|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))\\.?)(?::\\d{2,5})?(?:[/?#][^\\s\"]*)?$/i",
-              "label": "生成二维码"
+              "label": "生成二维码",
+              "match": "/^https?:\\/\\/(?:(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3})|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))\\.?)(?::\\d{2,5})?(?:[/?#][^\\s\"]*)?$/i"
             }
           },
           {
@@ -9900,8 +10698,8 @@
               "扫码",
               {
                 "type": "regex",
-                "match": "/^https?:\\/\\/(?:(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3})|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))\\.?)(?::\\d{2,5})?(?:[/?#][^\\s\"]*)?$/i",
-                "label": "生成二维码"
+                "label": "生成二维码",
+                "match": "/^https?:\\/\\/(?:(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3})|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))\\.?)(?::\\d{2,5})?(?:[/?#][^\\s\"]*)?$/i"
               },
               {
                 "type": "img",
@@ -9927,6 +10725,7 @@
       "id": "random-data",
       "name": "随机数据",
       "version": "1.2.0",
+      "maturity": "prototype",
       "description": "输入指令生成常用随机测试数据，并自动填充到当前输入框。",
       "author": "gaoyubo",
       "type": "app",
@@ -9951,11 +10750,24 @@
       ],
       "category": "开发工具",
       "icon": "logo.svg",
+      "package": {
+        "kind": "legacy-html",
+        "id": "random-data",
+        "root": "plugins/random-data",
+        "manifestSha256": "a591364eeaec5ceba94a32b921833f45a3473f93cd51563d5eeff8d8eddc452b"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "61639457f9396b46f8764e48c8a217fec86a38d47d14df3c55cfe6300b5a559c"
+      },
       "html": {
         "sourceDir": "random-data",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "random-data-settings:text:command:0",
@@ -10008,6 +10820,7 @@
       "id": "random-password",
       "name": "随机密码",
       "version": "1.0.1",
+      "maturity": "prototype",
       "description": "轻量随机密码插件，快速生成安全密码。",
       "author": "zhy",
       "type": "app",
@@ -10021,11 +10834,20 @@
       ],
       "category": "其他工具",
       "icon": "logo-v2.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "random-password",
+        "root": "plugins/random-password",
+        "manifestSha256": "4f3a2df6ebb3b55c7bc7157caa29e47ce6236db8fe5a94478f95be906728d9e2"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "random-password",
-        "main": "index.html",
         "mainAvailable": false,
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "password:text:command:0",
@@ -10075,6 +10897,7 @@
       "id": "regex-editor",
       "name": "正则可视编辑器",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "正则可视化编辑器：铁路图可视化、实时匹配测试、AI 大白话说明、常用范例、按需求 AI 生成正则",
       "author": "adoin",
       "type": "app",
@@ -10099,12 +10922,21 @@
         "正则测试"
       ],
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "regex-editor",
+        "root": "plugins/regex-editor",
+        "manifestSha256": "26bb54602cb22b28d8de329e6b665f0b1dacf910ee4c3ba2a59f73d15e3fa272"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "regex-editor",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "editor:text:command:0",
@@ -10177,6 +11009,7 @@
       "id": "remote-manager",
       "name": "远程桌面管理",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "管理Windows远程桌面，快捷开启远程连接",
       "author": "WorldmeQC",
       "type": "app",
@@ -10200,12 +11033,21 @@
       ],
       "category": "网络工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "remote-manager",
+        "root": "plugins/remote-manager",
+        "manifestSha256": "98d3dfce0f8b15df54919ffa0f7cb450788e82c7424355a1570aa5aeae743900"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "remote-manager",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "remote-manager:text:command:0",
@@ -10258,6 +11100,7 @@
       "id": "rogue-shooter",
       "name": "无限重载",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "射击小游戏",
       "author": "西瓜",
       "type": "app",
@@ -10284,11 +11127,24 @@
       ],
       "category": "游戏娱乐",
       "icon": "icon.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "rogue-shooter",
+        "root": "plugins/rogue-shooter",
+        "manifestSha256": "21e9c78b8d464ebd28570d84719b867259c583b6ea68cd9e6ee68267aea64ff1"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "c037c3f03b6dab8c3fc41748ce1cf14e7cce35b93040c6f1659e8ad524cd44a7"
+      },
       "html": {
         "sourceDir": "rogue-shooter",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "rogue-shooter:text:command:0",
@@ -10350,10 +11206,11 @@
       }
     },
     {
-      "id": "saladict-\u007a\u0074ools",
+      "id": "saladict-ztools",
       "name": "沙拉查词",
       "version": "1.0.1",
-      "description": "沙拉查词-聚合词典专业查词翻译（\u005a\u0054ools 版）",
+      "maturity": "prototype",
+      "description": "沙拉查词-聚合词典专业查词翻译（ZTools 版）",
       "author": "EvanW",
       "type": "app",
       "permissions": [
@@ -10366,14 +11223,27 @@
         "dialog",
         "db"
       ],
-      "tags": ["saladict-\u007a\u0074ools", "沙拉查词", "saladict"],
+      "tags": ["saladict-ztools", "沙拉查词", "saladict"],
       "category": "效率工具",
       "icon": "ext-saladic/assets/icon-128.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "saladict-ztools",
+        "root": "plugins/saladict-ztools",
+        "manifestSha256": "87ed0ba17d03a534c50143054bd1b91e2c17e0fc524588385134df1f55e05589"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "efe274343c89855f81f465a9572ce7fdb39c8c177048be6ee58319e03858e38a"
+      },
       "html": {
-        "sourceDir": "saladict-\u007a\u0074ools",
+        "sourceDir": "saladict-ztools",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.cjs",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "command:text:command:0",
@@ -10432,6 +11302,7 @@
       "id": "screen-recorder",
       "name": "录屏助手",
       "version": "2.0.0",
+      "maturity": "prototype",
       "description": "专业级屏幕录制工具，提供全屏/窗口/自定义区域三种录制模式，支持实时标记鼠标点击轨迹与键盘输入显示",
       "author": "uTools 团队",
       "link": "https://u.tools",
@@ -10457,11 +11328,24 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "screen-recorder",
+        "root": "plugins/screen-recorder",
+        "manifestSha256": "d9d87c43383c8edf193c0966257bc8936cffd5ac87e6f1a83ce2402d15a6d929"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "3692de7229992efa3b9609305d8fdbda03a437f187267fb5ab6ad49a9d678667"
+      },
       "html": {
         "sourceDir": "screen-recorder",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "recorder:text:command:0",
@@ -10488,8 +11372,8 @@
           },
           {
             "code": "region",
-            "mainHide": true,
             "explain": "自定义框选区域录制",
+            "mainHide": true,
             "cmds": ["区域录屏"]
           }
         ],
@@ -10508,6 +11392,7 @@
       "id": "shortcut-capture",
       "name": "截图",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "截图、标注和保存截图",
       "author": "zing",
       "type": "app",
@@ -10539,12 +11424,21 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "shortcut-capture",
+        "root": "plugins/shortcut-capture",
+        "manifestSha256": "2bc803d18b7063a70e204e70c0b51f082a68e7b8c0a94d798492fe802e14afb8"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "shortcut-capture",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload.js",
-        "developmentMain": "http://localhost:5180/",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "shortcut-capture:text:shortcut-capture:0",
@@ -10683,6 +11577,7 @@
       "id": "shorthand-box",
       "name": "速记盒",
       "version": "1.0.3",
+      "maturity": "prototype",
       "description": "按分类快速记录数据,快捷复制使用",
       "author": "Jeffrey",
       "type": "app",
@@ -10699,12 +11594,21 @@
       "tags": ["shorthand-box", "速记盒", "sj"],
       "category": "效率工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "shorthand-box",
+        "root": "plugins/shorthand-box",
+        "manifestSha256": "0cbbb04488e7f52b956fbfdbdaaebdd91fb1d12fb94e243eadc46b196251e758"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "shorthand-box",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "sj:text:command:0",
@@ -10748,6 +11652,7 @@
       "id": "showcode",
       "name": "Showcode",
       "version": "1.1.0",
+      "maturity": "prototype",
       "description": "生成优雅的代码展示图片 / Create beautiful images of code",
       "author": "Evan Cui",
       "type": "app",
@@ -10772,12 +11677,21 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "showcode",
+        "root": "plugins/showcode",
+        "manifestSha256": "0d1dd197473cb43c4173607b5ec37f016287862de91c0c5a7165c7d909f82ef8"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "showcode",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "showcode:text:showcode:0",
@@ -10864,6 +11778,7 @@
       "id": "splayer-z",
       "name": "SPlayerZ",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "简约音乐播放器 - 支持网易云音乐、本地音乐、桌面歌词",
       "author": "Yueby",
       "type": "app",
@@ -10888,12 +11803,21 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "splayer-z",
+        "root": "plugins/splayer-z",
+        "manifestSha256": "633bb796e82577803ed629587b58b739a748f7775de19084f4c8e945a3ca3d91"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "splayer-z",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "music:text:command:0",
@@ -10955,6 +11879,7 @@
       "id": "sql-utils",
       "name": "SQL工具箱",
       "version": "1.0.30",
+      "maturity": "prototype",
       "description": "一款集成了多种 SQL 相关的实用工具🧰，帮助开发者提高工作效率🚀。多字段测试数据生成 | Excel转SQL | 文本拼接 | DDL代码生成",
       "author": "honvin",
       "type": "app",
@@ -10978,12 +11903,21 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "sql-utils",
+        "root": "plugins/sql-utils",
+        "manifestSha256": "6c4ada9a6de58ff34562cc99d615d669a843937fbafb1265e489407b23e439cd"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "sql-utils",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:1688",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "default:text:sql:0",
@@ -11002,10 +11936,7 @@
             "matcher": {
               "type": "regex",
               "label": "文本拼接",
-              "match": "/\\n/",
-              "option": {
-                "label": "加引号"
-              }
+              "match": "/\\n/"
             }
           }
         ],
@@ -11018,15 +11949,11 @@
           {
             "code": "textJoint-regex",
             "explain": "文本拼接",
-            "mainPush": "ture",
             "cmds": [
               {
                 "type": "regex",
                 "label": "文本拼接",
-                "match": "/\\n/",
-                "option": {
-                  "label": "加引号"
-                }
+                "match": "/\\n/"
               }
             ]
           }
@@ -11036,7 +11963,8 @@
           "effort": "medium",
           "notes": [
             "UI 插件可先通过 Tauri WebView 壳承载 main 入口。",
-            "存在 preload，需要实现旧版宿主 API bridge。"
+            "存在 preload，需要实现旧版宿主 API bridge。",
+            "非布尔 mainPush/mainHide 未映射；仅索引元数据，不证明旧 API 行为。"
           ],
           "unsupportedCommandTypes": []
         }
@@ -11046,6 +11974,7 @@
       "id": "sqlmate",
       "name": "SQLMate",
       "version": "1.0.2",
+      "maturity": "prototype",
       "description": "SQL 数据处理工具集 — 合并、拆分、去重、脱敏、格式化、DDL对比、CSV/Excel互转等 15 项功能，数据不离本地",
       "author": "rhymed.liu",
       "type": "app",
@@ -11146,12 +12075,21 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "sqlmate",
+        "root": "plugins/sqlmate",
+        "manifestSha256": "52774fccc363434ec873e6c34e25d480010606c0eb66dfc112efc2b9c8e4cfb5"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "sqlmate",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "merge:text:sql:0",
@@ -11188,9 +12126,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
+              "label": "SQL合并",
               "fileType": "file",
-              "extensions": ["sql"],
-              "label": "SQL合并"
+              "extensions": ["sql"]
             },
             "icon": "logo.png"
           },
@@ -11229,9 +12167,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
+              "label": "SQL拆分",
               "fileType": "file",
-              "extensions": ["sql"],
-              "label": "SQL拆分"
+              "extensions": ["sql"]
             },
             "icon": "logo.png"
           },
@@ -11270,9 +12208,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
+              "label": "SQL分割",
               "fileType": "file",
-              "extensions": ["sql"],
-              "label": "SQL分割"
+              "extensions": ["sql"]
             },
             "icon": "logo.png"
           },
@@ -11311,9 +12249,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
+              "label": "按表抽取",
               "fileType": "file",
-              "extensions": ["sql"],
-              "label": "按表抽取"
+              "extensions": ["sql"]
             },
             "icon": "logo.png"
           },
@@ -11352,9 +12290,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
+              "label": "SQL去重",
               "fileType": "file",
-              "extensions": ["sql"],
-              "label": "SQL去重"
+              "extensions": ["sql"]
             },
             "icon": "logo.png"
           },
@@ -11393,9 +12331,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
+              "label": "数据脱敏",
               "fileType": "file",
-              "extensions": ["sql"],
-              "label": "数据脱敏"
+              "extensions": ["sql"]
             },
             "icon": "logo.png"
           },
@@ -11434,9 +12372,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
+              "label": "表名替换",
               "fileType": "file",
-              "extensions": ["sql"],
-              "label": "表名替换"
+              "extensions": ["sql"]
             },
             "icon": "logo.png"
           },
@@ -11475,9 +12413,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
+              "label": "ID偏移",
               "fileType": "file",
-              "extensions": ["sql"],
-              "label": "ID偏移"
+              "extensions": ["sql"]
             },
             "icon": "logo.png"
           },
@@ -11516,9 +12454,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
+              "label": "SQL统计",
               "fileType": "file",
-              "extensions": ["sql"],
-              "label": "SQL统计"
+              "extensions": ["sql"]
             },
             "icon": "logo.png"
           },
@@ -11557,9 +12495,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
+              "label": "语句改写",
               "fileType": "file",
-              "extensions": ["sql"],
-              "label": "语句改写"
+              "extensions": ["sql"]
             },
             "icon": "logo.png"
           },
@@ -11616,9 +12554,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
+              "label": "SQL格式化",
               "fileType": "file",
-              "extensions": ["sql", "txt"],
-              "label": "SQL格式化"
+              "extensions": ["sql", "txt"]
             },
             "icon": "logo.png"
           },
@@ -11666,9 +12604,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
+              "label": "导出为CSV/Excel",
               "fileType": "file",
-              "extensions": ["sql"],
-              "label": "导出为CSV/Excel"
+              "extensions": ["sql"]
             },
             "icon": "logo.png"
           },
@@ -11716,9 +12654,9 @@
             "type": "files",
             "matcher": {
               "type": "files",
+              "label": "转换为SQL",
               "fileType": "file",
-              "extensions": ["csv", "xlsx", "xls"],
-              "label": "转换为SQL"
+              "extensions": ["csv", "xlsx", "xls"]
             },
             "icon": "logo.png"
           },
@@ -11788,9 +12726,9 @@
               "sqlmate merge",
               {
                 "type": "files",
+                "label": "SQL合并",
                 "fileType": "file",
-                "extensions": ["sql"],
-                "label": "SQL合并"
+                "extensions": ["sql"]
               }
             ]
           },
@@ -11804,9 +12742,9 @@
               "sqlmate split",
               {
                 "type": "files",
+                "label": "SQL拆分",
                 "fileType": "file",
-                "extensions": ["sql"],
-                "label": "SQL拆分"
+                "extensions": ["sql"]
               }
             ]
           },
@@ -11820,9 +12758,9 @@
               "sqlmate segment",
               {
                 "type": "files",
+                "label": "SQL分割",
                 "fileType": "file",
-                "extensions": ["sql"],
-                "label": "SQL分割"
+                "extensions": ["sql"]
               }
             ]
           },
@@ -11836,9 +12774,9 @@
               "sqlmate extract",
               {
                 "type": "files",
+                "label": "按表抽取",
                 "fileType": "file",
-                "extensions": ["sql"],
-                "label": "按表抽取"
+                "extensions": ["sql"]
               }
             ]
           },
@@ -11852,9 +12790,9 @@
               "sqlmate dedupe",
               {
                 "type": "files",
+                "label": "SQL去重",
                 "fileType": "file",
-                "extensions": ["sql"],
-                "label": "SQL去重"
+                "extensions": ["sql"]
               }
             ]
           },
@@ -11868,9 +12806,9 @@
               "sqlmate mask",
               {
                 "type": "files",
+                "label": "数据脱敏",
                 "fileType": "file",
-                "extensions": ["sql"],
-                "label": "数据脱敏"
+                "extensions": ["sql"]
               }
             ]
           },
@@ -11884,9 +12822,9 @@
               "sqlmate rename",
               {
                 "type": "files",
+                "label": "表名替换",
                 "fileType": "file",
-                "extensions": ["sql"],
-                "label": "表名替换"
+                "extensions": ["sql"]
               }
             ]
           },
@@ -11900,9 +12838,9 @@
               "sqlmate offset",
               {
                 "type": "files",
+                "label": "ID偏移",
                 "fileType": "file",
-                "extensions": ["sql"],
-                "label": "ID偏移"
+                "extensions": ["sql"]
               }
             ]
           },
@@ -11916,9 +12854,9 @@
               "sqlmate stats",
               {
                 "type": "files",
+                "label": "SQL统计",
                 "fileType": "file",
-                "extensions": ["sql"],
-                "label": "SQL统计"
+                "extensions": ["sql"]
               }
             ]
           },
@@ -11932,9 +12870,9 @@
               "sqlmate convert",
               {
                 "type": "files",
+                "label": "语句改写",
                 "fileType": "file",
-                "extensions": ["sql"],
-                "label": "语句改写"
+                "extensions": ["sql"]
               }
             ]
           },
@@ -11950,9 +12888,9 @@
               "sqlmate format",
               {
                 "type": "files",
+                "label": "SQL格式化",
                 "fileType": "file",
-                "extensions": ["sql", "txt"],
-                "label": "SQL格式化"
+                "extensions": ["sql", "txt"]
               }
             ]
           },
@@ -11967,9 +12905,9 @@
               "sqlmate export",
               {
                 "type": "files",
+                "label": "导出为CSV/Excel",
                 "fileType": "file",
-                "extensions": ["sql"],
-                "label": "导出为CSV/Excel"
+                "extensions": ["sql"]
               }
             ]
           },
@@ -11984,9 +12922,9 @@
               "sqlmate import",
               {
                 "type": "files",
+                "label": "转换为SQL",
                 "fileType": "file",
-                "extensions": ["csv", "xlsx", "xls"],
-                "label": "转换为SQL"
+                "extensions": ["csv", "xlsx", "xls"]
               }
             ]
           },
@@ -12018,15 +12956,16 @@
     },
     {
       "id": "srktoolbox",
-      "name": "SRK Toolbox for \u005a\u0074ools",
+      "name": "SRK Toolbox for Ztools",
       "version": "10.22.1",
+      "maturity": "prototype",
       "description": "基于 CyberChef 的中文安全工具箱，支持编码、加密、压缩和数据分析。",
       "author": "Raka-loah&&LAOBILAXI233",
       "type": "app",
       "permissions": ["storage"],
       "tags": [
         "srktoolbox",
-        "SRK Toolbox for \u005a\u0074ools",
+        "SRK Toolbox for Ztools",
         "srk-toolbox",
         "打开 SRK Toolbox 工具箱",
         "SRK Toolbox",
@@ -12039,11 +12978,21 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "srktoolbox",
+        "root": "plugins/srktoolbox",
+        "manifestSha256": "dea3a35b4135cabc0d113cf8f3c5e910e4dcb44e22d144e804ff0a6d9fb22eb7"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "missing"
+      },
       "html": {
         "sourceDir": "srktoolbox",
         "main": "index.html",
         "mainAvailable": false,
-        "developmentMain": "http://localhost:54333",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "srk-toolbox:text:srk-toolbox:0",
@@ -12137,6 +13086,7 @@
       "id": "ssh-screenshot",
       "name": "SSH 截图",
       "version": "0.2.0",
+      "maturity": "prototype",
       "description": "把本地剪贴板里的截图通过 SSH 上传到远端，然后把远端路径自动粘贴到当前光标位置",
       "author": "Zing",
       "type": "app",
@@ -12170,12 +13120,21 @@
       ],
       "category": "网络工具",
       "icon": "logo.svg",
+      "package": {
+        "kind": "legacy-html",
+        "id": "ssh-screenshot",
+        "root": "plugins/ssh-screenshot",
+        "manifestSha256": "3697913c4a50396c968e84552914ce0f400e3000154f3a1c77f4b5f6c106acc2"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "ssh-screenshot",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload.js",
-        "developmentMain": "http://localhost:5179/",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "paste-screenshot-path:text:command:0",
@@ -12297,6 +13256,7 @@
       "id": "stickercan",
       "name": "表情罐头",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "一个功能强大的表情包管理插件，支持本地、云端混合存储和多源聚合搜索",
       "author": "抹露茶柒",
       "link": "https://sticker.moruteaven.com/",
@@ -12321,11 +13281,24 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "stickercan",
+        "root": "plugins/stickercan",
+        "manifestSha256": "07676342427b80be94ac62fb6b06eee85bce1eccdc0bfb597644fe7868b9aa37"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "33acae99e461eecf2a220b2d025da90d40a474f5ef5f5dbe5d82b9ce8e0b65f2"
+      },
       "html": {
         "sourceDir": "stickercan",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "main:text:command:0",
@@ -12368,7 +13341,6 @@
           {
             "code": "main",
             "explain": "表情包管理工具，支持本地和云端存储",
-            "platform": ["win32", "darwin", "linux"],
             "icon": "logo.png",
             "cmds": ["表情包", "表情", "表情罐头", "stickercan"]
           }
@@ -12388,6 +13360,7 @@
       "id": "sticky-note",
       "name": "HTML Plugin",
       "version": "0.0.0",
+      "maturity": "prototype",
       "type": "app",
       "permissions": [
         "storage",
@@ -12416,12 +13389,24 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "sticky-note",
+        "root": "plugins/sticky-note",
+        "manifestSha256": "e86c41e47cb30a0a2c238855a14014026cfae1ce2916604fd5bd4d4537c933ac"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "dist/index.html",
+        "sha256": "9824d8fcde30c7e48b7c776ec7eac4409bec2028a88c5d46db063a05da2b2441"
+      },
       "html": {
         "sourceDir": "sticky-note",
         "main": "dist/index.html",
         "mainAvailable": true,
-        "preload": "\u007a\u0074ools-preload/preload.js",
-        "developmentMain": "http://127.0.0.1:5173",
+        "preload": "ztools-preload/preload.js",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "home:text:command:0",
@@ -12504,6 +13489,7 @@
       "id": "sub2api-usage",
       "name": "Sub2API 用量",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "查看 Sub2API API Key token 使用量，并支持置顶悬浮小窗",
       "author": "Zing",
       "type": "app",
@@ -12526,12 +13512,21 @@
         "flymux 用量"
       ],
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "sub2api-usage",
+        "root": "plugins/sub2api-usage",
+        "manifestSha256": "2495316a0cda089904e1e339c8060dc25636b6c8f9f6cf72183ef5f2f2a97031"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "sub2api-usage",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload.js",
-        "developmentMain": "http://localhost:5182",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "manage:text:sub2api:0",
@@ -12584,6 +13579,7 @@
       "id": "subnet-calculator",
       "name": "子网掩码计算器",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "输入 IP 地址和子网掩码/CIDR，快速计算网络地址、广播地址、可用主机范围等",
       "type": "app",
       "permissions": [
@@ -12609,11 +13605,24 @@
       ],
       "category": "网络工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "subnet-calculator",
+        "root": "plugins/subnet-calculator",
+        "manifestSha256": "4a702f6a1d2140275dae9db482b37b95f4b877651ef691a7661d21a036a65340"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "7afdd40aa41a42fda86a25ae2a33128a9f6261915c0897d8ae94918409e0b180"
+      },
       "html": {
         "sourceDir": "subnet-calculator",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "subnet:text:command:0",
@@ -12695,6 +13704,7 @@
       "id": "super-mario",
       "name": "super-mario",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "超级玛丽",
       "type": "app",
       "permissions": [
@@ -12710,12 +13720,25 @@
       "tags": ["super-mario", "超级玛丽"],
       "category": "游戏娱乐",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "super-mario",
+        "root": "plugins/super-mario",
+        "manifestSha256": "be1a9cc84df7ebcffd5363fbc25676aaad97b45cf5f86c28b0ee9d4bfcfdf548"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "public/index.html",
+        "sha256": "2c6833a46f042ad09e84dcc93a875353fc98422cb525d3ee769f837ec7c4836a"
+      },
       "html": {
         "sourceDir": "super-mario",
         "assetDir": "public",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "super-mario:text:command:0",
@@ -12748,6 +13771,7 @@
       "id": "swap-file",
       "name": "SwapFile文件分享",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "快速通过局域网分享文件。同一局域网内的设备通过浏览器即可浏览、下载和上传文件。",
       "author": "皮皮虾我们走",
       "type": "app",
@@ -12770,12 +13794,21 @@
       ],
       "category": "网络工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "swap-file",
+        "root": "plugins/swap-file",
+        "manifestSha256": "499fa3b515890b3cf750e4420458b73fb4bcb7fdefb74b567ab183bff3ae9dcc"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "swap-file",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "swap-file:text:swap-file:0",
@@ -12835,6 +13868,7 @@
       "id": "termdock",
       "name": "TermDock",
       "version": "0.1.0",
+      "maturity": "prototype",
       "description": "SSH、SFTP、FTP 远程工作台",
       "author": "Zing",
       "type": "app",
@@ -12859,12 +13893,21 @@
         "远程终端"
       ],
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "termdock",
+        "root": "plugins/termdock",
+        "manifestSha256": "6a68e5313157dd121bf397eff9b8eb08e1e5e5f7c43a6b845f84ec1124d11d4e"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "termdock",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "open:text:termdock:0",
@@ -12929,6 +13972,7 @@
       "id": "tetris",
       "name": "俄罗斯方块",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "俄罗斯方块",
       "author": "zzx221",
       "type": "app",
@@ -12939,11 +13983,20 @@
         "俄罗斯方块游戏，支持三种主题和自定义按键"
       ],
       "icon": "logo.jpg",
+      "package": {
+        "kind": "legacy-html",
+        "id": "tetris",
+        "root": "plugins/tetris",
+        "manifestSha256": "2dc1a186504ded58b7f0ca6d19124af454d1da6bda4ff92d972eed7c00459c23"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "tetris",
-        "main": "index.html",
         "mainAvailable": false,
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "tetris:text:command:0",
@@ -12981,6 +14034,7 @@
       "id": "text-copy",
       "name": "复制纯文本",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "纯文本复制，提取文本中的链接",
       "author": "皮皮虾我们走",
       "type": "tool",
@@ -13007,10 +14061,21 @@
       ],
       "category": "文本处理",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "text-copy",
+        "root": "plugins/text-copy",
+        "manifestSha256": "bc62c32a47dc0713b60149e185093afecb09f47e0b483b02871d56ca0b855801"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "absent"
+      },
       "html": {
         "sourceDir": "text-copy",
         "mainAvailable": false,
         "preload": "preload/services.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "copy-text:over:command:0",
@@ -13053,8 +14118,8 @@
             "matcher": {
               "type": "regex",
               "label": "提取文本内链接",
-              "minLength": 1,
-              "match": "/((ht|f)tps?):///"
+              "match": "/((ht|f)tps?):///",
+              "minLength": 1
             }
           }
         ],
@@ -13093,8 +14158,8 @@
               {
                 "type": "regex",
                 "label": "提取文本内链接",
-                "minLength": 1,
-                "match": "/((ht|f)tps?):///"
+                "match": "/((ht|f)tps?):///",
+                "minLength": 1
               }
             ]
           }
@@ -13114,6 +14179,7 @@
       "id": "tiga",
       "name": "提肛助手",
       "version": "1.1.0",
+      "maturity": "prototype",
       "description": "定时提醒提肛运动，关爱久坐族盆底健康",
       "author": "咖啡八杯",
       "type": "app",
@@ -13142,12 +14208,21 @@
         "提肛教程"
       ],
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "tiga",
+        "root": "plugins/tiga",
+        "manifestSha256": "143fde58c7b92e8d0aa245ad5c89861608c0c5315e1dfabe6859195c7b828f15"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "tiga",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "settings:text:command:0",
@@ -13230,6 +14305,7 @@
       "id": "timestamp",
       "name": "timestamp",
       "version": "1.1.0",
+      "maturity": "prototype",
       "description": "时间戳转换",
       "author": "loocao",
       "type": "app",
@@ -13251,11 +14327,20 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "timestamp",
+        "root": "plugins/timestamp",
+        "manifestSha256": "55570aaf89f046215bd9a058acb6fc156873d46901ee9b714f3a99cc6acc544f"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "timestamp",
-        "main": "index.html",
         "mainAvailable": false,
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "timestamp:text:timestamp:0",
@@ -13527,6 +14612,7 @@
       "id": "tiny-clock",
       "name": "小小时钟",
       "version": "0.0.2",
+      "maturity": "prototype",
       "description": "一款简洁好用的全屏时钟工具。内置翻页、像素、iOS待机风等多种精美主题，可跟随系统或按时间自动切换深浅色模式，适合作为屏幕待机显示。",
       "author": "luosh",
       "type": "app",
@@ -13543,11 +14629,24 @@
       "tags": ["tiny-clock", "小小时钟", "xiaoxiao", "小小时钟设置界面"],
       "category": "其他工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "tiny-clock",
+        "root": "plugins/tiny-clock",
+        "manifestSha256": "d50ddbb728347c01328218796e4e9d56f5c2086b41391d49aa4d1116433fa8c2"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "2b4bf92dd3b33dc60765192bfdfd52d660b3b12c77475c71913e06ed77f7048e"
+      },
       "html": {
         "sourceDir": "tiny-clock",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload/services.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "xiaoxiao:text:command:0",
@@ -13580,6 +14679,7 @@
       "id": "tiny-rdm",
       "name": "TinyRDM",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "redis客户端",
       "author": "Zing",
       "type": "app",
@@ -13596,11 +14696,24 @@
       "tags": ["tiny-rdm", "TinyRDM"],
       "category": "开发工具",
       "icon": "favicon.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "tiny-rdm",
+        "root": "plugins/tiny-rdm",
+        "manifestSha256": "e7f9f7e10c925bfdce85e59fe18ccf835e552eb8f8e70d08601e7da36f4730c9"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "1a1473f0462e7569f4e3fd4c2ad486bc8747c2370cca8a3ca5d69a50c4d1a31d"
+      },
       "html": {
         "sourceDir": "tiny-rdm",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload/services.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "tiny-rdm:text:tiny-rdm:0",
@@ -13633,6 +14746,7 @@
       "id": "tinypng",
       "name": "TinyPNG 压缩图片",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "使用 TinyPNG 压缩图片",
       "author": "Zing",
       "type": "app",
@@ -13654,12 +14768,21 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "tinypng",
+        "root": "plugins/tinypng",
+        "manifestSha256": "126d2ed0e070fcac72a73424bae703a53fca7d7adfc8841430c8300e643f4c5b"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "tinypng",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "tinypng:text:tinypng:0",
@@ -13687,8 +14810,8 @@
             "type": "files",
             "matcher": {
               "type": "files",
-              "fileType": "file",
               "label": "压缩图片",
+              "fileType": "file",
               "extensions": ["png", "jpg", "jpeg", "webp"]
             },
             "icon": "logo.png"
@@ -13701,8 +14824,8 @@
             "type": "files",
             "matcher": {
               "type": "files",
-              "fileType": "directory",
-              "label": "压缩此文件夹下所有图片"
+              "label": "压缩此文件夹下所有图片",
+              "fileType": "directory"
             },
             "icon": "logo.png"
           }
@@ -13717,14 +14840,14 @@
               "压缩图片",
               {
                 "type": "files",
-                "fileType": "file",
                 "label": "压缩图片",
+                "fileType": "file",
                 "extensions": ["png", "jpg", "jpeg", "webp"]
               },
               {
                 "type": "files",
-                "fileType": "directory",
-                "label": "压缩此文件夹下所有图片"
+                "label": "压缩此文件夹下所有图片",
+                "fileType": "directory"
               }
             ]
           }
@@ -13746,6 +14869,7 @@
       "id": "today-gold-price",
       "name": "今日金价",
       "version": "1.0.1",
+      "maturity": "prototype",
       "description": "实时查看黄金价格走势，包含当前价格、涨跌幅及走势图表",
       "type": "app",
       "permissions": [
@@ -13769,11 +14893,24 @@
       ],
       "category": "其他工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "today-gold-price",
+        "root": "plugins/today-gold-price",
+        "manifestSha256": "c8a25dc7c14fcd0feb06ca08915c911964d8fca66d8604f0c19fe1d014f51008"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "eee8b5d7afbd86a50edbb00dc8fb59b7208f2cd4138ca400d59b5560fdc32df4"
+      },
       "html": {
         "sourceDir": "today-gold-price",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "gold-price:text:gold:0",
@@ -13822,6 +14959,7 @@
       "id": "todo-neo",
       "name": "Todo",
       "version": "0.0.1",
+      "maturity": "prototype",
       "description": "Vim-like 的 todo 工具",
       "author": "thetree",
       "type": "app",
@@ -13846,12 +14984,21 @@
       ],
       "category": "其他工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "todo-neo",
+        "root": "plugins/todo-neo",
+        "manifestSha256": "b54d3d01d07c6bf2b9d7b4bbcd50dddc41d89343a4424614fe24726f0020729b"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "unsafe"
+      },
       "html": {
         "sourceDir": "todo-neo",
-        "main": "../index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "todo:text:to-do:0",
@@ -13909,6 +15056,7 @@
       "id": "topwindow",
       "name": "窗口置顶",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "一个简单的窗口置顶插件，支持切换当前窗口的置顶状态。",
       "author": "evanwen97-ops",
       "type": "app",
@@ -13931,11 +15079,24 @@
       ],
       "category": "系统工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "topwindow",
+        "root": "plugins/topwindow",
+        "manifestSha256": "6ec24653c69b0e7a6448cb2948cc3962db6df9ac0003691418bb744ddae52a2c"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "79bf910de078db47100d1de45f851df47ec81b97af23b527dceb3d6e846dcc28"
+      },
       "html": {
         "sourceDir": "topwindow",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "topwindow:text:top-window:0",
@@ -13970,8 +15131,7 @@
             "code": "topwindow",
             "explain": "将当前窗口置顶或取消置顶",
             "icon": "logo.png",
-            "cmds": ["TopWindow", "窗口置顶", "置顶"],
-            "platform": ["win32"]
+            "cmds": ["TopWindow", "窗口置顶", "置顶"]
           }
         ],
         "compatibility": {
@@ -13989,6 +15149,7 @@
       "id": "totodo",
       "name": "totodo",
       "version": "1.0.1",
+      "maturity": "prototype",
       "description": "结合日历的待办列表清单。",
       "author": "Totti",
       "type": "app",
@@ -14015,11 +15176,24 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "totodo",
+        "root": "plugins/totodo",
+        "manifestSha256": "70103811a65a70c382bf5883d339b96f2222a3337c0a06916060d866ad0e1126"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "f43ae573324429530faf715f4207b96ad6cc9502d69f91f71bac0c7a5cee5dd6"
+      },
       "html": {
         "sourceDir": "totodo",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "totodo:text:command:0",
@@ -14097,6 +15271,7 @@
       "id": "traditional-simplified-cn",
       "name": "繁简转换",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "剪贴板有文本时在启动器中推送入口；亦可手动打开（OpenCC）",
       "author": "lecoix",
       "type": "app",
@@ -14122,11 +15297,24 @@
       ],
       "category": "文本处理",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "traditional-simplified-cn",
+        "root": "plugins/traditional-simplified-cn",
+        "manifestSha256": "a27844da6447df92de5c3978ab3bb0fb98994c85b46a159c75bcf56c19f6721a"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "661e1e392a03738804655c9f4699a362d06eac37772964d22f963499c73fa77b"
+      },
       "html": {
         "sourceDir": "traditional-simplified-cn",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "convert-clipboard:over:command:0",
@@ -14192,6 +15380,7 @@
       "id": "url-wizard",
       "name": "网址精灵",
       "version": "2.1.11",
+      "maturity": "prototype",
       "description": "一键收藏、搜索web网页，打造个人网站网址导航站、书签导入、网页快开神器！",
       "author": "呀唔咪",
       "type": "app",
@@ -14222,11 +15411,24 @@
       ],
       "category": "网络工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "url-wizard",
+        "root": "plugins/url-wizard",
+        "manifestSha256": "2d01a9eb6ec65290ae5131cdfc153baa0be64687e68a83bb4c3c5d44ec2c3e51"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "d647507e607cc61b23c83c9a6962df7e7dab309c5d3f0b889d6b77eefcd9d217"
+      },
       "html": {
         "sourceDir": "url-wizard",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "goodweb:text:command:0",
@@ -14303,6 +15505,7 @@
             "code": "searchweb",
             "explain": "在网址精灵中搜索网址卡片！",
             "icon": "search.png",
+            "mainPush": true,
             "cmds": [
               {
                 "type": "over",
@@ -14310,8 +15513,7 @@
                 "minLength": 2,
                 "maxLength": 20
               }
-            ],
-            "mainPush": true
+            ]
           },
           {
             "code": "addweb",
@@ -14341,6 +15543,7 @@
       "id": "utools-upassword",
       "name": "密码管理",
       "version": "1.0",
+      "maturity": "prototype",
       "description": "uTools 官方开源、安全、简洁的密码管理器",
       "type": "app",
       "permissions": [
@@ -14365,12 +15568,25 @@
       ],
       "category": "其他工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "utools-upassword",
+        "root": "plugins/utools-upassword",
+        "manifestSha256": "bb887643eebde724090e654f35cacdbeb20848c96ca42b7cd9c3d37991c6ed31"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "public/index.html",
+        "sha256": "bf1023bbce50a9c91aa0bde51808acf0beb84a65f810461d4136e6ccc268bead"
+      },
       "html": {
         "sourceDir": "utools-upassword",
         "assetDir": "public",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "passwords:text:passwords:0",
@@ -14424,6 +15640,7 @@
       "id": "variable-name",
       "name": "起个变量名",
       "version": "1.0.07",
+      "maturity": "prototype",
       "description": "使用百度翻译起变量名称",
       "author": "Jeffrey",
       "type": "app",
@@ -14440,12 +15657,21 @@
       "tags": ["variable-name", "起个变量名", "fy", "起变量名"],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "variable-name",
+        "root": "plugins/variable-name",
+        "manifestSha256": "5539b11ed7b10cc689dd1d56846e59a7aede69f98c1990c4abf5bf35383cb18e"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "variable-name",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "fy:text:command:0",
@@ -14489,6 +15715,7 @@
       "id": "video-parse",
       "name": "轻溪去水印",
       "version": "1.0.3",
+      "maturity": "prototype",
       "description": "一个简单小巧的视频去水印应用。",
       "type": "app",
       "permissions": [
@@ -14511,12 +15738,21 @@
       ],
       "category": "图像媒体",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "video-parse",
+        "root": "plugins/video-parse",
+        "manifestSha256": "679b8192f56699b7c3a1b78fa0bd2441f7f13a34cec5473324bf3c7b56a7d3a4"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "video-parse",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "parse:text:command:0",
@@ -14557,6 +15793,7 @@
       "id": "vimtutor",
       "name": "vim教程",
       "version": "1.0.2",
+      "maturity": "prototype",
       "description": "在使用中学习vim",
       "author": "福州猿力信息科技有限公司",
       "link": "",
@@ -14574,11 +15811,24 @@
       "tags": ["vimtutor", "vim教程"],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "vimtutor",
+        "root": "plugins/vimtutor",
+        "manifestSha256": "5e3998ec529853d9d346bb8b5f06ef8bfb84ab37040c02d3a9575e4582102305"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "686371239c8e4a9d204a46b9ee4e77679ed98752132549fba89c6626bc2f3f91"
+      },
       "html": {
         "sourceDir": "vimtutor",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "vimtutor:text:vimtutor:0",
@@ -14619,6 +15869,7 @@
       "id": "virtual-data",
       "name": "虚拟数据",
       "version": "1.0.1",
+      "maturity": "prototype",
       "description": "使用mockjs生成虚拟数据便于使用",
       "author": "Jeffrey",
       "type": "app",
@@ -14635,12 +15886,21 @@
       "tags": ["virtual-data", "虚拟数据", "xn"],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "virtual-data",
+        "root": "plugins/virtual-data",
+        "manifestSha256": "d80eeea197b738cb244aee69f9bd173f7808da23bc486322e7cccbf2c74fd344"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "virtual-data",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "xn:text:command:0",
@@ -14684,6 +15944,7 @@
       "id": "web-quick-open",
       "name": "网页快开",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "管理网页快开和搜索引擎快捷入口",
       "author": "Zing",
       "type": "app",
@@ -14705,12 +15966,21 @@
         "Web Quick Open"
       ],
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "web-quick-open",
+        "root": "plugins/web-quick-open",
+        "manifestSha256": "c294c2110fa94fa18f0729d7b820eea57a01090d994f2b62b85e4e3efbc7d09c"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "web-quick-open",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload.js",
-        "developmentMain": "http://localhost:5178",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "manage:text:command:0",
@@ -14754,6 +16024,7 @@
       "id": "webapp",
       "name": "网页应用",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "你可以添加web应用到插件中，一键直接加载应用",
       "author": "Apcan",
       "type": "app",
@@ -14775,12 +16046,21 @@
         "ai"
       ],
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "webapp",
+        "root": "plugins/webapp",
+        "manifestSha256": "15120124498f4855a8d85eea0af5443dedf5e3e95aa154d49e0dad2e742fd77e"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "webapp",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "webapp:text:webapp:0",
@@ -14842,6 +16122,7 @@
       "id": "wechat-ocr",
       "name": "微信 OCR",
       "version": "0.1.0",
+      "maturity": "prototype",
       "description": "使用本地封装的微信 OCR 识别图片文字",
       "author": "zing",
       "type": "app",
@@ -14871,12 +16152,21 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "wechat-ocr",
+        "root": "plugins/wechat-ocr",
+        "manifestSha256": "3c01e24fcf5553e580171f7466815b1960b971b286c371fa45dd58836545ce65"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "wechat-ocr",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload.js",
-        "developmentMain": "http://localhost:5179/",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "wechat-ocr:text:ocr:0",
@@ -14961,6 +16251,7 @@
       "id": "whiteboard",
       "name": "白板",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "白板是一款高性能绘图工具，提供无限画布和丰富的绘图能力，让用户能够轻松地进行创意表达、头脑风暴。",
       "type": "app",
       "permissions": [
@@ -14981,12 +16272,21 @@
       ],
       "category": "效率工具",
       "icon": "icon.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "whiteboard",
+        "root": "plugins/whiteboard",
+        "manifestSha256": "159eeb4e5f9b1d7a2e43380696596382b3e474112f148ea5e15a3839e6c64433"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "whiteboard",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload.js",
-        "developmentMain": "http://localhost:5178",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "main:text:command:0",
@@ -15019,6 +16319,7 @@
       "id": "wifi-export-tool",
       "name": "WiFi历史密码查看器",
       "version": "1.0.3",
+      "maturity": "prototype",
       "description": "查看 Windows 设备上保存的所有 WiFi 网络及其密码。",
       "author": "wangtao",
       "type": "app",
@@ -15043,11 +16344,24 @@
       ],
       "category": "网络工具",
       "icon": "logo.svg",
+      "package": {
+        "kind": "legacy-html",
+        "id": "wifi-export-tool",
+        "root": "plugins/wifi-export-tool",
+        "manifestSha256": "1d0d8ee5d82995347f6fffffbba64c667e9ac1157863b6c03c334d58848b1e1e"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "cb0142dd8440a91863f73933901fd06bfe6766e9ef1a353ce826f23003770b8c"
+      },
       "html": {
         "sourceDir": "wifi-export-tool",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "wifi-export-tool:text:wifi:0",
@@ -15104,6 +16418,7 @@
       "id": "yanhua",
       "name": "烟花",
       "version": "1.0.1",
+      "maturity": "prototype",
       "description": "在屏幕上绽放烟花",
       "author": "Aaron",
       "type": "tool",
@@ -15120,10 +16435,21 @@
       "tags": ["yanhua", "烟花", "fireworks", "发射全屏烟花"],
       "category": "其他工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "yanhua",
+        "root": "plugins/yanhua",
+        "manifestSha256": "b55d759c51f3ec542be294fe611ab5d8e7720d2c3223ee336957774535f8bdc0"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "absent"
+      },
       "html": {
         "sourceDir": "yanhua",
         "mainAvailable": false,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "fireworks:text:command:0",
@@ -15138,8 +16464,8 @@
           {
             "code": "fireworks",
             "explain": "发射全屏烟花",
-            "cmds": ["烟花"],
-            "mainHide": true
+            "mainHide": true,
+            "cmds": ["烟花"]
           }
         ],
         "compatibility": {
@@ -15157,6 +16483,7 @@
       "id": "zapapi",
       "name": "ZapApi",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "API 测试工具，支持 HTTP/WebSocket 请求构建、响应查看、集合管理、历史记录、代码生成、环境变量和多种认证方式",
       "author": "nichijoux",
       "type": "app",
@@ -15177,12 +16504,21 @@
       ],
       "category": "开发工具",
       "icon": "logo.svg",
+      "package": {
+        "kind": "legacy-html",
+        "id": "zapapi",
+        "root": "plugins/zapapi",
+        "manifestSha256": "85ede8c3ae0f6611d0f751848c7854515fc0194dd0427cbde9a1ffc5215d6f2e"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "zapapi",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "zapapi:text:zapapi:0",
@@ -15217,6 +16553,7 @@
       "id": "zhi-interaction",
       "name": "Zhi 智能交互",
       "version": "1.1.0",
+      "maturity": "prototype",
       "description": "MCP 阻塞式用户交互工具，AI 通过弹窗与用户确认、提问、获取反馈",
       "author": "Zing",
       "type": "app",
@@ -15241,11 +16578,24 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "zhi-interaction",
+        "root": "plugins/zhi-interaction",
+        "manifestSha256": "56e95e4bfb916552bede3f537cf50a755fbf2835c8781877dcd1b4dc95217181"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "7d523724497a53386587a75a3ffd9a380073251fa47ba0b245f95448b2beee0a"
+      },
       "html": {
         "sourceDir": "zhi-interaction",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload/services.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "zhi-info:text:zhi:0",
@@ -15298,6 +16648,7 @@
       "id": "zosenlink-tunnel",
       "name": "内网穿透",
       "version": "1.0.5",
+      "maturity": "prototype",
       "description": "免公网Ip，快速对外发布应用服务，内网建站、远程桌面、NAS云盘、游戏联机等",
       "author": "Zing",
       "type": "app",
@@ -15321,12 +16672,21 @@
         "frpc"
       ],
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "zosenlink-tunnel",
+        "root": "plugins/zosenlink-tunnel",
+        "manifestSha256": "5e7eea5ba89ce1075a94db39f28ce5685f371ff5895e0327ab095e97febbf0d2"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
         "sourceDir": "zosenlink-tunnel",
-        "main": "index.html",
         "mainAvailable": false,
         "preload": "preload.js",
-        "developmentMain": "http://localhost:5173/",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "zosenlink-tunnel-open:text:command:0",
@@ -15388,6 +16748,7 @@
       "id": "ztool-vsc-recent",
       "name": "VSCode 最近项目",
       "version": "0.1.1",
+      "maturity": "prototype",
       "description": "快速打开最近的 VSCode 项目、工作区与远程会话",
       "author": "derekxia1988",
       "type": "app",
@@ -15410,11 +16771,24 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "ztool-vsc-recent",
+        "root": "plugins/ztool-vsc-recent",
+        "manifestSha256": "74f9173bbcd9fead38c1d32cedfc667228a3043013b1907da8fe69c49f11dfa1"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "index.html",
+        "sha256": "adcc7abaa1f9fcda2652d9633767a8a75683c3fa1dc714df7ed8acb6e757b3f1"
+      },
       "html": {
         "sourceDir": "ztool-vsc-recent",
         "main": "index.html",
         "mainAvailable": true,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "vsc-recent:text:vsc:0",
@@ -15429,7 +16803,6 @@
           {
             "code": "vsc-recent",
             "explain": "最近打开的 VSCode 项目",
-            "platform": ["win32", "darwin", "linux"],
             "cmds": ["vsc"]
           }
         ],
@@ -15445,16 +16818,17 @@
       }
     },
     {
-      "id": "\u007a\u0074ools-developer-plugin",
-      "name": "\u005a\u0054ools 开发者工具",
+      "id": "ztools-developer-plugin",
+      "name": "ZTools 开发者工具",
       "version": "1.0.1",
-      "description": "\u005a\u0054ools 开发者插件",
+      "maturity": "prototype",
+      "description": "ZTools 开发者插件",
       "author": "xiaou",
       "type": "app",
       "permissions": ["storage", "fs"],
       "tags": [
-        "\u007a\u0074ools-developer-plugin",
-        "\u005a\u0054ools 开发者工具",
+        "ztools-developer-plugin",
+        "ZTools 开发者工具",
         "ui.router",
         "开发者工具",
         "function.reload-all-plugin",
@@ -15465,16 +16839,28 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "ztools-developer-plugin",
+        "root": "plugins/ztools-developer-plugin",
+        "manifestSha256": "9df03b3da74a15ea50188a2b9b036d47c416a58fc841b460c60313c064b1ed3e"
+      },
+      "evidence": {
+        "status": "entry-resolved",
+        "fixtureId": "static-entry-v1",
+        "path": "dist/index.html",
+        "sha256": "126b2066ce07944b897568858fd469c09a4fee147bbad5e67b181629cd7e906a"
+      },
       "html": {
-        "sourceDir": "\u007a\u0074ools-developer-plugin",
+        "sourceDir": "ztools-developer-plugin",
         "main": "dist/index.html",
         "mainAvailable": true,
-        "developmentMain": "http://localhost:8686/",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "ui-router:text:command:0",
             "title": "开发者工具",
-            "description": "\u005a\u0054ools 开发者工具",
+            "description": "ZTools 开发者工具",
             "featureCode": "ui.router",
             "type": "text",
             "matcher": "开发者工具"
@@ -15497,9 +16883,9 @@
             "matcher": {
               "type": "files",
               "label": "添加开发中插件",
-              "fileType": "file",
               "match": "/plugin\\.json$/i",
-              "maxLength": 1
+              "maxLength": 1,
+              "fileType": "file"
             },
             "icon": "logo.png"
           }
@@ -15507,7 +16893,7 @@
         "features": [
           {
             "code": "ui.router",
-            "explain": "\u005a\u0054ools 开发者工具",
+            "explain": "ZTools 开发者工具",
             "cmds": ["开发者工具"]
           },
           {
@@ -15524,9 +16910,9 @@
               {
                 "type": "files",
                 "label": "添加开发中插件",
-                "fileType": "file",
                 "match": "/plugin\\.json$/i",
-                "maxLength": 1
+                "maxLength": 1,
+                "fileType": "file"
               }
             ]
           }
@@ -15544,9 +16930,10 @@
       }
     },
     {
-      "id": "\u007a\u0074ools-node-manager",
+      "id": "ztools-node-manager",
       "name": "Node Dashboard",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "📦 极简、高效的 Node.js 生产力工具。支持版本一键切换 (基于 nvm)、npm 多源管理、快速指令极速换源，专为开发者打造。",
       "author": "wangtao",
       "type": "app",
@@ -15561,7 +16948,7 @@
         "db"
       ],
       "tags": [
-        "\u007a\u0074ools-node-manager",
+        "ztools-node-manager",
         "Node Dashboard",
         "node-manager",
         "可视化管理 Node 版本与 npm 镜像源。注：版本管理需本地安装 nvm-windows 并具备管理员权限。",
@@ -15579,11 +16966,21 @@
       ],
       "category": "开发工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "ztools-node-manager",
+        "root": "plugins/ztools-node-manager",
+        "manifestSha256": "ba3bf10430e2fff0dcfe71db65d62c9a02bec24aad7364da5b80e3991ace0511"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
-        "sourceDir": "\u007a\u0074ools-node-manager",
-        "main": "index.html",
+        "sourceDir": "ztools-node-manager",
         "mainAvailable": false,
         "preload": "preload.js",
+        "hasDevelopmentMain": false,
         "commands": [
           {
             "id": "node-manager:text:node:0",
@@ -15691,10 +17088,11 @@
       }
     },
     {
-      "id": "\u007a\u0074ools-openlist",
+      "id": "ztools-openlist",
       "name": "OpenListUI",
       "version": "1.0.0",
-      "description": "在 \u005a\u0054ools 中浏览、下载和上传 OpenList 文件。",
+      "maturity": "prototype",
+      "description": "在 ZTools 中浏览、下载和上传 OpenList 文件。",
       "author": "gcnanmu",
       "type": "app",
       "permissions": [
@@ -15708,19 +17106,28 @@
         "db"
       ],
       "tags": [
-        "\u007a\u0074ools-openlist",
+        "ztools-openlist",
         "OpenListUI",
         "打开 OpenListUI 文件管理器",
         "openlist",
         "OpenList"
       ],
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "ztools-openlist",
+        "root": "plugins/ztools-openlist",
+        "manifestSha256": "9f1cc04583e7665d428557b69a374b4d8f526cb3eb682c472fda019fd71af427"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
-        "sourceDir": "\u007a\u0074ools-openlist",
-        "main": "index.html",
+        "sourceDir": "ztools-openlist",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://127.0.0.1:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "open-list-ui:text:openlist:0",
@@ -15770,9 +17177,10 @@
       }
     },
     {
-      "id": "\u007a\u0074ools-simpletimer",
+      "id": "ztools-simpletimer",
       "name": "计时器",
       "version": "1.0.0",
+      "maturity": "prototype",
       "description": "简单的正计时和倒计时工具",
       "author": "zzzbug",
       "type": "app",
@@ -15787,7 +17195,7 @@
         "db"
       ],
       "tags": [
-        "\u007a\u0074ools-simpletimer",
+        "ztools-simpletimer",
         "计时器",
         "stopwatch",
         "打开正计时器",
@@ -15798,12 +17206,21 @@
       ],
       "category": "效率工具",
       "icon": "logo.png",
+      "package": {
+        "kind": "legacy-html",
+        "id": "ztools-simpletimer",
+        "root": "plugins/ztools-simpletimer",
+        "manifestSha256": "dedf3ab207787f85b971c6a7dfb9b3fcc1741c0923600486582b4138fe1daadb"
+      },
+      "evidence": {
+        "status": "indexed",
+        "reason": "source-only"
+      },
       "html": {
-        "sourceDir": "\u007a\u0074ools-simpletimer",
-        "main": "index.html",
+        "sourceDir": "ztools-simpletimer",
         "mainAvailable": false,
         "preload": "preload/services.js",
-        "developmentMain": "http://localhost:5173",
+        "hasDevelopmentMain": true,
         "commands": [
           {
             "id": "stopwatch:text:command:0",

@@ -86,8 +86,15 @@ The SDK's maturity vocabulary is `prototype`, `experimental`, `beta`,
 `production`; missing metadata means `prototype`. All twelve built-ins and both
 host manifests explicitly declare `prototype`, also shown by CLI list/info.
 Compatibility evidence (`indexed` through `production-certified`) is separate
-and never grants execution or proves maturity. Catalog/UI propagation continues
-in P0.3a2/a3; existing UI "stable" badges are not readiness evidence.
+and never grants execution or proves maturity. UI propagation continues in
+P0.3a3; existing UI "stable" badges are not readiness evidence.
+The version-1 portable HTML catalog stores package identity, relative paths and
+scan hashes, never a checkout root or development URL. Its 125 prototype entries
+contain 47 `entry-resolved` file receipts and 78 `indexed` records; these are not
+runtime/API/security certification. `bun run verify:plugin-catalog` checks both
+catalog copies and the controlled fixture digest without reading a local checkout.
+Legacy local preview requires an explicit `VITE_HTML_PLUGIN_ROOT` in a development
+server; the published catalog does not locate or authorize installed packages.
 The HTML catalog is discovery evidence only, not a claim that 125 plugins are
 compatible, secure or production-ready. Signed third-party code remains untrusted.
 

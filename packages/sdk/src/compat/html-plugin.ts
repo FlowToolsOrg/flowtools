@@ -245,6 +245,7 @@ export function getHtmlPluginCommands(
   manifest: HtmlPluginManifest
 ): HtmlPluginCommandDescriptor[] {
   const commands: HtmlPluginCommandDescriptor[] = []
+  const ids = new Set<string>()
 
   for (const feature of manifest.features ?? []) {
     const featureTitle = feature.explain ?? feature.code
@@ -252,13 +253,18 @@ export function getHtmlPluginCommands(
     for (const [index, cmd] of (feature.cmds ?? []).entries()) {
       const label = getCommandLabel(cmd) ?? featureTitle
       const type = getCommandType(cmd)
+      const baseId = [
+        commandIdPart(feature.code),
+        commandIdPart(type),
+        commandIdPart(label),
+        String(index),
+      ].join(':')
+      let id = baseId
+      let duplicate = 0
+      while (ids.has(id)) id = `${baseId}:duplicate:${++duplicate}`
+      ids.add(id)
       commands.push({
-        id: [
-          commandIdPart(feature.code),
-          commandIdPart(type),
-          commandIdPart(label),
-          String(index),
-        ].join(':'),
+        id,
         title: label,
         description: feature.explain,
         featureCode: feature.code,

@@ -14,6 +14,16 @@
 
 ## 工程验证结构
 
+- `packages/sdk/src/compat/catalog.ts`：portable Catalog schema/path 与独立
+  indexed/entry-resolved 证据；公开无 React 的 `@flowtools/sdk/compat/catalog`。
+- `scripts/inspect-html-plugins.ts`：只读扫描 checkout，生成两份相同的 package
+  identity/相对资源/hash Catalog；无本机根路径、development URL 或认证升级。
+- `scripts/verify-plugin-catalog.ts` / `scripts/catalog.test.ts`：路径/identity/
+  hash fixture/假认证/重复目录拒绝门禁。fixture 位于
+  `scripts/fixtures/html-catalog/static-entry-v1.json`；控制文本 hash 归一化换行。
+- Desktop `src/runtime/catalog-entry.ts` / `test/catalog-entry.test.ts`：明确 DEV
+  与开发者指定的 checkout root 才解析本地相对入口；不是原生 scope enforcement。
+
 - `packages/sdk/src/types/maturity.ts` / `test/maturity.test.ts`：成熟度统一词表、
   prototype 默认与独立 compatibility evidence enum；不执行安全认证。
 - `scripts/generate-manifests.ts`：排序扫描内置 metadata，生成 Web/Desktop 两份

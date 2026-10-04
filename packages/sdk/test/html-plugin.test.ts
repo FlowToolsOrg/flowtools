@@ -100,6 +100,19 @@ describe('HTML plugin commands', () => {
       'repeat:text:same:1',
     ])
   })
+
+  test('keeps repeated feature codes and labels discoverable with unique command ids', () => {
+    const manifest = {
+      features: [
+        { code: 'same', cmds: ['same'] },
+        { code: 'same', cmds: ['same'] },
+      ],
+    }
+    const commands = getHtmlPluginCommands(manifest)
+    expect(commands).toHaveLength(2)
+    expect(new Set(commands.map(command => command.id)).size).toBe(2)
+    expect(getHtmlPluginCommands(manifest)).toEqual(commands)
+  })
 })
 
 describe('HTML plugin compatibility normalization', () => {

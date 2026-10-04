@@ -122,6 +122,10 @@ test('runs bounded Windows gates without caching JS build products', async () =>
   )
   expect(entry).toContain("'install', '--frozen-lockfile'")
   expect(entry).toContain("'run', 'docs:check'")
+  expect(entry).toContain("'run', 'verify:plugin-catalog'")
+  expect(entry.indexOf("'verify:plugin-catalog'")).toBeLessThan(
+    entry.indexOf("'lint'")
+  )
   expect(entry.indexOf("'docs:check'")).toBeLessThan(entry.indexOf("'lint'"))
   expect(entry).toContain("'check', '--locked'")
 })

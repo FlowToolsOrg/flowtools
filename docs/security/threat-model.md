@@ -1,6 +1,6 @@
 # FlowTools 插件威胁模型
 
-- 复核日期：2026-10-03；源码基线：`eed0e4d`（P0.4 开始前）
+- 复核日期：2026-10-04；源码基线：`eed0e4d`（P0.4 开始前）
 - 范围：Desktop/Web/CLI 插件入口，以及后续包安装、授权与应用更新设计
 - 状态：prototype；高风险项全部 open，未接受 production 风险豁免
 - 责任：Repository Maintainer 对发布阻断负责；下列 owner 是实施角色，
@@ -28,6 +28,9 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 - 入口：市场/目录/外部包到安装、加载；高危，open（Tampering/Spoofing）
 - 现状：Catalog 是扫描结果，市场操作主要持久化元数据，没有完整签名下载、
   解包校验与原子安装。发现插件不能证明 publisher 或可执行文件身份。
+  P0.3a2 相对目录包含稳定 identity、manifest/entry 扫描 hash 与 fixture scope；
+  假认证标签、缺失 fixture、路径逃逸和不一致目录被拒绝。hash 未签名，仅证明
+  扫描字节/文件存在，不是供应链或实时安装验证；本项仍 open。
 - 证据：[市场与 runner](../../apps/desktop/src/App.tsx)、
   [目录生成器](../../scripts/inspect-html-plugins.ts)
 - Owner：Plugin Platform / Release；Repository Maintainer 为发布责任人
@@ -192,6 +195,10 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 - 入口：catalog main/development.main、preload、iframe 导航；严重，open
 - 现状：runner 注入 preload 并提供宽松 iframe sandbox；开发 fallback 与
   本机静态目录不是发布包认证；支持级别仅表示需要的 API 类型。
+  P0.3a2 发布 Catalog 不含 checkout root、development URL 或源码 main；47 项
+  entry-resolved 只证明扫描时普通文件存在，78 项 indexed；本地入口仅在显式
+  DEV + 开发 checkout 配置下解析。源态/remote/越界拒绝 fixture 在
+  [Catalog 回归](../../scripts/catalog.test.ts)，不证明 iframe/preload 隔离，仍 open。
 - 证据：[HTML 注入器](../../apps/desktop/src/runtime/html-plugin-bridge.ts)、
   [iframe runner](../../apps/desktop/src/App.tsx)、
   [HTML normalizer](../../packages/sdk/src/compat/html-plugin.ts)

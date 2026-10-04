@@ -16,6 +16,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { FlowToolRuntimeProvider, PluginErrorBoundary } from '@flowtools/sdk'
 import {
+  htmlPluginCatalogSchema,
+  type HtmlCatalogPlugin,
+} from '@flowtools/sdk/compat/catalog'
+import {
   BanIcon,
   BlocksIcon,
   ClockIcon,
@@ -40,6 +44,7 @@ import { convertFileSrc } from '@tauri-apps/api/core'
 import htmlPluginIndexData from './data/html-plugin-catalog.json'
 import { builtInManifests } from './plugin/manifests'
 import { BuiltinExecutionPanel } from './runtime/builtin-execution-panel'
+import { resolveCatalogEntry } from './runtime/catalog-entry'
 import { createDesktopRuntimeContext } from './runtime/desktop-capabilities'
 import {
   handleHtmlPluginBridgeRequest,
@@ -76,42 +81,7 @@ interface IndexedCommand {
   requiresNative: boolean
 }
 
-interface HtmlIndexedPlugin {
-  id: string
-  name: string
-  version: string
-  description?: string
-  type: 'app' | 'tool'
-  permissions: readonly Permission[]
-  category?: string
-  html: {
-    sourceDir?: string
-    assetDir?: string
-    main?: string
-    mainAvailable?: boolean
-    preload?: string
-    developmentMain?: string
-    commands: Array<{
-      id: string
-      title: string
-      description?: string
-      featureCode?: string
-      type: string
-    }>
-    compatibility: {
-      level: string
-    }
-  }
-}
-
-interface HtmlPluginIndex {
-  source: string
-  totals: {
-    plugins: number
-    commands: number
-  }
-  plugins: HtmlIndexedPlugin[]
-}
+type HtmlIndexedPlugin = HtmlCatalogPlugin
 
 interface IconProps {
   className?: string
@@ -120,7 +90,7 @@ interface IconProps {
 
 type IconComponent = ComponentType<IconProps>
 
-const htmlPluginIndex = htmlPluginIndexData as HtmlPluginIndex
+const htmlPluginIndex = htmlPluginCatalogSchema.parse(htmlPluginIndexData)
 const reactPluginById = new Map(
   builtInManifests.map(manifest => [manifest.id, manifest])
 )
@@ -211,12 +181,9 @@ function toHtmlCommandIndex(plugin: HtmlIndexedPlugin): IndexedCommand[] {
     main: plugin.html.main,
     mainAvailable: plugin.html.mainAvailable,
     preload: plugin.html.preload,
-    developmentMain: plugin.html.developmentMain,
+    developmentMain: undefined,
     permissions: plugin.permissions,
-    hasUi: Boolean(
-      (plugin.html.mainAvailable !== false && plugin.html.main) ||
-      plugin.html.developmentMain
-    ),
+    hasUi: Boolean(plugin.html.mainAvailable && plugin.html.main),
     hasPreload: Boolean(plugin.html.preload),
     requiresNative: plugin.html.compatibility.level === 'native-bridge',
   } satisfies Omit<
@@ -352,24 +319,6 @@ function isExternalUrl(value: string | undefined): boolean {
   return Boolean(value && /^https?:\/\//i.test(value))
 }
 
-function stripRelativePath(value: string): string {
-  return value.replace(/\\/g, '/').replace(/^\.?\//, '')
-}
-
-function isAbsoluteLocalPath(value: string): boolean {
-  return /^[a-zA-Z]:[\\/]/.test(value) || value.startsWith('/')
-}
-
-function joinLocalPath(...parts: string[]): string {
-  const [first = '', ...rest] = parts
-  return [
-    first.replace(/\\/g, '/').replace(/\/+$/, ''),
-    ...rest.map(part => stripRelativePath(part).replace(/^\/+|\/+$/g, '')),
-  ]
-    .filter(Boolean)
-    .join('/')
-}
-
 function toViteFsUrl(path: string): string {
   return encodeURI(`/@fs/${path.replace(/\\/g, '/')}`)
 }
@@ -398,18 +347,18 @@ function getBaseUrl(value: string): string {
 }
 
 function getPluginEntryPath(command: IndexedCommand): string | undefined {
-  const entry = command.mainAvailable === false ? undefined : command.main
-
-  if (!entry || isExternalUrl(entry)) return undefined
-  if (isAbsoluteLocalPath(entry)) return entry.replace(/\\/g, '/')
-  if (!command.sourceDir) return undefined
-
-  return joinLocalPath(
-    htmlPluginIndex.source,
-    'plugins',
-    command.sourceDir,
-    command.assetDir ?? '',
-    entry
+  const plugin = htmlPluginIndex.plugins.find(
+    plugin => plugin.id === command.pluginId
+  )
+  if (!plugin || plugin.evidence.status !== 'entry-resolved') return undefined
+  return resolveCatalogEntry(
+    { packageRoot: plugin.package.root, entry: plugin.evidence.path },
+    {
+      development: import.meta.env.DEV,
+      checkoutRoot: import.meta.env.DEV
+        ? import.meta.env.VITE_HTML_PLUGIN_ROOT
+        : undefined,
+    }
   )
 }
 
@@ -500,10 +449,7 @@ const pluginListItems: PluginListItem[] = [
     cliAvailable: false,
     compatibilityLevel: plugin.html.compatibility.level,
     commandCount: Math.max(plugin.html.commands.length, 1),
-    hasUi: Boolean(
-      (plugin.html.mainAvailable !== false && plugin.html.main) ||
-      plugin.html.developmentMain
-    ),
+    hasUi: Boolean(plugin.html.mainAvailable && plugin.html.main),
   })),
 ]
 

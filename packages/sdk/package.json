@@ -10,6 +10,10 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
+    "./compat/catalog": {
+      "types": "./dist/compat/catalog.d.ts",
+      "import": "./dist/compat/catalog.js"
+    },
     "./execution": {
       "types": "./dist/execution.d.ts",
       "import": "./dist/execution.js"

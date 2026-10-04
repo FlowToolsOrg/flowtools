@@ -12,7 +12,7 @@ Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平�
 
 ## 1. Reality Check（当前实现状态）
 
-截至 2026-10-03，仓库中的实现状态（prototype）：
+截至 2026-10-04，仓库中的实现状态（prototype）：
 
 - 已实现：
   - `packages/sdk`：插件契约、hooks（工厂模式）、runtime provider、结果类型、Zod-based `inputSchema`
@@ -39,7 +39,15 @@ production），缺失 metadata 仅默认 prototype；compatibility evidence 独
 12 个内置 meta、Web/Desktop manifest、CLI list/info JSON/text 同步声明 prototype。
 生成器按排序 inventory 同时更新两端；Desktop 补显式 plugins workspace 依赖，
 根 Turbo 的依赖 tests/build 顺序随真实 dependency graph 推导。该标签不是签名、
-API 认证或 grant；Catalog/UI 的旧状态在 P0.3a2/a3 修正，不能据此宣称 P0 done。
+API 认证或 grant；UI 的旧状态在 P0.3a3 修正，不能据此宣称 P0 done。
+
+P0.3a2 Catalog formatVersion 1 使用 logical source、package identity/相对资源和
+manifest/entry SHA-256；不保存 checkout root、development URL 或源态 main。
+SDK 无 React 的 `compat/catalog` 子入口与只读 `verify:plugin-catalog` 检查结构、
+身份、路径、两份目录及 fixture digest。125 项均为 prototype：47 项仅证明扫描
+时入口文件存在（entry-resolved），78 项 indexed。没有 API/平台/签名认证。
+Desktop 消费同一 schema；只有显式 DEV + VITE_HTML_PLUGIN_ROOT 才解析本地资源。
+这不是安装、完整包依赖验证、运行时隔离、TOCTOU 防护或用户授权。
 
 P0.2a 已交付 `packages/sdk/src/execution/executor.ts`：`executePlugin()` 对
 真实 app/tool `run()` 统一 schema/defaults、版本/时间戳/耗时、输入形状摘要、

@@ -798,10 +798,16 @@ bun run --cwd apps/desktop build
   69、CLI 33、plugins 41、Web 19、Desktop 20 + Rust 11、Chromium 50 tests。
   生成器统一格式并提供只读 `--check`，两端排序后的 manifest 零漂移；实际 CLI
   list/info JSON/text 验证通过。此项无 UI 行为变更，不升级兼容性或安全结论。
-- **P0.3a2 Portable Catalog 与证据 gate**：`pending`，Catalog schema、相对
+- **P0.3a2 Portable Catalog 与证据 gate**：`done`（2026-10-04），Catalog schema、相对
   package/entry、稳定身份与范围明确的证据；扫描不等于执行或 API 认证。
   `verify:plugin-catalog` 拒绝本机路径、入口逃逸、假认证、缺失证据 fixture；
   生成器 fixture + 两份真实目录一致性 + Desktop build。
+  验收：两次真实扫描字节一致并符合 formatter；125 项均为 prototype，47 项
+  entry-resolved（仅文件存在/hash）、78 项 indexed。路径/编码/设备名/符号链接
+  越界、伪造认证/fixture hash、缺失 fixture 与目录不一致拒绝回归通过。SDK
+  72、Desktop 24 + Rust 11、Chromium 50 tests，根七 workspace 全 gate 通过；
+  Desktop 使用共享 schema 与显式 DEV checkout root，不再从发布目录取本机路径。
+  不认证资源依赖、runtime/API/平台或签名；12 项 SEC 风险仍 open。
 - **P0.3a3 UI 成熟度/兼容证据展示**：`pending`，共享 UI status 与 Web/Desktop
   从实际 meta/catalog 读标签，删除硬编码 stable；状态/证据互不升级，UI 回归、
   真实路由截图/键盘验收与根 gate。a1/a2/a3 全部完成后关闭 P0.3a。
@@ -1547,7 +1553,7 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 | P0.3   | in-progress | Codex      | P0.1          | 2026-10-03；P0.2 done，开始成熟度/目录与生产准入                                                              |
 | P0.3a  | in-progress | Codex      | P0.2          | 按 a1 契约 → a2 Catalog → a3 UI 分开验收                                                                      |
 | P0.3a1 | done        | Codex      | P0.2          | 2026-10-04；根七 workspace 全 gate，SDK 69 / plugins 41；两端 manifest 只读漂移检查通过                       |
-| P0.3a2 | pending     | Codex      | P0.3a1        | Portable Catalog 与证据 gate                                                                                  |
+| P0.3a2 | done        | Codex      | P0.3a1        | 2026-10-04；根七 workspace 全 gate，SDK 72 / Desktop 24 + Rust 11；125 相对目录、47 文件证据与拒绝 fixture    |
 | P0.3a3 | pending     | Codex      | P0.3a2        | UI 成熟度与兼容证据展示                                                                                       |
 | P0.3b  | pending     | Codex      | P0.3a         | 默认拒绝未认证第三方生产执行                                                                                  |
 | P0.3c  | pending     | Codex      | P0.3b         | 市场状态、production bundle 与 P0 总验收                                                                      |

@@ -11,6 +11,7 @@ interface PackageManifest {
 }
 
 const expectedSymbols: Record<string, readonly string[]> = {
+  './compat/catalog': ['htmlPluginCatalogSchema', 'portablePluginPathSchema'],
   '.': ['definePlugin', 'result'],
   './definePlugin': ['definePlugin'],
   './execution': [
@@ -31,11 +32,13 @@ const expectedSymbols: Record<string, readonly string[]> = {
 }
 
 describe('package exports', () => {
-  test('execution subpath is usable without React or source transpilers', async () => {
-    const source = await Bun.file(
-      new URL('../dist/execution.js', import.meta.url)
-    ).text()
-    expect(source).not.toMatch(/(?:from|import)\s*['"](?:react|sucrase)/)
+  test('execution/catalog subpaths are usable without React or source transpilers', async () => {
+    for (const path of ['execution.js', 'compat/catalog.js']) {
+      const source = await Bun.file(
+        new URL(`../dist/${path}`, import.meta.url)
+      ).text()
+      expect(source).not.toMatch(/(?:from|import)\s*['"](?:react|sucrase)/)
+    }
   })
   test('points every public subpath at consumable JS and declaration files', async () => {
     const packageRoot = new URL('../', import.meta.url)

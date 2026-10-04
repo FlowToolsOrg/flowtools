@@ -1,7 +1,7 @@
 # P0.3b4 发布产物与跨入口门禁
 
 - 日期：2026-10-04；P0.3b3 已独立提交为 fbbe988 后开始本项。
-- 状态：in-progress；实际 45 个 host artifacts 已通过，17 项 artifact 回归及 CI 契约已实现，待完整根复核。
+- 状态：done；本地实际产物与拒绝回归通过，远端干净 Windows checkout 完整门禁及最终无漂移复核通过。
 - 范围：生产外部入口停用的构建证据；不是签名、sandbox、grant 或安全审批。
 
 ## 可复现命令
@@ -66,6 +66,14 @@ inventory / 真实 run()、Desktop bridge/runner 六构建模式与持久状态�
 重型构建，保留实现与失败证据，不将 P0.3b4 或 Phase 0 标记为 done。
 
 ## 未验证与残余风险
+
+2026-10-04 补充核对：合并 commit `966878d65ae3ecb599dd9ed660eb38f745a3a79e`
+的 [Windows quality](https://github.com/FlowToolsOrg/flowtools/actions/runs/37189304639)
+已完成且 conclusion=success；Run all quality gates 与 Verify clean worktree
+均成功。该 workflow 调用现有 `check-ci.ps1`，包含 uncached tests、force
+build、fatal production artifact gate、Rust fmt/check/clippy 与最终漂移检查。
+它补齐本地因资源不足中断的自动化验收，不将那次本地失败改记为通过。
+P0.3b4 与 P0.3b 据此关闭；P0.3c 的市场/权限文案仍独立待处理。
 
 SHA 比较是同一机器/构建工具下的 opt-in 不变量，不是跨机器 reproducible
 build、publisher provenance 或包签名。已知指纹/语法不认证不存在所有恶意

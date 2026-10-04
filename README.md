@@ -104,6 +104,16 @@ server; the published catalog does not locate or authorize installed packages.
 The HTML catalog is discovery evidence only, not a claim that 125 plugins are
 compatible, secure or production-ready. Signed third-party code remains untrusted.
 
+P0.3b1 closes the SDK/Web source entry by default: the ordinary SDK
+`PluginFileLoader` always refuses with `EXTERNAL_CODE_DISABLED`, and no longer
+exports transpilation/import-map injection. Web source preview requires both a
+development server and explicit `VITE_ENABLE_UNSAFE_PLUGIN_PREVIEW=1`; its unsafe
+implementation is dynamically imported from `@flowtools/sdk/development` and
+absent from the Web production bundle. The UI warns that unsigned code shares
+the host realm and is not installed, isolated or granted. Old IndexedDB source
+records are preserved, never automatically restored in any mode. CLI and Desktop
+entry closure remains separate P0.3b2/b3 work; this is not a production sandbox.
+
 - Product direction: desktop-first, cross-platform ready.
 - Current runnable hosts:
   - `apps/web-vite`: web runtime prototype.

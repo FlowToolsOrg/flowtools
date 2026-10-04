@@ -44,9 +44,18 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 ### SEC-002 外部模块进入宿主 realm
 
 - 入口：浏览器 File/Blob module、动态 import；严重，open（Elevation）
-- 现状：PluginFileLoader 在宿主 document 注入模块，执行后才检查 default
+- 现状：危险开发预览仍在宿主 document 注入模块，执行后才检查 default
   export。SDK hooks、metadata 校验或 ErrorBoundary 无法限制已运行代码。
+  P0.3b1 普通 SDK 文件/外部对象入口已改为副作用前拒绝；危险实现仅在独立
+  development 子入口且 Host DEV + 显式 opt-in 下开放。Web 生产不加载它，
+  所有模式不自动恢复旧 IndexedDB 源码、不静默删除数据。拒绝 API 与构建模式
+  回归见 SDK/Web external-code-gate tests；CLI/Desktop 仍待后继入口 gate。
+  开发预览仍能访问 Host realm，内置加载器属于可信 Host API；签名/隔离/broker
+  未实现，本项保持 open，不把此停用策略称作生产 sandbox。
 - 证据：[文件加载器](../../packages/sdk/src/services/plugin-file-loader.ts)、
+  [危险开发实现](../../packages/sdk/src/services/development-plugin-file-loader.ts)、
+  [SDK 拒绝回归](../../packages/sdk/test/external-code-gate.test.ts)、
+  [Web 拒绝回归](../../apps/web-vite/src/app/external-code-gate.test.ts)、
   [CLI discovery](../../packages/cli/src/discovery.ts)
 - Owner：SDK / Runtime / Desktop
 - 缓解：按 ADR-0001 分流 T1 与 T2/T3；生产准入在执行前完成；不可信源码

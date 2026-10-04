@@ -7,7 +7,11 @@ export const portablePluginPathSchema = z
   .string()
   .min(1)
   .refine(value => {
-    if (/[\\:%?#<>"|*\u0000-\u001f]/.test(value) || value.startsWith('/'))
+    if (
+      /[\\:%?#<>"|*]/.test(value) ||
+      value.startsWith('/') ||
+      value.split('').some(character => character.charCodeAt(0) < 32)
+    )
       return false
     return value
       .split('/')

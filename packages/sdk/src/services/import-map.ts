@@ -1,5 +1,7 @@
 import { GLOBAL_KEY, IMPORT_MAP_ID } from '../constants'
 
+import { assertUnsafeDevelopmentPreview } from './development-policy'
+
 interface FlowToolsGlobal {
   sdk: Record<string, unknown>
 }
@@ -44,6 +46,7 @@ export function setupImportMap(
   sdk: Record<string, unknown>,
   config?: ImportMapConfig
 ): void {
+  assertUnsafeDevelopmentPreview()
   if (typeof document === 'undefined') {
     return
   }
@@ -79,12 +82,4 @@ export function setupImportMap(
   el.type = 'importmap'
   el.textContent = JSON.stringify(importMap)
   document.head.prepend(el)
-}
-
-/**
- * Create a blob URL that re-exports the host's `@flowtools/sdk`.
- * Used by PluginFileLoader as a fallback when import maps are unavailable.
- */
-export function createSdkBridgeBlobUrl(): string {
-  return createSdkBridgeUrl()
 }

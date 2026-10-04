@@ -28,6 +28,13 @@ test('portable catalog paths reject absolute, encoded, traversal and Windows ali
     '*/b',
   ])
     expect(portablePluginPathSchema.safeParse(path).success).toBe(false)
+  for (let code = 0; code < 32; code += 1) {
+    expect(
+      portablePluginPathSchema.safeParse(
+        `assets/a${String.fromCharCode(code)}b/index.html`
+      ).success
+    ).toBe(false)
+  }
 })
 
 test('catalog evidence cannot be fabricated from a compatibility or maturity label', () => {

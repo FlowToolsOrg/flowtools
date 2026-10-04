@@ -11,6 +11,7 @@ export default createPackageTsdownConfig({
   packageDir,
   entry: {
     'compat/catalog': 'src/compat/catalog.ts',
+    development: 'src/development.ts',
     execution: 'src/execution/index.ts',
     definePlugin: 'src/compositions/definePlugin.ts',
     result: 'src/result/index.ts',

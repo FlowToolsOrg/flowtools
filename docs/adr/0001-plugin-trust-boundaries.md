@@ -61,8 +61,11 @@ broker 不接受调用方指定目标插件 namespace。会话销毁、停用、
 
 现状为 prototype，不符合上述目标：
 
-- T1 React panel 在主树运行；外部 SDK `PluginFileLoader` 也能在同 realm
-  执行文件代码，尚未按信任等级分流。
+- T1 React panel 在主树运行；早期外部 SDK `PluginFileLoader` 曾在同 realm
+  执行文件代码，没有按信任等级分流。P0.3b1 普通 SDK 文件服务现已拒绝所有
+  外部执行；危险代码移至显式 DEV + opt-in 的 development 子入口，Web 生产
+  不加载且不恢复已保存源码。该停用策略符合本 ADR 的 production denial 方向，
+  不代表 T2/T3/TL 隔离或包准入已经实现；CLI/Desktop 入口收口仍待后续里程碑。
 - Desktop TL 使用主窗口内 iframe、`allow-same-origin + allow-scripts` 与
   `srcDoc` 注入；仅检查 message source 与宽松 envelope，没有完整 origin、
   session nonce、版本或 grant 检查。

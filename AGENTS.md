@@ -233,6 +233,18 @@ execution bypassing the SDK:
 
 ### Third-Party Plugin Security Defaults
 
+SDK `PluginFileLoader` is now deny-only (`EXTERNAL_CODE_DISABLED`) before file
+reads, registry writes or lifecycle calls. Do not re-enable it with metadata,
+certification flags or a caller-supplied mode. Source transpilation/import-map
+injection is not exported by the ordinary SDK. The unsafe development subpath
+`@flowtools/sdk/development` requires DEV plus the exact opt-in
+`VITE_ENABLE_UNSAFE_PLUGIN_PREVIEW=1`; Web imports it dynamically inside a DEV
+guard and displays the unsigned, same-realm risk. Never statically import that
+subpath into a host. Web does not automatically restore external source in any
+mode; preserve the old IndexedDB records without executing or deleting them.
+Service-level rejection and build-mode regressions are required, not only a
+hidden upload button. CLI/Desktop entry gates are separate roadmap milestones.
+
 Portable catalogs use `@flowtools/sdk/compat/catalog`, logical source identity,
 package-relative paths and scan SHA-256 values. All current HTML entries remain
 prototype. The implemented evidence gate accepts only indexed or entry-resolved

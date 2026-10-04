@@ -11,6 +11,7 @@ interface PackageManifest {
 }
 
 const expectedSymbols: Record<string, readonly string[]> = {
+  './development': ['DevelopmentPluginFileLoader', 'setupImportMap'],
   './compat/catalog': ['htmlPluginCatalogSchema', 'portablePluginPathSchema'],
   '.': ['definePlugin', 'result'],
   './definePlugin': ['definePlugin'],
@@ -33,11 +34,15 @@ const expectedSymbols: Record<string, readonly string[]> = {
 
 describe('package exports', () => {
   test('execution/catalog subpaths are usable without React or source transpilers', async () => {
-    for (const path of ['execution.js', 'compat/catalog.js']) {
+    for (const path of ['index.js', 'execution.js', 'compat/catalog.js']) {
       const source = await Bun.file(
         new URL(`../dist/${path}`, import.meta.url)
       ).text()
-      expect(source).not.toMatch(/(?:from|import)\s*['"](?:react|sucrase)/)
+      expect(source).not.toMatch(/(?:from|import)\s*['"]sucrase/)
+      if (path !== 'index.js') {
+        expect(source).not.toMatch(/(?:from|import)\s*['"]react/)
+      }
+      expect(source).not.toContain('__flowtools_plugin_loaded__')
     }
   })
   test('points every public subpath at consumable JS and declaration files', async () => {

@@ -824,7 +824,7 @@ bun run --cwd apps/desktop build
 
 #### P0.3b 生产入口默认拒绝未认证外部代码
 
-- 状态：`pending`
+- 状态：`in-progress`
 - 依赖：P0.3a
 - 范围：生产构建不暴露源码转译/导入、remote HTML 和 Legacy 自动执行；开发
   入口只在显式开发环境可见并有未签名警告。未实现签名准入前不允许以布尔
@@ -833,6 +833,34 @@ bun run --cwd apps/desktop build
   和最终构建产物的负面测试；检查 production bundle 无源码 loader 或本机路径。
 - 边界：这是 Phase 0 的停用/准入 gate，不代替 Phase 2 的 OS 隔离、grant 或
   每次原生操作授权；相关 SEC 风险只能更新缓解证据，不能全部关闭。
+
+顺序细化为四个独立提交；前项验收并提交后再开始后项：
+
+- **P0.3b1 SDK / Web 源码入口**：`done`（2026-10-04）。公共 SDK 文件加载器默认拒绝，
+  源码转译与 import-map 移出普通 SDK 导出；危险开发实现只由 DEV 构建且显式
+  `VITE_ENABLE_UNSAFE_PLUGIN_PREVIEW=1` 加载，并展示未签名、同 realm 风险。
+  Web service 在读文件/写存储/加载代码之前拒绝，生产不恢复旧 IndexedDB 源码，
+  保留原记录用于后续明确恢复；开发也不自动恢复。覆盖 API 绕过、模式矩阵、
+  数据保留、实际内置运行与 Web production bundle 中开发实现缺席。
+  验收：初始 10 项拒绝回归在旧实现失败，修复后通过；SDK 六模式/缺少环境与
+  绕过构造器调用 TS-private 方法均拒绝；开发源码不能自报 production 标签。
+  根七 workspace 全 gate 强制执行、零缓存，SDK 86 / Web 22 / Chromium 59；
+  十二 compiled smoke 15 项与真实 Web 执行流程通过。实际 production/default
+  dev/opt-in dev 的 UI、键盘与旧 IndexedDB 保留验收通过；生产构建带 opt-in=1
+  仍与普通 production artifact 字节一致。截图与边界见
+  [源码入口记录](./validation/p0-web-source-gate.md)。此项不关闭 CLI/Desktop gate
+  或 SEC-002，也不构成独立安全 Reviewer 批准。
+- **P0.3b2 CLI 固定 compiled inventory**：`pending`。只执行随仓库构建的内置
+  inventory；取消 TSX 源码导入、正则 headless rewrite 和任意 ID 路径 fallback。
+  未知/路径 ID 与缺失 compiled artifact 在 import 前失败；真实十二插件 smoke、
+  CLI list/info/run 和 compiled CLI 子进程回归。
+- **P0.3b3 Desktop HTML / Legacy gate**：`pending`。生产不启动外部 HTML/remote/
+  preload，不因 Catalog、持久 metadata 或伪认证放行；开发预览要求显式 DEV
+  opt-in 与警告，runner/bridge 在副作用前独立拒绝。覆盖路由绕过、持久恢复与
+  bridge 拒绝，内置 React/SDK 行为不变；实窗验收仍使用专用测试身份。
+- **P0.3b4 发布产物与跨入口验收**：`pending`。将实际 Web/Desktop production
+  artifact 检查加入可复现门禁，证明没有危险 loader、开发路径/URL 或认证布尔
+  开关；全根 gate 和模式/拒绝矩阵记录。b1/b2/b3/b4 全部完成才关闭 P0.3b。
 
 #### P0.3c 诚实市场状态与 P0 总验收
 
@@ -1565,7 +1593,11 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 | P0.3a1 | done        | Codex      | P0.2          | 2026-10-04；根七 workspace 全 gate，SDK 69 / plugins 41；两端 manifest 只读漂移检查通过                       |
 | P0.3a2 | done        | Codex      | P0.3a1        | 2026-10-04；根七 workspace 全 gate，SDK 72 / Desktop 24 + Rust 11；125 相对目录、47 文件证据与拒绝 fixture    |
 | P0.3a3 | done        | Codex      | P0.3a2        | 2026-10-04；根 gate / Chromium 59 / Desktop 25 + Rust 13；Web 实验与维护者独立 r2 包实窗确认、截图归档        |
-| P0.3b  | pending     | Codex      | P0.3a         | 默认拒绝未认证第三方生产执行                                                                                  |
+| P0.3b  | in-progress | Codex      | P0.3a         | b1 SDK/Web → b2 CLI → b3 Desktop → b4 production artifact 分开实施                                            |
+| P0.3b1 | done        | Codex      | P0.3a         | 2026-10-04；根 gate / SDK 86 / Web 22；三种实际 Web 模式、旧源码保留、production opt-in artifact 一致通过     |
+| P0.3b2 | pending     | Codex      | P0.3b1        | CLI 只执行固定 compiled built-in inventory                                                                    |
+| P0.3b3 | pending     | Codex      | P0.3b2        | Desktop runner/bridge 的生产拒绝与显式开发预览                                                                |
+| P0.3b4 | pending     | Codex      | P0.3b3        | 实际发布产物与跨入口拒绝矩阵                                                                                  |
 | P0.3c  | pending     | Codex      | P0.3b         | 市场状态、production bundle 与 P0 总验收                                                                      |
 | P0.4   | done        | Codex      | -             | P0.4a/b 完成；仅设计与评审契约，12 项安全风险保持 open                                                        |
 | P0.4a  | done        | Codex      | -             | `docs(security): define plugin trust and threat baseline (P0.4a)`；12 open 风险、80 链接、lint 7/7            |

@@ -14,6 +14,18 @@
 
 ## 工程验证结构
 
+- `packages/sdk/src/services/plugin-file-loader.ts`：普通 SDK 的 deny-only 外部
+  入口；`development-plugin-file-loader.ts` / `development-policy.ts` 为显式
+  DEV + opt-in 的危险预览实现，只从 `@flowtools/sdk/development` 动态导入。
+  `packages/sdk/test/external-code-gate.test.ts` 覆盖导入前拒绝与构建模式矩阵。
+- Web `src/app/development-policy.ts` 与 registry store 在读文件/持久化之前
+  拒绝；bootstrap 不恢复外部源码，旧 IndexedDB 数据保留。对应
+  `src/app/external-code-gate.test.ts` 覆盖绕过 UI 和恢复/状态无副作用。
+  此为 P0.3b1 停用策略，不是第三方隔离；CLI/Desktop gate 分别独立实施。
+  `apps/ui-test/scripts/validate-web-source-gate.ts` 用三个真实 Web server 与临时
+  Chromium context 验证默认拒绝、显式预览、键盘及旧源码保留；见
+  [源码入口验收](./validation/p0-web-source-gate.md)。
+
 - `packages/ui/src/components/plugin-status`：共享 maturity/evidence badge，
   消费 SDK 词表；`ToolStatus` / `ToolMarketStatus` 是 PluginMaturity 别名。
   `apps/ui-test/src/test/plugin-status` 覆盖四状态、缺省 Prototype 与证据不升级；

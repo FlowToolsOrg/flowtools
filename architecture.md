@@ -56,6 +56,14 @@ meta/Catalog 读取；独立 compatibility badge 不升级 maturity，桥接需�
 专用 Windows 验收以根路由查询标记进入首页，Tauri MockRuntime 回归覆盖最终
 URL；实窗、开发模式与独立包验收分别记录，Mock 不启动宿主或用户数据库。
 
+P0.3b1 将普通 SDK PluginFileLoader 改为执行前一律拒绝，移除普通入口的转译与
+import-map 导出。危险实现分离到 `@flowtools/sdk/development`，只接受 Host 构建
+的 DEV + `VITE_ENABLE_UNSAFE_PLUGIN_PREVIEW=1`；Web 在同一条件下动态导入，
+生产 bundle 不包含它。Web 文件/enable/reload 服务在副作用前拒绝外部入口，
+IndexedDB 源码在所有模式都不自动恢复、不静默删除；内置 compiled manifest 的
+加载与运行保留。开发预览仍共 realm、无签名/隔离/grant，仅限受控测试数据。
+CLI 与 Desktop 关闭分别由 P0.3b2/b3 验收；SEC-002 仍 open，不能由此关闭整体风险。
+
 P0.2a 已交付 `packages/sdk/src/execution/executor.ts`：`executePlugin()` 对
 真实 app/tool `run()` 统一 schema/defaults、版本/时间戳/耗时、输入形状摘要、
 稳定失败码、取消及异步超时。21 个新增回归覆盖校验期取消竞争、迟到结果和

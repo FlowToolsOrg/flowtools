@@ -21,6 +21,15 @@ plugin。
 Catalog 索引、API 名称或构建成功不代表兼容认证；v1 不宣称兼容全部 125 个
 HTML 插件，也不提供任意 shell/native binary 或 Node/Electron 私有 API。
 
+P0.3b1 的普通 SDK `PluginFileLoader` 一律抛 `EXTERNAL_CODE_DISABLED`，不读取
+源码、不注册外部对象；普通 SDK 不再导出 transpile/setupImportMap 等注入工具。
+Web 默认及生产构建均不可导入源码；受控开发评估须同时使用 Vite dev server 和
+显式 `VITE_ENABLE_UNSAFE_PLUGIN_PREVIEW=1`。危险实现从
+`@flowtools/sdk/development` 在 DEV 分支动态导入，并显示未签名、同 realm 风险，
+不得在宿主静态导入该子入口或当作安装/隔离/grant。已有 IndexedDB 源码保留，
+任何模式都不自动恢复；需要预览时重新主动选择审阅过的文件，仅使用可丢弃数据。
+CLI 与 Desktop 的生产入口仍待 P0.3b2/b3；不得把 Web gate 解释为全宿主已关闭。
+
 ## 1. 先理解插件模型
 
 Flow Tool 目前支持两类插件：

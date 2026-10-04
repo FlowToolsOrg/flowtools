@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
 import { once } from 'node:events'
 import { mkdtemp, readFile } from 'node:fs/promises'
+import { createConnection } from 'node:net'
 import { tmpdir } from 'node:os'
 import { resolve, join } from 'node:path'
 import { createInterface } from 'node:readline'
@@ -45,8 +46,43 @@ const ready = /** @type {{ pipe: string }} */ (
 const cli = new RuntimeClient(await connectNamedPipe(ready.pipe))
 const desktop = new RuntimeClient(await connectNamedPipe(ready.pipe))
 try {
+  const mismatch = await rawExchange(ready.pipe, {
+    version: 2,
+    requestId: 'wrong-version',
+    session: null,
+    call: { method: 'runtime.status' },
+  })
+  partial(mismatch, {
+    outcome: { type: 'error', data: { code: 'PROTOCOL_MISMATCH' } },
+  })
+  const injected = await rawExchange(ready.pipe, {
+    version: 1,
+    requestId: 'spoof',
+    session: null,
+    call: {
+      method: 'session.open',
+      payload: {
+        token: cliToken,
+        clientVersion: '0.1.0',
+        expectedInstanceId: null,
+        agentId: 'admin',
+      },
+    },
+  })
+  partial(injected, {
+    outcome: { type: 'error', data: { code: 'INVALID_REQUEST' } },
+  })
+  const oversized = await rawExchange(ready.pipe, null, true)
+  partial(oversized, {
+    outcome: { type: 'error', data: { code: 'FRAME_TOO_LARGE' } },
+  })
   await cli.connect(cliToken)
   await desktop.connect(desktopToken)
+  const obsolete = new RuntimeClient(await connectNamedPipe(ready.pipe))
+  await assert.rejects(obsolete.connect(cliToken, 'old-instance'), {
+    code: 'INSTANCE_MISMATCH',
+  })
+  obsolete.close()
   assert.equal(cli.instanceId, desktop.instanceId)
   const job = {
     pluginId: 'plugin-base64-encoder',
@@ -57,6 +93,10 @@ try {
     deadline: Date.now() + 10000,
   }
   const receipt = await cli.submit(job)
+  await assert.rejects(
+    cli.submit({ ...job, idempotencyKey: 'expired', deadline: Date.now() - 1 }),
+    { code: 'TIMEOUT' }
+  )
   assert.equal(receipt.receiptType, 'job')
   assert.equal('success' in receipt, false)
   const retried = await cli.submit(job)
@@ -98,6 +138,37 @@ try {
   const background = await cli.submit({ ...job, idempotencyKey: 'background' })
   cli.close()
   partial(await desktop.waitForResult(background.runId), { state: 'succeeded' })
+  const reconnect = new RuntimeClient(await connectNamedPipe(ready.pipe))
+  await reconnect.connect(cliToken, desktop.instanceId)
+  const foreground = await reconnect.submit({
+    ...job,
+    idempotencyKey: 'foreground',
+    background: false,
+    deadline: Date.now() + 10000,
+  })
+  reconnect.close()
+  partial(await desktop.waitForResult(foreground.runId), {
+    state: 'cancelled',
+    result: { success: false, error: { code: 'ABORTED' } },
+  })
+  const events = await desktop.call({
+    method: 'jobs.events',
+    payload: { runId: background.runId, afterSequence: 0 },
+  })
+  assert.ok(!JSON.stringify(events).includes('hello'))
+  const outputBudget = new RuntimeClient(await connectNamedPipe(ready.pipe))
+  await outputBudget.connect(cliToken, desktop.instanceId)
+  const oversizedOutput = await outputBudget.submit({
+    ...job,
+    input: { text: 'x'.repeat(500000) },
+    idempotencyKey: 'output-budget',
+    deadline: Date.now() + 10000,
+  })
+  partial(await desktop.waitForResult(oversizedOutput.runId), {
+    state: 'failed',
+    result: { success: false, error: { code: 'OUTPUT_INVALID' } },
+  })
+  outputBudget.close()
   assert.equal(
     await readFile(join(profile, 'validation-profile-v1'), 'utf8'),
     'flowtools-disposable-v1'
@@ -115,5 +186,34 @@ function partial(actual, expected) {
   for (const [key, value] of Object.entries(expected)) {
     if (value && typeof value === 'object') partial(actual[key], value)
     else assert.equal(actual[key], value)
+  }
+}
+
+/** @returns {Promise<unknown>} */
+async function rawExchange(pipe, request, oversized = false) {
+  const socket = createConnection(pipe)
+  socket.on('error', () => {})
+  await once(socket, 'connect')
+  try {
+    return await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        socket.destroy()
+        reject(new Error('Raw frame timeout'))
+      }, 5000)
+      let buffer = Buffer.alloc(0)
+      socket.on('data', chunk => {
+        buffer = Buffer.concat([buffer, chunk])
+        if (buffer.length < 4 || buffer.length < buffer.readUInt32LE(0) + 4)
+          return
+        clearTimeout(timer)
+        resolve(JSON.parse(buffer.subarray(4).toString('utf8')))
+      })
+      const bytes = Buffer.from(JSON.stringify(request))
+      const header = Buffer.alloc(4)
+      header.writeUInt32LE(oversized ? 1_048_577 : bytes.length)
+      socket.write(oversized ? header : Buffer.concat([header, bytes]))
+    })
+  } finally {
+    socket.destroy()
   }
 }

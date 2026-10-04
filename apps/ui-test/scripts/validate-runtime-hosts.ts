@@ -12,6 +12,8 @@ import { chromium } from 'playwright'
 import { RuntimeClient } from '../../../packages/runtime-client/dist/index.js'
 import { connectNamedPipe } from '../../../packages/runtime-client/dist/node.js'
 
+import { assertRuntimeValidationPreflight } from './runtime-validation-preflight.ts'
+
 // Run with Node. Dedicated config/profile, child-only loopback CDP, no user DB.
 const root = resolve(import.meta.dirname, '../../..')
 const desktopExe = join(root, 'apps/desktop/src-tauri/target/debug/desktop.exe')
@@ -20,9 +22,20 @@ const config = JSON.parse(
     join(root, 'apps/desktop/tauri.runtime-validation.conf.json'),
     'utf8'
   )
-) as { identifier: string }
+) as { identifier: string; app: { windows: { title: string }[] } }
 assert.equal(config.identifier, 'com.flowtools.g2-validation-20261004')
-assert.ok((await readFile(desktopExe)).includes(Buffer.from(config.identifier)))
+// Old binaries do not support the safe probe and must never be executed.
+assertRuntimeValidationPreflight(
+  await readFile(desktopExe),
+  [config.identifier, 'http://127.0.0.1:1420/', config.app.windows[0]!.title],
+  () =>
+    execFileSync(desktopExe, ['--runtime-validation-identity'], {
+      windowsHide: true,
+      encoding: 'utf8',
+      maxBuffer: 4096,
+      env: { SystemRoot: process.env.SystemRoot },
+    })
+)
 const output = join(root, 'execution-validation/g2')
 await mkdir(output, { recursive: true })
 const runtimeProfile = await mkdtemp(join(tmpdir(), 'flowtools-validation-g2-'))
@@ -133,6 +146,31 @@ try {
     path: join(output, 'desktop-runtime-job.png'),
     fullPage: true,
   })
+  await page
+    .getByRole('textbox', { name: 'Run ID', exact: true })
+    .fill('missing-fixture-run')
+  await page.getByRole('button', { name: 'Inspect Runtime job' }).click()
+  await page
+    .getByTestId('runtime-job-status')
+    .filter({ hasText: 'JOB_NOT_FOUND:' })
+    .waitFor()
+  assert.match(
+    await page.getByTestId('runtime-job-status').innerText(),
+    /不自动重新提交/
+  )
+  // Only the fixture Host is stopped; reload exercises a real handshake failure.
+  host.stdin.end()
+  const [hostExitCode] = (await hostExit) as unknown[]
+  assert.equal(hostExitCode, 0)
+  await page.reload()
+  await page
+    .getByTestId('runtime-job-status')
+    .filter({ hasText: 'RUNTIME_DISCONNECTED:' })
+    .waitFor()
+  assert.match(
+    await page.getByTestId('runtime-job-status').innerText(),
+    /重连同一实例并查询 runId/
+  )
   await writeFile(
     join(output, 'native-receipt.json'),
     JSON.stringify(
@@ -141,6 +179,7 @@ try {
         keyboard: true,
         sharedRunId: receipt.runId,
         state: job.state,
+        connectionDiagnostic: 'RUNTIME_DISCONNECTED',
         identity: config.identifier,
         scope: 'prototype validation only',
       },
@@ -167,6 +206,6 @@ try {
   await desktopExit
   cli.close()
   lines.close()
-  host.stdin.end()
+  if (!host.stdin.writableEnded) host.stdin.end()
   await hostExit
 }

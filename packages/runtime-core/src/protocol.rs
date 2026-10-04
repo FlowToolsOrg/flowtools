@@ -111,6 +111,31 @@ pub enum ErrorCode {
     RuntimeBusy,
     #[serde(rename = "RUNTIME_DISCONNECTED")]
     RuntimeDisconnected,
+    #[serde(rename = "INVALID_RESPONSE")]
+    InvalidResponse,
+}
+
+impl ErrorCode {
+    pub const ALL: [Self; 18] = [
+        Self::ProtocolMismatch,
+        Self::ClientIncompatible,
+        Self::FrameTooLarge,
+        Self::InvalidRequest,
+        Self::SessionInvalid,
+        Self::InstanceMismatch,
+        Self::ApprovalRequired,
+        Self::PluginNotFound,
+        Self::InputInvalid,
+        Self::JobNotFound,
+        Self::IdempotencyConflict,
+        Self::Timeout,
+        Self::Aborted,
+        Self::ExecutionFailed,
+        Self::OutputInvalid,
+        Self::RuntimeBusy,
+        Self::RuntimeDisconnected,
+        Self::InvalidResponse,
+    ];
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
@@ -128,7 +153,7 @@ pub struct Response {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
-#[serde(tag = "type", content = "data")]
+#[serde(tag = "type", content = "data", deny_unknown_fields)]
 pub enum Outcome {
     #[serde(rename = "session")]
     Session(SessionProof),
@@ -147,7 +172,7 @@ pub enum Outcome {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RuntimeStatus {
     pub instance_id: String,
     pub mode: String,
@@ -155,7 +180,7 @@ pub struct RuntimeStatus {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PluginStatus {
     pub plugin_id: String,
     pub version: String,
@@ -187,7 +212,7 @@ impl JobState {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct JobReceipt {
     pub format_version: u16,
     pub receipt_type: String,
@@ -197,7 +222,7 @@ pub struct JobReceipt {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct JobSnapshot {
     pub format_version: u16,
     pub run_id: String,
@@ -227,6 +252,7 @@ pub struct InputSummary {
 /// Versioned extension of PluginExecutionResult; a receipt is a different type.
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
+#[schemars(deny_unknown_fields)]
 pub struct ExecutionResult {
     pub format_version: u16,
     pub run_id: String,
@@ -255,7 +281,7 @@ pub enum ExecutionOutcome {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct JobEvent {
     pub run_id: String,
     pub sequence: u32,

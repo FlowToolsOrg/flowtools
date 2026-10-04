@@ -9,7 +9,7 @@ import {
 import { resolve } from 'node:path'
 
 // Local validation bootstrap is created by the build, never by an IPC caller.
-const root = resolve(import.meta.dir, '../..')
+const root = resolve(import.meta.dirname, '../..')
 const regular = (path: string) => {
   if (
     !lstatSync(path).isFile() ||
@@ -22,9 +22,9 @@ const regular = (path: string) => {
     sha256: createHash('sha256').update(readFileSync(path)).digest('hex'),
   }
 }
-mkdirSync(resolve(import.meta.dir, '.generated'), { recursive: true })
+mkdirSync(resolve(import.meta.dirname, '.generated'), { recursive: true })
 writeFileSync(
-  resolve(import.meta.dir, '.generated/runner.json'),
+  resolve(import.meta.dirname, '.generated/runner.json'),
   JSON.stringify({
     bun: regular(process.execPath),
     runner: regular(resolve(root, 'packages/plugin-runner/dist/runner.js')),

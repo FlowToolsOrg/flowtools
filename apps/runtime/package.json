@@ -4,12 +4,15 @@
   "private": true,
   "scripts": {
     "build": "bun run prepare.ts && cargo build --locked --manifest-path Cargo.toml",
-    "lint": "cargo fmt --manifest-path Cargo.toml -- --check && cargo clippy --locked --manifest-path Cargo.toml --all-targets -- -D warnings",
-    "check-types": "cargo check --locked --manifest-path Cargo.toml --all-targets",
+    "lint": "oxlint --type-aware --type-check *.ts && cargo fmt --manifest-path Cargo.toml -- --check && cargo clippy --locked --manifest-path Cargo.toml --all-targets -- -D warnings",
+    "check-types": "tsgo --noEmit && cargo check --locked --manifest-path Cargo.toml --all-targets",
     "test": "bun run prepare.ts && bun run ../../scripts/check-rust-tests.ts Cargo.toml && cargo test --locked --manifest-path Cargo.toml"
   },
   "dependencies": {
     "@flowtools/plugin-runner": "workspace:*",
     "@flowtools/runtime-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:"
   }
 }

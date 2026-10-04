@@ -79,7 +79,7 @@ origin/opt-in，JS 无法选择 endpoint 或 caller token。Node CLI submit 后 
 GUI 键盘 Enter 查询同一 runId，显示 succeeded/validation-cli；截图已检查。
 结束已关闭本任务窗口、Runtime、Vite，1420/9224 不再监听。
 
-![实际 Desktop 查询 CLI 任务](./assets/g2-desktop-runtime-job.png)
+![实际 Desktop 查询 CLI 任务，P1.5a 最终复验更新](./assets/g2-desktop-runtime-job.png)
 
 复现：build:packages -> runtime-core generate -> plugin-runner build -> runtime
 build -> runtime-client build；使用 TAURI_CONFIG 为上述专用配置的 cargo build
@@ -95,3 +95,75 @@ P1.3a 提交前 docs/workspace/actionlint 通过；十一 workspace lint/types �
 独立 Rust 7 tests、runner 1 test、client 2 tests 和实际 native harness 通过。
 Rust 两个 workspace 的 fmt/clippy -D warnings 通过。全仓 test/build 与生产产物
 gate 在 P1.5a 完成后顺序复验，不把当前定向检查表述为全仓 test/build。
+
+## P1.5a
+
+P1.3a commit 为 dcc80ed。P1.5a 使用同一 Rust 类型导出 version constants、
+TypeScript、JSON Schema 和全部十二个完整 Manifest/18 错误响应 golden；Rust
+与 TS 都校验同一 fixture、schema 与 canonical SHA-256。read-only
+verify:runtime-contracts 在 CI generate:hosts 后、lint 前执行；生成文本只允许
+checkout CRLF/LF 规范化，不掩盖字段或语义漂移。Types 不是手写 DTO 镜像。
+
+Manifest golden 保留真实十二插件的完整元数据，files 使用固定 LF fixture
+文本和 SHA-256；它不代表可执行包。Rust 恢复 build-owned files 后逐字段匹配
+实际清单，TS 同时校验完整 Manifest、fixture 文件字节与 canonical digest。
+真实 Runtime/runner 仍使用实际构建文件的原始 size/hash，篡改即拒绝。
+首次全仓 test 发现 sourcemap 嵌入 LF/CRLF 源码导致 golden 漂移；以上分离
+消除 checkout 换行依赖，没有归一化真实包 hash 或移除漂移断言。
+
+每种公开错误提供受控文案与下一步操作；response version/requestId/method、
+formatVersion/终态/result identity/时间一致性均拒绝不匹配。请求超限在 IO 前
+拒绝；原生 bridge 的稳定拒绝码保留。submit 失联明确 acceptanceUnknown，
+不自动重试；重连核对 instance，原始 key/package/input/background/deadline
+不可变。当前没有 durable crash 恢复，旧实例任务无恢复证据，返回
+INSTANCE_MISMATCH/JOB_NOT_FOUND，不能伪造 interrupted 或 success。
+
+真实 Node raw pipe 复验错协议、超限 header 和 identity injection；实际
+foreground 断开取消、background 断开继续、跨 caller 取消拒绝通过。真实
+Base64 超预算输出返回 OUTPUT_INVALID；受管 child 包摘要改变返回
+EXECUTION_FAILED，极短 deadline 返回 TIMEOUT，均经过实际 child wait/reap。
+事件仅含 runId/state/sequence，diagnostic export 仅有版本/code/summary/action/
+acceptanceUnknown；token/input/output/路径/异常 canaries 均不进入诊断。
+Native bridge 增加与实际 configured origin 的精确匹配，错误本地端口也拒绝。
+
+最终 native harness 重建同一 G2 fixture identity，以新的 WebView profile、
+loopback-only child CDP 再验证初始 launcher、同一真实成功 runId、Enter
+键盘触发及 JOB_NOT_FOUND 可操作文案。结束关闭本任务 native/Runtime/Vite。
+截图更新为 2026-10-05 最终复验，实际 runId 为
+6efafd6b-7faa-4df5-9ce9-1bee16a3074a。receipt 留在忽略的
+execution-validation/g2，不包含 tokens 或 raw payload。仍未认证 NVDA、
+其他 OS、前台窗口、签名发行、安全 Reviewer 或 G3 生产 grants/持久恢复。
+
+2026-10-05 最终全仓门禁：冻结依赖、docs/workspace/catalog contracts 通过；
+十一 workspace lint（零警告/错误）、types、test、build 全部通过。
+test 与 build 顺序执行，未使用 Turbo 测试缓存。SDK 180、CLI 93、UI 3、
+plugins 47、Web 24、runner 1、runtime-client 6、Desktop 80 项 Bun tests；
+UI-test 固定 Chromium 的 25 files / 59 tests；独立 Runtime/core 10 和
+Desktop 15 项 Rust tests。真实十二插件 smoke 包含在 plugins gate。
+生产入口门禁对 Web/Desktop 实际产物和 opt-in/canary 重建完成字节一致检查，
+DEV 验证面板及已知 unsafe fingerprints 未进入生产产物。
+Desktop Rust fmt/check/clippy -D warnings、actionlint、完整 Manifest、命令文档
+和生成文件只读复核均通过。
+
+补验事故：全仓 Cargo integration tests 重建了默认桌面二进制，harness 原先只
+检查产物包含验证 identifier，错误配置也含同一拒绝逻辑常量，因而检查无效。
+2026-10-04 23:33 的补验误启动默认 Debug；会话校验拒绝，但默认 app.sqlite
+在初始化时触发了已有的删除重建逻辑。没有本次任务前的数据快照，不能证明
+旧数据恢复。维护者明确无需保留数据；没有复制、读出记录或恢复原库。
+
+已增加 metadata-only preflight：先验证新探针 marker，再读取实际编译配置的
+identifier/dev origin/title，全部匹配后才启动 fixture Host/Desktop。旧二进制
+没有探针时执行前拒绝；不能用源码字符串出现作为身份依据。原生显式验证模式
+另在任何 Builder/plugin/数据库初始化前拒绝错误 identifier。普通 Debug 的
+历史重置行为没有更改，仍是已知 SEC 风险，不授权默认用户身份用于验收。
+重新加载真实原生面板时，测试 Host 正常关闭后的握手错误保留
+RUNTIME_DISCONNECTED 和可操作文案。
+
+最终真实 preflight 先拒绝 Cargo 重建的默认配置，发生在任何 Host/GUI 创建
+之前；再以专用 TAURI_CONFIG 重新编译的二进制通过实际配置 probe。
+新的 native harness 通过共享实际成功任务、JOB_NOT_FOUND 文案与 Host 正常
+关停后 reload 的握手失联检查；结束确认 1420/9224 不再监听。
+
+P1.5a 单独提交，G2 固定 Windows/T1 验证范围 done；P1.3/P1.5 父项和
+Phase 1 继续 pending。根 CI 脚本的检查在有意未提交实现期间逐项执行，
+提交后另核对 clean worktree；没有宣称远程 CI 或 required checks 已验收。

@@ -26,6 +26,9 @@ try {
   Invoke-QualityCommand 'Generate host routes and Rust bindings' bun @(
     'run', 'generate:hosts'
   )
+  Invoke-QualityCommand 'Generated Runtime contracts' bun @(
+    'run', 'verify:runtime-contracts'
+  )
   Invoke-QualityCommand 'Lint all workspaces' bun @(
     'run', 'lint', '--force'
   )

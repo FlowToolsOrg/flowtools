@@ -370,3 +370,25 @@ implied. ADR-0001/0002 accepted designs unchanged. Same-account compromise,
 TOCTOU replacement, process trees, OS budgets, third-party sandbox, persistent
 grants and Debug user-DB reset are not resolved. Security Reviewer/date/conclusion:
 independent reviewer pending / not approved; Codex engineering checks only.
+
+### G2 P1.5a diagnostic evidence (2026-10-04)
+
+SEC-003/006/009/010/012 remain open. Source/rejection evidence adds Rust codegen
+and runtime deadline/event tests, TS codec/diagnostics golden/privacy tests,
+actual Node raw frame/version/injection/foreground disconnect/output budget tests
+and managed child package mismatch/deadline kill/wait. Native identity checks now
+require the actual configured origin, preventing alternate localhost port reuse.
+Oversized request IDs are bounded before replay-cache insertion; frame and output
+budgets cannot publish private errors. Production artifact tests and post-build
+gate also refuse the DEV validation panel. Recovery remains explicit same-instance
+query; no automatic retries, grants or persistent payloads are introduced.
+ADR-0001/0002 unchanged. Reviewer/date/conclusion: independent reviewer pending /
+not approved; Codex engineering verification only. Residual same-user compromise,
+TOCTOU, process trees/OS budgets, durable recovery and Debug DB reset remain.
+
+Validation startup evidence: metadata-only preflight reads actual compiled config
+before a GUI/Host starts; unsupported stale binaries refuse before execution.
+Explicit validation rejects the default identifier before Builder/plugins/DB IO.
+This repairs a reproduced harness identity bug: Cargo tests rebuilt the default
+binary, and a literal-ID scan allowed its 23:33 Debug DB reset. Data preservation
+was declined; no pre-reset recovery is claimed. Ordinary Debug reset remains open.

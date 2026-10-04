@@ -7,7 +7,8 @@
     "src-tauri/**",
     "src/utils/bindings.ts",
     "packages/runtime-client/src/bindings.ts",
-    "packages/runtime-client/src/wire-schema.json"
+    "packages/runtime-client/src/wire-schema.json",
+    "packages/runtime-client/src/wire-fixtures.json"
   ],
   "tabWidth": 2,
   "useTabs": false,

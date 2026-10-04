@@ -9,7 +9,7 @@
 > 2026-10-04 产品决策：面向知识工作者/普通办公用户，GUI 与外部 agents
 > 共用命令；支持独立 CLI、轻量后台内核、集中管理和共享二进制工具依赖。
 > 低代码、内置 AI 助手与模型接入保留为未来插件。具体顺序与实现见
-> [下一阶段目标与实施设计](./next-milestones.md)。G1 已完成，G2–G8 实施项仍 pending。
+> [下一阶段目标与实施设计](./next-milestones.md)。G1、G2 固定验证范围已完成，G3–G8 实施项仍 pending。
 
 本文档是 FlowTools 从 Demo 级原型走向生产版本的执行台账。它不以
 “页面已存在”或“类型已定义”作为完成标准，而以真实执行、失败可恢复、
@@ -1021,7 +1021,7 @@ G4 服务依赖 -> G5 签名安装与隔离 -> G6 工具链 -> G7 办公闭环 -
 | P1.2a | done    | P1.1                | 单一状态机、锁和 hook 补偿；100 并发操作不重复激活                                 |
 | P1.2b | done    | P1.2a               | 命令状态投影、进程/视图资源 ownership；更新/卸载无孤儿 handler                     |
 | P1.3a | done    | P1.2                | Runtime core/binary、用户级 IPC、T1 临时 profile 与 job 协议；不接用户数据/第三方  |
-| P1.5a | pending | P1.3a               | versioned DTO、拒绝码、脱敏事件与兼容/失联诊断                                     |
+| P1.5a | done    | P1.3a               | versioned DTO、拒绝码、脱敏事件与兼容/失联诊断                                     |
 | P2.3a | pending | P1.3a、P1.5a        | 基础 typed broker，先 T1；同一身份/operation/scope 决策，拒绝无副作用              |
 | P2.6a | pending | P2.3a               | 移除 Debug reset、迁移/备份、Runtime 单写者与异步 data/revision；保留旧数据        |
 | P2.4a | pending | P2.3a、P2.6a        | CLI-only init/策略管理、持久 grants、冷启动/后台/effects、撤销 epoch；无默认放行   |
@@ -1823,3 +1823,23 @@ and Windows WebView2 clients query the same successful runId. See
 G3 P1.3b durable/granted execution; P1.5a diagnostic acceptance is next. All
 maturity labels stay prototype, independent security Reviewer remains pending,
 and SEC risks remain open. No production DB migration or grant system is claimed.
+
+### G2 P1.5a implementation evidence
+
+2026-10-05: protocol/client version constants, types/schema/complete metadata and
+wire golden fixtures are generated from Rust and checked read-only before CI lint.
+Manifest fixture files use controlled LF text; actual runtime package integrity
+retains raw build file hashes. 18 refusal codes have fixture and actionable user
+wording. Diagnostic events and
+exports omit private input/output/exception messages. Real managed children cover
+package mismatch, deadline kill/wait and actual oversized Base64 output; native
+GUI/Node share results and show JOB_NOT_FOUND diagnostics. G2 is complete for
+Windows validation/T1; P1.3/P1.5 parents remain pending for G3 durable/granted
+production execution and extended diagnostics. See [G2 evidence](./validation/g2-runtime.md).
+All maturity labels remain prototype; no independent security approval is claimed.
+
+Validation startup now requires a supported metadata-only native probe and exact
+compiled identity/origin/title before any GUI/Host launch. Explicit validation
+also rejects incorrect identity before native plugin/DB initialization. This
+repairs the reproduced stale-artifact incident recorded in G2 acceptance; ordinary
+Debug DB reset remains an open risk, with no claim of user-data recovery.

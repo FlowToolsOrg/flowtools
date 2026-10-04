@@ -75,6 +75,9 @@
         "@flowtools/plugin-runner": "workspace:*",
         "@flowtools/runtime-core": "workspace:*",
       },
+      "devDependencies": {
+        "@types/node": "catalog:",
+      },
     },
     "apps/ui-test": {
       "name": "@flowtools/ui-test",
@@ -194,6 +197,9 @@
       "dependencies": {
         "@flowtools/plugins": "workspace:*",
         "@flowtools/sdk": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "catalog:",
       },
     },
     "packages/sdk": {

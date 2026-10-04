@@ -1,8 +1,17 @@
 import { useEffect, useState } from 'react'
 
-import { RuntimeClient, RuntimeClientError } from '@flowtools/runtime-client'
+import {
+  RuntimeClient,
+  RuntimeClientError,
+  describeRuntimeError,
+} from '@flowtools/runtime-client'
 
 import { commands } from '../utils/bindings'
+
+function diagnosticText(error: unknown): string {
+  const diagnostic = describeRuntimeError(error)
+  return `${diagnostic.code}: ${diagnostic.summary}；${diagnostic.action}`
+}
 
 /** Disposable G2 fixture: native code binds endpoint, caller and bootstrap token. */
 export default function ValidationRuntimePanel() {
@@ -32,8 +41,8 @@ export default function ValidationRuntimePanel() {
             setStatus('Connected: prototype validation')
           }
         })
-        .catch(() => {
-          if (active) setStatus('RUNTIME_DISCONNECTED')
+        .catch(error => {
+          if (active) setStatus(diagnosticText(error))
         })
     }, 0)
     return () => {
@@ -49,9 +58,7 @@ export default function ValidationRuntimePanel() {
       const job = await client.waitForResult(runId)
       setStatus(`${job.runId} | ${job.state} | ${job.rootCaller}`)
     } catch (error) {
-      setStatus(
-        error instanceof RuntimeClientError ? error.code : 'INVALID_RESPONSE'
-      )
+      setStatus(diagnosticText(error))
     }
   }
   return (

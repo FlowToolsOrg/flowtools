@@ -17,12 +17,20 @@ fn denied() -> RuntimeError {
     }
 }
 
-fn allowed(debug: bool, identifier: &str, label: &str, host: &str, opt_in: Option<&str>) -> bool {
+fn allowed(
+    debug: bool,
+    identifier: &str,
+    label: &str,
+    host: &str,
+    opt_in: Option<&str>,
+    origin_matches: bool,
+) -> bool {
     debug
-        && identifier == "com.flowtools.g2-validation-20261004"
+        && identifier == crate::RUNTIME_VALIDATION_IDENTIFIER
         && label == "main"
         && matches!(host, "localhost" | "127.0.0.1" | "tauri.localhost")
         && opt_in == Some("1")
+        && origin_matches
 }
 
 fn check_window<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>) -> Result<(), RuntimeError> {
@@ -36,6 +44,13 @@ fn check_window<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>) -> Result<(
             std::env::var("FLOWTOOLS_RUNTIME_VALIDATION")
                 .ok()
                 .as_deref(),
+            window
+                .app_handle()
+                .config()
+                .build
+                .dev_url
+                .as_ref()
+                .is_some_and(|configured| configured.origin() == url.origin()),
         )
     {
         return Err(denied());
@@ -120,6 +135,9 @@ pub async fn validation_runtime_disconnect<R: tauri::Runtime>(
 }
 
 pub fn on_destroyed<R: tauri::Runtime>(window: &tauri::Window<R>) {
+    if window.label() != "main" {
+        return;
+    }
     if let Some(state) = window.try_state::<ValidationRuntimeConnection>() {
         let connection = state.0.clone();
         tauri::async_runtime::spawn(async move {
@@ -139,7 +157,7 @@ mod tests {
                     for host in ["localhost", "evil.invalid"] {
                         for opt_in in [None, Some("1"), Some("true")] {
                             assert_eq!(
-                                allowed(debug, identifier, label, host, opt_in),
+                                allowed(debug, identifier, label, host, opt_in, true),
                                 debug
                                     && identifier == "com.flowtools.g2-validation-20261004"
                                     && label == "main"
@@ -151,5 +169,13 @@ mod tests {
                 }
             }
         }
+        assert!(!allowed(
+            true,
+            "com.flowtools.g2-validation-20261004",
+            "main",
+            "127.0.0.1",
+            Some("1"),
+            false
+        ));
     }
 }

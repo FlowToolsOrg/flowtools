@@ -6,7 +6,7 @@ import { parseManifestCatalog } from '@flowtools/sdk/manifest'
 import { builtInCLIManifests } from '../cli/src/builtin-manifests'
 
 // Build-owned complete package metadata, not a caller-supplied installation source.
-const root = resolve(import.meta.dir, '../..')
+const root = resolve(import.meta.dirname, '../..')
 const catalog = parseManifestCatalog(
   JSON.parse(
     readFileSync(
@@ -22,7 +22,7 @@ const catalog = parseManifestCatalog(
   },
   builtInCLIManifests.map(plugin => plugin.id)
 )
-const directory = resolve(import.meta.dir, '.generated')
+const directory = resolve(import.meta.dirname, '.generated')
 mkdirSync(directory, { recursive: true })
 writeFileSync(
   resolve(directory, 'catalog.json'),

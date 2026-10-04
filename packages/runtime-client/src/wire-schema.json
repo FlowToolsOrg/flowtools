@@ -270,7 +270,8 @@
           "EXECUTION_FAILED",
           "OUTPUT_INVALID",
           "RUNTIME_BUSY",
-          "RUNTIME_DISCONNECTED"
+          "RUNTIME_DISCONNECTED",
+          "INVALID_RESPONSE"
         ],
         "type": "string"
       },
@@ -348,7 +349,8 @@
           "durationMs",
           "inputSummary"
         ],
-        "type": "object"
+        "type": "object",
+        "unevaluatedProperties": false
       },
       "InputSummary": {
         "additionalProperties": false,
@@ -369,6 +371,7 @@
         "type": "object"
       },
       "JobEvent": {
+        "additionalProperties": false,
         "properties": {
           "runId": {
             "type": "string"
@@ -390,6 +393,7 @@
         "type": "object"
       },
       "JobReceipt": {
+        "additionalProperties": false,
         "properties": {
           "acceptedAt": {
             "format": "double",
@@ -421,6 +425,7 @@
         "type": "object"
       },
       "JobSnapshot": {
+        "additionalProperties": false,
         "properties": {
           "commandId": {
             "type": "string"
@@ -517,6 +522,7 @@
       "Outcome": {
         "oneOf": [
           {
+            "additionalProperties": false,
             "properties": {
               "data": {
                 "$ref": "#/$defs/SessionProof"
@@ -533,6 +539,7 @@
             "type": "object"
           },
           {
+            "additionalProperties": false,
             "properties": {
               "data": {
                 "$ref": "#/$defs/RuntimeStatus"
@@ -549,6 +556,7 @@
             "type": "object"
           },
           {
+            "additionalProperties": false,
             "properties": {
               "data": {
                 "items": {
@@ -568,6 +576,7 @@
             "type": "object"
           },
           {
+            "additionalProperties": false,
             "properties": {
               "data": {
                 "$ref": "#/$defs/JobReceipt"
@@ -584,6 +593,7 @@
             "type": "object"
           },
           {
+            "additionalProperties": false,
             "properties": {
               "data": {
                 "$ref": "#/$defs/JobSnapshot"
@@ -600,6 +610,7 @@
             "type": "object"
           },
           {
+            "additionalProperties": false,
             "properties": {
               "data": {
                 "items": {
@@ -619,6 +630,7 @@
             "type": "object"
           },
           {
+            "additionalProperties": false,
             "properties": {
               "data": {
                 "$ref": "#/$defs/RuntimeError"
@@ -637,6 +649,7 @@
         ]
       },
       "PluginStatus": {
+        "additionalProperties": false,
         "properties": {
           "enabled": {
             "type": "boolean"
@@ -676,6 +689,7 @@
         "type": "object"
       },
       "RuntimeStatus": {
+        "additionalProperties": false,
         "properties": {
           "instanceId": {
             "type": "string"

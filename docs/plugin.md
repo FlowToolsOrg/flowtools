@@ -743,7 +743,23 @@ live in Rust; GUI/Node clients query the same runId. Receipts are distinct from
 terminal execution results; foreground disconnect cancels, explicit background
 jobs survive. This only evaluates pure built-in commands: side effects require
 APPROVAL_REQUIRED. No user DB migration, production unattended execution, cold
-start, new grants, third-party runner or OS sandbox is delivered. P1.5a diagnostic
-acceptance remains pending. Runtime/core Rust builds are uncached; generate:hosts
+start, new grants, third-party runner or OS sandbox is delivered. P1.5a adds Rust-derived wire/golden drift checks, stable refusal codes,
+redacted events and actionable version/disconnection diagnostics. G2 is complete
+for its declared Windows/T1/disposable-profile scope. Runtime/core Rust builds are uncached; generate:hosts
 creates Rust-derived client DTO/schema and Desktop bindings before quality gates.
 See [G2 acceptance](./validation/g2-runtime.md).
+
+P1.5a: `bun run verify:runtime-contracts` compares generated types, JSON Schema
+and full Manifest/wire fixtures without rewriting tracked artifacts. Both Rust
+and TS validate the same fixtures/digests. Manifest fixture files use controlled
+LF text; runtime package integrity retains actual build file hashes. Connection
+loss never auto-resubmits;
+a submit with a lost response marks acceptance unknown. Reconnect checks instance
+identity; same-key retries preserve input/package/background/deadline. Diagnostic
+exports allow only version/code/summary/action/acceptance status, excluding private
+exception text and payloads. Desktop validation also binds the actual configured
+origin. Production builds exclude the DEV validation panel. Durable restart
+recovery, user data/grants and independent CLI distribution remain G3 scope.
+Validation must use the metadata-only native preflight before launching a Host
+or GUI; literal identifier strings cannot establish the compiled identity.
+Explicit validation refuses incorrect native identity before plugins/database IO.

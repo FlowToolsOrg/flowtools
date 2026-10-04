@@ -36,6 +36,13 @@ fn profile() -> Result<PathBuf, &'static str> {
     }
     let path = PathBuf::from(&args[1]);
     if !path.is_absolute()
+        || path.components().any(|part| {
+            matches!(
+                part,
+                std::path::Component::ParentDir | std::path::Component::CurDir
+            )
+        })
+        || !matches!(path.components().next(), Some(std::path::Component::Prefix(prefix)) if matches!(prefix.kind(),std::path::Prefix::Disk(_) | std::path::Prefix::VerbatimDisk(_)))
         || !path
             .file_name()
             .is_some_and(|s| s.to_string_lossy().starts_with("flowtools-validation-"))
@@ -59,7 +66,10 @@ fn profile() -> Result<PathBuf, &'static str> {
         use std::os::windows::fs::MetadataExt;
         let metadata =
             std::fs::symlink_metadata(&marker).map_err(|_| "VALIDATION_PROFILE_REQUIRED")?;
-        if !metadata.is_file() || metadata.file_attributes() & 0x400 != 0 {
+        if !metadata.is_file()
+            || metadata.file_attributes() & 0x400 != 0
+            || metadata.len() != b"flowtools-disposable-v1".len() as u64
+        {
             return Err("VALIDATION_PROFILE_REQUIRED");
         }
         if std::fs::read(&marker).map_err(|_| "VALIDATION_PROFILE_REQUIRED")?
@@ -209,12 +219,12 @@ async fn connection(mut pipe: NamedPipeServer, core: Core, tasks: mpsc::Sender<S
             }
             _ => break,
         };
-        if !request_ids.insert(request.request_id.clone()) {
+        if request.request_id.len() > 128 || !request_ids.insert(request.request_id.clone()) {
             let _ = send(
                 &mut pipe,
                 &Response {
                     version: 1,
-                    request_id: request.request_id,
+                    request_id: String::new(),
                     outcome: Outcome::Error(RuntimeError {
                         code: ErrorCode::InvalidRequest,
                     }),
@@ -325,4 +335,52 @@ async fn execute(spec: &RunSpec, core: Core, workspace: &Path) -> Result<Value, 
         let _ = child.wait().await;
     }
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[tokio::test]
+    async fn real_managed_child_refuses_changed_package_and_reaps_on_deadline() {
+        let profile = std::env::temp_dir().join(format!(
+            "flowtools-validation-runner-{}",
+            uuid::Uuid::new_v4()
+        ));
+        std::fs::create_dir(&profile).unwrap();
+        let (manifest, _) = flowtools_runtime_core::catalog::BuiltinCatalog::embedded()
+            .command("plugin-base64-encoder", "run")
+            .map(|(a, b)| (a.clone(), b.clone()))
+            .unwrap();
+        let digest = flowtools_runtime_core::catalog::digest(&manifest);
+        let core = Arc::new(Mutex::new(RuntimeCore::validation(
+            "cli".into(),
+            "desktop".into(),
+        )));
+        let invalid = RunSpec {
+            run_id: uuid::Uuid::new_v4().to_string(),
+            plugin_id: "plugin-base64-encoder".into(),
+            command_id: "run".into(),
+            input: json!({"text":"private-canary"}),
+            deadline: now() + 10000.0,
+            package_digest: "changed".into(),
+        };
+        assert_eq!(
+            execute(&invalid, core.clone(), &profile.join(&invalid.run_id))
+                .await
+                .unwrap_err(),
+            ErrorCode::ExecutionFailed
+        );
+        let expired = RunSpec {
+            run_id: uuid::Uuid::new_v4().to_string(),
+            package_digest: digest,
+            deadline: now() + 1.0,
+            ..invalid
+        };
+        assert_eq!(
+            execute(&expired, core, &profile.join(&expired.run_id))
+                .await
+                .unwrap_err(),
+            ErrorCode::Timeout
+        );
+    }
 }

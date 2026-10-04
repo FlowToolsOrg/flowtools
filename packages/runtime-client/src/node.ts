@@ -1,4 +1,4 @@
-import type { Request, Response } from './bindings'
+import type { ErrorCode, Request, Response } from './bindings'
 import type { RuntimeTransport } from './client'
 
 import { createConnection } from 'node:net'
@@ -39,29 +39,29 @@ export async function connectNamedPipe(
         timer: ReturnType<typeof setTimeout>
       }
     | undefined
-  const failed = () => {
+  const failed = (code: ErrorCode = 'RUNTIME_DISCONNECTED') => {
     closed = true
     socket.destroy()
     if (pending) {
       clearTimeout(pending.timer)
-      pending.reject(new RuntimeClientError('RUNTIME_DISCONNECTED'))
+      pending.reject(new RuntimeClientError(code))
       pending = undefined
     }
     buffer = Buffer.alloc(0)
   }
-  socket.on('close', failed)
-  socket.on('error', failed)
+  socket.on('close', () => failed())
+  socket.on('error', () => failed())
   // Keep a single reader for the lifetime of the stream, including between requests.
   socket.on('data', (chunk: Buffer) => {
     if (!pending || buffer.length + chunk.length > MAX_FRAME_BYTES + 4) {
-      failed()
+      failed('INVALID_RESPONSE')
       return
     }
     buffer = Buffer.concat([buffer, chunk])
     if (buffer.length < 4) return
     const size = buffer.readUInt32LE(0)
     if (size > MAX_FRAME_BYTES || buffer.length > size + 4) {
-      failed()
+      failed('INVALID_RESPONSE')
       return
     }
     if (buffer.length < size + 4) return
@@ -75,7 +75,7 @@ export async function connectNamedPipe(
       clearTimeout(operation.timer)
       operation.resolve(response)
     } catch {
-      failed()
+      failed('INVALID_RESPONSE')
     }
   })
   return {
@@ -111,6 +111,6 @@ export async function connectNamedPipe(
       tail = operation
       return operation
     },
-    close: failed,
+    close: () => failed(),
   }
 }

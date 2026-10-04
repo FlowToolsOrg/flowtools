@@ -210,16 +210,9 @@ impl RuntimeCore {
             .catalog
             .command(&submit.plugin_id, &submit.command_id)?;
         let accepted_at = now();
-        if submit.deadline <= accepted_at {
-            return Err(ErrorCode::Timeout);
-        }
-        if submit.deadline > accepted_at + command["resources"]["timeoutMs"].as_f64().unwrap_or(0.0)
-        {
-            return Err(ErrorCode::InvalidRequest);
-        }
         let package_digest = digest(manifest);
         let action_digest = digest(
-            &json!({ "package":package_digest, "command":submit.command_id, "input":input, "background":submit.background }),
+            &json!({ "package":package_digest, "command":submit.command_id, "input":input, "background":submit.background, "deadline":submit.deadline }),
         );
         let key = (caller.to_owned(), submit.idempotency_key);
         if let Some(run_id) = self.keys.get(&key) {
@@ -228,6 +221,13 @@ impl RuntimeCore {
                 return Err(ErrorCode::IdempotencyConflict);
             }
             return Ok(self.receipt(run_id));
+        }
+        if submit.deadline <= accepted_at {
+            return Err(ErrorCode::Timeout);
+        }
+        if submit.deadline > accepted_at + command["resources"]["timeoutMs"].as_f64().unwrap_or(0.0)
+        {
+            return Err(ErrorCode::InvalidRequest);
         }
         if self.jobs.len() >= 128 {
             return Err(ErrorCode::RuntimeBusy);
@@ -520,10 +520,11 @@ mod tests {
         let mut core = RuntimeCore::validation("cli".into(), "desktop".into());
         let cli = open(&mut core, "cli-conn", "cli");
         let desktop = open(&mut core, "desktop-conn", "desktop");
+        let original = submit();
         let Outcome::Receipt(receipt) = core
             .handle(
                 "cli-conn",
-                request(Call::Submit(submit()), Some(cli.clone())),
+                request(Call::Submit(original.clone()), Some(cli.clone())),
             )
             .outcome
         else {
@@ -535,14 +536,14 @@ mod tests {
         let Outcome::Receipt(repeated) = core
             .handle(
                 "cli-conn",
-                request(Call::Submit(submit()), Some(cli.clone())),
+                request(Call::Submit(original.clone()), Some(cli.clone())),
             )
             .outcome
         else {
             panic!("Receipt retry")
         };
         assert_eq!(repeated.run_id, receipt.run_id);
-        let mut changed = submit();
+        let mut changed = original.clone();
         changed.input = json!({"text":"other"});
         assert!(matches!(
             core.handle("cli-conn", request(Call::Submit(changed), Some(cli)))
@@ -594,6 +595,118 @@ mod tests {
             core.handle("c", req).outcome,
             Outcome::Error(RuntimeError {
                 code: ErrorCode::ProtocolMismatch
+            })
+        ));
+    }
+
+    #[test]
+    fn compatibility_deadline_errors_and_redacted_events_are_stable() {
+        let mut core = RuntimeCore::validation("private-token".into(), "desktop".into());
+        for (version, instance, expected) in [
+            ("future", None, ErrorCode::ClientIncompatible),
+            (
+                CLIENT_VERSION,
+                Some("old-instance".to_owned()),
+                ErrorCode::InstanceMismatch,
+            ),
+        ] {
+            let reply = core.handle(
+                "c",
+                request(
+                    Call::Open(OpenSession {
+                        token: "private-token".into(),
+                        client_version: version.into(),
+                        expected_instance_id: instance,
+                    }),
+                    None,
+                ),
+            );
+            assert!(matches!(reply.outcome, Outcome::Error(RuntimeError {code}) if code==expected));
+        }
+        let proof = open(&mut core, "c", "private-token");
+        let mut expired = submit();
+        expired.deadline = now() - 1.0;
+        assert!(matches!(
+            core.handle("c", request(Call::Submit(expired), Some(proof.clone())))
+                .outcome,
+            Outcome::Error(RuntimeError {
+                code: ErrorCode::Timeout
+            })
+        ));
+        let mut original = submit();
+        original.input = json!({"text":"private-payload-canary"});
+        let Outcome::Receipt(receipt) = core
+            .handle(
+                "c",
+                request(Call::Submit(original.clone()), Some(proof.clone())),
+            )
+            .outcome
+        else {
+            panic!("receipt");
+        };
+        let mut extension = original;
+        extension.deadline += 1.0;
+        assert!(matches!(
+            core.handle("c", request(Call::Submit(extension), Some(proof.clone())))
+                .outcome,
+            Outcome::Error(RuntimeError {
+                code: ErrorCode::IdempotencyConflict
+            })
+        ));
+        core.take_run(&receipt.run_id).unwrap();
+        core.finish(&receipt.run_id, Err(ErrorCode::ExecutionFailed));
+        let events = core.handle(
+            "c",
+            request(
+                Call::Events(EventCursor {
+                    run_id: receipt.run_id.clone(),
+                    after_sequence: 0,
+                }),
+                Some(proof.clone()),
+            ),
+        );
+        let text = serde_json::to_string(&events).unwrap();
+        for private in [
+            "private-token",
+            "private-payload-canary",
+            "input",
+            "result",
+            "message",
+        ] {
+            assert!(!text.contains(private));
+        }
+        let Outcome::Job(job) = core
+            .handle(
+                "c",
+                request(
+                    Call::Job(JobKey {
+                        run_id: receipt.run_id.clone(),
+                    }),
+                    Some(proof.clone()),
+                ),
+            )
+            .outcome
+        else {
+            panic!("job");
+        };
+        assert!(matches!(
+            job.result.unwrap().outcome,
+            ExecutionOutcome::Failure {
+                success: false,
+                error: RuntimeError {
+                    code: ErrorCode::ExecutionFailed
+                }
+            }
+        ));
+        core.finish(&receipt.run_id, Err(ErrorCode::Timeout));
+        assert_eq!(core.state(&receipt.run_id), Some(JobState::Failed));
+        let mut replacement = RuntimeCore::validation("private-token".into(), "desktop".into());
+        assert!(matches!(
+            replacement
+                .handle("c", request(Call::Status, Some(proof)))
+                .outcome,
+            Outcome::Error(RuntimeError {
+                code: ErrorCode::InstanceMismatch
             })
         ));
     }

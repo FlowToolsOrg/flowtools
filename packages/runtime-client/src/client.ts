@@ -11,6 +11,7 @@ import type {
   SubmitJob,
 } from './bindings'
 
+import { CLIENT_VERSION, PROTOCOL_MAJOR } from './bindings'
 import { decodeResponse, encodeRequest } from './codec'
 
 export interface RuntimeTransport {
@@ -20,7 +21,7 @@ export interface RuntimeTransport {
 
 export class RuntimeClientError extends Error {
   constructor(
-    readonly code: ErrorCode | 'INVALID_RESPONSE',
+    readonly code: ErrorCode,
     readonly acceptanceUnknown = false
   ) {
     super(code)
@@ -43,7 +44,7 @@ export class RuntimeClient {
   ): Promise<void> {
     const outcome = await this.call({
       method: 'session.open',
-      payload: { token, clientVersion: '0.1.0', expectedInstanceId },
+      payload: { token, clientVersion: CLIENT_VERSION, expectedInstanceId },
     })
     if (outcome.type !== 'session')
       throw new RuntimeClientError('INVALID_RESPONSE')
@@ -52,32 +53,68 @@ export class RuntimeClient {
 
   async call(call: Call): Promise<Outcome> {
     const request: Request = {
-      version: 1,
+      version: PROTOCOL_MAJOR,
       requestId: crypto.randomUUID(),
       session: this.proof,
       call,
     }
     try {
       encodeRequest(request)
-    } catch {
-      throw new RuntimeClientError('INVALID_REQUEST')
+    } catch (error) {
+      throw new RuntimeClientError(
+        error instanceof Error && error.message === 'FRAME_TOO_LARGE'
+          ? 'FRAME_TOO_LARGE'
+          : 'INVALID_REQUEST'
+      )
     }
     let response: Response
     try {
-      response = decodeResponse(await this.transport.exchange(request))
+      response = await this.transport.exchange(request)
+    } catch (error) {
+      const code =
+        error instanceof RuntimeClientError
+          ? error.code
+          : 'RUNTIME_DISCONNECTED'
+      throw new RuntimeClientError(
+        code,
+        call.method === 'jobs.submit' &&
+          ['RUNTIME_DISCONNECTED', 'INVALID_RESPONSE'].includes(code)
+      )
+    }
+    try {
+      response = decodeResponse(response)
     } catch {
       throw new RuntimeClientError(
-        'RUNTIME_DISCONNECTED',
+        'INVALID_RESPONSE',
         call.method === 'jobs.submit'
       )
     }
-    if (response.version !== 1 || response.requestId !== request.requestId)
+    if (response.version !== PROTOCOL_MAJOR)
+      throw new RuntimeClientError(
+        'PROTOCOL_MISMATCH',
+        call.method === 'jobs.submit'
+      )
+    if (response.requestId !== request.requestId)
       throw new RuntimeClientError(
         'INVALID_RESPONSE',
         call.method === 'jobs.submit'
       )
     if (response.outcome.type === 'error')
       throw new RuntimeClientError(response.outcome.data.code)
+    const expected = {
+      'session.open': 'session',
+      'runtime.status': 'status',
+      'plugins.list': 'plugins',
+      'jobs.submit': 'receipt',
+      'jobs.status': 'job',
+      'jobs.cancel': 'job',
+      'jobs.events': 'events',
+    } satisfies Record<Call['method'], Outcome['type']>
+    if (response.outcome.type !== expected[call.method])
+      throw new RuntimeClientError(
+        'INVALID_RESPONSE',
+        call.method === 'jobs.submit'
+      )
     return response.outcome
   }
 

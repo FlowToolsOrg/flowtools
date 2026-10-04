@@ -1018,7 +1018,7 @@ G4 服务依赖 -> G5 签名安装与隔离 -> G6 工具链 -> G7 办公闭环 -
 | P1.1a | done    | P0.3c、P0.4         | 序列化 Manifest、多操作输入/输出 Schema、冷启动/effects/依赖声明；非法包执行前拒绝 |
 | P1.1b | done    | P1.1a               | UI/commands 分包、十二插件兼容适配；无 React/GUI/source 消费实际命令               |
 | P1.1c | done    | P1.1b               | describe/commands/flags 同源生成；编译 CLI 的机器发现与拒绝回归                    |
-| P1.2a | pending | P1.1                | 单一状态机、锁和 hook 补偿；100 并发操作不重复激活                                 |
+| P1.2a | done    | P1.1                | 单一状态机、锁和 hook 补偿；100 并发操作不重复激活                                 |
 | P1.2b | pending | P1.2a               | 命令状态投影、进程/视图资源 ownership；更新/卸载无孤儿 handler                     |
 | P1.3a | pending | P1.2                | Runtime core/binary、用户级 IPC、T1 临时 profile 与 job 协议；不接用户数据/第三方  |
 | P1.5a | pending | P1.3a               | versioned DTO、拒绝码、脱敏事件与兼容/失联诊断                                     |

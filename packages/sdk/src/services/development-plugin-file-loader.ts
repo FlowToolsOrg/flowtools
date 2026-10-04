@@ -76,13 +76,7 @@ export class DevelopmentPluginFileLoader {
       )
     }
 
-    const entry = this.registry.get(pluginId)
-
-    if (entry?.state === 'enabled') {
-      await this.loader.disable(pluginId)
-    }
-
-    this.registry.unregister(pluginId)
+    await this.loader.uninstall(pluginId)
     this.externalPluginIds.delete(pluginId)
   }
 

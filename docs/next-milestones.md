@@ -1,7 +1,7 @@
 # FlowTools 下一阶段目标与实施设计
 
 - 决策日期：2026-10-04
-- 状态：accepted-design；G1 已完成，G2–G8 实施项仍 pending，不证明隔离或生产能力已交付
+- 状态：accepted-design；G1 已完成，G2 P1.2a 已完成，其余实施项仍 pending，不证明隔离或生产能力已交付
 - 决策来源：维护者已确认的产品讨论；实施责任由 Repository Maintainer 分配
 - 进度来源：[生产路线图](./production-roadmap.md)
 - 安全来源：[信任边界](./adr/0001-plugin-trust-boundaries.md)、
@@ -406,3 +406,5 @@ G0 已在 2026-10-04 收口；完整根门禁、实际 production artifacts 与�
 三端实际 T1 入口在加载前检查同一 Manifest，外部默认拒绝保持；父项 P1.1 完成。
 实际检查范围与本机资源故障记录见 [G1 验收](./validation/g1-command-contract.md)。
 后续顺序为 G2，Host、runtime-client、后台任务、grant 与独立 CLI 尚未实现。
+
+P1.2a 已实施单一生命周期与每插件锁，见 [G2 验收](./validation/g2-runtime.md)。

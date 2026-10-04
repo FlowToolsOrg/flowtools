@@ -289,3 +289,13 @@ scripts/generate-command-docs.ts 和只读 drift 回归；docs/builtin-commands.
 既有 runtime adapters 和生成 loader 接入该 SDK 契约；没有新增 G2/G3 module。
 Turbo build outputs 覆盖 dist/.generated；固定 Chromium gate 串行执行所有文件，
 相关缓存完整性与 runner 约束由 scripts/ci-contracts.test.ts 验证。
+
+## G2 lifecycle progress
+
+P1.2a uses one SDK lifecycle controller with registry-owned per-plugin queues.
+Loader and LifecycleManager share load/activate/deactivate/unload ordering.
+State transitions reject illegal edges; failed hooks retain their cause and
+cleanup failures until explicit unload/reload recovery. Disabled instances are
+reused without loading again. Removal requires completed cleanup.
+P1.2b resource/command ownership and P1.3a/P1.5a headless IPC remain pending.
+See [G2 acceptance](./validation/g2-runtime.md).

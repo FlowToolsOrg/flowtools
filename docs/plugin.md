@@ -723,3 +723,13 @@ JSON 与顺序 batch 规则见 [CLI v1](./cli-contract-v1.md)。三端 JSON run 
 Manifest executor；UI run capability 取命令请求和 metadata 声明交集，panel
 继续使用既有 provider/store。Web/Desktop 固定 loader 在 UI import 前验证契约，
 外部执行仍 deny-only。操作修改后 build:packages 并 generate:command-docs。
+
+## G2 lifecycle progress
+
+P1.2a uses one SDK lifecycle controller with registry-owned per-plugin queues.
+Loader and LifecycleManager share load/activate/deactivate/unload ordering.
+State transitions reject illegal edges; failed hooks retain their cause and
+cleanup failures until explicit unload/reload recovery. Disabled instances are
+reused without loading again. Removal requires completed cleanup.
+P1.2b resource/command ownership and P1.3a/P1.5a headless IPC remain pending.
+See [G2 acceptance](./validation/g2-runtime.md).

@@ -60,6 +60,8 @@ describe('PluginRegistry registration', () => {
     const registry = new PluginRegistry()
     registry.register(createManifest('app-plugin', 'app'))
     registry.register(createManifest('tool-plugin', 'tool'))
+    registry.transition('tool-plugin', 'loading')
+    registry.transition('tool-plugin', 'loaded')
     registry.transition('tool-plugin', 'enabled')
 
     expect(registry.getByType('app').map(plugin => plugin.id)).toEqual([
@@ -119,7 +121,7 @@ describe('PluginRegistry state events', () => {
     const events: PluginRegistryEvent[] = []
     registry.subscribe(event => events.push(event))
 
-    registry.updateState('missing-plugin', { state: 'enabled' })
+    registry.updateState('missing-plugin', { loadedAt: 0 })
     registry.transition('missing-plugin', 'enabled')
     registry.markError('missing-plugin', new Error('missing'))
     registry.unregister('missing-plugin')

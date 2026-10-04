@@ -87,6 +87,8 @@ export interface RegisteredPlugin {
    * Error if state is 'error'.
    */
   error?: Error
+  /** Cleanup failures are separate from the original lifecycle failure. */
+  cleanupErrors?: readonly Error[]
   /**
    * Timestamp when plugin was loaded.
    */

@@ -527,3 +527,13 @@ Turbo build outputs include `dist` and `.generated` so the compiled catalog is
 restored with cached artifacts. CI still forces builds and never caches JS output
 as a substitute for quality gates.
 See [CLI v1 contract](./docs/cli-contract-v1.md); keep unsupported platform scope explicit.
+
+## G2 lifecycle progress
+
+P1.2a uses one SDK lifecycle controller with registry-owned per-plugin queues.
+Loader and LifecycleManager share load/activate/deactivate/unload ordering.
+State transitions reject illegal edges; failed hooks retain their cause and
+cleanup failures until explicit unload/reload recovery. Disabled instances are
+reused without loading again. Removal requires completed cleanup.
+P1.2b resource/command ownership and P1.3a/P1.5a headless IPC remain pending.
+See [G2 acceptance](./docs/validation/g2-runtime.md).

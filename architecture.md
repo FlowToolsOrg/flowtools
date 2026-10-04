@@ -644,3 +644,13 @@ P1.1c 三端的内置入口使用同一纯 Manifest：Web/Desktop 在固定 UI i
 commands/describe/help 不加载 code；flag 解析与生成文档同源。batch v1 为顺序
 真实执行，无第二份任务/业务数据库。见 [CLI 契约](./docs/cli-contract-v1.md)。
 Host/runtime-client、grant 与独立 CLI 发行仍为 G2/G3，未实现跨进程调用。
+
+## G2 lifecycle progress
+
+P1.2a uses one SDK lifecycle controller with registry-owned per-plugin queues.
+Loader and LifecycleManager share load/activate/deactivate/unload ordering.
+State transitions reject illegal edges; failed hooks retain their cause and
+cleanup failures until explicit unload/reload recovery. Disabled instances are
+reused without loading again. Removal requires completed cleanup.
+P1.2b resource/command ownership and P1.3a/P1.5a headless IPC remain pending.
+See [G2 acceptance](./docs/validation/g2-runtime.md).

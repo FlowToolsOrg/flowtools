@@ -6,6 +6,8 @@ import type {
   RegisteredPlugin,
 } from './types'
 
+import { PluginLifecycleError, pluginStateTransitions } from './lifecycle-state'
+
 /**
  * Central registry for all plugins.
  * Single source of truth for plugin state.
@@ -13,6 +15,35 @@ import type {
 export class PluginRegistry {
   private plugins = new Map<string, RegisteredPlugin>()
   private listeners = new Set<PluginRegistryListener>()
+  private operations = new Map<string, Promise<unknown>>()
+  private activeOperations = new Map<string, symbol>()
+
+  /** Shared by every loader/manager using this registry, including failures. */
+  serialize<T>(
+    pluginId: string,
+    operation: (lease: symbol) => Promise<T>
+  ): Promise<T> {
+    const previous = this.operations.get(pluginId) ?? Promise.resolve()
+    const next = previous
+      .catch(() => {})
+      .then(async () => {
+        const lease = Symbol(pluginId)
+        this.activeOperations.set(pluginId, lease)
+        try {
+          return await operation(lease)
+        } finally {
+          this.activeOperations.delete(pluginId)
+        }
+      })
+    this.operations.set(pluginId, next)
+    void next
+      .finally(() => {
+        if (this.operations.get(pluginId) === next)
+          this.operations.delete(pluginId)
+      })
+      .catch(() => {})
+    return next
+  }
 
   /**
    * Register a plugin manifest without loading it.
@@ -28,7 +59,7 @@ export class PluginRegistry {
       state: 'registered',
     }
 
-    this.plugins.set(manifest.id, entry)
+    this.plugins.set(manifest.id, Object.freeze(entry))
     this.emit({ type: 'registered', pluginId: manifest.id })
   }
 
@@ -44,10 +75,21 @@ export class PluginRegistry {
   /**
    * Unregister a plugin and remove it from the registry.
    */
-  unregister(pluginId: string): void {
+  unregister(pluginId: string, lease?: symbol): void {
     const entry = this.plugins.get(pluginId)
     if (!entry) {
       return
+    }
+
+    if (
+      entry.state !== 'registered' ||
+      (this.operations.has(pluginId) &&
+        (!lease || this.activeOperations.get(pluginId) !== lease))
+    ) {
+      throw new PluginLifecycleError(
+        pluginId,
+        'must be unloaded before removal.'
+      )
     }
 
     this.plugins.delete(pluginId)
@@ -99,14 +141,22 @@ export class PluginRegistry {
   /**
    * Update a plugin's internal state and emit event.
    */
-  updateState(pluginId: string, update: Partial<RegisteredPlugin>): void {
+  updateState(
+    pluginId: string,
+    update: Partial<Omit<RegisteredPlugin, 'id' | 'manifest' | 'state'>>
+  ): void {
     const entry = this.plugins.get(pluginId)
     if (!entry) {
       return
     }
 
-    const next = { ...entry, ...update, id: pluginId }
-    this.plugins.set(pluginId, next)
+    if ('state' in update || 'manifest' in update || 'id' in update) {
+      throw new PluginLifecycleError(
+        pluginId,
+        'cannot bypass the state machine.'
+      )
+    }
+    this.plugins.set(pluginId, Object.freeze({ ...entry, ...update }))
   }
 
   /**
@@ -118,7 +168,16 @@ export class PluginRegistry {
       return
     }
 
-    this.updateState(pluginId, { state })
+    if (!pluginStateTransitions[entry.state].includes(state)) {
+      throw new PluginLifecycleError(
+        pluginId,
+        `cannot transition from ${entry.state} to ${state}.`
+      )
+    }
+    if (state === 'error') {
+      throw new PluginLifecycleError(pluginId, 'requires an error cause.')
+    }
+    this.plugins.set(pluginId, Object.freeze({ ...entry, state }))
 
     switch (state) {
       case 'registered':
@@ -136,8 +195,6 @@ export class PluginRegistry {
       case 'disabled':
         this.emit({ type: 'disabled', pluginId })
         break
-      case 'error':
-        break
     }
   }
 
@@ -149,7 +206,11 @@ export class PluginRegistry {
       return
     }
 
-    this.updateState(pluginId, { state: 'error', error })
+    const entry = this.plugins.get(pluginId)!
+    this.plugins.set(
+      pluginId,
+      Object.freeze({ ...entry, state: 'error', error })
+    )
     this.emit({ type: 'error', pluginId, error })
   }
 

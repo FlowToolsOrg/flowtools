@@ -689,3 +689,13 @@ After changing operations run `bun run generate:command-docs`; check the
 generated reference with `bun run verify:command-docs`. G1 is complete for the
 fixed T1 scope; independent CLI/Host/grants and signed external packages remain
 later milestones. All built-ins stay Prototype.
+
+## G2 lifecycle progress
+
+P1.2a uses one SDK lifecycle controller with registry-owned per-plugin queues.
+Loader and LifecycleManager share load/activate/deactivate/unload ordering.
+State transitions reject illegal edges; failed hooks retain their cause and
+cleanup failures until explicit unload/reload recovery. Disabled instances are
+reused without loading again. Removal requires completed cleanup.
+P1.2b resource/command ownership and P1.3a/P1.5a headless IPC remain pending.
+See [G2 acceptance](./docs/validation/g2-runtime.md).

@@ -336,3 +336,15 @@ P1.1b：固定 CLI [Manifest/文件导入校验](../../packages/cli/src/discover
 身份来自编译 inventory；文件 hash 无签名，不能抵御同时替换可信产物和 catalog，
 亦不解决校验后的替换竞争。SEC-001/002/010 保持 open，ADR 无设计变更，
 独立安全 Reviewer pending；没有新增 grant、可撤销安装或隔离声明。
+
+P1.1c：三端固定 T1 import 前契约校验使用
+[SDK loader](../../packages/sdk/src/manifest/loader.ts)，
+[拒绝与 registry 状态回归](../../packages/sdk/test/manifest-loader.test.ts)。
+CLI [参数解析](../../packages/cli/src/command-schema.ts) 与
+[compiled 回归](../../packages/cli/src/discovery.test.ts) 验证机器发现不 import code、
+未知/混合参数预检拒绝和真实 handler 参数值。Web/Desktop JSON run 使用相同
+Manifest executor；SDK 回归覆盖非法 runtime validator/default 后预算。
+身份由固定 callback/inventory 绑定，权限取命令请求与 host metadata 的交集；
+这不是持久 grant 或撤销服务。batch 顺序执行但没有事务/回滚，实际异常仍有
+副作用残余风险。SEC-001/002/005/010 保持 open，ADR 无设计变更，工程自检通过，
+独立安全 Reviewer pending；没有新增外部安装/可执行路径/原始 native API。

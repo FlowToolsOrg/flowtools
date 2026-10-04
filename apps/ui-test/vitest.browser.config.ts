@@ -21,6 +21,8 @@ export default defineConfig({
     ],
   },
   test: {
+    // Bound Chromium page/transform concurrency on Windows; run every file.
+    fileParallelism: false,
     setupFiles: ['./src/test/browser-setup.ts'],
     browser: {
       enabled: true,

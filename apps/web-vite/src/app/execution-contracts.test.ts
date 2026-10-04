@@ -5,6 +5,18 @@ import latency from '@flowtools/plugins/plugin-website-latency'
 
 import { runWebPlugin } from '../runtime/plugin-runtime'
 
+test('serialized command schema rejects undeclared fields and unavailable identities', async () => {
+  expect(
+    await runWebPlugin(base64, { text: 'hello', unknown: true })
+  ).toMatchObject({ success: false, error: { code: 'INPUT_INVALID' } })
+  expect(
+    await runWebPlugin(
+      { ...base64, meta: { ...base64.meta, id: 'plugin-unlisted-fixture' } },
+      { text: 'hello' }
+    )
+  ).toMatchObject({ success: false, error: { code: 'NOT_RUNNABLE' } })
+})
+
 test('Web runs actual app entry through SDK schema and execution envelope', async () => {
   expect(await runWebPlugin(base64, { text: 'hello' })).toMatchObject({
     success: true,

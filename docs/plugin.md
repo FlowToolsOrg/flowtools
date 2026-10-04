@@ -716,3 +716,10 @@ UI 显式复用 commandPlugin，Todo setup/run 使用同一 host store。
 commands 不导入 React/GUI/Tauri；完整包 hash 由 build-manifests.ts 从实际 dist
 生成。修改命令后重新 build:packages；UI watch 不替代 CLI 包重建。
 CLI 的命令级 capability 请求独立于 UI metadata 请求，均不等于用户 grant。
+
+P1.1c：用 `commands`/`describe <id> run --format json` 获取纯 operation contract，
+help/flags 和 [生成文档](./builtin-commands.md) 同源。具体错误、false/负数/数组、
+JSON 与顺序 batch 规则见 [CLI v1](./cli-contract-v1.md)。三端 JSON run 都通过
+Manifest executor；UI run capability 取命令请求和 metadata 声明交集，panel
+继续使用既有 provider/store。Web/Desktop 固定 loader 在 UI import 前验证契约，
+外部执行仍 deny-only。操作修改后 build:packages 并 generate:command-docs。

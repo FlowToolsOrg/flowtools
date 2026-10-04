@@ -149,7 +149,10 @@ function scanPlugins(): ComputedPluginMeta[] {
   return plugins
 }
 
-function generateManifests(plugins: ComputedPluginMeta[]): string {
+function generateManifests(
+  plugins: ComputedPluginMeta[],
+  host: string
+): string {
   // 按 category 分组生成 categories
   const categoryMap = new Map<string, string[]>()
 
@@ -171,7 +174,12 @@ function generateManifests(plugins: ComputedPluginMeta[]): string {
     maturity: '${p.maturity}',${p.description ? `\n    description: '${p.description}',` : ''}
     type: '${p.type}',${p.permissions && p.permissions.length > 0 ? `\n    permissions: [${p.permissions.map(p => `'${p}'`).join(', ')}],` : ''}${p.tags && p.tags.length > 0 ? `\n    tags: [${p.tags.map(t => `'${t}'`).join(', ')}],` : ''}${p.category ? `\n    category: '${p.category}',` : ''}
     cliAvailable: ${p.cliAvailable},
-    loader: () => import('@flowtools/plugins/${p.id}'),
+    loader: () => loadManifestModule(
+      builtInManifestData.find(value => value.id === '${p.id}'),
+      { hostVersion: '0.1.0', sdkVersion: '0.0.0', platform: '${host === 'desktop' ? 'windows' : 'web'}', arch: '${host === 'desktop' ? 'x64' : 'wasm32'}' },
+      { publisher: 'flowtools', id: '${p.id}', version: '${p.version}', type: '${p.type}', maturity: '${p.maturity}' },
+      () => import('@flowtools/plugins/${p.id}')
+    ),
   }`
     )
     .join(',\n')
@@ -188,6 +196,14 @@ function generateManifests(plugins: ComputedPluginMeta[]): string {
     .join(',\n')
 
   return `import type { PluginManifestEntry } from '@flowtools/sdk'
+import { loadManifestModule, parseManifestCatalog } from '@flowtools/sdk/manifest'
+import serializedData from '../../../../plugins/.generated/builtin-manifests.json'
+
+export const builtInManifestData = parseManifestCatalog(
+  serializedData as unknown,
+  { hostVersion: '0.1.0', sdkVersion: '0.0.0', platform: '${host === 'desktop' ? 'windows' : 'web'}', arch: '${host === 'desktop' ? 'x64' : 'wasm32'}' },
+  ${JSON.stringify(plugins.map(plugin => plugin.id))}
+)
 
 export const builtInManifests: PluginManifestEntry[] = [
 ${manifestsEntries},
@@ -220,7 +236,13 @@ import type { CLIPluginInfo } from './types'
 export const builtInCLIManifests = ${JSON.stringify(cliInventory, null, 2)} as const satisfies readonly CLIPluginInfo[]
 `
 const outputs = [
-  ...OUTPUT_FILES.map(path => ({ path, source: generateManifests(plugins) })),
+  ...OUTPUT_FILES.map(path => ({
+    path,
+    source: generateManifests(
+      plugins,
+      path.includes('desktop') ? 'desktop' : 'web'
+    ),
+  })),
   { path: CLI_OUTPUT, source: cliSource },
 ]
 const formatOptions = JSON.parse(

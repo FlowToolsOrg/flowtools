@@ -677,6 +677,15 @@ The React-free SDK manifest subpath validates serialized commands and package
 metadata. Node file verification is a separate read-only subpath; it does not
 grant external execution. See [Manifest v1](./docs/manifest-v1.md). P1.1a is
 implemented. P1.1b builds twelve separate UI/command entries and validates the
-fixed compiled CLI packages before import; machine discovery follows in P1.1c.
+fixed compiled CLI packages before import. P1.1c adds Manifest-driven
+`commands`, `describe`, help, flags and sequential JSON batch input. Web/Desktop
+validate the same contract before UI import and use it for execution. See the
+[CLI v1 contract](./docs/cli-contract-v1.md) and
+[generated command reference](./docs/builtin-commands.md).
 Run `bun run build:packages` before CLI use and `bun run verify:manifests`
 for read-only protocol and actual built-in package checks.
+
+After changing operations run `bun run generate:command-docs`; check the
+generated reference with `bun run verify:command-docs`. G1 is complete for the
+fixed T1 scope; independent CLI/Host/grants and signed external packages remain
+later milestones. All built-ins stay Prototype.

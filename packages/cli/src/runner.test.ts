@@ -16,6 +16,27 @@ const createContext = (pluginId: string): ToolContext => ({
 })
 
 describe('createPluginRunner SDK adapter', () => {
+  test('legacy library adapters do not silently execute an unknown command', async () => {
+    let runs = 0,
+      contexts = 0
+    const run = createPluginRunner({
+      loadPlugin: async () => ({
+        meta,
+        run: () => {
+          runs++
+        },
+      }),
+      createContext: id => {
+        contexts++
+        return createContext(id)
+      },
+    })
+    expect(await run(meta.id, {}, { commandId: 'other' })).toMatchObject({
+      success: false,
+      error: { code: 'NOT_RUNNABLE' },
+    })
+    expect(runs + contexts).toBe(0)
+  })
   test('validates defaults and returns the shared versioned envelope', async () => {
     let cleanups = 0
     const run = createPluginRunner({

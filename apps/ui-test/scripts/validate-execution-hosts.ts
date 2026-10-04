@@ -137,8 +137,8 @@ async function openNativePlugin(page: Page, name: string) {
       has: page.locator('strong').filter({ hasText: name }),
     })
     .last()
-  await row.getByRole('button', { name: '安装', exact: true }).click()
-  await row.getByRole('button', { name: '启用并启动', exact: true }).click()
+  await row.getByRole('button', { name: '保存配置', exact: true }).click()
+  await row.getByRole('button', { name: '启用并打开', exact: true }).click()
 }
 
 async function verifyCancel(page: Page, host: string) {

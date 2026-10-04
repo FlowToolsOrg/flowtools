@@ -1,7 +1,7 @@
 # FlowTools 下一阶段目标与实施设计
 
 - 决策日期：2026-10-04
-- 状态：accepted-design；全部新增实施项为 pending，不证明隔离或生产能力已交付
+- 状态：accepted-design；G1 已完成，G2–G8 实施项仍 pending，不证明隔离或生产能力已交付
 - 决策来源：维护者已确认的产品讨论；实施责任由 Repository Maintainer 分配
 - 进度来源：[生产路线图](./production-roadmap.md)
 - 安全来源：[信任边界](./adr/0001-plugin-trust-boundaries.md)、
@@ -109,7 +109,7 @@ typed command 对象，未来跨进程 SDK client 在 G2/G3 实现。迁移十�
 
 ### P1.1c 机器发现与文档
 
-拟新增 `flowtools commands` 和 `flowtools describe <plugin> <command> --format json`，
+P1.1c 已新增 `flowtools commands` 和 `flowtools describe <plugin> <command> --format json`，
 提供 Schema、效果、所需授权、平台与交互要求。保留 `list/info/run` 的现有用途，
 新增多命令参数在版本化兼容规范中定义，不默默改变旧命令含义。
 帮助、CLI flags 与可执行文档从同一 Manifest 生成；提供批处理参数和 JSON 输入。
@@ -396,7 +396,13 @@ AI 生成当安全豁免。远程调用、开放付费市场和云同步待单�
 Conventional Commit 记录，不提前把父里程碑标为 done。拟新增验证脚本属于
 里程碑交付物；当前仍运行已有 docs/生成内容/静态/测试/构建门禁。
 
-本次只交付设计与文档同步，现有第三方入口拒绝、数据保留策略和成熟度不改变。
+设计已接受，G1 实施完成；现有第三方入口拒绝、数据保留策略和成熟度不改变。
 G0 已在 2026-10-04 收口；完整根门禁、实际 production artifacts 与前端复核
 通过，剩余原生人工复验按维护者要求豁免，见
-[验收记录](./validation/p0-market-state.md)。P1.1a/b 已实现，下一项为 P1.1c 机器发现。
+[验收记录](./validation/p0-market-state.md)。P1.1a/b/c 均已完成，下一项为 G2 生命周期。
+
+2026-10-04，G1 的 a/b/c 已分别完成实施、回归与提交；命令发现/运行规范见
+[CLI v1](./cli-contract-v1.md)，同源参考见 [生成文档](./builtin-commands.md)。
+三端实际 T1 入口在加载前检查同一 Manifest，外部默认拒绝保持；父项 P1.1 完成。
+实际检查范围与本机资源故障记录见 [G1 验收](./validation/g1-command-contract.md)。
+后续顺序为 G2，Host、runtime-client、后台任务、grant 与独立 CLI 尚未实现。

@@ -9,7 +9,7 @@
 > 2026-10-04 产品决策：面向知识工作者/普通办公用户，GUI 与外部 agents
 > 共用命令；支持独立 CLI、轻量后台内核、集中管理和共享二进制工具依赖。
 > 低代码、内置 AI 助手与模型接入保留为未来插件。具体顺序与实现见
-> [下一阶段目标与实施设计](./next-milestones.md)。新增实施项均 pending。
+> [下一阶段目标与实施设计](./next-milestones.md)。G1 已完成，G2–G8 实施项仍 pending。
 
 本文档是 FlowTools 从 Demo 级原型走向生产版本的执行台账。它不以
 “页面已存在”或“类型已定义”作为完成标准，而以真实执行、失败可恢复、
@@ -1017,7 +1017,7 @@ G4 服务依赖 -> G5 签名安装与隔离 -> G6 工具链 -> G7 办公闭环 -
 | ----- | ------- | ------------------- | ---------------------------------------------------------------------------------- |
 | P1.1a | done    | P0.3c、P0.4         | 序列化 Manifest、多操作输入/输出 Schema、冷启动/effects/依赖声明；非法包执行前拒绝 |
 | P1.1b | done    | P1.1a               | UI/commands 分包、十二插件兼容适配；无 React/GUI/source 消费实际命令               |
-| P1.1c | pending | P1.1b               | describe/commands/flags 同源生成；编译 CLI 的机器发现与拒绝回归                    |
+| P1.1c | done    | P1.1b               | describe/commands/flags 同源生成；编译 CLI 的机器发现与拒绝回归                    |
 | P1.2a | pending | P1.1                | 单一状态机、锁和 hook 补偿；100 并发操作不重复激活                                 |
 | P1.2b | pending | P1.2a               | 命令状态投影、进程/视图资源 ownership；更新/卸载无孤儿 handler                     |
 | P1.3a | pending | P1.2                | Runtime core/binary、用户级 IPC、T1 临时 profile 与 job 协议；不接用户数据/第三方  |
@@ -1054,8 +1054,9 @@ P1.1/1.2/1.3/1.4/1.5、P2.3/2.4/2.5/2.6、P3.1/3.4 父项分别由上述同前�
 
 ### P1.1 发布 Manifest v1 运行时契约
 
-- 状态：`in-progress`
-- 负责人：`TBD (SDK)`
+- 状态：`done`
+- 负责人：`Codex`
+- 完成日期：2026-10-04；a/b/c 分别验证并独立提交
 - 依赖：P0.1、P0.4
 
 交付物：
@@ -1079,6 +1080,10 @@ bun run check-types
 - 所有 plugin ingress 在加载代码前验证同一 Manifest schema。
 - 正常、边界、未知字段、路径穿越和版本不兼容 fixture 均有测试。
 - 无效插件不会进入 `installed` 或 `loaded` 状态。
+
+当前范围为固定十二 T1 的同源契约与拒绝 fixture，普通外部入口仍提前拒绝；
+DEV Legacy preview 保持独立 unsafe 语义。浏览器不宣称验证 staging 文件字节，
+第三方签名/授权/隔离属于后续门禁。见 [G1 验收](./validation/g1-command-contract.md)。
 
 ### P1.2 实现单一生命周期状态机
 
@@ -1725,14 +1730,14 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 
 ### Phase 1
 
-| ID   | 状态        | 负责人        | 依赖               | Commit / 验证记录               |
-| ---- | ----------- | ------------- | ------------------ | ------------------------------- |
-| P1.1 | in-progress | Codex         | P0.1, P0.4         | -                               |
-| P1.2 | pending     | TBD           | P1.1               | -                               |
-| P1.3 | pending     | TBD           | P1.2               | -                               |
-| P1.4 | pending     | TBD           | P1.1, P1.3         | -                               |
-| P1.5 | pending     | TBD           | P1.3               | -                               |
-| P1.6 | pending     | SDK / Runtime | P1.1、P1.3b、P2.4a | G4 设计完成；实施与验证 pending |
+| ID   | 状态    | 负责人        | 依赖               | Commit / 验证记录               |
+| ---- | ------- | ------------- | ------------------ | ------------------------------- |
+| P1.1 | done    | Codex         | P0.1, P0.4         | a/b/c 完成；G1 验收见文档       |
+| P1.2 | pending | TBD           | P1.1               | -                               |
+| P1.3 | pending | TBD           | P1.2               | -                               |
+| P1.4 | pending | TBD           | P1.1, P1.3         | -                               |
+| P1.5 | pending | TBD           | P1.3               | -                               |
+| P1.6 | pending | SDK / Runtime | P1.1、P1.3b、P2.4a | G4 设计完成；实施与验证 pending |
 
 ### Phase 2
 
@@ -1801,3 +1806,9 @@ P1.1a：2026-10-04，Owner Codex；序列化 Manifest/有限 Schema/输出与 pa
 P1.1b：2026-10-04，Owner Codex；十二实际 UI/command 入口、命令级输出校验、
 固定 CLI Manifest/hash 导入前拒绝与无 React/GUI/source 的 Node 消费验证完成。
 完整 smoke 保留；Todo 没有新增数据副本。见 [契约证据](./manifest-v1.md)。
+
+P1.1c：2026-10-04，Owner Codex；commands/describe/help/flags/生成参考同源，
+固定 compiled CLI JSON/batch/拒绝、三端实际 T1 接入完成。完整根门禁通过，
+本机资源限制使用单任务并发；449 项测试与真实 Web/Desktop 前端复验通过。
+原生 metadata IPC 本轮为 fixture，不声称新的原生实窗验收。P1.1 父项完成。
+见 [G1 验收](./validation/g1-command-contract.md)。

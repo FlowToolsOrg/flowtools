@@ -132,6 +132,8 @@ If dependencies change, run `bun install`.
 Before running browser tests on a new machine, run
 `bun run --cwd apps/ui-test test:install-browser`. The Playwright version is
 pinned; do not substitute an arbitrary system browser for the regression gate.
+Keep browser test files serial (`fileParallelism: false`) to bound Windows
+page/transform memory; every test file and assertion still runs.
 Root Turbo tests depend on dependency tests (`^test`); package contract tests
 build their own artifacts before assertions. Tests are uncached so a successful
 cached result cannot hide missing build output. Run root `test` and `build`
@@ -508,3 +510,20 @@ catalog and exact file list/hash before importing a command; no source fallback.
 UI setup explicitly adapts the same implementation and host store. After command
 edits rebuild packages: UI watch does not regenerate CLI package hashes.
 See [Manifest v1](./docs/manifest-v1.md); hashes/declarations are not grants.
+
+## G1 command discovery and execution
+
+commands/describe/help/flags consume pure Manifest data and must never import
+an executor. Keep list/info/run compatibility and JSON failure stdout/nonzero
+exit behavior. Default operation is run; only declared operations are accepted.
+Unknown/duplicate scalar flags, extra positionals and mixed JSON/flags fail.
+Batch v1 validates all finite schemas before import, then executes sequentially;
+it is not a transaction or persisted job. Preserve runtime validation and budgets.
+Web/Desktop host-bound callbacks use loadManifestModule before UI import and
+executeManifestCommand for JSON runs. These are T1, not external execution grants.
+Run generate:command-docs after build:packages, then verify:command-docs.
+The generated [reference](./docs/builtin-commands.md) must match actual manifests.
+Turbo build outputs include `dist` and `.generated` so the compiled catalog is
+restored with cached artifacts. CI still forces builds and never caches JS output
+as a substitute for quality gates.
+See [CLI v1 contract](./docs/cli-contract-v1.md); keep unsupported platform scope explicit.

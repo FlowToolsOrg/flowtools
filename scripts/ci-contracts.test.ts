@@ -91,11 +91,15 @@ test('runs bounded Windows gates without caching JS build products', async () =>
     new URL('../turbo.json', import.meta.url)
   ).json()) as {
     globalPassThroughEnv: string[]
-    tasks: Record<'test' | 'build', { passThroughEnv: string[] }>
+    tasks: Record<
+      'test' | 'build',
+      { passThroughEnv: string[]; outputs: string[] }
+    >
   }
   expect(turbo.globalPassThroughEnv).toEqual(['PATHEXT'])
   expect(turbo.tasks.test.passThroughEnv).toEqual(['CARGO_TARGET_DIR'])
   expect(turbo.tasks.build.passThroughEnv).toEqual(['CARGO_TARGET_DIR'])
+  expect(turbo.tasks.build.outputs).toEqual(['dist/**/*', '.generated/**/*'])
   const job = workflow.jobs.quality
   expect(job.name).toBe('Windows quality gates')
   expect(job['runs-on']).toBe('windows-2022')
@@ -128,6 +132,24 @@ test('runs bounded Windows gates without caching JS build products', async () =>
   )
   expect(entry.indexOf("'docs:check'")).toBeLessThan(entry.indexOf("'lint'"))
   expect(entry).toContain("'check', '--locked'")
+})
+
+test('browser gate bounds file concurrency without replacing or narrowing the runner', async () => {
+  const config = await Bun.file(
+    new URL('../apps/ui-test/vitest.browser.config.ts', import.meta.url)
+  ).text()
+  const app = (await Bun.file(
+    new URL('../apps/ui-test/package.json', import.meta.url)
+  ).json()) as {
+    scripts: Record<string, string>
+    devDependencies: Record<string, string>
+  }
+  expect(config).toMatch(/fileParallelism:\s*false/)
+  expect(config).toContain('provider: playwright()')
+  expect(config).toContain("instances: [{ browser: 'chromium' }]")
+  expect(config).not.toMatch(/(?:exclude|retry|passWithNoTests)\s*:/)
+  expect(app.scripts.test).toBe('vitest run --config vitest.browser.config.ts')
+  expect(app.devDependencies.playwright).toBe('1.59.1')
 })
 
 test('PowerShell propagates native failure before subsequent gates run', () => {

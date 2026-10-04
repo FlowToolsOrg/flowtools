@@ -1,3 +1,4 @@
+import type { ExecutablePlugin } from '../src/execution/executor'
 import type { ToolContext } from '../src/types/ctx'
 
 import { expect, test } from 'bun:test'
@@ -29,6 +30,58 @@ const ctx: ToolContext = {
   log() {},
   utils: { now: Date.now },
 }
+
+test('manifest execution refuses invalid runtime validators, default-expanded budgets and huge timeouts before run', async () => {
+  let calls = 0
+  const plugin = {
+    meta: { id: 'fixture-plugin', version: '0.1.0' },
+    run: () => {
+      calls++
+      return 'result'
+    },
+  }
+  const manifest = manifestFixture()
+  manifest.commands[0]!.runtimeValidation.output = 'required'
+  expect(
+    await executeManifestCommand(
+      manifest,
+      'convert',
+      { ...plugin, outputSchema: {} } as unknown as ExecutablePlugin,
+      { text: 'x' },
+      ctx,
+      manifestTarget
+    )
+  ).toMatchObject({ success: false, error: { code: 'NOT_RUNNABLE' } })
+  manifest.commands[0]!.runtimeValidation.output = 'schema-only'
+  manifest.commands[0]!.inputSchema.properties!.text = {
+    type: 'string',
+    default: 'x'.repeat(100),
+  }
+  manifest.commands[0]!.resources.maxInputBytes = 50
+  expect(
+    await executeManifestCommand(
+      manifest,
+      'convert',
+      plugin,
+      {},
+      ctx,
+      manifestTarget
+    )
+  ).toMatchObject({ success: false, error: { code: 'INPUT_INVALID' } })
+  manifest.commands[0]!.resources.maxInputBytes = 4096
+  expect(
+    await executeManifestCommand(
+      manifest,
+      'convert',
+      plugin,
+      { text: 'x' },
+      ctx,
+      manifestTarget,
+      { timeoutMs: 2147483648 }
+    )
+  ).toMatchObject({ success: false, error: { code: 'TIMEOUT_INVALID' } })
+  expect(calls).toBe(0)
+})
 
 test('serializable v1 preserves explicit identity and prototype default', () => {
   const value = manifestFixture()

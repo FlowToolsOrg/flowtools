@@ -1,0 +1,15 @@
+import original from './base64-original.js'
+import { z } from 'zod'
+import { readFileSync } from 'node:fs'
+
+const command = JSON.parse(readFileSync(new URL('../.generated/builtin-manifests.json', import.meta.url),'utf8')).plugins.find(item => item.id === 'plugin-base64-encoder').commands[0]
+export default {
+  ...original,
+  command,
+  inputSchema: original.inputSchema.extend({ active:z.boolean().default(true), offset:z.number().default(0), items:z.array(z.string()).default([]) }),
+  run(ctx, input) {
+    if(input.active !== false || input.offset !== -2 || JSON.stringify(input.items) !== '["a","b"]') throw Error('CLI argument values were not preserved')
+    if(ctx.request || ctx.storage) throw Error('CLI exposed undeclared capabilities')
+    return original.run(ctx,input)
+  },
+}

@@ -285,6 +285,11 @@ function defaults(schema: OperationSchema, value: JsonValue): JsonValue {
   return value
 }
 
+/** Compare bounded JSON structurally; object property order is not identity. */
+export function equalJsonValues(left: unknown, right: unknown): boolean {
+  return isJsonValue(left) && isJsonValue(right) && same(left, right)
+}
+
 export function validateOperationValue(
   schema: OperationSchema,
   value: unknown,

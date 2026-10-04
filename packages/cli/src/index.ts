@@ -4,7 +4,14 @@
  */
 
 export { createCLIToolContext } from './context'
-export { scanPlugins, loadPlugin } from './discovery'
+export { scanPlugins, loadPlugin, getBuiltinCommandManifest } from './discovery'
+export {
+  commandFlags,
+  commandExample,
+  parseCommandFlags,
+  validateCommandInput,
+  commandFlagHelp,
+} from './command-schema'
 export { formatResult } from './formatter'
 export {
   addSchemaFlags,

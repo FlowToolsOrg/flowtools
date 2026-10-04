@@ -1,3 +1,5 @@
+import type { PluginManifestV1 } from '@flowtools/sdk/manifest'
+
 import { afterEach, expect, test } from 'bun:test'
 import { createHash } from 'node:crypto'
 import {
@@ -66,10 +68,15 @@ function addSource(plugins: string, id = builtinId) {
   )
 }
 
-async function invoke(entry: string, args: string[], evaluate = false) {
+async function invoke(
+  entry: string,
+  args: string[],
+  evaluate = false,
+  environment: Record<string, string> = {}
+) {
   const child = Bun.spawn(
     [process.execPath, ...(evaluate ? ['--eval', entry] : [entry]), ...args],
-    { stdout: 'pipe', stderr: 'pipe' }
+    { stdout: 'pipe', stderr: 'pipe', env: { ...process.env, ...environment } }
   )
   const [stdout, stderr, code] = await Promise.all([
     new Response(child.stdout).text(),
@@ -122,6 +129,8 @@ test('compiled CLI never falls back to source after a compiled import fails', as
   const output = await invoke(sample.cli, [
     'run',
     builtinId,
+    '--text',
+    'hello',
     '--format',
     'json',
   ])
@@ -129,6 +138,174 @@ test('compiled CLI never falls back to source after a compiled import fails', as
   expect(output.code).toBe(1)
   expect(JSON.parse(output.stdout)).toMatchObject({
     error: { code: 'LOAD_FAILED' },
+  })
+}, 30_000)
+
+test('compiled discovery/info/help use serialized data without importing an executor', async () => {
+  const sample = fixture(true)
+  for (const args of [
+    ['commands', '--format', 'json'],
+    ['describe', builtinId, 'run', '--format', 'json'],
+    ['info', builtinId, '--format', 'json'],
+    ['run', builtinId, '--help'],
+  ]) {
+    const output = await invoke(sample.cli, args)
+    expect(output.code).toBe(0)
+    expect(output.stdout + output.stderr).not.toContain(sourceCanary)
+    if (args[0] === 'describe')
+      expect(JSON.parse(output.stdout)).toMatchObject({
+        formatVersion: 1,
+        identity: `flowtools/${builtinId}/run`,
+        command: {
+          inputSchema: { properties: { text: { type: 'string' } } },
+        },
+        authorization: 'declarations-only',
+      })
+    if (args[0] === 'commands')
+      expect(JSON.parse(output.stdout).commands).toHaveLength(12)
+  }
+}, 30_000)
+
+for (const flags of [
+  ['--text', 'hello', '--typo', 'secret'],
+  ['--text', 'hello', 'unexpected'],
+  ['--text', 'hello', '--text', 'duplicate'],
+  [],
+  ['--input', '{"text":"hello","undeclared":true}'],
+  ['--input', '{"text":"hello"}', '--text', 'ignored'],
+  ['--batch-input', '[]'],
+  ['--batch-input', '[{}]'],
+  ['--batch-input', '[{"text":"hello"},{"text":3}]'],
+  ['--batch-input', '{private-secret'],
+  ['--timeout', 'NaN', '--text', 'hello'],
+]) {
+  test(`compiled CLI rejects invalid preparation without code import ${JSON.stringify(flags)}`, async () => {
+    const sample = fixture(true)
+    const output = await invoke(sample.cli, [
+      'run',
+      builtinId,
+      ...flags,
+      '--format',
+      'json',
+    ])
+    expect(output.code).toBe(1)
+    expect(JSON.parse(output.stdout)).toMatchObject({
+      success: false,
+      error: {
+        code: flags[0] === '--timeout' ? 'TIMEOUT_INVALID' : 'INPUT_INVALID',
+      },
+    })
+    expect(output.stdout + output.stderr).not.toContain('private-secret')
+    expect(output.stdout + output.stderr).not.toContain(sourceCanary)
+  }, 30_000)
+}
+
+test('compiled CLI refuses an oversized default before importing code', async () => {
+  const sample = fixture(true)
+  const path = join(sample.plugins, '.generated/builtin-manifests.json')
+  const catalog = JSON.parse(readFileSync(path, 'utf8')) as {
+    plugins: PluginManifestV1[]
+  }
+  const command = catalog.plugins.find(item => item.id === builtinId)!
+    .commands[0]!
+  command.resources.maxInputBytes = 32
+  command.inputSchema.properties!.text!.default = 'x'.repeat(64)
+  writeFileSync(path, JSON.stringify(catalog))
+  const output = await invoke(sample.cli, [
+    'run',
+    builtinId,
+    '--input',
+    '{}',
+    '--format',
+    'json',
+  ])
+  expect(output.code).toBe(1)
+  expect(JSON.parse(output.stdout)).toMatchObject({
+    success: false,
+    error: { code: 'INPUT_INVALID' },
+  })
+  expect(output.stdout + output.stderr).not.toContain(sourceCanary)
+}, 30_000)
+
+test('compiled CLI carries false, negative and array flags into runtime validation and real Base64 run', async () => {
+  const sample = fixture()
+  const dist = join(sample.plugins, 'dist')
+  cpSync(join(packageRoot, '../../plugins/dist'), dist, { recursive: true })
+  copyFileSync(
+    join(dist, `${builtinId}.commands.js`),
+    join(dist, 'base64-original.js')
+  )
+  copyFileSync(
+    join(packageRoot, 'test-fixtures/command-options.txt'),
+    join(dist, `${builtinId}.commands.js`)
+  )
+  const path = join(sample.plugins, '.generated/builtin-manifests.json')
+  const catalog = JSON.parse(readFileSync(path, 'utf8')) as {
+    plugins: PluginManifestV1[]
+  }
+  const command = catalog.plugins.find(item => item.id === builtinId)!
+    .commands[0]!
+  Object.assign(command.inputSchema.properties!, {
+    active: { type: 'boolean', default: true },
+    offset: { type: 'number', default: 0 },
+    items: { type: 'array', items: { type: 'string' }, default: [] },
+  })
+  for (const manifest of catalog.plugins) {
+    for (const name of [`${builtinId}.commands.js`, 'base64-original.js']) {
+      const bytes = readFileSync(join(dist, name))
+      const file = {
+        path: name,
+        size: bytes.length,
+        sha256: createHash('sha256').update(bytes).digest('hex'),
+      }
+      const index = manifest.files.findIndex(item => item.path === name)
+      if (index === -1) manifest.files.push(file)
+      else manifest.files[index] = file
+    }
+  }
+  writeFileSync(path, JSON.stringify(catalog))
+  const output = await invoke(sample.cli, [
+    'run',
+    builtinId,
+    '--text',
+    'hello',
+    '--active',
+    'false',
+    '--offset',
+    '-2',
+    '--items',
+    'a',
+    '--items',
+    'b',
+    '--format',
+    'json',
+  ])
+  expect(output.code).toBe(0)
+  expect(JSON.parse(output.stdout)).toMatchObject({
+    success: true,
+    data: { value: { result: 'aGVsbG8=' } },
+  })
+  const input = { text: 'hello', active: false, offset: -2, items: ['a', 'b'] }
+  const batch = await invoke(sample.cli, [
+    'run',
+    builtinId,
+    '--batch-input',
+    JSON.stringify([
+      input,
+      { ...input, active: true },
+      { ...input, text: 'world' },
+    ]),
+  ])
+  expect(batch.code).toBe(1)
+  expect(JSON.parse(batch.stdout)).toMatchObject({
+    formatVersion: 1,
+    type: 'batch',
+    success: false,
+    results: [
+      { success: true, data: { value: { result: 'aGVsbG8=' } } },
+      { success: false, error: { code: 'EXECUTION_FAILED' } },
+      { success: true, data: { value: { result: 'd29ybGQ=' } } },
+    ],
   })
 }, 30_000)
 
@@ -265,13 +442,12 @@ for (const mismatch of [
       file.sha256 = createHash('sha256').update(bytes).digest('hex')
     }
     writeFileSync(catalogPath, JSON.stringify(catalog))
-    const output = await invoke(sample.cli, [
-      'run',
-      builtinId,
-      '--format',
-      'json',
-      mismatch,
-    ])
+    const output = await invoke(
+      sample.cli,
+      ['run', builtinId, '--format', 'json', '--text', 'hello'],
+      false,
+      { FLOWTOOLS_CONTRACT_MISMATCH: mismatch }
+    )
     expect(output.code).toBe(1)
     expect(JSON.parse(output.stdout)).toMatchObject({
       success: false,
@@ -294,12 +470,16 @@ for (const corruption of ['schema', 'digest', 'entry']) {
     const entry = join(sample.plugins, 'dist', `${builtinId}.commands.js`)
     writeFileSync(entry, `throw new Error('${sourceCanary}')`)
     const path = join(sample.plugins, '.generated/builtin-manifests.json')
-    const catalog = JSON.parse(readFileSync(path, 'utf8'))
+    const catalog = JSON.parse(readFileSync(path, 'utf8')) as {
+      plugins: PluginManifestV1[]
+    }
     const manifest = catalog.plugins.find(
       (item: { id: string }) => item.id === builtinId
-    )
+    )!
     if (corruption === 'schema')
-      manifest.commands[0].inputSchema.unknownCritical = true
+      Object.assign(manifest.commands[0]!.inputSchema, {
+        unknownCritical: true,
+      })
     if (corruption === 'entry') manifest.entries.executor = '../outside.js'
     writeFileSync(path, JSON.stringify(catalog))
     const output = await invoke(sample.cli, [
@@ -307,6 +487,8 @@ for (const corruption of ['schema', 'digest', 'entry']) {
       builtinId,
       '--format',
       'json',
+      '--text',
+      'hello',
     ])
     expect(output.code).toBe(1)
     expect(JSON.parse(output.stdout)).toMatchObject({

@@ -147,6 +147,9 @@ Web manifest 元数据逐插件验证真实构建入口，冷加载与批量注�
 Turbo 的 `test` 依赖 `^test`，不缓存结果；package 合约测试自行构建产物，
 消费者等待依赖测试完成，避免读取正在被清理的 `dist`。根 `test` 与 `build`
 必须顺序执行，不能并发运行；单独的 `build` 图仍依赖 `^build`。
+UI browser gate 串行执行全部测试文件，限制 Windows 页面和 transform 并发内存。
+本地 build cache 同时恢复 `dist` 和 `.generated`，避免实际 compiled catalog 缺失；
+Windows CI 仍强制构建，不以 JavaScript 产物缓存代替门禁。
 Turbo 保留严格环境模式，显式透传 Windows `PATHEXT` 和 build/test 使用的
 `CARGO_TARGET_DIR`，避免 PowerShell 命令发现失败及原生缓存路径被过滤。
 测试类型与浏览器生产类型隔离；这些验证不等同于
@@ -635,3 +638,9 @@ All maturity labels stay prototype; SEC-001–SEC-012 remain open.
 不执行包代码。P1.1b 的十二个 `commands.ts` 构建独立于 React/UI，UI setup
 显式复用同一 command 实现并保留原 Todo store；CLI 只导入固定 `.commands.js`。
 实际 T1 Manifest 与文件 hash 在导入前验证；G5 仍负责签名、安装事务与隔离。
+
+P1.1c 三端的内置入口使用同一纯 Manifest：Web/Desktop 在固定 UI import 前验证
+契约/身份，JSON run 使用共享 Manifest executor；CLI 还验证实际包文件。
+commands/describe/help 不加载 code；flag 解析与生成文档同源。batch v1 为顺序
+真实执行，无第二份任务/业务数据库。见 [CLI 契约](./docs/cli-contract-v1.md)。
+Host/runtime-client、grant 与独立 CLI 发行仍为 G2/G3，未实现跨进程调用。

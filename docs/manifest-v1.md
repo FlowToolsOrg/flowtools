@@ -90,3 +90,21 @@ Rust 13、UI contract 3、Chromium consumer 59）。生产入口 Web 22/Desktop 
 重新启动后配置保存/启用、真实 Base64 和权限状态检查通过；IPC 为受控 fixture，
 没有启动原生用户应用。最初旧 dev server 在重建期间失效导致一次超时，保留失败
 日志；重启后复验成功。截图已检查，本步没有设计或标签视觉变更。
+
+## P1.1c / G1 三端接入
+
+三端固定 T1 callback/inventory 在代码加载前验证同一 Manifest；CLI 验证实际
+文件清单/hash，浏览器仅检查纯契约和固定身份，不混淆这两个验证范围。
+SDK loadManifestModule 的拒绝不会调用 loader 或进入 loaded 状态；加载后验证
+实际 UI metadata/adapted command，JSON 对象字段顺序不影响契约相等判断。
+Web/Desktop/CLI 的 JSON run 都使用 executeManifestCommand，Zod output validator
+继续验证不可序列化规则。默认值展开后重新检查输入预算，非法 timeout 或 runtime
+validator 在 run 前拒绝。命令级请求与 UI metadata 声明的交集不等于 user grant。
+
+CLI commands/describe/help/flags、确定性有限 Schema 示例与生成参考同源；
+batch 和兼容规范见 [CLI v1](./cli-contract-v1.md)。G1 的范围为当前十二 T1 与
+协议/拒绝 fixture；普通外部入口继续更早拒绝，DEV legacy 仍是显式 unsafe preview，
+不升级为 v1 包。G2/G3/G5 的 Host、共享授权、独立 CLI、签名安装、隔离不在本步。
+
+全部根门禁、真实 Web 与 Desktop 前端复验通过；测试计数、初始资源故障与
+原生 IPC fixture 边界见 [G1 验收](./validation/g1-command-contract.md)。

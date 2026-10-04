@@ -26,7 +26,8 @@ export async function executeManifestCommand<T>(
       | 'INPUT_INVALID'
       | 'OUTPUT_INVALID'
       | 'NOT_RUNNABLE'
-      | 'PLUGIN_ID_MISMATCH',
+      | 'PLUGIN_ID_MISMATCH'
+      | 'TIMEOUT_INVALID',
     message: string
   ) =>
     createExecutionFailure(
@@ -56,9 +57,15 @@ export async function executeManifestCommand<T>(
       'NOT_RUNNABLE',
       'Command requires an available execution/interaction adapter'
     )
-  if (command.runtimeValidation.input === 'required' && !plugin.inputSchema)
+  if (
+    command.runtimeValidation.input === 'required' &&
+    typeof plugin.inputSchema?.safeParse !== 'function'
+  )
     return fail('NOT_RUNNABLE', 'Required input runtime validator is missing')
-  if (command.runtimeValidation.output === 'required' && !plugin.outputSchema)
+  if (
+    command.runtimeValidation.output === 'required' &&
+    typeof plugin.outputSchema?.safeParse !== 'function'
+  )
     return fail('NOT_RUNNABLE', 'Required output runtime validator is missing')
   if (
     !isJsonValue(input) ||
@@ -69,6 +76,24 @@ export async function executeManifestCommand<T>(
   const parsed = validateOperationValue(command.inputSchema, input, true)
   if (!parsed.success)
     return fail('INPUT_INVALID', 'Input does not match command schema')
+  if (
+    new TextEncoder().encode(JSON.stringify(parsed.data)).length >
+    command.resources.maxInputBytes
+  )
+    return fail(
+      'INPUT_INVALID',
+      'Defaulted input exceeds the command JSON budget'
+    )
+  if (
+    options.timeoutMs !== undefined &&
+    (!Number.isInteger(options.timeoutMs) ||
+      options.timeoutMs < 1 ||
+      options.timeoutMs > 2_147_483_647)
+  )
+    return fail(
+      'TIMEOUT_INVALID',
+      'Timeout must be a positive integer within the timer range'
+    )
   const result = await executePlugin(plugin, parsed.data, ctx, {
     ...options,
     timeoutMs: Math.min(

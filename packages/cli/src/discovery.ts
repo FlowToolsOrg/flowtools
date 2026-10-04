@@ -13,7 +13,7 @@ import { lstatSync, realpathSync, readFileSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
-import { parsePluginManifest } from '@flowtools/sdk/manifest'
+import { parsePluginManifest, equalJsonValues } from '@flowtools/sdk/manifest'
 import { verifyManifestPackage } from '@flowtools/sdk/manifest/package'
 import { resolvePluginMaturity } from '@flowtools/sdk/types'
 import { z } from 'zod'
@@ -92,6 +92,8 @@ function readBuiltinManifests(): Map<string, PluginManifestV1> {
 
 export function getBuiltinCommandManifest(id: string): PluginManifestV1 | null {
   if (!inventory.has(id)) return null
+  if (!compiledArtifact(id))
+    throw new Error('Built-in command artifact unavailable')
   return readBuiltinManifests().get(id) ?? null
 }
 
@@ -161,7 +163,7 @@ export async function loadPlugin(id: string): Promise<CLICommandPlugin | null> {
       (expected.hasSchema &&
         typeof plugin.inputSchema?.safeParse !== 'function') ||
       typeof plugin.outputSchema?.safeParse !== 'function' ||
-      JSON.stringify(plugin.command) !== JSON.stringify(manifest.commands[0])
+      !equalJsonValues(plugin.command, manifest.commands[0])
     )
       return null
     return { ...plugin, manifest }

@@ -282,3 +282,10 @@ Node-only package verifier。packages/sdk/test/manifest\*.test.ts 覆盖协议�
 plugins/plugin-\*/commands.ts 为纯命令源；index.tsx 为 UI；command-contract.ts
 声明同源 operation Schema。build-manifests.ts 写 plugins/.generated 下的纯 JSON，
 与 dist 分离避免自引用 hash；这两个目录均为构建产物。
+
+P1.1c 新增 SDK manifest/catalog.ts/loader.ts、CLI command-schema.ts/run-arguments.ts，
+scripts/generate-command-docs.ts 和只读 drift 回归；docs/builtin-commands.md
+是生成文件，CLI 兼容/批处理协议见 [CLI v1](./cli-contract-v1.md)。Web/Desktop
+既有 runtime adapters 和生成 loader 接入该 SDK 契约；没有新增 G2/G3 module。
+Turbo build outputs 覆盖 dist/.generated；固定 Chromium gate 串行执行所有文件，
+相关缓存完整性与 runner 约束由 scripts/ci-contracts.test.ts 验证。

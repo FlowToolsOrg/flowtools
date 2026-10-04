@@ -3,16 +3,12 @@ import { useState } from 'react'
 import { describeInputSchema } from '@flowtools/sdk/execution'
 import {
   ExecutionPanel,
+  PluginMaturityBadge,
   ToolDetailPage,
   ToolPermissionList,
   ToolSummaryCard,
 } from '@flowtools/ui'
-import {
-  ArrowLeftIcon,
-  CircleCheckIcon,
-  EyeIcon,
-  PlayIcon,
-} from '@flowtools/ui/icons'
+import { ArrowLeftIcon, EyeIcon, PlayIcon } from '@flowtools/ui/icons'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useStore } from 'zustand'
 
@@ -84,7 +80,6 @@ function ToolDetailPage_() {
   }
 
   const isAppPlugin = plugin?.type === 'app'
-  const StatusIcon = CircleCheckIcon
 
   return (
     <div className="flex flex-col gap-6 p-6 lg:p-8">
@@ -100,12 +95,7 @@ function ToolDetailPage_() {
         <div className="h-4 w-px bg-separator" />
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-semibold text-foreground">{meta.name}</h1>
-          <Chip color="success" size="sm" variant="soft">
-            <span className="flex items-center gap-1">
-              <StatusIcon size={12} />
-              stable
-            </span>
-          </Chip>
+          <PluginMaturityBadge maturity={meta.maturity} />
           <Chip size="sm" variant="secondary">
             v{meta.version}
           </Chip>
@@ -141,7 +131,7 @@ function ToolDetailPage_() {
                 <ToolSummaryCard
                   category={meta.category}
                   description={meta.description}
-                  status="stable"
+                  status={meta.maturity}
                   title={meta.name}
                   version={meta.version}
                 />

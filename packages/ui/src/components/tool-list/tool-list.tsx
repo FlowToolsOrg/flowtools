@@ -1,5 +1,7 @@
 'use client'
 
+import type { PluginMaturity } from '@flowtools/sdk/types'
+
 import { type ComponentPropsWithoutRef, type ReactNode } from 'react'
 
 import {
@@ -12,8 +14,9 @@ import {
 } from '@heroui/react'
 
 import { cn } from '../../utils/class-name'
+import { PluginMaturityBadge } from '../plugin-status'
 
-export type ToolStatus = 'stable' | 'beta' | 'experimental' | 'deprecated'
+export type ToolStatus = PluginMaturity
 export type ToolListKey = string | number
 
 export interface ToolListItem {
@@ -43,23 +46,6 @@ export interface ToolListProps extends Omit<
   onSelectionChange?: (keys: Selection) => void
   onAction?: (key: ToolListKey) => void
   emptyContent?: ReactNode
-}
-
-const statusLabelMap: Record<ToolStatus, string> = {
-  stable: 'Stable',
-  beta: 'Beta',
-  experimental: 'Experimental',
-  deprecated: 'Deprecated',
-}
-
-const statusColorMap: Record<
-  ToolStatus,
-  'success' | 'accent' | 'warning' | 'danger'
-> = {
-  stable: 'success',
-  beta: 'accent',
-  experimental: 'warning',
-  deprecated: 'danger',
 }
 
 export const ToolList = ({
@@ -118,15 +104,7 @@ export const ToolList = ({
                       <Label className="text-sm font-semibold text-foreground">
                         {item.name}
                       </Label>
-                      {item.status ? (
-                        <Chip
-                          color={statusColorMap[item.status]}
-                          size="sm"
-                          variant="soft"
-                        >
-                          {statusLabelMap[item.status]}
-                        </Chip>
-                      ) : null}
+                      <PluginMaturityBadge maturity={item.status} />
                       {item.isPinned ? (
                         <Chip size="sm" variant="tertiary">
                           Pinned

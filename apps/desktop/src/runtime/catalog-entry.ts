@@ -10,7 +10,8 @@ export function resolveCatalogEntry(
     !options.development ||
     !root ||
     !/^(?:[a-z]:[\\/]|\/)/i.test(root) ||
-    /[\u0000-\u001f?#]/.test(root)
+    /[?#]/.test(root) ||
+    root.split('').some(character => character.charCodeAt(0) < 32)
   )
     return undefined
   if (

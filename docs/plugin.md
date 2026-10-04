@@ -53,8 +53,10 @@ FlowTools 插件，而是先把 `main`、`preload`、`features`、`cmds` 归一�
 SDK 从 `@flowtools/sdk/types` 导出 `pluginMaturitySchema`、`resolvePluginMaturity`
 和独立 `compatibilityEvidenceStatusSchema`。内置插件、两端 manifest 与 CLI
 list/info 当前都为 prototype；生成两端 metadata 使用 `bun run generate:manifests`。
-Catalog 已使用相同 prototype 词表；UI 全量传播由 P0.3a3 验收，旧 stable UI
-标签不是生产证据。Portable Catalog formatVersion 1 记录 logical source、package
+Catalog 与 UI 已使用相同 maturity 词表；ToolStatus/ToolMarketStatus 是 SDK 类型
+别名，原 status prop 仅表示成熟度。共享 PluginMaturityBadge 缺省显示 Prototype，
+PluginCompatibilityBadge 单独显示证据；桥接需求、元数据保存和生产授权都不是
+maturity。Portable Catalog formatVersion 1 记录 logical source、package
 identity/相对路径与扫描 hash，不保存本机根路径或 development URL。重新扫描使用
 `bun run inspect:html-plugins [checkout-path]`，随后运行 `bun run verify:plugin-catalog`。
 当前仅接受 indexed/entry-resolved；后者是入口文件存在/hash，不认证资源依赖、
@@ -100,6 +102,8 @@ Host 必须注入与插件 ID 匹配的 context。CLI/Web/Desktop 已接入（P0
 原始输入、输出和异常 message 只展示在本次结果中，不持久化。新 key 与旧未验证
 历史分离，旧 key 不删除；恢复损坏或矛盾记录时显示提示，不伪造成功。
 Windows 验收范围与限制见 [宿主验收](./validation/p0-execution-hosts.md)。
+测试实例必须初始进入真实首页，不能以跳转到插件页掩盖启动 NotFound。
+专用验收配置使用根路由查询标记；开发模式手工通过与独立包通过分开记录。
 
 内置插件的 `bun run smoke:plugins` 使用真实编译实现和受控 capability，不访问
 公网/用户数据，也不替换 run()。Todo run 在 app host 读写 panel 共享 store；CLI

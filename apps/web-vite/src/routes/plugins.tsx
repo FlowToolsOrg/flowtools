@@ -2,6 +2,7 @@ import type { RegisteredPlugin } from '@flowtools/sdk'
 
 import { useCallback, useRef, useState } from 'react'
 
+import { PluginMaturityBadge } from '@flowtools/ui'
 import {
   LayersIcon,
   LoaderPinwheelIcon,
@@ -298,6 +299,7 @@ function PluginRow({
           <Chip size="sm" variant="tertiary">
             {manifest.type}
           </Chip>
+          <PluginMaturityBadge maturity={manifest.maturity} />
           <Chip
             color={stateColorMap[state] ?? 'default'}
             size="sm"

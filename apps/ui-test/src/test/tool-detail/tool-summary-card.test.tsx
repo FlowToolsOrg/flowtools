@@ -9,7 +9,7 @@ describe('ToolSummaryCard', () => {
       <ToolSummaryCard
         category="Security"
         description="Generate secure hashes quickly"
-        status="stable"
+        status="prototype"
         title="Hash Generator"
         version="1.2.0"
       />
@@ -19,7 +19,7 @@ describe('ToolSummaryCard', () => {
       .element(getByRole('heading', { level: 3, name: 'Hash Generator' }))
       .toBeInTheDocument()
     await expect.element(getByText('Security')).toBeInTheDocument()
-    await expect.element(getByText('Stable')).toBeInTheDocument()
+    await expect.element(getByText('Prototype')).toBeInTheDocument()
   })
 
   it('supports interactions through actions slot', async () => {

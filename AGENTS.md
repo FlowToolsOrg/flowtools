@@ -170,7 +170,12 @@ its own schema and does not authorize execution or certify security.
 `bun run generate:manifests` now regenerates both Web and Desktop manifests
 from the same built-in metadata in sorted order. Desktop directly depends on
 the plugins workspace; retain that dependency so types/tests do not rely on an
-undeclared resolution side effect. Catalog/UI migration is P0.3a2/a3.
+undeclared resolution side effect. Catalog/UI consume this SDK maturity contract.
+`ToolStatus` and `ToolMarketStatus` are aliases of `PluginMaturity`; their existing
+status prop represents only maturity. Use shared `PluginMaturityBadge` (omission
+displays Prototype) and `PluginCompatibilityBadge` for independent evidence.
+Support/bridge requirements are not evidence or security approval. Never restore
+hardcoded stable labels. Keep real metadata, default and evidence UI regressions.
 `bun run scripts/generate-manifests.ts --check` is a read-only generated-content
 gate; the generator formats output before comparing or writing both hosts.
 
@@ -347,6 +352,12 @@ desktop against user data: startup currently resets its database. Use the
 dedicated validation config, fresh test identity/profile and loopback-only
 child-process CDP; never persist remote debugging in production configuration.
 Screenshot inspection and keyboard checks do not certify NVDA or other platforms.
+For maintainer manual acceptance, use `tauri.manual-validation.conf.json` in
+`apps/desktop`, verify its test identity and title, and use fixture data only.
+It is visible, adds no remote debugging, and does not change production config.
+Validation URLs must use `/?execution-validation=...`, not
+`index.html?execution-validation=...`: the latter enters an unmatched route.
+The native harness must check initial launcher rendering before navigation.
 
 ## Documentation Sync (Required and !Important)
 

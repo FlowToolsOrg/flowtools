@@ -23,6 +23,8 @@ const rootExports = [
   'HeroSection',
   'MarketEmptyState',
   'MarketToolbar',
+  'PluginMaturityBadge',
+  'PluginCompatibilityBadge',
   'RunHistoryPanel',
   'RunInputPanel',
   'RunLogList',

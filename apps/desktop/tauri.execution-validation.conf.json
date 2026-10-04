@@ -5,7 +5,7 @@
       {
         "label": "main",
         "title": "FlowTools isolated execution validation",
-        "url": "index.html?execution-validation=20261003",
+        "url": "/?execution-validation=20261003",
         "width": 1200,
         "height": 900,
         "visible": false

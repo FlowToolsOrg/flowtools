@@ -135,3 +135,9 @@ export {
   type ToolListProps,
   type ToolStatus,
 } from './components/tool-list'
+export {
+  PluginMaturityBadge,
+  PluginCompatibilityBadge,
+  type PluginMaturityBadgeProps,
+  type PluginCompatibilityBadgeProps,
+} from './components/plugin-status'

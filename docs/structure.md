@@ -14,6 +14,11 @@
 
 ## 工程验证结构
 
+- `packages/ui/src/components/plugin-status`：共享 maturity/evidence badge，
+  消费 SDK 词表；`ToolStatus` / `ToolMarketStatus` 是 PluginMaturity 别名。
+  `apps/ui-test/src/test/plugin-status` 覆盖四状态、缺省 Prototype 与证据不升级；
+  Web/Desktop 直接使用 metadata/catalog，不维护“stable”镜像状态。
+
 - `packages/sdk/src/compat/catalog.ts`：portable Catalog schema/path 与独立
   indexed/entry-resolved 证据；公开无 React 的 `@flowtools/sdk/compat/catalog`。
 - `scripts/inspect-html-plugins.ts`：只读扫描 checkout，生成两份相同的 package
@@ -42,6 +47,10 @@
 - `apps/ui-test/scripts/validate-execution-hosts.ts`：真实 Web/Tauri 验收，Node
   Playwright + 独立测试 identity/CDP，不 mock 原生 IPC；记录与截图在
   [宿主验收](./validation/p0-execution-hosts.md)。
+- Desktop `tauri.execution-validation.conf.json` / `tauri.manual-validation.conf.json`：
+  隐藏自动化与可见人工验收的独立测试身份，均以根路由查询标记进入首页。
+  `src-tauri/tests/bindings.rs` 用真实 Tauri MockRuntime 验证入口 URL，不启动宿主；
+  URL 回归不替代独立包实窗验收。
 
 - `scripts/docs-check.ts` / `docs-check.test.ts`：十份核心/ADR/威胁/PR 文档的
   只读契约，内联本地链接路径与风险字段验证；脚本由 Desktop 测试任务消费。

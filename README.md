@@ -74,6 +74,10 @@ history stores at most 200 metadata-only attempts, including failures; inputs,
 output values and exception messages remain transient. Unverified legacy keys
 are left untouched and excluded from the new history. See the
 [Windows host acceptance record](./docs/validation/p0-execution-hosts.md).
+Native validation uses isolated test identities and a root-route query marker;
+the harness checks initial launcher rendering before navigating. Maintainer
+development-mode results and standalone packaged-app acceptance are recorded
+separately; a successful build or URL-resolution test is not visual sign-off.
 This helper does not isolate code or stop synchronous loops. Execution
 metadata records input shape only, never raw input values or field names.
 `bun run smoke:plugins` builds package prerequisites and exercises all twelve
@@ -86,8 +90,10 @@ The SDK's maturity vocabulary is `prototype`, `experimental`, `beta`,
 `production`; missing metadata means `prototype`. All twelve built-ins and both
 host manifests explicitly declare `prototype`, also shown by CLI list/info.
 Compatibility evidence (`indexed` through `production-certified`) is separate
-and never grants execution or proves maturity. UI propagation continues in
-P0.3a3; existing UI "stable" badges are not readiness evidence.
+and never grants execution or proves maturity. Shared UI, Web and Desktop read
+actual metadata through common maturity badges; missing values display Prototype,
+never Stable. Compatibility evidence is displayed independently, not inferred
+from maturity, support classification or catalog membership.
 The version-1 portable HTML catalog stores package identity, relative paths and
 scan hashes, never a checkout root or development URL. Its 125 prototype entries
 contain 47 `entry-resolved` file receipts and 78 `indexed` records; these are not

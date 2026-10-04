@@ -24,4 +24,12 @@ test('portable catalog discovery needs an explicit development checkout, never a
         { development: true, checkoutRoot: 'D:/fixture' }
       )
     ).toBeUndefined()
+  for (const checkoutRoot of [
+    'D:/fixture?query',
+    'D:/fixture#hash',
+    'D:/\u0000fixture',
+  ])
+    expect(
+      resolveCatalogEntry(entry, { development: true, checkoutRoot })
+    ).toBeUndefined()
 })

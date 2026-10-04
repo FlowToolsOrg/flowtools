@@ -39,7 +39,7 @@ production），缺失 metadata 仅默认 prototype；compatibility evidence 独
 12 个内置 meta、Web/Desktop manifest、CLI list/info JSON/text 同步声明 prototype。
 生成器按排序 inventory 同时更新两端；Desktop 补显式 plugins workspace 依赖，
 根 Turbo 的依赖 tests/build 顺序随真实 dependency graph 推导。该标签不是签名、
-API 认证或 grant；UI 的旧状态在 P0.3a3 修正，不能据此宣称 P0 done。
+API 认证或 grant，不能据此宣称 P0 done。
 
 P0.3a2 Catalog formatVersion 1 使用 logical source、package identity/相对资源和
 manifest/entry SHA-256；不保存 checkout root、development URL 或源态 main。
@@ -48,6 +48,13 @@ SDK 无 React 的 `compat/catalog` 子入口与只读 `verify:plugin-catalog` �
 时入口文件存在（entry-resolved），78 项 indexed。没有 API/平台/签名认证。
 Desktop 消费同一 schema；只有显式 DEV + VITE_HTML_PLUGIN_ROOT 才解析本地资源。
 这不是安装、完整包依赖验证、运行时隔离、TOCTOU 防护或用户授权。
+
+P0.3a3 共享 UI ToolStatus/ToolMarketStatus 直接复用 SDK PluginMaturity，卡片、
+列表与详情的缺省标签为 Prototype。Web 从 manifest 读取，Desktop 从实际 built-in
+meta/Catalog 读取；独立 compatibility badge 不升级 maturity，桥接需求不是 API
+认证。状态仅在 render 中派生，没有另建持久状态或 effect 同步副本。
+专用 Windows 验收以根路由查询标记进入首页，Tauri MockRuntime 回归覆盖最终
+URL；实窗、开发模式与独立包验收分别记录，Mock 不启动宿主或用户数据库。
 
 P0.2a 已交付 `packages/sdk/src/execution/executor.ts`：`executePlugin()` 对
 真实 app/tool `run()` 统一 schema/defaults、版本/时间戳/耗时、输入形状摘要、

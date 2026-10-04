@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { resolvePluginMaturity } from '@flowtools/sdk/types'
 import {
   MarketEmptyState,
   MarketToolbar,
@@ -41,7 +42,7 @@ function ToolsPage() {
       name: p.manifest.name,
       description: p.manifest.description ?? '',
       version: p.manifest.version,
-      status: 'stable' as const,
+      status: resolvePluginMaturity(p.manifest.maturity),
       category: p.manifest.category,
       tags: p.manifest.tags,
       permissions: p.manifest.permissions?.map(perm => ({

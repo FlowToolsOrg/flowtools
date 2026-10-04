@@ -9,7 +9,11 @@ import type {
   FlowToolPlugin,
   PluginManifestEntry,
 } from '@flowtools/sdk'
-import type { Permission } from '@flowtools/sdk/types'
+import type {
+  Permission,
+  PluginMaturity,
+  CompatibilityEvidenceStatus,
+} from '@flowtools/sdk/types'
 import type { ComponentType, ReactNode } from 'react'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -19,6 +23,8 @@ import {
   htmlPluginCatalogSchema,
   type HtmlCatalogPlugin,
 } from '@flowtools/sdk/compat/catalog'
+import { resolvePluginMaturity } from '@flowtools/sdk/types'
+import { PluginMaturityBadge, PluginCompatibilityBadge } from '@flowtools/ui'
 import {
   BanIcon,
   BlocksIcon,
@@ -67,6 +73,8 @@ interface IndexedCommand {
   category?: string
   pluginType: 'app' | 'tool'
   compatibilityLevel: string
+  maturity?: PluginMaturity
+  compatibilityEvidence?: CompatibilityEvidenceStatus
   source: CommandSource
   sourceDir?: string
   assetDir?: string
@@ -175,6 +183,8 @@ function toHtmlCommandIndex(plugin: HtmlIndexedPlugin): IndexedCommand[] {
     category: plugin.category,
     pluginType: plugin.type,
     compatibilityLevel: plugin.html.compatibility.level,
+    maturity: plugin.maturity,
+    compatibilityEvidence: plugin.evidence.status,
     source: 'html' as const,
     sourceDir: plugin.html.sourceDir,
     assetDir: plugin.html.assetDir,
@@ -226,6 +236,7 @@ function toReactCommandIndex(manifest: PluginManifestEntry): IndexedCommand {
     category: manifest.category,
     pluginType: manifest.type,
     compatibilityLevel: 'sdk',
+    maturity: resolvePluginMaturity(manifest.maturity),
     source: 'react',
     permissions: manifest.permissions ?? [],
     hasUi: manifest.type === 'app',
@@ -351,13 +362,14 @@ function getPluginEntryPath(command: IndexedCommand): string | undefined {
     plugin => plugin.id === command.pluginId
   )
   if (!plugin || plugin.evidence.status !== 'entry-resolved') return undefined
+  const checkoutRoot: unknown = import.meta.env.DEV
+    ? import.meta.env.VITE_HTML_PLUGIN_ROOT
+    : undefined
   return resolveCatalogEntry(
     { packageRoot: plugin.package.root, entry: plugin.evidence.path },
     {
       development: import.meta.env.DEV,
-      checkoutRoot: import.meta.env.DEV
-        ? import.meta.env.VITE_HTML_PLUGIN_ROOT
-        : undefined,
+      checkoutRoot: typeof checkoutRoot === 'string' ? checkoutRoot : undefined,
     }
   )
 }
@@ -416,6 +428,8 @@ interface PluginListItem {
   category?: string
   cliAvailable: boolean
   compatibilityLevel: string
+  maturity: PluginMaturity
+  compatibilityEvidence?: CompatibilityEvidenceStatus
   commandCount: number
   hasUi: boolean
 }
@@ -432,7 +446,8 @@ const pluginListItems: PluginListItem[] = [
     tags: manifest.tags ?? [],
     category: manifest.category,
     cliAvailable: manifest.cliAvailable ?? false,
-    compatibilityLevel: 'React',
+    compatibilityLevel: 'sdk',
+    maturity: resolvePluginMaturity(manifest.maturity),
     commandCount: 1,
     hasUi: manifest.type === 'app',
   })),
@@ -448,10 +463,34 @@ const pluginListItems: PluginListItem[] = [
     category: plugin.category,
     cliAvailable: false,
     compatibilityLevel: plugin.html.compatibility.level,
+    maturity: plugin.maturity,
+    compatibilityEvidence: plugin.evidence.status,
     commandCount: Math.max(plugin.html.commands.length, 1),
     hasUi: Boolean(plugin.html.mainAvailable && plugin.html.main),
   })),
 ]
+
+function getSupportLabel(reference: {
+  source: CommandSource
+  compatibilityLevel: string
+}): string {
+  return reference.source === 'html'
+    ? `桥接需求：${reference.compatibilityLevel}`
+    : reference.source === 'react'
+      ? '内置 SDK'
+      : '宿主路由'
+}
+
+function CommandEvidence({ command }: { command: IndexedCommand }) {
+  return (
+    <>
+      <PluginMaturityBadge maturity={command.maturity} />
+      {command.compatibilityEvidence ? (
+        <PluginCompatibilityBadge evidence={command.compatibilityEvidence} />
+      ) : null}
+    </>
+  )
+}
 
 function getAppErrorMessage(error: AppError | undefined): string {
   return error?.message ?? '插件数据库操作失败'
@@ -1325,6 +1364,13 @@ function PluginsView() {
       title="插件市场"
     >
       <div className="grid gap-3">
+        <p
+          className="m-0 text-xs text-(--text-secondary)"
+          data-testid="catalog-evidence-notice"
+        >
+          成熟度与兼容证据独立；indexed 仅索引，entry-resolved
+          仅找到入口文件，桥接需求不代表 API/安全认证或授权。
+        </p>
         {notice || inventory.error ? (
           <div className="rounded-lg border border-(--divider-color) bg-(--control-bg) px-3 py-2 text-sm text-(--text-secondary)">
             {notice ?? inventory.error}
@@ -1382,6 +1428,10 @@ function PluginMarketRow({
           <Chip color="accent" size="sm" variant="soft">
             {plugin.source === 'react' ? 'React' : 'HTML'}
           </Chip>
+          <PluginMaturityBadge maturity={plugin.maturity} />
+          {plugin.compatibilityEvidence ? (
+            <PluginCompatibilityBadge evidence={plugin.compatibilityEvidence} />
+          ) : null}
           <Chip
             color={stage === 'available' ? 'warning' : 'accent'}
             size="sm"
@@ -1394,7 +1444,7 @@ function PluginMarketRow({
           {plugin.description ?? plugin.id}
         </span>
         <span className="mt-1 flex flex-wrap gap-1.5 text-[11px] text-(--text-secondary)">
-          <span>{plugin.compatibilityLevel}</span>
+          <span>{getSupportLabel(plugin)}</span>
           <span>{plugin.commandCount} 个命令</span>
           <span>{plugin.permissions.length} 项权限</span>
           <span>{plugin.version}</span>
@@ -1634,8 +1684,9 @@ function PluginActivationGate({
             <CapabilityChip icon={LayersIcon}>
               {getPluginStageLabel(stage)}
             </CapabilityChip>
-            <CapabilityChip icon={ShieldCheckIcon}>
-              {command.compatibilityLevel}
+            <CommandEvidence command={command} />
+            <CapabilityChip icon={BlocksIcon}>
+              {getSupportLabel(command)}
             </CapabilityChip>
           </div>
           <div className="flex justify-center gap-2">
@@ -1741,6 +1792,12 @@ function ReactAppPluginPanel({ plugin }: { plugin: AppPlugin }) {
 
   return (
     <div className="h-full min-h-0 overflow-auto bg-(--bg-color) p-4">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <PluginMaturityBadge maturity={plugin.meta.maturity} />
+        <span className="text-xs text-muted">
+          内置 SDK · 成熟度不等于授权或兼容认证
+        </span>
+      </div>
       <PluginErrorBoundary pluginId={plugin.meta.id}>
         <FlowToolRuntimeProvider value={runtimeContext}>
           <Panel />
@@ -1897,8 +1954,9 @@ function PluginLaunchSurface({ command, target }: PluginLaunchSurfaceProps) {
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
+          <CommandEvidence command={command} />
           <Chip color="accent" size="sm" variant="soft">
-            {command.compatibilityLevel}
+            {getSupportLabel(command)}
           </Chip>
           {command.hasPreload ? (
             <Chip color="warning" size="sm" variant="soft">
@@ -1972,8 +2030,9 @@ function HeadlessCommandSurface({ command }: { command: IndexedCommand }) {
         </div>
         <div className="flex justify-center gap-1.5">
           <CapabilityChip icon={PlayIcon}>{command.type}</CapabilityChip>
-          <CapabilityChip icon={ShieldCheckIcon}>
-            {command.compatibilityLevel}
+          <CommandEvidence command={command} />
+          <CapabilityChip icon={BlocksIcon}>
+            {getSupportLabel(command)}
           </CapabilityChip>
         </div>
       </div>

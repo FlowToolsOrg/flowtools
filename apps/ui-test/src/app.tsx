@@ -17,7 +17,7 @@ const TOOL_ITEMS: ToolListItem[] = [
     name: 'Clipboard History',
     description:
       'Track copied text snippets and search recent history instantly.',
-    status: 'stable',
+    status: 'prototype',
     version: '1.4.2',
     tags: ['clipboard', 'productivity'],
     isInstalled: true,

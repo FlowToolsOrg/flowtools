@@ -5,6 +5,7 @@ import { type ComponentPropsWithoutRef, type ReactNode } from 'react'
 import { Card, Chip } from '@heroui/react'
 
 import { cn } from '../../utils/class-name'
+import { PluginMaturityBadge } from '../plugin-status'
 import { type ToolMarketStatus } from '../tool-market'
 
 export interface ToolSummaryCardProps extends Omit<
@@ -17,23 +18,6 @@ export interface ToolSummaryCardProps extends Omit<
   status?: ToolMarketStatus
   version?: string
   actions?: ReactNode
-}
-
-const statusLabelMap: Record<ToolMarketStatus, string> = {
-  stable: 'Stable',
-  beta: 'Beta',
-  experimental: 'Experimental',
-  deprecated: 'Deprecated',
-}
-
-const statusColorMap: Record<
-  ToolMarketStatus,
-  'success' | 'accent' | 'warning' | 'danger'
-> = {
-  stable: 'success',
-  beta: 'accent',
-  experimental: 'warning',
-  deprecated: 'danger',
 }
 
 export const ToolSummaryCard = ({
@@ -65,11 +49,7 @@ export const ToolSummaryCard = ({
                 {category}
               </Chip>
             ) : null}
-            {status ? (
-              <Chip color={statusColorMap[status]} size="sm" variant="soft">
-                {statusLabelMap[status]}
-              </Chip>
-            ) : null}
+            <PluginMaturityBadge maturity={status} />
             {version ? (
               <Chip size="sm" variant="secondary">
                 v{version}

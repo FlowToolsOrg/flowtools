@@ -780,7 +780,7 @@ bun run --cwd apps/desktop build
 
 #### P0.3a 统一成熟度与 Catalog 证据
 
-- 状态：`in-progress`
+- 状态：`done`（2026-10-04）
 - 范围：`prototype` / `experimental` / `beta` / `production` 一套成熟度；
   `indexed` / `entry-resolved` / `api-verified` / `production-certified` 为
   独立兼容证据，缺失验证不得默认升级。
@@ -808,9 +808,19 @@ bun run --cwd apps/desktop build
   72、Desktop 24 + Rust 11、Chromium 50 tests，根七 workspace 全 gate 通过；
   Desktop 使用共享 schema 与显式 DEV checkout root，不再从发布目录取本机路径。
   不认证资源依赖、runtime/API/平台或签名；12 项 SEC 风险仍 open。
-- **P0.3a3 UI 成熟度/兼容证据展示**：`pending`，共享 UI status 与 Web/Desktop
+- **P0.3a3 UI 成熟度/兼容证据展示**：`done`（2026-10-04），共享 UI status 与 Web/Desktop
   从实际 meta/catalog 读标签，删除硬编码 stable；状态/证据互不升级，UI 回归、
   真实路由截图/键盘验收与根 gate。a1/a2/a3 全部完成后关闭 P0.3a。
+  2026-10-04 当前证据：共享 UI 新增 9 项浏览器回归，Chromium 共 59 tests；
+  根七 workspace 全门禁、专用 Tauri native build 通过。Web Dashboard/插件清单
+  的 12 项实际 metadata、Base64 JSON/键盘/错误/历史、network 取消和 Todo 共享
+  store 已复验，见 [宿主记录](./validation/p0-execution-hosts.md)。
+  维护者在开发模式完成六项手工清单；第一版独立包的初始 NotFound 已修复，
+  两项真实 Tauri MockRuntime URL 回归在旧配置失败、修复后通过。第二版专用
+  identity 的独立包已由维护者实窗确认正常，市场/实际 Base64 成功截图已归档。
+  根 gate 强制执行、零缓存；Desktop 25 Bun + 13 Rust、Chromium 59 tests。
+  a1/a2/a3 全部完成，关闭 P0.3a；不认证第三方执行、安全审查或其他平台，
+  所有插件仍 prototype。生产入口与诚实市场标签留在 P0.3b/c。
 
 #### P0.3b 生产入口默认拒绝未认证外部代码
 
@@ -1551,10 +1561,10 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 | P0.2b2 | done        | Codex      | P0.2b1        | 2026-10-03；根七 workspace 全 gate；SDK 67/Chromium 50 tests；真实 Web/Tauri 验收与截图                       |
 | P0.2c  | done        | Codex      | P0.2b         | 2026-10-03；smoke 15 / plugins 39 tests；根七 workspace 全 gate，真实 Web/Tauri Todo/network 验收             |
 | P0.3   | in-progress | Codex      | P0.1          | 2026-10-03；P0.2 done，开始成熟度/目录与生产准入                                                              |
-| P0.3a  | in-progress | Codex      | P0.2          | 按 a1 契约 → a2 Catalog → a3 UI 分开验收                                                                      |
+| P0.3a  | done        | Codex      | P0.2          | 2026-10-04；a1/a2/a3 完成，契约、Catalog、两端实际 UI 分别验收                                                |
 | P0.3a1 | done        | Codex      | P0.2          | 2026-10-04；根七 workspace 全 gate，SDK 69 / plugins 41；两端 manifest 只读漂移检查通过                       |
 | P0.3a2 | done        | Codex      | P0.3a1        | 2026-10-04；根七 workspace 全 gate，SDK 72 / Desktop 24 + Rust 11；125 相对目录、47 文件证据与拒绝 fixture    |
-| P0.3a3 | pending     | Codex      | P0.3a2        | UI 成熟度与兼容证据展示                                                                                       |
+| P0.3a3 | done        | Codex      | P0.3a2        | 2026-10-04；根 gate / Chromium 59 / Desktop 25 + Rust 13；Web 实验与维护者独立 r2 包实窗确认、截图归档        |
 | P0.3b  | pending     | Codex      | P0.3a         | 默认拒绝未认证第三方生产执行                                                                                  |
 | P0.3c  | pending     | Codex      | P0.3b         | 市场状态、production bundle 与 P0 总验收                                                                      |
 | P0.4   | done        | Codex      | -             | P0.4a/b 完成；仅设计与评审契约，12 项安全风险保持 open                                                        |

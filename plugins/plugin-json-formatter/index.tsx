@@ -21,6 +21,7 @@ export default definePlugin({
     id: 'plugin-json-formatter',
     name: 'JSON 格式化',
     version: '0.1.0',
+    maturity: 'prototype',
     description: 'JSON 格式化、压缩、验证工具',
     permissions: ['clipboard'],
     tags: ['json', 'format', 'minify', 'validate'],

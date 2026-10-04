@@ -80,6 +80,7 @@ export default definePlugin({
     id: 'plugin-website-latency',
     name: '网站延迟测试',
     version: '0.1.0',
+    maturity: 'prototype',
     description: '测试常用网站的网络延迟（Ping）',
     permissions: ['network'],
     tags: ['network', 'latency', 'ping'],

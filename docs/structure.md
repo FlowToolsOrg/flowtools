@@ -14,6 +14,12 @@
 
 ## 工程验证结构
 
+- `packages/sdk/src/types/maturity.ts` / `test/maturity.test.ts`：成熟度统一词表、
+  prototype 默认与独立 compatibility evidence enum；不执行安全认证。
+- `scripts/generate-manifests.ts`：排序扫描内置 metadata，生成 Web/Desktop 两份
+  manifest；`plugins/test/maturity-contract.test.ts` 通过实际 compiled imports 和
+  CLI 子进程 list/info 验证 maturity 一致。源码正则扫描仍不是完整 manifest 验证。
+
 - `packages/sdk/src/execution/executor.ts` / `test/executor.test.ts`：共享真实
   `run()` 执行边界，校验/defaults、稳定 envelope、取消/异步等待上限与资源清理。
   输入摘要只保留类型和大小；CLI/Web/Desktop 已接入，执行器不是 sandbox。

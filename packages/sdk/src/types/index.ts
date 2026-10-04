@@ -1,4 +1,5 @@
 export * from './capabilities'
+export * from './maturity'
 export type { CommandDef, CommandMode } from './command'
 export type {
   PluginInputSchema,

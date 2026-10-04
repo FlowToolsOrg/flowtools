@@ -26,6 +26,7 @@ export default definePlugin({
     id: 'plugin-uuid-generator',
     name: 'UUID 生成器',
     version: '0.1.0',
+    maturity: 'prototype',
     description: '在线生成随机 UUID v4',
     permissions: ['clipboard'],
     tags: ['uuid', 'random', 'generator'],

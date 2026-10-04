@@ -129,6 +129,7 @@ export default definePlugin({
     id: 'plugin-color-converter',
     name: '颜色转换器',
     version: '0.1.0',
+    maturity: 'prototype',
     description: 'HEX/RGB/HSL 颜色格式互转',
     permissions: ['clipboard'],
     tags: ['color', 'hex', 'rgb', 'hsl', 'converter'],

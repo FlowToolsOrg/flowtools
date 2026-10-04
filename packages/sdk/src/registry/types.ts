@@ -1,3 +1,4 @@
+import type { PluginMaturity } from '../types/maturity'
 import type { Permission } from '../types/permissions'
 import type { FlowToolPlugin, PluginType } from '../types/plugin'
 
@@ -29,6 +30,8 @@ export interface PluginManifestEntry {
    * Semver version string.
    */
   version: string
+  /** Missing metadata is prototype; this is separate from compatibility evidence. */
+  maturity?: PluginMaturity
   /**
    * Optional plugin description.
    */

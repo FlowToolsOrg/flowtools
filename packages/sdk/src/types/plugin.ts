@@ -1,6 +1,7 @@
 import type { CommandResult } from '../result/types'
 import type { CommandDef } from './command'
 import type { ToolContext } from './ctx'
+import type { PluginMaturity } from './maturity'
 import type { Permission } from './permissions'
 import type { MarkedPluginFeature } from './plugin-features'
 import type { PluginStoreShape } from './store'
@@ -99,9 +100,9 @@ export interface PluginMeta {
    */
   tags?: string[]
   /**
-   * Plugin release status.
+   * Declared product maturity. Omission means prototype, not production approval.
    */
-  status?: 'stable' | 'beta' | 'experimental' | 'deprecated'
+  maturity?: PluginMaturity
   /**
    * Plugin category label.
    */

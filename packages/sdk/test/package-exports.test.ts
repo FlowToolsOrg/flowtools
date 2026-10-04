@@ -23,7 +23,11 @@ const expectedSymbols: Record<string, readonly string[]> = {
   './utils/capability': ['pickCapability'],
   './hooks': ['useEnv'],
   './runtime': ['FlowToolRuntimeContext', 'FlowToolRuntimeProvider'],
-  './types': [],
+  './types': [
+    'pluginMaturitySchema',
+    'resolvePluginMaturity',
+    'compatibilityEvidenceStatusSchema',
+  ],
 }
 
 describe('package exports', () => {

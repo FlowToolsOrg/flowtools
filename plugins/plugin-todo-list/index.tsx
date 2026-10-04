@@ -74,6 +74,7 @@ export default definePlugin({
     id: 'plugin-todo-list',
     name: 'Todo List',
     version: '0.0.1',
+    maturity: 'prototype',
     permissions: ['storage'],
   },
   inputSchema,

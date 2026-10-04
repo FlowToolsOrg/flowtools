@@ -38,6 +38,9 @@ FlowTools 插件，而是先把 `main`、`preload`、`features`、`cmds` 归一�
 - `id`：稳定唯一，命名方式使用 kebab-case
 - `name`：展示名
 - `version`：语义化版本
+- `maturity`：`prototype` / `experimental` / `beta` / `production`，缺失时为
+  prototype。原 `PluginMeta.status: stable/deprecated` 改用本字段；beta/production
+  只能在路线图记录客观验收后推进，不能由声明自行证明安全/兼容/授权。
 - `permissions`：声明所需能力（可选但强烈建议最小化）
 - `description`: 插件描述（可选）
 - `author`: 插件作者（可选）
@@ -46,6 +49,11 @@ FlowTools 插件，而是先把 `main`、`preload`、`features`、`cmds` 归一�
 - `run(ctx, input)`: 执行入口，返回 `result.text/json/table/open/multi`
 
 ### 输入 Schema（Zod）
+
+SDK 从 `@flowtools/sdk/types` 导出 `pluginMaturitySchema`、`resolvePluginMaturity`
+和独立 `compatibilityEvidenceStatusSchema`。内置插件、两端 manifest 与 CLI
+list/info 当前都为 prototype；生成两端 metadata 使用 `bun run generate:manifests`。
+Catalog/UI 全量传播由 P0.3a2/a3 验收，旧 stable UI 标签不是生产证据。
 
 插件推荐通过 `inputSchema` 声明输入参数。使用 Zod `z.object({...})` 定义，
 SDK 重新导出了 `z`，也可以从 `@flowtools/sdk` 直接导入：

@@ -82,6 +82,12 @@ storage and scoped fixture responses, not public network or user data. It also
 checks schema rejection, cancellation and actual plugin exceptions.
 Todo JSON runs share the host app store with its panel (CLI retains its existing
 validated `todos` key). Website latency uses SDK request with no raw fetch fallback.
+The SDK's maturity vocabulary is `prototype`, `experimental`, `beta`,
+`production`; missing metadata means `prototype`. All twelve built-ins and both
+host manifests explicitly declare `prototype`, also shown by CLI list/info.
+Compatibility evidence (`indexed` through `production-certified`) is separate
+and never grants execution or proves maturity. Catalog/UI propagation continues
+in P0.3a2/a3; existing UI "stable" badges are not readiness evidence.
 The HTML catalog is discovery evidence only, not a claim that 125 plugins are
 compatible, secure or production-ready. Signed third-party code remains untrusted.
 

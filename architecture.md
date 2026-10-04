@@ -34,6 +34,13 @@ CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用插�
 
 ### 当前自动化验证边界
 
+P0.3a1 在 SDK types 定义 maturity schema/type（prototype/experimental/beta/
+production），缺失 metadata 仅默认 prototype；compatibility evidence 独立。
+12 个内置 meta、Web/Desktop manifest、CLI list/info JSON/text 同步声明 prototype。
+生成器按排序 inventory 同时更新两端；Desktop 补显式 plugins workspace 依赖，
+根 Turbo 的依赖 tests/build 顺序随真实 dependency graph 推导。该标签不是签名、
+API 认证或 grant；Catalog/UI 的旧状态在 P0.3a2/a3 修正，不能据此宣称 P0 done。
+
 P0.2a 已交付 `packages/sdk/src/execution/executor.ts`：`executePlugin()` 对
 真实 app/tool `run()` 统一 schema/defaults、版本/时间戳/耗时、输入形状摘要、
 稳定失败码、取消及异步超时。21 个新增回归覆盖校验期取消竞争、迟到结果和

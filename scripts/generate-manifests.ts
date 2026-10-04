@@ -11,14 +11,14 @@ import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { resolvePluginMaturity } from '../packages/sdk/src/types/maturity'
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 const PLUGINS_DIR = resolve(__dirname, '..', 'plugins')
-const OUTPUT_FILE = resolve(
-  __dirname,
-  '..',
-  'apps/web-vite/src/plugin/manifests.ts'
+const OUTPUT_FILES = ['web-vite', 'desktop'].map(host =>
+  resolve(__dirname, '..', 'apps', host, 'src/plugin/manifests.ts')
 )
 
 type ComputedPluginMeta = PluginMeta & {
@@ -26,10 +26,7 @@ type ComputedPluginMeta = PluginMeta & {
   cliAvailable: boolean
 }
 
-function extractMeta(
-  content: string,
-  filePath: string
-): ComputedPluginMeta | null {
+function extractMeta(content: string): ComputedPluginMeta | null {
   // 提取 type
   const typeMatch = content.match(/type:\s*['"](\w+)['"]/)
   if (!typeMatch) return null
@@ -46,6 +43,9 @@ function extractMeta(
   const name = extractStringField(metaStr, 'name')
   const version = extractStringField(metaStr, 'version')
   const description = extractStringField(metaStr, 'description')
+  const maturity = resolvePluginMaturity(
+    extractStringField(metaStr, 'maturity')
+  )
 
   if (!id || !name || !version) {
     return null
@@ -64,13 +64,11 @@ function extractMeta(
   // 检测是否有 run 函数（CLI 可用）
   const cliAvailable = /run\s*[<(]/.test(content) || /run\s*:/.test(content)
 
-  // 检测是否有 Zod inputSchema
-  const hasSchema = /inputSchema:\s*z\.object/.test(content)
-
   return {
     id,
     name,
     version,
+    maturity,
     description,
     type,
     permissions,
@@ -101,7 +99,7 @@ function scanPlugins(): ComputedPluginMeta[] {
   const plugins: ComputedPluginMeta[] = []
 
   try {
-    const entries = readdirSync(PLUGINS_DIR)
+    const entries = readdirSync(PLUGINS_DIR).sort()
 
     for (const entry of entries) {
       const pluginDir = join(PLUGINS_DIR, entry)
@@ -125,7 +123,7 @@ function scanPlugins(): ComputedPluginMeta[] {
       }
 
       const content = readFileSync(filePath, 'utf-8')
-      const meta = extractMeta(content, filePath)
+      const meta = extractMeta(content)
 
       if (meta) {
         plugins.push(meta)
@@ -156,7 +154,8 @@ function generateManifests(plugins: ComputedPluginMeta[]): string {
       p => `  {
     id: '${p.id}',
     name: '${p.name}',
-    version: '${p.version}',${p.description ? `\n    description: '${p.description}',` : ''}
+    version: '${p.version}',
+    maturity: '${p.maturity}',${p.description ? `\n    description: '${p.description}',` : ''}
     type: '${p.type}',${p.permissions && p.permissions.length > 0 ? `\n    permissions: [${p.permissions.map(p => `'${p}'`).join(', ')}],` : ''}${p.tags && p.tags.length > 0 ? `\n    tags: [${p.tags.map(t => `'${t}'`).join(', ')}],` : ''}${p.category ? `\n    category: '${p.category}',` : ''}
     cliAvailable: ${p.cliAvailable},
     loader: () => import('@flowtools/plugins/${p.id}'),
@@ -191,6 +190,26 @@ ${categoryEntries},
 
 const plugins = scanPlugins()
 
-const content = generateManifests(plugins)
+const formatted = Bun.spawnSync(
+  [
+    process.execPath,
+    resolve(__dirname, '..', 'node_modules/oxfmt/bin/oxfmt'),
+    '--stdin-filepath',
+    OUTPUT_FILES[0]!,
+  ],
+  {
+    stdin: Buffer.from(generateManifests(plugins)),
+    stdout: 'pipe',
+    stderr: 'pipe',
+  }
+)
+if (formatted.exitCode !== 0)
+  throw new Error(`Manifest formatting failed: ${formatted.stderr.toString()}`)
+const content = formatted.stdout.toString()
 
-writeFileSync(OUTPUT_FILE, content, 'utf-8')
+for (const outputFile of OUTPUT_FILES) {
+  if (process.argv.includes('--check')) {
+    if (readFileSync(outputFile, 'utf-8').replaceAll('\r\n', '\n') !== content)
+      throw new Error(`Generated manifest drift: ${outputFile}`)
+  } else writeFileSync(outputFile, content, 'utf-8')
+}

@@ -20,6 +20,8 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
+import { resolvePluginMaturity } from '@flowtools/sdk/types'
+
 interface PluginModule {
   default: FlowToolPlugin
 }
@@ -74,6 +76,9 @@ function extractMetaFromSource(pluginDir: string): CLIPluginInfo | null {
     const name = extractStringField(metaBlock, 'name')
     const version = extractStringField(metaBlock, 'version')
     const description = extractStringField(metaBlock, 'description')
+    const maturity = resolvePluginMaturity(
+      extractStringField(metaBlock, 'maturity')
+    )
 
     if (!id || !name || !version) continue
 
@@ -82,7 +87,7 @@ function extractMetaFromSource(pluginDir: string): CLIPluginInfo | null {
       /inputSchema\s*=\s*z\.object/.test(content) ||
       /inputSchema:\s*z\.object/.test(content)
 
-    return { id, name, version, description, type, hasRun, hasSchema }
+    return { id, name, version, maturity, description, type, hasRun, hasSchema }
   }
 
   return null

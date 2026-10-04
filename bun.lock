@@ -32,6 +32,7 @@
       "name": "@flowtools/desktop",
       "version": "0.1.0",
       "dependencies": {
+        "@flowtools/plugins": "workspace:*",
         "@flowtools/sdk": "workspace:*",
         "@flowtools/ui": "workspace:*",
         "@heroui/react": "catalog:",

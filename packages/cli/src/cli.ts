@@ -63,7 +63,7 @@ program
       const cli = p.hasRun ? '✓' : '✗'
       const schema = p.hasSchema ? ' [schema]' : ''
       const desc = p.description ? ` — ${p.description}` : ''
-      process.stdout.write(`${cli} ${p.id}${schema}${desc}\n`)
+      process.stdout.write(`${cli} ${p.id} [${p.maturity}]${schema}${desc}\n`)
     }
   })
 
@@ -221,6 +221,7 @@ async function printPluginInfo(
   process.stdout.write(`${pluginInfo.id}\n`)
   process.stdout.write(`Name: ${pluginInfo.name}\n`)
   process.stdout.write(`Version: ${pluginInfo.version}\n`)
+  process.stdout.write(`Maturity: ${pluginInfo.maturity}\n`)
   process.stdout.write(`Type: ${pluginInfo.type}\n`)
   process.stdout.write(`CLI: ${pluginInfo.hasRun ? 'yes' : 'no'}\n`)
 

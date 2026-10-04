@@ -39,6 +39,7 @@ export default definePlugin({
     id: 'plugin-hash-generator',
     name: '哈希生成器',
     version: '0.1.0',
+    maturity: 'prototype',
     description: '生成 SHA-1/SHA-256/SHA-384/SHA-512 哈希值',
     permissions: ['clipboard'],
     tags: ['hash', 'sha', 'sha256', 'md5', 'generator'],

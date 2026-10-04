@@ -15,6 +15,7 @@ export default definePlugin({
     id: 'plugin-image-base64',
     name: '图片 Base64 互转',
     version: '0.1.0',
+    maturity: 'prototype',
     description: '在线图片与 Base64 编码互相转换',
     permissions: ['clipboard'],
     tags: ['image', 'base64', 'converter'],

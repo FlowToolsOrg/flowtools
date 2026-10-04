@@ -159,6 +159,18 @@ Catalog presence, parsed metadata, command discovery, or a successful build is
 not evidence of compatibility or production readiness. Advance a maturity
 label only when the declared scope has objective validation evidence.
 
+Use SDK `PluginMeta.maturity` / `PluginManifestEntry.maturity` and
+`pluginMaturitySchema` from `@flowtools/sdk/types`; omission resolves to
+`prototype` via `resolvePluginMaturity`, never stable. The old PluginMeta
+`status: stable/deprecated` vocabulary is removed. Compatibility evidence uses
+its own schema and does not authorize execution or certify security.
+`bun run generate:manifests` now regenerates both Web and Desktop manifests
+from the same built-in metadata in sorted order. Desktop directly depends on
+the plugins workspace; retain that dependency so types/tests do not rely on an
+undeclared resolution side effect. Catalog/UI migration is P0.3a2/a3.
+`bun run scripts/generate-manifests.ts --check` is a read-only generated-content
+gate; the generator formats output before comparing or writing both hosts.
+
 ## Coding Style and Naming Conventions
 
 - TypeScript strict mode is enabled; keep code type-safe and avoid `any`.

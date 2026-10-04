@@ -14,6 +14,13 @@
 
 ## 工程验证结构
 
+- `scripts/production-artifacts.ts`：固定生产目录的只读 byte/hash、危险指纹、
+  已知 certification AST 与 canary 检查；拒绝路径重定向，不执行产物。
+  `verify-production-entrypoints.ts`：仅两端固定 build，child-only probes 后
+  所有文件逐字节一致。`production-artifacts.test.ts` 与 CI contract 回归
+  覆盖拒绝/顺序/fatal。post-build CI 执行，无 native launch 或用户 DB。
+  见 [产物 gate](./validation/p0-production-artifacts.md)。
+
 - Desktop `runtime/html-development-policy.ts` 是 Host 构建策略；普通
   `html-plugin-bridge.ts` 永久拒绝。`development-html-launch.ts` / bridge / surface
   仅在 DEV + opt-in 下动态加载；生产不创建 iframe 或读外部入口，开发也不支持

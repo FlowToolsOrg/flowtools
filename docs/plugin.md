@@ -38,6 +38,12 @@ P0.3b3 Desktop 默认也拒绝 HTML/Legacy，普通 bridge API 一律拒绝；�
 拒绝已通过；独立 r3 包的实际 Base64 与 HTML 默认拒绝人工清单已通过，
 运行路径/身份另行核实。不能解释为已完成签名/隔离或独立安全验收。
 
+P0.3b4 生产 artifact gate 在 root build 后检查两端固定构建树与已知危险/
+certification syntax，再用 opt-in=1 和 synthetic path/URL/key canaries
+实际重建，要求所有字节与普通产物一致。它不执行插件、不删除旧数据，
+不是签名或 publisher 认证；CLI compiled inventory 与服务拒绝另由真实回归覆盖。
+见 [发布产物验收](./validation/p0-production-artifacts.md)。
+
 ## 1. 先理解插件模型
 
 Flow Tool 目前支持两类插件：

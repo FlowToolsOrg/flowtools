@@ -83,6 +83,11 @@ Run from repository root:
 - `bun run verify:plugin-catalog`: read-only portable version-1 catalog, identity,
   path, fixture digest and duplicate-copy gate; no live checkout or runtime/API/
   security certification. It runs before lint in Windows CI.
+- `bun run verify:production-entrypoints`: run after root build; inspect actual
+  Web/Desktop output, then rebuild with child-only opt-in and synthetic canaries.
+  Require byte-identical artifacts, no known unsafe fingerprints/certification
+  switches or canary leakage. No raw artifact import, native launch or user DB.
+  This rebuild gate is not signing, publisher verification or sandbox evidence.
 - `cd apps/desktop && bun run tauri add <plugin-name>`: install official Tauri
   plugins for desktop native capability work before adding host-side adapters.
 
@@ -152,6 +157,9 @@ work; local commit permission does not authorize pushes or repository settings.
 Windows MSVC binding integration tests require the Common Controls v6 manifest
 directives in `src-tauri/build.rs`; Tauri's app manifest does not cover them.
 Keep these directives test-target scoped to avoid duplicate app manifests.
+Production artifact refusal is a fatal post-build CI gate, before the final
+clean-worktree check. Preserve standard test/build order, strict Turbo env and
+all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 

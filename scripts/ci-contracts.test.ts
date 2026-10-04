@@ -148,6 +148,26 @@ test('PowerShell propagates native failure before subsequent gates run', () => {
   expect(failure.stdout).not.toContain('UNEXPECTED_CONTINUATION')
 }, 30_000)
 
+test('production artifact refusal is a fatal post-build gate before the clean-worktree check', async () => {
+  const entry = await Bun.file(
+    new URL('./check-ci.ps1', import.meta.url)
+  ).text()
+  const gate = entry.indexOf("'verify:production-entrypoints'")
+  expect(entry).toContain(
+    "Invoke-QualityCommand 'Production external-entrypoint artifacts' bun @("
+  )
+  expect(gate).toBeGreaterThan(entry.indexOf("'build', '--force'"))
+  expect(gate).toBeLessThan(entry.lastIndexOf('Assert-CleanWorktree'))
+  const root = (await Bun.file(
+    new URL('../package.json', import.meta.url)
+  ).json()) as {
+    scripts: Record<string, string>
+  }
+  expect(root.scripts['verify:production-entrypoints']).toBe(
+    'bun run scripts/verify-production-entrypoints.ts'
+  )
+})
+
 test('worktree guard accepts clean repositories and rejects untracked drift', () => {
   const fixture = mkdtempSync(join(tmpdir(), 'flowtools-ci-contract-'))
   try {

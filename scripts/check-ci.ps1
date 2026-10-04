@@ -36,6 +36,9 @@ try {
   Invoke-QualityCommand 'Build all seven workspaces' bun @(
     'run', 'build', '--force'
   )
+  Invoke-QualityCommand 'Production external-entrypoint artifacts' bun @(
+    'run', 'verify:production-entrypoints'
+  )
   Invoke-QualityCommand 'Rust format' cargo @(
     'fmt', '--manifest-path', 'apps/desktop/src-tauri/Cargo.toml', '--', '--check'
   )

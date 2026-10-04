@@ -138,6 +138,13 @@ route denials passed. The dedicated r3 native package also passed maintainer
 manual acceptance, separately recorded from development screenshots. See the
 [Desktop entry record](./docs/validation/p0-desktop-external-gate.md).
 
+P0.3b4 adds `bun run verify:production-entrypoints` after the root build in CI.
+It checks actual Web/Desktop files, known unsafe fingerprints and certification
+syntax, then rebuilds with child-only development/path/URL/synthetic-key probes.
+All bytes must match the ordinary production baseline; it is not signing or
+security certification. The current 45 host artifacts passed; full milestone
+verification is recorded in [the artifact gate](./docs/validation/p0-production-artifacts.md).
+
 - Product direction: desktop-first, cross-platform ready.
 - Current runnable hosts:
   - `apps/web-vite`: web runtime prototype.

@@ -83,6 +83,13 @@ DEV + 精确 opt-in 下的动态模块；普通 bridge API 一律拒绝，开发
 拒绝已通过；独立 r3 原生包人工清单已回报通过，并核实运行路径/测试身份。
 这不是独立安全审批或签名安装验收；成熟度保持 prototype。
 
+P0.3b4 将实际 Web/Desktop artifact 验收加入 post-build CI：固定树/字节 hash、
+危险模块/事件指纹、已知 certification syntax 和 child-only 环境 canary；
+production opt-in 重建必须与普通构建逐字节一致。它不执行产物或启动原生 DB，
+不认证任意数据流或签名/隔离；仍须保留 SDK/CLI/Host 的真实副作用前拒绝回归。
+当前两端共 45 个文件通过，完整里程碑见
+[产物验收](./docs/validation/p0-production-artifacts.md)。
+
 P0.2a 已交付 `packages/sdk/src/execution/executor.ts`：`executePlugin()` 对
 真实 app/tool `run()` 统一 schema/defaults、版本/时间戳/耗时、输入形状摘要、
 稳定失败码、取消及异步超时。21 个新增回归覆盖校验期取消竞争、迟到结果和

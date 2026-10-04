@@ -56,6 +56,8 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
   功能/拒绝人工验收已回报通过，运行路径/身份已核实，不认证隔离或用户授权。
   开发预览仍能访问 Host realm，内置加载器属于可信 Host API；签名/隔离/broker
   未实现，本项保持 open，不把此停用策略称作生产 sandbox。
+  P0.3b4 新增 post-build 实际产物/child opt-in byte 不变量门禁，覆盖已知危险
+  指纹、伪认证语法与环境泄漏探针；不证明任意数据流或第三方包安全。
 - 证据：[文件加载器](../../packages/sdk/src/services/plugin-file-loader.ts)、
   [危险开发实现](../../packages/sdk/src/services/development-plugin-file-loader.ts)、
   [SDK 拒绝回归](../../packages/sdk/test/external-code-gate.test.ts)、

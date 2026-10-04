@@ -871,9 +871,14 @@ bun run --cwd apps/desktop build
   opt-in + canary 产物逐字节一致、三条实际前端路由拒绝通过。新专用原生包
   独立 r3 人工清单已回报通过，运行路径/身份核实，最终 Desktop 39+13 与
   cargo fmt 复核通过；见 [Desktop gate](./validation/p0-desktop-external-gate.md)。
-- **P0.3b4 发布产物与跨入口验收**：`pending`。将实际 Web/Desktop production
+- **P0.3b4 发布产物与跨入口验收**：`in-progress`。将实际 Web/Desktop production
   artifact 检查加入可复现门禁，证明没有危险 loader、开发路径/URL 或认证布尔
   开关；全根 gate 和模式/拒绝矩阵记录。b1/b2/b3/b4 全部完成才关闭 P0.3b。
+  已实现固定树/实际 byte/hash、已知危险指纹与 certification AST 拒绝，child
+  opt-in/path/URL/synthetic-key probes 重建全部 45 文件逐字节一致；17 artifact
+  与 6 CI contracts 通过。post-build fatal gate 与最终 drift check 保留。
+  待完整根门禁与 clean checkout 复核；见
+  [产物 gate](./validation/p0-production-artifacts.md)。
 
 #### P0.3c 诚实市场状态与 P0 总验收
 
@@ -1610,7 +1615,7 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 | P0.3b1 | done        | Codex      | P0.3a         | 2026-10-04；根 gate / SDK 86 / Web 22；三种实际 Web 模式、旧源码保留、production opt-in artifact 一致通过         |
 | P0.3b2 | done        | Codex      | P0.3b1        | 2026-10-04；CLI 48 / 七 workspace 全 gate / 十二真实 compiled smoke 15 / 三份清单检查通过                         |
 | P0.3b3 | done        | Codex      | P0.3b2        | 默认拒绝/DEV 动态分离/危险方法禁用已实现；全根/24 artifacts/三条前端拒绝/独立 r3 人工清单/最终 Desktop 39+13 通过 |
-| P0.3b4 | pending     | Codex      | P0.3b3        | 实际发布产物与跨入口拒绝矩阵                                                                                      |
+| P0.3b4 | in-progress | Codex      | P0.3b3        | 23 项 artifact/CI 契约通过；首轮干净 gate 内存分配失败，按用户要求暂缓重型复核                                    |
 | P0.3c  | pending     | Codex      | P0.3b         | 市场状态、production bundle 与 P0 总验收                                                                          |
 | P0.4   | done        | Codex      | -             | P0.4a/b 完成；仅设计与评审契约，12 项安全风险保持 open                                                            |
 | P0.4a  | done        | Codex      | -             | `docs(security): define plugin trust and threat baseline (P0.4a)`；12 open 风险、80 链接、lint 7/7                |

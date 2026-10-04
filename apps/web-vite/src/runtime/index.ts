@@ -11,5 +11,6 @@ export type {
 export {
   renderWebAppPlugin,
   runWebPlugin,
+  runWebRegisteredPlugin,
   runWebToolPlugin,
 } from './plugin-runtime'

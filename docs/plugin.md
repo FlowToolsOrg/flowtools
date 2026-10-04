@@ -731,5 +731,10 @@ Loader and LifecycleManager share load/activate/deactivate/unload ordering.
 State transitions reject illegal edges; failed hooks retain their cause and
 cleanup failures until explicit unload/reload recovery. Disabled instances are
 reused without loading again. Removal requires completed cleanup.
-P1.2b resource/command ownership and P1.3a/P1.5a headless IPC remain pending.
+P1.2b adds reactive command projection, generation leases, execution draining,
+and cooperative load/activation/view/runner resource scopes. Enabled module state
+is separate from a resident runner; only explicitly owned runner resources count
+as running. Web GUI executions acquire the current registry instance. Updates
+and removal drain accepted calls and clean resources; cleanup errors block removal.
+P1.3a/P1.5a headless IPC remain pending.
 See [G2 acceptance](./validation/g2-runtime.md).

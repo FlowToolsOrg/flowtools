@@ -7,6 +7,7 @@ import type {
 } from './types'
 
 import { PluginLifecycleError, pluginStateTransitions } from './lifecycle-state'
+import { PluginResourceScope, type PluginResourceOwner } from './resource-scope'
 
 /**
  * Central registry for all plugins.
@@ -17,6 +18,85 @@ export class PluginRegistry {
   private listeners = new Set<PluginRegistryListener>()
   private operations = new Map<string, Promise<unknown>>()
   private activeOperations = new Map<string, symbol>()
+  private resources = new Map<
+    string,
+    Map<PluginResourceOwner, PluginResourceScope>
+  >()
+
+  resourceScope(
+    pluginId: string,
+    owner: PluginResourceOwner
+  ): PluginResourceScope {
+    const entry = this.plugins.get(pluginId)
+    if (
+      !entry ||
+      (owner !== 'load' &&
+        entry.state !== 'enabled' &&
+        !(
+          owner === 'activation' &&
+          (entry.state === 'loaded' || entry.state === 'disabled')
+        ))
+    ) {
+      throw new PluginLifecycleError(
+        pluginId,
+        'cannot acquire resources in this state.'
+      )
+    }
+    let scopes = this.resources.get(pluginId)
+    if (!scopes) {
+      scopes = new Map()
+      this.resources.set(pluginId, scopes)
+    }
+    let scope = scopes.get(owner)
+    if (!scope) {
+      scope = new PluginResourceScope()
+      scopes.set(owner, scope)
+    }
+    return scope
+  }
+
+  /** Enabled UI modules do not imply a resident runner process. */
+  isRunning(pluginId: string): boolean {
+    return (this.resources.get(pluginId)?.get('runner')?.size ?? 0) > 0
+  }
+
+  async releaseResources(
+    pluginId: string,
+    owners: readonly PluginResourceOwner[]
+  ): Promise<Error[]> {
+    const scopes = this.resources.get(pluginId)
+    const errors: Error[] = []
+    for (const owner of owners) {
+      const scope = scopes?.get(owner)
+      if (!scope) continue
+      const failures = await scope.close()
+      errors.push(...failures)
+      if (!failures.length) scopes!.delete(owner)
+    }
+    if (scopes?.size === 0) this.resources.delete(pluginId)
+    return errors
+  }
+
+  replaceManifest(
+    pluginId: string,
+    manifest: PluginManifestEntry,
+    lease: symbol
+  ): void {
+    const entry = this.plugins.get(pluginId)
+    if (
+      !entry ||
+      entry.state !== 'registered' ||
+      manifest.id !== pluginId ||
+      this.activeOperations.get(pluginId) !== lease
+    ) {
+      throw new PluginLifecycleError(
+        pluginId,
+        'cannot replace a live manifest.'
+      )
+    }
+    this.plugins.set(pluginId, Object.freeze({ ...entry, manifest }))
+    this.emit({ type: 'registered', pluginId })
+  }
 
   /** Shared by every loader/manager using this registry, including failures. */
   serialize<T>(
@@ -57,6 +137,7 @@ export class PluginRegistry {
       id: manifest.id,
       manifest,
       state: 'registered',
+      generation: 0,
     }
 
     this.plugins.set(manifest.id, Object.freeze(entry))

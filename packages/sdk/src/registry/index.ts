@@ -1,4 +1,10 @@
 export { CommandRegistry } from './command-registry'
+export { projectPluginCommands } from './command-projection'
+export { PluginResourceScope } from './resource-scope'
+export type {
+  PluginResourceOwner,
+  PluginResourceCleanup,
+} from './resource-scope'
 export type {
   RegisteredCommand,
   CommandRegistryListener,

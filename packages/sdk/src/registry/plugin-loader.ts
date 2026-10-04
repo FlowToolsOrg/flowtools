@@ -1,5 +1,6 @@
+import type { FlowToolPlugin } from '../types/plugin'
 import type { PluginRegistry } from './plugin-registry'
-import type { RegisteredPlugin } from './types'
+import type { PluginManifestEntry, RegisteredPlugin } from './types'
 
 import { PluginCleanupError, PluginLifecycleError } from './lifecycle-state'
 
@@ -72,6 +73,36 @@ export class PluginLoader {
     )
   }
 
+  update(pluginId: string, manifest: PluginManifestEntry): Promise<void> {
+    return this.registry.serialize(pluginId, async lease => {
+      const entry = this.getEntry(pluginId)
+      if (manifest.id !== pluginId)
+        throw new PluginLifecycleError(pluginId, 'identity cannot change.')
+      const enabled = entry.state === 'enabled'
+      await this.unloadInternal(pluginId)
+      this.registry.replaceManifest(pluginId, manifest, lease)
+      if (enabled) await this.enableInternal(pluginId)
+    })
+  }
+
+  /** Updates/removal drain accepted calls; late calls reject after transition. */
+  withPlugin<T>(
+    pluginId: string,
+    operation: (plugin: FlowToolPlugin) => Promise<T> | T
+  ): Promise<T> {
+    return this.registry.serialize(pluginId, async () => {
+      const entry = this.getEntry(pluginId)
+      if (
+        entry.state !== 'enabled' ||
+        entry.manifest.dependenciesSatisfied === false ||
+        !entry.plugin
+      ) {
+        throw new PluginLifecycleError(pluginId, 'is unavailable for commands.')
+      }
+      return await operation(entry.plugin)
+    })
+  }
+
   async enableAll(): Promise<void> {
     for (const entry of this.registry.getAll()) {
       if (entry.state === 'loaded' || entry.state === 'disabled') {
@@ -114,9 +145,14 @@ export class PluginLoader {
           `[PluginLoader] Plugin "${pluginId}" has invalid default export.`
         )
       }
-      this.registry.updateState(pluginId, { plugin })
+      this.registry.updateState(pluginId, {
+        plugin,
+        generation: entry.generation + 1,
+      })
       this.hooks.set(pluginId, { loaded: true, active: false })
-      await plugin.lifecycle?.onLoad?.()
+      await plugin.lifecycle?.onLoad?.(
+        this.registry.resourceScope(pluginId, 'load')
+      )
       this.registry.updateState(pluginId, { loadedAt: Date.now() })
       this.registry.transition(pluginId, 'loaded')
     } catch (error) {
@@ -132,7 +168,15 @@ export class PluginLoader {
     const updated = this.getEntry(pluginId)
     try {
       this.hooks.get(pluginId)!.active = true
-      await updated.plugin?.lifecycle?.onActivate?.()
+      if (updated.manifest.dependenciesSatisfied === false) {
+        throw new PluginLifecycleError(
+          pluginId,
+          'dependencies are unavailable.'
+        )
+      }
+      await updated.plugin?.lifecycle?.onActivate?.(
+        this.registry.resourceScope(pluginId, 'activation')
+      )
       this.registry.updateState(pluginId, { enabledAt: Date.now() })
       this.registry.transition(pluginId, 'enabled')
     } catch (error) {
@@ -147,6 +191,12 @@ export class PluginLoader {
     try {
       await entry.plugin?.lifecycle?.onDeactivate?.()
       this.hooks.get(pluginId)!.active = false
+      const errors = await this.registry.releaseResources(pluginId, [
+        'view',
+        'runner',
+        'activation',
+      ])
+      if (errors.length) throw new PluginCleanupError(errors)
       this.registry.updateState(pluginId, { enabledAt: undefined })
       this.registry.transition(pluginId, 'disabled')
     } catch (error) {
@@ -175,6 +225,14 @@ export class PluginLoader {
         errors.push(asError(error))
       }
     }
+    errors.push(
+      ...(await this.registry.releaseResources(pluginId, [
+        'view',
+        'runner',
+        'activation',
+        'load',
+      ]))
+    )
     return errors
   }
 

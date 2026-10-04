@@ -1,7 +1,7 @@
 import type { AppPlugin, FlowToolPlugin } from '@flowtools/sdk'
 import type { ExecutePluginOptions } from '@flowtools/sdk/execution'
 
-import { PluginErrorBoundary } from '@flowtools/sdk'
+import { PluginErrorBoundary, PluginLoader } from '@flowtools/sdk'
 import { createExecutionFailure } from '@flowtools/sdk/execution'
 import {
   executeManifestCommand,
@@ -10,6 +10,7 @@ import {
 } from '@flowtools/sdk/manifest'
 
 import { builtInManifestData } from '../plugin/manifests'
+import { pluginRegistryInternals } from '../stores/plugin-registry-store'
 
 import { createWebToolContext, WebPluginRuntimeProvider } from './ctx'
 
@@ -91,3 +92,28 @@ export async function runWebPlugin(
 }
 
 export const runWebToolPlugin = runWebPlugin
+
+/** GUI executions acquire the current enabled generation, never a captured UI instance. */
+export async function runWebRegisteredPlugin(
+  pluginId: string,
+  input: unknown,
+  options: ExecutePluginOptions = {}
+) {
+  const registry = pluginRegistryInternals._registry
+  try {
+    if (!registry) throw new Error('Registry unavailable')
+    return await new PluginLoader(registry).withPlugin(pluginId, plugin =>
+      runWebPlugin(plugin, input, options)
+    )
+  } catch {
+    return createExecutionFailure(
+      pluginId,
+      registry?.get(pluginId)?.manifest.version ?? '0.0.0',
+      input,
+      {
+        code: 'NOT_RUNNABLE',
+        message: 'Plugin is unavailable for execution',
+      }
+    )
+  }
+}

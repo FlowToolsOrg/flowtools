@@ -1,3 +1,4 @@
+import type { PluginResourceScope } from '../registry/resource-scope'
 import type { CommandResult } from '../result/types'
 import type { CommandDef } from './command'
 import type { ToolContext } from './ctx'
@@ -48,7 +49,7 @@ export interface PluginLifecycle {
   /**
    * Called when the plugin is loaded.
    */
-  onLoad?: () => void | Promise<void>
+  onLoad?: (resources: PluginResourceScope) => void | Promise<void>
   /**
    * Called when the plugin is unloaded.
    */
@@ -56,7 +57,7 @@ export interface PluginLifecycle {
   /**
    * Called when the plugin becomes active.
    */
-  onActivate?: () => void | Promise<void>
+  onActivate?: (resources: PluginResourceScope) => void | Promise<void>
   /**
    * Called when the plugin becomes inactive.
    */

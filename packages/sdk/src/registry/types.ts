@@ -56,6 +56,8 @@ export interface PluginManifestEntry {
    * Whether this plugin has a `run()` function and is CLI-compatible.
    */
   cliAvailable?: boolean
+  /** Host-resolved availability only; dependency resolution ships in G4. */
+  dependenciesSatisfied?: boolean
   /**
    * Async loader that returns the plugin module.
    * Built-in plugins use relative import(), external plugins use URL import().
@@ -83,6 +85,8 @@ export interface RegisteredPlugin {
    * Current lifecycle state.
    */
   state: PluginState
+  /** Monotonic loaded instance generation, even when imports reuse a singleton. */
+  generation: number
   /**
    * Error if state is 'error'.
    */

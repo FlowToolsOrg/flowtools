@@ -14,7 +14,7 @@ import { useStore } from 'zustand'
 
 import { Button, Chip, Tabs } from '@heroui/react'
 
-import { renderWebAppPlugin, runWebPlugin } from '@/runtime'
+import { renderWebAppPlugin, runWebRegisteredPlugin } from '@/runtime'
 import { pluginRegistryStore } from '@/stores/plugin-registry-store'
 import { runHistoryStore } from '@/stores/run-history-store'
 
@@ -197,7 +197,7 @@ function ToolDetailPage_() {
                 inputSchema={describeInputSchema(plugin.inputSchema)}
                 history={runHistoryStore}
                 execute={(input, signal) =>
-                  runWebPlugin(plugin, input, { signal })
+                  runWebRegisteredPlugin(toolId, input, { signal })
                 }
               />
             ) : (

@@ -209,6 +209,8 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
   但不能抢占同步循环或撤回已发生副作用；
   UI/Headless 同进程没有完整 CPU/内存/输出/并发硬配额。
 - 证据：[SDK watchdog](../../packages/sdk/src/registry/watchdog.ts)、
+  [T1 生命周期与资源回收](../../packages/sdk/src/registry/plugin-loader.ts)、
+  [资源与在途调用回归](../../packages/sdk/test/command-projection.test.ts)、
   [CLI runner](../../packages/cli/src/runner.ts)、
   [正则插件](../../plugins/plugin-regex-tester/index.tsx)
 - Owner：Runtime / Desktop / CLI
@@ -217,6 +219,8 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 - 验证：P2.1/P2.2/P2.7；死循环、忽略 abort、内存/输出洪泛、崩溃 fixture；
   deadline 后 Host 保持响应、无孤儿进程/未释放资源。
 - 残余风险：共享 OS 资源或 WebView 引擎缺陷仍会影响 Host；UI 隔离需平台证明。
+  G2 P1.2a/b 每插件锁、代际 handler 与资源 scope 仅约束合作 T1；hook/handler
+  忽略清理或同步阻塞仍可阻止排空，不是强制终止或进程沙箱，本项仍 open。
 
 ### SEC-011 Legacy preload、资源与远程导航
 

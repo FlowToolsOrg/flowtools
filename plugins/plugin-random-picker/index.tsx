@@ -1,46 +1,12 @@
 import { useCallback, useRef, useState } from 'react'
 
 import { definePlugin } from '@flowtools/sdk'
-import { result } from '@flowtools/sdk/result'
 import { Button, Card, Chip, Label, TextArea } from '@flowtools/ui/plugin'
-import { z } from 'zod'
 
-const inputSchema = z.object({
-  names: z.string().describe('List of names (newline or comma separated)'),
-  count: z.number().default(1).describe('Number of names to pick'),
-})
+import commandPlugin from './commands'
 
 export default definePlugin({
-  type: 'app',
-  meta: {
-    id: 'plugin-random-picker',
-    name: '随机点名',
-    version: '0.1.0',
-    maturity: 'prototype',
-    description: '在线名单随机点名工具',
-    permissions: [],
-    tags: ['random', 'picker', 'name'],
-    category: '实用工具',
-  },
-  inputSchema,
-  async run(_ctx, input: z.infer<typeof inputSchema>) {
-    const { names: text } = input
-    if (!text) return result.text('Error: names is required')
-    const nameList = text
-      .split(/[\n,，、;；]+/)
-      .map(s => s.trim())
-      .filter(Boolean)
-    if (nameList.length === 0) return result.text('Error: no valid names')
-    const count = Math.min(input.count ?? 1, nameList.length)
-    const picked: string[] = []
-    const remaining = [...nameList]
-    for (let i = 0; i < count; i++) {
-      const idx = Math.floor(Math.random() * remaining.length)
-      picked.push(remaining[idx])
-      remaining.splice(idx, 1)
-    }
-    return result.json({ result: picked, total: nameList.length })
-  },
+  ...commandPlugin,
   setup() {
     return function RandomPickerPanel() {
       const [names, setNames] = useState('')
@@ -49,29 +15,23 @@ export default definePlugin({
       const [isRolling, setIsRolling] = useState(false)
       const [rollingName, setRollingName] = useState('')
       const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
       const parseNames = useCallback((text: string): string[] => {
         return text
           .split(/[\n,，、;；]+/)
           .map(s => s.trim())
           .filter(Boolean)
       }, [])
-
       const pick = useCallback(() => {
         const list = parseNames(names)
         if (list.length === 0) return
-
         setIsRolling(true)
         setPicked(null)
-
         let count = 0
         const totalTicks = 20
-
         timerRef.current = setInterval(() => {
           const randomIndex = Math.floor(Math.random() * list.length)
           setRollingName(list[randomIndex])
           count++
-
           if (count >= totalTicks) {
             if (timerRef.current) clearInterval(timerRef.current)
             const finalIndex = Math.floor(Math.random() * list.length)
@@ -83,20 +43,16 @@ export default definePlugin({
           }
         }, 80)
       }, [names, parseNames])
-
       const stop = useCallback(() => {
         if (timerRef.current) clearInterval(timerRef.current)
         setIsRolling(false)
         setRollingName('')
       }, [])
-
       const clearHistory = useCallback(() => {
         setHistory([])
         setPicked(null)
       }, [])
-
       const nameList = parseNames(names)
-
       return (
         <div className="w-full max-w-2xl mx-auto">
           <Card className="p-6">

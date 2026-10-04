@@ -1,41 +1,12 @@
 import { useCallback, useRef, useState } from 'react'
 
 import { definePlugin, useCapability } from '@flowtools/sdk'
-import { result } from '@flowtools/sdk/result'
 import { Button, Card, Label, TextArea } from '@flowtools/ui/plugin'
-import { z } from 'zod'
 
-const inputSchema = z.object({
-  base64: z.string().optional().describe('Base64 string to get info about'),
-})
+import commandPlugin from './commands'
 
 export default definePlugin({
-  type: 'app',
-  meta: {
-    id: 'plugin-image-base64',
-    name: '图片 Base64 互转',
-    version: '0.1.0',
-    maturity: 'prototype',
-    description: '在线图片与 Base64 编码互相转换',
-    permissions: ['clipboard'],
-    tags: ['image', 'base64', 'converter'],
-    category: '编码工具',
-  },
-  inputSchema,
-  async run(_ctx, input: z.infer<typeof inputSchema>) {
-    const b64 = input.base64
-    if (!b64) return result.text('Error: base64 is required')
-    const src = b64.startsWith('data:') ? b64 : `data:image/png;base64,${b64}`
-    const raw = src.includes(',') ? src.split(',')[1] : src
-    const bytes = Math.round((raw.length * 3) / 4)
-    return result.json({
-      result: {
-        dataUrl: src.slice(0, 80) + '...',
-        estimatedBytes: bytes,
-        hasPrefix: src.startsWith('data:'),
-      },
-    })
-  },
+  ...commandPlugin,
   setup() {
     return function ImageBase64Panel() {
       const { clipboard } = useCapability()
@@ -50,27 +21,22 @@ export default definePlugin({
       const [fileSize, setFileSize] = useState('')
       const [copied, setCopied] = useState(false)
       const [error, setError] = useState('')
-
       const formatSize = (bytes: number): string => {
         if (bytes < 1024) return `${bytes} B`
         if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
         return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
       }
-
       const handleFileChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
           const file = e.target.files?.[0]
           if (!file) return
-
           if (!file.type.startsWith('image/')) {
             setError('请选择图片文件')
             return
           }
-
           setError('')
           setFileName(file.name)
           setFileSize(formatSize(file.size))
-
           const reader = new FileReader()
           reader.onload = () => {
             const data = reader.result as string
@@ -81,31 +47,25 @@ export default definePlugin({
         },
         []
       )
-
       const handleBase64Convert = useCallback(() => {
         if (!base64Input.trim()) {
           setError('请输入 Base64 编码')
           return
         }
-
         setError('')
         let src = base64Input.trim()
-
         if (!src.startsWith('data:')) {
           src = `data:image/png;base64,${src}`
         }
-
         setImagePreview(src)
         setFileName('从 Base64 还原')
         setFileSize('')
       }, [base64Input])
-
       const copyBase64 = useCallback(async () => {
         await clipboard.writeText(base64Output)
         setCopied(true)
         setTimeout(() => setCopied(false), 1500)
       }, [clipboard, base64Output])
-
       const clearAll = useCallback(() => {
         setBase64Output('')
         setBase64Input('')
@@ -117,7 +77,6 @@ export default definePlugin({
           fileInputRef.current.value = ''
         }
       }, [])
-
       return (
         <div className="w-full max-w-3xl mx-auto">
           <Card className="p-6">

@@ -123,7 +123,7 @@ function scanPlugins(): ComputedPluginMeta[] {
       }
 
       // 查找 index.ts 或 index.tsx
-      let filePath = join(pluginDir, 'index.tsx')
+      let filePath = join(pluginDir, 'commands.ts')
       try {
         statSync(filePath)
       } catch {

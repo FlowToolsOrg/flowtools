@@ -6,13 +6,18 @@ import type {
 import type { Permission, ToolContext } from '@flowtools/sdk/types'
 
 import { createExecutionFailure, executePlugin } from '@flowtools/sdk/execution'
+import {
+  executeManifestCommand,
+  type PluginManifestV1,
+} from '@flowtools/sdk/manifest'
 
 import { createCLIToolContext } from './context'
-import { loadPlugin } from './discovery'
+import { loadPlugin, cliManifestTarget } from './discovery'
 import { formatRaw, formatResult } from './formatter'
 
 export type RunResult = PluginExecutionResult
 interface CLIExecutablePlugin extends ExecutablePlugin {
+  manifest?: PluginManifestV1
   type?: 'app' | 'tool'
   meta: ExecutablePlugin['meta'] & { permissions?: readonly Permission[] }
 }
@@ -66,11 +71,22 @@ export function createPluginRunner(dependencies: PluginRunnerDependencies) {
         plugin.meta.version
       )
     }
-    return executePlugin(plugin, input, ctx, {
+    const executionOptions = {
       timeoutMs: options.timeout,
       signal: options.signal,
       startTimeout: dependencies.startTimeout,
-    })
+    }
+    return plugin.manifest
+      ? executeManifestCommand(
+          plugin.manifest,
+          'run',
+          plugin,
+          input,
+          ctx,
+          cliManifestTarget,
+          executionOptions
+        )
+      : executePlugin(plugin, input, ctx, executionOptions)
   }
 }
 
@@ -79,7 +95,13 @@ const defaultPluginRunner = createPluginRunner({
   createContext: (pluginId, plugin) =>
     createCLIToolContext(pluginId, {
       pluginType: plugin.type ?? 'app',
-      permissions: plugin.meta.permissions,
+      permissions: plugin.manifest
+        ? plugin.manifest.commands[0]?.permissions.flatMap(request =>
+            request.capability === 'network' || request.capability === 'storage'
+              ? [request.capability]
+              : []
+          )
+        : plugin.meta.permissions,
     }),
 })
 export const runPlugin = defaultPluginRunner

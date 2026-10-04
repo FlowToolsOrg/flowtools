@@ -278,4 +278,7 @@ All maturity labels stay prototype; SEC-001–SEC-012 remain open.
 
 packages/sdk/src/manifest 已存在：schema、json-schema、execution、legacy 和
 Node-only package verifier。packages/sdk/test/manifest\*.test.ts 覆盖协议与文件
-拒绝；scripts/verify-manifests.ts 为只读契约 gate。见 [协议](./manifest-v1.md)。
+拒绝；scripts/verify-manifests.ts 为只读契约与十二实际包 gate。见 [协议](./manifest-v1.md)。
+plugins/plugin-\*/commands.ts 为纯命令源；index.tsx 为 UI；command-contract.ts
+声明同源 operation Schema。build-manifests.ts 写 plugins/.generated 下的纯 JSON，
+与 dist 分离避免自引用 hash；这两个目录均为构建产物。

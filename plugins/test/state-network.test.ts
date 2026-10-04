@@ -8,6 +8,7 @@ import { expect, spyOn, test } from 'bun:test'
 
 import { executePlugin } from '@flowtools/sdk/execution'
 
+import regex from '../plugin-regex-tester/commands'
 import todo from '../plugin-todo-list/index.tsx'
 import latency from '../plugin-website-latency/index.tsx'
 
@@ -20,6 +21,23 @@ function context(id: string): ToolContext {
     log: () => {},
   }
 }
+
+test('regex command omits undefined unmatched groups from validated JSON output', async () => {
+  const result = await executePlugin(
+    regex,
+    { pattern: '(?<optional>a)?b', text: 'b', flags: 'g' },
+    context(regex.meta.id)
+  )
+  expect(result).toMatchObject({
+    success: true,
+    data: {
+      type: 'json',
+      value: { result: [{ match: 'b', index: 0, groups: {} }] },
+    },
+  })
+  if (result.success)
+    expect(regex.outputSchema.safeParse(result.data).success).toBe(true)
+})
 
 test('website latency requires the SDK capability and never bypasses it with raw fetch', async () => {
   const rawFetch = spyOn(globalThis, 'fetch').mockImplementation(

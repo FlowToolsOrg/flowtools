@@ -711,4 +711,8 @@ All maturity labels stay prototype; SEC-001–SEC-012 remain open.
 插件函数对象不属于包 Manifest。用 [Manifest v1](./manifest-v1.md) 的纯数据
 命令声明表达 Schema、效果、预算与授权请求；runtimeValidation=required 必须
 提供真实校验器。旧元数据迁移须显式补齐 publisher、包文件和操作信息。当前
-T1 run/setup 接口仍保持兼容，十二插件分包在 P1.1b 验收。
+T1 run/setup 接口仍保持兼容。十二插件已拆为 commands.ts 与 UI index.tsx，
+UI 显式复用 commandPlugin，Todo setup/run 使用同一 host store。
+commands 不导入 React/GUI/Tauri；完整包 hash 由 build-manifests.ts 从实际 dist
+生成。修改命令后重新 build:packages；UI watch 不替代 CLI 包重建。
+CLI 的命令级 capability 请求独立于 UI metadata 请求，均不等于用户 grant。

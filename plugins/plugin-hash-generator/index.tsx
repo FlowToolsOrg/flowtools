@@ -1,57 +1,16 @@
 import { useCallback, useState } from 'react'
 
 import { definePlugin, useCapability } from '@flowtools/sdk'
-import { result } from '@flowtools/sdk/result'
 import { Button, Card, Chip, Label, TextArea } from '@flowtools/ui/plugin'
-import { z } from 'zod'
 
-type HashAlgorithm = 'SHA-1' | 'SHA-256' | 'SHA-384' | 'SHA-512'
-
-const ALGORITHM_LABELS: Record<HashAlgorithm, string> = {
-  'SHA-1': 'SHA-1',
-  'SHA-256': 'SHA-256',
-  'SHA-384': 'SHA-384',
-  'SHA-512': 'SHA-512',
-}
-
-async function computeHash(
-  text: string,
-  algorithm: HashAlgorithm
-): Promise<string> {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(text)
-  const hashBuffer = await crypto.subtle.digest(algorithm, data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-}
-
-const inputSchema = z.object({
-  text: z.string().describe('Text to hash'),
-  algorithm: z
-    .enum(['SHA-1', 'SHA-256', 'SHA-384', 'SHA-512'])
-    .default('SHA-256')
-    .describe('Hash algorithm to use'),
-})
+import commandPlugin, {
+  type HashAlgorithm,
+  ALGORITHM_LABELS,
+  computeHash,
+} from './commands'
 
 export default definePlugin({
-  type: 'app',
-  meta: {
-    id: 'plugin-hash-generator',
-    name: '哈希生成器',
-    version: '0.1.0',
-    maturity: 'prototype',
-    description: '生成 SHA-1/SHA-256/SHA-384/SHA-512 哈希值',
-    permissions: ['clipboard'],
-    tags: ['hash', 'sha', 'sha256', 'md5', 'generator'],
-    category: '开发工具',
-  },
-  inputSchema,
-  async run(_ctx, input: z.infer<typeof inputSchema>) {
-    const { text, algorithm } = input
-    if (!text) return result.text('Error: text is required')
-    const hash = await computeHash(text, algorithm)
-    return result.json({ result: hash, algorithm, bytes: hash.length / 2 })
-  },
+  ...commandPlugin,
   setup() {
     return function HashGeneratorPanel() {
       const { clipboard } = useCapability()
@@ -60,25 +19,19 @@ export default definePlugin({
       const [selectedAlgo, setSelectedAlgo] = useState<HashAlgorithm>('SHA-256')
       const [isComputing, setIsComputing] = useState(false)
       const [copiedAlgo, setCopiedAlgo] = useState<string | null>(null)
-
       const computeAll = useCallback(async () => {
         if (!input.trim()) return
-
         setIsComputing(true)
         const newResults: Record<string, string> = {}
-
         for (const algo of Object.keys(ALGORITHM_LABELS) as HashAlgorithm[]) {
           newResults[algo] = await computeHash(input, algo)
         }
-
         setResults(newResults)
         setIsComputing(false)
       }, [input])
-
       const computeSingle = useCallback(
         async (algo: HashAlgorithm) => {
           if (!input.trim()) return
-
           setIsComputing(true)
           const hash = await computeHash(input, algo)
           setResults(prev => ({ ...prev, [algo]: hash }))
@@ -87,24 +40,20 @@ export default definePlugin({
         },
         [input]
       )
-
       const copyHash = useCallback(
         async (algo: string) => {
           const hash = results[algo]
           if (!hash) return
-
           await clipboard.writeText(hash)
           setCopiedAlgo(algo)
           setTimeout(() => setCopiedAlgo(null), 1500)
         },
         [clipboard, results]
       )
-
       const clear = useCallback(() => {
         setInput('')
         setResults({})
       }, [])
-
       return (
         <div className="w-full max-w-2xl mx-auto">
           <Card className="p-6">

@@ -329,3 +329,10 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 证据：[展示策略](../../apps/desktop/src/runtime/catalog-presentation.ts)、
 [回归](../../apps/desktop/test/catalog-presentation.test.ts)。
 没有新增 native API、grant、数据迁移或第三方执行入口；SEC-001/002/006 保持 open。
+
+P1.1b：固定 CLI [Manifest/文件导入校验](../../packages/cli/src/discovery.ts)、
+[导入前拒绝与 runtime 不匹配回归](../../packages/cli/src/discovery.test.ts)、
+[无 React/GUI/source 消费](../../plugins/test/headless-artifacts.test.ts)。
+身份来自编译 inventory；文件 hash 无签名，不能抵御同时替换可信产物和 catalog，
+亦不解决校验后的替换竞争。SEC-001/002/010 保持 open，ADR 无设计变更，
+独立安全 Reviewer pending；没有新增 grant、可撤销安装或隔离声明。

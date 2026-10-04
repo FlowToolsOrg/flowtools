@@ -29,6 +29,7 @@ execution-validation/
 out/
 build
 dist
+plugins/.generated/
 tsconfig.tsbuildinfo
 
 

@@ -8,7 +8,6 @@ import {
   usePluginStoreApi,
   definePluginStore,
 } from '@flowtools/sdk'
-import { result } from '@flowtools/sdk/result'
 import {
   Button,
   Calendar,
@@ -19,7 +18,8 @@ import {
   Label,
   TextField,
 } from '@flowtools/ui/plugin'
-import { z } from 'zod'
+
+import commandPlugin from './commands'
 
 export interface TodoItem {
   todo: string
@@ -43,6 +43,7 @@ export const todoStore = definePluginStore({
 })
 
 type TodoState = InferStoreState<typeof todoStore>
+
 type TodoActions = InferStoreActions<typeof todoStore>
 
 function readValue(input: FormDataEntryValue | null): string {
@@ -53,74 +54,24 @@ function readValue(input: FormDataEntryValue | null): string {
   return input.trim()
 }
 
-const inputSchema = z.object({
-  todo: z.string().optional().describe('Todo item text to add'),
-  deadline: z.string().optional().describe('Deadline date (YYYY-MM-DD)'),
-})
-
-const todoItemsSchema = z.array(
-  z
-    .object({
-      todo: z.string(),
-      deadline: z.string().default(''),
-    })
-    .passthrough()
-)
-const todoStateSchema = z.object({ todos: todoItemsSchema })
-
 export default definePlugin({
-  type: 'app',
-  meta: {
-    id: 'plugin-todo-list',
-    name: 'Todo List',
-    version: '0.0.1',
-    maturity: 'prototype',
-    permissions: ['storage'],
-  },
-  inputSchema,
+  ...commandPlugin,
   store: todoStore,
-  async run(ctx, input: z.infer<typeof inputSchema>) {
-    if (!ctx.store && !ctx.storage)
-      throw new Error('Todo storage capability is unavailable')
-    // App hosts share their declared store with setup(); CLI keeps its existing key.
-    // Validate before writing, preserve unrelated fields and do not migrate old keys.
-    const items = ctx.store
-      ? todoStateSchema.parse(ctx.store.getState()).todos
-      : todoItemsSchema.parse(ctx.storage?.get('todos') ?? [])
-    if (input.todo) {
-      const item = { todo: input.todo, deadline: input.deadline ?? '' }
-      const todos = [...items, item]
-      if (ctx.store) ctx.store.setState({ todos })
-      else ctx.storage?.set('todos', todos)
-      return result.json({ result: { added: item.todo, total: todos.length } })
-    }
-    return result.json({
-      result: items.map(
-        (item, idx) =>
-          `${idx + 1}. [${item.deadline || 'No Deadline'}] ${item.todo}`
-      ),
-      count: items.length,
-    })
-  },
   setup() {
     return function () {
       const { todos } = usePluginStore<TodoState>()
       const { actions } = usePluginStoreApi<TodoState, TodoActions>()
-
       const onSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         const formData = new FormData(e.currentTarget)
         const todo = readValue(formData.get('todo'))
         const deadline = readValue(formData.get('deadline'))
-
         if (!todo) {
           return
         }
-
         actions.addTodo({ todo, deadline })
         e.currentTarget.reset()
       }
-
       return (
         <div className="w-full">
           <div className="flex">

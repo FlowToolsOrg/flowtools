@@ -143,6 +143,8 @@ export interface PluginBase {
    * When omitted, CLI falls back to `--input <json>`.
    */
   inputSchema?: PluginInputSchema
+  /** Optional runtime output contract; rejection uses OUTPUT_INVALID. */
+  outputSchema?: z.ZodType
   lifecycle?: PluginLifecycle
   features?: MarkedPluginFeature[]
 }

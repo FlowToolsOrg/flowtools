@@ -1016,7 +1016,7 @@ G4 服务依赖 -> G5 签名安装与隔离 -> G6 工具链 -> G7 办公闭环 -
 | 子 ID | 状态    | 前置                | 聚焦交付物与验收                                                                   |
 | ----- | ------- | ------------------- | ---------------------------------------------------------------------------------- |
 | P1.1a | done    | P0.3c、P0.4         | 序列化 Manifest、多操作输入/输出 Schema、冷启动/effects/依赖声明；非法包执行前拒绝 |
-| P1.1b | pending | P1.1a               | UI/commands 分包、十二插件兼容适配；无 React/GUI/source 消费实际命令               |
+| P1.1b | done    | P1.1a               | UI/commands 分包、十二插件兼容适配；无 React/GUI/source 消费实际命令               |
 | P1.1c | pending | P1.1b               | describe/commands/flags 同源生成；编译 CLI 的机器发现与拒绝回归                    |
 | P1.2a | pending | P1.1                | 单一状态机、锁和 hook 补偿；100 并发操作不重复激活                                 |
 | P1.2b | pending | P1.2a               | 命令状态投影、进程/视图资源 ownership；更新/卸载无孤儿 handler                     |
@@ -1797,3 +1797,7 @@ G0 收口：2026-10-04，P0.1–P0.4 均完成。P0.3c 证据与人工豁免范�
 
 P1.1a：2026-10-04，Owner Codex；序列化 Manifest/有限 Schema/输出与 package
 拒绝契约完成，SDK 125 tests；父项等待 b/c 接实际入口。见 [契约证据](./manifest-v1.md)。
+
+P1.1b：2026-10-04，Owner Codex；十二实际 UI/command 入口、命令级输出校验、
+固定 CLI Manifest/hash 导入前拒绝与无 React/GUI/source 的 Node 消费验证完成。
+完整 smoke 保留；Todo 没有新增数据副本。见 [契约证据](./manifest-v1.md)。

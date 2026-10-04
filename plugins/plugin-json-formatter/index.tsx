@@ -1,51 +1,12 @@
 import { useCallback, useState } from 'react'
 
 import { definePlugin, useCapability } from '@flowtools/sdk'
-import { result } from '@flowtools/sdk/result'
 import { Button, Card, Chip, Label, TextArea } from '@flowtools/ui/plugin'
-import { z } from 'zod'
 
-type FormatMode = 'format' | 'minify' | 'validate'
-
-const inputSchema = z.object({
-  text: z.string().describe('JSON string to process'),
-  mode: z
-    .enum(['format', 'minify', 'validate'])
-    .default('format')
-    .describe('Processing mode'),
-})
+import commandPlugin, { type FormatMode } from './commands'
 
 export default definePlugin({
-  type: 'app',
-  meta: {
-    id: 'plugin-json-formatter',
-    name: 'JSON 格式化',
-    version: '0.1.0',
-    maturity: 'prototype',
-    description: 'JSON 格式化、压缩、验证工具',
-    permissions: ['clipboard'],
-    tags: ['json', 'format', 'minify', 'validate'],
-    category: '开发工具',
-  },
-  inputSchema,
-  async run(_ctx, input: z.infer<typeof inputSchema>) {
-    const { text, mode } = input
-    if (!text) return result.text('Error: text is required')
-    try {
-      const parsed: unknown = JSON.parse(text)
-      if (mode === 'validate') return result.json({ result: { valid: true } })
-      const output =
-        mode === 'format'
-          ? JSON.stringify(parsed, null, 2)
-          : JSON.stringify(parsed)
-      return result.text(output)
-    } catch (e) {
-      const message = e instanceof Error ? e.message : 'JSON parse error'
-      if (mode === 'validate')
-        return result.json({ result: { valid: false, error: message } })
-      return result.text(`Error: ${message}`)
-    }
-  },
+  ...commandPlugin,
   setup() {
     return function JSONFormatterPanel() {
       const { clipboard } = useCapability()
@@ -55,31 +16,25 @@ export default definePlugin({
       const [error, setError] = useState<string | null>(null)
       const [copied, setCopied] = useState(false)
       const [isValid, setIsValid] = useState<boolean | null>(null)
-
       const process = useCallback(() => {
         setError(null)
         setOutput('')
         setIsValid(null)
-
         if (!input.trim()) {
           setError('请输入 JSON 内容')
           return
         }
-
         try {
           const parsed: unknown = JSON.parse(input)
-
           if (mode === 'validate') {
             setIsValid(true)
             setOutput('JSON 格式有效')
             return
           }
-
           const result =
             mode === 'format'
               ? JSON.stringify(parsed, null, 2)
               : JSON.stringify(parsed)
-
           setOutput(result)
         } catch (e) {
           if (mode === 'validate') {
@@ -89,21 +44,18 @@ export default definePlugin({
           setError(e instanceof Error ? e.message : 'JSON 解析失败')
         }
       }, [input, mode])
-
       const copyOutput = useCallback(async () => {
         if (!output) return
         await clipboard.writeText(output)
         setCopied(true)
         setTimeout(() => setCopied(false), 1500)
       }, [clipboard, output])
-
       const clear = useCallback(() => {
         setInput('')
         setOutput('')
         setError(null)
         setIsValid(null)
       }, [])
-
       return (
         <div className="w-full max-w-4xl mx-auto">
           <Card className="p-6">

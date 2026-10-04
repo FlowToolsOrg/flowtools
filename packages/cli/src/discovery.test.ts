@@ -1,4 +1,5 @@
 import { afterEach, expect, test } from 'bun:test'
+import { createHash } from 'node:crypto'
 import {
   copyFileSync,
   cpSync,
@@ -7,6 +8,8 @@ import {
   realpathSync,
   rmSync,
   symlinkSync,
+  readFileSync,
+  writeFileSync,
 } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -27,12 +30,17 @@ function fixture(withBuiltins = false) {
   cpSync(join(packageRoot, 'dist'), dist, { recursive: true })
   const plugins = join(root, 'plugins')
   mkdirSync(plugins)
+  cpSync(
+    join(packageRoot, '../../plugins/.generated'),
+    join(plugins, '.generated'),
+    { recursive: true }
+  )
   if (withBuiltins) {
     mkdirSync(join(plugins, 'dist'))
     for (const info of builtInCLIManifests)
       copyFileSync(
         join(packageRoot, 'test-fixtures/broken-compiled.txt'),
-        join(plugins, 'dist', `${info.id}.js`)
+        join(plugins, 'dist', `${info.id}.commands.js`)
       )
   }
   return {
@@ -109,7 +117,7 @@ test('compiled CLI never falls back to source after a compiled import fails', as
   mkdirSync(join(sample.plugins, 'dist'))
   copyFileSync(
     join(packageRoot, 'test-fixtures/broken-compiled.txt'),
-    join(sample.plugins, 'dist', `${builtinId}.js`)
+    join(sample.plugins, 'dist', `${builtinId}.commands.js`)
   )
   const output = await invoke(sample.cli, [
     'run',
@@ -182,7 +190,7 @@ test('compiled directory junction cannot redirect imports outside the fixed arti
   mkdirSync(redirected)
   copyFileSync(
     join(packageRoot, 'test-fixtures/source-canary.txt'),
-    join(redirected, `${builtinId}.js`)
+    join(redirected, `${builtinId}.commands.js`)
   )
   symlinkSync(redirected, join(sample.plugins, 'dist'), 'junction')
   const output = await invoke(sample.cli, [
@@ -217,14 +225,46 @@ test('compiled CLI parses malformed JSON before any built-in import', async () =
   })
 }, 30_000)
 
-for (const mismatch of ['id', 'version', 'maturity', 'type', 'run', 'schema']) {
+for (const mismatch of [
+  'id',
+  'version',
+  'maturity',
+  'type',
+  'run',
+  'schema',
+  'output',
+  'command',
+]) {
   test(`compiled CLI rejects a built-in artifact with mismatched ${mismatch}`, async () => {
     const sample = fixture()
-    mkdirSync(join(sample.plugins, 'dist'))
+    cpSync(
+      join(packageRoot, '../../plugins/dist'),
+      join(sample.plugins, 'dist'),
+      { recursive: true }
+    )
     copyFileSync(
       join(packageRoot, 'test-fixtures/metadata-mismatch.txt'),
-      join(sample.plugins, 'dist', `${builtinId}.js`)
+      join(sample.plugins, 'dist', `${builtinId}.commands.js`)
     )
+    // Keep file integrity valid so each assertion really reaches the module contract.
+    const bytes = readFileSync(
+      join(sample.plugins, 'dist', `${builtinId}.commands.js`)
+    )
+    const catalogPath = join(
+      sample.plugins,
+      '.generated/builtin-manifests.json'
+    )
+    const catalog = JSON.parse(readFileSync(catalogPath, 'utf8')) as {
+      plugins: { files: { path: string; size: number; sha256: string }[] }[]
+    }
+    for (const manifest of catalog.plugins) {
+      const file = manifest.files.find(
+        item => item.path === `${builtinId}.commands.js`
+      )!
+      file.size = bytes.length
+      file.sha256 = createHash('sha256').update(bytes).digest('hex')
+    }
+    writeFileSync(catalogPath, JSON.stringify(catalog))
     const output = await invoke(sample.cli, [
       'run',
       builtinId,
@@ -240,5 +280,38 @@ for (const mismatch of ['id', 'version', 'maturity', 'type', 'run', 'schema']) {
     expect(output.stdout + output.stderr).not.toContain(
       'Mismatched compiled entry must not run'
     )
+  }, 30_000)
+}
+
+for (const corruption of ['schema', 'digest', 'entry']) {
+  test(`compiled CLI refuses ${corruption} before importing code`, async () => {
+    const sample = fixture()
+    cpSync(
+      join(packageRoot, '../../plugins/dist'),
+      join(sample.plugins, 'dist'),
+      { recursive: true }
+    )
+    const entry = join(sample.plugins, 'dist', `${builtinId}.commands.js`)
+    writeFileSync(entry, `throw new Error('${sourceCanary}')`)
+    const path = join(sample.plugins, '.generated/builtin-manifests.json')
+    const catalog = JSON.parse(readFileSync(path, 'utf8'))
+    const manifest = catalog.plugins.find(
+      (item: { id: string }) => item.id === builtinId
+    )
+    if (corruption === 'schema')
+      manifest.commands[0].inputSchema.unknownCritical = true
+    if (corruption === 'entry') manifest.entries.executor = '../outside.js'
+    writeFileSync(path, JSON.stringify(catalog))
+    const output = await invoke(sample.cli, [
+      'run',
+      builtinId,
+      '--format',
+      'json',
+    ])
+    expect(output.code).toBe(1)
+    expect(JSON.parse(output.stdout)).toMatchObject({
+      error: { code: 'LOAD_FAILED' },
+    })
+    expect(output.stdout + output.stderr).not.toContain(sourceCanary)
   }, 30_000)
 }

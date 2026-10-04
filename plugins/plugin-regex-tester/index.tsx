@@ -1,73 +1,12 @@
 import { useCallback, useMemo, useState } from 'react'
 
 import { definePlugin, useCapability } from '@flowtools/sdk'
-import { result } from '@flowtools/sdk/result'
 import { Button, Card, Chip, Label, TextArea } from '@flowtools/ui/plugin'
-import { z } from 'zod'
 
-interface MatchResult {
-  match: string
-  index: number
-  groups?: Record<string, string>
-}
-
-const inputSchema = z.object({
-  pattern: z.string().describe('Regular expression pattern'),
-  text: z.string().describe('Text to test against'),
-  flags: z.string().default('g').describe('Regex flags (e.g., "gi", "gm")'),
-})
+import commandPlugin, { type MatchResult } from './commands'
 
 export default definePlugin({
-  type: 'app',
-  meta: {
-    id: 'plugin-regex-tester',
-    name: '正则表达式测试',
-    version: '0.1.0',
-    maturity: 'prototype',
-    description: '测试和调试正则表达式',
-    permissions: ['clipboard'],
-    tags: ['regex', 'regexp', 'test', 'pattern'],
-    category: '开发工具',
-  },
-  inputSchema,
-  async run(_ctx, input: z.infer<typeof inputSchema>) {
-    const { pattern, text, flags } = input
-    if (!pattern) return result.text('Error: pattern is required')
-    if (!text) return result.text('Error: text is required')
-    try {
-      const regex = new RegExp(pattern, flags)
-      const matches: MatchResult[] = []
-      if (flags.includes('g')) {
-        let match: RegExpExecArray | null
-        while ((match = regex.exec(text)) !== null) {
-          matches.push({
-            match: match[0],
-            index: match.index,
-            groups: match.groups ? { ...match.groups } : undefined,
-          })
-          if (!match[0]) break
-        }
-      } else {
-        const match = regex.exec(text)
-        if (match) {
-          matches.push({
-            match: match[0],
-            index: match.index,
-            groups: match.groups ? { ...match.groups } : undefined,
-          })
-        }
-      }
-      return result.json({
-        result: matches,
-        pattern,
-        flags,
-        matchCount: matches.length,
-      })
-    } catch (e) {
-      const message = e instanceof Error ? e.message : 'Invalid regex'
-      return result.text(`Error: ${message}`)
-    }
-  },
+  ...commandPlugin,
   setup() {
     return function RegexTesterPanel() {
       const { clipboard } = useCapability()
@@ -76,14 +15,11 @@ export default definePlugin({
       const [testString, setTestString] = useState('')
       const [error, setError] = useState<string | null>(null)
       const [copied, setCopied] = useState(false)
-
       const results = useMemo(() => {
         if (!pattern || !testString) return null
-
         try {
           const regex = new RegExp(pattern, flags)
           const matches: MatchResult[] = []
-
           if (flags.includes('g')) {
             let match
             while ((match = regex.exec(testString)) !== null) {
@@ -104,7 +40,6 @@ export default definePlugin({
               })
             }
           }
-
           setError(null)
           return matches
         } catch (e) {
@@ -112,13 +47,13 @@ export default definePlugin({
           return null
         }
       }, [pattern, flags, testString])
-
       const highlightedText = useMemo(() => {
         if (!results || results.length === 0) return testString
-
-        const parts: Array<{ text: string; isMatch: boolean }> = []
+        const parts: Array<{
+          text: string
+          isMatch: boolean
+        }> = []
         let lastIndex = 0
-
         for (const result of results) {
           if (result.index > lastIndex) {
             parts.push({
@@ -132,23 +67,19 @@ export default definePlugin({
           })
           lastIndex = result.index + result.match.length
         }
-
         if (lastIndex < testString.length) {
           parts.push({
             text: testString.slice(lastIndex),
             isMatch: false,
           })
         }
-
         return parts
       }, [testString, results])
-
       const toggleFlag = useCallback((flag: string) => {
         setFlags(prev =>
           prev.includes(flag) ? prev.replace(flag, '') : prev + flag
         )
       }, [])
-
       const copyMatches = useCallback(async () => {
         if (!results || results.length === 0) return
         const text = results.map(r => r.match).join('\n')
@@ -156,7 +87,6 @@ export default definePlugin({
         setCopied(true)
         setTimeout(() => setCopied(false), 1500)
       }, [clipboard, results])
-
       const commonPatterns = [
         { name: '邮箱', pattern: '[\\w.-]+@[\\w.-]+\\.\\w+' },
         { name: '手机号', pattern: '1[3-9]\\d{9}' },
@@ -168,7 +98,6 @@ export default definePlugin({
         { name: '日期', pattern: '\\d{4}[-/]\\d{1,2}[-/]\\d{1,2}' },
         { name: '中文', pattern: '[\\u4e00-\\u9fa5]+' },
       ]
-
       return (
         <div className="w-full max-w-4xl mx-auto">
           <Card className="p-6">

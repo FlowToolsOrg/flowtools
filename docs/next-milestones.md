@@ -99,9 +99,9 @@ Zod refinement/transform 等不可导出的逻辑必须有显式 runtime 校验�
 
 ### P1.1b SDK 构建入口与旧插件适配
 
-一个插件包分开构建 `ui`、`commands` 与可选 `services`。
-执行入口不 import React/React DOM、Host UI 或 Tauri API；UI 使用 typed SDK client
-调用操作。迁移现有十二插件时逐个保留真实 smoke、默认值、text formatter 与结果
+P1.1b 已将十二内置插件分开构建 `ui` 与 `commands`；`services` 仍为可选未来入口。
+执行入口不 import React/React DOM、Host UI 或 Tauri API；当前 UI 显式复用同一
+typed command 对象，未来跨进程 SDK client 在 G2/G3 实现。迁移十二插件时保留真实 smoke、默认值、text formatter 与结果
 语义，旧 `run/setup` 通过明确适配过渡，不恢复源码扫描或 TSX fallback。
 
 退出：在没有 GUI、React bundle 和源码 checkout 的消费目录中导入执行产物；
@@ -399,4 +399,4 @@ Conventional Commit 记录，不提前把父里程碑标为 done。拟新增验�
 本次只交付设计与文档同步，现有第三方入口拒绝、数据保留策略和成熟度不改变。
 G0 已在 2026-10-04 收口；完整根门禁、实际 production artifacts 与前端复核
 通过，剩余原生人工复验按维护者要求豁免，见
-[验收记录](./validation/p0-market-state.md)。下一项为 P1.1a Manifest v1。
+[验收记录](./validation/p0-market-state.md)。P1.1a/b 已实现，下一项为 P1.1c 机器发现。

@@ -5,13 +5,16 @@ import { fileURLToPath } from 'node:url'
 
 import { createPackageTsdownConfig } from '../configs/tsdown/create-config.ts'
 
-import { getPluginEntries } from './plugin-entries.ts'
+import { getPluginEntries, getPluginCommandEntries } from './plugin-entries.ts'
 
 const packageDir = dirname(fileURLToPath(import.meta.url))
 
 export default createPackageTsdownConfig({
   packageDir,
-  entry: getPluginEntries(packageDir),
+  entry: {
+    ...getPluginEntries(packageDir),
+    ...getPluginCommandEntries(packageDir),
+  },
   neverBundle: [
     'react/jsx-runtime',
     'react/jsx-dev-runtime',

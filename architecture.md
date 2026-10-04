@@ -632,4 +632,6 @@ All maturity labels stay prototype; SEC-001–SEC-012 remain open.
 
 [Manifest v1](./docs/manifest-v1.md) 已提供纯 JSON 协议、有限 operation Schema、
 显式旧元数据适配和输入/输出执行校验。Node 文件验证独立于浏览器契约，校验
-不执行包代码。当前仅 T1/fixture；host 接入与分包由 P1.1b/c 完成，G5 负责签名。
+不执行包代码。P1.1b 的十二个 `commands.ts` 构建独立于 React/UI，UI setup
+显式复用同一 command 实现并保留原 Todo store；CLI 只导入固定 `.commands.js`。
+实际 T1 Manifest 与文件 hash 在导入前验证；G5 仍负责签名、安装事务与隔离。

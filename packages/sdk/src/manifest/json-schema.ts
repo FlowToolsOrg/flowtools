@@ -1,5 +1,9 @@
 import { z } from 'zod'
 
+function hasOwn(value: object, key: PropertyKey): boolean {
+  return Object.prototype.hasOwnProperty.call(value, key)
+}
+
 export type JsonValue =
   | null
   | boolean
@@ -132,7 +136,7 @@ const same = (a: JsonValue, b: JsonValue): boolean => {
     left.length === right.length &&
     left.every(
       key =>
-        Object.hasOwn(b, key) &&
+        hasOwn(b, key) &&
         same(
           (a as Record<string, JsonValue>)[key]!,
           (b as Record<string, JsonValue>)[key]!
@@ -145,8 +149,7 @@ function matches(schema: OperationSchema, value: JsonValue): boolean {
   if (schema.anyOf && !schema.anyOf.some(branch => matches(branch, value)))
     return false
   if (schema.enum && !schema.enum.some(item => same(item, value))) return false
-  if (Object.hasOwn(schema, 'const') && !same(schema.const!, value))
-    return false
+  if (hasOwn(schema, 'const') && !same(schema.const!, value)) return false
   switch (schema.type) {
     case 'null':
       return value === null
@@ -180,7 +183,7 @@ function matches(schema: OperationSchema, value: JsonValue): boolean {
         value !== null &&
         typeof value === 'object' &&
         !Array.isArray(value) &&
-        (schema.required ?? []).every(key => Object.hasOwn(value, key)) &&
+        (schema.required ?? []).every(key => hasOwn(value, key)) &&
         Object.entries(value).every(([key, item]) =>
           schema.properties?.[key]
             ? matches(schema.properties[key], item)
@@ -193,19 +196,14 @@ function matches(schema: OperationSchema, value: JsonValue): boolean {
 }
 
 function wellFormed(schema: OperationSchema): boolean {
-  if (
-    !schema.type &&
-    !schema.anyOf &&
-    !schema.enum &&
-    !Object.hasOwn(schema, 'const')
-  )
+  if (!schema.type && !schema.anyOf && !schema.enum && !hasOwn(schema, 'const'))
     return false
   if (schema.type === 'object') {
     if (schema.additionalProperties === undefined) return false
     const required = schema.required ?? []
     if (
       new Set(required).size !== required.length ||
-      required.some(key => !Object.hasOwn(schema.properties ?? {}, key))
+      required.some(key => !hasOwn(schema.properties ?? {}, key))
     )
       return false
   } else if (
@@ -257,7 +255,7 @@ function wellFormed(schema: OperationSchema): boolean {
     ...(schema.anyOf ?? []),
   ]
   if (!children.every(wellFormed)) return false
-  return !Object.hasOwn(schema, 'default') || matches(schema, schema.default!)
+  return !hasOwn(schema, 'default') || matches(schema, schema.default!)
 }
 
 /** Check JSON before recursive Zod parsing so hostile deep/cyclic trees cannot recurse. */
@@ -276,10 +274,9 @@ function defaults(schema: OperationSchema, value: JsonValue): JsonValue {
   ) {
     const output = { ...value }
     for (const [key, child] of Object.entries(schema.properties ?? {})) {
-      if (!Object.hasOwn(output, key) && Object.hasOwn(child, 'default'))
+      if (!hasOwn(output, key) && hasOwn(child, 'default'))
         output[key] = structuredClone(child.default!)
-      if (Object.hasOwn(output, key))
-        output[key] = defaults(child, output[key]!)
+      if (hasOwn(output, key)) output[key] = defaults(child, output[key]!)
     }
     return output
   }

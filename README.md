@@ -125,7 +125,7 @@ records are preserved, never automatically restored in any mode.
 P0.3b2 binds CLI discovery/loading to a tracked, generated built-in inventory,
 embedded in the CLI build and generated alongside Web/Desktop manifests. Runtime
 directory additions and caller paths cannot add entries. Only fixed regular-file
-`plugins/dist/<built-in-id>.js` artifacts are loaded; missing/broken artifacts,
+`plugins/dist/<built-in-id>.commands.js` artifacts are loaded; missing/broken artifacts,
 directory junctions and inconsistent metadata fail closed. `list/info/run/help`
 report missing builds instead of importing TSX or rewriting headless source.
 Regenerate all three inventories with `bun run generate:manifests`, then run
@@ -676,4 +676,7 @@ All maturity labels stay prototype; SEC-001–SEC-012 remain open.
 The React-free SDK manifest subpath validates serialized commands and package
 metadata. Node file verification is a separate read-only subpath; it does not
 grant external execution. See [Manifest v1](./docs/manifest-v1.md). P1.1a is
-implemented; split built-in artifacts and CLI discovery follow in P1.1b/c.
+implemented. P1.1b builds twelve separate UI/command entries and validates the
+fixed compiled CLI packages before import; machine discovery follows in P1.1c.
+Run `bun run build:packages` before CLI use and `bun run verify:manifests`
+for read-only protocol and actual built-in package checks.

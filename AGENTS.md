@@ -107,7 +107,7 @@ task names.
 CLI discovery/loading is bound to generated `packages/cli/src/builtin-manifests.ts`,
 embedded in the CLI build. Never restore runtime source scans, arbitrary ID/path
 imports, TSX fallback or regex headless rewriting. Only fixed regular-file
-`plugins/dist/<known-id>.js` artifacts are accepted; unknown IDs fail before IO,
+`plugins/dist/<known-id>.commands.js` artifacts are accepted; unknown IDs fail before IO,
 missing/broken entries fail without source execution, and junction/symlink
 redirection is rejected. This T1 consistency check is not signing, a sandbox or
 protection against replacing trusted compiled files. CLI tests build their own
@@ -500,5 +500,11 @@ Use @flowtools/sdk/manifest for bounded serialized metadata and operation
 validation, and @flowtools/sdk/manifest/package for Node-only file verification.
 Use parsePluginManifest with an explicit Host target before loading artifacts.
 Keep custom Zod runtime validation explicit; never export an empty substitute.
-Run bun run verify:manifests; the P1.1a gate covers protocol fixtures only.
+Run bun run verify:manifests after build:packages; it covers protocol fixtures
+and all twelve actual compiled T1 packages. Keep commands.ts independent of
+React/UI/Tauri and build fixed <known-id>.commands.js entries. Generated JSON
+lives outside dist to avoid self-referential hashes. CLI validates the bounded
+catalog and exact file list/hash before importing a command; no source fallback.
+UI setup explicitly adapts the same implementation and host store. After command
+edits rebuild packages: UI watch does not regenerate CLI package hashes.
 See [Manifest v1](./docs/manifest-v1.md); hashes/declarations are not grants.

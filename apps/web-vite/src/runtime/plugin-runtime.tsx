@@ -2,7 +2,14 @@ import type { AppPlugin, FlowToolPlugin } from '@flowtools/sdk'
 import type { ExecutePluginOptions } from '@flowtools/sdk/execution'
 
 import { PluginErrorBoundary } from '@flowtools/sdk'
-import { createExecutionFailure, executePlugin } from '@flowtools/sdk/execution'
+import { createExecutionFailure } from '@flowtools/sdk/execution'
+import {
+  executeManifestCommand,
+  parsePluginManifest,
+  type PluginManifestV1,
+} from '@flowtools/sdk/manifest'
+
+import { builtInManifestData } from '../plugin/manifests'
 
 import { createWebToolContext, WebPluginRuntimeProvider } from './ctx'
 
@@ -34,10 +41,32 @@ export async function runWebPlugin(
   input: unknown,
   options: ExecutePluginOptions = {}
 ) {
+  const target = {
+    hostVersion: '0.1.0',
+    sdkVersion: '0.0.0',
+    platform: 'web' as const,
+    arch: 'wasm32' as const,
+  }
+  let manifest: PluginManifestV1
+  try {
+    manifest = parsePluginManifest(
+      builtInManifestData.find(item => item.id === plugin.meta.id),
+      target
+    )
+  } catch {
+    return createExecutionFailure(plugin.meta.id, plugin.meta.version, input, {
+      code: 'NOT_RUNNABLE',
+      message: 'Built-in command manifest is unavailable',
+    })
+  }
   let ctx
   try {
     ctx = createWebToolContext({
-      permissions: plugin.meta.permissions,
+      permissions: plugin.meta.permissions?.filter(permission =>
+        manifest.commands[0]?.permissions.some(
+          request => request.capability === permission
+        )
+      ),
       pluginId: plugin.meta.id,
       pluginType: plugin.type,
       storeShape: plugin.type === 'app' ? plugin.store : undefined,
@@ -50,7 +79,15 @@ export async function runWebPlugin(
       message: 'Web runtime context could not be created',
     })
   }
-  return executePlugin(plugin, input, ctx, options)
+  return executeManifestCommand(
+    manifest,
+    'run',
+    plugin,
+    input,
+    ctx,
+    target,
+    options
+  )
 }
 
 export const runWebToolPlugin = runWebPlugin

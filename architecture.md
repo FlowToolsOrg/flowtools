@@ -8,6 +8,16 @@ Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平�
 - 生产目标：按信任等级隔离执行，Rust broker 强制验证身份、grant 与 scope
 - 插件形态：`app`（长期 UI）与 `tool`（即时执行）
 
+### 2026-10-04 下一阶段设计
+
+产品服务知识工作者和普通办公用户，GUI 与外部 agent CLI 共用命令、授权、数据
+和任务。目标结构是独立 `flowtools-runtime` + GUI/CLI clients；无界面内核不依赖
+Tauri WebView。React 是主要 UI 开发方式，执行入口单独构建；服务依赖由 Host
+RPC 路由，二进制工具由共享 artifact store 与受管任务进程执行。
+冷启动声明不等于授权，覆盖/删除/发送需明确 grant。低代码和内置 AI 助手保留
+为未来插件。模块、协议、数据迁移和 G0–G8 顺序见
+[下一阶段实施设计](./docs/next-milestones.md)。以下当前状态与历史记录不因此升级。
+
 > 关键词：Capability Injection / Plugin Runtime / Permission Gating / Namespacing / Single React Tree
 
 ## 1. Reality Check（当前实现状态）
@@ -137,6 +147,9 @@ Web manifest 元数据逐插件验证真实构建入口，冷加载与批量注�
 Turbo 的 `test` 依赖 `^test`，不缓存结果；package 合约测试自行构建产物，
 消费者等待依赖测试完成，避免读取正在被清理的 `dist`。根 `test` 与 `build`
 必须顺序执行，不能并发运行；单独的 `build` 图仍依赖 `^build`。
+UI browser gate 串行执行全部测试文件，限制 Windows 页面和 transform 并发内存。
+本地 build cache 同时恢复 `dist` 和 `.generated`，避免实际 compiled catalog 缺失；
+Windows CI 仍强制构建，不以 JavaScript 产物缓存代替门禁。
 Turbo 保留严格环境模式，显式透传 Windows `PATHEXT` 和 build/test 使用的
 `CARGO_TARGET_DIR`，避免 PowerShell 命令发现失败及原生缓存路径被过滤。
 测试类型与浏览器生产类型隔离；这些验证不等同于
@@ -608,3 +621,26 @@ Web 端 db：
 - CLI `--schema` 输出 JSON Schema（供桌面端动态 UI 生成）
 - CLI `--watch` 模式（监听输入变化重新执行）
 - CLI `flowtools create` 脚手架（交互式创建新插件）
+
+## P0.3c catalog and permission presentation
+
+Desktop market actions save built-in configuration only. HTML entries display
+不可安装 and saved records cannot grant execution. Removing a record is not a
+package uninstall. The permission center shows capability declarations and
+explicitly records that per-plugin grants and isolation are not implemented.
+Legacy persisted DTO status values remain metadata for compatibility.
+All maturity labels stay prototype; SEC-001–SEC-012 remain open.
+
+## P1.1a 命令 Manifest 实现
+
+[Manifest v1](./docs/manifest-v1.md) 已提供纯 JSON 协议、有限 operation Schema、
+显式旧元数据适配和输入/输出执行校验。Node 文件验证独立于浏览器契约，校验
+不执行包代码。P1.1b 的十二个 `commands.ts` 构建独立于 React/UI，UI setup
+显式复用同一 command 实现并保留原 Todo store；CLI 只导入固定 `.commands.js`。
+实际 T1 Manifest 与文件 hash 在导入前验证；G5 仍负责签名、安装事务与隔离。
+
+P1.1c 三端的内置入口使用同一纯 Manifest：Web/Desktop 在固定 UI import 前验证
+契约/身份，JSON run 使用共享 Manifest executor；CLI 还验证实际包文件。
+commands/describe/help 不加载 code；flag 解析与生成文档同源。batch v1 为顺序
+真实执行，无第二份任务/业务数据库。见 [CLI 契约](./docs/cli-contract-v1.md)。
+Host/runtime-client、grant 与独立 CLI 发行仍为 G2/G3，未实现跨进程调用。

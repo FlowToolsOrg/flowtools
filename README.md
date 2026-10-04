@@ -3,6 +3,15 @@
 > An extensible, cross-platform toolbox powered by a plugin runtime.
 > Plugin Runtime for AI Age
 
+FlowTools targets knowledge workers and everyday office users. People use a
+unified React GUI; external agents call the same operations through the CLI.
+The accepted next-stage design includes an independently installable CLI,
+a lightweight headless runtime, scoped cold-start/background execution,
+versioned plugin services, and centrally managed shared binary tools such as
+FFmpeg. These are planned capabilities, not current production guarantees.
+Low-code creation, built-in AI assistants and model providers remain future
+plugins. See the [ordered implementation plan](./docs/next-milestones.md).
+
 Flow Tool is a plugin-driven utility platform focused on capability injection,
 permission gating, and a unified React UI runtime.
 
@@ -116,7 +125,7 @@ records are preserved, never automatically restored in any mode.
 P0.3b2 binds CLI discovery/loading to a tracked, generated built-in inventory,
 embedded in the CLI build and generated alongside Web/Desktop manifests. Runtime
 directory additions and caller paths cannot add entries. Only fixed regular-file
-`plugins/dist/<built-in-id>.js` artifacts are loaded; missing/broken artifacts,
+`plugins/dist/<built-in-id>.commands.js` artifacts are loaded; missing/broken artifacts,
 directory junctions and inconsistent metadata fail closed. `list/info/run/help`
 report missing builds instead of importing TSX or rewriting headless source.
 Regenerate all three inventories with `bun run generate:manifests`, then run
@@ -652,3 +661,31 @@ The focus is on:
 [HM Suiji](https://github.com/HM-Suiji)
 
 Built with architectural obsession and system-level thinking.
+
+## P0.3c catalog and permission presentation
+
+Desktop market actions save built-in configuration only. HTML entries display
+不可安装 and saved records cannot grant execution. Removing a record is not a
+package uninstall. The permission center shows capability declarations and
+explicitly records that per-plugin grants and isolation are not implemented.
+Legacy persisted DTO status values remain metadata for compatibility.
+All maturity labels stay prototype; SEC-001–SEC-012 remain open.
+
+## Manifest v1 protocol
+
+The React-free SDK manifest subpath validates serialized commands and package
+metadata. Node file verification is a separate read-only subpath; it does not
+grant external execution. See [Manifest v1](./docs/manifest-v1.md). P1.1a is
+implemented. P1.1b builds twelve separate UI/command entries and validates the
+fixed compiled CLI packages before import. P1.1c adds Manifest-driven
+`commands`, `describe`, help, flags and sequential JSON batch input. Web/Desktop
+validate the same contract before UI import and use it for execution. See the
+[CLI v1 contract](./docs/cli-contract-v1.md) and
+[generated command reference](./docs/builtin-commands.md).
+Run `bun run build:packages` before CLI use and `bun run verify:manifests`
+for read-only protocol and actual built-in package checks.
+
+After changing operations run `bun run generate:command-docs`; check the
+generated reference with `bun run verify:command-docs`. G1 is complete for the
+fixed T1 scope; independent CLI/Host/grants and signed external packages remain
+later milestones. All built-ins stay Prototype.

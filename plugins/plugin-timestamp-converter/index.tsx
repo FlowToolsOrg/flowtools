@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { definePlugin, useCapability } from '@flowtools/sdk'
-import { result } from '@flowtools/sdk/result'
 import {
   Button,
   Card,
@@ -10,86 +9,15 @@ import {
   Label,
   TextField,
 } from '@flowtools/ui/plugin'
-import { z } from 'zod'
 
-type TimestampUnit = 'seconds' | 'milliseconds'
-
-function formatDate(timestamp: number, unit: TimestampUnit): string {
-  const ms = unit === 'seconds' ? timestamp * 1000 : timestamp
-  const date = new Date(ms)
-
-  if (isNaN(date.getTime())) {
-    return '无效时间戳'
-  }
-
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-    timeZoneName: 'short',
-  })
-}
-
-function parseDateInput(dateStr: string): number | null {
-  const date = new Date(dateStr)
-  if (isNaN(date.getTime())) return null
-  return date.getTime()
-}
-
-const inputSchema = z.object({
-  timestamp: z
-    .string()
-    .optional()
-    .describe('Unix timestamp to convert to date'),
-  date: z
-    .string()
-    .optional()
-    .describe('Date string to convert to timestamp (ISO format)'),
-  unit: z
-    .enum(['seconds', 'milliseconds'])
-    .default('seconds')
-    .describe('Timestamp unit'),
-})
+import commandPlugin, {
+  type TimestampUnit,
+  formatDate,
+  parseDateInput,
+} from './commands'
 
 export default definePlugin({
-  type: 'app',
-  meta: {
-    id: 'plugin-timestamp-converter',
-    name: '时间戳转换',
-    version: '0.1.0',
-    maturity: 'prototype',
-    description: 'Unix 时间戳与日期时间互转',
-    permissions: ['clipboard'],
-    tags: ['timestamp', 'unix', 'date', 'converter'],
-    category: '开发工具',
-  },
-  inputSchema,
-  async run(_ctx, input: z.infer<typeof inputSchema>) {
-    const unit = input.unit ?? 'seconds'
-    if (input.timestamp) {
-      const ts = Number(input.timestamp)
-      if (isNaN(ts)) return result.text('Error: invalid timestamp')
-      const iso = new Date(unit === 'seconds' ? ts * 1000 : ts).toISOString()
-      return result.json({ result: iso, timestamp: input.timestamp, unit })
-    }
-    if (input.date) {
-      const ms = parseDateInput(input.date)
-      if (ms === null) return result.text('Error: invalid date string')
-      const ts = unit === 'seconds' ? Math.floor(ms / 1000) : ms
-      return result.json({ result: ts, date: input.date, unit })
-    }
-    const now = Date.now()
-    const ts = unit === 'seconds' ? Math.floor(now / 1000) : now
-    return result.json({
-      result: ts,
-      unit,
-      iso: new Date(now).toISOString(),
-    })
-  },
+  ...commandPlugin,
   setup() {
     return function TimestampConverterPanel() {
       const { clipboard } = useCapability()
@@ -98,14 +26,12 @@ export default definePlugin({
       const [unit, setUnit] = useState<TimestampUnit>('seconds')
       const [currentTimestamp, setCurrentTimestamp] = useState(0)
       const [copiedField, setCopiedField] = useState<string | null>(null)
-
       useEffect(() => {
         const update = () => setCurrentTimestamp(Date.now())
         update()
         const timer = setInterval(update, 1000)
         return () => clearInterval(timer)
       }, [])
-
       const copyToClipboard = useCallback(
         async (text: string, field: string) => {
           await clipboard.writeText(text)
@@ -114,11 +40,9 @@ export default definePlugin({
         },
         [clipboard]
       )
-
       const timestampToDate = timestamp
         ? formatDate(Number(timestamp), unit)
         : ''
-
       const dateToTimestamp = dateInput
         ? (() => {
             const ms = parseDateInput(dateInput)
@@ -128,7 +52,6 @@ export default definePlugin({
               : ms.toString()
           })()
         : ''
-
       const useCurrentTimestamp = useCallback(() => {
         setTimestamp(
           unit === 'seconds'
@@ -136,7 +59,6 @@ export default definePlugin({
             : Date.now().toString()
         )
       }, [unit])
-
       return (
         <div className="w-full max-w-2xl mx-auto">
           <Card className="p-6">

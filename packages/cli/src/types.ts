@@ -17,8 +17,10 @@ export interface CLIPluginInfo {
 }
 
 export interface RunOptions {
+  commandId?: string
   format: OutputFormat
   input?: string
+  batchInput?: string
   timeout?: number
 }
 

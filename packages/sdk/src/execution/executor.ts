@@ -47,6 +47,7 @@ interface SchemaValidation {
 export interface ExecutablePlugin<TInput = never> {
   meta: { id: string; version: string }
   inputSchema?: { safeParse: (input: unknown) => SchemaValidation }
+  outputSchema?: { safeParse: (output: unknown) => SchemaValidation }
   run?: (ctx: ToolContext, input: TInput) => unknown
 }
 
@@ -220,6 +221,21 @@ export async function executePlugin<TInput>(
       }),
       aborted,
     ])
+    if (plugin.outputSchema) {
+      try {
+        if (!plugin.outputSchema.safeParse(data).success) {
+          return fail({
+            code: 'OUTPUT_INVALID',
+            message: 'Plugin output does not match outputSchema',
+          })
+        }
+      } catch {
+        return fail({
+          code: 'OUTPUT_INVALID',
+          message: 'Plugin output schema validation failed',
+        })
+      }
+    }
     const finishedAt = Math.max(startedAt, Date.now())
     return {
       pluginId: plugin.meta.id,

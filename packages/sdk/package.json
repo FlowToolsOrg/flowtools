@@ -10,6 +10,14 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
+    "./manifest": {
+      "types": "./dist/manifest.d.ts",
+      "import": "./dist/manifest.js"
+    },
+    "./manifest/package": {
+      "types": "./dist/manifest/package.d.ts",
+      "import": "./dist/manifest/package.js"
+    },
     "./development": {
       "types": "./dist/development.d.ts",
       "import": "./dist/development.js"
@@ -66,6 +74,7 @@
     "test": "bun run build && bun test test"
   },
   "dependencies": {
+    "semver": "7.7.4",
     "sucrase": "^3.35.0",
     "zod": "catalog:"
   },
@@ -73,6 +82,7 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "@types/semver": "7.7.1",
     "bun-types": "^1.3.13",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",

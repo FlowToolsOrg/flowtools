@@ -11,6 +11,12 @@ interface PackageManifest {
 }
 
 const expectedSymbols: Record<string, readonly string[]> = {
+  './manifest': [
+    'pluginManifestSchema',
+    'executeManifestCommand',
+    'exportOperationSchema',
+  ],
+  './manifest/package': ['verifyManifestPackage'],
   './development': ['DevelopmentPluginFileLoader', 'setupImportMap'],
   './compat/catalog': ['htmlPluginCatalogSchema', 'portablePluginPathSchema'],
   '.': ['definePlugin', 'result'],
@@ -34,7 +40,13 @@ const expectedSymbols: Record<string, readonly string[]> = {
 
 describe('package exports', () => {
   test('execution/catalog subpaths are usable without React or source transpilers', async () => {
-    for (const path of ['index.js', 'execution.js', 'compat/catalog.js']) {
+    for (const path of [
+      'index.js',
+      'execution.js',
+      'compat/catalog.js',
+      'manifest.js',
+      'manifest/package.js',
+    ]) {
       const source = await Bun.file(
         new URL(`../dist/${path}`, import.meta.url)
       ).text()

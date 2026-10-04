@@ -6,7 +6,8 @@
 - 责任：Repository Maintainer 对发布阻断负责；下列 owner 是实施角色，
   尚未指定自然人的角色由 Repository Maintainer 承接，不是风险已被批准
 - 相关决策：[ADR-0001](../adr/0001-plugin-trust-boundaries.md)、
-  [ADR-0002](../adr/0002-capability-and-package-policy.md)
+  [ADR-0002](../adr/0002-capability-and-package-policy.md)、
+  [后续实施设计](../next-milestones.md)
 
 ## 资产、攻击者与边界
 
@@ -32,7 +33,11 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
   假认证标签、缺失 fixture、路径逃逸和不一致目录被拒绝。hash 未签名，仅证明
   扫描字节/文件存在，不是供应链或实时安装验证；本项仍 open。
 - 证据：[市场与 runner](../../apps/desktop/src/App.tsx)、
-  [目录生成器](../../scripts/inspect-html-plugins.ts)
+  [目录生成器](../../scripts/inspect-html-plugins.ts)、
+  [Manifest v1](../../packages/sdk/src/manifest/schema.ts)、
+  [包文件只读校验](../../packages/sdk/src/manifest/package.ts)、
+  [Manifest 拒绝回归](../../packages/sdk/test/manifest.test.ts)、
+  [文件拒绝回归](../../packages/sdk/test/manifest-package.test.ts)
 - Owner：Plugin Platform / Release；Repository Maintainer 为发布责任人
 - 缓解：加载前验证 versioned manifest、文件 hash、可信 publisher、兼容范围；
   staging 隔离，拒绝 Zip Slip、特殊文件、zip bomb；失败恢复完整旧版本。
@@ -246,6 +251,64 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
   用户取消 fixture；拒绝时无外部应用启动。
 - 残余风险：获准打开的外部应用仍可能不安全；需要用户提示与可撤销 scope。
 
+### SEC-013 CLI 冷启动、后台任务与调用主体混淆
+
+- 入口：规划中的本地 runtime IPC、CLI bootstrap、后台 job/调度；高危，open
+- 现状：CLI 仍在自身进程调用 T1 compiled inventory；尚无无界面服务、Host-bound
+  client roles、冷启动 grants 或持久任务恢复。新增设计不会让 run flag 获得授权，
+  不声称同用户 token 可隔离同用户恶意进程。
+- 证据：[CLI runner](../../packages/cli/src/runner.ts)、
+  [CLI context](../../packages/cli/src/context.ts)、
+  [当前执行契约](../../packages/sdk/src/execution/executor.ts)
+- Owner：Runtime / CLI / Rust；Repository Maintainer 负责开放入口决策
+- 缓解：当前用户 ACL、有限 IPC、Host 会话/roles、命令与 scope 授权、epoch；
+  bootstrap 仅启动受管内核，CLI-only 显式管理初始化不加载插件；durable accepted
+  后 ACK，幂等键绑定包/hash/lock/action digest，失联按同 key 恢复；非幂等中断
+  不重放，私有 job payload 与历史分离；GUI/CLI 不建两套 grants 或业务数据。
+- 验证：P1.3/P1.4/P1.5/P2.4/P2.6/P3.1；伪造 role/ID、错协议、并发启动、
+  stale session、CLI-only 首次初始化、相同幂等键不同输入/包锁、提交 ACK 与发送
+  确认丢失、GUI 关闭与权限撤销/调度重复。
+- 残余风险：同一 OS 用户被攻陷可访问其本地接口/凭据；外部副作用不能通用回滚
+  或保证 exactly-once；未验收平台/运行方式不开放。
+
+### SEC-014 服务依赖代理越权与版本漂移
+
+- 入口：规划中的依赖 resolver、插件服务 RPC、更新/卸载；高危，open
+- 现状：当前 Registry/Loader 不提供生产依赖 DAG、不可变锁或服务委托身份；
+  插件依赖是新设计范围，未通过 fixtures，不能推断前置插件有安全共享机制。
+- 证据：[插件契约](../../packages/sdk/src/types/plugin.ts)、
+  [命令契约](../../packages/sdk/src/types/command.ts)、
+  [插件 loader](../../packages/sdk/src/registry/plugin-loader.ts)
+- Owner：SDK / Runtime / Security
+- 缓解：明确 publisher/interface/version、确定 DAG/lock、服务单 profile 单版本；
+  Host 保留 root caller/provider/parentRunId、可委托 handles、剩余预算与 epoch，
+  调用方和 provider scope 共同约束；服务排空后切版本，禁止同空间新旧双写；
+  在途 lease 与反向依赖检查，未准入第三方依赖保持 plan-only。
+- 验证：P1.6/P2.3/P2.4/P2.7；循环/冲突/假 publisher、A 借 B 读取无权文件、
+  参数注入、递归/输出洪泛、取消传递、排空失败/双写、撤销竞争与并发更新卸载
+  拒绝矩阵。
+- 残余风险：合法服务可能错误处理受托数据；用户对整条调用链的理解仍有限，
+  需明确 provider 与效果展示，不把签名或依赖安装当授权。
+
+### SEC-015 共享工具包、间接 IO 与进程恢复
+
+- 入口：规划中的工具侧载/下载、artifact/lease/GC、媒体进程；严重，open
+- 现状：当前只有 Tauri 官方能力 adapter，无集中工具包准入、共享版本仓库或
+  已验证的原生工具访问约束。FFmpeg 等工具仍属待实现目标，默认入口未开放。
+- 证据：[Desktop adapter](../../apps/desktop/src/runtime/desktop-capabilities.ts)、
+  [Rust 依赖](../../apps/desktop/src-tauri/Cargo.toml)、
+  [当前 Host 初始化](../../apps/desktop/src-tauri/src/lib.rs)
+- Owner：Runtime / Rust / Security / Release
+- 缓解：签名/hash/来源/平台/build flavor 准入、无安装脚本、typed operations、
+  scoped handles/协议/输出提交、实际平台 file/network 限制、任务私有环境和
+  进程树预算；辅助 executable/DLL 清单及受控 loader 路径；不可变 artifact、
+  journal、accepted 起生效的任务 leases、持久恢复引用、回滚根集合和 GC 宽限期。
+- 验证：P2.5/P2.8/P2.7；错误签名/篡改、路径替换/外部引用/raw argv/未知工具、
+  可写 cwd/PATH 的伪造 DLL/辅助程序、未授权网络/文件、进程后代/Host 崩溃、
+  排队/恢复任务 GC、PID 复用、并发安装与更新撤销。
+- 残余风险：合法签名工具仍可能有漏洞；参数限制与 Job Object 不构成权限沙箱，
+  支持平台须实测；磁盘/数据库不同资源的提交需要恢复日志，不保证天然原子。
+
 ## 复核与关闭规则
 
 新增入口/能力、包协议、平台、授权或恢复策略必须更新对应威胁 ID 与 ADR，
@@ -259,3 +322,29 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 [CSP](https://v2.tauri.app/security/csp/) 与
 [updater](https://v2.tauri.app/plugin/updater/)。这些机制是实施基础，不证明当前
 配置安全；尤其 CSP 必须启用，Rust commands 必须自己正确实施授权与 scope。
+
+## P0.3c 状态说明收口
+
+市场内置按钮只保存配置，HTML 不可安装；权限页显示授权/隔离缺口。
+证据：[展示策略](../../apps/desktop/src/runtime/catalog-presentation.ts)、
+[回归](../../apps/desktop/test/catalog-presentation.test.ts)。
+没有新增 native API、grant、数据迁移或第三方执行入口；SEC-001/002/006 保持 open。
+
+P1.1b：固定 CLI [Manifest/文件导入校验](../../packages/cli/src/discovery.ts)、
+[导入前拒绝与 runtime 不匹配回归](../../packages/cli/src/discovery.test.ts)、
+[无 React/GUI/source 消费](../../plugins/test/headless-artifacts.test.ts)。
+身份来自编译 inventory；文件 hash 无签名，不能抵御同时替换可信产物和 catalog，
+亦不解决校验后的替换竞争。SEC-001/002/010 保持 open，ADR 无设计变更，
+独立安全 Reviewer pending；没有新增 grant、可撤销安装或隔离声明。
+
+P1.1c：三端固定 T1 import 前契约校验使用
+[SDK loader](../../packages/sdk/src/manifest/loader.ts)，
+[拒绝与 registry 状态回归](../../packages/sdk/test/manifest-loader.test.ts)。
+CLI [参数解析](../../packages/cli/src/command-schema.ts) 与
+[compiled 回归](../../packages/cli/src/discovery.test.ts) 验证机器发现不 import code、
+未知/混合参数预检拒绝和真实 handler 参数值。Web/Desktop JSON run 使用相同
+Manifest executor；SDK 回归覆盖非法 runtime validator/default 后预算。
+身份由固定 callback/inventory 绑定，权限取命令请求与 host metadata 的交集；
+这不是持久 grant 或撤销服务。batch 顺序执行但没有事务/回滚，实际异常仍有
+副作用残余风险。SEC-001/002/005/010 保持 open，ADR 无设计变更，工程自检通过，
+独立安全 Reviewer pending；没有新增外部安装/可执行路径/原始 native API。

@@ -1,5 +1,15 @@
 # Flow Tools 架构设计规范
 
+## 下一阶段拟新增结构
+
+[下一阶段实施设计](./next-milestones.md) 定义 G0–G8 的顺序与验收。
+拟新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`
+（无界面运行服务）、`packages/runtime-client`（生成 DTO 的 TS 客户端）和
+`packages/plugin-runner`（受管执行入口）。这些目录当前尚未交付。
+SDK 拟增加命令/Manifest、服务依赖和异步 data 契约；Rust core 管理 broker、
+单写者数据、任务、依赖锁、工具 artifact/lease/GC；Desktop 和 CLI 使用同一服务。
+普通受管 T1 runner 不是 T3 sandbox，Web 原型不自动连接本机服务。
+
 ## 安全设计来源与实现边界
 
 - `docs/adr/0001-plugin-trust-boundaries.md`：T0/T1/T2/T3/TL 执行位置、身份
@@ -88,7 +98,7 @@
   `src-tauri/tests/bindings.rs` 用真实 Tauri MockRuntime 验证入口 URL，不启动宿主；
   URL 回归不替代独立包实窗验收。
 
-- `scripts/docs-check.ts` / `docs-check.test.ts`：十份核心/ADR/威胁/PR 文档的
+- `scripts/docs-check.ts` / `docs-check.test.ts`：十一份核心/设计/ADR/威胁/PR 文档的
   只读契约，内联本地链接路径与风险字段验证；脚本由 Desktop 测试任务消费。
   不检查远端 URL、Markdown anchor、运行时安全或 reviewer 批准。
 - `.github/pull_request_template.md`：安全边界变更的 threat/ADR、scope、拒绝
@@ -254,3 +264,28 @@ Plugins Bundle Metadata (捆绑包元数据)
 Presets (预设基座): 插件的预设配置, 做到开箱即用。
 
 Instances (插件实例): 独立打包的 Plugin A, Plugin B 等。
+
+## P0.3c catalog and permission presentation
+
+Desktop market actions save built-in configuration only. HTML entries display
+不可安装 and saved records cannot grant execution. Removing a record is not a
+package uninstall. The permission center shows capability declarations and
+explicitly records that per-plugin grants and isolation are not implemented.
+Legacy persisted DTO status values remain metadata for compatibility.
+All maturity labels stay prototype; SEC-001–SEC-012 remain open.
+
+## P1.1a 新增模块
+
+packages/sdk/src/manifest 已存在：schema、json-schema、execution、legacy 和
+Node-only package verifier。packages/sdk/test/manifest\*.test.ts 覆盖协议与文件
+拒绝；scripts/verify-manifests.ts 为只读契约与十二实际包 gate。见 [协议](./manifest-v1.md)。
+plugins/plugin-\*/commands.ts 为纯命令源；index.tsx 为 UI；command-contract.ts
+声明同源 operation Schema。build-manifests.ts 写 plugins/.generated 下的纯 JSON，
+与 dist 分离避免自引用 hash；这两个目录均为构建产物。
+
+P1.1c 新增 SDK manifest/catalog.ts/loader.ts、CLI command-schema.ts/run-arguments.ts，
+scripts/generate-command-docs.ts 和只读 drift 回归；docs/builtin-commands.md
+是生成文件，CLI 兼容/批处理协议见 [CLI v1](./cli-contract-v1.md)。Web/Desktop
+既有 runtime adapters 和生成 loader 接入该 SDK 契约；没有新增 G2/G3 module。
+Turbo build outputs 覆盖 dist/.generated；固定 Chromium gate 串行执行所有文件，
+相关缓存完整性与 runner 约束由 scripts/ci-contracts.test.ts 验证。

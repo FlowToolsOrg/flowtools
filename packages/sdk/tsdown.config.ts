@@ -10,6 +10,8 @@ const packageDir = dirname(fileURLToPath(import.meta.url))
 export default createPackageTsdownConfig({
   packageDir,
   entry: {
+    manifest: 'src/manifest/index.ts',
+    'manifest/package': 'src/manifest/package.ts',
     'compat/catalog': 'src/compat/catalog.ts',
     development: 'src/development.ts',
     execution: 'src/execution/index.ts',

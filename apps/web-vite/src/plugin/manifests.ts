@@ -1,5 +1,36 @@
 import type { PluginManifestEntry } from '@flowtools/sdk'
 
+import {
+  loadManifestModule,
+  parseManifestCatalog,
+} from '@flowtools/sdk/manifest'
+
+import serializedData from '../../../../plugins/.generated/builtin-manifests.json'
+
+export const builtInManifestData = parseManifestCatalog(
+  serializedData as unknown,
+  {
+    hostVersion: '0.1.0',
+    sdkVersion: '0.0.0',
+    platform: 'web',
+    arch: 'wasm32',
+  },
+  [
+    'plugin-base64-encoder',
+    'plugin-color-converter',
+    'plugin-hash-generator',
+    'plugin-image-base64',
+    'plugin-json-formatter',
+    'plugin-random-picker',
+    'plugin-regex-tester',
+    'plugin-text-ops',
+    'plugin-timestamp-converter',
+    'plugin-todo-list',
+    'plugin-uuid-generator',
+    'plugin-website-latency',
+  ]
+)
+
 export const builtInManifests: PluginManifestEntry[] = [
   {
     id: 'plugin-base64-encoder',
@@ -12,7 +43,24 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['base64', 'encode', 'decode', 'converter'],
     category: '编码工具',
     cliAvailable: true,
-    loader: () => import('@flowtools/plugins/plugin-base64-encoder'),
+    loader: () =>
+      loadManifestModule(
+        builtInManifestData.find(value => value.id === 'plugin-base64-encoder'),
+        {
+          hostVersion: '0.1.0',
+          sdkVersion: '0.0.0',
+          platform: 'web',
+          arch: 'wasm32',
+        },
+        {
+          publisher: 'flowtools',
+          id: 'plugin-base64-encoder',
+          version: '0.1.0',
+          type: 'app',
+          maturity: 'prototype',
+        },
+        () => import('@flowtools/plugins/plugin-base64-encoder')
+      ),
   },
   {
     id: 'plugin-color-converter',
@@ -25,7 +73,26 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['color', 'hex', 'rgb', 'hsl', 'converter'],
     category: '开发工具',
     cliAvailable: true,
-    loader: () => import('@flowtools/plugins/plugin-color-converter'),
+    loader: () =>
+      loadManifestModule(
+        builtInManifestData.find(
+          value => value.id === 'plugin-color-converter'
+        ),
+        {
+          hostVersion: '0.1.0',
+          sdkVersion: '0.0.0',
+          platform: 'web',
+          arch: 'wasm32',
+        },
+        {
+          publisher: 'flowtools',
+          id: 'plugin-color-converter',
+          version: '0.1.0',
+          type: 'app',
+          maturity: 'prototype',
+        },
+        () => import('@flowtools/plugins/plugin-color-converter')
+      ),
   },
   {
     id: 'plugin-hash-generator',
@@ -38,7 +105,24 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['hash', 'sha', 'sha256', 'md5', 'generator'],
     category: '开发工具',
     cliAvailable: true,
-    loader: () => import('@flowtools/plugins/plugin-hash-generator'),
+    loader: () =>
+      loadManifestModule(
+        builtInManifestData.find(value => value.id === 'plugin-hash-generator'),
+        {
+          hostVersion: '0.1.0',
+          sdkVersion: '0.0.0',
+          platform: 'web',
+          arch: 'wasm32',
+        },
+        {
+          publisher: 'flowtools',
+          id: 'plugin-hash-generator',
+          version: '0.1.0',
+          type: 'app',
+          maturity: 'prototype',
+        },
+        () => import('@flowtools/plugins/plugin-hash-generator')
+      ),
   },
   {
     id: 'plugin-image-base64',
@@ -51,7 +135,24 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['image', 'base64', 'converter'],
     category: '编码工具',
     cliAvailable: true,
-    loader: () => import('@flowtools/plugins/plugin-image-base64'),
+    loader: () =>
+      loadManifestModule(
+        builtInManifestData.find(value => value.id === 'plugin-image-base64'),
+        {
+          hostVersion: '0.1.0',
+          sdkVersion: '0.0.0',
+          platform: 'web',
+          arch: 'wasm32',
+        },
+        {
+          publisher: 'flowtools',
+          id: 'plugin-image-base64',
+          version: '0.1.0',
+          type: 'app',
+          maturity: 'prototype',
+        },
+        () => import('@flowtools/plugins/plugin-image-base64')
+      ),
   },
   {
     id: 'plugin-json-formatter',
@@ -64,7 +165,24 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['json', 'format', 'minify', 'validate'],
     category: '开发工具',
     cliAvailable: true,
-    loader: () => import('@flowtools/plugins/plugin-json-formatter'),
+    loader: () =>
+      loadManifestModule(
+        builtInManifestData.find(value => value.id === 'plugin-json-formatter'),
+        {
+          hostVersion: '0.1.0',
+          sdkVersion: '0.0.0',
+          platform: 'web',
+          arch: 'wasm32',
+        },
+        {
+          publisher: 'flowtools',
+          id: 'plugin-json-formatter',
+          version: '0.1.0',
+          type: 'app',
+          maturity: 'prototype',
+        },
+        () => import('@flowtools/plugins/plugin-json-formatter')
+      ),
   },
   {
     id: 'plugin-random-picker',
@@ -76,7 +194,24 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['random', 'picker', 'name'],
     category: '实用工具',
     cliAvailable: true,
-    loader: () => import('@flowtools/plugins/plugin-random-picker'),
+    loader: () =>
+      loadManifestModule(
+        builtInManifestData.find(value => value.id === 'plugin-random-picker'),
+        {
+          hostVersion: '0.1.0',
+          sdkVersion: '0.0.0',
+          platform: 'web',
+          arch: 'wasm32',
+        },
+        {
+          publisher: 'flowtools',
+          id: 'plugin-random-picker',
+          version: '0.1.0',
+          type: 'app',
+          maturity: 'prototype',
+        },
+        () => import('@flowtools/plugins/plugin-random-picker')
+      ),
   },
   {
     id: 'plugin-regex-tester',
@@ -89,7 +224,24 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['regex', 'regexp', 'test', 'pattern'],
     category: '开发工具',
     cliAvailable: true,
-    loader: () => import('@flowtools/plugins/plugin-regex-tester'),
+    loader: () =>
+      loadManifestModule(
+        builtInManifestData.find(value => value.id === 'plugin-regex-tester'),
+        {
+          hostVersion: '0.1.0',
+          sdkVersion: '0.0.0',
+          platform: 'web',
+          arch: 'wasm32',
+        },
+        {
+          publisher: 'flowtools',
+          id: 'plugin-regex-tester',
+          version: '0.1.0',
+          type: 'app',
+          maturity: 'prototype',
+        },
+        () => import('@flowtools/plugins/plugin-regex-tester')
+      ),
   },
   {
     id: 'plugin-text-ops',
@@ -102,7 +254,24 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['text', 'set', 'intersection', 'union', 'difference'],
     category: '文本工具',
     cliAvailable: true,
-    loader: () => import('@flowtools/plugins/plugin-text-ops'),
+    loader: () =>
+      loadManifestModule(
+        builtInManifestData.find(value => value.id === 'plugin-text-ops'),
+        {
+          hostVersion: '0.1.0',
+          sdkVersion: '0.0.0',
+          platform: 'web',
+          arch: 'wasm32',
+        },
+        {
+          publisher: 'flowtools',
+          id: 'plugin-text-ops',
+          version: '0.1.0',
+          type: 'app',
+          maturity: 'prototype',
+        },
+        () => import('@flowtools/plugins/plugin-text-ops')
+      ),
   },
   {
     id: 'plugin-timestamp-converter',
@@ -115,7 +284,26 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['timestamp', 'unix', 'date', 'converter'],
     category: '开发工具',
     cliAvailable: true,
-    loader: () => import('@flowtools/plugins/plugin-timestamp-converter'),
+    loader: () =>
+      loadManifestModule(
+        builtInManifestData.find(
+          value => value.id === 'plugin-timestamp-converter'
+        ),
+        {
+          hostVersion: '0.1.0',
+          sdkVersion: '0.0.0',
+          platform: 'web',
+          arch: 'wasm32',
+        },
+        {
+          publisher: 'flowtools',
+          id: 'plugin-timestamp-converter',
+          version: '0.1.0',
+          type: 'app',
+          maturity: 'prototype',
+        },
+        () => import('@flowtools/plugins/plugin-timestamp-converter')
+      ),
   },
   {
     id: 'plugin-todo-list',
@@ -125,7 +313,24 @@ export const builtInManifests: PluginManifestEntry[] = [
     type: 'app',
     permissions: ['storage'],
     cliAvailable: true,
-    loader: () => import('@flowtools/plugins/plugin-todo-list'),
+    loader: () =>
+      loadManifestModule(
+        builtInManifestData.find(value => value.id === 'plugin-todo-list'),
+        {
+          hostVersion: '0.1.0',
+          sdkVersion: '0.0.0',
+          platform: 'web',
+          arch: 'wasm32',
+        },
+        {
+          publisher: 'flowtools',
+          id: 'plugin-todo-list',
+          version: '0.0.1',
+          type: 'app',
+          maturity: 'prototype',
+        },
+        () => import('@flowtools/plugins/plugin-todo-list')
+      ),
   },
   {
     id: 'plugin-uuid-generator',
@@ -138,7 +343,24 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['uuid', 'random', 'generator'],
     category: '开发工具',
     cliAvailable: true,
-    loader: () => import('@flowtools/plugins/plugin-uuid-generator'),
+    loader: () =>
+      loadManifestModule(
+        builtInManifestData.find(value => value.id === 'plugin-uuid-generator'),
+        {
+          hostVersion: '0.1.0',
+          sdkVersion: '0.0.0',
+          platform: 'web',
+          arch: 'wasm32',
+        },
+        {
+          publisher: 'flowtools',
+          id: 'plugin-uuid-generator',
+          version: '0.1.0',
+          type: 'app',
+          maturity: 'prototype',
+        },
+        () => import('@flowtools/plugins/plugin-uuid-generator')
+      ),
   },
   {
     id: 'plugin-website-latency',
@@ -151,7 +373,26 @@ export const builtInManifests: PluginManifestEntry[] = [
     tags: ['network', 'latency', 'ping'],
     category: '网络工具',
     cliAvailable: true,
-    loader: () => import('@flowtools/plugins/plugin-website-latency'),
+    loader: () =>
+      loadManifestModule(
+        builtInManifestData.find(
+          value => value.id === 'plugin-website-latency'
+        ),
+        {
+          hostVersion: '0.1.0',
+          sdkVersion: '0.0.0',
+          platform: 'web',
+          arch: 'wasm32',
+        },
+        {
+          publisher: 'flowtools',
+          id: 'plugin-website-latency',
+          version: '0.1.0',
+          type: 'app',
+          maturity: 'prototype',
+        },
+        () => import('@flowtools/plugins/plugin-website-latency')
+      ),
   },
 ]
 

@@ -145,7 +145,9 @@ describe('CLI integration contract', () => {
     const loaded = await loadPlugin(pluginId)
     const { default: builtPlugin } =
       await import('@flowtools/plugins/plugin-base64-encoder')
-    expect(Object.is(loaded, builtPlugin)).toBe(true)
+    expect(loaded?.run).toBe(builtPlugin.run)
+    expect(loaded).not.toHaveProperty('setup')
+    expect(loaded?.manifest.commands[0]?.id).toBe('run')
     expect(loaded?.meta.id).toBe(pluginId)
 
     const parsed = loaded?.inputSchema?.safeParse?.({

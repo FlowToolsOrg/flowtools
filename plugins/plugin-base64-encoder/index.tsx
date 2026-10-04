@@ -1,71 +1,16 @@
 import { useCallback, useState } from 'react'
 
 import { definePlugin, useCapability } from '@flowtools/sdk'
-import { result } from '@flowtools/sdk/result'
 import { Button, Card, Chip, Label, TextArea } from '@flowtools/ui/plugin'
-import { z } from 'zod'
 
-type Mode = 'encode' | 'decode'
-
-function encodeBase64(text: string): string {
-  try {
-    return btoa(
-      encodeURIComponent(text).replace(/%([0-9A-F]{2})/g, (_, p1) =>
-        String.fromCharCode(parseInt(p1, 16))
-      )
-    )
-  } catch (e) {
-    throw new Error(
-      '编码失败: ' + (e instanceof Error ? e.message : '未知错误')
-    )
-  }
-}
-
-function decodeBase64(base64: string): string {
-  try {
-    return decodeURIComponent(
-      Array.from(
-        atob(base64),
-        c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-      ).join('')
-    )
-  } catch {
-    throw new Error('解码失败: 无效的 Base64 字符串')
-  }
-}
-
-const inputSchema = z.object({
-  text: z.string().describe('Text to encode or decode'),
-  mode: z
-    .enum(['encode', 'decode'])
-    .default('encode')
-    .describe('Encode or decode mode'),
-})
+import commandPlugin, {
+  type Mode,
+  encodeBase64,
+  decodeBase64,
+} from './commands'
 
 export default definePlugin({
-  type: 'app',
-  meta: {
-    id: 'plugin-base64-encoder',
-    name: 'Base64 编解码',
-    version: '0.1.0',
-    maturity: 'prototype',
-    description: '文本与 Base64 编码互转',
-    permissions: ['clipboard'],
-    tags: ['base64', 'encode', 'decode', 'converter'],
-    category: '编码工具',
-  },
-  inputSchema,
-  async run(_ctx, input: z.infer<typeof inputSchema>) {
-    const { text, mode } = input
-    if (!text) return result.text('Error: text is required')
-    try {
-      const output = mode === 'encode' ? encodeBase64(text) : decodeBase64(text)
-      return result.json({ result: output, mode, input: text })
-    } catch (e) {
-      const message = e instanceof Error ? e.message : 'Conversion failed'
-      return result.text(`Error: ${message}`)
-    }
-  },
+  ...commandPlugin,
   setup() {
     return function Base64EncoderPanel() {
       const { clipboard } = useCapability()
@@ -74,16 +19,13 @@ export default definePlugin({
       const [mode, setMode] = useState<Mode>('encode')
       const [error, setError] = useState<string | null>(null)
       const [copied, setCopied] = useState(false)
-
       const convert = useCallback(() => {
         setError(null)
         setOutput('')
-
         if (!input.trim()) {
           setError('请输入内容')
           return
         }
-
         try {
           const result =
             mode === 'encode' ? encodeBase64(input) : decodeBase64(input)
@@ -92,27 +34,23 @@ export default definePlugin({
           setError(e instanceof Error ? e.message : '转换失败')
         }
       }, [input, mode])
-
       const copyOutput = useCallback(async () => {
         if (!output) return
         await clipboard.writeText(output)
         setCopied(true)
         setTimeout(() => setCopied(false), 1500)
       }, [clipboard, output])
-
       const swap = useCallback(() => {
         setInput(output)
         setOutput('')
         setMode(prev => (prev === 'encode' ? 'decode' : 'encode'))
         setError(null)
       }, [output])
-
       const clear = useCallback(() => {
         setInput('')
         setOutput('')
         setError(null)
       }, [])
-
       return (
         <div className="w-full max-w-4xl mx-auto">
           <Card className="p-6">

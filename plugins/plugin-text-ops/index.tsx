@@ -1,79 +1,17 @@
 import { useCallback, useState } from 'react'
 
 import { definePlugin, useCapability } from '@flowtools/sdk'
-import { result } from '@flowtools/sdk/result'
 import { Button, Card, Chip, Label, TextArea } from '@flowtools/ui/plugin'
-import { z } from 'zod'
 
-type Operation = 'intersection' | 'union' | 'difference'
-
-function parseLines(text: string): Set<string> {
-  return new Set(
-    text
-      .split('\n')
-      .map(s => s.trim())
-      .filter(Boolean)
-  )
-}
-
-function computeSetOp(
-  setA: Set<string>,
-  setB: Set<string>,
-  op: Operation
-): string[] {
-  let resultSet: Set<string>
-  switch (op) {
-    case 'intersection':
-      resultSet = new Set([...setA].filter(x => setB.has(x)))
-      break
-    case 'union':
-      resultSet = new Set([...setA, ...setB])
-      break
-    case 'difference':
-      resultSet = new Set([...setA].filter(x => !setB.has(x)))
-      break
-  }
-  return [...resultSet]
-}
-
-const OP_LABELS: Record<Operation, string> = {
-  intersection: '交集 (A ∩ B)',
-  union: '并集 (A ∪ B)',
-  difference: '差集 (A - B)',
-}
-
-const inputSchema = z.object({
-  setA: z.string().describe('Set A items (newline-separated)'),
-  setB: z.string().describe('Set B items (newline-separated)'),
-  operation: z
-    .enum(['intersection', 'union', 'difference'])
-    .default('intersection')
-    .describe('Set operation to perform'),
-})
+import commandPlugin, {
+  type Operation,
+  parseLines,
+  computeSetOp,
+  OP_LABELS,
+} from './commands'
 
 export default definePlugin({
-  type: 'app',
-  meta: {
-    id: 'plugin-text-ops',
-    name: '文本集合运算',
-    version: '0.1.0',
-    maturity: 'prototype',
-    description: '计算文本的交集、差集、并集',
-    permissions: ['clipboard'],
-    tags: ['text', 'set', 'intersection', 'union', 'difference'],
-    category: '文本工具',
-  },
-  inputSchema,
-  async run(_ctx, input: z.infer<typeof inputSchema>) {
-    const setA = parseLines(input.setA)
-    const setB = parseLines(input.setB)
-    const items = computeSetOp(setA, setB, input.operation)
-    return result.json({
-      result: items,
-      operation: input.operation,
-      count: items.length,
-    })
-  },
+  ...commandPlugin,
   setup() {
     return function TextOpsPanel() {
       const { clipboard } = useCapability()
@@ -82,24 +20,20 @@ export default definePlugin({
       const [operation, setOperation] = useState<Operation>('intersection')
       const [result, setResult] = useState<string[] | null>(null)
       const [copied, setCopied] = useState(false)
-
       const compute = useCallback(() => {
         const setA = parseLines(textA)
         const setB = parseLines(textB)
         const resultSet = computeSetOp(setA, setB, operation)
         setResult([...resultSet])
       }, [textA, textB, operation])
-
       const copyResult = useCallback(async () => {
         if (!result) return
         await clipboard.writeText(result.join('\n'))
         setCopied(true)
         setTimeout(() => setCopied(false), 1500)
       }, [clipboard, result])
-
       const setA = parseLines(textA)
       const setB = parseLines(textB)
-
       return (
         <div className="w-full max-w-4xl mx-auto">
           <Card className="p-6">

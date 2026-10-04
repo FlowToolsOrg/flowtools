@@ -11,6 +11,7 @@ export const REQUIRED_DOCUMENTS = [
   'docs/structure.md',
   'docs/plugin.md',
   'docs/production-roadmap.md',
+  'docs/next-milestones.md',
   'docs/adr/0001-plugin-trust-boundaries.md',
   'docs/adr/0002-capability-and-package-policy.md',
   'docs/security/threat-model.md',

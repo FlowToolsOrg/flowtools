@@ -6,13 +6,22 @@ import type {
 import type { Permission, ToolContext } from '@flowtools/sdk/types'
 
 import { createExecutionFailure, executePlugin } from '@flowtools/sdk/execution'
+import {
+  executeManifestCommand,
+  type PluginManifestV1,
+} from '@flowtools/sdk/manifest'
 
 import { createCLIToolContext } from './context'
-import { loadPlugin } from './discovery'
+import {
+  loadPlugin,
+  cliManifestTarget,
+  getBuiltinPluginInfo,
+} from './discovery'
 import { formatRaw, formatResult } from './formatter'
 
 export type RunResult = PluginExecutionResult
 interface CLIExecutablePlugin extends ExecutablePlugin {
+  manifest?: PluginManifestV1
   type?: 'app' | 'tool'
   meta: ExecutablePlugin['meta'] & { permissions?: readonly Permission[] }
 }
@@ -22,6 +31,7 @@ export interface PluginRunnerDependencies {
   startTimeout?: (callback: () => void, delayMs: number) => () => void
 }
 export interface PluginRunOptions {
+  commandId?: string
   timeout?: number
   signal?: AbortSignal
 }
@@ -56,6 +66,17 @@ export function createPluginRunner(dependencies: PluginRunnerDependencies) {
     }
     if (!plugin)
       return failure('PLUGIN_NOT_FOUND', 'Plugin not found: ' + pluginId)
+    if (!plugin.manifest && options.commandId && options.commandId !== 'run')
+      return createExecutionFailure(
+        pluginId,
+        plugin.meta.version,
+        input,
+        {
+          code: 'NOT_RUNNABLE',
+          message: 'Legacy adapters expose only the run command',
+        },
+        startedAt
+      )
     let ctx: ToolContext
     try {
       ctx = dependencies.createContext(pluginId, plugin)
@@ -66,20 +87,42 @@ export function createPluginRunner(dependencies: PluginRunnerDependencies) {
         plugin.meta.version
       )
     }
-    return executePlugin(plugin, input, ctx, {
+    const executionOptions = {
       timeoutMs: options.timeout,
       signal: options.signal,
       startTimeout: dependencies.startTimeout,
-    })
+    }
+    return plugin.manifest
+      ? executeManifestCommand(
+          plugin.manifest,
+          options.commandId ?? 'run',
+          plugin,
+          input,
+          ctx,
+          cliManifestTarget,
+          executionOptions
+        )
+      : executePlugin(plugin, input, ctx, executionOptions)
   }
 }
 
 const defaultPluginRunner = createPluginRunner({
-  loadPlugin,
+  loadPlugin: async pluginId => {
+    const plugin = await loadPlugin(pluginId)
+    if (!plugin && getBuiltinPluginInfo(pluginId))
+      throw new Error('Built-in command could not be loaded')
+    return plugin
+  },
   createContext: (pluginId, plugin) =>
     createCLIToolContext(pluginId, {
       pluginType: plugin.type ?? 'app',
-      permissions: plugin.meta.permissions,
+      permissions: plugin.manifest
+        ? plugin.manifest.commands[0]?.permissions.flatMap(request =>
+            request.capability === 'network' || request.capability === 'storage'
+              ? [request.capability]
+              : []
+          )
+        : plugin.meta.permissions,
     }),
 })
 export const runPlugin = defaultPluginRunner

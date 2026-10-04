@@ -20,7 +20,7 @@
     }
   },
   "scripts": {
-    "build": "tsdown --config tsdown.config.ts",
+    "build": "tsdown --config tsdown.config.ts && bun run build-manifests.ts",
     "dev": "tsdown --config tsdown.config.ts --watch",
     "lint": "oxlint --type-aware --type-check",
     "lint:fix": "oxlint --fix --type-aware --type-check",

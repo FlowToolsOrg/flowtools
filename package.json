@@ -41,7 +41,7 @@
     "dev:web": "turbo run dev --filter=@flowtools/web",
     "dev:desktop": "bun run --cwd apps/desktop tauri dev",
     "build:desktop": "bun run --cwd apps/desktop tauri build",
-    "lint": "oxlint --type-aware --type-check scripts/docs-check.ts scripts/docs-check.test.ts scripts/inspect-html-plugins.ts scripts/verify-plugin-catalog.ts scripts/catalog.test.ts scripts/generate-manifests.ts scripts/generate-manifests.test.ts scripts/production-artifacts.ts scripts/production-artifacts.test.ts scripts/verify-production-entrypoints.ts && turbo run lint",
+    "lint": "oxlint --type-aware --type-check scripts/docs-check.ts scripts/docs-check.test.ts scripts/inspect-html-plugins.ts scripts/verify-plugin-catalog.ts scripts/catalog.test.ts scripts/generate-manifests.ts scripts/generate-manifests.test.ts scripts/generate-command-docs.ts scripts/generate-command-docs.test.ts scripts/production-artifacts.ts scripts/production-artifacts.test.ts scripts/verify-production-entrypoints.ts scripts/verify-manifests.ts scripts/verify-manifests.test.ts && turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "format": "turbo run format",
     "check-types": "turbo run check-types",
@@ -50,11 +50,14 @@
     "lint:staged": "lint-staged",
     "prepare": "husky",
     "generate:manifests": "bun run scripts/generate-manifests.ts",
+    "generate:command-docs": "bun run scripts/generate-command-docs.ts",
+    "verify:command-docs": "bun run scripts/generate-command-docs.ts --check",
     "generate:hosts": "bun run --cwd apps/web-vite generate:routes && bun run --cwd apps/desktop generate",
     "inspect:html-plugins": "bun run scripts/inspect-html-plugins.ts",
     "verify:plugin-catalog": "bun run scripts/verify-plugin-catalog.ts",
     "verify:production-entrypoints": "bun run scripts/verify-production-entrypoints.ts",
     "docs:check": "bun run scripts/docs-check.ts",
+    "verify:manifests": "bun run scripts/verify-manifests.ts",
     "verify:workspace-tasks": "bun run scripts/verify-workspace-tasks.ts"
   },
   "dependencies": {

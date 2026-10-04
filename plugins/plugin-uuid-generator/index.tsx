@@ -1,57 +1,24 @@
 import { useCallback, useState } from 'react'
 
 import { definePlugin, useCapability } from '@flowtools/sdk'
-import { result } from '@flowtools/sdk/result'
 import { Button, Card, Input, Label, TextField } from '@flowtools/ui/plugin'
-import { z } from 'zod'
 
-function generateUUID(): string {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID()
-  }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = (Math.random() * 16) | 0
-    const v = c === 'x' ? r : (r & 0x3) | 0x8
-    return v.toString(16)
-  })
-}
-
-const inputSchema = z.object({
-  count: z.number().default(1).describe('Number of UUIDs to generate (1-100)'),
-})
+import commandPlugin, { generateUUID } from './commands'
 
 export default definePlugin({
-  type: 'app',
-  meta: {
-    id: 'plugin-uuid-generator',
-    name: 'UUID 生成器',
-    version: '0.1.0',
-    maturity: 'prototype',
-    description: '在线生成随机 UUID v4',
-    permissions: ['clipboard'],
-    tags: ['uuid', 'random', 'generator'],
-    category: '开发工具',
-  },
-  inputSchema,
-  async run(_ctx, input: z.infer<typeof inputSchema>) {
-    const count = Math.max(1, Math.min(100, input.count ?? 1))
-    const uuids = Array.from({ length: count }, () => generateUUID())
-    return result.json({ result: uuids, count: uuids.length })
-  },
+  ...commandPlugin,
   setup() {
     return function UUIDGeneratorPanel() {
       const { clipboard } = useCapability()
       const [uuids, setUuids] = useState<string[]>([generateUUID()])
       const [count, setCount] = useState(1)
       const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
-
       const generate = useCallback(() => {
         const n = Math.max(1, Math.min(100, count))
         const newUuids = Array.from({ length: n }, () => generateUUID())
         setUuids(newUuids)
         setCopiedIndex(null)
       }, [count])
-
       const copyOne = useCallback(
         async (uuid: string, index: number) => {
           await clipboard.writeText(uuid)
@@ -60,13 +27,11 @@ export default definePlugin({
         },
         [clipboard]
       )
-
       const copyAll = useCallback(async () => {
         await clipboard.writeText(uuids.join('\n'))
         setCopiedIndex(-1)
         setTimeout(() => setCopiedIndex(null), 1500)
       }, [clipboard, uuids])
-
       return (
         <div className="w-full max-w-2xl mx-auto">
           <Card className="p-6">

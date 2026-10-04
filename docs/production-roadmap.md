@@ -1020,7 +1020,7 @@ G4 服务依赖 -> G5 签名安装与隔离 -> G6 工具链 -> G7 办公闭环 -
 | P1.1c | done    | P1.1b               | describe/commands/flags 同源生成；编译 CLI 的机器发现与拒绝回归                    |
 | P1.2a | done    | P1.1                | 单一状态机、锁和 hook 补偿；100 并发操作不重复激活                                 |
 | P1.2b | done    | P1.2a               | 命令状态投影、进程/视图资源 ownership；更新/卸载无孤儿 handler                     |
-| P1.3a | pending | P1.2                | Runtime core/binary、用户级 IPC、T1 临时 profile 与 job 协议；不接用户数据/第三方  |
+| P1.3a | done    | P1.2                | Runtime core/binary、用户级 IPC、T1 临时 profile 与 job 协议；不接用户数据/第三方  |
 | P1.5a | pending | P1.3a               | versioned DTO、拒绝码、脱敏事件与兼容/失联诊断                                     |
 | P2.3a | pending | P1.3a、P1.5a        | 基础 typed broker，先 T1；同一身份/operation/scope 决策，拒绝无副作用              |
 | P2.6a | pending | P2.3a               | 移除 Debug reset、迁移/备份、Runtime 单写者与异步 data/revision；保留旧数据        |
@@ -1813,3 +1813,13 @@ P1.1c：2026-10-04，Owner Codex；commands/describe/help/flags/生成参考同�
 本机资源限制使用单任务并发；449 项测试与真实 Web/Desktop 前端复验通过。
 原生 metadata IPC 本轮为 fixture，不声称新的原生实窗验收。P1.1 父项完成。
 见 [G1 验收](./validation/g1-command-contract.md)。
+
+### G2 P1.3a implementation evidence
+
+2026-10-04: independent Rust core/binary, generated TS client, fixed compiled T1
+runner and validation-only native Desktop adapter are implemented. Actual Node
+and Windows WebView2 clients query the same successful runId. See
+[G2 acceptance](./validation/g2-runtime.md). P1.3 parent remains pending until
+G3 P1.3b durable/granted execution; P1.5a diagnostic acceptance is next. All
+maturity labels stay prototype, independent security Reviewer remains pending,
+and SEC risks remain open. No production DB migration or grant system is claimed.

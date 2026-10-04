@@ -3,9 +3,9 @@
 ## 下一阶段拟新增结构
 
 [下一阶段实施设计](./next-milestones.md) 定义 G0–G8 的顺序与验收。
-拟新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`
+G2 已新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`
 （无界面运行服务）、`packages/runtime-client`（生成 DTO 的 TS 客户端）和
-`packages/plugin-runner`（受管执行入口）。这些目录当前尚未交付。
+`packages/plugin-runner`（受管执行入口）。这些目录已交付 G2 的固定 T1 / 可丢弃 profile 验证基础；G3 授权与用户数据迁移尚未交付。
 SDK 拟增加命令/Manifest、服务依赖和异步 data 契约；Rust core 管理 broker、
 单写者数据、任务、依赖锁、工具 artifact/lease/GC；Desktop 和 CLI 使用同一服务。
 普通受管 T1 runner 不是 T3 sandbox，Web 原型不自动连接本机服务。
@@ -286,7 +286,7 @@ plugins/plugin-\*/commands.ts 为纯命令源；index.tsx 为 UI；command-contr
 P1.1c 新增 SDK manifest/catalog.ts/loader.ts、CLI command-schema.ts/run-arguments.ts，
 scripts/generate-command-docs.ts 和只读 drift 回归；docs/builtin-commands.md
 是生成文件，CLI 兼容/批处理协议见 [CLI v1](./cli-contract-v1.md)。Web/Desktop
-既有 runtime adapters 和生成 loader 接入该 SDK 契约；没有新增 G2/G3 module。
+既有 runtime adapters 和生成 loader 接入该 SDK 契约；G1 当时没有新增 G2/G3 module；当前 G2 模块见下节。
 Turbo build outputs 覆盖 dist/.generated；固定 Chromium gate 串行执行所有文件，
 相关缓存完整性与 runner 约束由 scripts/ci-contracts.test.ts 验证。
 
@@ -302,5 +302,14 @@ and cooperative load/activation/view/runner resource scopes. Enabled module stat
 is separate from a resident runner; only explicitly owned runner resources count
 as running. Web GUI executions acquire the current registry instance. Updates
 and removal drain accepted calls and clean resources; cleanup errors block removal.
-P1.3a/P1.5a headless IPC remain pending.
+P1.3a adds `packages/runtime-core`, `apps/runtime`, `packages/runtime-client`
+and a fixed T1 `packages/plugin-runner`. Windows validation uses a current-user
+ACL named pipe, Host-bound connection proofs and disposable profiles. Task facts
+live in Rust; GUI/Node clients query the same runId. Receipts are distinct from
+terminal execution results; foreground disconnect cancels, explicit background
+jobs survive. This only evaluates pure built-in commands: side effects require
+APPROVAL_REQUIRED. No user DB migration, production unattended execution, cold
+start, new grants, third-party runner or OS sandbox is delivered. P1.5a diagnostic
+acceptance remains pending. Runtime/core Rust builds are uncached; generate:hosts
+creates Rust-derived client DTO/schema and Desktop bindings before quality gates.
 See [G2 acceptance](./validation/g2-runtime.md).

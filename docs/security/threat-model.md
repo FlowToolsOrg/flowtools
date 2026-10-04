@@ -352,3 +352,21 @@ Manifest executor；SDK 回归覆盖非法 runtime validator/default 后预算�
 这不是持久 grant 或撤销服务。batch 顺序执行但没有事务/回滚，实际异常仍有
 副作用残余风险。SEC-001/002/005/010 保持 open，ADR 无设计变更，工程自检通过，
 独立安全 Reviewer pending；没有新增外部安装/可执行路径/原始 native API。
+
+### G2 P1.3a engineering evidence (2026-10-04)
+
+SEC-001/003/006/009/010/012 remain open. Sources: runtime-core catalog/protocol/
+runtime, apps/runtime server/security, plugin-runner, runtime-client and Desktop
+validation_runtime.rs. Rejection evidence: exact embedded Manifest metadata,
+unknown IDs/input/side effects, connection-bound proofs, native origin/identity/
+mode table, current-user protected pipe ACL and duplicate first listener. GUI
+and Node query one Runtime task in a disposable profile. Token never reaches
+Desktop JS; native code supplies the endpoint and caller credential. Event data
+is state/sequence/runId only. Revocation is connection close; foreground jobs
+cancel and background jobs keep their explicit validation submission contract.
+Profiles preserve fixture workspaces, with no automatic durable job recovery.
+Root/workspace build gates cover generated artifacts; no reviewer approval is
+implied. ADR-0001/0002 accepted designs unchanged. Same-account compromise,
+TOCTOU replacement, process trees, OS budgets, third-party sandbox, persistent
+grants and Debug user-DB reset are not resolved. Security Reviewer/date/conclusion:
+independent reviewer pending / not approved; Codex engineering checks only.

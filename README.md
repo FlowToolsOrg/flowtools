@@ -702,5 +702,14 @@ and cooperative load/activation/view/runner resource scopes. Enabled module stat
 is separate from a resident runner; only explicitly owned runner resources count
 as running. Web GUI executions acquire the current registry instance. Updates
 and removal drain accepted calls and clean resources; cleanup errors block removal.
-P1.3a/P1.5a headless IPC remain pending.
+P1.3a adds `packages/runtime-core`, `apps/runtime`, `packages/runtime-client`
+and a fixed T1 `packages/plugin-runner`. Windows validation uses a current-user
+ACL named pipe, Host-bound connection proofs and disposable profiles. Task facts
+live in Rust; GUI/Node clients query the same runId. Receipts are distinct from
+terminal execution results; foreground disconnect cancels, explicit background
+jobs survive. This only evaluates pure built-in commands: side effects require
+APPROVAL_REQUIRED. No user DB migration, production unattended execution, cold
+start, new grants, third-party runner or OS sandbox is delivered. P1.5a diagnostic
+acceptance remains pending. Runtime/core Rust builds are uncached; generate:hosts
+creates Rust-derived client DTO/schema and Desktop bindings before quality gates.
 See [G2 acceptance](./docs/validation/g2-runtime.md).

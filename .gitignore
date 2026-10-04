@@ -30,6 +30,9 @@ out/
 build
 dist
 plugins/.generated/
+packages/runtime-core/.generated/
+/target/
+apps/runtime/.generated/
 tsconfig.tsbuildinfo
 
 

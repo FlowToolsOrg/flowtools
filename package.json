@@ -52,7 +52,7 @@
     "generate:manifests": "bun run scripts/generate-manifests.ts",
     "generate:command-docs": "bun run scripts/generate-command-docs.ts",
     "verify:command-docs": "bun run scripts/generate-command-docs.ts --check",
-    "generate:hosts": "bun run --cwd apps/web-vite generate:routes && bun run --cwd apps/desktop generate",
+    "generate:hosts": "bun run --cwd packages/runtime-core generate && bun run --cwd apps/web-vite generate:routes && bun run --cwd apps/desktop generate",
     "inspect:html-plugins": "bun run scripts/inspect-html-plugins.ts",
     "verify:plugin-catalog": "bun run scripts/verify-plugin-catalog.ts",
     "verify:production-entrypoints": "bun run scripts/verify-production-entrypoints.ts",

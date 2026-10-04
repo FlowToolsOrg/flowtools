@@ -43,4 +43,55 @@ Web lint/types 与浏览器并行时内存分配失败；关闭本任务浏览�
 
 本项改动 T1 生命周期与 Web 执行边界；SEC-002/010 仍 open。没有新增原生
 capability/持久授权/用户数据存储。独立安全 Reviewer 未批准。
-P1.3a、P1.5a pending。
+P1.3a 见下节，P1.5a pending。
+
+## P1.3a
+
+独立 Rust workspace 提供 runtime-core 和 flowtools-runtime（无 Tauri 依赖）；
+TS runtime-client 的 DTO/JSON Schema 由 Rust Specta/Schemars 生成。Catalog
+使用 TS 已验证完整 Manifest 的固定 build artifact；Rust 再验证 input/defaults/
+output/effects，runner 核对同一 package digest 并调用实际 compiled Base64。
+未知 ID 在 IO 前拒绝，不接受 executable/path/raw argv。Bootstrap artifact
+路径/hash 仅在忽略的本地 build 配置，未进入 portable catalog。普通启动拒绝
+SETUP_REQUIRED；只允许显式 disposable validation profile 和两类 Host token。
+
+当前用户 protected ACL 的 Windows named pipe 拒绝 remote clients、重复首实例；
+请求长度 1MiB、connection/session proof、client version/instance 检查，最多
+16 pipe instances、128 jobs、4 workers。超期/取消杀死并等待 owned child，正常
+退出排空 workers；纯 T1 每任务目录与干净 env，不继承 token/secret。
+纯命令无需持久 grant；所有 effects/permissions 非空命令 APPROVAL_REQUIRED。
+这些不是 sandbox、真实权限 broker 或任意外部包准入。Installed/enabled/running
+分别报告；UI module 不要求 resident runner。任务/回执/事件只在内存，重启不
+恢复业务，不接真实 SQLite/store；G3 才迁移 ownership 和 durable jobs。
+
+Rust core 6 tests、named pipe 原生测试、runner 的实际调用/包变化拒绝及 Node
+客户端回归通过。Bun Windows net.Socket 在双 pipe 切换后遗漏响应；保留所有
+断言改用实际 Node 子进程，不用放宽等待或重试掩盖。测试覆盖同 runId/同 key、
+实际结果、schema/副作用拒绝、跨 caller 取消拒绝、取消终态和显式后台断线续跑。
+Serde flatten + deny_unknown_fields 使原生终态反序列化失败，已修复并加入
+success/failure 的真实往返回归，重新验收 Desktop 通过。
+
+实际 Windows WebView2 测试 identity 为 com.flowtools.g2-validation-20261004；
+配置 tauri.runtime-validation.conf.json、全新 WebView profile、隐藏窗口，仅
+child env 设置 loopback CDP 9224，核对实际 listener 127.0.0.1。先确认初始
+launcher 在 /，再启用 DEV fixture；原生 adapter 校验真实 identifier/window/
+origin/opt-in，JS 无法选择 endpoint 或 caller token。Node CLI submit 后 native
+GUI 键盘 Enter 查询同一 runId，显示 succeeded/validation-cli；截图已检查。
+结束已关闭本任务窗口、Runtime、Vite，1420/9224 不再监听。
+
+![实际 Desktop 查询 CLI 任务](./assets/g2-desktop-runtime-job.png)
+
+复现：build:packages -> runtime-core generate -> plugin-runner build -> runtime
+build -> runtime-client build；使用 TAURI_CONFIG 为上述专用配置的 cargo build
+--bin desktop，Vite DEV 前端启动后用 Node 运行
+apps/ui-test/scripts/validate-runtime-hosts.ts。Harness 校验专用 identifier/
+artifact，绝不启动默认 Debug。仅测试 fixture 数据；没有用户数据库删除/迁移。
+
+全部仍 prototype；没有独立安全 Reviewer 批准、NVDA、前台 OS 窗口、Unix、
+签名分发或生产无人值守验收。P1.5a 继续单独实现兼容/失联/隐私 golden gates。
+
+P1.3a 提交前 docs/workspace/actionlint 通过；十一 workspace lint/types 通过，
+唯一 harness 类型警告修复后定向 lint 清零。Desktop 76 tests + 14 Rust tests、
+独立 Rust 7 tests、runner 1 test、client 2 tests 和实际 native harness 通过。
+Rust 两个 workspace 的 fmt/clippy -D warnings 通过。全仓 test/build 与生产产物
+gate 在 P1.5a 完成后顺序复验，不把当前定向检查表述为全仓 test/build。

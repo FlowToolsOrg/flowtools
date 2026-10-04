@@ -92,13 +92,17 @@ test('runs bounded Windows gates without caching JS build products', async () =>
   ).json()) as {
     globalPassThroughEnv: string[]
     tasks: Record<
-      'test' | 'build',
+      'test' | 'build' | 'lint' | 'check-types',
       { passThroughEnv: string[]; outputs: string[] }
     >
   }
   expect(turbo.globalPassThroughEnv).toEqual(['PATHEXT'])
   expect(turbo.tasks.test.passThroughEnv).toEqual(['CARGO_TARGET_DIR'])
   expect(turbo.tasks.build.passThroughEnv).toEqual(['CARGO_TARGET_DIR'])
+  expect(turbo.tasks.lint.passThroughEnv).toEqual(['CARGO_TARGET_DIR'])
+  expect(turbo.tasks['check-types'].passThroughEnv).toEqual([
+    'CARGO_TARGET_DIR',
+  ])
   expect(turbo.tasks.build.outputs).toEqual(['dist/**/*', '.generated/**/*'])
   const job = workflow.jobs.quality
   expect(job.name).toBe('Windows quality gates')
@@ -112,6 +116,17 @@ test('runs bounded Windows gates without caching JS build products', async () =>
   for (const step of job.steps.filter(item => item.with?.path)) {
     expect(step.with?.path).not.toMatch(/node_modules|\.turbo|\bdist\b/)
   }
+  const rawWorkflow = await Bun.file(
+    new URL('../.github/workflows/windows-quality.yml', import.meta.url)
+  ).text()
+  expect(rawWorkflow).toContain(
+    "hashFiles('Cargo.lock', 'apps/desktop/src-tauri/Cargo.lock')"
+  )
+  const rawTurbo = (await Bun.file(
+    new URL('../turbo.json', import.meta.url)
+  ).json()) as { tasks: Record<string, { cache?: boolean }> }
+  expect(rawTurbo['tasks']['@flowtools/runtime#build'].cache).toBe(false)
+  expect(rawTurbo['tasks']['@flowtools/runtime-core#build'].cache).toBe(false)
   const entry = await Bun.file(
     new URL('./check-ci.ps1', import.meta.url)
   ).text()

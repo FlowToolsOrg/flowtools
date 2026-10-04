@@ -410,3 +410,12 @@ G0 已在 2026-10-04 收口；完整根门禁、实际 production artifacts 与�
 P1.2a 已实施单一生命周期与每插件锁，见 [G2 验收](./validation/g2-runtime.md)。
 
 P1.2b 已实施命令投影、代际租约、在途排空及协作资源 ownership；保持 T1/prototype 范围。
+
+### G2 P1.3a progress (2026-10-04)
+
+P1.2a/P1.2b and P1.3a are implemented and independently validated. The four
+headless modules now exist for fixed T1 / Windows validation profiles; Unix,
+production cold start, user DB ownership and durable recovery remain future
+stages. Native GUI and Node CLI fixture query the same actual Base64 task.
+[G2 evidence](./validation/g2-runtime.md) records native identity/profile and
+residual boundaries. P1.5a remains pending.

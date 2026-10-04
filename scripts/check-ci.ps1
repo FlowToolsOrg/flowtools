@@ -26,14 +26,14 @@ try {
   Invoke-QualityCommand 'Generate host routes and Rust bindings' bun @(
     'run', 'generate:hosts'
   )
-  Invoke-QualityCommand 'Lint all seven workspaces' bun @(
+  Invoke-QualityCommand 'Lint all workspaces' bun @(
     'run', 'lint', '--force'
   )
-  Invoke-QualityCommand 'Type-check all seven workspaces' bun @(
+  Invoke-QualityCommand 'Type-check all workspaces' bun @(
     'run', 'check-types', '--force'
   )
-  Invoke-QualityCommand 'Test all seven workspaces' bun @('run', 'test')
-  Invoke-QualityCommand 'Build all seven workspaces' bun @(
+  Invoke-QualityCommand 'Test all workspaces' bun @('run', 'test')
+  Invoke-QualityCommand 'Build all workspaces' bun @(
     'run', 'build', '--force'
   )
   Invoke-QualityCommand 'Production external-entrypoint artifacts' bun @(

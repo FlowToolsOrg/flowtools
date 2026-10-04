@@ -5,7 +5,9 @@
     "dist/**",
     "coverage/**",
     "src-tauri/**",
-    "src/utils/bindings.ts"
+    "src/utils/bindings.ts",
+    "packages/runtime-client/src/bindings.ts",
+    "packages/runtime-client/src/wire-schema.json"
   ],
   "tabWidth": 2,
   "useTabs": false,

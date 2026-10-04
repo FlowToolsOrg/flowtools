@@ -56,7 +56,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git/db
             ${{ env.CARGO_TARGET_DIR }}
-          key: rust-${{ runner.os }}-${{ env.RUST_TOOLCHAIN }}-${{ hashFiles('apps/desktop/src-tauri/Cargo.lock') }}
+          key: rust-${{ runner.os }}-${{ env.RUST_TOOLCHAIN }}-${{ hashFiles('Cargo.lock', 'apps/desktop/src-tauri/Cargo.lock') }}
           restore-keys: rust-${{ runner.os }}-${{ env.RUST_TOOLCHAIN }}-
 
       - name: Run all quality gates

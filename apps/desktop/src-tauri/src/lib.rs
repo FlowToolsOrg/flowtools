@@ -5,6 +5,8 @@ mod dto;
 mod error;
 mod models;
 mod repositories;
+#[cfg(all(windows, any(debug_assertions, feature = "codegen")))]
+mod validation_runtime;
 
 use app_state::AppState;
 use commands::{
@@ -17,7 +19,8 @@ use tauri_specta::{collect_commands, Builder};
 use tokio::sync::Mutex;
 
 fn command_builder<R: tauri::Runtime>() -> Builder<R> {
-    Builder::<R>::new().commands(collect_commands![
+    #[cfg(not(all(windows, any(debug_assertions, feature = "codegen"))))]
+    let builder = Builder::<R>::new().commands(collect_commands![
         get_plugins,
         get_plugin,
         add_plugin,
@@ -25,7 +28,20 @@ fn command_builder<R: tauri::Runtime>() -> Builder<R> {
         enable_plugin,
         disable_plugin,
         remove_plugin
-    ])
+    ]);
+    #[cfg(all(windows, any(debug_assertions, feature = "codegen")))]
+    let builder = Builder::<R>::new().commands(collect_commands![
+        get_plugins,
+        get_plugin,
+        add_plugin,
+        update_plugin,
+        enable_plugin,
+        disable_plugin,
+        remove_plugin,
+        validation_runtime::validation_runtime::<tauri::Wry>,
+        validation_runtime::validation_runtime_disconnect::<tauri::Wry>
+    ]);
+    builder
 }
 
 #[cfg(feature = "codegen")]
@@ -79,6 +95,15 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(log_plugin_builder.build());
+
+    #[cfg(all(windows, debug_assertions))]
+    let tauri_builder = tauri_builder
+        .manage(validation_runtime::ValidationRuntimeConnection::default())
+        .on_window_event(|window, event| {
+            if matches!(event, tauri::WindowEvent::Destroyed) {
+                validation_runtime::on_destroyed(window);
+            }
+        });
 
     #[cfg(debug_assertions)]
     let tauri_builder = tauri_builder.plugin(tauri_plugin_devtools::init());

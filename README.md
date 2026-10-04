@@ -3,6 +3,15 @@
 > An extensible, cross-platform toolbox powered by a plugin runtime.
 > Plugin Runtime for AI Age
 
+FlowTools targets knowledge workers and everyday office users. People use a
+unified React GUI; external agents call the same operations through the CLI.
+The accepted next-stage design includes an independently installable CLI,
+a lightweight headless runtime, scoped cold-start/background execution,
+versioned plugin services, and centrally managed shared binary tools such as
+FFmpeg. These are planned capabilities, not current production guarantees.
+Low-code creation, built-in AI assistants and model providers remain future
+plugins. See the [ordered implementation plan](./docs/next-milestones.md).
+
 Flow Tool is a plugin-driven utility platform focused on capability injection,
 permission gating, and a unified React UI runtime.
 

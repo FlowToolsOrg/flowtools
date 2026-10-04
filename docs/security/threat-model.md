@@ -6,7 +6,8 @@
 - 责任：Repository Maintainer 对发布阻断负责；下列 owner 是实施角色，
   尚未指定自然人的角色由 Repository Maintainer 承接，不是风险已被批准
 - 相关决策：[ADR-0001](../adr/0001-plugin-trust-boundaries.md)、
-  [ADR-0002](../adr/0002-capability-and-package-policy.md)
+  [ADR-0002](../adr/0002-capability-and-package-policy.md)、
+  [后续实施设计](../next-milestones.md)
 
 ## 资产、攻击者与边界
 
@@ -245,6 +246,64 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 - 验证：P2.3/P2.4/P2.7；未授权 opener、恶意 scheme/路径/参数、跳转与
   用户取消 fixture；拒绝时无外部应用启动。
 - 残余风险：获准打开的外部应用仍可能不安全；需要用户提示与可撤销 scope。
+
+### SEC-013 CLI 冷启动、后台任务与调用主体混淆
+
+- 入口：规划中的本地 runtime IPC、CLI bootstrap、后台 job/调度；高危，open
+- 现状：CLI 仍在自身进程调用 T1 compiled inventory；尚无无界面服务、Host-bound
+  client roles、冷启动 grants 或持久任务恢复。新增设计不会让 run flag 获得授权，
+  不声称同用户 token 可隔离同用户恶意进程。
+- 证据：[CLI runner](../../packages/cli/src/runner.ts)、
+  [CLI context](../../packages/cli/src/context.ts)、
+  [当前执行契约](../../packages/sdk/src/execution/executor.ts)
+- Owner：Runtime / CLI / Rust；Repository Maintainer 负责开放入口决策
+- 缓解：当前用户 ACL、有限 IPC、Host 会话/roles、命令与 scope 授权、epoch；
+  bootstrap 仅启动受管内核，CLI-only 显式管理初始化不加载插件；durable accepted
+  后 ACK，幂等键绑定包/hash/lock/action digest，失联按同 key 恢复；非幂等中断
+  不重放，私有 job payload 与历史分离；GUI/CLI 不建两套 grants 或业务数据。
+- 验证：P1.3/P1.4/P1.5/P2.4/P2.6/P3.1；伪造 role/ID、错协议、并发启动、
+  stale session、CLI-only 首次初始化、相同幂等键不同输入/包锁、提交 ACK 与发送
+  确认丢失、GUI 关闭与权限撤销/调度重复。
+- 残余风险：同一 OS 用户被攻陷可访问其本地接口/凭据；外部副作用不能通用回滚
+  或保证 exactly-once；未验收平台/运行方式不开放。
+
+### SEC-014 服务依赖代理越权与版本漂移
+
+- 入口：规划中的依赖 resolver、插件服务 RPC、更新/卸载；高危，open
+- 现状：当前 Registry/Loader 不提供生产依赖 DAG、不可变锁或服务委托身份；
+  插件依赖是新设计范围，未通过 fixtures，不能推断前置插件有安全共享机制。
+- 证据：[插件契约](../../packages/sdk/src/types/plugin.ts)、
+  [命令契约](../../packages/sdk/src/types/command.ts)、
+  [插件 loader](../../packages/sdk/src/registry/plugin-loader.ts)
+- Owner：SDK / Runtime / Security
+- 缓解：明确 publisher/interface/version、确定 DAG/lock、服务单 profile 单版本；
+  Host 保留 root caller/provider/parentRunId、可委托 handles、剩余预算与 epoch，
+  调用方和 provider scope 共同约束；服务排空后切版本，禁止同空间新旧双写；
+  在途 lease 与反向依赖检查，未准入第三方依赖保持 plan-only。
+- 验证：P1.6/P2.3/P2.4/P2.7；循环/冲突/假 publisher、A 借 B 读取无权文件、
+  参数注入、递归/输出洪泛、取消传递、排空失败/双写、撤销竞争与并发更新卸载
+  拒绝矩阵。
+- 残余风险：合法服务可能错误处理受托数据；用户对整条调用链的理解仍有限，
+  需明确 provider 与效果展示，不把签名或依赖安装当授权。
+
+### SEC-015 共享工具包、间接 IO 与进程恢复
+
+- 入口：规划中的工具侧载/下载、artifact/lease/GC、媒体进程；严重，open
+- 现状：当前只有 Tauri 官方能力 adapter，无集中工具包准入、共享版本仓库或
+  已验证的原生工具访问约束。FFmpeg 等工具仍属待实现目标，默认入口未开放。
+- 证据：[Desktop adapter](../../apps/desktop/src/runtime/desktop-capabilities.ts)、
+  [Rust 依赖](../../apps/desktop/src-tauri/Cargo.toml)、
+  [当前 Host 初始化](../../apps/desktop/src-tauri/src/lib.rs)
+- Owner：Runtime / Rust / Security / Release
+- 缓解：签名/hash/来源/平台/build flavor 准入、无安装脚本、typed operations、
+  scoped handles/协议/输出提交、实际平台 file/network 限制、任务私有环境和
+  进程树预算；辅助 executable/DLL 清单及受控 loader 路径；不可变 artifact、
+  journal、accepted 起生效的任务 leases、持久恢复引用、回滚根集合和 GC 宽限期。
+- 验证：P2.5/P2.8/P2.7；错误签名/篡改、路径替换/外部引用/raw argv/未知工具、
+  可写 cwd/PATH 的伪造 DLL/辅助程序、未授权网络/文件、进程后代/Host 崩溃、
+  排队/恢复任务 GC、PID 复用、并发安装与更新撤销。
+- 残余风险：合法签名工具仍可能有漏洞；参数限制与 Job Object 不构成权限沙箱，
+  支持平台须实测；磁盘/数据库不同资源的提交需要恢复日志，不保证天然原子。
 
 ## 复核与关闭规则
 

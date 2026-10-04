@@ -50,6 +50,7 @@ workflows:
 - [README](./README.md)
 - [Plugin](./docs/plugin.md)
 - [Production Roadmap](./docs/production-roadmap.md)
+- [Ordered Implementation Plan](./docs/next-milestones.md)
 - [Trust Boundaries ADR](./docs/adr/0001-plugin-trust-boundaries.md)
 - [Capability and Package Policy ADR](./docs/adr/0002-capability-and-package-policy.md)
 - [Threat Model](./docs/security/threat-model.md)
@@ -162,6 +163,26 @@ clean-worktree check. Preserve standard test/build order, strict Turbo env and
 all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
+
+### Accepted next-stage product and runtime design
+
+Follow `docs/next-milestones.md` in G0–G8 dependency order. The target audience is
+non-specialist knowledge/office users; external agents use the same command
+contracts as the GUI. Independently installable CLI, headless/background Host,
+versioned plugin services and centrally managed shared binary tools are planned,
+not implemented production controls. Low-code and built-in AI/model plugins stay
+future scope. Do not silently implement them while closing current milestones.
+
+Keep React UI and command execution in separate artifacts. Cold-start support
+is a declaration; it does not grant unattended execution or file/network/tool
+access. Overwrite, delete and send require explicit approval/grants. Runtime
+owns data, tasks and policy; Desktop/CLI clients must not create duplicate stores.
+Preserve metadata-only history; durable job payloads need separate private storage.
+Resolve service/tool dependencies to Host-generated immutable locks. Share tool
+files, never grants, environment, working directories or plugin identities.
+Do not expose arbitrary shell, executable paths, raw argv or self-managed daemons.
+Runtime/tool side-loading remains denied until package and platform gates pass.
+Keep planned module paths distinguishable from the current project structure.
 
 Use these labels consistently in manifests, catalogs, documentation, UI, and
 the production roadmap:

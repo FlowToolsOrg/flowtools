@@ -6,6 +6,11 @@
 >
 > 目标定位：可签名发布、可安全扩展、可回滚的桌面工具平台
 
+> 2026-10-04 产品决策：面向知识工作者/普通办公用户，GUI 与外部 agents
+> 共用命令；支持独立 CLI、轻量后台内核、集中管理和共享二进制工具依赖。
+> 低代码、内置 AI 助手与模型接入保留为未来插件。具体顺序与实现见
+> [下一阶段目标与实施设计](./next-milestones.md)。新增实施项均 pending。
+
 本文档是 FlowTools 从 Demo 级原型走向生产版本的执行台账。它不以
 “页面已存在”或“类型已定义”作为完成标准，而以真实执行、失败可恢复、
 权限可强制、产物可验证和发布可回滚作为完成标准。
@@ -22,6 +27,9 @@
 5. 架构或开发流程发生重大变化时，同一里程碑必须同步 `README.md`、
    `AGENTS.md`、`architecture.md`、`docs/structure.md` 和 `docs/plugin.md`。
 6. 未明确认证的 ZTools 插件只能标记为 `indexed`，不能标记为 `compatible`。
+7. 后续实施按 G0–G8 顺序推进；Phase 1/2/3 表示能力归属，不要求先完成整个
+   Phase 1 才开始其运行授权/数据前置子项。子项按自己的依赖实施，父项只有
+   全部子项与原退出标准满足时完成。不要将设计文档落库当成实施里程碑完成。
 
 ## 2. 成熟度与状态图例
 
@@ -994,6 +1002,52 @@ Phase 0 总退出标准：P0.1–P0.4 全部 `done`；仓库全绿；生产构�
 
 ## 7. Phase 1：可靠 SDK、生命周期与 CLI 内核
 
+### 后续顺序与子里程碑
+
+现有 ID 保留，新增 P1.6（服务依赖）与 P2.8（共享工具链）。原目标周期为历史
+估算；本次增加独立运行服务、数据 ownership 迁移与工具供应链后，实际周期须
+按人员和平台验证重新估算。正式实施先关闭 P0.3b/P0.3c 台账尾项，不升级成熟度。
+
+实施顺序：G1 命令契约 -> G2 生命周期/无界面内核 -> G3 授权/共享数据/CLI ->
+G4 服务依赖 -> G5 签名安装与隔离 -> G6 工具链 -> G7 办公闭环 -> G8 发布。
+对应模块、协议、错误码、数据/任务恢复和拒绝 fixtures 在
+[实施设计](./next-milestones.md) 中定义；以下全部为待交付子项。
+
+| 子 ID | 状态    | 前置                | 聚焦交付物与验收                                                                   |
+| ----- | ------- | ------------------- | ---------------------------------------------------------------------------------- |
+| P1.1a | pending | P0.3c、P0.4         | 序列化 Manifest、多操作输入/输出 Schema、冷启动/effects/依赖声明；非法包执行前拒绝 |
+| P1.1b | pending | P1.1a               | UI/commands 分包、十二插件兼容适配；无 React/GUI/source 消费实际命令               |
+| P1.1c | pending | P1.1b               | describe/commands/flags 同源生成；编译 CLI 的机器发现与拒绝回归                    |
+| P1.2a | pending | P1.1                | 单一状态机、锁和 hook 补偿；100 并发操作不重复激活                                 |
+| P1.2b | pending | P1.2a               | 命令状态投影、进程/视图资源 ownership；更新/卸载无孤儿 handler                     |
+| P1.3a | pending | P1.2                | Runtime core/binary、用户级 IPC、T1 临时 profile 与 job 协议；不接用户数据/第三方  |
+| P1.5a | pending | P1.3a               | versioned DTO、拒绝码、脱敏事件与兼容/失联诊断                                     |
+| P2.3a | pending | P1.3a、P1.5a        | 基础 typed broker，先 T1；同一身份/operation/scope 决策，拒绝无副作用              |
+| P2.6a | pending | P2.3a               | 移除 Debug reset、迁移/备份、Runtime 单写者与异步 data/revision；保留旧数据        |
+| P2.4a | pending | P2.3a、P2.6a        | CLI-only init/策略管理、持久 grants、冷启动/后台/effects、撤销 epoch；无默认放行   |
+| P1.3b | pending | P2.4a、P2.6a        | 实际执行、durable receipt/同 key 恢复、幂等/取消；未知状态不重试非幂等副作用       |
+| P1.4a | pending | P1.3b               | CLI-only runtime/runner 分发、受控冷启动；未安装 GUI、50 并发启动验收              |
+| P1.4b | pending | P1.4a               | GUI/CLI 同任务和数据，jobs status/watch/cancel、完整 text/JSON/退出码回归          |
+| P1.5b | pending | P1.4b               | run/调用链诊断与隐私红线；实际异常/撤销/恢复可诊断                                 |
+| P1.6a | pending | P1.1、P1.3b         | T1/fixture 的 plan-only DAG/lock、服务接口和工具声明；缺失/冲突/循环拒绝           |
+| P1.6b | pending | P1.6a、P2.4a        | Host RPC/委托 scope、排空后切服务版本、租约/反向依赖；前置服务不能代理越权         |
+| P2.5a | pending | P1.6                | plugin/tool 签名、trust root、撤销/离线/回滚协议及 fixtures；冻结后方能实现准入    |
+| P2.5b | pending | P2.5a、P2.3a        | staging/journal、签名准入、artifact 安装与恢复；安装不等于允许执行                 |
+| P2.3b | pending | P2.1、P2.2、P2.3a   | 将验证后 T2/T3/TL 会话接入真实 broker；直接 API/IPC 越权拒绝                       |
+| P2.4b | pending | P2.3b、P2.4a        | 第三方授权 UI、更新差异、冷启动/调度拒绝与活跃撤销                                 |
+| P2.6b | pending | P2.3b、P2.6a        | 第三方 namespace、升级/卸载、导入导出和恢复；跨插件读写拒绝                        |
+| P2.8a | pending | P2.5、P1.6          | 工具包目录/侧载准入、多版本只读共享、locks/leases/journal                          |
+| P2.8b | pending | P2.8a、P2.2、P2.3b  | FFmpeg typed adapter、实际平台访问约束、进程树/预算/取消                           |
+| P2.8c | pending | P2.8b、P2.4b、P2.6b | 两插件共享、原子更新指针、回滚/撤销、lease-aware GC 与崩溃恢复                     |
+| P3.1a | pending | P1.4、P2.3          | 托盘/热键/单实例、轻量驻留与可选自启动；GUI 不决定内核存活                         |
+| P3.1b | pending | P3.1a、P1.3b、P2.4  | Host 调度/通知、时区/休眠/重复策略；授权到期或撤销不执行                           |
+| P3.4a | pending | P2.7、P3.1、P3.2    | 文件/媒体/日程三闭环与实际 UI/CLI E2E，发布成熟度仍按范围证据                      |
+| P3.4b | pending | P3.4a、P3.3         | 扩大插件认证与 Legacy 迁移，每项平台/API/资源矩阵实际通过                          |
+
+P1.1/1.2/1.3/1.4/1.5、P2.3/2.4/2.5/2.6、P3.1/3.4 父项分别由上述同前缀
+子项和原验收共同收口。P2.1/P2.2 的平台验证先并行评估，生产执行在 G5 全部
+相关 gate 完成前继续拒绝；不将受管 T1 runner 或工具签名当作 T3 sandbox。
+
 目标周期：第 3–6 周。
 
 阶段目标：形成三端共用、可验证且失败可恢复的插件执行内核。
@@ -1063,8 +1117,9 @@ bun run check-types
 交付物：
 
 - Web、Desktop 和 CLI 共用一个与宿主无关的 execution contract。
-- 每次运行生成 `runId`，记录插件版本、validated input、deadline、取消原因、
-  结构化结果和稳定错误码。
+- 每次运行生成 `runId`，输入在内存校验；历史仅记录安全形状摘要、插件版本、
+  deadline、取消原因和稳定状态。实际结果即时返回；可恢复 job payload 进入
+  独立受控 workspace，不能将输入/输出正文或异常 message 写入普通历史。
 - Host capability 通过 adapter 注入，但 permission decision 使用统一策略接口。
 - 执行历史使用同一 envelope，禁止 host 自行制造伪结果。
 
@@ -1141,8 +1196,26 @@ bun run smoke:plugins
 - 日志红线测试证明 secret 和原始敏感内容不会泄漏。
 - 用户可导出诊断摘要而不导出插件私有数据。
 
-Phase 1 总退出标准：P1.1–P1.5 全部 `done`；三端真实执行契约一致；Lifecycle
-测试覆盖所有迁移；CLI 从构建产物稳定运行；达到 `M2 Internal Alpha` 内核标准。
+Phase 1 内核退出标准：P1.1–P1.5 全部 `done`；三端真实执行契约一致；Lifecycle
+测试覆盖所有迁移；CLI 独立于 GUI 稳定运行，授权与数据前置子项通过；达到
+`M2 Internal Alpha` 的 T1 内核标准，仍不开放未认证第三方代码。
+
+### P1.6 插件依赖锁与服务调用
+
+- 状态：`pending`
+- Owner：SDK / Runtime；Repository Maintainer 指定实施责任人
+- 依赖：P1.1、P1.3b、P2.4a
+- 子项：P1.6a、P1.6b；对应 G4
+- 交付：区分构建代码、运行服务与工具依赖；服务单 profile 单版本、工具多版本；
+  Host 生成确定 lock、DAG/版本冲突检查、反向依赖和版本租约；服务经 Host RPC，
+  root caller/parentRunId/委托 scope 不丢失，前置插件不得扩大调用者授权。
+- 验证：新增 `test:dependencies` 作为本项交付，实际 A -> B -> C 的正常调用、
+  缺失/循环/冲突/平台不符、越权、取消继承与并发卸载 fixtures；根标准门禁。
+- 退出：T1/fixtures 的 plan-only 解析与激活通过，不下载/安装未准入第三方；
+  服务先排空后切版本，不允许新旧双写；旧锁保留供恢复，工具任务保持旧 lease；
+  provider 错误与资源泄漏可诊断。跨包安装事务由 P2.5 签名准入后另行验收。
+
+Phase 1 总收口要求以上内核退出标准与 P1.6 全部通过，才能推进 G5 的第三方包。
 
 ## 8. Phase 2：隔离、权限、供应链与数据安全
 
@@ -1330,7 +1403,7 @@ bun run test:data-isolation
 
 - 状态：`pending`
 - 负责人：`TBD (Security / Build)`
-- 依赖：P2.1–P2.6
+- 依赖：P2.1–P2.6、P2.8
 
 交付物：
 
@@ -1354,8 +1427,28 @@ bun run build
 - production 配置中不存在空 CSP、插件宽泛 default capability 或未签名安装。
 - 安全 gate 在 PR 和 release 分支均不可跳过。
 
-Phase 2 总退出标准：P2.1–P2.7 全部 `done`；第三方代码默认拒绝且可强制
-终止；权限在 Rust 边界执行；包和数据可校验、迁移与回滚。
+### P2.8 共享二进制工具链（Phase 2 新增）
+
+- 状态：`pending`
+- Owner：Runtime / Rust / Security；Repository Maintainer 指定实施责任人
+- 依赖：P1.6、P2.2、P2.3、P2.4、P2.5、P2.6
+- 子项：P2.8a、P2.8b、P2.8c；对应 G6
+- 交付：工具包的 publisher/version/target/build flavor/hash/来源/许可证准入；
+  集中只读 artifact、多版本共享、leases、安装 journal、typed 媒体操作与平台
+  进程树/文件/网络/预算约束；版本切换、撤销、回滚和根集合 GC。
+- 验证：新增 `test:toolchain` 作为本项交付；两个真实媒体插件共享 FFmpeg，
+  篡改/不兼容/raw argv/额外文件与网络、cwd/PATH 伪造 DLL/辅助程序、并发安装、
+  超时/后代、更新/撤销/GC/崩溃恢复 fixtures；实际媒体结果可播放，根门禁与人工验收。
+- 退出：共享文件不共享授权；侧载走正常准入；取消无孤儿进程；更新不覆写活跃
+  版本，排队与可恢复任务也持有 lease；未通过访问隔离的平台拒绝执行。
+  Job Object/签名/参数限制不单独证明 sandbox。
+
+P2.7 的新增运行范围包含 P1.6/P2.8：共享工具与服务委托拒绝矩阵通过后，才可
+关闭对应威胁项。
+
+Phase 2 总退出标准：P2.1–P2.8 全部 `done`；第三方代码默认拒绝且可强制
+终止；权限在 Rust 边界执行；包和数据可校验、迁移与回滚；包括授权/数据
+基础子项和共享工具链，不因旧总清单仅到 P2.7 而漏检新增执行范围。
 
 ## 9. Phase 3：产品闭环、生态认证与公开 Beta
 
@@ -1367,7 +1460,7 @@ Phase 2 总退出标准：P2.1–P2.7 全部 `done`；第三方代码默认拒�
 
 - 状态：`pending`
 - 负责人：`TBD (Desktop)`
-- 依赖：P0.1、P2.3
+- 依赖：P0.1、P1.4、P2.3、P2.4
 
 交付物：
 
@@ -1375,6 +1468,8 @@ Phase 2 总退出标准：P2.1–P2.7 全部 `done`；第三方代码默认拒�
 - 实现全局热键、托盘、单实例、窗口恢复、多屏定位和可选开机启动。
 - 热键冲突、权限拒绝和插件崩溃不阻塞主窗口恢复。
 - 设置真正持久化，并支持重置和导出诊断。
+- P3.1a/1b 分别交付后台宿主/桌面入口与授权调度/提醒；GUI 关闭不阻断已接受
+  job，时区、休眠恢复、重复通知与撤销后的调度明确验证。
 
 验证：
 
@@ -1454,6 +1549,8 @@ bun run --cwd apps/desktop build
 交付物：
 
 - 按价值和风险选择首批不超过 20 个插件，避免一次兼容 125 个。
+- P3.4a 先完成文件整理、共享 FFmpeg 媒体处理、本地日程三条办公闭环；
+  P3.4b 在真实市场后扩大认证。优先 React 迁移，Legacy 仅逐项认证，数量不替代质量。
 - 每个插件有 owner、Manifest、权限审查、fixture、性能预算和兼容等级。
 - Bridge API 逐项认证语义；silent no-op 必须改为明确 unsupported error。
 - 无法安全映射的 Legacy 插件重写为 T1/T2/T3 插件或保持不兼容。
@@ -1567,12 +1664,17 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 
 ## 10. v1 显式非目标
 
+本轮明确纳入独立 CLI、无界面后台内核、服务依赖与受管侧载工具包；
+共享文件、Host 服务租约与用户授权按 ADR 和实施设计落地，不开放任意系统执行。
+
 - 不允许任意第三方 React/TSX 在主窗口 JavaScript realm 执行。
 - 不开放通用 native invoke、raw SQL、任意路径 FS 或无域名策略的网络能力。
 - 不在验证前宣称兼容全部 ZTools 插件。
 - 不在 Desktop 安全内核稳定前追求 Web/Desktop 全能力一致。
 - 不在真实安装、签名、升级和回滚完成前扩展开放市场。
 - 不用更多 Demo 插件数量代替核心运行时、权限和发布质量。
+- 不实现低代码编辑器、内置 agent、云同步或远程服务器；保留正常插件扩展契约。
+- 不开放任意 shell/executable path/raw argv、未经准入工具或插件自建常驻进程。
 
 ## 11. 进度台账
 
@@ -1623,37 +1725,39 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 
 ### Phase 1
 
-| ID   | 状态    | 负责人 | 依赖       | Commit / 验证记录 |
-| ---- | ------- | ------ | ---------- | ----------------- |
-| P1.1 | pending | TBD    | P0.1, P0.4 | -                 |
-| P1.2 | pending | TBD    | P1.1       | -                 |
-| P1.3 | pending | TBD    | P1.2       | -                 |
-| P1.4 | pending | TBD    | P1.1, P1.3 | -                 |
-| P1.5 | pending | TBD    | P1.3       | -                 |
+| ID   | 状态    | 负责人        | 依赖               | Commit / 验证记录               |
+| ---- | ------- | ------------- | ------------------ | ------------------------------- |
+| P1.1 | pending | TBD           | P0.1, P0.4         | -                               |
+| P1.2 | pending | TBD           | P1.1               | -                               |
+| P1.3 | pending | TBD           | P1.2               | -                               |
+| P1.4 | pending | TBD           | P1.1, P1.3         | -                               |
+| P1.5 | pending | TBD           | P1.3               | -                               |
+| P1.6 | pending | SDK / Runtime | P1.1、P1.3b、P2.4a | G4 设计完成；实施与验证 pending |
 
 ### Phase 2
 
-| ID   | 状态    | 负责人 | 依赖       | Commit / 验证记录 |
-| ---- | ------- | ------ | ---------- | ----------------- |
-| P2.1 | pending | TBD    | P1.1, P1.2 | -                 |
-| P2.2 | pending | TBD    | P1.3, P1.5 | -                 |
-| P2.3 | pending | TBD    | P2.1, P2.2 | -                 |
-| P2.4 | pending | TBD    | P2.3       | -                 |
-| P2.5 | pending | TBD    | P1.1, P2.3 | -                 |
-| P2.6 | pending | TBD    | P1.2, P2.3 | -                 |
-| P2.7 | pending | TBD    | P2.1-P2.6  | -                 |
+| ID   | 状态    | 负责人                    | 依赖            | Commit / 验证记录               |
+| ---- | ------- | ------------------------- | --------------- | ------------------------------- |
+| P2.1 | pending | TBD                       | P1.1, P1.2      | -                               |
+| P2.2 | pending | TBD                       | P1.3, P1.5      | -                               |
+| P2.3 | pending | TBD                       | P2.1, P2.2      | -                               |
+| P2.4 | pending | TBD                       | P2.3            | -                               |
+| P2.5 | pending | TBD                       | P1.1, P2.3      | -                               |
+| P2.6 | pending | TBD                       | P1.2, P2.3      | -                               |
+| P2.7 | pending | TBD                       | P2.1-P2.6、P2.8 | -                               |
+| P2.8 | pending | Runtime / Rust / Security | P1.6、P2.2-P2.6 | G6 设计完成；实施与验证 pending |
 
 ### Phase 3
 
-| ID   | 状态    | 负责人 | 依赖             | Commit / 验证记录 |
-| ---- | ------- | ------ | ---------------- | ----------------- |
-| P3.1 | pending | TBD    | P0.1, P2.3       | -                 |
-| P3.2 | pending | TBD    | P1.2, P3.1       | -                 |
-| P3.3 | pending | TBD    | P2.4, P2.5, P2.6 | -                 |
-| P3.4 | pending | TBD    | P2.7, P3.3       | -                 |
-| P3.5 | pending | TBD    | P2.5, P2.7, P3.1 | -                 |
-| P3.6 | pending | TBD    | P1.5, P2.7       | -                 |
-| P3.7 | pending | TBD    | P3.1-P3.6        | -                 |
+| ID   | 状态    | 负责人 | 依赖                   | Commit / 验证记录 |
+| ---- | ------- | ------ | ---------------------- | ----------------- |
+| P3.1 | pending | TBD    | P0.1、P1.4、P2.3、P2.4 | -                 |
+| P3.2 | pending | TBD    | P1.2, P3.1             | -                 |
+| P3.3 | pending | TBD    | P2.4, P2.5, P2.6       | -                 |
+| P3.4 | pending | TBD    | P2.7, P3.3             | -                 |
+| P3.5 | pending | TBD    | P2.5, P2.7, P3.1       | -                 |
+| P3.6 | pending | TBD    | P1.5, P2.7             | -                 |
+| P3.7 | pending | TBD    | P3.1-P3.6              | -                 |
 
 ## 12. 里程碑记录模板
 

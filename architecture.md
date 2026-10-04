@@ -8,6 +8,16 @@ Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平�
 - 生产目标：按信任等级隔离执行，Rust broker 强制验证身份、grant 与 scope
 - 插件形态：`app`（长期 UI）与 `tool`（即时执行）
 
+### 2026-10-04 下一阶段设计
+
+产品服务知识工作者和普通办公用户，GUI 与外部 agent CLI 共用命令、授权、数据
+和任务。目标结构是独立 `flowtools-runtime` + GUI/CLI clients；无界面内核不依赖
+Tauri WebView。React 是主要 UI 开发方式，执行入口单独构建；服务依赖由 Host
+RPC 路由，二进制工具由共享 artifact store 与受管任务进程执行。
+冷启动声明不等于授权，覆盖/删除/发送需明确 grant。低代码和内置 AI 助手保留
+为未来插件。模块、协议、数据迁移和 G0–G8 顺序见
+[下一阶段实施设计](./docs/next-milestones.md)。以下当前状态与历史记录不因此升级。
+
 > 关键词：Capability Injection / Plugin Runtime / Permission Gating / Namespacing / Single React Tree
 
 ## 1. Reality Check（当前实现状态）

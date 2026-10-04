@@ -1,6 +1,7 @@
 # ADR-0001：插件信任边界与执行位置
 
 - 日期：2026-10-03
+- 范围修订：2026-10-04；独立 CLI、后台内核、共享受管工具按维护者确认纳入目标
 - 状态：accepted-design；实现未完成，不能作为生产安全认证
 - 决策责任：Repository Maintainer；Desktop / Runtime / Security 模块负责人
 - 路线图：P0.4a；实现由 P1.1、P2.1、P2.2、P2.3、P2.7 验收
@@ -39,6 +40,27 @@ Tauri capability 约束的是 window/webview，而非 React 组件。多个 capa
 的权限会合并；自定义应用 commands 默认可被应用窗口/webview 调用，需要
 显式命令 permission 配置及 broker 内的身份与 scope 检查。
 [Tauri 官方 capability 文档](https://v2.tauri.app/security/capabilities/)
+
+### 无界面内核、冷启动与工具包
+
+目标 `flowtools-runtime` 是不依赖 Tauri WebView 的 T0 服务；GUI 与独立 CLI
+共用其 broker、插件状态、任务和数据。服务可按用户策略冷启动或轻量后台驻留，
+T1/T2/T3 插件默认按需启动。关闭 GUI、插件后台执行、开机自启与调度授权分别
+处理；supportsColdStart/headless 是适配声明，不是 user grant。
+
+CLI-only 安装需包含受管 runtime/runner，不能要求 Desktop 运行。Windows
+named pipe 使用当前用户 ACL；同用户会话凭据只解决协议身份、防误连和授权路由，
+不声称能抵御已控制同一 OS 用户的程序。不能相信 payload 的 agentId/role。
+
+允许插件声明、侧载或下载受管工具包，例如 FFmpeg；T0 负责签名/来源/平台准入、
+共享只读版本文件、启动和回收。工具通过 typed operation 使用，不接受任意
+executable path/raw argv/shell；共享文件不共享 grants、环境或数据。工具与插件
+都不因签名变成 T1；任意新工具需要 adapter 与平台访问约束验收。
+
+原生工具运行器须独立于 GUI 生命周期，限制进程树、资源、文件与网络访问。
+普通 subprocess/Job Object 不构成完整权限沙箱。未验证平台仍拒绝执行。
+受管服务依赖由 Host 启停，不允许插件自行 daemonize。
+完整目标顺序、模块和验收见 [下一阶段实施设计](../next-milestones.md)。
 
 ## 身份与数据流
 
@@ -87,7 +109,9 @@ broker 不接受调用方指定目标插件 namespace。会话销毁、停用、
   或主窗口 URL 校验识别插件调用者。
 - 拒绝“签名插件等同 T1”：被攻陷发布者与恶意签名代码仍是不可信的。
 - v1 不支持插件携带任意 native binary、shell、Node/Electron 私有 API 或
-  后台常驻服务；不承诺兼容目录中的全部 125 个 HTML 插件。
+  自行启动后台常驻服务。下一阶段支持集中准入的工具包和 Host 管理的后台内核/
+  服务租约；在对应签名、broker、平台与恢复 gate 前保持拒绝，不向插件开放
+  任意 native library 或未验证 binary；不承诺兼容目录中的全部 125 个 HTML 插件。
 - 不承诺抵抗已控制 OS/管理员/Host Rust 的攻击者或 WebView 零日；但禁止
   把这些残余风险当作扩大 capability 的理由。
 
@@ -100,5 +124,9 @@ broker 不接受调用方指定目标插件 namespace。会话销毁、停用、
 - P2.3/P2.7：每个声明的平台测试直接绕过 SDK、未授权 command、capability
   合并、导航后会话失效和撤销竞争。无证据的平台不能进入支持矩阵。
 - 人工验收：主机仍可停用/恢复失控插件；插件不能伪装宿主授权弹窗。
+- P1.3/P1.4/P2.4：GUI 未安装/关闭时 CLI 可按 grant 冷启动，bootstrap 不能
+  授权操作；伪造 agent/role、50 次并发启动、重放写请求与旧会话全部受控。
+- P1.6/P2.8：跨插件服务不提升调用者权限；共享工具不继承其他插件 grants；
+  撤销、超时、进程后代、更新/卸载与 Host 崩溃无越权或孤儿资源。
 
 本 ADR 的验收是设计和源码证据审阅；以上攻击 fixture 尚待对应里程碑实现。

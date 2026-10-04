@@ -3,6 +3,17 @@
 本文面向 Flow Tool 开发者，目标是帮助你在当前仓库里快速开发并调试自己的
 plugin。
 
+### 下一阶段插件契约（设计，未实现）
+
+维护者已确定 React 为主要插件开发方式，每项业务能力通过同一命令契约供
+GUI 与外部 agents 调用。目标包分离 commands、可选 React UI 与服务入口；
+Manifest v1 声明输入/输出 Schema、效果、headless/冷启动支持、资源预算、
+服务和工具依赖。代码库随包构建，服务通过 Host RPC，FFmpeg 等工具由宿主
+集中准入和共享版本文件；共享依赖不共享授权。覆盖/删除/发送需明确授权。
+低代码创建以后也生成正常插件包，当前只作为未来展望。
+详细顺序与拟新增 API 见 [实施设计](./next-milestones.md)；本指南后文仍描述
+当前 API，不能把设计字段当作现有 SDK 支持或第三方执行许可。
+
 > 当前阶段说明：Flow Tool 的产品方向是 desktop-first（Tauri）。
 > `apps/web-vite` 仍用于验证 SDK/registry/runtime，`apps/desktop` 已提供
 > 启动器、TanStack Router 路由、React/SDK 插件面板、HTML `main` 启动容器和 Tauri
@@ -20,6 +31,9 @@ plugin。
 
 Catalog 索引、API 名称或构建成功不代表兼容认证；v1 不宣称兼容全部 125 个
 HTML 插件，也不提供任意 shell/native binary 或 Node/Electron 私有 API。
+
+下一阶段允许签名准入、宿主集中管理的二进制工具依赖与后台内核；仍禁止任意
+shell、未经准入 executable path 和插件自建常驻进程。新能力验收前维持当前拒绝。
 
 P0.3b1 的普通 SDK `PluginFileLoader` 一律抛 `EXTERNAL_CODE_DISABLED`，不读取
 源码、不注册外部对象；普通 SDK 不再导出 transpile/setupImportMap 等注入工具。

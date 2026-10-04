@@ -1,5 +1,15 @@
 # Flow Tools 架构设计规范
 
+## 下一阶段拟新增结构
+
+[下一阶段实施设计](./next-milestones.md) 定义 G0–G8 的顺序与验收。
+拟新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`
+（无界面运行服务）、`packages/runtime-client`（生成 DTO 的 TS 客户端）和
+`packages/plugin-runner`（受管执行入口）。这些目录当前尚未交付。
+SDK 拟增加命令/Manifest、服务依赖和异步 data 契约；Rust core 管理 broker、
+单写者数据、任务、依赖锁、工具 artifact/lease/GC；Desktop 和 CLI 使用同一服务。
+普通受管 T1 runner 不是 T3 sandbox，Web 原型不自动连接本机服务。
+
 ## 安全设计来源与实现边界
 
 - `docs/adr/0001-plugin-trust-boundaries.md`：T0/T1/T2/T3/TL 执行位置、身份
@@ -88,7 +98,7 @@
   `src-tauri/tests/bindings.rs` 用真实 Tauri MockRuntime 验证入口 URL，不启动宿主；
   URL 回归不替代独立包实窗验收。
 
-- `scripts/docs-check.ts` / `docs-check.test.ts`：十份核心/ADR/威胁/PR 文档的
+- `scripts/docs-check.ts` / `docs-check.test.ts`：十一份核心/设计/ADR/威胁/PR 文档的
   只读契约，内联本地链接路径与风险字段验证；脚本由 Desktop 测试任务消费。
   不检查远端 URL、Markdown anchor、运行时安全或 reviewer 批准。
 - `.github/pull_request_template.md`：安全边界变更的 threat/ADR、scope、拒绝

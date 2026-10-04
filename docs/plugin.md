@@ -32,7 +32,11 @@ P0.3b2 CLI 只执行构建内嵌清单中的内置 compiled artifact，运行时
 任意路径、直接 TSX 与 headless rewrite 不再支持。更新内置 metadata 后运行
 `bun run generate:manifests`，随后 `bun run build:packages`；list/info/run/help
 缺编译产物会失败，不回退源码。这是 T1 构建一致性，不是包签名或 sandbox。
-Desktop 入口仍待 P0.3b3；不得把 SDK/Web/CLI gate 解释为全宿主已关闭。
+P0.3b3 Desktop 默认也拒绝 HTML/Legacy，普通 bridge API 一律拒绝；危险 runner
+仅在 DEV + 精确 opt-in 下动态导入。开发 bridge 也不能调用 raw invoke、SQL、
+任意 FS 或 opener；失败不直接打开远程 src。根 gate、实际生产产物与前端
+拒绝已通过；独立 r3 包的实际 Base64 与 HTML 默认拒绝人工清单已通过，
+运行路径/身份另行核实。不能解释为已完成签名/隔离或独立安全验收。
 
 ## 1. 先理解插件模型
 
@@ -185,18 +189,22 @@ bun run inspect:html-plugins
 
 扫描器会区分源码 checkout 和可运行静态入口：如果 `main` 指向的 HTML 仍然引用
 `/src/main.ts`、`/main.tsx` 等 Vite 源码入口，目录会把该静态入口标记为不可用。
-Desktop runner 会改用 `development.main`；如果开发服务器没有启动，需要先在对应
-HTML 插件目录执行构建或启动 dev server。
+当前 portable catalog 不发布 development URL，不自动回退源码态服务。受控
+开发预览须指定 VITE_HTML_PLUGIN_ROOT 并提供已构建的静态入口；该路径不是授权。
 
 Desktop 端使用 TanStack Router 承载启动器、设置、插件、权限和命令运行页。
 React/SDK 插件和 HTML 目录中的命令都会进入 `/run/$commandId`，内置设置类命令会进入对应页面。
-React/SDK app 插件会直接渲染 panel；如果 HTML 插件声明了 `main`，该路由会启动 iframe 运行容器；没有 UI 入口的命令才进入 headless 执行状态视图。
+React/SDK app 插件会直接渲染 panel；HTML/Legacy 默认显示 EXTERNAL_CODE_DISABLED，
+仅显式 DEV opt-in 启动危险预览 iframe，不因安装/启用 metadata 或 main 声明放行。
 
-Desktop runner 会在 iframe 里预注入旧版宿主 API。常用旧 API 会通过
-`postMessage` 回到 desktop host，再走 SDK runtime context；实际原生能力由
-`@tauri-apps/plugin-fs`、`plugin-dialog`、`plugin-clipboard-manager`、
-`plugin-notification`、`plugin-sql`、`plugin-store`、`plugin-opener` 等官方
-Tauri 插件提供。
+显式开发 runner 会在 iframe 里预注入有限旧版宿主 API。UI、clipboard、dialog、
+notification 经开发 bridge 的固定方法列表调用，身份 context 来自 Host command。
+raw native/SQL/FS/opener 方法仍禁用；不是独立 session、用户 grant 或 sandbox。
+有限旧 API 会通过
+`postMessage` 回到 desktop host，再走 SDK runtime context。宿主的 T1 内置
+插件 adapter 另外使用官方 `plugin-fs`、`plugin-dialog`、
+`plugin-clipboard-manager`、`plugin-notification`、`plugin-sql`、
+`plugin-store`、`plugin-opener`；安装这些依赖不向 Legacy bridge 开放对应 API。
 
 Desktop host 的插件元数据正在迁移到 Rust + SQLite。后端记录与前端 manifest
 保持同一批核心字段：`id`、`name`、`version`、`description`、`author`、

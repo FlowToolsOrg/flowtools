@@ -65,10 +65,12 @@ broker 不接受调用方指定目标插件 namespace。会话销毁、停用、
   执行文件代码，没有按信任等级分流。P0.3b1 普通 SDK 文件服务现已拒绝所有
   外部执行；危险代码移至显式 DEV + opt-in 的 development 子入口，Web 生产
   不加载且不恢复已保存源码。该停用策略符合本 ADR 的 production denial 方向，
-  不代表 T2/T3/TL 隔离或包准入已经实现；Desktop 入口收口仍待后续里程碑。
-- Desktop TL 使用主窗口内 iframe、`allow-same-origin + allow-scripts` 与
-  `srcDoc` 注入；仅检查 message source 与宽松 envelope，没有完整 origin、
-  session nonce、版本或 grant 检查。
+  不代表 T2/T3/TL 隔离或包准入已经实现；Desktop 默认拒绝已由 P0.3b3 收口。
+- P0.3b3 Desktop TL 默认禁用，仅显式 DEV + opt-in 动态加载主窗口内 iframe、
+  `allow-same-origin + allow-scripts` 与 `srcDoc`。普通 bridge 拒绝，开发也移除
+  raw native/SQL/FS/opener；但仍只检查 message source 与宽松 envelope，没有
+  完整 origin、session nonce、版本或 grant，不能称作隔离。独立 r3 功能/
+  拒绝实窗清单已回报通过，运行路径与身份已核实；不是安全审批。
 - P0.3b2 CLI 仅 import Host 构建内嵌清单中的内置 compiled artifact，删除直接
   源码/headless fallback，缺失/破损/路径重定向明确拒绝；仍在自身进程运行。
   这不是签名供应链验证或 TOCTOU 防护，T3 restricted runner 不存在，

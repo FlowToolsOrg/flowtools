@@ -51,7 +51,9 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
   所有模式不自动恢复旧 IndexedDB 源码、不静默删除数据。拒绝 API 与构建模式
   回归见 SDK/Web external-code-gate tests。P0.3b2 CLI 现只加载 Host 构建内嵌清单
   对应的固定编译文件：未知 ID/路径在 IO 前拒绝，缺失/破损不回退源码，删除
-  headless rewrite；junction 与 metadata 不一致拒绝。Desktop 仍待后继入口 gate。
+  headless rewrite；junction 与 metadata 不一致拒绝。P0.3b3 Desktop 已在 activation、
+  fetch、iframe 前默认拒绝，危险实现仅 DEV + opt-in 动态加载；独立 r3 包
+  功能/拒绝人工验收已回报通过，运行路径/身份已核实，不认证隔离或用户授权。
   开发预览仍能访问 Host realm，内置加载器属于可信 Host API；签名/隔离/broker
   未实现，本项保持 open，不把此停用策略称作生产 sandbox。
 - 证据：[文件加载器](../../packages/sdk/src/services/plugin-file-loader.ts)、
@@ -73,7 +75,14 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 - 现状：runner 校验 source/envelope，但没有完整 origin/session/nonce schema；
   双向目标为 `*`；native adapter 转发 command 字符串。build.rs 未配置
   AppManifest command permission allowlist。
+  P0.3b3 普通 HTML bridge 一律拒绝；有限开发 bridge 在 Host DEV + opt-in 下开放，
+  raw native/SQL/FS/opener 均在 payload 读取前禁用。Host context 来自 command 而
+  非请求身份，但开发 iframe 仍同 realm、无真正 session/grant，T1 adapter
+  仍有 raw native/SQL，风险不关闭。
 - 证据：[HTML bridge](../../apps/desktop/src/runtime/html-plugin-bridge.ts)、
+  [开发 bridge](../../apps/desktop/src/runtime/development-html-plugin-bridge.ts)、
+  [入口回归](../../apps/desktop/test/html-plugin-bridge-gate.test.ts)、
+  [构建矩阵](../../apps/desktop/test/html-development-matrix.test.ts)、
   [runner](../../apps/desktop/src/App.tsx)、
   [native adapter](../../apps/desktop/src/runtime/desktop-capabilities.ts)、
   [Tauri build](../../apps/desktop/src-tauri/build.rs)

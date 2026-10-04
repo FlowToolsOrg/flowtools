@@ -30,7 +30,7 @@ Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平�
   - `apps/web`
 
 结论：架构方向是 desktop-first，当前 web 原型已具备注册中心、命令面板、生命周期管理、错误隔离等核心机制。
-CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用插件。HTML 插件兼容层已完成插件元数据与命令入口归一化，并在 desktop 端提供 React/SDK panel 渲染、HTML `main` iframe 启动容器、旧版宿主 API bridge，以及基于 SDK capability contract 的 Tauri 官方插件适配。
+CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用内置插件。HTML 插件兼容层已完成插件元数据与命令入口归一化；Desktop 默认拒绝 HTML/Legacy 执行，iframe 与有限旧版 API bridge 仅用于显式危险开发预览。React/SDK 内置 panel 与其 Tauri capability adapter 不受该外部入口停用影响。
 
 ### 当前自动化验证边界
 
@@ -62,7 +62,8 @@ import-map 导出。危险实现分离到 `@flowtools/sdk/development`，只接�
 生产 bundle 不包含它。Web 文件/enable/reload 服务在副作用前拒绝外部入口，
 IndexedDB 源码在所有模式都不自动恢复、不静默删除；内置 compiled manifest 的
 加载与运行保留。开发预览仍共 realm、无签名/隔离/grant，仅限受控测试数据。
-Desktop 关闭仍待 P0.3b3；SEC-002 仍 open，不能由此关闭整体风险。
+Desktop 默认拒绝由下述 P0.3b3 完成验收；发布产物复现门禁仍待 b4。
+SEC-002 仍 open，不能由此关闭整体风险。
 
 P0.3b2 将 CLI inventory 固化为构建内嵌的生成清单；运行时不扫描源码目录，
 未知 ID/路径在 IO 前拒绝。仅加载固定 plugins/dist 内普通编译文件，拒绝缺失、
@@ -71,6 +72,16 @@ P0.3b2 将 CLI inventory 固化为构建内嵌的生成清单；运行时不扫�
 清单证明 Host T1 构建一致性，不证明 publisher/签名或 TOCTOU 防护；仍在 CLI
 自身进程 import。真实十二内置 run() smoke 和临时 compiled CLI 拒绝 fixture
 分别验证正向行为与入口限制，不以假成功替代真实插件执行。
+
+P0.3b3 Desktop 默认在 activation、fetch 或 iframe 创建前拒绝 HTML/Legacy，
+持久 enabled metadata 与 Catalog 不能放行。危险 runner/bridge 从主 App 移到
+DEV + 精确 opt-in 下的动态模块；普通 bridge API 一律拒绝，开发 bridge 也
+不再提供 raw invoke/SQL/任意文件或 opener。请求 context 由 Host command 绑定，
+不采信 payload 的身份/mode/certified/granted；尚无 origin/nonce/grant broker。
+开发 fetch 失败不回退原始远程 src；AbortController 与过期回复清理保留。
+实际构建模式、完整根 gate、24 个 production opt-in 产物一致性与三条前端路由
+拒绝已通过；独立 r3 原生包人工清单已回报通过，并核实运行路径/测试身份。
+这不是独立安全审批或签名安装验收；成熟度保持 prototype。
 
 P0.2a 已交付 `packages/sdk/src/execution/executor.ts`：`executePlugin()` 对
 真实 app/tool `run()` 统一 schema/defaults、版本/时间戳/耗时、输入形状摘要、
@@ -295,14 +306,14 @@ Host runtime 用 `pickCapability(...)` 做权限裁剪：
 ## 6.1 Desktop Runtime（Tauri）
 
 `apps/desktop` 当前是 Tauri 桌面壳，不再是默认模板页。它读取
-`apps/desktop/src/data/html-plugin-catalog.json`，并合并内置 React/SDK 插件 manifest，展示插件启动、搜索、命令数量、分类和运行支持级别；`docs/html-plugin-catalog.json` 作为同源的人类可读目录副本。桌面端路由使用 TanStack Router，当前包括 `/`、`/settings`、`/plugins`、`/permissions` 和 `/run/$commandId`。其中 `/run/$commandId` 对 React/SDK app 插件会直接渲染 panel，对声明了 `main` 的 HTML 插件会启动 iframe 运行容器。
+`apps/desktop/src/data/html-plugin-catalog.json`，并合并内置 React/SDK 插件 manifest，展示插件启动、搜索、命令数量、分类和运行支持级别；`docs/html-plugin-catalog.json` 作为同源的人类可读目录副本。桌面端路由使用 TanStack Router，当前包括 `/`、`/settings`、`/plugins`、`/permissions` 和 `/run/$commandId`。其中 `/run/$commandId` 对 React/SDK 内置 app 插件渲染 panel；HTML/Legacy 默认显示 EXTERNAL_CODE_DISABLED，仅 DEV + 显式 opt-in 才动态加载危险 iframe 预览。
 
 当前边界：
 
-- 已实现：HeroUI + Tailwind 桌面首屏、React/SDK 插件和 HTML 插件共同驱动的启动器界面、设置/插件/权限路由、HTML `main` iframe 启动容器、workspace icon 复用。
+- 已实现：HeroUI + Tailwind 桌面首屏、React/SDK 插件和 HTML 目录共同驱动的启动器界面、设置/插件/权限路由、默认拒绝外部执行、显式 DEV iframe 预览、workspace icon 复用。
 - 已实现：Desktop SDK capability adapter，按插件 permissions 暴露 `fs/request/clipboard/dialog/notification/storage/db/native`。
 - 已实现：通过 `bun tauri add` 安装并接入官方 Tauri 插件：`fs`、`dialog`、`clipboard-manager`、`notification`、`sql`、`store`、`opener`。
-- 已实现：iframe 注入旧版宿主 API bridge，将常用旧 API 转回 SDK capability，再由 Tauri plugin 或 WebView API 执行。
+- 已实现：仅显式 DEV iframe 注入有限 UI/clipboard/dialog/notification bridge；raw native/SQL/FS/opener 在读取 payload 前拒绝。该 bridge 不是用户授权或隔离。
 - 已实现：Tauri/Rust 后端持久化插件元数据，提供 `get_plugins`、`get_plugin`、`add_plugin`、`update_plugin`、`enable_plugin`、`disable_plugin`、`remove_plugin` 命令；数据库中的 `state` 与 SDK registry 状态词保持一致。
 - 待完善：更完整的旧版桌面 API 面覆盖、截图/窗口控制、插件安装与细粒度授权提示。
 

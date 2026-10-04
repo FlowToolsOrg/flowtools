@@ -14,6 +14,17 @@
 
 ## 工程验证结构
 
+- Desktop `runtime/html-development-policy.ts` 是 Host 构建策略；普通
+  `html-plugin-bridge.ts` 永久拒绝。`development-html-launch.ts` / bridge / surface
+  仅在 DEV + opt-in 下动态加载；生产不创建 iframe 或读外部入口，开发也不支持
+  raw native/SQL/FS/opener。共享 command types 不反向导入整个 Host App。
+  `test/html-plugin-bridge-gate.test.ts` 与 `html-development-matrix.test.ts` 覆盖
+  普通入口、副作用之前拒绝、六构建模式及原生危险方法始终禁用；不 mock
+  用户数据。这些自动化不是实窗验收；独立 r3 人工清单与身份核查分别记录于
+  [Desktop gate](./validation/p0-desktop-external-gate.md)。
+  `test/html-mode-build.ts` 为每个模式提供独立实际编译进程，规避已复现的
+  Windows Bun 文件缓存生命周期问题；该进程不是插件隔离 runner。
+
 - `packages/sdk/src/services/plugin-file-loader.ts`：普通 SDK 的 deny-only 外部
   入口；`development-plugin-file-loader.ts` / `development-policy.ts` 为显式
   DEV + opt-in 的危险预览实现，只从 `@flowtools/sdk/development` 动态导入。
@@ -203,7 +214,7 @@ Virtual Bridge Link 流程:
 
 Web (基于 Vite): 实现 Dynamic Import (动态导入)、SDK Mount (SDK 挂载)、Import Map (导入映射)。
 
-Desktop (基于 Tauri): 已有 `apps/desktop` 壳，用于承载 HeroUI + Tailwind 桌面启动器、TanStack Router 桌面路由、React/SDK 插件面板、HTML 插件目录和 iframe 插件运行容器。原生能力通过官方 Tauri plugins 安装，再由 desktop SDK adapter 暴露为标准 capability。
+Desktop (基于 Tauri): 已有 `apps/desktop` 壳，用于承载 HeroUI + Tailwind 桌面启动器、TanStack Router 桌面路由、React/SDK 内置插件面板和 HTML 插件目录。HTML/Legacy 执行默认拒绝，iframe runner 仅供显式危险 DEV 预览。原生能力通过官方 Tauri plugins 安装，再由 desktop SDK adapter 暴露为内置插件 capability；这不构成第三方授权。
 
 Desktop 插件元数据逐步迁移到 Rust 后端。`apps/desktop/src-tauri/src/models/plugin.rs`
 定义插件记录，`repositories/plugin_repository.rs` 负责数据库增删改查、启用/禁用和基础校验，`commands/plugin_commands.rs` 暴露 Tauri IPC。持久化的 `state`
@@ -216,7 +227,8 @@ Desktop 插件元数据逐步迁移到 Rust 后端。`apps/desktop/src-tauri/src
 - `apps/desktop/src/data/html-plugin-catalog.json`: desktop 启动器直接读取的 HTML 插件目录。
 - `docs/html-plugin-catalog.json`: 同源的人类可读目录副本，供后续插件市场/导入器参考。
 - `apps/desktop/src/runtime/desktop-capabilities.ts`: 将 SDK `fs/network/clipboard/dialog/notification/storage/db/native` capability 映射到 Tauri plugins 或 WebView API。
-- `apps/desktop/src/runtime/html-plugin-bridge.ts`: 在 HTML iframe 中注入旧版宿主 API，并通过 `postMessage` 回到 desktop SDK runtime。
+- `apps/desktop/src/runtime/html-plugin-bridge.ts`: 普通入口永久拒绝；开发实现拆分至
+  `development-html-plugin-bridge.ts`，仅动态加载的危险预览使用有限方法表。
 
 兼容级别：
 

@@ -122,15 +122,29 @@ report missing builds instead of importing TSX or rewriting headless source.
 Regenerate all three inventories with `bun run generate:manifests`, then run
 `bun run build:packages` after changing built-ins. This is T1 build consistency,
 not package authentication, TOCTOU protection or a third-party sandbox. Desktop
-entry closure remains P0.3b3 work. See the
+entry closure is completed by P0.3b3; the reusable artifact gate remains P0.3b4.
+See the
 [compiled CLI acceptance record](./docs/validation/p0-cli-compiled-inventory.md).
+
+P0.3b3 closes Desktop HTML/Legacy execution by default, before activation,
+HTML fetching or iframe creation. Saved enabled metadata and catalog evidence
+cannot unlock it. The runner and bridge are development-only, dynamically loaded
+behind DEV + `VITE_ENABLE_UNSAFE_PLUGIN_PREVIEW=1`, with a visible unsigned,
+shared-realm warning. Ordinary bridge APIs are deny-only. Even unsafe preview
+does not expose raw invoke, SQL, arbitrary files or opener calls; fetch failure
+does not fall back to opening a raw remote page. Built-in React/SDK flows remain.
+All root gates, the production opt-in artifact comparison and three real catalog
+route denials passed. The dedicated r3 native package also passed maintainer
+manual acceptance, separately recorded from development screenshots. See the
+[Desktop entry record](./docs/validation/p0-desktop-external-gate.md).
 
 - Product direction: desktop-first, cross-platform ready.
 - Current runnable hosts:
   - `apps/web-vite`: web runtime prototype.
   - `apps/desktop`: Tauri desktop shell with a HeroUI + Tailwind powered
     launcher surface, TanStack Router desktop routes, React/SDK plugin panels,
-    and an iframe-based plugin launch surface for legacy HTML `main` entries.
+    and an explicitly enabled development-only HTML `main` preview; production
+    external execution is disabled.
     Desktop native capabilities are installed through official Tauri plugins
     and exposed to plugins through the existing SDK capability contract.
 - Core packages under active development:
@@ -281,11 +295,12 @@ FlowTools descriptors, then classified by required runtime support:
 - `metadata`: useful for indexing or headless rewrite, but no UI entry exists.
 
 Desktop HTML execution is a compatibility layer, not a second plugin model:
-the iframe bridge maps legacy host API calls back into the SDK capabilities
-(`fs`, `network`, `clipboard`, `dialog`, `notification`, `storage`, `db`,
-`native`). Tauri is only the desktop implementation behind that contract.
-For source checkouts, static HTML plugins must be built first, or their own dev
-server must be running at `development.main`.
+it is disabled by default. Only explicit unsafe development preview uses an
+iframe and a limited UI/clipboard/dialog/notification bridge. Raw native,
+SQL, filesystem and opener calls remain disabled even there. The broader SDK
+capability adapter is for host-bound built-ins, not third-party authorization.
+Local preview requires a built static entry and `VITE_HTML_PLUGIN_ROOT`;
+portable catalogs do not publish or automatically load development URLs.
 
 All plugins can declare `inputSchema` (Zod `z.object({...})`) for:
 

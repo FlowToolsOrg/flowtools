@@ -227,9 +227,9 @@ execution bypassing the SDK:
   `plugin.json`.
 - Treat `webview`, `preload-bridge`, `native-bridge`, and `metadata` as the
   support levels.
-- Desktop `/run/$commandId` may launch HTML plugins with a `main` entry, but
-  native/preload behavior must still route through the desktop SDK capability
-  adapter and the HTML plugin bridge.
+- Desktop `/run/$commandId` refuses HTML/Legacy execution by default, before
+  activation or loading. Only DEV + explicit unsafe opt-in may preview a `main`
+  through the development runner/bridge; catalog and saved metadata never grant.
 - The generated HTML catalog records whether a static `main` is actually
   runnable from the scanned checkout. Source-only Vite entries such as
   `/src/main.ts` or `/main.tsx` should fall back to `development.main` or a
@@ -254,7 +254,19 @@ subpath into a host. Web does not automatically restore external source in any
 mode; preserve the old IndexedDB records without executing or deleting them.
 Service-level rejection and build-mode regressions are required, not only a
 hidden upload button. CLI accepts only its fixed compiled T1 inventory (P0.3b2);
-Desktop entry closure remains separate P0.3b3 work.
+Desktop HTML/Legacy runner and bridge follow the same default denial (P0.3b3).
+Keep their implementations in development-only dynamic imports behind DEV and
+the exact opt-in. Ordinary HTML bridge APIs always refuse before metadata or
+payload reads. Saved enabled metadata, catalog evidence, query flags and claimed
+certification never authorize an iframe, preload, fetch or native operation.
+Unsafe preview must visibly warn about unsigned/shared-realm code; raw invoke,
+SQL, arbitrary FS and opener bridge methods remain unavailable even there.
+Fetch failure must not fall back to unbridged remote src. Retain independent
+runner/bridge build-mode and rejection tests; this is not an isolated session.
+`test/html-mode-build.ts` owns each actual compilation in a fresh process with
+the Desktop working directory; repeated in-process Bun.build after SDK imports
+has a reproduced Windows file-cache failure. Keep all assertions and normal
+unit-test timeouts; this compiler subprocess is not a plugin sandbox.
 
 Portable catalogs use `@flowtools/sdk/compat/catalog`, logical source identity,
 package-relative paths and scan SHA-256 values. All current HTML entries remain
@@ -310,8 +322,9 @@ Desktop routes are owned by `apps/desktop` and should use TanStack Router. The
 current routes are `/`, `/settings`, `/plugins`, `/permissions`, and
 `/run/$commandId`. For React/SDK app plugins, `/run/$commandId` must render the
 plugin panel through the SDK runtime provider. For HTML plugins with a `main`
-entry, `/run/$commandId` must launch the plugin UI in the desktop runner instead
-of acting as a metadata detail page.
+entry, `/run/$commandId` denies execution by default and explains why. Only DEV
+plus explicit unsafe opt-in may dynamically launch the development runner;
+catalog or saved activation state cannot grant production execution.
 
 Desktop native capability work should prefer official Tauri plugins installed
 with `bun tauri add` (`fs`, `dialog`, `clipboard-manager`, `notification`,

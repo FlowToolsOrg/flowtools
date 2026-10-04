@@ -1,3 +1,4 @@
+import { resolvePluginMaturity } from '@flowtools/sdk/types'
 import { ToolCard, ToolGrid } from '@flowtools/ui'
 import {
   EarthIcon,
@@ -35,7 +36,7 @@ function Dashboard() {
     name: p.manifest.name,
     description: p.manifest.description ?? '',
     version: p.manifest.version,
-    status: 'stable' as const,
+    status: resolvePluginMaturity(p.manifest.maturity),
     category: p.manifest.category,
     tags: p.manifest.tags,
     isInstalled: true,

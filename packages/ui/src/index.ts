@@ -1,5 +1,9 @@
 export { cn } from './utils/class-name'
 export {
+  ExecutionPanel,
+  type ExecutionPanelProps,
+} from './components/run-panel/execution-panel'
+export {
   CommandPalette,
   type CommandPaletteItem,
   type CommandPaletteRootProps,
@@ -131,3 +135,9 @@ export {
   type ToolListProps,
   type ToolStatus,
 } from './components/tool-list'
+export {
+  PluginMaturityBadge,
+  PluginCompatibilityBadge,
+  type PluginMaturityBadgeProps,
+  type PluginCompatibilityBadgeProps,
+} from './components/plugin-status'

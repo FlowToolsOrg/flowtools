@@ -17,8 +17,12 @@ export {
   buildFlagExample,
 } from './schema'
 export type { CLIInputErrorCode, FieldMeta } from './schema'
-export { runPlugin, runPluginAndPrint } from './runner'
-export type { RunResult } from './runner'
+export { createPluginRunner, runPlugin, runPluginAndPrint } from './runner'
+export type {
+  RunResult,
+  PluginRunnerDependencies,
+  PluginRunOptions,
+} from './runner'
 export type {
   CLIPluginInfo,
   OutputFormat,

@@ -16,8 +16,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: [
-      { find: '@flowtools/ui', replacement: uiSrcIndex },
-      { find: '@flowtools/ui/', replacement: `${uiSrcDir}/` },
+      { find: /^@flowtools\/ui$/, replacement: uiSrcIndex },
+      { find: /^@flowtools\/ui\/(.*)$/, replacement: `${uiSrcDir}/$1` },
     ],
   },
   test: {

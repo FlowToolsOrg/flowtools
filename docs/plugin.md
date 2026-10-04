@@ -21,6 +21,29 @@ plugin。
 Catalog 索引、API 名称或构建成功不代表兼容认证；v1 不宣称兼容全部 125 个
 HTML 插件，也不提供任意 shell/native binary 或 Node/Electron 私有 API。
 
+P0.3b1 的普通 SDK `PluginFileLoader` 一律抛 `EXTERNAL_CODE_DISABLED`，不读取
+源码、不注册外部对象；普通 SDK 不再导出 transpile/setupImportMap 等注入工具。
+Web 默认及生产构建均不可导入源码；受控开发评估须同时使用 Vite dev server 和
+显式 `VITE_ENABLE_UNSAFE_PLUGIN_PREVIEW=1`。危险实现从
+`@flowtools/sdk/development` 在 DEV 分支动态导入，并显示未签名、同 realm 风险，
+不得在宿主静态导入该子入口或当作安装/隔离/grant。已有 IndexedDB 源码保留，
+任何模式都不自动恢复；需要预览时重新主动选择审阅过的文件，仅使用可丢弃数据。
+P0.3b2 CLI 只执行构建内嵌清单中的内置 compiled artifact，运行时目录新增项、
+任意路径、直接 TSX 与 headless rewrite 不再支持。更新内置 metadata 后运行
+`bun run generate:manifests`，随后 `bun run build:packages`；list/info/run/help
+缺编译产物会失败，不回退源码。这是 T1 构建一致性，不是包签名或 sandbox。
+P0.3b3 Desktop 默认也拒绝 HTML/Legacy，普通 bridge API 一律拒绝；危险 runner
+仅在 DEV + 精确 opt-in 下动态导入。开发 bridge 也不能调用 raw invoke、SQL、
+任意 FS 或 opener；失败不直接打开远程 src。根 gate、实际生产产物与前端
+拒绝已通过；独立 r3 包的实际 Base64 与 HTML 默认拒绝人工清单已通过，
+运行路径/身份另行核实。不能解释为已完成签名/隔离或独立安全验收。
+
+P0.3b4 生产 artifact gate 在 root build 后检查两端固定构建树与已知危险/
+certification syntax，再用 opt-in=1 和 synthetic path/URL/key canaries
+实际重建，要求所有字节与普通产物一致。它不执行插件、不删除旧数据，
+不是签名或 publisher 认证；CLI compiled inventory 与服务拒绝另由真实回归覆盖。
+见 [发布产物验收](./validation/p0-production-artifacts.md)。
+
 ## 1. 先理解插件模型
 
 Flow Tool 目前支持两类插件：
@@ -38,6 +61,9 @@ FlowTools 插件，而是先把 `main`、`preload`、`features`、`cmds` 归一�
 - `id`：稳定唯一，命名方式使用 kebab-case
 - `name`：展示名
 - `version`：语义化版本
+- `maturity`：`prototype` / `experimental` / `beta` / `production`，缺失时为
+  prototype。原 `PluginMeta.status: stable/deprecated` 改用本字段；beta/production
+  只能在路线图记录客观验收后推进，不能由声明自行证明安全/兼容/授权。
 - `permissions`：声明所需能力（可选但强烈建议最小化）
 - `description`: 插件描述（可选）
 - `author`: 插件作者（可选）
@@ -46,6 +72,21 @@ FlowTools 插件，而是先把 `main`、`preload`、`features`、`cmds` 归一�
 - `run(ctx, input)`: 执行入口，返回 `result.text/json/table/open/multi`
 
 ### 输入 Schema（Zod）
+
+SDK 从 `@flowtools/sdk/types` 导出 `pluginMaturitySchema`、`resolvePluginMaturity`
+和独立 `compatibilityEvidenceStatusSchema`。内置插件、两端 manifest 与 CLI
+list/info 当前都为 prototype；生成两端 metadata 使用 `bun run generate:manifests`。
+Catalog 与 UI 已使用相同 maturity 词表；ToolStatus/ToolMarketStatus 是 SDK 类型
+别名，原 status prop 仅表示成熟度。共享 PluginMaturityBadge 缺省显示 Prototype，
+PluginCompatibilityBadge 单独显示证据；桥接需求、元数据保存和生产授权都不是
+maturity。Portable Catalog formatVersion 1 记录 logical source、package
+identity/相对路径与扫描 hash，不保存本机根路径或 development URL。重新扫描使用
+`bun run inspect:html-plugins [checkout-path]`，随后运行 `bun run verify:plugin-catalog`。
+当前仅接受 indexed/entry-resolved；后者是入口文件存在/hash，不认证资源依赖、
+runtime、bridge、平台、签名或安全，也不允许生产执行。47 项 entry-resolved、
+78 项 indexed，全部 prototype；API/production 认证仍待 P3.4。
+本地预览需在开发服务器显式配置 VITE_HTML_PLUGIN_ROOT 指向自己的 checkout，
+不能把该路径写回目录或嵌入发布产物；该配置不是隔离/授权。
 
 插件推荐通过 `inputSchema` 声明输入参数。使用 Zod `z.object({...})` 定义，
 SDK 重新导出了 `z`，也可以从 `@flowtools/sdk` 直接导入：
@@ -68,6 +109,30 @@ const inputSchema = z.object({
 - **JSON Schema 生成**：通过 `z.toJSONSchema()` 生成标准 JSON Schema（Zod 4 内置）
 
 若未提供 `inputSchema`，CLI 仍可通过 `--input '{"key":"value"}'` 传入原始 JSON。
+
+SDK 共享执行入口为 `executePlugin(plugin, input, toolContext, options)`，对 app
+和 tool 的实际 `run()` 应用 schema 默认值与校验，返回 `PluginExecutionResult`。
+结果含插件 ID/版本、真实开始/完成时间、耗时和仅类型/大小的输入摘要；失败含
+稳定 `error.code`，如 `INPUT_INVALID`、`EXECUTION_FAILED`、`ABORTED`、`TIMEOUT`。
+默认异步等待上限 30 秒，可传 `signal` 与正整数 `timeoutMs`；取消通知插件并
+丢弃迟到结果，但插件必须合作停止副作用，同步死循环无法在共享 realm 内终止。
+Host 必须注入与插件 ID 匹配的 context。CLI/Web/Desktop 已接入（P0.2b）。
+非 React 调用可从 `@flowtools/sdk/execution` 导入执行器。Web 工具页 Run tab
+与 Desktop React app/tool runner 使用共享 `ExecutionPanel`；app panel 保留。
+输入 JSON/schema 错误、实际异常、取消与输出序列化失败都显示稳定失败码。
+历史使用 SDK `createExecutionHistory()`，formatVersion 1、最多 200 条 metadata，
+仅保存 ID/名称/版本、输入类型/大小、真实时间/耗时、status/resultType/errorCode。
+原始输入、输出和异常 message 只展示在本次结果中，不持久化。新 key 与旧未验证
+历史分离，旧 key 不删除；恢复损坏或矛盾记录时显示提示，不伪造成功。
+Windows 验收范围与限制见 [宿主验收](./validation/p0-execution-hosts.md)。
+测试实例必须初始进入真实首页，不能以跳转到插件页掩盖启动 NotFound。
+专用验收配置使用根路由查询标记；开发模式手工通过与独立包通过分开记录。
+
+内置插件的 `bun run smoke:plugins` 使用真实编译实现和受控 capability，不访问
+公网/用户数据，也不替换 run()。Todo run 在 app host 读写 panel 共享 store；CLI
+继续使用原 `todos` key，数据先校验、损坏时失败且不覆盖；没有隐式跨 namespace
+迁移。网站延迟 run/panel 都使用 SDK request，缺少能力时实际失败，不回退 global
+fetch。批量测量中单个站点错误仍是返回的诊断数据，并非整个 run() 抛出异常。
 
 ### 结果 helpers（`result.*`）
 
@@ -130,18 +195,22 @@ bun run inspect:html-plugins
 
 扫描器会区分源码 checkout 和可运行静态入口：如果 `main` 指向的 HTML 仍然引用
 `/src/main.ts`、`/main.tsx` 等 Vite 源码入口，目录会把该静态入口标记为不可用。
-Desktop runner 会改用 `development.main`；如果开发服务器没有启动，需要先在对应
-HTML 插件目录执行构建或启动 dev server。
+当前 portable catalog 不发布 development URL，不自动回退源码态服务。受控
+开发预览须指定 VITE_HTML_PLUGIN_ROOT 并提供已构建的静态入口；该路径不是授权。
 
 Desktop 端使用 TanStack Router 承载启动器、设置、插件、权限和命令运行页。
 React/SDK 插件和 HTML 目录中的命令都会进入 `/run/$commandId`，内置设置类命令会进入对应页面。
-React/SDK app 插件会直接渲染 panel；如果 HTML 插件声明了 `main`，该路由会启动 iframe 运行容器；没有 UI 入口的命令才进入 headless 执行状态视图。
+React/SDK app 插件会直接渲染 panel；HTML/Legacy 默认显示 EXTERNAL_CODE_DISABLED，
+仅显式 DEV opt-in 启动危险预览 iframe，不因安装/启用 metadata 或 main 声明放行。
 
-Desktop runner 会在 iframe 里预注入旧版宿主 API。常用旧 API 会通过
-`postMessage` 回到 desktop host，再走 SDK runtime context；实际原生能力由
-`@tauri-apps/plugin-fs`、`plugin-dialog`、`plugin-clipboard-manager`、
-`plugin-notification`、`plugin-sql`、`plugin-store`、`plugin-opener` 等官方
-Tauri 插件提供。
+显式开发 runner 会在 iframe 里预注入有限旧版宿主 API。UI、clipboard、dialog、
+notification 经开发 bridge 的固定方法列表调用，身份 context 来自 Host command。
+raw native/SQL/FS/opener 方法仍禁用；不是独立 session、用户 grant 或 sandbox。
+有限旧 API 会通过
+`postMessage` 回到 desktop host，再走 SDK runtime context。宿主的 T1 内置
+插件 adapter 另外使用官方 `plugin-fs`、`plugin-dialog`、
+`plugin-clipboard-manager`、`plugin-notification`、`plugin-sql`、
+`plugin-store`、`plugin-opener`；安装这些依赖不向 Legacy bridge 开放对应 API。
 
 Desktop host 的插件元数据正在迁移到 Rust + SQLite。后端记录与前端 manifest
 保持同一批核心字段：`id`、`name`、`version`、`description`、`author`、
@@ -426,7 +495,8 @@ console.log(output)
 
 ## 7. 从 CLI 调用插件
 
-`packages/cli` 提供统一的 CLI 入口，可直接调用任何提供了 `run()` 的插件。
+`packages/cli` 提供统一的 CLI 入口，只调用固定 Host inventory 中提供 `run()`
+的内置编译插件；增加源码目录本身不会开放 CLI 执行。
 
 ### 7.1 列出可调用插件
 
@@ -473,6 +543,14 @@ bun run packages/cli/src/cli.ts run plugin-uuid-generator --count 3 \
 CLI 入口设计为机器可读：`--format json` 输出结构化结果，
 桌面端 Tauri host 可通过 `Command::new("flowtools")` 调用 CLI，
 将输出解析后反馈给 AI agent。
+
+JSON 输出现在是 `PluginExecutionResult`：成功读取 `data` 中的真实 `CommandResult`，
+失败读取 `error.code/message`，两者均有真实版本、时间和输入形状摘要。失败同时
+输出 JSON 到 stdout、稳定码到 stderr，退出码 1；无效输出序列化为 `OUTPUT_INVALID`。
+text formatter 保留现有展示。此为 prototype 接口变更，不再输出裸结果 JSON。
+CLI adapter 不自动记录原始插件日志；storage/network 仅按内置插件声明提供，
+不是第三方用户授权。存储使用 SDK `remove/zustand`，保留合法现有键的文件位置，
+路径和设备保留名键会拒绝；canonical/symlink 强制隔离仍待安全阶段。
 
 ### 7.5 子路径导入
 

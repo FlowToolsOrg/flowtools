@@ -1,6 +1,6 @@
-// TODO(review): waiting code review
+import type { PluginMaturity } from '@flowtools/sdk/types'
 
-export type ToolMarketStatus = 'stable' | 'beta' | 'experimental' | 'deprecated'
+export type ToolMarketStatus = PluginMaturity
 
 export interface ToolPermissionTag {
   id: string

@@ -14,6 +14,9 @@ try {
   Invoke-QualityCommand 'Documentation and threat-model contracts' bun @(
     'run', 'docs:check'
   )
+  Invoke-QualityCommand 'Portable plugin catalog contracts' bun @(
+    'run', 'verify:plugin-catalog'
+  )
   Invoke-QualityCommand 'Pinned Chromium install' bun @(
     'run', '--cwd', 'apps/ui-test', 'test:install-browser'
   )
@@ -32,6 +35,9 @@ try {
   Invoke-QualityCommand 'Test all seven workspaces' bun @('run', 'test')
   Invoke-QualityCommand 'Build all seven workspaces' bun @(
     'run', 'build', '--force'
+  )
+  Invoke-QualityCommand 'Production external-entrypoint artifacts' bun @(
+    'run', 'verify:production-entrypoints'
   )
   Invoke-QualityCommand 'Rust format' cargo @(
     'fmt', '--manifest-path', 'apps/desktop/src-tauri/Cargo.toml', '--', '--check'

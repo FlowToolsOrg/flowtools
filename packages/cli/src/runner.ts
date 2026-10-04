@@ -1,141 +1,139 @@
-/**
- * Plugin runner — loads and executes a plugin's run() function.
- */
-
 import type { OutputFormat } from './types'
+import type {
+  ExecutablePlugin,
+  PluginExecutionResult,
+} from '@flowtools/sdk/execution'
+import type { Permission, ToolContext } from '@flowtools/sdk/types'
+
+import { createExecutionFailure, executePlugin } from '@flowtools/sdk/execution'
 
 import { createCLIToolContext } from './context'
 import { loadPlugin } from './discovery'
 import { formatRaw, formatResult } from './formatter'
 
-export interface RunResult {
-  success: boolean
-  data?: unknown
-  error?: string
+export type RunResult = PluginExecutionResult
+interface CLIExecutablePlugin extends ExecutablePlugin {
+  type?: 'app' | 'tool'
+  meta: ExecutablePlugin['meta'] & { permissions?: readonly Permission[] }
 }
-
-interface RunnablePlugin {
-  run?: (context: unknown, input: Record<string, unknown>) => unknown
-}
-
 export interface PluginRunnerDependencies {
-  loadPlugin: (pluginId: string) => Promise<RunnablePlugin | null>
-  createContext: (pluginId: string) => object
+  loadPlugin: (pluginId: string) => Promise<CLIExecutablePlugin | null>
+  createContext: (pluginId: string, plugin: CLIExecutablePlugin) => ToolContext
   startTimeout?: (callback: () => void, delayMs: number) => () => void
 }
+export interface PluginRunOptions {
+  timeout?: number
+  signal?: AbortSignal
+}
 
-type PluginRunner = (
-  pluginId: string,
-  input: Record<string, unknown>,
-  options?: { timeout?: number }
-) => Promise<RunResult>
-
-/**
- * Create an isolated runner with injectable discovery and context boundaries.
- */
-export function createPluginRunner(
-  dependencies: PluginRunnerDependencies
-): PluginRunner {
-  return async (pluginId, input, options) => {
-    let cancelTimeout: (() => void) | undefined
-
+export function createPluginRunner(dependencies: PluginRunnerDependencies) {
+  return async (
+    pluginId: string,
+    input: unknown,
+    options: PluginRunOptions = {}
+  ): Promise<RunResult> => {
+    const startedAt = Date.now()
+    const failure = (
+      code: 'PLUGIN_NOT_FOUND' | 'LOAD_FAILED' | 'CONTEXT_FAILED',
+      message: string,
+      version: string | null = null
+    ) =>
+      createExecutionFailure(
+        pluginId,
+        version,
+        input,
+        { code, message },
+        startedAt
+      )
+    let plugin: CLIExecutablePlugin | null
     try {
-      const plugin = await dependencies.loadPlugin(pluginId)
-      if (!plugin) {
-        return { success: false, error: `Plugin not found: ${pluginId}` }
-      }
-
-      if (!plugin.run) {
-        return {
-          success: false,
-          error: `Plugin ${pluginId} has no run() function`,
-        }
-      }
-
-      const ctx = dependencies.createContext(pluginId)
-      const timeoutMs = options?.timeout ?? 30_000
-      const controller = new AbortController()
-      const startTimeout =
-        dependencies.startTimeout ??
-        ((callback: () => void, delayMs: number) => {
-          const timeout = setTimeout(callback, delayMs)
-          return () => clearTimeout(timeout)
-        })
-      cancelTimeout = startTimeout(() => controller.abort(), timeoutMs)
-      const execCtx = { ...ctx, signal: controller.signal }
-
-      const result = await Promise.race([
-        Promise.resolve(plugin.run(execCtx, input)),
-        new Promise<never>((_, reject) => {
-          controller.signal.addEventListener(
-            'abort',
-            () => {
-              reject(
-                new Error(`Plugin execution timed out after ${timeoutMs}ms`)
-              )
-            },
-            { once: true }
-          )
-        }),
-      ])
-
-      return { success: true, data: result }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      return { success: false, error: message }
-    } finally {
-      cancelTimeout?.()
+      plugin = await dependencies.loadPlugin(pluginId)
+    } catch (error) {
+      return failure(
+        'LOAD_FAILED',
+        error instanceof Error ? error.message : String(error)
+      )
     }
+    if (!plugin)
+      return failure('PLUGIN_NOT_FOUND', 'Plugin not found: ' + pluginId)
+    let ctx: ToolContext
+    try {
+      ctx = dependencies.createContext(pluginId, plugin)
+    } catch (error) {
+      return failure(
+        'CONTEXT_FAILED',
+        error instanceof Error ? error.message : String(error),
+        plugin.meta.version
+      )
+    }
+    return executePlugin(plugin, input, ctx, {
+      timeoutMs: options.timeout,
+      signal: options.signal,
+      startTimeout: dependencies.startTimeout,
+    })
   }
 }
 
 const defaultPluginRunner = createPluginRunner({
   loadPlugin,
-  createContext: createCLIToolContext,
+  createContext: (pluginId, plugin) =>
+    createCLIToolContext(pluginId, {
+      pluginType: plugin.type ?? 'app',
+      permissions: plugin.meta.permissions,
+    }),
 })
+export const runPlugin = defaultPluginRunner
 
-/**
- * Run a plugin by id with the given input.
- * Returns the structured result.
- */
-export async function runPlugin(
-  pluginId: string,
-  input: Record<string, unknown>,
-  options?: {
-    timeout?: number
+/** JSON output is always the shared envelope, including failure metadata. */
+export function printExecutionResult(
+  result: RunResult,
+  format: OutputFormat
+): number {
+  if (format === 'json') {
+    let output: string
+    try {
+      output = JSON.stringify(result, null, 2)
+    } catch {
+      const failure = createExecutionFailure(
+        result.pluginId,
+        result.pluginVersion,
+        null,
+        {
+          code: 'OUTPUT_INVALID',
+          message: 'Plugin output is not JSON serializable',
+        },
+        result.startedAt
+      )
+      return printExecutionResult(
+        { ...failure, inputSummary: result.inputSummary },
+        format
+      )
+    }
+    process.stdout.write(output + '\n')
+  } else if (result.success) {
+    const output =
+      result.data && typeof result.data === 'object' && 'type' in result.data
+        ? formatResult(
+            result.data as Parameters<typeof formatResult>[0],
+            format
+          )
+        : formatRaw(result.data, format)
+    if (output) process.stdout.write(output + '\n')
   }
-): Promise<RunResult> {
-  return defaultPluginRunner(pluginId, input, options)
-}
-
-/**
- * Run a plugin and print the result to stdout/stderr.
- */
-export async function runPluginAndPrint(
-  pluginId: string,
-  input: Record<string, unknown>,
-  format: OutputFormat = 'json',
-  options?: {
-    timeout?: number
-  }
-): Promise<number> {
-  const result = await runPlugin(pluginId, input, options)
-
   if (!result.success) {
-    process.stderr.write(`${result.error ?? 'Plugin execution failed'}\n`)
+    process.stderr.write(
+      '[' + result.error.code + '] ' + result.error.message + '\n'
+    )
     return 1
   }
-
-  if (result.data && typeof result.data === 'object' && 'type' in result.data) {
-    const output = formatResult(
-      result.data as Parameters<typeof formatResult>[0],
-      format
-    )
-    if (output) process.stdout.write(`${output}\n`)
-  } else {
-    const output = formatRaw(result.data, format)
-    if (output) process.stdout.write(`${output}\n`)
-  }
-
   return 0
+}
+
+export async function runPluginAndPrint(
+  pluginId: string,
+  input: unknown,
+  format: OutputFormat = 'json',
+  options?: PluginRunOptions
+): Promise<number> {
+  return printExecutionResult(await runPlugin(pluginId, input, options), format)
 }

@@ -25,9 +25,10 @@
     "lint:fix": "oxlint --fix --type-aware --type-check",
     "format": "oxfmt",
     "check-types": "tsgo --noEmit",
-    "test": "bun test src"
+    "test": "bun run build && bun test src"
   },
   "dependencies": {
+    "@flowtools/sdk": "workspace:*",
     "commander": "^13.1.0",
     "json-schema-faker": "^0.6.1",
     "zod": "catalog:"

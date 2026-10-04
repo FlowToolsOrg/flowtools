@@ -1,0 +1,18 @@
+import { z } from 'zod'
+
+const mismatch = process.argv.at(-1)
+export default {
+  type: mismatch === 'type' ? 'tool' : 'app',
+  meta: {
+    id: mismatch === 'id' ? 'plugin-impostor' : 'plugin-base64-encoder',
+    name: 'Controlled metadata mismatch fixture',
+    version: mismatch === 'version' ? '99.0.0' : '0.1.0',
+    maturity: mismatch === 'maturity' ? 'production' : 'prototype',
+    certified: true,
+    granted: true,
+  },
+  inputSchema: mismatch === 'schema' ? {} : z.object({}),
+  run: mismatch === 'run' ? true : () => {
+    throw new Error('Mismatched compiled entry must not run')
+  },
+}

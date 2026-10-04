@@ -1,0 +1,15 @@
+{
+  "identifier": "com.flowtools.manual-validation-20261004-r2",
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "FlowTools manual validation - test data only",
+        "url": "/?execution-validation=20261004-manual",
+        "width": 1200,
+        "height": 900,
+        "visible": true
+      }
+    ]
+  }
+}

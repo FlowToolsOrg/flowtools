@@ -72,12 +72,22 @@ Run from repository root:
 - `bun run lint`: runs workspace lint tasks.
 - `bun run check-types`: runs workspace type checks.
 - `bun run test`: runs required workspace automated tests via Turbo.
+- `bun run smoke:plugins`: builds prerequisites and validates all twelve actual
+  compiled entries with controlled request/storage, schema rejection and abort.
 - `bun run docs:check`: read-only core/ADR/threat/PR-template contracts and inline
   local link path checks; no remote URL, anchor or security certification.
 - `bun run format`: formats tracked source/document files.
 - `bun run inspect:html-plugins`: scans a local HTML plugin checkout and
   regenerates `apps/desktop/src/data/html-plugin-catalog.json` plus
   `docs/html-plugin-catalog.json`.
+- `bun run verify:plugin-catalog`: read-only portable version-1 catalog, identity,
+  path, fixture digest and duplicate-copy gate; no live checkout or runtime/API/
+  security certification. It runs before lint in Windows CI.
+- `bun run verify:production-entrypoints`: run after root build; inspect actual
+  Web/Desktop output, then rebuild with child-only opt-in and synthetic canaries.
+  Require byte-identical artifacts, no known unsafe fingerprints/certification
+  switches or canary leakage. No raw artifact import, native launch or user DB.
+  This rebuild gate is not signing, publisher verification or sandbox evidence.
 - `cd apps/desktop && bun run tauri add <plugin-name>`: install official Tauri
   plugins for desktop native capability work before adding host-side adapters.
 
@@ -93,7 +103,24 @@ tasks must invoke those names consistently across the monorepo. Do not use
 workspace-only aliases such as `check:types` as substitutes for the standard
 task names.
 
+CLI discovery/loading is bound to generated `packages/cli/src/builtin-manifests.ts`,
+embedded in the CLI build. Never restore runtime source scans, arbitrary ID/path
+imports, TSX fallback or regex headless rewriting. Only fixed regular-file
+`plugins/dist/<known-id>.js` artifacts are accepted; unknown IDs fail before IO,
+missing/broken entries fail without source execution, and junction/symlink
+redirection is rejected. This T1 consistency check is not signing, a sandbox or
+protection against replacing trusted compiled files. CLI tests build their own
+CLI artifacts and run disposable compiled-entry rejection fixtures. Build the
+plugin artifacts before using `list/info/run/help`; missing builds are errors.
+
 CLI commands (from repo root):
+
+CLI `--format json` returns `PluginExecutionResult`, not bare `CommandResult`;
+read actual results from `data` and stable failures from `error.code`. Failures
+must emit JSON to stdout and exit nonzero. Preserve text formatter behavior.
+Use `@flowtools/sdk/execution` for non-React execution; CLI context construction
+must not own a timeout or expose undeclared built-in capabilities. Declarations
+are not user grants; do not describe this adapter as third-party isolation.
 
 - `bun run packages/cli/src/cli.ts list` — list CLI-compatible plugins
 - `bun run packages/cli/src/cli.ts info <plugin-id>` — show plugin details
@@ -130,6 +157,9 @@ work; local commit permission does not authorize pushes or repository settings.
 Windows MSVC binding integration tests require the Common Controls v6 manifest
 directives in `src-tauri/build.rs`; Tauri's app manifest does not cover them.
 Keep these directives test-target scoped to avoid duplicate app manifests.
+Production artifact refusal is a fatal post-build CI gate, before the final
+clean-worktree check. Preserve standard test/build order, strict Turbo env and
+all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
@@ -149,6 +179,23 @@ the production roadmap:
 Catalog presence, parsed metadata, command discovery, or a successful build is
 not evidence of compatibility or production readiness. Advance a maturity
 label only when the declared scope has objective validation evidence.
+
+Use SDK `PluginMeta.maturity` / `PluginManifestEntry.maturity` and
+`pluginMaturitySchema` from `@flowtools/sdk/types`; omission resolves to
+`prototype` via `resolvePluginMaturity`, never stable. The old PluginMeta
+`status: stable/deprecated` vocabulary is removed. Compatibility evidence uses
+its own schema and does not authorize execution or certify security.
+`bun run generate:manifests` regenerates Web/Desktop manifests and CLI inventory
+from the same built-in metadata in sorted order. Desktop directly depends on
+the plugins workspace; retain that dependency so types/tests do not rely on an
+undeclared resolution side effect. Catalog/UI consume this SDK maturity contract.
+`ToolStatus` and `ToolMarketStatus` are aliases of `PluginMaturity`; their existing
+status prop represents only maturity. Use shared `PluginMaturityBadge` (omission
+displays Prototype) and `PluginCompatibilityBadge` for independent evidence.
+Support/bridge requirements are not evidence or security approval. Never restore
+hardcoded stable labels. Keep real metadata, default and evidence UI regressions.
+`bun run scripts/generate-manifests.ts --check` is a read-only generated-content
+gate; the generator formats output before comparing or writing all three outputs.
 
 ## Coding Style and Naming Conventions
 
@@ -176,6 +223,10 @@ Plugins are managed through a central registry system:
 - `PluginLifecycleManager`: orchestrates `onLoad/onUnload/onActivate/onDeactivate`.
 - `PluginErrorBoundary`: catches rendering errors from plugin panels.
 - `withWatchdog`: wraps tool execution with timeout detection.
+- `executePlugin`: shared app/tool schema-validation and execution envelope;
+  use it for new run adapters instead of fabricating success or timing. It
+  bounds asynchronous waiting and forwards cancellation, but is not a sandbox
+  or a hard stop for synchronous code. Persist only safe input-shape metadata.
 
 HTML plugin compatibility is handled as an import/compatibility layer, not as direct
 execution bypassing the SDK:
@@ -184,9 +235,9 @@ execution bypassing the SDK:
   `plugin.json`.
 - Treat `webview`, `preload-bridge`, `native-bridge`, and `metadata` as the
   support levels.
-- Desktop `/run/$commandId` may launch HTML plugins with a `main` entry, but
-  native/preload behavior must still route through the desktop SDK capability
-  adapter and the HTML plugin bridge.
+- Desktop `/run/$commandId` refuses HTML/Legacy execution by default, before
+  activation or loading. Only DEV + explicit unsafe opt-in may preview a `main`
+  through the development runner/bridge; catalog and saved metadata never grant.
 - The generated HTML catalog records whether a static `main` is actually
   runnable from the scanned checkout. Source-only Vite entries such as
   `/src/main.ts` or `/main.tsx` should fall back to `development.main` or a
@@ -199,6 +250,40 @@ execution bypassing the SDK:
   claims.
 
 ### Third-Party Plugin Security Defaults
+
+SDK `PluginFileLoader` is now deny-only (`EXTERNAL_CODE_DISABLED`) before file
+reads, registry writes or lifecycle calls. Do not re-enable it with metadata,
+certification flags or a caller-supplied mode. Source transpilation/import-map
+injection is not exported by the ordinary SDK. The unsafe development subpath
+`@flowtools/sdk/development` requires DEV plus the exact opt-in
+`VITE_ENABLE_UNSAFE_PLUGIN_PREVIEW=1`; Web imports it dynamically inside a DEV
+guard and displays the unsigned, same-realm risk. Never statically import that
+subpath into a host. Web does not automatically restore external source in any
+mode; preserve the old IndexedDB records without executing or deleting them.
+Service-level rejection and build-mode regressions are required, not only a
+hidden upload button. CLI accepts only its fixed compiled T1 inventory (P0.3b2);
+Desktop HTML/Legacy runner and bridge follow the same default denial (P0.3b3).
+Keep their implementations in development-only dynamic imports behind DEV and
+the exact opt-in. Ordinary HTML bridge APIs always refuse before metadata or
+payload reads. Saved enabled metadata, catalog evidence, query flags and claimed
+certification never authorize an iframe, preload, fetch or native operation.
+Unsafe preview must visibly warn about unsigned/shared-realm code; raw invoke,
+SQL, arbitrary FS and opener bridge methods remain unavailable even there.
+Fetch failure must not fall back to unbridged remote src. Retain independent
+runner/bridge build-mode and rejection tests; this is not an isolated session.
+`test/html-mode-build.ts` owns each actual compilation in a fresh process with
+the Desktop working directory; repeated in-process Bun.build after SDK imports
+has a reproduced Windows file-cache failure. Keep all assertions and normal
+unit-test timeouts; this compiler subprocess is not a plugin sandbox.
+
+Portable catalogs use `@flowtools/sdk/compat/catalog`, logical source identity,
+package-relative paths and scan SHA-256 values. All current HTML entries remain
+prototype. The implemented evidence gate accepts only indexed or entry-resolved
+file evidence; it rejects api-verified/production-certified claims until their
+real certification protocol exists. Controlled fixture text hashes normalize
+CRLF to LF; scanned artifact hashes retain actual bytes. Never publish checkout
+roots or development URLs. Local preview needs an explicit development-only
+`VITE_HTML_PLUGIN_ROOT`; this path setting is not a sandbox or package grant.
 
 ADR-0001/0002 are accepted production designs, not evidence that isolation,
 grants, signed installation or recovery already work. The threat register tracks
@@ -227,19 +312,27 @@ advance maturity merely because documentation or CI passes.
 Built-in plugins are declared in `apps/web-vite/src/plugin/manifests.ts`
 and loaded at startup via `bootstrap()`.
 
-Host UI reads plugin/command state from Zustand stores:
+Host UI reads plugin/command/settings state from Zustand stores:
 
 - `pluginRegistryStore`: reactive plugin list
 - `commandStore`: command palette items + execution
-- `runHistoryStore`: persisted tool execution history
 - `settingsStore`: persisted host settings
+
+Execution UI uses `ExecutionPanel` from `@flowtools/ui`, bound to the real
+host adapter and `executePlugin()` from `@flowtools/sdk/execution`. Use
+`createExecutionHistory()` for stable external-store snapshots, formatVersion 1,
+bounded metadata-only records and visible persistence errors. Web uses
+`flowtools-web-run-history-v1`; Desktop uses `flowtools-desktop-run-history-v1`.
+Never persist raw input/output or exception messages. Do not import/delete
+unverified legacy history; preserve the old key for deliberate recovery.
 
 Desktop routes are owned by `apps/desktop` and should use TanStack Router. The
 current routes are `/`, `/settings`, `/plugins`, `/permissions`, and
 `/run/$commandId`. For React/SDK app plugins, `/run/$commandId` must render the
 plugin panel through the SDK runtime provider. For HTML plugins with a `main`
-entry, `/run/$commandId` must launch the plugin UI in the desktop runner instead
-of acting as a metadata detail page.
+entry, `/run/$commandId` denies execution by default and explains why. Only DEV
+plus explicit unsafe opt-in may dynamically launch the development runner;
+catalog or saved activation state cannot grant production execution.
 
 Desktop native capability work should prefer official Tauri plugins installed
 with `bun tauri add` (`fs`, `dialog`, `clipboard-manager`, `notification`,
@@ -296,6 +389,20 @@ Current validation gate:
 5. Manual validation for changed flows (for web host, verify routes and plugin
    rendering in `apps/web-vite`)
 
+The reproducible Web/Tauri execution acceptance harness is
+`apps/ui-test/scripts/validate-execution-hosts.ts` (run with Node, not Bun).
+Follow `docs/validation/p0-execution-hosts.md`. Never launch the default Debug
+desktop against user data: startup currently resets its database. Use the
+dedicated validation config, fresh test identity/profile and loopback-only
+child-process CDP; never persist remote debugging in production configuration.
+Screenshot inspection and keyboard checks do not certify NVDA or other platforms.
+For maintainer manual acceptance, use `tauri.manual-validation.conf.json` in
+`apps/desktop`, verify its test identity and title, and use fixture data only.
+It is visible, adds no remote debugging, and does not change production config.
+Validation URLs must use `/?execution-validation=...`, not
+`index.html?execution-validation=...`: the latter enters an unmatched route.
+The native harness must check initial launcher rendering before navigation.
+
 ## Documentation Sync (Required and !Important)
 
 When code includes major refactoring or important new features, update these
@@ -319,6 +426,20 @@ Complete production-roadmap milestones incrementally. Each completed milestone
 must be independently validated and recorded in one focused Conventional
 Commit before work begins on the next milestone. Do not bundle multiple
 completed roadmap milestones into one commit.
+
+Phase 0 continuation uses P0.2a/b/c and P0.3a/b/c from the roadmap. Implement
+the shared SDK executor before changing host execution, then validate built-in
+smoke fixtures before maturity/catalog and production-entry gates. Execution
+tests must call the real plugin implementation; controlled capability adapters
+are permitted, replacing `run()` with synthetic success is not. Keep maturity
+separate from compatibility evidence and do not mark Phase 0 done early.
+
+Keep `plugins/test/smoke-fixtures.ts` exactly aligned with CLI discovery and
+built-in entries; missing fixtures fail the smoke gate. Network fixtures must
+use the SDK request capability and reserved `.invalid` URLs, not global fetch
+or live websites. Todo run and setup share the declared host store; the CLI
+legacy storage key is validated before writes, never silently overwritten on
+corruption. Do not claim this is automatic migration or a persistent grant.
 
 PRs should include:
 

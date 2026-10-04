@@ -18,6 +18,7 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@flowtools/plugins": "workspace:*",
     "@flowtools/sdk": "workspace:*",
     "@flowtools/ui": "workspace:*",
     "@heroui/react": "catalog:",

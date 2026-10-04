@@ -30,7 +30,7 @@ import {
   PLUGIN_STORE_STORAGE_KEY,
   PLUGIN_STORE_STORAGE_NAMESPACE,
   RUNTIME_PREFIX,
-} from '@/constants'
+} from '../constants'
 
 interface InternalPluginStoreState {
   state: PluginStoreState
@@ -46,6 +46,8 @@ export interface CreateWebRuntimeContextOptions {
 
 export interface CreateWebToolContextOptions {
   pluginId: string
+  pluginType?: PluginType
+  storeShape?: PluginStoreShape
   permissions?: readonly Permission[]
   mode?: RuntimeMode
   signal?: AbortSignal
@@ -597,7 +599,8 @@ export function createWebToolContext(
     mode: options.mode,
     permissions: options.permissions,
     pluginId: options.pluginId,
-    pluginType: 'tool',
+    pluginType: options.pluginType ?? 'tool',
+    storeShape: options.storeShape,
   })
 
   return {

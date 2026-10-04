@@ -1,49 +1,22 @@
 import { useState } from 'react'
 
+import { describeInputSchema } from '@flowtools/sdk/execution'
 import {
-  RunInputPanel,
-  RunLogList,
-  RunPanel,
-  RunResultPanel,
-  RunStatusStrip,
+  ExecutionPanel,
+  PluginMaturityBadge,
   ToolDetailPage,
   ToolPermissionList,
   ToolSummaryCard,
-  ToolVersionTimeline,
-  type RunLogEntry,
-  type RunResultPayload,
-  type RunStatus,
-  type ToolVersionRecord,
 } from '@flowtools/ui'
-import {
-  ArrowLeftIcon,
-  CircleCheckIcon,
-  EyeIcon,
-  PlayIcon,
-  SparklesIcon,
-} from '@flowtools/ui/icons'
+import { ArrowLeftIcon, EyeIcon, PlayIcon } from '@flowtools/ui/icons'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useStore } from 'zustand'
 
 import { Button, Chip, Tabs } from '@heroui/react'
 
-import { renderWebAppPlugin } from '@/runtime'
+import { renderWebAppPlugin, runWebPlugin } from '@/runtime'
 import { pluginRegistryStore } from '@/stores/plugin-registry-store'
-
-const versions: ToolVersionRecord[] = [
-  {
-    id: 'v1.0.0',
-    version: '1.0.0',
-    date: '2026-01-15',
-    notes: 'Initial release',
-  },
-  {
-    id: 'v1.1.0',
-    version: '1.1.0',
-    date: '2026-02-10',
-    notes: 'Bug fixes and improvements',
-  },
-]
+import { runHistoryStore } from '@/stores/run-history-store'
 
 export const Route = createFileRoute('/tools/$toolId')({
   component: ToolDetailPage_,
@@ -58,58 +31,6 @@ function ToolDetailPage_() {
   const registered = plugins.find(p => p.id === toolId)
   const plugin = registered?.plugin
   const meta = registered?.manifest
-
-  const [input, setInput] = useState('')
-  const [status, setStatus] = useState<RunStatus>('idle')
-  const [statusMessage, setStatusMessage] = useState('Waiting for input')
-  const [result, setResult] = useState<RunResultPayload>({
-    title: 'No Result Yet',
-    summary: 'Run the tool to see output.',
-  })
-  const [logs, setLogs] = useState<RunLogEntry[]>([])
-
-  const appendLog = (entry: RunLogEntry) => {
-    setLogs(current => [entry, ...current].slice(0, 8))
-  }
-
-  const handleRun = () => {
-    const now = new Date()
-    const timestamp = now.toLocaleTimeString()
-
-    if (!input.trim()) {
-      setStatus('error')
-      setStatusMessage('Input cannot be empty')
-      appendLog({
-        id: `${Date.now()}-error`,
-        level: 'error',
-        message: 'Run rejected: input is empty',
-        timestamp,
-      })
-      return
-    }
-
-    setStatus('running')
-    setStatusMessage('Executing...')
-
-    setTimeout(() => {
-      const output = input.toUpperCase()
-
-      setStatus('success')
-      setStatusMessage('Execution completed')
-      setResult({
-        title: 'Execution Result',
-        summary: `Processed ${input.length} characters`,
-        raw: output,
-      })
-
-      appendLog({
-        id: `${Date.now()}-success`,
-        level: 'info',
-        message: `Ran input: ${input}`,
-        timestamp: new Date().toLocaleTimeString(),
-      })
-    }, 300)
-  }
 
   if (!meta) {
     return (
@@ -159,7 +80,6 @@ function ToolDetailPage_() {
   }
 
   const isAppPlugin = plugin?.type === 'app'
-  const StatusIcon = CircleCheckIcon
 
   return (
     <div className="flex flex-col gap-6 p-6 lg:p-8">
@@ -175,12 +95,7 @@ function ToolDetailPage_() {
         <div className="h-4 w-px bg-separator" />
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-semibold text-foreground">{meta.name}</h1>
-          <Chip color="success" size="sm" variant="soft">
-            <span className="flex items-center gap-1">
-              <StatusIcon size={12} />
-              stable
-            </span>
-          </Chip>
+          <PluginMaturityBadge maturity={meta.maturity} />
           <Chip size="sm" variant="secondary">
             v{meta.version}
           </Chip>
@@ -216,7 +131,7 @@ function ToolDetailPage_() {
                 <ToolSummaryCard
                   category={meta.category}
                   description={meta.description}
-                  status="stable"
+                  status={meta.maturity}
                   title={meta.name}
                   version={meta.version}
                 />
@@ -242,7 +157,9 @@ function ToolDetailPage_() {
                   <h2 className="text-sm font-semibold text-foreground">
                     Version History
                   </h2>
-                  <ToolVersionTimeline records={versions} />
+                  <p className="text-sm text-muted">
+                    Loaded v{meta.version}; release history is not provided.
+                  </p>
                 </section>
               </div>
 
@@ -267,47 +184,28 @@ function ToolDetailPage_() {
         </Tabs.Panel>
 
         <Tabs.Panel id="run">
-          {isAppPlugin && plugin ? (
-            <div className="rounded-(--radius) border border-border bg-surface p-4">
-              {renderWebAppPlugin(plugin)}
-            </div>
-          ) : (
-            <RunPanel>
-              <RunPanel.Content>
-                <RunStatusStrip
-                  duration={status === 'success' ? '24ms' : undefined}
-                  message={statusMessage}
-                  onReset={() => {
-                    setStatus('idle')
-                    setStatusMessage('Waiting for input')
-                    setResult({
-                      title: 'No Result Yet',
-                      summary: 'Run the tool to see output.',
-                    })
-                  }}
-                  status={status}
-                />
-                <RunInputPanel
-                  label="Tool Input"
-                  onChange={setInput}
-                  onRun={handleRun}
-                  value={input}
-                />
-                <RunResultPanel result={result} />
-                <RunLogList entries={logs} />
-              </RunPanel.Content>
-              <RunPanel.Footer>
-                <Button
-                  onPress={() => setInput('demo-input')}
-                  size="sm"
-                  variant="ghost"
-                >
-                  <SparklesIcon size={16} />
-                  Fill Demo Input
-                </Button>
-              </RunPanel.Footer>
-            </RunPanel>
-          )}
+          <div className="space-y-4">
+            {isAppPlugin && plugin ? (
+              <div className="rounded-(--radius) border border-border bg-surface p-4">
+                {renderWebAppPlugin(plugin)}
+              </div>
+            ) : null}
+            {plugin ? (
+              <ExecutionPanel
+                key={plugin.meta.id}
+                meta={plugin.meta}
+                inputSchema={describeInputSchema(plugin.inputSchema)}
+                history={runHistoryStore}
+                execute={(input, signal) =>
+                  runWebPlugin(plugin, input, { signal })
+                }
+              />
+            ) : (
+              <p role="alert">
+                Actual plugin code is not loaded; no execution is available.
+              </p>
+            )}
+          </div>
         </Tabs.Panel>
       </Tabs>
     </div>

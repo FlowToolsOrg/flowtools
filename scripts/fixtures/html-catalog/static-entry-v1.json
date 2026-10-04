@@ -1,0 +1,21 @@
+{
+  "formatVersion": 1,
+  "id": "static-entry-v1",
+  "scope": "local-file-existence-and-sha256-only",
+  "checks": [
+    "package-relative-path",
+    "realpath-containment",
+    "regular-file",
+    "no-source-entry-script",
+    "sha256"
+  ],
+  "test": "scripts/catalog.test.ts",
+  "excludes": [
+    "runtime",
+    "bridge",
+    "platform",
+    "package-signature",
+    "authorization",
+    "security-certification"
+  ]
+}

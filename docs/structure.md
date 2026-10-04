@@ -14,6 +14,80 @@
 
 ## 工程验证结构
 
+- `scripts/production-artifacts.ts`：固定生产目录的只读 byte/hash、危险指纹、
+  已知 certification AST 与 canary 检查；拒绝路径重定向，不执行产物。
+  `verify-production-entrypoints.ts`：仅两端固定 build，child-only probes 后
+  所有文件逐字节一致。`production-artifacts.test.ts` 与 CI contract 回归
+  覆盖拒绝/顺序/fatal。post-build CI 执行，无 native launch 或用户 DB。
+  见 [产物 gate](./validation/p0-production-artifacts.md)。
+
+- Desktop `runtime/html-development-policy.ts` 是 Host 构建策略；普通
+  `html-plugin-bridge.ts` 永久拒绝。`development-html-launch.ts` / bridge / surface
+  仅在 DEV + opt-in 下动态加载；生产不创建 iframe 或读外部入口，开发也不支持
+  raw native/SQL/FS/opener。共享 command types 不反向导入整个 Host App。
+  `test/html-plugin-bridge-gate.test.ts` 与 `html-development-matrix.test.ts` 覆盖
+  普通入口、副作用之前拒绝、六构建模式及原生危险方法始终禁用；不 mock
+  用户数据。这些自动化不是实窗验收；独立 r3 人工清单与身份核查分别记录于
+  [Desktop gate](./validation/p0-desktop-external-gate.md)。
+  `test/html-mode-build.ts` 为每个模式提供独立实际编译进程，规避已复现的
+  Windows Bun 文件缓存生命周期问题；该进程不是插件隔离 runner。
+
+- `packages/sdk/src/services/plugin-file-loader.ts`：普通 SDK 的 deny-only 外部
+  入口；`development-plugin-file-loader.ts` / `development-policy.ts` 为显式
+  DEV + opt-in 的危险预览实现，只从 `@flowtools/sdk/development` 动态导入。
+  `packages/sdk/test/external-code-gate.test.ts` 覆盖导入前拒绝与构建模式矩阵。
+- Web `src/app/development-policy.ts` 与 registry store 在读文件/持久化之前
+  拒绝；bootstrap 不恢复外部源码，旧 IndexedDB 数据保留。对应
+  `src/app/external-code-gate.test.ts` 覆盖绕过 UI 和恢复/状态无副作用。
+  此为 P0.3b1 停用策略，不是第三方隔离；Desktop gate 仍待后继独立实施。
+  `apps/ui-test/scripts/validate-web-source-gate.ts` 用三个真实 Web server 与临时
+  Chromium context 验证默认拒绝、显式预览、键盘及旧源码保留；见
+  [源码入口验收](./validation/p0-web-source-gate.md)。
+
+- `packages/ui/src/components/plugin-status`：共享 maturity/evidence badge，
+  消费 SDK 词表；`ToolStatus` / `ToolMarketStatus` 是 PluginMaturity 别名。
+  `apps/ui-test/src/test/plugin-status` 覆盖四状态、缺省 Prototype 与证据不升级；
+  Web/Desktop 直接使用 metadata/catalog，不维护“stable”镜像状态。
+
+- `packages/sdk/src/compat/catalog.ts`：portable Catalog schema/path 与独立
+  indexed/entry-resolved 证据；公开无 React 的 `@flowtools/sdk/compat/catalog`。
+- `scripts/inspect-html-plugins.ts`：只读扫描 checkout，生成两份相同的 package
+  identity/相对资源/hash Catalog；无本机根路径、development URL 或认证升级。
+- `scripts/verify-plugin-catalog.ts` / `scripts/catalog.test.ts`：路径/identity/
+  hash fixture/假认证/重复目录拒绝门禁。fixture 位于
+  `scripts/fixtures/html-catalog/static-entry-v1.json`；控制文本 hash 归一化换行。
+- Desktop `src/runtime/catalog-entry.ts` / `test/catalog-entry.test.ts`：明确 DEV
+  与开发者指定的 checkout root 才解析本地相对入口；不是原生 scope enforcement。
+
+- `packages/sdk/src/types/maturity.ts` / `test/maturity.test.ts`：成熟度统一词表、
+  prototype 默认与独立 compatibility evidence enum；不执行安全认证。
+- `scripts/generate-manifests.ts`：构建时排序扫描内置 metadata，生成 Web/Desktop
+  manifest 与 `packages/cli/src/builtin-manifests.ts` 固定清单；read-only --check
+  检查三个输出。`plugins/test/maturity-contract.test.ts` 通过实际 compiled imports 和
+  CLI 子进程 list/info 验证 maturity 一致。源码正则扫描仍不是完整 manifest 验证。
+- `packages/cli/src/discovery.ts`：只读构建内嵌清单，未知 ID 在 IO 前拒绝；仅加载
+  固定 dist 普通文件，拒绝缺失/破损、junction/symlink 与 metadata 不一致，不再
+  扫描或改写源码。`src/discovery.test.ts` 复制真实 compiled CLI 到临时隔离目录，
+  执行未知入口、坏产物与顶层源码 canary 拒绝回归；CLI test 自行构建 CLI，
+  十二真实内置执行仍由 plugins smoke 验证，不新增循环 workspace 依赖。
+
+- `packages/sdk/src/execution/executor.ts` / `test/executor.test.ts`：共享真实
+  `run()` 执行边界，校验/defaults、稳定 envelope、取消/异步等待上限与资源清理。
+  输入摘要只保留类型和大小；CLI/Web/Desktop 已接入，执行器不是 sandbox。
+- `packages/sdk/src/execution/history.ts`：versioned 元数据-only external store，
+  bounded records、失败/取消、刷新恢复与非法记录拒绝；不导入旧未验证 key。
+- `packages/ui/src/components/run-panel/execution-panel.tsx`：三态操作、JSON/schema、
+  实际 envelope、取消/卸载清理与不可序列化输出失败；不制造演示结果。
+- `apps/web-vite/src/runtime/plugin-runtime.tsx` / Desktop
+  `src/runtime/plugin-execution.ts`：宿主真实能力 context + SDK executor。
+- `apps/ui-test/scripts/validate-execution-hosts.ts`：真实 Web/Tauri 验收，Node
+  Playwright + 独立测试 identity/CDP，不 mock 原生 IPC；记录与截图在
+  [宿主验收](./validation/p0-execution-hosts.md)。
+- Desktop `tauri.execution-validation.conf.json` / `tauri.manual-validation.conf.json`：
+  隐藏自动化与可见人工验收的独立测试身份，均以根路由查询标记进入首页。
+  `src-tauri/tests/bindings.rs` 用真实 Tauri MockRuntime 验证入口 URL，不启动宿主；
+  URL 回归不替代独立包实窗验收。
+
 - `scripts/docs-check.ts` / `docs-check.test.ts`：十份核心/ADR/威胁/PR 文档的
   只读契约，内联本地链接路径与风险字段验证；脚本由 Desktop 测试任务消费。
   不检查远端 URL、Markdown anchor、运行时安全或 reviewer 批准。
@@ -31,7 +105,15 @@
   禁止空测试成功选项与测试缓存。根 `test` 和 `build` 必须顺序执行。
 
 - `packages/sdk/test`：SDK 值对象、registry、lifecycle、watchdog 与公开导出。
-- `packages/cli/src/*.test.ts`：CLI 参数、schema、formatter 与 runner。
+- `packages/cli/src/*.test.ts`：CLI 参数、schema、formatter、SDK runner/context
+  与 entry 子进程拒绝路径；使用无 React 的 `@flowtools/sdk/execution` 子入口。
+- `plugins/test/cli-execution.test.ts`：真实编译后 CLI 的 generated flags / JSON
+  envelope / schema 错误 / 非法 timeout / text 回归；不替换内置插件 `run()`。
+- `plugins/test/smoke-fixtures.ts` / `plugin-smoke.test.ts`：十二个真实 compiled
+  entries 与 CLI discovery 一一对应；注入受控 request/storage，实际 success、
+  schema/abort 拒绝无副作用及异常 envelope。根 `smoke:plugins` 显式构建前置产物。
+- `plugins/test/state-network.test.ts`：SDK request 不能退回 raw fetch；Todo
+  app store/CLI key、缺失 capability 与损坏旧数据的保护回归。
 - `packages/ui/test`：构建后公开导出；`test/consumer` 独立编译声明消费。
 - `plugins/plugin-entries.ts`：构建与合约测试共享目录 inventory；
   `plugins/test` 验证内置插件和 CLI 执行链路。
@@ -139,7 +221,7 @@ Virtual Bridge Link 流程:
 
 Web (基于 Vite): 实现 Dynamic Import (动态导入)、SDK Mount (SDK 挂载)、Import Map (导入映射)。
 
-Desktop (基于 Tauri): 已有 `apps/desktop` 壳，用于承载 HeroUI + Tailwind 桌面启动器、TanStack Router 桌面路由、React/SDK 插件面板、HTML 插件目录和 iframe 插件运行容器。原生能力通过官方 Tauri plugins 安装，再由 desktop SDK adapter 暴露为标准 capability。
+Desktop (基于 Tauri): 已有 `apps/desktop` 壳，用于承载 HeroUI + Tailwind 桌面启动器、TanStack Router 桌面路由、React/SDK 内置插件面板和 HTML 插件目录。HTML/Legacy 执行默认拒绝，iframe runner 仅供显式危险 DEV 预览。原生能力通过官方 Tauri plugins 安装，再由 desktop SDK adapter 暴露为内置插件 capability；这不构成第三方授权。
 
 Desktop 插件元数据逐步迁移到 Rust 后端。`apps/desktop/src-tauri/src/models/plugin.rs`
 定义插件记录，`repositories/plugin_repository.rs` 负责数据库增删改查、启用/禁用和基础校验，`commands/plugin_commands.rs` 暴露 Tauri IPC。持久化的 `state`
@@ -152,7 +234,8 @@ Desktop 插件元数据逐步迁移到 Rust 后端。`apps/desktop/src-tauri/src
 - `apps/desktop/src/data/html-plugin-catalog.json`: desktop 启动器直接读取的 HTML 插件目录。
 - `docs/html-plugin-catalog.json`: 同源的人类可读目录副本，供后续插件市场/导入器参考。
 - `apps/desktop/src/runtime/desktop-capabilities.ts`: 将 SDK `fs/network/clipboard/dialog/notification/storage/db/native` capability 映射到 Tauri plugins 或 WebView API。
-- `apps/desktop/src/runtime/html-plugin-bridge.ts`: 在 HTML iframe 中注入旧版宿主 API，并通过 `postMessage` 回到 desktop SDK runtime。
+- `apps/desktop/src/runtime/html-plugin-bridge.ts`: 普通入口永久拒绝；开发实现拆分至
+  `development-html-plugin-bridge.ts`，仅动态加载的危险预览使用有限方法表。
 
 兼容级别：
 

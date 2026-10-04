@@ -23,6 +23,7 @@ export default definePlugin({
     id: 'plugin-regex-tester',
     name: '正则表达式测试',
     version: '0.1.0',
+    maturity: 'prototype',
     description: '测试和调试正则表达式',
     permissions: ['clipboard'],
     tags: ['regex', 'regexp', 'test', 'pattern'],

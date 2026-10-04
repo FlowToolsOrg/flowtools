@@ -48,6 +48,7 @@ export default definePlugin({
     id: 'plugin-base64-encoder',
     name: 'Base64 编解码',
     version: '0.1.0',
+    maturity: 'prototype',
     description: '文本与 Base64 编码互转',
     permissions: ['clipboard'],
     tags: ['base64', 'encode', 'decode', 'converter'],

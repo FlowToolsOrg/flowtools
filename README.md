@@ -65,15 +65,93 @@ not yet implemented. See [trust boundaries](./docs/adr/0001-plugin-trust-boundar
 [capability/package policy](./docs/adr/0002-capability-and-package-policy.md),
 [open threat register](./docs/security/threat-model.md) and the
 [production roadmap](./docs/production-roadmap.md).
+The SDK now exports `executePlugin()` for real app/tool `run()` calls with
+schema validation/defaults, versioned execution metadata, stable failure codes,
+cancellation and bounded asynchronous waiting. CLI, Web and Desktop use this
+same boundary (P0.2b). Web/Desktop retain app panels and provide a shared
+`ExecutionPanel` for actual JSON runs, errors and cancellation. Versioned
+history stores at most 200 metadata-only attempts, including failures; inputs,
+output values and exception messages remain transient. Unverified legacy keys
+are left untouched and excluded from the new history. See the
+[Windows host acceptance record](./docs/validation/p0-execution-hosts.md).
+Native validation uses isolated test identities and a root-route query marker;
+the harness checks initial launcher rendering before navigating. Maintainer
+development-mode results and standalone packaged-app acceptance are recorded
+separately; a successful build or URL-resolution test is not visual sign-off.
+This helper does not isolate code or stop synchronous loops. Execution
+metadata records input shape only, never raw input values or field names.
+`bun run smoke:plugins` builds package prerequisites and exercises all twelve
+real compiled entries through the CLI SDK runner with controlled in-memory
+storage and scoped fixture responses, not public network or user data. It also
+checks schema rejection, cancellation and actual plugin exceptions.
+Todo JSON runs share the host app store with its panel (CLI retains its existing
+validated `todos` key). Website latency uses SDK request with no raw fetch fallback.
+The SDK's maturity vocabulary is `prototype`, `experimental`, `beta`,
+`production`; missing metadata means `prototype`. All twelve built-ins and both
+host manifests explicitly declare `prototype`, also shown by CLI list/info.
+Compatibility evidence (`indexed` through `production-certified`) is separate
+and never grants execution or proves maturity. Shared UI, Web and Desktop read
+actual metadata through common maturity badges; missing values display Prototype,
+never Stable. Compatibility evidence is displayed independently, not inferred
+from maturity, support classification or catalog membership.
+The version-1 portable HTML catalog stores package identity, relative paths and
+scan hashes, never a checkout root or development URL. Its 125 prototype entries
+contain 47 `entry-resolved` file receipts and 78 `indexed` records; these are not
+runtime/API/security certification. `bun run verify:plugin-catalog` checks both
+catalog copies and the controlled fixture digest without reading a local checkout.
+Legacy local preview requires an explicit `VITE_HTML_PLUGIN_ROOT` in a development
+server; the published catalog does not locate or authorize installed packages.
 The HTML catalog is discovery evidence only, not a claim that 125 plugins are
 compatible, secure or production-ready. Signed third-party code remains untrusted.
+
+P0.3b1 closes the SDK/Web source entry by default: the ordinary SDK
+`PluginFileLoader` always refuses with `EXTERNAL_CODE_DISABLED`, and no longer
+exports transpilation/import-map injection. Web source preview requires both a
+development server and explicit `VITE_ENABLE_UNSAFE_PLUGIN_PREVIEW=1`; its unsafe
+implementation is dynamically imported from `@flowtools/sdk/development` and
+absent from the Web production bundle. The UI warns that unsigned code shares
+the host realm and is not installed, isolated or granted. Old IndexedDB source
+records are preserved, never automatically restored in any mode.
+
+P0.3b2 binds CLI discovery/loading to a tracked, generated built-in inventory,
+embedded in the CLI build and generated alongside Web/Desktop manifests. Runtime
+directory additions and caller paths cannot add entries. Only fixed regular-file
+`plugins/dist/<built-in-id>.js` artifacts are loaded; missing/broken artifacts,
+directory junctions and inconsistent metadata fail closed. `list/info/run/help`
+report missing builds instead of importing TSX or rewriting headless source.
+Regenerate all three inventories with `bun run generate:manifests`, then run
+`bun run build:packages` after changing built-ins. This is T1 build consistency,
+not package authentication, TOCTOU protection or a third-party sandbox. Desktop
+entry closure is completed by P0.3b3; the reusable artifact gate remains P0.3b4.
+See the
+[compiled CLI acceptance record](./docs/validation/p0-cli-compiled-inventory.md).
+
+P0.3b3 closes Desktop HTML/Legacy execution by default, before activation,
+HTML fetching or iframe creation. Saved enabled metadata and catalog evidence
+cannot unlock it. The runner and bridge are development-only, dynamically loaded
+behind DEV + `VITE_ENABLE_UNSAFE_PLUGIN_PREVIEW=1`, with a visible unsigned,
+shared-realm warning. Ordinary bridge APIs are deny-only. Even unsafe preview
+does not expose raw invoke, SQL, arbitrary files or opener calls; fetch failure
+does not fall back to opening a raw remote page. Built-in React/SDK flows remain.
+All root gates, the production opt-in artifact comparison and three real catalog
+route denials passed. The dedicated r3 native package also passed maintainer
+manual acceptance, separately recorded from development screenshots. See the
+[Desktop entry record](./docs/validation/p0-desktop-external-gate.md).
+
+P0.3b4 adds `bun run verify:production-entrypoints` after the root build in CI.
+It checks actual Web/Desktop files, known unsafe fingerprints and certification
+syntax, then rebuilds with child-only development/path/URL/synthetic-key probes.
+All bytes must match the ordinary production baseline; it is not signing or
+security certification. The current 45 host artifacts passed; full milestone
+verification is recorded in [the artifact gate](./docs/validation/p0-production-artifacts.md).
 
 - Product direction: desktop-first, cross-platform ready.
 - Current runnable hosts:
   - `apps/web-vite`: web runtime prototype.
   - `apps/desktop`: Tauri desktop shell with a HeroUI + Tailwind powered
     launcher surface, TanStack Router desktop routes, React/SDK plugin panels,
-    and an iframe-based plugin launch surface for legacy HTML `main` entries.
+    and an explicitly enabled development-only HTML `main` preview; production
+    external execution is disabled.
     Desktop native capabilities are installed through official Tauri plugins
     and exposed to plugins through the existing SDK capability contract.
 - Core packages under active development:
@@ -224,11 +302,12 @@ FlowTools descriptors, then classified by required runtime support:
 - `metadata`: useful for indexing or headless rewrite, but no UI entry exists.
 
 Desktop HTML execution is a compatibility layer, not a second plugin model:
-the iframe bridge maps legacy host API calls back into the SDK capabilities
-(`fs`, `network`, `clipboard`, `dialog`, `notification`, `storage`, `db`,
-`native`). Tauri is only the desktop implementation behind that contract.
-For source checkouts, static HTML plugins must be built first, or their own dev
-server must be running at `development.main`.
+it is disabled by default. Only explicit unsafe development preview uses an
+iframe and a limited UI/clipboard/dialog/notification bridge. Raw native,
+SQL, filesystem and opener calls remain disabled even there. The broader SDK
+capability adapter is for host-bound built-ins, not third-party authorization.
+Local preview requires a built static entry and `VITE_HTML_PLUGIN_ROOT`;
+portable catalogs do not publish or automatically load development URLs.
 
 All plugins can declare `inputSchema` (Zod `z.object({...})`) for:
 
@@ -288,13 +367,23 @@ bun run packages/cli/src/cli.ts run plugin-uuid-generator --count 5
 bun run packages/cli/src/cli.ts run plugin-uuid-generator \
   --input '{"count": 5}'
 
-# Output as text (default is JSON)
+# Output as text (flags default to text; --input defaults to JSON)
 bun run packages/cli/src/cli.ts run plugin-uuid-generator --count 3 \
   --format text
 ```
 
 CLI flags are auto-generated from each plugin's `inputSchema` (Zod).
 Input is validated with `z.safeParse()` before execution.
+CLI JSON now returns the shared execution envelope: success has `data` containing
+the actual `CommandResult`; failure has `error.code/message`, is printed as JSON
+to stdout and exits with status 1. Both include real plugin version/timing and
+safe input-shape metadata. This is a prototype API change from bare result JSON;
+text output keeps its formatter. Non-serializable JSON output fails explicitly
+with `OUTPUT_INVALID`. `@flowtools/sdk/execution` is a non-React runtime subpath.
+The CLI context exposes only declared built-in storage/network capabilities,
+uses SDK `remove/zustand`, does not create its own execution timer, and does not
+emit raw plugin logs. Existing valid storage filenames remain unchanged; invalid
+path/reserved-device keys fail. This is not third-party authorization/isolation.
 Desktop Tauri host can invoke CLI via `Command::new("flowtools")` and parse JSON output for AI agent integration.
 
 ## SDK Hooks

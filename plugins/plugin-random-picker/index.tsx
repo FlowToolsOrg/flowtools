@@ -16,6 +16,7 @@ export default definePlugin({
     id: 'plugin-random-picker',
     name: '随机点名',
     version: '0.1.0',
+    maturity: 'prototype',
     description: '在线名单随机点名工具',
     permissions: [],
     tags: ['random', 'picker', 'name'],

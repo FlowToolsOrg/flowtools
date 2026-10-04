@@ -5,6 +5,7 @@ import { type ComponentProps, type ComponentPropsWithoutRef } from 'react'
 import { Card, Chip } from '@heroui/react'
 
 import { cn } from '../../utils/class-name'
+import { PluginMaturityBadge } from '../plugin-status'
 
 import { type ToolMarketStatus } from './types'
 
@@ -29,23 +30,6 @@ export interface ToolCardMetaProps extends ComponentPropsWithoutRef<'div'> {
 export interface ToolCardTagsProps extends ComponentPropsWithoutRef<'div'> {}
 
 export interface ToolCardActionsProps extends ComponentPropsWithoutRef<'div'> {}
-
-const statusTextMap: Record<ToolMarketStatus, string> = {
-  stable: 'Stable',
-  beta: 'Beta',
-  experimental: 'Experimental',
-  deprecated: 'Deprecated',
-}
-
-const statusColorMap: Record<
-  ToolMarketStatus,
-  'success' | 'accent' | 'warning' | 'danger'
-> = {
-  stable: 'success',
-  beta: 'accent',
-  experimental: 'warning',
-  deprecated: 'danger',
-}
 
 const ToolCardRoot = ({
   children,
@@ -133,11 +117,7 @@ const ToolCardMeta = ({
       className={cn('mt-3 flex flex-wrap items-center gap-2', className)}
       {...props}
     >
-      {status ? (
-        <Chip color={statusColorMap[status]} size="sm" variant="soft">
-          {statusTextMap[status]}
-        </Chip>
-      ) : null}
+      <PluginMaturityBadge maturity={status} />
       {version ? (
         <Chip size="sm" variant="secondary">
           v{version}

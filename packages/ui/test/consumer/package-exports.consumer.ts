@@ -2,6 +2,12 @@ import type { ComponentProps } from 'react'
 
 import {
   CommandPalette,
+  ExecutionPanel,
+  PluginMaturityBadge,
+  PluginCompatibilityBadge,
+  type PluginMaturityBadgeProps,
+  type PluginCompatibilityBadgeProps,
+  type ExecutionPanelProps,
   ToolLayoutMain,
   ToolLayoutSidebar,
   type CommandPaletteItem,
@@ -20,6 +26,9 @@ import {
 
 export const runtimeExports = [
   CommandPalette,
+  ExecutionPanel,
+  PluginMaturityBadge,
+  PluginCompatibilityBadge,
   ToolLayoutMain,
   ToolLayoutSidebar,
   Button,
@@ -38,10 +47,14 @@ export const toolEntity: ToolEntity = {
   id: 'consumer-contract',
   name: 'Consumer contract',
   description: 'Validates the generated package declarations',
-  status: 'stable',
+  status: 'prototype',
 }
 
 export interface ConsumerTypeContract {
+  maturityProps: PluginMaturityBadgeProps
+  evidenceProps: PluginCompatibilityBadgeProps
+  executionProps: ExecutionPanelProps
+  inferredExecutionProps: ComponentProps<typeof ExecutionPanel>
   rootProps: ToolLayoutMainProps
   inferredRootProps: ComponentProps<typeof ToolLayoutMain>
   pluginButtonProps: ComponentProps<typeof Button>

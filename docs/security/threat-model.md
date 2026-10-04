@@ -1,6 +1,6 @@
 # FlowTools 插件威胁模型
 
-- 复核日期：2026-10-03；源码基线：`eed0e4d`（P0.4 开始前）
+- 复核日期：2026-10-04；源码基线：`eed0e4d`（P0.4 开始前）
 - 范围：Desktop/Web/CLI 插件入口，以及后续包安装、授权与应用更新设计
 - 状态：prototype；高风险项全部 open，未接受 production 风险豁免
 - 责任：Repository Maintainer 对发布阻断负责；下列 owner 是实施角色，
@@ -28,6 +28,9 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 - 入口：市场/目录/外部包到安装、加载；高危，open（Tampering/Spoofing）
 - 现状：Catalog 是扫描结果，市场操作主要持久化元数据，没有完整签名下载、
   解包校验与原子安装。发现插件不能证明 publisher 或可执行文件身份。
+  P0.3a2 相对目录包含稳定 identity、manifest/entry 扫描 hash 与 fixture scope；
+  假认证标签、缺失 fixture、路径逃逸和不一致目录被拒绝。hash 未签名，仅证明
+  扫描字节/文件存在，不是供应链或实时安装验证；本项仍 open。
 - 证据：[市场与 runner](../../apps/desktop/src/App.tsx)、
   [目录生成器](../../scripts/inspect-html-plugins.ts)
 - Owner：Plugin Platform / Release；Repository Maintainer 为发布责任人
@@ -41,10 +44,26 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 ### SEC-002 外部模块进入宿主 realm
 
 - 入口：浏览器 File/Blob module、动态 import；严重，open（Elevation）
-- 现状：PluginFileLoader 在宿主 document 注入模块，执行后才检查 default
+- 现状：危险开发预览仍在宿主 document 注入模块，执行后才检查 default
   export。SDK hooks、metadata 校验或 ErrorBoundary 无法限制已运行代码。
+  P0.3b1 普通 SDK 文件/外部对象入口已改为副作用前拒绝；危险实现仅在独立
+  development 子入口且 Host DEV + 显式 opt-in 下开放。Web 生产不加载它，
+  所有模式不自动恢复旧 IndexedDB 源码、不静默删除数据。拒绝 API 与构建模式
+  回归见 SDK/Web external-code-gate tests。P0.3b2 CLI 现只加载 Host 构建内嵌清单
+  对应的固定编译文件：未知 ID/路径在 IO 前拒绝，缺失/破损不回退源码，删除
+  headless rewrite；junction 与 metadata 不一致拒绝。P0.3b3 Desktop 已在 activation、
+  fetch、iframe 前默认拒绝，危险实现仅 DEV + opt-in 动态加载；独立 r3 包
+  功能/拒绝人工验收已回报通过，运行路径/身份已核实，不认证隔离或用户授权。
+  开发预览仍能访问 Host realm，内置加载器属于可信 Host API；签名/隔离/broker
+  未实现，本项保持 open，不把此停用策略称作生产 sandbox。
+  P0.3b4 新增 post-build 实际产物/child opt-in byte 不变量门禁，覆盖已知危险
+  指纹、伪认证语法与环境泄漏探针；不证明任意数据流或第三方包安全。
 - 证据：[文件加载器](../../packages/sdk/src/services/plugin-file-loader.ts)、
-  [CLI discovery](../../packages/cli/src/discovery.ts)
+  [危险开发实现](../../packages/sdk/src/services/development-plugin-file-loader.ts)、
+  [SDK 拒绝回归](../../packages/sdk/test/external-code-gate.test.ts)、
+  [Web 拒绝回归](../../apps/web-vite/src/app/external-code-gate.test.ts)、
+  [CLI discovery](../../packages/cli/src/discovery.ts)、
+  [compiled CLI 拒绝回归](../../packages/cli/src/discovery.test.ts)
 - Owner：SDK / Runtime / Desktop
 - 缓解：按 ADR-0001 分流 T1 与 T2/T3；生产准入在执行前完成；不可信源码
   不进主 realm，未满足隔离条件的平台拒绝执行。
@@ -58,7 +77,14 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 - 现状：runner 校验 source/envelope，但没有完整 origin/session/nonce schema；
   双向目标为 `*`；native adapter 转发 command 字符串。build.rs 未配置
   AppManifest command permission allowlist。
+  P0.3b3 普通 HTML bridge 一律拒绝；有限开发 bridge 在 Host DEV + opt-in 下开放，
+  raw native/SQL/FS/opener 均在 payload 读取前禁用。Host context 来自 command 而
+  非请求身份，但开发 iframe 仍同 realm、无真正 session/grant，T1 adapter
+  仍有 raw native/SQL，风险不关闭。
 - 证据：[HTML bridge](../../apps/desktop/src/runtime/html-plugin-bridge.ts)、
+  [开发 bridge](../../apps/desktop/src/runtime/development-html-plugin-bridge.ts)、
+  [入口回归](../../apps/desktop/test/html-plugin-bridge-gate.test.ts)、
+  [构建矩阵](../../apps/desktop/test/html-development-matrix.test.ts)、
   [runner](../../apps/desktop/src/App.tsx)、
   [native adapter](../../apps/desktop/src/runtime/desktop-capabilities.ts)、
   [Tauri build](../../apps/desktop/src-tauri/build.rs)
@@ -73,8 +99,10 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 ### SEC-004 文件 scope 越界与 TOCTOU
 
 - 入口：fs 路径、dialog 返回路径、CLI storage key；高危，open
-- 现状：Desktop 将路径交给官方 FS 插件，未绑定 per-plugin scope；CLI storage
-  用 `join(dir, key + '.json')`。本记录不证明官方插件能读取所有系统文件。
+- 现状：Desktop 将路径交给官方 FS 插件，未绑定 per-plugin scope；P0.2b1 CLI
+  验证 kebab-case 插件 ID、限制 storage key 字符并拒绝 Windows 设备保留名，
+  合法已有键文件位置不变。未实现 canonical/symlink/reparse/TOCTOU 防护，仍 open。
+  本记录不证明官方插件能读取所有系统文件。
 - 证据：[Desktop FS](../../apps/desktop/src/runtime/desktop-capabilities.ts)、
   [CLI context](../../packages/cli/src/context.ts)、
   [主窗口 capability](../../apps/desktop/src-tauri/capabilities/default.json)
@@ -90,6 +118,9 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 - 入口：SDK request、插件自身 fetch/资源请求、重定向；高危，open
 - 现状：Desktop/Web/CLI 直接 fetch；Desktop CSP 为空，没有统一 host/port/
   redirect 策略。未证明跨 origin 请求或所有 private 地址都会成功。
+  P0.2c 网站延迟 built-in 的 run/panel 已走 SDK request；缺失能力不会退回 raw
+  fetch，受控 fixture 不访问公网。adapter 最终仍 fetch，同 realm 代码仍可绕过，
+  网络 broker/出站限制并未实现，本风险保持 open。
 - 证据：[Desktop request](../../apps/desktop/src/runtime/desktop-capabilities.ts)、
   [Web context](../../apps/web-vite/src/runtime/ctx.tsx)、
   [Tauri CSP](../../apps/desktop/src-tauri/tauri.conf.json)
@@ -106,6 +137,8 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 - 现状：插件 DB 共享 `sqlite:flowtools.db`，query 接收 raw SQL；storage key
   前缀不是恶意代码边界。Host `app.sqlite` 在 Debug 启动删除；Rust repository
   的元数据校验和内存测试不等于插件数据隔离或生产 migration。
+  P0.2c Todo run 使用面板共享 app store；CLI 保留旧 key，损坏数据拒绝写入，
+  无能力时不伪报保存；这不是通用 migration/备份/隔离。
 - 证据：[DB adapter](../../apps/desktop/src/runtime/desktop-capabilities.ts)、
   [数据库初始化](../../apps/desktop/src-tauri/src/db/init.rs)、
   [repository](../../apps/desktop/src-tauri/src/repositories/plugin_repository.rs)
@@ -148,8 +181,11 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 ### SEC-009 日志、错误与历史泄露
 
 - 入口：ctx.log、bridge error、CLI stderr、history/诊断导出；高危，open
-- 现状：CLI log 写入 details，runner 返回异常 message；缺少统一脱敏审计与
-  保留/配额策略，普通运行历史不能证明授权决定。
+- 现状：P0.2b1 CLI 不再自动输出插件 log/details，执行元数据只有输入形状；
+  JSON/parser 和输出序列化错误不回显原文，runner 仍返回实际异常 message。
+  P0.2b2 Web/Desktop 使用 versioned、限额 200 的元数据-only 历史，不保存原始
+  input/output/message；旧未验证 key 保留且不导入，损坏记录与写失败可见。
+  缺少统一脱敏审计与保留/配额策略，普通运行历史不能证明授权决定，仍 open。
 - 证据：[CLI logger](../../packages/cli/src/context.ts)、
   [bridge error](../../apps/desktop/src/App.tsx)、
   [Web history](../../apps/web-vite/src/stores/run-history-store.ts)
@@ -163,7 +199,9 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 ### SEC-010 无限循环、灾难正则与资源耗尽
 
 - 入口：UI setup/run、CLI import/run、HTML bridge 洪泛；高危，open
-- 现状：SDK watchdog 只触发 abort，CLI Promise deadline 不能抢占同步循环；
+- 现状：旧 SDK watchdog 只触发 abort；新 SDK executor/CLI race 可界定异步等待、
+  转发取消并丢弃迟到输出，Web/Desktop 同样接入，UI 卸载会取消当前尝试；
+  但不能抢占同步循环或撤回已发生副作用；
   UI/Headless 同进程没有完整 CPU/内存/输出/并发硬配额。
 - 证据：[SDK watchdog](../../packages/sdk/src/registry/watchdog.ts)、
   [CLI runner](../../packages/cli/src/runner.ts)、
@@ -180,6 +218,10 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 - 入口：catalog main/development.main、preload、iframe 导航；严重，open
 - 现状：runner 注入 preload 并提供宽松 iframe sandbox；开发 fallback 与
   本机静态目录不是发布包认证；支持级别仅表示需要的 API 类型。
+  P0.3a2 发布 Catalog 不含 checkout root、development URL 或源码 main；47 项
+  entry-resolved 只证明扫描时普通文件存在，78 项 indexed；本地入口仅在显式
+  DEV + 开发 checkout 配置下解析。源态/remote/越界拒绝 fixture 在
+  [Catalog 回归](../../scripts/catalog.test.ts)，不证明 iframe/preload 隔离，仍 open。
 - 证据：[HTML 注入器](../../apps/desktop/src/runtime/html-plugin-bridge.ts)、
   [iframe runner](../../apps/desktop/src/App.tsx)、
   [HTML normalizer](../../packages/sdk/src/compat/html-plugin.ts)

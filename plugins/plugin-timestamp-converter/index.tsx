@@ -61,6 +61,7 @@ export default definePlugin({
     id: 'plugin-timestamp-converter',
     name: '时间戳转换',
     version: '0.1.0',
+    maturity: 'prototype',
     description: 'Unix 时间戳与日期时间互转',
     permissions: ['clipboard'],
     tags: ['timestamp', 'unix', 'date', 'converter'],

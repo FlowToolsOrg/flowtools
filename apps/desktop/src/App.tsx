@@ -1,4 +1,8 @@
 import type {
+  CommandSource,
+  IndexedCommand,
+} from './runtime/html-command-types'
+import type {
   AppError,
   CreatePluginDto,
   PluginDto,
@@ -9,12 +13,28 @@ import type {
   FlowToolPlugin,
   PluginManifestEntry,
 } from '@flowtools/sdk'
-import type { Permission } from '@flowtools/sdk/types'
+import type {
+  PluginMaturity,
+  CompatibilityEvidenceStatus,
+} from '@flowtools/sdk/types'
 import type { ComponentType, ReactNode } from 'react'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 
 import { FlowToolRuntimeProvider, PluginErrorBoundary } from '@flowtools/sdk'
+import {
+  htmlPluginCatalogSchema,
+  type HtmlCatalogPlugin,
+} from '@flowtools/sdk/compat/catalog'
+import { resolvePluginMaturity } from '@flowtools/sdk/types'
+import { PluginMaturityBadge, PluginCompatibilityBadge } from '@flowtools/ui'
 import {
   BanIcon,
   BlocksIcon,
@@ -35,82 +55,15 @@ import { Outlet, useNavigate, useParams } from '@tanstack/react-router'
 
 import { Button, Chip, SearchField } from '@heroui/react'
 
-import { convertFileSrc } from '@tauri-apps/api/core'
-
 import htmlPluginIndexData from './data/html-plugin-catalog.json'
 import { builtInManifests } from './plugin/manifests'
+import { BuiltinExecutionPanel } from './runtime/builtin-execution-panel'
 import { createDesktopRuntimeContext } from './runtime/desktop-capabilities'
-import {
-  handleHtmlPluginBridgeRequest,
-  injectHtmlPluginBridge,
-  isHtmlPluginBridgeRequest,
-  type HtmlPluginBridgeResponse,
-} from './runtime/html-plugin-bridge'
+import { unsafeHtmlPreviewEnabled } from './runtime/html-development-policy'
 import { commands as desktopCommands } from './utils/bindings'
 import './App.css'
 
-type CommandSource = 'system' | 'html' | 'react'
-
-interface IndexedCommand {
-  id: string
-  title: string
-  description?: string
-  type: string
-  pluginId: string
-  pluginName: string
-  category?: string
-  pluginType: 'app' | 'tool'
-  compatibilityLevel: string
-  source: CommandSource
-  sourceDir?: string
-  assetDir?: string
-  main?: string
-  mainAvailable?: boolean
-  preload?: string
-  developmentMain?: string
-  permissions: readonly Permission[]
-  featureCode?: string
-  hasUi: boolean
-  hasPreload: boolean
-  requiresNative: boolean
-}
-
-interface HtmlIndexedPlugin {
-  id: string
-  name: string
-  version: string
-  description?: string
-  type: 'app' | 'tool'
-  permissions: readonly Permission[]
-  category?: string
-  html: {
-    sourceDir?: string
-    assetDir?: string
-    main?: string
-    mainAvailable?: boolean
-    preload?: string
-    developmentMain?: string
-    commands: Array<{
-      id: string
-      title: string
-      description?: string
-      featureCode?: string
-      type: string
-    }>
-    compatibility: {
-      level: string
-    }
-  }
-}
-
-interface HtmlPluginIndex {
-  source: string
-  totals: {
-    plugins: number
-    commands: number
-  }
-  plugins: HtmlIndexedPlugin[]
-}
+type HtmlIndexedPlugin = HtmlCatalogPlugin
 
 interface IconProps {
   className?: string
@@ -119,10 +72,15 @@ interface IconProps {
 
 type IconComponent = ComponentType<IconProps>
 
-const htmlPluginIndex = htmlPluginIndexData as HtmlPluginIndex
+const htmlPluginIndex = htmlPluginCatalogSchema.parse(htmlPluginIndexData)
 const reactPluginById = new Map(
   builtInManifests.map(manifest => [manifest.id, manifest])
 )
+// Vite removes this entire development import from production, including opt-in=1.
+const DevelopmentHtmlPluginSurface =
+  import.meta.env.DEV && unsafeHtmlPreviewEnabled
+    ? lazy(() => import('./runtime/development-html-plugin-surface'))
+    : null
 const recentStorageKey = 'flowtools.desktop.recentCommandIds'
 
 const builtInActions: IndexedCommand[] = [
@@ -204,18 +162,17 @@ function toHtmlCommandIndex(plugin: HtmlIndexedPlugin): IndexedCommand[] {
     category: plugin.category,
     pluginType: plugin.type,
     compatibilityLevel: plugin.html.compatibility.level,
+    maturity: plugin.maturity,
+    compatibilityEvidence: plugin.evidence.status,
     source: 'html' as const,
     sourceDir: plugin.html.sourceDir,
     assetDir: plugin.html.assetDir,
     main: plugin.html.main,
     mainAvailable: plugin.html.mainAvailable,
     preload: plugin.html.preload,
-    developmentMain: plugin.html.developmentMain,
+    developmentMain: undefined,
     permissions: plugin.permissions,
-    hasUi: Boolean(
-      (plugin.html.mainAvailable !== false && plugin.html.main) ||
-      plugin.html.developmentMain
-    ),
+    hasUi: Boolean(plugin.html.mainAvailable && plugin.html.main),
     hasPreload: Boolean(plugin.html.preload),
     requiresNative: plugin.html.compatibility.level === 'native-bridge',
   } satisfies Omit<
@@ -258,6 +215,7 @@ function toReactCommandIndex(manifest: PluginManifestEntry): IndexedCommand {
     category: manifest.category,
     pluginType: manifest.type,
     compatibilityLevel: 'sdk',
+    maturity: resolvePluginMaturity(manifest.maturity),
     source: 'react',
     permissions: manifest.permissions ?? [],
     hasUi: manifest.type === 'app',
@@ -341,98 +299,6 @@ function getRunLabel(command: IndexedCommand): string {
   return command.hasUi ? '启动插件' : '运行命令'
 }
 
-interface PluginLaunchTarget {
-  url: string
-  entryPath?: string
-  entry: string
-}
-
-function isExternalUrl(value: string | undefined): boolean {
-  return Boolean(value && /^https?:\/\//i.test(value))
-}
-
-function stripRelativePath(value: string): string {
-  return value.replace(/\\/g, '/').replace(/^\.?\//, '')
-}
-
-function isAbsoluteLocalPath(value: string): boolean {
-  return /^[a-zA-Z]:[\\/]/.test(value) || value.startsWith('/')
-}
-
-function joinLocalPath(...parts: string[]): string {
-  const [first = '', ...rest] = parts
-  return [
-    first.replace(/\\/g, '/').replace(/\/+$/, ''),
-    ...rest.map(part => stripRelativePath(part).replace(/^\/+|\/+$/g, '')),
-  ]
-    .filter(Boolean)
-    .join('/')
-}
-
-function toViteFsUrl(path: string): string {
-  return encodeURI(`/@fs/${path.replace(/\\/g, '/')}`)
-}
-
-function isTauriRuntime(): boolean {
-  return Boolean(
-    (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__
-  )
-}
-
-function toRuntimeAssetUrl(path: string): string {
-  if (isTauriRuntime() && !import.meta.env.DEV) {
-    return convertFileSrc(path)
-  }
-
-  return toViteFsUrl(path)
-}
-
-function getBaseUrl(value: string): string {
-  const normalized = value.replace(/\\/g, '/')
-  const index = normalized.lastIndexOf('/')
-
-  if (index < 0) return normalized
-
-  return normalized.slice(0, index + 1)
-}
-
-function getPluginEntryPath(command: IndexedCommand): string | undefined {
-  const entry = command.mainAvailable === false ? undefined : command.main
-
-  if (!entry || isExternalUrl(entry)) return undefined
-  if (isAbsoluteLocalPath(entry)) return entry.replace(/\\/g, '/')
-  if (!command.sourceDir) return undefined
-
-  return joinLocalPath(
-    htmlPluginIndex.source,
-    'plugins',
-    command.sourceDir,
-    command.assetDir ?? '',
-    entry
-  )
-}
-
-function getPluginLaunchTarget(
-  command: IndexedCommand
-): PluginLaunchTarget | undefined {
-  const entry = command.mainAvailable === false ? undefined : command.main
-
-  if (!entry) return undefined
-
-  if (isExternalUrl(entry)) {
-    return { url: entry, entry }
-  }
-
-  const entryPath = getPluginEntryPath(command)
-  if (!entryPath) return undefined
-
-  return {
-    url: toRuntimeAssetUrl(entryPath),
-    entryPath,
-    entry,
-  }
-}
-
 function getPrimaryCommandForPlugin(
   pluginId: string
 ): IndexedCommand | undefined {
@@ -466,6 +332,8 @@ interface PluginListItem {
   category?: string
   cliAvailable: boolean
   compatibilityLevel: string
+  maturity: PluginMaturity
+  compatibilityEvidence?: CompatibilityEvidenceStatus
   commandCount: number
   hasUi: boolean
 }
@@ -482,7 +350,8 @@ const pluginListItems: PluginListItem[] = [
     tags: manifest.tags ?? [],
     category: manifest.category,
     cliAvailable: manifest.cliAvailable ?? false,
-    compatibilityLevel: 'React',
+    compatibilityLevel: 'sdk',
+    maturity: resolvePluginMaturity(manifest.maturity),
     commandCount: 1,
     hasUi: manifest.type === 'app',
   })),
@@ -498,13 +367,34 @@ const pluginListItems: PluginListItem[] = [
     category: plugin.category,
     cliAvailable: false,
     compatibilityLevel: plugin.html.compatibility.level,
+    maturity: plugin.maturity,
+    compatibilityEvidence: plugin.evidence.status,
     commandCount: Math.max(plugin.html.commands.length, 1),
-    hasUi: Boolean(
-      (plugin.html.mainAvailable !== false && plugin.html.main) ||
-      plugin.html.developmentMain
-    ),
+    hasUi: Boolean(plugin.html.mainAvailable && plugin.html.main),
   })),
 ]
+
+function getSupportLabel(reference: {
+  source: CommandSource
+  compatibilityLevel: string
+}): string {
+  return reference.source === 'html'
+    ? `桥接需求：${reference.compatibilityLevel}`
+    : reference.source === 'react'
+      ? '内置 SDK'
+      : '宿主路由'
+}
+
+function CommandEvidence({ command }: { command: IndexedCommand }) {
+  return (
+    <>
+      <PluginMaturityBadge maturity={command.maturity} />
+      {command.compatibilityEvidence ? (
+        <PluginCompatibilityBadge evidence={command.compatibilityEvidence} />
+      ) : null}
+    </>
+  )
+}
 
 function getAppErrorMessage(error: AppError | undefined): string {
   return error?.message ?? '插件数据库操作失败'
@@ -1378,6 +1268,13 @@ function PluginsView() {
       title="插件市场"
     >
       <div className="grid gap-3">
+        <p
+          className="m-0 text-xs text-(--text-secondary)"
+          data-testid="catalog-evidence-notice"
+        >
+          成熟度与兼容证据独立；indexed 仅索引，entry-resolved
+          仅找到入口文件，桥接需求不代表 API/安全认证或授权。
+        </p>
         {notice || inventory.error ? (
           <div className="rounded-lg border border-(--divider-color) bg-(--control-bg) px-3 py-2 text-sm text-(--text-secondary)">
             {notice ?? inventory.error}
@@ -1435,6 +1332,10 @@ function PluginMarketRow({
           <Chip color="accent" size="sm" variant="soft">
             {plugin.source === 'react' ? 'React' : 'HTML'}
           </Chip>
+          <PluginMaturityBadge maturity={plugin.maturity} />
+          {plugin.compatibilityEvidence ? (
+            <PluginCompatibilityBadge evidence={plugin.compatibilityEvidence} />
+          ) : null}
           <Chip
             color={stage === 'available' ? 'warning' : 'accent'}
             size="sm"
@@ -1447,7 +1348,7 @@ function PluginMarketRow({
           {plugin.description ?? plugin.id}
         </span>
         <span className="mt-1 flex flex-wrap gap-1.5 text-[11px] text-(--text-secondary)">
-          <span>{plugin.compatibilityLevel}</span>
+          <span>{getSupportLabel(plugin)}</span>
           <span>{plugin.commandCount} 个命令</span>
           <span>{plugin.permissions.length} 项权限</span>
           <span>{plugin.version}</span>
@@ -1557,6 +1458,28 @@ function CommandRunView() {
     )
   }
 
+  // Catalog presence and saved enabled metadata never authorize external code.
+  if (command.source === 'html' && !unsafeHtmlPreviewEnabled) {
+    return (
+      <PageFrame title="外部插件执行已禁用" description={command.pluginName}>
+        <div
+          className="grid gap-3 p-6 text-sm text-(--text-secondary)"
+          role="note"
+        >
+          <code>EXTERNAL_CODE_DISABLED</code>
+          <p>HTML / Legacy 仅供显式开发预览；生产包不执行外部代码。</p>
+          <p>
+            目录证据和已保存的启用状态不等于签名、隔离或授权；原元数据保留。
+          </p>
+          <p>
+            受控开发需 DEV + VITE_ENABLE_UNSAFE_PLUGIN_PREVIEW=1 和指定本地
+            checkout。
+          </p>
+        </div>
+      </PageFrame>
+    )
+  }
+
   const installedPlugin = inventory.pluginById.get(command.pluginId)
   const stage = getPluginStage(installedPlugin)
   const requiresPluginActivation = command.pluginId !== 'flowtools'
@@ -1606,8 +1529,6 @@ function CommandRunView() {
     )
   }
 
-  const launchTarget = getPluginLaunchTarget(command)
-
   return (
     <PageFrame
       actions={
@@ -1626,8 +1547,10 @@ function CommandRunView() {
     >
       {command.source === 'react' ? (
         <ReactPluginSurface command={command} />
-      ) : launchTarget ? (
-        <PluginLaunchSurface command={command} target={launchTarget} />
+      ) : command.source === 'html' && DevelopmentHtmlPluginSurface ? (
+        <Suspense fallback={<div className="p-6">正在加载开发预览...</div>}>
+          <DevelopmentHtmlPluginSurface command={command} />
+        </Suspense>
       ) : (
         <HeadlessCommandSurface command={command} />
       )}
@@ -1687,8 +1610,9 @@ function PluginActivationGate({
             <CapabilityChip icon={LayersIcon}>
               {getPluginStageLabel(stage)}
             </CapabilityChip>
-            <CapabilityChip icon={ShieldCheckIcon}>
-              {command.compatibilityLevel}
+            <CommandEvidence command={command} />
+            <CapabilityChip icon={BlocksIcon}>
+              {getSupportLabel(command)}
             </CapabilityChip>
           </div>
           <div className="flex justify-center gap-2">
@@ -1769,7 +1693,11 @@ function ReactPluginSurface({ command }: { command: IndexedCommand }) {
   }
 
   if (!isAppPlugin(plugin)) {
-    return <HeadlessCommandSurface command={command} />
+    return (
+      <div className="h-full overflow-auto p-4">
+        <BuiltinExecutionPanel key={plugin.meta.id} plugin={plugin} />
+      </div>
+    )
   }
 
   return <ReactAppPluginPanel plugin={plugin} />
@@ -1790,206 +1718,20 @@ function ReactAppPluginPanel({ plugin }: { plugin: AppPlugin }) {
 
   return (
     <div className="h-full min-h-0 overflow-auto bg-(--bg-color) p-4">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <PluginMaturityBadge maturity={plugin.meta.maturity} />
+        <span className="text-xs text-muted">
+          内置 SDK · 成熟度不等于授权或兼容认证
+        </span>
+      </div>
       <PluginErrorBoundary pluginId={plugin.meta.id}>
         <FlowToolRuntimeProvider value={runtimeContext}>
           <Panel />
         </FlowToolRuntimeProvider>
       </PluginErrorBoundary>
-    </div>
-  )
-}
-
-interface PluginLaunchSurfaceProps {
-  command: IndexedCommand
-  target: PluginLaunchTarget
-}
-
-interface FrameSource {
-  kind: 'src' | 'srcDoc' | 'error'
-  value: string
-}
-
-function isLocalDevelopmentUrl(value: string): boolean {
-  try {
-    const url = new URL(value)
-    return ['localhost', '127.0.0.1', '0.0.0.0'].includes(url.hostname)
-  } catch {
-    return false
-  }
-}
-
-function PluginLaunchSurface({ command, target }: PluginLaunchSurfaceProps) {
-  const navigate = useNavigate()
-  const frameRef = useRef<HTMLIFrameElement>(null)
-  const [frameVersion, setFrameVersion] = useState(0)
-  const [frameSource, setFrameSource] = useState<FrameSource | null>(null)
-
-  const runtimeContext = useMemo(
-    () =>
-      createDesktopRuntimeContext({
-        pluginId: command.pluginId,
-        pluginType: command.pluginType,
-        permissions: command.permissions,
-      }),
-    [command.permissions, command.pluginId, command.pluginType]
-  )
-
-  useEffect(() => {
-    const handleClosePanel = (event: Event) => {
-      const detail = (event as CustomEvent<{ pluginId?: string }>).detail
-      if (detail?.pluginId && detail.pluginId !== command.pluginId) return
-
-      void navigate({ to: '/' })
-    }
-
-    window.addEventListener('flowtools:close-panel', handleClosePanel)
-
-    return () => {
-      window.removeEventListener('flowtools:close-panel', handleClosePanel)
-    }
-  }, [command.pluginId, navigate])
-
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent<unknown>) => {
-      const source = event.source
-      if (!source || source !== frameRef.current?.contentWindow) return
-      const request = event.data
-      if (!isHtmlPluginBridgeRequest(request)) return
-
-      void (async () => {
-        const response: HtmlPluginBridgeResponse = {
-          type: 'flowtools:html-plugin-response',
-          id: request.id,
-          ok: true,
-        }
-
-        try {
-          response.value = await handleHtmlPluginBridgeRequest(
-            runtimeContext,
-            request
-          )
-        } catch (error) {
-          response.ok = false
-          response.error =
-            error instanceof Error ? error.message : 'Unknown bridge error'
-        }
-
-        ;(source as Window).postMessage(response, '*')
-      })()
-    }
-
-    window.addEventListener('message', handleMessage)
-
-    return () => {
-      window.removeEventListener('message', handleMessage)
-    }
-  }, [runtimeContext])
-
-  useEffect(() => {
-    let cancelled = false
-    setFrameSource(null)
-
-    const loadHtml = async () => {
-      try {
-        const response = await fetch(target.url, { cache: 'no-store' })
-        if (!response.ok) {
-          throw new Error(`Failed to load plugin HTML: ${response.status}`)
-        }
-
-        const html = await response.text()
-        if (cancelled) return
-
-        setFrameSource({
-          kind: 'srcDoc',
-          value: injectHtmlPluginBridge(html, command, getBaseUrl(target.url)),
-        })
-      } catch {
-        if (cancelled) return
-
-        if (isLocalDevelopmentUrl(target.url)) {
-          setFrameSource({
-            kind: 'error',
-            value: `无法连接到插件开发服务：${target.url}`,
-          })
-          return
-        }
-
-        setFrameSource({
-          kind: 'src',
-          value: target.url,
-        })
-      }
-    }
-
-    void loadHtml()
-
-    return () => {
-      cancelled = true
-    }
-  }, [command, frameVersion, target.url])
-
-  return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
-      <div className="flex min-h-10.5 items-center justify-between gap-3 border-b border-black/20 bg-(--bg-color) px-3 py-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <CommandIcon command={command} />
-          <div className="min-w-0">
-            <div className="truncate text-sm font-semibold text-(--text-color)">
-              {command.pluginName}
-            </div>
-            <div className="truncate text-[11px] text-(--text-secondary)">
-              {target.entry}
-            </div>
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-1.5">
-          <Chip color="accent" size="sm" variant="soft">
-            {command.compatibilityLevel}
-          </Chip>
-          {command.hasPreload ? (
-            <Chip color="warning" size="sm" variant="soft">
-              Bridge
-            </Chip>
-          ) : null}
-          <Button
-            onPress={() => setFrameVersion(version => version + 1)}
-            size="sm"
-            variant="secondary"
-          >
-            重新载入
-          </Button>
-        </div>
+      <div className="mt-4">
+        <BuiltinExecutionPanel key={plugin.meta.id} plugin={plugin} />
       </div>
-      {frameSource?.kind === 'error' ? (
-        <div className="grid min-h-0 flex-1 place-items-center bg-white p-6 text-center">
-          <div className="grid max-w-120 gap-3">
-            <h2 className="m-0 text-base font-semibold text-slate-900">
-              插件开发服务未启动
-            </h2>
-            <p className="m-0 text-sm leading-relaxed text-slate-600">
-              {frameSource.value}
-            </p>
-            <p className="m-0 text-sm leading-relaxed text-slate-500">
-              请先在对应 HTML 插件目录启动 dev server，或构建静态产物后重新运行
-              inspect:html-plugins。
-            </p>
-          </div>
-        </div>
-      ) : frameSource ? (
-        <iframe
-          className="min-h-0 flex-1 border-0 bg-white"
-          key={`${target.url}:${frameVersion}:${frameSource.kind}`}
-          ref={frameRef}
-          sandbox="allow-same-origin allow-scripts allow-forms allow-modals allow-popups allow-downloads"
-          src={frameSource.kind === 'src' ? frameSource.value : undefined}
-          srcDoc={frameSource.kind === 'srcDoc' ? frameSource.value : undefined}
-          title={`${command.pluginName} - ${command.title}`}
-        />
-      ) : (
-        <div className="grid min-h-0 flex-1 place-items-center bg-white text-sm text-slate-500">
-          正在启动插件...
-        </div>
-      )}
     </div>
   )
 }
@@ -2018,8 +1760,9 @@ function HeadlessCommandSurface({ command }: { command: IndexedCommand }) {
         </div>
         <div className="flex justify-center gap-1.5">
           <CapabilityChip icon={PlayIcon}>{command.type}</CapabilityChip>
-          <CapabilityChip icon={ShieldCheckIcon}>
-            {command.compatibilityLevel}
+          <CommandEvidence command={command} />
+          <CapabilityChip icon={BlocksIcon}>
+            {getSupportLabel(command)}
           </CapabilityChip>
         </div>
       </div>

@@ -58,26 +58,42 @@ const inputSchema = z.object({
   deadline: z.string().optional().describe('Deadline date (YYYY-MM-DD)'),
 })
 
+const todoItemsSchema = z.array(
+  z
+    .object({
+      todo: z.string(),
+      deadline: z.string().default(''),
+    })
+    .passthrough()
+)
+const todoStateSchema = z.object({ todos: todoItemsSchema })
+
 export default definePlugin({
   type: 'app',
   meta: {
     id: 'plugin-todo-list',
     name: 'Todo List',
     version: '0.0.1',
+    maturity: 'prototype',
     permissions: ['storage'],
   },
   inputSchema,
   store: todoStore,
   async run(ctx, input: z.infer<typeof inputSchema>) {
+    if (!ctx.store && !ctx.storage)
+      throw new Error('Todo storage capability is unavailable')
+    // App hosts share their declared store with setup(); CLI keeps its existing key.
+    // Validate before writing, preserve unrelated fields and do not migrate old keys.
+    const items = ctx.store
+      ? todoStateSchema.parse(ctx.store.getState()).todos
+      : todoItemsSchema.parse(ctx.storage?.get('todos') ?? [])
     if (input.todo) {
       const item = { todo: input.todo, deadline: input.deadline ?? '' }
-      const stored = ctx.storage?.get('todos') as TodoItem[] | undefined
-      const todos = [...(stored ?? []), item]
-      ctx.storage?.set('todos', todos)
+      const todos = [...items, item]
+      if (ctx.store) ctx.store.setState({ todos })
+      else ctx.storage?.set('todos', todos)
       return result.json({ result: { added: item.todo, total: todos.length } })
     }
-    const stored = ctx.storage?.get('todos') as TodoItem[] | undefined
-    const items = stored ?? []
     return result.json({
       result: items.map(
         (item, idx) =>

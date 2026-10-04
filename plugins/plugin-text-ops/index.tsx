@@ -57,6 +57,7 @@ export default definePlugin({
     id: 'plugin-text-ops',
     name: '文本集合运算',
     version: '0.1.0',
+    maturity: 'prototype',
     description: '计算文本的交集、差集、并集',
     permissions: ['clipboard'],
     tags: ['text', 'set', 'intersection', 'union', 'difference'],

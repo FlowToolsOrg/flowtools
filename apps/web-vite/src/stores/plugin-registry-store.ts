@@ -2,17 +2,24 @@ import type {
   PluginRegistryEvent,
   RegisteredCommand,
   RegisteredPlugin,
+  ExternalPluginLoader,
 } from '@flowtools/sdk'
 
-import { PluginFileLoader, PluginLoader } from '@flowtools/sdk'
+import { ExternalCodeDisabledError, PluginLoader } from '@flowtools/sdk'
 import { persist } from 'zustand/middleware'
 import { createStore } from 'zustand/vanilla'
 
-import {
-  loadAllPluginFiles,
-  removePluginFile,
-  savePluginFile,
-} from '../utils/plugin-storage'
+import { assertUnsafePluginPreview } from '../app/development-policy'
+import { builtInManifests } from '../plugin/manifests'
+import { removePluginFile, savePluginFile } from '../utils/plugin-storage'
+
+const builtInPluginIds = new Set(builtInManifests.map(entry => entry.id))
+
+function assertPluginEntryAllowed(pluginId: string): void {
+  if (!builtInPluginIds.has(pluginId)) {
+    assertUnsafePluginPreview()
+  }
+}
 
 interface PluginRegistryState {
   plugins: RegisteredPlugin[]
@@ -33,7 +40,7 @@ interface PluginRegistryActions {
 export type PluginRegistryStore = PluginRegistryState & PluginRegistryActions
 
 let _loader: PluginLoader | null = null
-let _fileLoader: PluginFileLoader | null = null
+let _fileLoader: ExternalPluginLoader | null = null
 
 function getLoader(): PluginLoader {
   if (!_loader) {
@@ -43,7 +50,7 @@ function getLoader(): PluginLoader {
   return _loader
 }
 
-function getFileLoader(): PluginFileLoader {
+function getFileLoader(): ExternalPluginLoader {
   if (!_fileLoader) {
     throw new Error('[PluginRegistryStore] Store not initialized.')
   }
@@ -76,6 +83,7 @@ export const pluginRegistryStore = createStore<
       },
 
       async enablePlugin(pluginId: string) {
+        assertPluginEntryAllowed(pluginId)
         set(state => ({
           disabledPluginIds: state.disabledPluginIds.filter(
             id => id !== pluginId
@@ -86,6 +94,7 @@ export const pluginRegistryStore = createStore<
       },
 
       async disablePlugin(pluginId: string) {
+        assertPluginEntryAllowed(pluginId)
         set(state => ({
           disabledPluginIds: [...state.disabledPluginIds, pluginId],
         }))
@@ -94,11 +103,13 @@ export const pluginRegistryStore = createStore<
       },
 
       async reloadPlugin(pluginId: string) {
+        assertPluginEntryAllowed(pluginId)
         await getLoader().reload(pluginId)
         get().sync()
       },
 
       async loadPluginFromFile(file: File) {
+        assertUnsafePluginPreview()
         const entry = await getFileLoader().loadFromFile(file)
 
         const buffer = await file.arrayBuffer()
@@ -115,6 +126,7 @@ export const pluginRegistryStore = createStore<
       },
 
       async unloadExternalPlugin(pluginId: string) {
+        assertUnsafePluginPreview()
         await getFileLoader().unloadExternalPlugin(pluginId)
         await removePluginFile(pluginId)
         get().sync()
@@ -138,7 +150,7 @@ export function initPluginRegistryStore(
   registry: import('@flowtools/sdk').PluginRegistry,
   commandRegistry: import('@flowtools/sdk').CommandRegistry,
   loader: PluginLoader,
-  fileLoader: PluginFileLoader
+  fileLoader: ExternalPluginLoader
 ): void {
   pluginRegistryInternals._registry = registry
   pluginRegistryInternals._commandRegistry = commandRegistry
@@ -157,22 +169,9 @@ export function initPluginRegistryStore(
 }
 
 /**
- * Restore external plugins from IndexedDB.
- * Call after initPluginRegistryStore and import map setup.
+ * Automatic source recovery is intentionally disabled in every host mode.
+ * Keep the old database unchanged for deliberate future export/recovery.
  */
 export async function restoreExternalPlugins(): Promise<void> {
-  const stored = await loadAllPluginFiles()
-
-  for (const entry of stored) {
-    try {
-      const file = new File([entry.data], entry.fileName, {
-        type: entry.type,
-      })
-      await getFileLoader().loadFromFile(file)
-    } catch {
-      await removePluginFile(entry.id)
-    }
-  }
-
-  pluginRegistryStore.getState().sync()
+  throw new ExternalCodeDisabledError()
 }

@@ -2,17 +2,14 @@ import type { RegisteredPlugin } from '@flowtools/sdk'
 
 import { useCallback, useRef, useState } from 'react'
 
-import {
-  LayersIcon,
-  LoaderPinwheelIcon,
-  ShieldCheckIcon,
-  XIcon,
-} from '@flowtools/ui/icons'
+import { PluginMaturityBadge } from '@flowtools/ui'
+import { LayersIcon, LoaderPinwheelIcon, XIcon } from '@flowtools/ui/icons'
 import { createFileRoute } from '@tanstack/react-router'
 import { useStore } from 'zustand'
 
 import { Button, Chip, Spinner } from '@heroui/react'
 
+import { unsafePluginPreviewEnabled } from '@/app/development-policy'
 import { pluginRegistryStore } from '@/stores/plugin-registry-store'
 
 export const Route = createFileRoute('/plugins')({
@@ -111,76 +108,100 @@ function PluginsPage() {
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Plugins</h1>
           <p className="text-sm text-muted">
-            Manage and load plugins from local files.
+            Manage built-in plugins. External source execution is disabled by
+            default.
           </p>
         </div>
       </header>
 
       <div className="grid min-h-0 flex-1 gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="flex min-w-0 flex-col gap-6">
-          {/* Upload area */}
-          <div
-            className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-(--radius) border-2 border-dashed p-8 transition ${
-              dragOver
-                ? 'border-(--accent) bg-(--accent)/5'
-                : 'border-border hover:border-(--accent)/50'
-            }`}
-            onClick={() => inputRef.current?.click()}
-            onDragLeave={handleDragLeave}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            role="button"
-            tabIndex={0}
-          >
-            <input
-              accept=".js,.mjs,.jsx,.ts,.tsx"
-              className="hidden"
-              onChange={handleFileInput}
-              ref={inputRef}
-              type="file"
-            />
-            {loadStatus === 'loading' ? (
-              <Spinner size="sm" />
-            ) : (
-              <LoaderPinwheelIcon
-                className={dragOver ? 'text-accent' : 'text-muted'}
-                size={28}
-              />
-            )}
-            <div className="text-center">
-              <p className="text-sm font-medium text-foreground">
-                {loadStatus === 'loading'
-                  ? 'Loading plugin...'
-                  : 'Drop a plugin file here or click to browse'}
-              </p>
-              <p className="mt-1 text-xs text-muted">
-                Supports .js, .mjs, .jsx, .ts, and .tsx files
-              </p>
-            </div>
-          </div>
+          {unsafePluginPreviewEnabled ? (
+            <>
+              {/* Unsigned, unsafe development preview only. */}
+              <div
+                className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-(--radius) border-2 border-dashed p-8 transition ${
+                  dragOver
+                    ? 'border-(--accent) bg-(--accent)/5'
+                    : 'border-border hover:border-(--accent)/50'
+                }`}
+                onDragLeave={handleDragLeave}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+              >
+                <input
+                  accept=".js,.mjs,.jsx,.ts,.tsx"
+                  className="hidden"
+                  onChange={handleFileInput}
+                  ref={inputRef}
+                  type="file"
+                />
+                {loadStatus === 'loading' ? (
+                  <Spinner size="sm" />
+                ) : (
+                  <LoaderPinwheelIcon
+                    className={dragOver ? 'text-accent' : 'text-muted'}
+                    size={28}
+                  />
+                )}
+                <div className="text-center">
+                  <p className="text-sm font-medium text-foreground">
+                    {loadStatus === 'loading'
+                      ? 'Loading plugin...'
+                      : 'Drop an unsigned development plugin here'}
+                  </p>
+                  <p className="mt-1 text-xs text-muted">
+                    Supports .js, .mjs, .jsx, .ts, and .tsx files
+                  </p>
+                </div>
+                <Button
+                  isPending={loadStatus === 'loading'}
+                  onPress={() => inputRef.current?.click()}
+                  variant="secondary"
+                >
+                  Preview unsigned plugin
+                </Button>
+              </div>
 
-          {/* Load status messages */}
-          {loadStatus === 'success' && loadedName ? (
-            <div className="flex items-center gap-2 rounded-(--radius) bg-accent/10 px-4 py-2.5 text-sm text-accent">
-              <LayersIcon size={16} />
-              Plugin "{loadedName}" loaded successfully.
-            </div>
-          ) : null}
-          {loadStatus === 'error' && loadError ? (
-            <div className="flex items-center gap-2 rounded-(--radius) bg-red-500/10 px-4 py-2.5 text-sm text-red-500">
-              <XIcon size={16} />
-              {loadError}
-            </div>
-          ) : null}
+              {/* Load status messages */}
+              {loadStatus === 'success' && loadedName ? (
+                <div className="flex items-center gap-2 rounded-(--radius) bg-accent/10 px-4 py-2.5 text-sm text-accent">
+                  <LayersIcon size={16} />
+                  Plugin "{loadedName}" loaded successfully.
+                </div>
+              ) : null}
+              {loadStatus === 'error' && loadError ? (
+                <div className="flex items-center gap-2 rounded-(--radius) bg-red-500/10 px-4 py-2.5 text-sm text-red-500">
+                  <XIcon size={16} />
+                  {loadError}
+                </div>
+              ) : null}
 
-          {/* Security warning */}
-          <div className="flex items-start gap-2 rounded-(--radius) border border-amber-500/30 bg-amber-500/5 px-4 py-2.5 text-xs text-amber-600">
-            <ShieldCheckIcon className="mt-0.5 shrink-0" size={14} />
-            <span>
-              External plugins run in the main thread without sandbox isolation.
-              Only load plugin files from trusted sources.
-            </span>
-          </div>
+              {/* Security warning */}
+              <div className="flex items-start gap-2 rounded-(--radius) border border-amber-500/30 bg-amber-500/5 px-4 py-2.5 text-xs text-amber-600">
+                <LayersIcon className="mt-0.5 shrink-0" size={14} />
+                <span>
+                  UNSAFE DEVELOPMENT PREVIEW — unsigned code runs in the host
+                  realm without isolation and can access host data. Use only
+                  reviewed test code and disposable data. This is not
+                  installation or a user grant.
+                </span>
+              </div>
+            </>
+          ) : (
+            <div
+              className="rounded-(--radius) border border-border bg-surface px-4 py-3 text-sm"
+              role="status"
+            >
+              External code execution is disabled. Signed-package admission and
+              isolation are not implemented. Source import is unavailable in
+              production, even if a plugin claims certification.
+            </div>
+          )}
+          <p className="text-xs text-muted">
+            Saved external source files are preserved but never restored
+            automatically.
+          </p>
 
           {/* External plugins section */}
           {externalPlugins.length > 0 ? (
@@ -298,6 +319,7 @@ function PluginRow({
           <Chip size="sm" variant="tertiary">
             {manifest.type}
           </Chip>
+          <PluginMaturityBadge maturity={manifest.maturity} />
           <Chip
             color={stateColorMap[state] ?? 'default'}
             size="sm"

@@ -11,17 +11,40 @@ interface PackageManifest {
 }
 
 const expectedSymbols: Record<string, readonly string[]> = {
+  './development': ['DevelopmentPluginFileLoader', 'setupImportMap'],
+  './compat/catalog': ['htmlPluginCatalogSchema', 'portablePluginPathSchema'],
   '.': ['definePlugin', 'result'],
   './definePlugin': ['definePlugin'],
+  './execution': [
+    'executePlugin',
+    'createExecutionFailure',
+    'summarizeExecutionInput',
+  ],
   './result': ['result'],
   './utils': ['extractMeta', 'pickCapability'],
   './utils/capability': ['pickCapability'],
   './hooks': ['useEnv'],
   './runtime': ['FlowToolRuntimeContext', 'FlowToolRuntimeProvider'],
-  './types': [],
+  './types': [
+    'pluginMaturitySchema',
+    'resolvePluginMaturity',
+    'compatibilityEvidenceStatusSchema',
+  ],
 }
 
 describe('package exports', () => {
+  test('execution/catalog subpaths are usable without React or source transpilers', async () => {
+    for (const path of ['index.js', 'execution.js', 'compat/catalog.js']) {
+      const source = await Bun.file(
+        new URL(`../dist/${path}`, import.meta.url)
+      ).text()
+      expect(source).not.toMatch(/(?:from|import)\s*['"]sucrase/)
+      if (path !== 'index.js') {
+        expect(source).not.toMatch(/(?:from|import)\s*['"]react/)
+      }
+      expect(source).not.toContain('__flowtools_plugin_loaded__')
+    }
+  })
   test('points every public subpath at consumable JS and declaration files', async () => {
     const packageRoot = new URL('../', import.meta.url)
     const manifest = (await Bun.file(

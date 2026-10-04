@@ -1,6 +1,10 @@
 import { useCallback, useState } from 'react'
 
-import { definePlugin } from '@flowtools/sdk'
+import {
+  definePlugin,
+  useCapability,
+  type RequestCapability,
+} from '@flowtools/sdk'
 import { result } from '@flowtools/sdk/result'
 import { Button, Card, Chip } from '@flowtools/ui/plugin'
 import { z } from 'zod'
@@ -28,10 +32,11 @@ const DEFAULT_SITES = [
 
 async function measureLatency(
   url: string,
+  request: RequestCapability,
   signal?: AbortSignal
 ): Promise<number> {
   const start = performance.now()
-  await fetch(url, {
+  await request(url, {
     mode: 'no-cors',
     cache: 'no-store',
     signal,
@@ -75,6 +80,7 @@ export default definePlugin({
     id: 'plugin-website-latency',
     name: '网站延迟测试',
     version: '0.1.0',
+    maturity: 'prototype',
     description: '测试常用网站的网络延迟（Ping）',
     permissions: ['network'],
     tags: ['network', 'latency', 'ping'],
@@ -82,6 +88,8 @@ export default definePlugin({
   },
   inputSchema,
   async run(ctx, input: z.infer<typeof inputSchema>) {
+    const request = ctx.request
+    if (!request) throw new Error('Network capability is unavailable')
     const sites = input.urls
       ? input.urls.filter(Boolean)
       : DEFAULT_SITES.map(s => s.url)
@@ -89,7 +97,7 @@ export default definePlugin({
     const results = await Promise.allSettled(
       sites.map(async url => {
         try {
-          const latency = await measureLatency(url, ctx.signal)
+          const latency = await measureLatency(url, request, ctx.signal)
           return { url, latency, status: 'success' as const }
         } catch (err) {
           return {
@@ -125,6 +133,7 @@ export default definePlugin({
   },
   setup() {
     return function WebsiteLatencyPanel() {
+      const { request } = useCapability()
       const [results, setResults] = useState<LatencyResult[]>(
         DEFAULT_SITES.map(s => ({
           ...s,
@@ -145,7 +154,7 @@ export default definePlugin({
 
         const tasks = DEFAULT_SITES.map(async (site, index) => {
           try {
-            const latency = await measureLatency(site.url, ac.signal)
+            const latency = await measureLatency(site.url, request, ac.signal)
             setResults(prev =>
               prev.map((r, i) =>
                 i === index ? { ...r, latency, status: 'success' as const } : r
@@ -170,7 +179,7 @@ export default definePlugin({
         await Promise.allSettled(tasks)
         setIsRunning(false)
         setController(null)
-      }, [])
+      }, [request])
 
       const stopTests = useCallback(() => {
         controller?.abort()

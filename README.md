@@ -661,3 +661,12 @@ The focus is on:
 [HM Suiji](https://github.com/HM-Suiji)
 
 Built with architectural obsession and system-level thinking.
+
+## P0.3c catalog and permission presentation
+
+Desktop market actions save built-in configuration only. HTML entries display
+不可安装 and saved records cannot grant execution. Removing a record is not a
+package uninstall. The permission center shows capability declarations and
+explicitly records that per-plugin grants and isolation are not implemented.
+Legacy persisted DTO status values remain metadata for compatibility.
+All maturity labels stay prototype; SEC-001–SEC-012 remain open.

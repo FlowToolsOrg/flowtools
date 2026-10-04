@@ -397,4 +397,6 @@ Conventional Commit 记录，不提前把父里程碑标为 done。拟新增验�
 里程碑交付物；当前仍运行已有 docs/生成内容/静态/测试/构建门禁。
 
 本次只交付设计与文档同步，现有第三方入口拒绝、数据保留策略和成熟度不改变。
-下一项实施从 G0 的台账尾项收口，再按 P1.1a 开始 Manifest v1。
+G0 已在 2026-10-04 收口；完整根门禁、实际 production artifacts 与前端复核
+通过，剩余原生人工复验按维护者要求豁免，见
+[验收记录](./validation/p0-market-state.md)。下一项为 P1.1a Manifest v1。

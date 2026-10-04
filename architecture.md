@@ -618,3 +618,12 @@ Web 端 db：
 - CLI `--schema` 输出 JSON Schema（供桌面端动态 UI 生成）
 - CLI `--watch` 模式（监听输入变化重新执行）
 - CLI `flowtools create` 脚手架（交互式创建新插件）
+
+## P0.3c catalog and permission presentation
+
+Desktop market actions save built-in configuration only. HTML entries display
+不可安装 and saved records cannot grant execution. Removing a record is not a
+package uninstall. The permission center shows capability declarations and
+explicitly records that per-plugin grants and isolation are not implemented.
+Legacy persisted DTO status values remain metadata for compatibility.
+All maturity labels stay prototype; SEC-001–SEC-012 remain open.

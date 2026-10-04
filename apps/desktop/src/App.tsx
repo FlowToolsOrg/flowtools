@@ -58,6 +58,10 @@ import { Button, Chip, SearchField } from '@heroui/react'
 import htmlPluginIndexData from './data/html-plugin-catalog.json'
 import { builtInManifests } from './plugin/manifests'
 import { BuiltinExecutionPanel } from './runtime/builtin-execution-panel'
+import {
+  catalogPresentation,
+  permissionPresentation,
+} from './runtime/catalog-presentation'
 import { createDesktopRuntimeContext } from './runtime/desktop-capabilities'
 import { unsafeHtmlPreviewEnabled } from './runtime/html-development-policy'
 import { commands as desktopCommands } from './utils/bindings'
@@ -417,10 +421,7 @@ function getPluginStage(plugin: PluginDto | undefined): PluginLifecycleStage {
 }
 
 function getPluginStageLabel(stage: PluginLifecycleStage): string {
-  if (stage === 'available') return '未安装'
-  if (stage === 'downloaded') return '待安装'
-  if (stage === 'installed') return '已安装'
-  return '已启用'
+  return catalogPresentation('react', stage, true).stageLabel
 }
 
 function toCreatePluginDto(
@@ -486,7 +487,7 @@ function usePluginInventory() {
       setPlugins(assertCommandData(result))
     } catch (loadError) {
       setError(
-        loadError instanceof Error ? loadError.message : '无法读取插件安装状态'
+        loadError instanceof Error ? loadError.message : '无法读取插件配置状态'
       )
     } finally {
       setIsLoading(false)
@@ -1172,8 +1173,8 @@ function PluginsView() {
         disable: '已禁用',
         enable: '已启用',
         'enable-and-open': '已启用，正在启动',
-        install: '已安装',
-        remove: '已卸载',
+        install: '配置已保存',
+        remove: '配置记录已移除',
       } satisfies Record<PluginActionKind, string>
 
       setNotice(`${plugin.name} ${actionLabel[action]}`)
@@ -1211,6 +1212,7 @@ function PluginsView() {
   }
 
   const handlePrimaryAction = (plugin: PluginListItem) => {
+    if (plugin.source === 'html') return
     const installedPlugin = inventory.pluginById.get(plugin.id)
     const stage = getPluginStage(installedPlugin)
 
@@ -1274,6 +1276,7 @@ function PluginsView() {
         >
           成熟度与兼容证据独立；indexed 仅索引，entry-resolved
           仅找到入口文件，桥接需求不代表 API/安全认证或授权。
+          第三方包安装尚未实现；内置工具只保存启用配置，旧目录记录不能授权执行。
         </p>
         {notice || inventory.error ? (
           <div className="rounded-lg border border-(--divider-color) bg-(--control-bg) px-3 py-2 text-sm text-(--text-secondary)">
@@ -1314,12 +1317,7 @@ function PluginMarketRow({
   onRemove,
 }: PluginMarketRowProps) {
   const isBusy = busyAction?.pluginId === plugin.id
-  const primaryLabel = {
-    available: '安装',
-    downloaded: '安装',
-    enabled: plugin.hasUi ? '启动' : '运行',
-    installed: plugin.hasUi ? '启用并启动' : '启用',
-  } satisfies Record<PluginLifecycleStage, string>
+  const presentation = catalogPresentation(plugin.source, stage, plugin.hasUi)
 
   return (
     <div className="grid min-h-18 w-full grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-transparent px-2 py-2 text-left text-(--text-color) hover:border-(--divider-color) hover:bg-(--hover-bg) max-[720px]:grid-cols-[40px_minmax(0,1fr)]">
@@ -1341,7 +1339,7 @@ function PluginMarketRow({
             size="sm"
             variant="soft"
           >
-            {getPluginStageLabel(stage)}
+            {presentation.stageLabel}
           </Chip>
         </span>
         <span className="mt-1 block truncate text-xs text-(--text-secondary)">
@@ -1350,7 +1348,7 @@ function PluginMarketRow({
         <span className="mt-1 flex flex-wrap gap-1.5 text-[11px] text-(--text-secondary)">
           <span>{getSupportLabel(plugin)}</span>
           <span>{plugin.commandCount} 个命令</span>
-          <span>{plugin.permissions.length} 项权限</span>
+          <span>{plugin.permissions.length} 项能力声明</span>
           <span>{plugin.version}</span>
         </span>
       </span>
@@ -1373,7 +1371,7 @@ function PluginMarketRow({
             size="sm"
             variant="ghost"
           >
-            卸载
+            移除配置记录
           </Button>
         ) : null}
         <Button
@@ -1383,6 +1381,7 @@ function PluginMarketRow({
               busyAction?.action ?? ''
             )
           }
+          isDisabled={!presentation.canExecute}
           onPress={() => onPrimaryAction(plugin)}
           size="sm"
         >
@@ -1393,7 +1392,7 @@ function PluginMarketRow({
           ) : (
             <LayersIcon size={15} />
           )}
-          {primaryLabel[stage]}
+          {presentation.primaryLabel}
         </Button>
       </span>
     </div>
@@ -1401,18 +1400,11 @@ function PluginMarketRow({
 }
 
 function PermissionsView() {
-  const permissionRows = [
-    ['storage', '插件命名空间存储', '安全沙箱'],
-    ['network', '网络请求能力', '需授权'],
-    ['fs', '文件读写能力', 'Tauri/Rust'],
-    ['clipboard', '剪贴板访问', '可控'],
-    ['native', '窗口、截图、系统命令', '高风险'],
-    ['preload', '旧版宿主 API Bridge', '兼容层'],
-  ] as const
+  const permissionRows = permissionPresentation
 
   return (
     <PageFrame
-      description="插件能力声明、授权状态和原生桥接范围"
+      description="能力声明与当前限制；插件级授权和隔离尚未实现"
       title="权限中心"
     >
       <div className="grid gap-2">
@@ -1499,7 +1491,7 @@ function CommandRunView() {
     return (
       <PageFrame title="正在检查插件状态">
         <div className="grid h-full place-items-center p-6 text-sm text-(--text-secondary)">
-          正在同步插件安装状态...
+          正在同步插件配置状态...
         </div>
       </PageFrame>
     )
@@ -1577,9 +1569,9 @@ function PluginActivationGate({
 }: PluginActivationGateProps) {
   const title =
     stage === 'available'
-      ? '插件尚未安装'
+      ? '内置工具尚未保存配置'
       : stage === 'downloaded'
-        ? '插件等待安装'
+        ? '内置工具配置待保存'
         : '插件尚未启用'
 
   return (
@@ -1603,7 +1595,7 @@ function PluginActivationGate({
             </h2>
             <p className="m-0 mt-2 text-sm leading-relaxed text-(--text-secondary)">
               {message ??
-                '这个插件需要先完成安装并启用后，才会被桌面运行器加载。'}
+                '内置工具需要先保存并启用配置，才会被桌面运行器加载。此操作不安装第三方包或授予持久权限。'}
             </p>
           </div>
           <div className="flex justify-center gap-1.5">

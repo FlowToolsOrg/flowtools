@@ -696,3 +696,12 @@ Desktop command DTO 来源必须是 Rust 生成器，不能维护第二份手写
 - 权限声明与实际调用一致
 - 不支持的 web 能力有清晰降级或提示
 - CLI 可正常调用：`bun run packages/cli/src/cli.ts run <plugin-id> --format text`
+
+## P0.3c catalog and permission presentation
+
+Desktop market actions save built-in configuration only. HTML entries display
+不可安装 and saved records cannot grant execution. Removing a record is not a
+package uninstall. The permission center shows capability declarations and
+explicitly records that per-plugin grants and isolation are not implemented.
+Legacy persisted DTO status values remain metadata for compatibility.
+All maturity labels stay prototype; SEC-001–SEC-012 remain open.

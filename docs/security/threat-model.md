@@ -318,3 +318,10 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 [CSP](https://v2.tauri.app/security/csp/) 与
 [updater](https://v2.tauri.app/plugin/updater/)。这些机制是实施基础，不证明当前
 配置安全；尤其 CSP 必须启用，Rust commands 必须自己正确实施授权与 scope。
+
+## P0.3c 状态说明收口
+
+市场内置按钮只保存配置，HTML 不可安装；权限页显示授权/隔离缺口。
+证据：[展示策略](../../apps/desktop/src/runtime/catalog-presentation.ts)、
+[回归](../../apps/desktop/test/catalog-presentation.test.ts)。
+没有新增 native API、grant、数据迁移或第三方执行入口；SEC-001/002/006 保持 open。

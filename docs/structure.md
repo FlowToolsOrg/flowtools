@@ -264,3 +264,12 @@ Plugins Bundle Metadata (捆绑包元数据)
 Presets (预设基座): 插件的预设配置, 做到开箱即用。
 
 Instances (插件实例): 独立打包的 Plugin A, Plugin B 等。
+
+## P0.3c catalog and permission presentation
+
+Desktop market actions save built-in configuration only. HTML entries display
+不可安装 and saved records cannot grant execution. Removing a record is not a
+package uninstall. The permission center shows capability declarations and
+explicitly records that per-plugin grants and isolation are not implemented.
+Legacy persisted DTO status values remain metadata for compatibility.
+All maturity labels stay prototype; SEC-001–SEC-012 remain open.

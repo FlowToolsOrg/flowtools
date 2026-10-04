@@ -51,7 +51,7 @@ FlowTools 是面向知识工作者与普通办公用户的 AI 时代快捷工具
 
 ### P1.1a 序列化 Manifest 与操作 Schema
 
-在 `packages/sdk/src/manifest/`（拟新增）定义纯数据 Manifest v1。
+在 `packages/sdk/src/manifest/` 定义纯数据 Manifest v1（P1.1a 已实现）。
 代码加载前验证 ID、semver、publisher、平台、Host/SDK 范围、入口相对路径、
 文件清单及内容 hash；签名格式与 trust root 在 P2.5a 另行确定。
 

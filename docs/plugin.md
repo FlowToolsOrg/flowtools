@@ -705,3 +705,10 @@ package uninstall. The permission center shows capability declarations and
 explicitly records that per-plugin grants and isolation are not implemented.
 Legacy persisted DTO status values remain metadata for compatibility.
 All maturity labels stay prototype; SEC-001–SEC-012 remain open.
+
+## P1.1a 序列化操作协议
+
+插件函数对象不属于包 Manifest。用 [Manifest v1](./manifest-v1.md) 的纯数据
+命令声明表达 Schema、效果、预算与授权请求；runtimeValidation=required 必须
+提供真实校验器。旧元数据迁移须显式补齐 publisher、包文件和操作信息。当前
+T1 run/setup 接口仍保持兼容，十二插件分包在 P1.1b 验收。

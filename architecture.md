@@ -627,3 +627,9 @@ package uninstall. The permission center shows capability declarations and
 explicitly records that per-plugin grants and isolation are not implemented.
 Legacy persisted DTO status values remain metadata for compatibility.
 All maturity labels stay prototype; SEC-001–SEC-012 remain open.
+
+## P1.1a 命令 Manifest 实现
+
+[Manifest v1](./docs/manifest-v1.md) 已提供纯 JSON 协议、有限 operation Schema、
+显式旧元数据适配和输入/输出执行校验。Node 文件验证独立于浏览器契约，校验
+不执行包代码。当前仅 T1/fixture；host 接入与分包由 P1.1b/c 完成，G5 负责签名。

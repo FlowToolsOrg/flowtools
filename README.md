@@ -670,3 +670,10 @@ package uninstall. The permission center shows capability declarations and
 explicitly records that per-plugin grants and isolation are not implemented.
 Legacy persisted DTO status values remain metadata for compatibility.
 All maturity labels stay prototype; SEC-001–SEC-012 remain open.
+
+## Manifest v1 protocol
+
+The React-free SDK manifest subpath validates serialized commands and package
+metadata. Node file verification is a separate read-only subpath; it does not
+grant external execution. See [Manifest v1](./docs/manifest-v1.md). P1.1a is
+implemented; split built-in artifacts and CLI discovery follow in P1.1b/c.

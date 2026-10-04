@@ -1015,7 +1015,7 @@ G4 服务依赖 -> G5 签名安装与隔离 -> G6 工具链 -> G7 办公闭环 -
 
 | 子 ID | 状态    | 前置                | 聚焦交付物与验收                                                                   |
 | ----- | ------- | ------------------- | ---------------------------------------------------------------------------------- |
-| P1.1a | pending | P0.3c、P0.4         | 序列化 Manifest、多操作输入/输出 Schema、冷启动/effects/依赖声明；非法包执行前拒绝 |
+| P1.1a | done    | P0.3c、P0.4         | 序列化 Manifest、多操作输入/输出 Schema、冷启动/effects/依赖声明；非法包执行前拒绝 |
 | P1.1b | pending | P1.1a               | UI/commands 分包、十二插件兼容适配；无 React/GUI/source 消费实际命令               |
 | P1.1c | pending | P1.1b               | describe/commands/flags 同源生成；编译 CLI 的机器发现与拒绝回归                    |
 | P1.2a | pending | P1.1                | 单一状态机、锁和 hook 补偿；100 并发操作不重复激活                                 |
@@ -1054,7 +1054,7 @@ P1.1/1.2/1.3/1.4/1.5、P2.3/2.4/2.5/2.6、P3.1/3.4 父项分别由上述同前�
 
 ### P1.1 发布 Manifest v1 运行时契约
 
-- 状态：`pending`
+- 状态：`in-progress`
 - 负责人：`TBD (SDK)`
 - 依赖：P0.1、P0.4
 
@@ -1725,14 +1725,14 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 
 ### Phase 1
 
-| ID   | 状态    | 负责人        | 依赖               | Commit / 验证记录               |
-| ---- | ------- | ------------- | ------------------ | ------------------------------- |
-| P1.1 | pending | TBD           | P0.1, P0.4         | -                               |
-| P1.2 | pending | TBD           | P1.1               | -                               |
-| P1.3 | pending | TBD           | P1.2               | -                               |
-| P1.4 | pending | TBD           | P1.1, P1.3         | -                               |
-| P1.5 | pending | TBD           | P1.3               | -                               |
-| P1.6 | pending | SDK / Runtime | P1.1、P1.3b、P2.4a | G4 设计完成；实施与验证 pending |
+| ID   | 状态        | 负责人        | 依赖               | Commit / 验证记录               |
+| ---- | ----------- | ------------- | ------------------ | ------------------------------- |
+| P1.1 | in-progress | Codex         | P0.1, P0.4         | -                               |
+| P1.2 | pending     | TBD           | P1.1               | -                               |
+| P1.3 | pending     | TBD           | P1.2               | -                               |
+| P1.4 | pending     | TBD           | P1.1, P1.3         | -                               |
+| P1.5 | pending     | TBD           | P1.3               | -                               |
+| P1.6 | pending     | SDK / Runtime | P1.1、P1.3b、P2.4a | G4 设计完成；实施与验证 pending |
 
 ### Phase 2
 
@@ -1794,3 +1794,6 @@ Docs synced:
 
 G0 收口：2026-10-04，P0.1–P0.4 均完成。P0.3c 证据与人工豁免范围见
 [市场状态验收](./validation/p0-market-state.md)。prototype 和 open 安全风险保持不变。
+
+P1.1a：2026-10-04，Owner Codex；序列化 Manifest/有限 Schema/输出与 package
+拒绝契约完成，SDK 125 tests；父项等待 b/c 接实际入口。见 [契约证据](./manifest-v1.md)。

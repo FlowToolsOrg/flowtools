@@ -493,3 +493,12 @@ package uninstall. The permission center shows capability declarations and
 explicitly records that per-plugin grants and isolation are not implemented.
 Legacy persisted DTO status values remain metadata for compatibility.
 All maturity labels stay prototype; SEC-001–SEC-012 remain open.
+
+## Manifest v1 validation
+
+Use @flowtools/sdk/manifest for bounded serialized metadata and operation
+validation, and @flowtools/sdk/manifest/package for Node-only file verification.
+Use parsePluginManifest with an explicit Host target before loading artifacts.
+Keep custom Zod runtime validation explicit; never export an empty substitute.
+Run bun run verify:manifests; the P1.1a gate covers protocol fixtures only.
+See [Manifest v1](./docs/manifest-v1.md); hashes/declarations are not grants.

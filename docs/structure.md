@@ -273,3 +273,9 @@ package uninstall. The permission center shows capability declarations and
 explicitly records that per-plugin grants and isolation are not implemented.
 Legacy persisted DTO status values remain metadata for compatibility.
 All maturity labels stay prototype; SEC-001–SEC-012 remain open.
+
+## P1.1a 新增模块
+
+packages/sdk/src/manifest 已存在：schema、json-schema、execution、legacy 和
+Node-only package verifier。packages/sdk/test/manifest\*.test.ts 覆盖协议与文件
+拒绝；scripts/verify-manifests.ts 为只读契约 gate。见 [协议](./manifest-v1.md)。

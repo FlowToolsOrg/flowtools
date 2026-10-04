@@ -33,7 +33,11 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
   假认证标签、缺失 fixture、路径逃逸和不一致目录被拒绝。hash 未签名，仅证明
   扫描字节/文件存在，不是供应链或实时安装验证；本项仍 open。
 - 证据：[市场与 runner](../../apps/desktop/src/App.tsx)、
-  [目录生成器](../../scripts/inspect-html-plugins.ts)
+  [目录生成器](../../scripts/inspect-html-plugins.ts)、
+  [Manifest v1](../../packages/sdk/src/manifest/schema.ts)、
+  [包文件只读校验](../../packages/sdk/src/manifest/package.ts)、
+  [Manifest 拒绝回归](../../packages/sdk/test/manifest.test.ts)、
+  [文件拒绝回归](../../packages/sdk/test/manifest-package.test.ts)
 - Owner：Plugin Platform / Release；Repository Maintainer 为发布责任人
 - 缓解：加载前验证 versioned manifest、文件 hash、可信 publisher、兼容范围；
   staging 隔离，拒绝 Zip Slip、特殊文件、zip bomb；失败恢复完整旧版本。

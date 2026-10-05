@@ -2058,6 +2058,36 @@
     {
       "outcome": {
         "data": {
+          "code": "ACCEPTANCE_UNKNOWN"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "EXECUTION_INTERRUPTED"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "RESULT_EXPIRED"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
           "code": "COLD_START_DENIED"
         },
         "type": "error"

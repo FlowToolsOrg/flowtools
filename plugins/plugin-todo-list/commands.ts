@@ -1,3 +1,4 @@
+import { isJsonValue } from '@flowtools/sdk/manifest'
 import { result } from '@flowtools/sdk/result'
 import { z } from 'zod'
 
@@ -30,6 +31,30 @@ export default defineBuiltinCommand({
   },
   inputSchema,
   async run(ctx, input: z.infer<typeof inputSchema>) {
+    if (ctx.data) {
+      const snapshot = await ctx.data.read('todos')
+      const items = todoItemsSchema.parse(snapshot.value ?? [])
+      if (input.todo) {
+        const item = { todo: input.todo, deadline: input.deadline ?? '' }
+        const todos = [...items, item]
+        if (!isJsonValue(todos)) throw new Error('INPUT_INVALID')
+        await ctx.data.write({
+          key: 'todos',
+          expectedRevision: snapshot.revision,
+          value: todos,
+        })
+        return result.json({
+          result: { added: item.todo, total: items.length + 1 },
+        })
+      }
+      return result.json({
+        result: items.map(
+          (item, idx) =>
+            `${idx + 1}. [${item.deadline || 'No Deadline'}] ${item.todo}`
+        ),
+        count: items.length,
+      })
+    }
     if (!ctx.store && !ctx.storage)
       throw new Error('Todo storage capability is unavailable')
     // App hosts share their declared store with setup(); CLI keeps its existing key.

@@ -1,5 +1,19 @@
 import { expect, test } from 'bun:test'
 import { fileURLToPath } from 'node:url'
+
+test('actual managed Host durably executes Todo and recovers lost ACK, crash and revoke', async () => {
+  const fixture = Bun.spawn(
+    ['node', fileURLToPath(new URL('./jobs-fixture.mjs', import.meta.url))],
+    { stdout: 'pipe', stderr: 'pipe' }
+  )
+  const [stdout, stderr, code] = await Promise.all([
+    new Response(fixture.stdout).text(),
+    new Response(fixture.stderr).text(),
+    fixture.exited,
+  ])
+  expect({ code, stderr }).toEqual({ code: 0, stderr: '' })
+  expect(stdout.trim()).toBe('Durable jobs fixture passed')
+}, 30000)
 test('actual Node clients and native Host share real T1 tasks and cancellation', async () => {
   // Bun's Windows net.Socket missed a response after switching pipes. Exercise the
   // supported Node transport in a real Node process, with every assertion intact.

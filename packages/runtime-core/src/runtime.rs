@@ -3,8 +3,10 @@ use crate::{
     catalog::{digest, BuiltinCatalog},
     data::DataStore,
     policy::PolicyStore,
+    private_jobs::PrivateJobs,
     protocol::*,
 };
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, HashMap};
 use uuid::Uuid;
@@ -30,6 +32,42 @@ struct Job {
     action_digest: String,
     events: Vec<JobEvent>,
     broker_session: Option<BrokerSession>,
+    idempotency_key: String,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct StoredJob {
+    format_version: u16,
+    snapshot: JobSnapshot,
+    background: bool,
+    accepted_at: f64,
+    started_at: f64,
+    input_summary: InputSummary,
+    action_digest: String,
+    idempotency_key: String,
+    events: Vec<JobEvent>,
+}
+impl StoredJob {
+    fn from_job(job: &Job) -> Self {
+        let mut snapshot = job.snapshot.clone();
+        if let Some(ref mut result) = snapshot.result {
+            if let ExecutionOutcome::Success { data, .. } = &mut result.outcome {
+                *data = Value::Null;
+            }
+        }
+        Self {
+            format_version: 1,
+            snapshot,
+            background: job.background,
+            accepted_at: job.accepted_at,
+            started_at: job.started_at,
+            input_summary: job.input_summary.clone(),
+            action_digest: job.action_digest.clone(),
+            idempotency_key: job.idempotency_key.clone(),
+            events: job.events.clone(),
+        }
+    }
 }
 
 /// Payload is transient runner input, never serializable diagnostics/history.
@@ -40,6 +78,7 @@ pub struct RunSpec {
     pub input: Value,
     pub deadline: f64,
     pub package_digest: String,
+    pub data: Option<DataSnapshot>,
 }
 
 pub struct RuntimeCore {
@@ -56,6 +95,7 @@ pub struct RuntimeCore {
     management_only: bool,
     cold_started: bool,
     stopping: bool,
+    private_jobs: Option<PrivateJobs>,
 }
 
 impl RuntimeCore {
@@ -78,6 +118,7 @@ impl RuntimeCore {
             management_only: false,
             cold_started: false,
             stopping: false,
+            private_jobs: None,
         }
     }
 
@@ -109,7 +150,170 @@ impl RuntimeCore {
             )?;
         }
         core.policy = Some(policy);
+        core.private_jobs = core.data.profile().map(PrivateJobs::open).transpose()?;
+        core.restore_jobs()?;
         Ok(core)
+    }
+
+    fn persist_job(&self, job: &Job) -> Result<(), ErrorCode> {
+        if self.private_jobs.is_some() {
+            self.data.save_job(
+                &job.snapshot.run_id,
+                &serde_json::to_value(StoredJob::from_job(job))
+                    .map_err(|_| ErrorCode::StorageFailed)?,
+            )?;
+        }
+        Ok(())
+    }
+    fn restore_jobs(&mut self) -> Result<(), ErrorCode> {
+        if self.private_jobs.is_none() {
+            return Ok(());
+        }
+        for value in self.data.load_jobs()? {
+            let stored: StoredJob =
+                serde_json::from_value(value).map_err(|_| ErrorCode::StoreCorrupt)?;
+            if stored.format_version != 1
+                || uuid::Uuid::parse_str(&stored.snapshot.run_id).is_err()
+                || !valid_key(&stored.idempotency_key)
+            {
+                return Err(ErrorCode::StoreCorrupt);
+            }
+            let run = stored.snapshot.run_id.clone();
+            let key = (
+                stored.snapshot.root_caller.clone(),
+                stored.idempotency_key.clone(),
+            );
+            if self.keys.insert(key, run.clone()).is_some() {
+                return Err(ErrorCode::StoreCorrupt);
+            }
+            self.jobs.insert(
+                run.clone(),
+                Job {
+                    snapshot: stored.snapshot,
+                    owner_connection: String::new(),
+                    background: stored.background,
+                    accepted_at: stored.accepted_at,
+                    started_at: stored.started_at,
+                    input_summary: stored.input_summary,
+                    action_digest: stored.action_digest,
+                    idempotency_key: stored.idempotency_key,
+                    events: stored.events,
+                    broker_session: None,
+                },
+            );
+            let job = &self.jobs[&run];
+            if job.snapshot.state.terminal() {
+                if now() >= job.accepted_at + 86_400_000.0 {
+                    self.private_jobs.as_ref().unwrap().remove(&run, "output")?;
+                }
+                self.private_jobs.as_ref().unwrap().remove(&run, "input")?;
+                continue;
+            }
+            if self.management_only {
+                continue;
+            }
+            let snapshot = job.snapshot.clone();
+            let catalog = self.catalog.clone();
+            let contract = catalog.command(&snapshot.plugin_id, &snapshot.command_id);
+            let authorization = contract.and_then(|(manifest, command)| {
+                let identity =
+                    CommandIdentity::from_manifest(&snapshot.root_caller, manifest, command);
+                self.managed_authorization(&identity, job.background)?;
+                if digest(manifest) != snapshot.package_digest
+                    || self.broker.authorize_command(&identity, command, now())?
+                        != snapshot.grant_epoch
+                {
+                    return Err(ErrorCode::GrantRevoked);
+                }
+                if snapshot.deadline <= now() {
+                    return Err(ErrorCode::Timeout);
+                }
+                Ok(())
+            });
+            // Queued has never entered a runner. Running Base64 is proven pure and
+            // deterministic; every other running operation needs manual review.
+            let retryable = matches!(snapshot.state, JobState::Accepted | JobState::Queued)
+                || (snapshot.state == JobState::Running
+                    && snapshot.plugin_id == "plugin-base64-encoder");
+            if job.background && retryable && authorization.is_ok() {
+                let input = self.private_jobs.as_ref().unwrap().read(&run, "input")?;
+                let prepared = self.catalog.prepare_input_mode(
+                    &snapshot.plugin_id,
+                    &snapshot.command_id,
+                    input.clone(),
+                    true,
+                )?;
+                if prepared != input
+                    || digest(
+                        &json!({"package":snapshot.package_digest,"command":snapshot.command_id,"lock":snapshot.dependency_lock,"input":input,"background":job.background,"deadline":snapshot.deadline}),
+                    ) != job.action_digest
+                {
+                    return Err(ErrorCode::StoreCorrupt);
+                }
+                self.private_jobs.as_ref().unwrap().remove(&run, "output")?;
+                self.pending.insert(
+                    run.clone(),
+                    RunSpec {
+                        run_id: run.clone(),
+                        plugin_id: snapshot.plugin_id,
+                        command_id: snapshot.command_id,
+                        input,
+                        deadline: snapshot.deadline,
+                        package_digest: snapshot.package_digest,
+                        data: None,
+                    },
+                );
+                let job = self.jobs.get_mut(&run).unwrap();
+                job.snapshot.state = JobState::Queued;
+                job.snapshot.sequence += 1;
+                job.events.push(JobEvent {
+                    run_id: run.clone(),
+                    sequence: job.snapshot.sequence,
+                    state: JobState::Queued,
+                });
+                self.persist_job(&self.jobs[&run])?;
+            } else {
+                self.finish_internal(
+                    &run,
+                    Err(authorization
+                        .err()
+                        .unwrap_or(ErrorCode::ExecutionInterrupted)),
+                    Some(JobState::Interrupted),
+                );
+                if self.stopping {
+                    return Err(ErrorCode::StorageFailed);
+                }
+            }
+        }
+        self.private_jobs
+            .as_ref()
+            .unwrap()
+            .remove_orphans(&self.jobs.keys().cloned().collect())?;
+        Ok(())
+    }
+    pub fn pending_runs(&self) -> Vec<String> {
+        self.pending.keys().cloned().collect()
+    }
+    fn job_snapshot(&self, run: &str) -> Result<JobSnapshot, ErrorCode> {
+        let job = self.jobs.get(run).ok_or(ErrorCode::JobNotFound)?;
+        let mut snapshot = job.snapshot.clone();
+        if let Some(ref payloads) = self.private_jobs {
+            if let Some(ref mut result) = snapshot.result {
+                if let ExecutionOutcome::Success { data, .. } = &mut result.outcome {
+                    if now() >= job.accepted_at + 86_400_000.0 {
+                        return Err(ErrorCode::ResultExpired);
+                    }
+                    *data = payloads.read(run, "output")?;
+                    if !self
+                        .catalog
+                        .output_valid(&snapshot.plugin_id, &snapshot.command_id, data)
+                    {
+                        return Err(ErrorCode::StoreCorrupt);
+                    }
+                }
+            }
+        }
+        Ok(snapshot)
     }
 
     pub fn stopping(&self) -> bool {
@@ -337,22 +541,24 @@ impl RuntimeCore {
             Call::Submit(submit) => self
                 .submit(connection, &caller, submit)
                 .map(Outcome::Receipt),
-            Call::Job(key) => Ok(Outcome::Job(Box::new(
-                self.jobs
-                    .get(&key.run_id)
-                    .ok_or(ErrorCode::JobNotFound)?
-                    .snapshot
-                    .clone(),
-            ))),
+            Call::Lookup(key) => {
+                if !valid_key(&key.idempotency_key) {
+                    return Err(ErrorCode::InvalidRequest);
+                }
+                let run = self
+                    .keys
+                    .get(&(caller.clone(), key.idempotency_key))
+                    .ok_or(ErrorCode::JobNotFound)?;
+                Ok(Outcome::Receipt(self.receipt(run)))
+            }
+            Call::Job(key) => Ok(Outcome::Job(Box::new(self.job_snapshot(&key.run_id)?))),
             Call::Cancel(key) => {
                 let job = self.jobs.get(&key.run_id).ok_or(ErrorCode::JobNotFound)?;
                 if job.snapshot.root_caller != caller {
                     return Err(ErrorCode::SessionInvalid);
                 }
                 self.cancel(&key.run_id);
-                Ok(Outcome::Job(Box::new(
-                    self.jobs[&key.run_id].snapshot.clone(),
-                )))
+                Ok(Outcome::Job(Box::new(self.job_snapshot(&key.run_id)?)))
             }
             Call::Events(cursor) => {
                 let job = self
@@ -486,18 +692,21 @@ impl RuntimeCore {
         let identity = CommandIdentity::from_manifest(caller, manifest, command);
         self.managed_authorization(&identity, submit.background)?;
         let grant_epoch = self.broker.authorize_command(&identity, command, now())?;
-        let input =
-            self.catalog
-                .prepare_input(&submit.plugin_id, &submit.command_id, submit.input)?;
+        let input = self.catalog.prepare_input_mode(
+            &submit.plugin_id,
+            &submit.command_id,
+            submit.input,
+            self.policy.is_some(),
+        )?;
         let (manifest, command) = self
             .catalog
             .command(&submit.plugin_id, &submit.command_id)?;
         let accepted_at = now();
         let package_digest = digest(manifest);
         let action_digest = digest(
-            &json!({ "package":package_digest, "command":submit.command_id, "input":input, "background":submit.background, "deadline":submit.deadline }),
+            &json!({ "package":package_digest, "command":submit.command_id, "lock":"t1-no-dependencies-v1", "input":input, "background":submit.background, "deadline":submit.deadline }),
         );
-        let key = (caller.to_owned(), submit.idempotency_key);
+        let key = (caller.to_owned(), submit.idempotency_key.clone());
         if let Some(run_id) = self.keys.get(&key) {
             let job = &self.jobs[run_id];
             if job.action_digest != action_digest {
@@ -512,7 +721,14 @@ impl RuntimeCore {
         {
             return Err(ErrorCode::InvalidRequest);
         }
-        if self.jobs.len() >= 128 {
+        if self.jobs.len() >= 1024
+            || self
+                .jobs
+                .values()
+                .filter(|job| !job.snapshot.state.terminal())
+                .count()
+                >= 128
+        {
             return Err(ErrorCode::RuntimeBusy);
         }
         let run_id = Uuid::new_v4().to_string();
@@ -549,8 +765,20 @@ impl RuntimeCore {
                 action_digest,
                 events: Vec::new(),
                 broker_session: None,
+                idempotency_key: submit.idempotency_key,
             },
         );
+        if let Some(ref payloads) = self.private_jobs {
+            if let Err(error) = payloads.write(&run_id, "input", &input) {
+                self.jobs.remove(&run_id);
+                return Err(error);
+            }
+            if self.persist_job(&self.jobs[&run_id]).is_err() {
+                // Do not assume an IO error proves absence of a durable record.
+                self.stopping = true;
+                return Err(ErrorCode::AcceptanceUnknown);
+            }
+        }
         self.pending.insert(
             run_id.clone(),
             RunSpec {
@@ -560,11 +788,12 @@ impl RuntimeCore {
                 input,
                 deadline: submit.deadline,
                 package_digest,
+                data: None,
             },
         );
-        self.transition(&run_id, JobState::Queued)
-            .expect("Accepted -> queued");
         self.keys.insert(key, run_id.clone());
+        self.transition(&run_id, JobState::Queued)
+            .map_err(|_| ErrorCode::AcceptanceUnknown)?;
         Ok(self.receipt(&run_id))
     }
 
@@ -599,6 +828,7 @@ impl RuntimeCore {
         if !valid {
             return Err(ErrorCode::InvalidRequest);
         }
+        let previous = job.snapshot.clone();
         job.snapshot.state = next;
         job.snapshot.sequence += 1;
         job.events.push(JobEvent {
@@ -606,11 +836,21 @@ impl RuntimeCore {
             sequence: job.snapshot.sequence,
             state: next,
         });
+        let stored =
+            serde_json::to_value(StoredJob::from_job(job)).map_err(|_| ErrorCode::StorageFailed)?;
+        if self.private_jobs.is_some() {
+            if let Err(code) = self.data.save_job(run_id, &stored) {
+                job.snapshot = previous;
+                job.events.pop();
+                self.stopping = true;
+                return Err(code);
+            }
+        }
         Ok(())
     }
 
     pub fn take_run(&mut self, run_id: &str) -> Option<RunSpec> {
-        let run = self.pending.remove(run_id)?;
+        let mut run = self.pending.remove(run_id)?;
         if self.jobs[run_id].snapshot.state != JobState::Queued {
             return None;
         }
@@ -639,7 +879,62 @@ impl RuntimeCore {
         }
         self.transition(run_id, JobState::Running).ok()?;
         self.jobs.get_mut(run_id)?.started_at = now();
+        if run.plugin_id == "plugin-todo-list" {
+            let session = self.jobs[run_id].broker_session.as_ref().unwrap();
+            match self.broker.invoke(
+                session,
+                &CapabilityOperation::DataRead {
+                    key: "todos".into(),
+                },
+                now(),
+                |identity| self.data.read(&namespace(identity), "todos"),
+            ) {
+                Ok(snapshot) => run.data = Some(snapshot),
+                Err(code) => {
+                    self.finish(run_id, Err(code));
+                    return None;
+                }
+            }
+        }
         Some(run)
+    }
+
+    pub fn commit_mutations(
+        &mut self,
+        run_id: &str,
+        mutations: &[DataMutation],
+    ) -> Result<(), ErrorCode> {
+        self.check_run(run_id)?;
+        if mutations.len() > 16 {
+            return Err(ErrorCode::BudgetExceeded);
+        }
+        if mutations.is_empty() {
+            return Ok(());
+        }
+        let job = &self.jobs[run_id];
+        let session = job.broker_session.as_ref().unwrap();
+        for mutation in &mutations[..mutations.len() - 1] {
+            self.broker.invoke(
+                session,
+                &CapabilityOperation::DataWrite {
+                    key: mutation.key.clone(),
+                },
+                now(),
+                |_| Ok(()),
+            )?;
+        }
+        self.broker.invoke(
+            session,
+            &CapabilityOperation::DataWrite {
+                key: mutations.last().unwrap().key.clone(),
+            },
+            now(),
+            |identity| {
+                self.data
+                    .transaction(&namespace(identity), mutations)
+                    .map(|_| ())
+            },
+        )
     }
 
     pub fn state(&self, run_id: &str) -> Option<JobState> {
@@ -663,64 +958,69 @@ impl RuntimeCore {
     }
 
     pub fn finish(&mut self, run_id: &str, result: Result<Value, ErrorCode>) {
+        self.finish_internal(run_id, result, None);
+    }
+
+    fn finish_internal(
+        &mut self,
+        run_id: &str,
+        mut result: Result<Value, ErrorCode>,
+        recovered: Option<JobState>,
+    ) {
         if self.state(run_id).is_none_or(JobState::terminal) {
             return;
         }
         let cancelled = self.state(run_id) == Some(JobState::Cancelling);
-        let (state, outcome) = if cancelled {
-            (
-                JobState::Cancelled,
-                ExecutionOutcome::Failure {
-                    success: false,
-                    error: RuntimeError {
-                        code: ErrorCode::Aborted,
-                    },
-                },
-            )
-        } else {
-            match result {
-                Ok(data) => {
-                    let snapshot = &self.jobs[run_id].snapshot;
-                    if self
-                        .catalog
-                        .output_valid(&snapshot.plugin_id, &snapshot.command_id, &data)
-                    {
-                        (
-                            JobState::Succeeded,
-                            ExecutionOutcome::Success {
-                                success: true,
-                                data,
-                            },
-                        )
-                    } else {
-                        (
-                            JobState::Failed,
-                            ExecutionOutcome::Failure {
-                                success: false,
-                                error: RuntimeError {
-                                    code: ErrorCode::OutputInvalid,
-                                },
-                            },
-                        )
-                    }
-                }
-                Err(code) => (
-                    JobState::Failed,
-                    ExecutionOutcome::Failure {
-                        success: false,
-                        error: RuntimeError { code },
-                    },
-                ),
-            }
-        };
-        if self.transition(run_id, state).is_err() {
-            return;
+        if cancelled {
+            result = Err(ErrorCode::Aborted);
         }
+        if let Ok(ref data) = result {
+            let snapshot = &self.jobs[run_id].snapshot;
+            if !self
+                .catalog
+                .output_valid(&snapshot.plugin_id, &snapshot.command_id, data)
+            {
+                result = Err(ErrorCode::OutputInvalid);
+            }
+        }
+        if let (Some(payloads), Ok(data)) = (&self.private_jobs, &result) {
+            if let Err(code) = payloads.write(run_id, "output", data) {
+                result = Err(code);
+            }
+        }
+        let state = recovered.unwrap_or(if cancelled {
+            JobState::Cancelled
+        } else if result.is_ok() {
+            JobState::Succeeded
+        } else {
+            JobState::Failed
+        });
+        let outcome = match result {
+            Ok(data) => ExecutionOutcome::Success {
+                success: true,
+                data: if self.private_jobs.is_some() {
+                    Value::Null
+                } else {
+                    data
+                },
+            },
+            Err(code) => ExecutionOutcome::Failure {
+                success: false,
+                error: RuntimeError { code },
+            },
+        };
         let job = self.jobs.get_mut(run_id).unwrap();
         if let Some(session) = job.broker_session.take() {
             self.broker.close(&session);
         }
         let finished_at = now().max(job.started_at);
+        job.snapshot.state = state;
+        job.snapshot.sequence += 1;
+        job.events.push(JobEvent {
+            run_id: run_id.into(),
+            sequence: job.snapshot.sequence,
+            state,
+        });
         job.snapshot.result = Some(ExecutionResult {
             format_version: 1,
             run_id: run_id.into(),
@@ -732,6 +1032,35 @@ impl RuntimeCore {
             input_summary: job.input_summary.clone(),
             outcome,
         });
+        // Terminal state and result commit together, never a terminal record without an envelope.
+        if self.persist_job(&self.jobs[run_id]).is_err() {
+            self.stopping = true;
+            let job = self.jobs.get_mut(run_id).unwrap();
+            job.snapshot.state = JobState::Interrupted;
+            if let Some(ref mut envelope) = job.snapshot.result {
+                envelope.outcome = ExecutionOutcome::Failure {
+                    success: false,
+                    error: RuntimeError {
+                        code: ErrorCode::StorageFailed,
+                    },
+                };
+            }
+            // Preserve input when the terminal commit is ambiguous. Restart
+            // decides from durable metadata, never from this in-memory state.
+            return;
+        }
+        if let Some(ref payloads) = self.private_jobs {
+            let cleanup = payloads.remove(run_id, "input").and_then(|_| {
+                if state != JobState::Succeeded {
+                    payloads.remove(run_id, "output")
+                } else {
+                    Ok(())
+                }
+            });
+            if cleanup.is_err() {
+                self.stopping = true;
+            }
+        }
     }
 
     pub fn cancel(&mut self, run_id: &str) {
@@ -739,8 +1068,9 @@ impl RuntimeCore {
             self.state(run_id),
             Some(JobState::Queued | JobState::Running)
         ) {
-            self.transition(run_id, JobState::Cancelling)
-                .expect("Cancellable state");
+            if self.transition(run_id, JobState::Cancelling).is_err() {
+                return;
+            }
             if self.pending.remove(run_id).is_some() {
                 self.finish(run_id, Err(ErrorCode::Aborted));
             }
@@ -789,6 +1119,132 @@ fn namespace(identity: &CommandIdentity) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn durable_receipt_recovery_keeps_keys_private_and_never_replays_running_writes() {
+        let profile =
+            std::env::temp_dir().join(format!("flowtools-validation-durable-{}", Uuid::new_v4()));
+        std::fs::create_dir(&profile).unwrap();
+        let database = profile.join("runtime.sqlite");
+        let reopen = || {
+            RuntimeCore::managed(
+                HashMap::from([
+                    ("cli".into(), "local-cli".into()),
+                    ("admin".into(), "local-manager".into()),
+                ]),
+                DataStore::open(&database).unwrap(),
+                false,
+                false,
+            )
+            .unwrap()
+        };
+        let mut core = reopen();
+        let admin = open(&mut core, "admin", "admin");
+        let (manifest, _) = core.catalog.command("plugin-todo-list", "run").unwrap();
+        let grant = PermissionGrant {
+            plugin_id: "plugin-todo-list".into(),
+            command_id: "run".into(),
+            target: GrantTarget::Cli,
+            package_digest: digest(manifest),
+            effects: vec!["data-read".into(), "data-write".into()],
+            scopes: vec![Scope::PluginData {
+                key_prefix: "todos".into(),
+            }],
+            expires_at: now() + 60_000.0,
+            max_calls: 16,
+            cold_start: false,
+            background: true,
+        };
+        assert!(matches!(
+            core.handle("admin", request(Call::Grant(grant), Some(admin)))
+                .outcome,
+            Outcome::Permissions(_)
+        ));
+        let cli = open(&mut core, "cli", "cli");
+        let operation = SubmitJob {
+            plugin_id: "plugin-todo-list".into(),
+            command_id: "run".into(),
+            input: json!({"todo":"PRIVATE_PAYLOAD_CANARY"}),
+            idempotency_key: "lost-ack".into(),
+            background: true,
+            deadline: now() + 20_000.0,
+        };
+        let Outcome::Receipt(receipt) = core
+            .handle("cli", request(Call::Submit(operation.clone()), Some(cli)))
+            .outcome
+        else {
+            panic!("Receipt")
+        };
+        let accepted = core.data.load_jobs().unwrap();
+        assert_eq!(accepted.len(), 1);
+        assert!(!serde_json::to_string(&accepted)
+            .unwrap()
+            .contains("PRIVATE_PAYLOAD_CANARY"));
+        drop(core);
+        let mut core = reopen();
+        let cli = open(&mut core, "cli", "cli");
+        let Outcome::Receipt(retry) = core
+            .handle(
+                "cli",
+                request(
+                    Call::Lookup(IdempotencyKey {
+                        idempotency_key: "lost-ack".into(),
+                    }),
+                    Some(cli.clone()),
+                ),
+            )
+            .outcome
+        else {
+            panic!("Lookup")
+        };
+        assert_eq!(retry.run_id, receipt.run_id);
+        let mut changed = operation;
+        changed.input = json!({"todo":"different"});
+        assert!(matches!(
+            core.handle("cli", request(Call::Submit(changed), Some(cli)))
+                .outcome,
+            Outcome::Error(RuntimeError {
+                code: ErrorCode::IdempotencyConflict
+            })
+        ));
+        assert_eq!(
+            core.take_run(&receipt.run_id).unwrap().input["todo"],
+            "PRIVATE_PAYLOAD_CANARY"
+        );
+        core.commit_mutations(
+            &receipt.run_id,
+            &[DataMutation {
+                key: "todos".into(),
+                expected_revision: 0,
+                value: json!([{"todo":"PRIVATE_PAYLOAD_CANARY","deadline":""}]),
+            }],
+        )
+        .unwrap();
+        drop(core); // Crash after a write but before completion/ACK.
+        let core = reopen();
+        assert_eq!(core.state(&receipt.run_id), Some(JobState::Interrupted));
+        assert!(core.pending_runs().is_empty());
+        let snapshot = core.job_snapshot(&receipt.run_id).unwrap();
+        assert!(matches!(
+            snapshot.result.unwrap().outcome,
+            ExecutionOutcome::Failure {
+                error: RuntimeError {
+                    code: ErrorCode::ExecutionInterrupted
+                },
+                ..
+            }
+        ));
+        assert_eq!(
+            core.data
+                .read("flowtools:plugin-todo-list", "todos")
+                .unwrap()
+                .revision,
+            1
+        );
+        assert_eq!(
+            core.jobs[&receipt.run_id].events.last().unwrap().state,
+            JobState::Interrupted
+        );
+    }
     #[test]
     fn management_role_is_host_bound_and_cannot_execute_business() {
         let mut core = RuntimeCore::managed(

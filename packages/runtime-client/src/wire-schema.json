@@ -376,6 +376,23 @@
             "additionalProperties": false,
             "properties": {
               "method": {
+                "const": "jobs.lookup",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/IdempotencyKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
                 "const": "jobs.status",
                 "type": "string"
               },
@@ -698,6 +715,18 @@
           "desktop"
         ],
         "type": "string"
+      },
+      "IdempotencyKey": {
+        "additionalProperties": false,
+        "properties": {
+          "idempotencyKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotencyKey"
+        ],
+        "type": "object"
       },
       "JobKey": {
         "additionalProperties": false,
@@ -1196,6 +1225,9 @@
           "STORE_CORRUPT",
           "SCHEMA_UNSUPPORTED",
           "STORAGE_FAILED",
+          "ACCEPTANCE_UNKNOWN",
+          "EXECUTION_INTERRUPTED",
+          "RESULT_EXPIRED",
           "COLD_START_DENIED",
           "PLUGIN_NOT_FOUND",
           "INPUT_INVALID",

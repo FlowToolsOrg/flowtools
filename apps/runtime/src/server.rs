@@ -117,7 +117,10 @@ pub async fn run() -> Result<(), &'static str> {
     } else {
         if args.len() != 3
             || !matches!(args[0].as_str(), "--initialize-profile" | "--profile")
-            || !matches!(args[2].as_str(), "--management" | "--cold-start")
+            || !matches!(
+                args[2].as_str(),
+                "--management" | "--cold-start" | "--serve"
+            )
             || (args[0] == "--initialize-profile" && args[2] != "--management")
         {
             return Err("SETUP_REQUIRED");
@@ -165,6 +168,9 @@ pub async fn run() -> Result<(), &'static str> {
     let mut connections = tokio::task::JoinSet::new();
     let mut workers = tokio::task::JoinSet::new();
     let (tasks, mut pending_tasks) = mpsc::channel::<String>(128);
+    for run in core.lock().await.pending_runs() {
+        tasks.try_send(run).map_err(|_| "RUNNER_QUEUE_FAILED")?;
+    }
     let mut scheduled = HashSet::new();
     let permits = Arc::new(Semaphore::new(4));
     let stdin_lifetime =
@@ -346,10 +352,19 @@ async fn execute(spec: &RunSpec, core: Core, workspace: &Path) -> Result<Value, 
         command.env("SystemRoot", system_root);
     }
     let mut child = command.spawn().map_err(|_| ErrorCode::ExecutionFailed)?;
-    let bytes = serde_json::to_vec(
-        &json!({"pluginId":spec.plugin_id,"commandId":spec.command_id,"input":spec.input,"packageDigest":spec.package_digest}),
-    )
-    .map_err(|_| ErrorCode::InputInvalid)?;
+    let _job = match crate::process_job::ProcessJob::bind(&child) {
+        Ok(job) => job,
+        Err(_) => {
+            let _ = child.kill().await;
+            let _ = child.wait().await;
+            return Err(ErrorCode::ExecutionFailed);
+        }
+    };
+    let mut payload = json!({"pluginId":spec.plugin_id,"commandId":spec.command_id,"input":spec.input,"packageDigest":spec.package_digest});
+    if spec.data.is_some() {
+        payload["data"] = serde_json::to_value(&spec.data).map_err(|_| ErrorCode::InputInvalid)?;
+    }
+    let bytes = serde_json::to_vec(&payload).map_err(|_| ErrorCode::InputInvalid)?;
     let mut stdin = child.stdin.take().ok_or(ErrorCode::ExecutionFailed)?;
     let mut stdout = child
         .stdout
@@ -368,9 +383,17 @@ async fn execute(spec: &RunSpec, core: Core, workspace: &Path) -> Result<Value, 
             let status = child.wait().await.map_err(|_| ErrorCode::ExecutionFailed)?;
             if !status.success() { return Err(ErrorCode::ExecutionFailed); }
             let envelope: Value = serde_json::from_slice(&output).map_err(|_| ErrorCode::OutputInvalid)?;
-            if envelope["pluginId"] != spec.plugin_id { return Err(ErrorCode::OutputInvalid); }
-            if envelope["success"] == true { Ok(envelope["data"].clone()) }
-            else { Err(serde_json::from_value(envelope["error"]["code"].clone()).unwrap_or(ErrorCode::ExecutionFailed)) }
+            if envelope.as_object().is_none_or(|v| v.len()!=2) {return Err(ErrorCode::OutputInvalid);}
+            let mutations:Vec<flowtools_runtime_core::protocol::DataMutation>=serde_json::from_value(envelope["mutations"].clone()).map_err(|_|ErrorCode::OutputInvalid)?;
+            let execution=&envelope["execution"];
+            if execution["pluginId"] != spec.plugin_id { return Err(ErrorCode::OutputInvalid); }
+            if execution["success"] == true {
+                let data=execution["data"].clone();
+                if !flowtools_runtime_core::catalog::BuiltinCatalog::embedded().output_valid(&spec.plugin_id,&spec.command_id,&data) {return Err(ErrorCode::OutputInvalid);}
+                core.lock().await.commit_mutations(&spec.run_id,&mutations)?;
+                Ok(data)
+            }
+            else { Err(serde_json::from_value(execution["error"]["code"].clone()).unwrap_or(ErrorCode::ExecutionFailed)) }
         }) => result.unwrap_or(Err(ErrorCode::Timeout)),
         code = async {
             loop {

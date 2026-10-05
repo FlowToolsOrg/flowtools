@@ -1,4 +1,5 @@
 {
   "extends": "../tsconfig.test.json",
-  "include": ["./**/*.ts"]
+  "compilerOptions": { "allowJs": true, "noEmit": true },
+  "include": ["./**/*", "../*.ts"]
 }

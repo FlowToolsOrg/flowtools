@@ -100,12 +100,16 @@ export class RuntimeClient {
         call.method === 'jobs.submit'
       )
     if (response.outcome.type === 'error')
-      throw new RuntimeClientError(response.outcome.data.code)
+      throw new RuntimeClientError(
+        response.outcome.data.code,
+        response.outcome.data.code === 'ACCEPTANCE_UNKNOWN'
+      )
     const expected = {
       'session.open': 'session',
       'runtime.status': 'status',
       'plugins.list': 'plugins',
       'jobs.submit': 'receipt',
+      'jobs.lookup': 'receipt',
       'jobs.status': 'job',
       'jobs.cancel': 'job',
       'jobs.events': 'events',

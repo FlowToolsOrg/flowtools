@@ -6,7 +6,7 @@ export type BootstrapPolicy = {
 	coldStart: boolean,
 };
 
-export type Call = { method: "session.open"; payload: OpenSession } | { method: "runtime.status" } | { method: "plugins.list" } | { method: "jobs.submit"; payload: SubmitJob } | { method: "jobs.status"; payload: JobKey } | { method: "jobs.cancel"; payload: JobKey } | { method: "jobs.events"; payload: EventCursor } | { method: "data.read"; payload: DataRead } | { method: "data.write"; payload: DataWrite } | { method: "data.transaction"; payload: DataTransaction } | { method: "data.import-legacy"; payload: DataImport } | { method: "permissions.list" } | { method: "permissions.grant"; payload: PermissionGrant } | { method: "permissions.revoke"; payload: PermissionKey } | { method: "policy.set"; payload: BootstrapPolicy } | { method: "policy.import"; payload: PolicyImport } | { method: "runtime.stop" };
+export type Call = { method: "session.open"; payload: OpenSession } | { method: "runtime.status" } | { method: "plugins.list" } | { method: "jobs.submit"; payload: SubmitJob } | { method: "jobs.lookup"; payload: IdempotencyKey } | { method: "jobs.status"; payload: JobKey } | { method: "jobs.cancel"; payload: JobKey } | { method: "jobs.events"; payload: EventCursor } | { method: "data.read"; payload: DataRead } | { method: "data.write"; payload: DataWrite } | { method: "data.transaction"; payload: DataTransaction } | { method: "data.import-legacy"; payload: DataImport } | { method: "permissions.list" } | { method: "permissions.grant"; payload: PermissionGrant } | { method: "permissions.revoke"; payload: PermissionKey } | { method: "policy.set"; payload: BootstrapPolicy } | { method: "policy.import"; payload: PolicyImport } | { method: "runtime.stop" };
 
 /**
  *  Narrow operations: no caller/plugin/namespace, raw paths, SQL, argv or env.
@@ -76,7 +76,7 @@ export type DataWrite = {
 	mutation: DataMutation,
 };
 
-export type ErrorCode = "PROTOCOL_MISMATCH" | "CLIENT_INCOMPATIBLE" | "FRAME_TOO_LARGE" | "INVALID_REQUEST" | "SESSION_INVALID" | "INSTANCE_MISMATCH" | "APPROVAL_REQUIRED" | "INTERACTION_REQUIRED" | "CAPABILITY_UNDECLARED" | "SCOPE_DENIED" | "GRANT_REVOKED" | "BUDGET_EXCEEDED" | "REVISION_CONFLICT" | "STORE_BUSY" | "STORE_CORRUPT" | "SCHEMA_UNSUPPORTED" | "STORAGE_FAILED" | "COLD_START_DENIED" | "PLUGIN_NOT_FOUND" | "INPUT_INVALID" | "JOB_NOT_FOUND" | "IDEMPOTENCY_CONFLICT" | "TIMEOUT" | "ABORTED" | "EXECUTION_FAILED" | "OUTPUT_INVALID" | "RUNTIME_BUSY" | "RUNTIME_DISCONNECTED" | "INVALID_RESPONSE";
+export type ErrorCode = "PROTOCOL_MISMATCH" | "CLIENT_INCOMPATIBLE" | "FRAME_TOO_LARGE" | "INVALID_REQUEST" | "SESSION_INVALID" | "INSTANCE_MISMATCH" | "APPROVAL_REQUIRED" | "INTERACTION_REQUIRED" | "CAPABILITY_UNDECLARED" | "SCOPE_DENIED" | "GRANT_REVOKED" | "BUDGET_EXCEEDED" | "REVISION_CONFLICT" | "STORE_BUSY" | "STORE_CORRUPT" | "SCHEMA_UNSUPPORTED" | "STORAGE_FAILED" | "ACCEPTANCE_UNKNOWN" | "EXECUTION_INTERRUPTED" | "RESULT_EXPIRED" | "COLD_START_DENIED" | "PLUGIN_NOT_FOUND" | "INPUT_INVALID" | "JOB_NOT_FOUND" | "IDEMPOTENCY_CONFLICT" | "TIMEOUT" | "ABORTED" | "EXECUTION_FAILED" | "OUTPUT_INVALID" | "RUNTIME_BUSY" | "RUNTIME_DISCONNECTED" | "INVALID_RESPONSE";
 
 export type EventCursor = {
 	runId: string,
@@ -98,6 +98,10 @@ export type ExecutionResult = {
 } & ExecutionOutcome;
 
 export type GrantTarget = "cli" | "desktop";
+
+export type IdempotencyKey = {
+	idempotencyKey: string,
+};
 
 export type InputSummary = {
 	kind: string,

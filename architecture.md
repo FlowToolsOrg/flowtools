@@ -737,3 +737,12 @@ old grants. Independent distribution and ordinary GUI/CLI execution integration
 remain the next G3 subitems; maturity stays prototype.
 
 Evidence: [P2.4a validation and boundaries](./docs/validation/g3-persistent-grants.md).
+
+### G3 P1.3b durable execution
+
+Windows managed T1 jobs now commit accepted metadata before receipt and preserve
+caller-bound idempotency across restart. Actual Todo uses Host-owned async data
+and broker-checked CAS; raw task payloads use separate DPAPI private storage.
+Interrupted non-idempotent writes require review. [Evidence](docs/validation/g3-durable-jobs.md).
+Independent CLI distribution and GUI integration remain P1.4a/P1.4b; all maturity
+labels stay prototype and independent security review remains pending.

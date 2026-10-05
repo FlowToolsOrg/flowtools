@@ -413,3 +413,9 @@ recovery is claimed. Durable grants/jobs and third-party boundaries remain open.
 Security Reviewer/date/conclusion: pending independent review.
 
 2026-10-05 P2.4a: [persistent policy evidence](../validation/g3-persistent-grants.md) adds Host-bound management, current-user private profile ACL, atomic grant import and durable epoch/audit. T1 only; same-account compromise, isolation, signing and independent Security Reviewer/date/conclusion remain pending.
+
+2026-10-05 P1.3b: [durable job evidence](../validation/g3-durable-jobs.md)
+binds receipts and replay to Host identity, immutable action/package lock and
+durable grant epochs. Private DPAPI payloads are separate from metadata. Running
+non-idempotent tasks interrupt after crash. This T1 lifetime guard is not a
+third-party sandbox; SEC risks and independent security review remain open.

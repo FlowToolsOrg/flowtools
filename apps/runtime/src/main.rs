@@ -1,4 +1,6 @@
 #[cfg(windows)]
+mod process_job;
+#[cfg(windows)]
 mod profile;
 #[cfg(windows)]
 mod security;

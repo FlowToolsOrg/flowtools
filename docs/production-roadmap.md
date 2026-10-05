@@ -1013,36 +1013,36 @@ G4 服务依赖 -> G5 签名安装与隔离 -> G6 工具链 -> G7 办公闭环 -
 对应模块、协议、错误码、数据/任务恢复和拒绝 fixtures 在
 [实施设计](./next-milestones.md) 中定义；以下全部为待交付子项。
 
-| 子 ID | 状态    | 前置                | 聚焦交付物与验收                                                                   |
-| ----- | ------- | ------------------- | ---------------------------------------------------------------------------------- |
-| P1.1a | done    | P0.3c、P0.4         | 序列化 Manifest、多操作输入/输出 Schema、冷启动/effects/依赖声明；非法包执行前拒绝 |
-| P1.1b | done    | P1.1a               | UI/commands 分包、十二插件兼容适配；无 React/GUI/source 消费实际命令               |
-| P1.1c | done    | P1.1b               | describe/commands/flags 同源生成；编译 CLI 的机器发现与拒绝回归                    |
-| P1.2a | done    | P1.1                | 单一状态机、锁和 hook 补偿；100 并发操作不重复激活                                 |
-| P1.2b | done    | P1.2a               | 命令状态投影、进程/视图资源 ownership；更新/卸载无孤儿 handler                     |
-| P1.3a | done    | P1.2                | Runtime core/binary、用户级 IPC、T1 临时 profile 与 job 协议；不接用户数据/第三方  |
-| P1.5a | done    | P1.3a               | versioned DTO、拒绝码、脱敏事件与兼容/失联诊断                                     |
-| P2.3a | done    | P1.3a、P1.5a        | T1 内存策略 broker、Host 绑定身份/operation/scope/epoch/预算；敏感 IO 仍拒绝       |
-| P2.6a | done    | P2.3a               | 移除 Debug reset、迁移/备份、Runtime 单写者与异步 data/revision；保留旧数据        |
-| P2.4a | done    | P2.3a、P2.6a        | CLI-only init/策略管理、持久 grants、冷启动/后台/effects、撤销 epoch；无默认放行   |
-| P1.3b | pending | P2.4a、P2.6a        | 实际执行、durable receipt/同 key 恢复、幂等/取消；未知状态不重试非幂等副作用       |
-| P1.4a | pending | P1.3b               | CLI-only runtime/runner 分发、受控冷启动；未安装 GUI、50 并发启动验收              |
-| P1.4b | pending | P1.4a               | GUI/CLI 同任务和数据，jobs status/watch/cancel、完整 text/JSON/退出码回归          |
-| P1.5b | pending | P1.4b               | run/调用链诊断与隐私红线；实际异常/撤销/恢复可诊断                                 |
-| P1.6a | pending | P1.1、P1.3b         | T1/fixture 的 plan-only DAG/lock、服务接口和工具声明；缺失/冲突/循环拒绝           |
-| P1.6b | pending | P1.6a、P2.4a        | Host RPC/委托 scope、排空后切服务版本、租约/反向依赖；前置服务不能代理越权         |
-| P2.5a | pending | P1.6                | plugin/tool 签名、trust root、撤销/离线/回滚协议及 fixtures；冻结后方能实现准入    |
-| P2.5b | pending | P2.5a、P2.3a        | staging/journal、签名准入、artifact 安装与恢复；安装不等于允许执行                 |
-| P2.3b | pending | P2.1、P2.2、P2.3a   | 将验证后 T2/T3/TL 会话接入真实 broker；直接 API/IPC 越权拒绝                       |
-| P2.4b | pending | P2.3b、P2.4a        | 第三方授权 UI、更新差异、冷启动/调度拒绝与活跃撤销                                 |
-| P2.6b | pending | P2.3b、P2.6a        | 第三方 namespace、升级/卸载、导入导出和恢复；跨插件读写拒绝                        |
-| P2.8a | pending | P2.5、P1.6          | 工具包目录/侧载准入、多版本只读共享、locks/leases/journal                          |
-| P2.8b | pending | P2.8a、P2.2、P2.3b  | FFmpeg typed adapter、实际平台访问约束、进程树/预算/取消                           |
-| P2.8c | pending | P2.8b、P2.4b、P2.6b | 两插件共享、原子更新指针、回滚/撤销、lease-aware GC 与崩溃恢复                     |
-| P3.1a | pending | P1.4、P2.3          | 托盘/热键/单实例、轻量驻留与可选自启动；GUI 不决定内核存活                         |
-| P3.1b | pending | P3.1a、P1.3b、P2.4  | Host 调度/通知、时区/休眠/重复策略；授权到期或撤销不执行                           |
-| P3.4a | pending | P2.7、P3.1、P3.2    | 文件/媒体/日程三闭环与实际 UI/CLI E2E，发布成熟度仍按范围证据                      |
-| P3.4b | pending | P3.4a、P3.3         | 扩大插件认证与 Legacy 迁移，每项平台/API/资源矩阵实际通过                          |
+| 子 ID | 状态        | 前置                | 聚焦交付物与验收                                                                   |
+| ----- | ----------- | ------------------- | ---------------------------------------------------------------------------------- |
+| P1.1a | done        | P0.3c、P0.4         | 序列化 Manifest、多操作输入/输出 Schema、冷启动/effects/依赖声明；非法包执行前拒绝 |
+| P1.1b | done        | P1.1a               | UI/commands 分包、十二插件兼容适配；无 React/GUI/source 消费实际命令               |
+| P1.1c | done        | P1.1b               | describe/commands/flags 同源生成；编译 CLI 的机器发现与拒绝回归                    |
+| P1.2a | done        | P1.1                | 单一状态机、锁和 hook 补偿；100 并发操作不重复激活                                 |
+| P1.2b | done        | P1.2a               | 命令状态投影、进程/视图资源 ownership；更新/卸载无孤儿 handler                     |
+| P1.3a | done        | P1.2                | Runtime core/binary、用户级 IPC、T1 临时 profile 与 job 协议；不接用户数据/第三方  |
+| P1.5a | done        | P1.3a               | versioned DTO、拒绝码、脱敏事件与兼容/失联诊断                                     |
+| P2.3a | done        | P1.3a、P1.5a        | T1 内存策略 broker、Host 绑定身份/operation/scope/epoch/预算；敏感 IO 仍拒绝       |
+| P2.6a | done        | P2.3a               | 移除 Debug reset、迁移/备份、Runtime 单写者与异步 data/revision；保留旧数据        |
+| P2.4a | done        | P2.3a、P2.6a        | CLI-only init/策略管理、持久 grants、冷启动/后台/effects、撤销 epoch；无默认放行   |
+| P1.3b | implemented | P2.4a、P2.6a        | 实际执行、durable receipt/同 key 恢复、幂等/取消；未知状态不重试非幂等副作用       |
+| P1.4a | pending     | P1.3b               | CLI-only runtime/runner 分发、受控冷启动；未安装 GUI、50 并发启动验收              |
+| P1.4b | pending     | P1.4a               | GUI/CLI 同任务和数据，jobs status/watch/cancel、完整 text/JSON/退出码回归          |
+| P1.5b | pending     | P1.4b               | run/调用链诊断与隐私红线；实际异常/撤销/恢复可诊断                                 |
+| P1.6a | pending     | P1.1、P1.3b         | T1/fixture 的 plan-only DAG/lock、服务接口和工具声明；缺失/冲突/循环拒绝           |
+| P1.6b | pending     | P1.6a、P2.4a        | Host RPC/委托 scope、排空后切服务版本、租约/反向依赖；前置服务不能代理越权         |
+| P2.5a | pending     | P1.6                | plugin/tool 签名、trust root、撤销/离线/回滚协议及 fixtures；冻结后方能实现准入    |
+| P2.5b | pending     | P2.5a、P2.3a        | staging/journal、签名准入、artifact 安装与恢复；安装不等于允许执行                 |
+| P2.3b | pending     | P2.1、P2.2、P2.3a   | 将验证后 T2/T3/TL 会话接入真实 broker；直接 API/IPC 越权拒绝                       |
+| P2.4b | pending     | P2.3b、P2.4a        | 第三方授权 UI、更新差异、冷启动/调度拒绝与活跃撤销                                 |
+| P2.6b | pending     | P2.3b、P2.6a        | 第三方 namespace、升级/卸载、导入导出和恢复；跨插件读写拒绝                        |
+| P2.8a | pending     | P2.5、P1.6          | 工具包目录/侧载准入、多版本只读共享、locks/leases/journal                          |
+| P2.8b | pending     | P2.8a、P2.2、P2.3b  | FFmpeg typed adapter、实际平台访问约束、进程树/预算/取消                           |
+| P2.8c | pending     | P2.8b、P2.4b、P2.6b | 两插件共享、原子更新指针、回滚/撤销、lease-aware GC 与崩溃恢复                     |
+| P3.1a | pending     | P1.4、P2.3          | 托盘/热键/单实例、轻量驻留与可选自启动；GUI 不决定内核存活                         |
+| P3.1b | pending     | P3.1a、P1.3b、P2.4  | Host 调度/通知、时区/休眠/重复策略；授权到期或撤销不执行                           |
+| P3.4a | pending     | P2.7、P3.1、P3.2    | 文件/媒体/日程三闭环与实际 UI/CLI E2E，发布成熟度仍按范围证据                      |
+| P3.4b | pending     | P3.4a、P3.3         | 扩大插件认证与 Legacy 迁移，每项平台/API/资源矩阵实际通过                          |
 
 P1.1/1.2/1.3/1.4/1.5、P2.3/2.4/2.5/2.6、P3.1/3.4 父项分别由上述同前缀
 子项和原验收共同收口。P2.1/P2.2 的平台验证先并行评估，生产执行在 G5 全部
@@ -1903,3 +1903,12 @@ old grants. Independent distribution and ordinary GUI/CLI execution integration
 remain the next G3 subitems; maturity stays prototype.
 
 Evidence: [P2.4a validation and boundaries](./validation/g3-persistent-grants.md).
+
+### G3 P1.3b durable execution
+
+Windows managed T1 jobs now commit accepted metadata before receipt and preserve
+caller-bound idempotency across restart. Actual Todo uses Host-owned async data
+and broker-checked CAS; raw task payloads use separate DPAPI private storage.
+Interrupted non-idempotent writes require review. [Evidence](validation/g3-durable-jobs.md).
+Independent CLI distribution and GUI integration remain P1.4a/P1.4b; all maturity
+labels stay prototype and independent security review remains pending.

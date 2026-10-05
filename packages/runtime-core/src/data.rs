@@ -116,6 +116,40 @@ fn validate_key(key: &str) -> Result<(), ErrorCode> {
 }
 
 impl DataStore {
+    pub(crate) fn profile(&self) -> Option<&Path> {
+        self.path.as_deref().and_then(|p| p.parent())
+    }
+    pub(crate) fn save_job(&self, run: &str, metadata: &Value) -> Result<(), ErrorCode> {
+        let text = serde_json::to_string(metadata).map_err(|_| ErrorCode::StorageFailed)?;
+        self.connection.execute("INSERT INTO jobs(run_id,metadata) VALUES(?1,?2) ON CONFLICT(run_id) DO UPDATE SET metadata=excluded.metadata",params![run,text]).map_err(db_error)?;
+        Ok(())
+    }
+    pub(crate) fn load_jobs(&self) -> Result<Vec<Value>, ErrorCode> {
+        let mut statement = self
+            .connection
+            .prepare("SELECT run_id,metadata FROM jobs ORDER BY run_id LIMIT 1025")
+            .map_err(db_error)?;
+        let rows = statement
+            .query_map([], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+            })
+            .map_err(db_error)?;
+        let values = rows
+            .map(|row| {
+                let (run, text) = row.map_err(db_error)?;
+                let value: Value =
+                    serde_json::from_str(&text).map_err(|_| ErrorCode::StoreCorrupt)?;
+                if value["snapshot"]["runId"] != run || text.len() > 32_768 {
+                    return Err(ErrorCode::StoreCorrupt);
+                }
+                Ok(value)
+            })
+            .collect::<Result<Vec<Value>, ErrorCode>>()?;
+        if values.len() > 1024 {
+            return Err(ErrorCode::BudgetExceeded);
+        }
+        Ok(values)
+    }
     pub fn memory() -> Result<Self, ErrorCode> {
         let mut store = Self {
             connection: Connection::open_in_memory().map_err(db_error)?,

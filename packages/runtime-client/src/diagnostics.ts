@@ -3,6 +3,18 @@ import type { ErrorCode } from './bindings'
 import { RuntimeClientError } from './client'
 
 const explanations = {
+  ACCEPTANCE_UNKNOWN: [
+    '任务提交是否完成尚未确认',
+    '保留原幂等键并查询回执；不要用新键重试写入。',
+  ],
+  EXECUTION_INTERRUPTED: [
+    '执行进程在完成确认前中断',
+    '检查实际数据或副作用，再主动决定是否发起新任务。',
+  ],
+  RESULT_EXPIRED: [
+    '私有任务结果已超过保留时间',
+    '任务元数据仍保留；检查原业务数据，不自动重放。',
+  ],
   COLD_START_DENIED: [
     '当前策略未允许冷启动 Runtime',
     '通过交互式初始化或主动导入策略配置冷启动；不自动打开 GUI。',
@@ -44,7 +56,7 @@ const explanations = {
   ],
   APPROVAL_REQUIRED: [
     '此操作需要授权',
-    '验证模式只允许纯内置命令，授权功能尚未交付。',
+    '主动导入与当前包和调用方匹配的授权；验证模式只允许纯内置命令。',
   ],
   INTERACTION_REQUIRED: ['此命令需要界面交互', '选择支持 headless 的命令。'],
   CAPABILITY_UNDECLARED: [

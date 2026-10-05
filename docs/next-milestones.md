@@ -443,3 +443,7 @@ deadline/output rejection, shared native GUI/Node runId and disconnection policy
 are verified. G3 is next; current non-durable tasks have no crash restoration.
 Instance change returns INSTANCE_MISMATCH; it never invents an interrupted result
 or retries unknown business actions. Prototype labels and SEC open states remain.
+
+2026-10-05: P1.3b implemented and regression-validated in the fixed Windows T1
+scope; see [durable jobs](validation/g3-durable-jobs.md). G3 remains pending
+P1.4a, P1.4b and P1.5b plus independent security review.

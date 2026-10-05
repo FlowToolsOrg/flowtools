@@ -34,6 +34,8 @@ pub enum Call {
     Plugins,
     #[serde(rename = "jobs.submit")]
     Submit(SubmitJob),
+    #[serde(rename = "jobs.lookup")]
+    Lookup(IdempotencyKey),
     #[serde(rename = "jobs.status")]
     Job(JobKey),
     #[serde(rename = "jobs.cancel")]
@@ -145,6 +147,12 @@ pub struct JobKey {
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct IdempotencyKey {
+    pub idempotency_key: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct EventCursor {
     pub run_id: String,
     pub after_sequence: u32,
@@ -243,6 +251,12 @@ pub enum ErrorCode {
     SchemaUnsupported,
     #[serde(rename = "STORAGE_FAILED")]
     StorageFailed,
+    #[serde(rename = "ACCEPTANCE_UNKNOWN")]
+    AcceptanceUnknown,
+    #[serde(rename = "EXECUTION_INTERRUPTED")]
+    ExecutionInterrupted,
+    #[serde(rename = "RESULT_EXPIRED")]
+    ResultExpired,
     #[serde(rename = "COLD_START_DENIED")]
     ColdStartDenied,
     #[serde(rename = "PLUGIN_NOT_FOUND")]
@@ -270,7 +284,10 @@ pub enum ErrorCode {
 }
 
 impl ErrorCode {
-    pub const ALL: [Self; 29] = [
+    pub const ALL: [Self; 32] = [
+        Self::AcceptanceUnknown,
+        Self::ExecutionInterrupted,
+        Self::ResultExpired,
         Self::ColdStartDenied,
         Self::ProtocolMismatch,
         Self::ClientIncompatible,

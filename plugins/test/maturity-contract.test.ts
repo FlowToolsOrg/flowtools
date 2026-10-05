@@ -37,8 +37,7 @@ test('compiled CLI list/info report maturity in JSON and text', async () => {
       new Response(child.stderr).text(),
       child.exited,
     ])
-    expect(code).toBe(0)
-    expect(stderr).toBe('')
+    expect({ code, stderr }).toEqual({ code: 0, stderr: '' })
     return stdout
   }
   const listed = z

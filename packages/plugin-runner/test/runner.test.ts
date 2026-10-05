@@ -1,13 +1,50 @@
 import { expect, test } from 'bun:test'
 
 import { loadPlugin } from '../../cli/src/discovery'
-import { runValidationCommand, manifestDigest } from '../src/runner'
+import {
+  runValidationCommand,
+  runManagedCommand,
+  manifestDigest,
+} from '../src/runner'
 
 const request = async (pluginId: string, input: unknown) => ({
   pluginId,
   commandId: 'run',
   input,
   packageDigest: manifestDigest((await loadPlugin(pluginId))?.manifest ?? null),
+})
+
+test('actual Todo uses only Host-provided data and stages CAS without a local store', async () => {
+  const outcome = await runManagedCommand({
+    ...(await request('plugin-todo-list', { todo: 'private-canary' })),
+    data: { key: 'todos', revision: 4, value: [] },
+  })
+  expect(outcome.execution).toMatchObject({
+    success: true,
+    data: { value: { result: { added: 'private-canary', total: 1 } } },
+  })
+  expect(outcome.mutations).toEqual([
+    {
+      key: 'todos',
+      expectedRevision: 4,
+      value: [{ todo: 'private-canary', deadline: '' }],
+    },
+  ])
+  expect(
+    await runManagedCommand({
+      ...(await request('plugin-website-latency', {})),
+      data: null,
+    })
+  ).toMatchObject({
+    execution: { success: false, error: { code: 'NOT_RUNNABLE' } },
+    mutations: [],
+  })
+  expect(
+    runManagedCommand({
+      ...(await request('plugin-todo-list', {})),
+      data: { key: 'other', revision: 0, value: [] },
+    })
+  ).rejects.toThrow('Invalid runner data')
 })
 
 test('fixed T1 runner invokes actual Base64 and denies side effects', async () => {

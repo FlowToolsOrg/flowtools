@@ -17,7 +17,7 @@ const expectedSymbols: Record<string, readonly string[]> = {
     'executeManifestCommand',
     'exportOperationSchema',
   ],
-  './manifest/package': ['verifyManifestPackage'],
+  './manifest/package': ['verifyManifestPackage', 'manifestPackageDigest'],
   './development': ['DevelopmentPluginFileLoader', 'setupImportMap'],
   './compat/catalog': ['htmlPluginCatalogSchema', 'portablePluginPathSchema'],
   '.': ['definePlugin', 'result'],

@@ -1,3 +1,4 @@
+use crate::broker::{CommandIdentity, Scope};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use specta::Type;
@@ -47,6 +48,73 @@ pub enum Call {
     DataTransaction(DataTransaction),
     #[serde(rename = "data.import-legacy")]
     DataImport(DataImport),
+    #[serde(rename = "permissions.list")]
+    Permissions,
+    #[serde(rename = "permissions.grant")]
+    Grant(PermissionGrant),
+    #[serde(rename = "permissions.revoke")]
+    Revoke(PermissionKey),
+    #[serde(rename = "policy.set")]
+    Policy(BootstrapPolicy),
+    #[serde(rename = "policy.import")]
+    PolicyImport(PolicyImport),
+    #[serde(rename = "runtime.stop")]
+    Stop,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum GrantTarget {
+    Cli,
+    Desktop,
+}
+impl GrantTarget {
+    pub fn caller(&self) -> &'static str {
+        match self {
+            Self::Cli => "local-cli",
+            Self::Desktop => "local-desktop",
+        }
+    }
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PermissionKey {
+    pub plugin_id: String,
+    pub command_id: String,
+    pub target: GrantTarget,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PermissionGrant {
+    pub plugin_id: String,
+    pub command_id: String,
+    pub target: GrantTarget,
+    pub package_digest: String,
+    pub effects: Vec<String>,
+    pub scopes: Vec<Scope>,
+    pub expires_at: f64,
+    pub max_calls: u32,
+    pub cold_start: bool,
+    pub background: bool,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PermissionRecord {
+    pub identity: CommandIdentity,
+    pub epoch: u32,
+    pub grant: Option<PermissionGrant>,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct BootstrapPolicy {
+    pub cold_start: bool,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PolicyImport {
+    pub format_version: u16,
+    pub cold_start: bool,
+    pub grants: Vec<PermissionGrant>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
@@ -175,6 +243,8 @@ pub enum ErrorCode {
     SchemaUnsupported,
     #[serde(rename = "STORAGE_FAILED")]
     StorageFailed,
+    #[serde(rename = "COLD_START_DENIED")]
+    ColdStartDenied,
     #[serde(rename = "PLUGIN_NOT_FOUND")]
     PluginNotFound,
     #[serde(rename = "INPUT_INVALID")]
@@ -200,7 +270,8 @@ pub enum ErrorCode {
 }
 
 impl ErrorCode {
-    pub const ALL: [Self; 28] = [
+    pub const ALL: [Self; 29] = [
+        Self::ColdStartDenied,
         Self::ProtocolMismatch,
         Self::ClientIncompatible,
         Self::FrameTooLarge,
@@ -265,6 +336,12 @@ pub enum Outcome {
     Data(DataSnapshot),
     #[serde(rename = "data-batch")]
     DataBatch(Vec<DataSnapshot>),
+    #[serde(rename = "permissions")]
+    Permissions(Vec<PermissionRecord>),
+    #[serde(rename = "policy")]
+    Policy(BootstrapPolicy),
+    #[serde(rename = "stopping")]
+    Stopping,
     #[serde(rename = "error")]
     Error(RuntimeError),
 }

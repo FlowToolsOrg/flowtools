@@ -411,3 +411,5 @@ is removed and corrupt legacy DB startup preserves the original. Historical
 G2 reset evidence above remains accurate for that incident; no lost user data
 recovery is claimed. Durable grants/jobs and third-party boundaries remain open.
 Security Reviewer/date/conclusion: pending independent review.
+
+2026-10-05 P2.4a: [persistent policy evidence](../validation/g3-persistent-grants.md) adds Host-bound management, current-user private profile ACL, atomic grant import and durable epoch/audit. T1 only; same-account compromise, isolation, signing and independent Security Reviewer/date/conclusion remain pending.

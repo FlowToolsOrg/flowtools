@@ -33,7 +33,7 @@ fn db_error(error: rusqlite::Error) -> ErrorCode {
     }
 }
 
-fn safe_path(path: &Path) -> Result<(), ErrorCode> {
+pub fn safe_path(path: &Path) -> Result<(), ErrorCode> {
     if !path.is_absolute()
         || path.components().any(|p| {
             matches!(

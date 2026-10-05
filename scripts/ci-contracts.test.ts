@@ -195,7 +195,7 @@ test('uncached native builds retain their actual Turbo prerequisite graph', () =
       'turbo',
       'run',
       'build',
-      '--filter=@flowtools/runtime-client',
+      '--filter=@flowtools/runtime',
       '--dry=json',
     ],
     {
@@ -235,10 +235,21 @@ test('uncached native builds retain their actual Turbo prerequisite graph', () =
     expect.arrayContaining([
       '@flowtools/plugin-runner#build',
       '@flowtools/runtime-core#build',
+      '@flowtools/runtime-client#build',
     ])
   )
   expect(dependencies('@flowtools/runtime-core#build')).toEqual(
     expect.arrayContaining(['@flowtools/plugins#build', '@flowtools/sdk#build'])
+  )
+  expect(dependencies('@flowtools/cli#build')).toEqual(
+    expect.arrayContaining(['@flowtools/runtime-client#build'])
+  )
+  expect(
+    tasks.find(task => task.taskId === '@flowtools/cli#build')
+      ?.resolvedTaskDefinition.passThroughEnv
+  ).toEqual(['CARGO_TARGET_DIR'])
+  expect(dependencies('@flowtools/runtime-client#build')).not.toContain(
+    '@flowtools/runtime#build'
   )
 }, 30_000)
 

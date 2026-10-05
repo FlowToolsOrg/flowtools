@@ -2,6 +2,7 @@ use crate::{
     broker::{BrokerSession, CapabilityBroker, CapabilityOperation, CommandIdentity, Grant, Scope},
     catalog::{digest, BuiltinCatalog},
     data::DataStore,
+    policy::PolicyStore,
     protocol::*,
 };
 use serde_json::{json, Value};
@@ -51,6 +52,10 @@ pub struct RuntimeCore {
     pending: HashMap<String, RunSpec>,
     broker: CapabilityBroker,
     data: DataStore,
+    policy: Option<PolicyStore>,
+    management_only: bool,
+    cold_started: bool,
+    stopping: bool,
 }
 
 impl RuntimeCore {
@@ -69,12 +74,66 @@ impl RuntimeCore {
             pending: HashMap::new(),
             broker: CapabilityBroker::default(),
             data: DataStore::memory().expect("Validation data schema"),
+            policy: None,
+            management_only: false,
+            cold_started: false,
+            stopping: false,
         }
     }
 
     pub fn with_data_store(mut self, store: DataStore) -> Self {
         self.data = store;
         self
+    }
+
+    pub fn managed(
+        tokens: HashMap<String, String>,
+        mut store: DataStore,
+        management_only: bool,
+        cold_started: bool,
+    ) -> Result<Self, ErrorCode> {
+        let policy = PolicyStore::load(&mut store, &PolicyStore::catalog_digest())?;
+        if cold_started && !policy.cold_start {
+            return Err(ErrorCode::ColdStartDenied);
+        }
+        let mut core =
+            Self::validation("unused-cli".into(), "unused-desktop".into()).with_data_store(store);
+        core.tokens = tokens;
+        core.management_only = management_only;
+        core.cold_started = cold_started;
+        for record in &policy.records {
+            core.broker.restore_policy(
+                record.identity.clone(),
+                record.epoch,
+                record.grant.as_ref().map(PolicyStore::capability),
+            )?;
+        }
+        core.policy = Some(policy);
+        Ok(core)
+    }
+
+    pub fn stopping(&self) -> bool {
+        self.stopping
+    }
+
+    fn managed_authorization(
+        &self,
+        identity: &CommandIdentity,
+        background: bool,
+    ) -> Result<(), ErrorCode> {
+        if let Some(ref policy) = self.policy {
+            self.broker.require_command_grant(identity, now())?;
+            let grant = policy
+                .records
+                .iter()
+                .find(|r| r.identity == *identity)
+                .and_then(|r| r.grant.as_ref())
+                .ok_or(ErrorCode::ApprovalRequired)?;
+            if (background && !grant.background) || (self.cold_started && !grant.cold_start) {
+                return Err(ErrorCode::ApprovalRequired);
+            }
+        }
+        Ok(())
     }
 
     /// Explicit disposable-profile fixture only. Not a production user grant.
@@ -167,10 +226,94 @@ impl RuntimeCore {
             return Err(ErrorCode::SessionInvalid);
         }
         let caller = session.caller.clone();
+        let management = caller == "local-manager" && self.policy.is_some();
+        if self.stopping {
+            return Err(ErrorCode::RuntimeBusy);
+        }
+        if matches!(
+            &request.call,
+            Call::Permissions
+                | Call::Grant(_)
+                | Call::Revoke(_)
+                | Call::Policy(_)
+                | Call::PolicyImport(_)
+                | Call::Stop
+        ) && !management
+        {
+            return Err(ErrorCode::SessionInvalid);
+        }
+        if (management || self.management_only)
+            && matches!(
+                &request.call,
+                Call::Submit(_)
+                    | Call::DataRead(_)
+                    | Call::DataWrite(_)
+                    | Call::DataTransaction(_)
+                    | Call::DataImport(_)
+            )
+        {
+            return Err(ErrorCode::ApprovalRequired);
+        }
         match request.call {
+            Call::PolicyImport(import) => {
+                let policy = self.policy.as_mut().unwrap();
+                policy.import(&mut self.data, import)?;
+                for record in &policy.records {
+                    self.broker.restore_policy(
+                        record.identity.clone(),
+                        record.epoch,
+                        record.grant.as_ref().map(PolicyStore::capability),
+                    )?;
+                }
+                Ok(Outcome::Permissions(policy.records.clone()))
+            }
+            Call::Permissions => Ok(Outcome::Permissions(
+                self.policy.as_ref().unwrap().records.clone(),
+            )),
+            Call::Grant(grant) => {
+                let record = self.policy.as_mut().unwrap().grant(&mut self.data, grant)?;
+                self.broker.restore_policy(
+                    record.identity.clone(),
+                    record.epoch,
+                    record.grant.as_ref().map(PolicyStore::capability),
+                )?;
+                Ok(Outcome::Permissions(vec![record]))
+            }
+            Call::Revoke(key) => {
+                let policy = self.policy.as_mut().unwrap();
+                policy.revoke(&mut self.data, key)?;
+                for record in &policy.records {
+                    self.broker.restore_policy(
+                        record.identity.clone(),
+                        record.epoch,
+                        record.grant.as_ref().map(PolicyStore::capability),
+                    )?;
+                }
+                Ok(Outcome::Permissions(policy.records.clone()))
+            }
+            Call::Policy(policy) => {
+                self.policy
+                    .as_mut()
+                    .unwrap()
+                    .set(&mut self.data, policy.clone())?;
+                Ok(Outcome::Policy(policy))
+            }
+            Call::Stop => {
+                self.stopping = true;
+                Ok(Outcome::Stopping)
+            }
             Call::Status => Ok(Outcome::Status(RuntimeStatus {
                 instance_id: self.instance_id.clone(),
-                mode: "validation".into(),
+                mode: if self.policy.is_some() {
+                    if self.management_only {
+                        "management"
+                    } else {
+                        "managed"
+                    }
+                } else {
+                    "validation"
+                }
+                .into(),
                 jobs: self.jobs.len() as u32,
             })),
             Call::Plugins => Ok(Outcome::Plugins(
@@ -315,6 +458,7 @@ impl RuntimeCore {
     ) -> Result<Outcome, ErrorCode> {
         let (manifest, command) = self.catalog.command(plugin_id, "run")?;
         let identity = CommandIdentity::from_manifest(caller, manifest, command);
+        self.managed_authorization(&identity, false)?;
         let at = now();
         let session = self.broker.bind(
             identity,
@@ -340,6 +484,7 @@ impl RuntimeCore {
             .catalog
             .command(&submit.plugin_id, &submit.command_id)?;
         let identity = CommandIdentity::from_manifest(caller, manifest, command);
+        self.managed_authorization(&identity, submit.background)?;
         let grant_epoch = self.broker.authorize_command(&identity, command, now())?;
         let input =
             self.catalog
@@ -644,6 +789,59 @@ fn namespace(identity: &CommandIdentity) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn management_role_is_host_bound_and_cannot_execute_business() {
+        let mut core = RuntimeCore::managed(
+            HashMap::from([
+                ("admin".into(), "local-manager".into()),
+                ("cli".into(), "local-cli".into()),
+            ]),
+            DataStore::memory().unwrap(),
+            true,
+            false,
+        )
+        .unwrap();
+        let admin = open(&mut core, "admin-connection", "admin");
+        let cli = open(&mut core, "cli-connection", "cli");
+        let import = Call::PolicyImport(PolicyImport {
+            format_version: 1,
+            cold_start: true,
+            grants: vec![],
+        });
+        assert!(matches!(
+            core.handle("cli-connection", request(import.clone(), Some(cli)))
+                .outcome,
+            Outcome::Error(RuntimeError {
+                code: ErrorCode::SessionInvalid
+            })
+        ));
+        assert!(matches!(
+            core.handle("admin-connection", request(import, Some(admin.clone())))
+                .outcome,
+            Outcome::Permissions(_)
+        ));
+        assert!(matches!(
+            core.handle(
+                "admin-connection",
+                request(
+                    Call::Submit(SubmitJob {
+                        plugin_id: "plugin-base64-encoder".into(),
+                        command_id: "run".into(),
+                        input: json!({"text":"fixture"}),
+                        idempotency_key: "fixture".into(),
+                        background: false,
+                        deadline: now() + 1000.0
+                    }),
+                    Some(admin)
+                )
+            )
+            .outcome,
+            Outcome::Error(RuntimeError {
+                code: ErrorCode::ApprovalRequired
+            })
+        ));
+        assert!(core.jobs.is_empty());
+    }
     fn request(call: Call, session: Option<SessionProof>) -> Request {
         Request {
             version: 1,

@@ -1,4 +1,6 @@
 #[cfg(windows)]
+mod profile;
+#[cfg(windows)]
 mod security;
 #[cfg(windows)]
 mod server;

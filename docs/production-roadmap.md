@@ -1024,7 +1024,7 @@ G4 服务依赖 -> G5 签名安装与隔离 -> G6 工具链 -> G7 办公闭环 -
 | P1.5a | done    | P1.3a               | versioned DTO、拒绝码、脱敏事件与兼容/失联诊断                                     |
 | P2.3a | done    | P1.3a、P1.5a        | T1 内存策略 broker、Host 绑定身份/operation/scope/epoch/预算；敏感 IO 仍拒绝       |
 | P2.6a | done    | P2.3a               | 移除 Debug reset、迁移/备份、Runtime 单写者与异步 data/revision；保留旧数据        |
-| P2.4a | pending | P2.3a、P2.6a        | CLI-only init/策略管理、持久 grants、冷启动/后台/effects、撤销 epoch；无默认放行   |
+| P2.4a | done    | P2.3a、P2.6a        | CLI-only init/策略管理、持久 grants、冷启动/后台/effects、撤销 epoch；无默认放行   |
 | P1.3b | pending | P2.4a、P2.6a        | 实际执行、durable receipt/同 key 恢复、幂等/取消；未知状态不重试非幂等副作用       |
 | P1.4a | pending | P1.3b               | CLI-only runtime/runner 分发、受控冷启动；未安装 GUI、50 并发启动验收              |
 | P1.4b | pending | P1.4a               | GUI/CLI 同任务和数据，jobs status/watch/cancel、完整 text/JSON/退出码回归          |
@@ -1891,3 +1891,15 @@ actual WebView and CLI to the same data. Normal user UI integration, durable
 grants/jobs and independent distribution remain subsequent G3 subitems.
 
 Evidence: [P2.6a scope and validation](./validation/g3-shared-data.md).
+
+## G3 P2.4a persistent grants and CLI management
+
+The single Runtime DB persists version/hash-bound grants, revocation epochs,
+bootstrap policy and bounded metadata-only policy audit. CLI-only interactive
+init or explicit policy import uses a Host-bound management role; management
+mode cannot run plugins. Private Windows profiles and inherited credentials
+require the current-user protected ACL. Package changes/rollback never restore
+old grants. Independent distribution and ordinary GUI/CLI execution integration
+remain the next G3 subitems; maturity stays prototype.
+
+Evidence: [P2.4a validation and boundaries](./validation/g3-persistent-grants.md).

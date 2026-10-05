@@ -99,26 +99,63 @@ fn profile() -> Result<PathBuf, &'static str> {
 pub async fn run() -> Result<(), &'static str> {
     // Validate explicit mode and bootstrap before touching profile data.
     let args: Vec<String> = std::env::args().skip(1).collect();
-    if !args.contains(&"--validation".into()) {
-        return Err("SETUP_REQUIRED");
-    }
-    let cli_token = token("FLOWTOOLS_RUNTIME_VALIDATION_CLI_TOKEN")?;
-    let desktop_token = token("FLOWTOOLS_RUNTIME_VALIDATION_DESKTOP_TOKEN")?;
-    if cli_token == desktop_token {
-        return Err("VALIDATION_TOKEN_REQUIRED");
-    }
-    let path = profile()?;
     let sid = current_user_sid().map_err(|_| "IPC_ACCESS_FAILED")?;
-    let digest = Sha256::digest(format!("{sid}|{}", path.display()).as_bytes());
-    let pipe_name = format!(r"\\.\pipe\flowtools-validation-{digest:x}");
+    let validation = args.contains(&"--validation".into());
+    let (path, pipe_name, credentials) = if validation {
+        let cli = token("FLOWTOOLS_RUNTIME_VALIDATION_CLI_TOKEN")?;
+        let desktop = token("FLOWTOOLS_RUNTIME_VALIDATION_DESKTOP_TOKEN")?;
+        if cli == desktop {
+            return Err("VALIDATION_TOKEN_REQUIRED");
+        }
+        let path = profile()?;
+        let digest = Sha256::digest(format!("{sid}|{}", path.display()).as_bytes());
+        (
+            path,
+            format!(r"\\.\pipe\flowtools-validation-{digest:x}"),
+            Some((cli, desktop)),
+        )
+    } else {
+        if args.len() != 3
+            || !matches!(args[0].as_str(), "--initialize-profile" | "--profile")
+            || !matches!(args[2].as_str(), "--management" | "--cold-start")
+            || (args[0] == "--initialize-profile" && args[2] != "--management")
+        {
+            return Err("SETUP_REQUIRED");
+        }
+        let path = PathBuf::from(&args[1]);
+        if args[0] == "--initialize-profile" {
+            crate::profile::initialize(&path, &sid).map_err(|_| "PROFILE_INITIALIZATION_FAILED")?;
+        }
+        let (path, _) = crate::profile::load(&path).map_err(|_| "SETUP_REQUIRED")?;
+        let pipe_name = crate::profile::pipe(&path, &sid);
+        (path, pipe_name, None)
+    };
     let mut listener =
         create_pipe(&pipe_name, &sid, true).map_err(|_| "RUNTIME_ALREADY_RUNNING")?;
     let store =
         DataStore::open(&path.join("runtime.sqlite")).map_err(|_| "RUNTIME_DATA_UNAVAILABLE")?;
-    let runtime = if args.contains(&"--validation-data".into()) {
-        RuntimeCore::validation_data(cli_token, desktop_token, store)
+    let runtime = if let Some((cli_token, desktop_token)) = credentials {
+        if args.contains(&"--validation-data".into()) {
+            RuntimeCore::validation_data(cli_token, desktop_token, store)
+        } else {
+            RuntimeCore::validation(cli_token, desktop_token).with_data_store(store)
+        }
     } else {
-        RuntimeCore::validation(cli_token, desktop_token).with_data_store(store)
+        let (_, bootstrap) = crate::profile::load(&path).map_err(|_| "SETUP_REQUIRED")?;
+        RuntimeCore::managed(
+            std::collections::HashMap::from([
+                (bootstrap.cli_token, "local-cli".into()),
+                (bootstrap.desktop_token, "local-desktop".into()),
+                (bootstrap.management_token, "local-manager".into()),
+            ]),
+            store,
+            args[2] == "--management",
+            args[2] == "--cold-start",
+        )
+        .map_err(|code| match code {
+            ErrorCode::ColdStartDenied => "COLD_START_DENIED",
+            _ => "RUNTIME_DATA_UNAVAILABLE",
+        })?
     };
     let core = Arc::new(Mutex::new(runtime));
     println!(
@@ -134,9 +171,11 @@ pub async fn run() -> Result<(), &'static str> {
         std::env::var("FLOWTOOLS_RUNTIME_VALIDATION_STDIN_LIFETIME").as_deref() == Ok("1");
     let mut stdin = tokio::io::stdin();
     let mut byte = [0u8; 1];
+    let mut tick = tokio::time::interval(Duration::from_millis(25));
     loop {
         tokio::select! {
             _ = tokio::signal::ctrl_c() => break,
+            _ = tick.tick() => {if core.lock().await.stopping() {break;}}
             _ = stdin.read(&mut byte), if stdin_lifetime => break,
             result = listener.connect(), if connections.len() < 15 => {
                 result.map_err(|_| "IPC_ACCESS_FAILED")?;

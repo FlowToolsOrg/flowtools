@@ -3,6 +3,10 @@ import type { ErrorCode } from './bindings'
 import { RuntimeClientError } from './client'
 
 const explanations = {
+  COLD_START_DENIED: [
+    '当前策略未允许冷启动 Runtime',
+    '通过交互式初始化或主动导入策略配置冷启动；不自动打开 GUI。',
+  ],
   REVISION_CONFLICT: [
     '共享数据已被其他客户端修改',
     '读取最新 revision，检查冲突后重新操作。',

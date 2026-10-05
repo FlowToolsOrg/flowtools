@@ -2058,6 +2058,16 @@
     {
       "outcome": {
         "data": {
+          "code": "COLD_START_DENIED"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
           "code": "PROTOCOL_MISMATCH"
         },
         "type": "error"

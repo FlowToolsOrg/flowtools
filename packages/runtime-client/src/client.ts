@@ -113,6 +113,12 @@ export class RuntimeClient {
       'data.write': 'data',
       'data.transaction': 'data-batch',
       'data.import-legacy': 'data',
+      'permissions.list': 'permissions',
+      'permissions.grant': 'permissions',
+      'permissions.revoke': 'permissions',
+      'policy.set': 'policy',
+      'policy.import': 'permissions',
+      'runtime.stop': 'stopping',
     } satisfies Record<Call['method'], Outcome['type']>
     if (response.outcome.type !== expected[call.method])
       throw new RuntimeClientError(

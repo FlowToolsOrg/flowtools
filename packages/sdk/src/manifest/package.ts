@@ -4,6 +4,23 @@ import { join, relative, resolve } from 'node:path'
 
 import { parsePluginManifest, type ManifestTarget } from './schema'
 
+/** Full canonical manifest identity, including actual artifact hashes. */
+export function manifestPackageDigest(value: unknown): string {
+  const canonical = (item: unknown): unknown => {
+    if (Array.isArray(item)) return item.map(canonical)
+    if (item && typeof item === 'object')
+      return Object.fromEntries(
+        Object.entries(item)
+          .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+          .map(([key, child]) => [key, canonical(child)])
+      )
+    return item
+  }
+  return createHash('sha256')
+    .update(JSON.stringify(canonical(value)))
+    .digest('hex')
+}
+
 /** Read-only staging/T1 verification. Hashes are not publisher provenance or a grant. */
 export function verifyManifestPackage(
   root: string,

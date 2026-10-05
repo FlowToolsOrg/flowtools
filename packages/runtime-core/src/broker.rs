@@ -8,7 +8,8 @@ use specta::Type;
 use std::collections::HashMap;
 use uuid::Uuid;
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CommandIdentity {
     pub caller: String,
     pub publisher: String,
@@ -74,7 +75,13 @@ pub enum SendMethod {
 }
 
 /// Exact, Host-approved scopes; there are no wildcard grants.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(
+    tag = "kind",
+    content = "scope",
+    rename_all = "kebab-case",
+    deny_unknown_fields
+)]
 pub enum Scope {
     FileHandle(String),
     NetworkRead { origin: String, method: ReadMethod },
@@ -123,9 +130,8 @@ impl CapabilityBroker {
         if !grant.expires_at.is_finite()
             || grant.max_calls == 0
             || grant.max_calls > 10_000
-            || grant.effects.is_empty()
             || grant.effects.len() > 32
-            || grant.scopes.is_empty()
+            || (grant.effects.is_empty() != grant.scopes.is_empty())
             || grant.scopes.len() > 64
             || grant.effects.iter().any(|effect| {
                 !matches!(
@@ -166,6 +172,42 @@ impl CapabilityBroker {
         Ok(policy.epoch)
     }
 
+    pub fn restore_policy(
+        &mut self,
+        identity: CommandIdentity,
+        epoch: u32,
+        grant: Option<Grant>,
+    ) -> Result<(), ErrorCode> {
+        if epoch == 0 {
+            return Err(ErrorCode::StoreCorrupt);
+        }
+        if let Some(ref approved) = grant {
+            let mut validator = Self::default();
+            validator.approve(identity.clone(), approved.clone())?;
+        }
+        self.policies.insert(identity, Policy { epoch, grant });
+        Ok(())
+    }
+
+    pub fn require_command_grant(
+        &self,
+        identity: &CommandIdentity,
+        at: f64,
+    ) -> Result<u32, ErrorCode> {
+        let policy = self
+            .policies
+            .get(identity)
+            .ok_or(ErrorCode::ApprovalRequired)?;
+        if policy
+            .grant
+            .as_ref()
+            .is_none_or(|grant| grant.expires_at <= at)
+        {
+            return Err(ErrorCode::ApprovalRequired);
+        }
+        Ok(policy.epoch)
+    }
+
     pub fn revoke(&mut self, identity: &CommandIdentity) -> Result<(), ErrorCode> {
         let policy = self.policies.entry(identity.clone()).or_insert(Policy {
             epoch: 0,
@@ -193,7 +235,11 @@ impl CapabilityBroker {
             .ok_or(ErrorCode::CapabilityUndeclared)?;
         // Preserve G2's explicit validation-only pure T1 evaluation.
         if effects.is_empty() && permissions.is_empty() {
-            return Ok(0);
+            return Ok(self
+                .policies
+                .get(identity)
+                .filter(|p| p.grant.is_some())
+                .map_or(0, |p| p.epoch));
         }
         let policy = self
             .policies

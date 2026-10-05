@@ -771,3 +771,15 @@ actual WebView and CLI to the same data. Normal user UI integration, durable
 grants/jobs and independent distribution remain subsequent G3 subitems.
 
 Evidence: [P2.6a scope and validation](./docs/validation/g3-shared-data.md).
+
+## G3 P2.4a persistent grants and CLI management
+
+The single Runtime DB persists version/hash-bound grants, revocation epochs,
+bootstrap policy and bounded metadata-only policy audit. CLI-only interactive
+init or explicit policy import uses a Host-bound management role; management
+mode cannot run plugins. Private Windows profiles and inherited credentials
+require the current-user protected ACL. Package changes/rollback never restore
+old grants. Independent distribution and ordinary GUI/CLI execution integration
+remain the next G3 subitems; maturity stays prototype.
+
+Evidence: [P2.4a validation and boundaries](./docs/validation/g3-persistent-grants.md).

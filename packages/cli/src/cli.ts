@@ -9,6 +9,7 @@ import type {
 
 import { createExecutionFailure } from '@flowtools/sdk/execution'
 import { commandIdentity } from '@flowtools/sdk/manifest'
+import { manifestPackageDigest } from '@flowtools/sdk/manifest/package'
 import { Command } from 'commander'
 
 import {
@@ -23,6 +24,7 @@ import {
   getBuiltinCommandManifest,
   scanPlugins,
 } from './discovery'
+import { addManagementCommands, managementFailure } from './management'
 import { parseRunArguments, requestedRunFormat } from './run-arguments'
 import { printExecutionResult, runPlugin } from './runner'
 import { CLIInputError, parseJsonInput } from './schema'
@@ -33,6 +35,8 @@ const program = new Command()
   .version('0.1.0')
   .configureOutput({ outputError: () => {} })
   .exitOverride()
+
+addManagementCommands(program)
 
 function writeJson(value: unknown) {
   process.stdout.write(JSON.stringify(value, null, 2) + '\n')
@@ -100,6 +104,7 @@ function describeCommand(
     formatVersion: 1,
     identity: commandIdentity(manifest, command),
     publisher: manifest.publisher,
+    packageDigest: manifestPackageDigest(manifest),
     pluginId: manifest.id,
     pluginVersion: manifest.version,
     maturity: manifest.maturity,
@@ -352,6 +357,10 @@ main().catch(error => {
     )
   )
     return
+  if (['init', 'permissions'].includes(process.argv[2] ?? '')) {
+    managementFailure(error)
+    return
+  }
   fail(
     'builtin-inventory',
     error instanceof CLIInputError ||

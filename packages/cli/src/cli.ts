@@ -24,10 +24,11 @@ import {
   getBuiltinCommandManifest,
   scanPlugins,
 } from './discovery'
+import { addRuntimeCommands } from './host'
 import { addManagementCommands, managementFailure } from './management'
 import { parseRunArguments, requestedRunFormat } from './run-arguments'
 import { printExecutionResult, runPlugin } from './runner'
-import { CLIInputError, parseJsonInput } from './schema'
+import { CLIInputError, isCLIInputError, parseJsonInput } from './schema'
 
 const program = new Command()
   .name('flowtools')
@@ -37,6 +38,7 @@ const program = new Command()
   .exitOverride()
 
 addManagementCommands(program)
+addRuntimeCommands(program)
 
 function writeJson(value: unknown) {
   process.stdout.write(JSON.stringify(value, null, 2) + '\n')
@@ -314,6 +316,7 @@ async function executeRun(pluginId: string, args: string[]) {
       results.push(
         await runPlugin(pluginId, input, {
           commandId: command.id,
+          profile: options.profile,
           timeout: options.timeout,
         })
       )
@@ -334,7 +337,7 @@ async function executeRun(pluginId: string, args: string[]) {
   } catch (error) {
     fail(
       pluginId,
-      error instanceof CLIInputError ? 'INPUT_INVALID' : 'LOAD_FAILED',
+      isCLIInputError(error) ? 'INPUT_INVALID' : 'LOAD_FAILED',
       format
     )
   }
@@ -357,13 +360,13 @@ main().catch(error => {
     )
   )
     return
-  if (['init', 'permissions'].includes(process.argv[2] ?? '')) {
+  if (['init', 'permissions', 'runtime'].includes(process.argv[2] ?? '')) {
     managementFailure(error)
     return
   }
   fail(
     'builtin-inventory',
-    error instanceof CLIInputError ||
+    isCLIInputError(error) ||
       (error &&
         typeof error === 'object' &&
         'code' in error &&

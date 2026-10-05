@@ -447,3 +447,12 @@ or retries unknown business actions. Prototype labels and SEC open states remain
 2026-10-05: P1.3b implemented and regression-validated in the fixed Windows T1
 scope; see [durable jobs](validation/g3-durable-jobs.md). G3 remains pending
 P1.4a, P1.4b and P1.5b plus independent security review.
+
+### G3 P1.4a standalone CLI
+
+Windows x64 CLI-only bundle and bounded, authenticated cold-start coordination
+are implemented for the fixed T1 inventory. See [standalone CLI evidence](validation/g3-standalone-cli.md).
+The package pins relative compiled artifacts and supports explicit GUI-free init,
+runtime start/status/stop and granted bundle execution. Source CLI/GUI integration
+and operational diagnostics remain P1.4b/P1.5b. Maturity remains prototype;
+signed releases, third-party sandbox and independent security review are pending.

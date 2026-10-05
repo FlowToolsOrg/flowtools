@@ -15,6 +15,7 @@ const reserved = new Set([
   'timeout',
   'command',
   'help',
+  'profile',
 ])
 const invalid = () =>
   new CLIInputError('SCHEMA_VALIDATION', 'Input does not match command schema')

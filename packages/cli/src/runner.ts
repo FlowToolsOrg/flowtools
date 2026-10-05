@@ -1,4 +1,5 @@
 import type { OutputFormat } from './types'
+import type { ExecutionResult } from '@flowtools/runtime-client'
 import type {
   ExecutablePlugin,
   PluginExecutionResult,
@@ -19,7 +20,21 @@ import {
 } from './discovery'
 import { formatRaw, formatResult } from './formatter'
 
-export type RunResult = PluginExecutionResult
+export type RunResult =
+  | PluginExecutionResult
+  | (Omit<ExecutionResult, 'success' | 'data' | 'error'> &
+      (
+        | { success: true; data: unknown }
+        | { success: false; error: { code: string } }
+      ))
+  | (Omit<PluginExecutionResult, 'error' | 'success'> & {
+      success: false
+      error: { code: string; message: string }
+    })
+declare const __FLOWTOOLS_BUNDLE_RUNTIME_LOCK__: {
+  path: string
+  sha256: string
+} | null
 interface CLIExecutablePlugin extends ExecutablePlugin {
   manifest?: PluginManifestV1
   type?: 'app' | 'tool'
@@ -31,6 +46,7 @@ export interface PluginRunnerDependencies {
   startTimeout?: (callback: () => void, delayMs: number) => () => void
 }
 export interface PluginRunOptions {
+  profile?: string
   commandId?: string
   timeout?: number
   signal?: AbortSignal
@@ -41,7 +57,7 @@ export function createPluginRunner(dependencies: PluginRunnerDependencies) {
     pluginId: string,
     input: unknown,
     options: PluginRunOptions = {}
-  ): Promise<RunResult> => {
+  ): Promise<PluginExecutionResult> => {
     const startedAt = Date.now()
     const failure = (
       code: 'PLUGIN_NOT_FOUND' | 'LOAD_FAILED' | 'CONTEXT_FAILED',
@@ -125,7 +141,20 @@ const defaultPluginRunner = createPluginRunner({
         : plugin.meta.permissions,
     }),
 })
-export const runPlugin = defaultPluginRunner
+export const runPlugin = async (
+  pluginId: string,
+  input: unknown,
+  options: PluginRunOptions = {}
+): Promise<RunResult> => {
+  if (
+    typeof __FLOWTOOLS_BUNDLE_RUNTIME_LOCK__ === 'object' &&
+    __FLOWTOOLS_BUNDLE_RUNTIME_LOCK__
+  ) {
+    const { runManagedPlugin } = await import('./managed-run')
+    return runManagedPlugin(pluginId, input, options)
+  }
+  return defaultPluginRunner(pluginId, input, options)
+}
 
 /** JSON output is always the shared envelope, including failure metadata. */
 export function printExecutionResult(
@@ -145,7 +174,7 @@ export function printExecutionResult(
           code: 'OUTPUT_INVALID',
           message: 'Plugin output is not JSON serializable',
         },
-        result.startedAt
+        result.startedAt ?? undefined
       )
       return printExecutionResult(
         { ...failure, inputSummary: result.inputSummary },
@@ -165,7 +194,13 @@ export function printExecutionResult(
   }
   if (!result.success) {
     process.stderr.write(
-      '[' + result.error.code + '] ' + result.error.message + '\n'
+      '[' +
+        (result.error?.code ?? 'INVALID_RESPONSE') +
+        '] ' +
+        (result.error && 'message' in result.error
+          ? result.error.message
+          : (result.error?.code ?? 'INVALID_RESPONSE')) +
+        '\n'
     )
     return 1
   }

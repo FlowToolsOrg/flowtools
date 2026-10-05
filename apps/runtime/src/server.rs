@@ -97,6 +97,8 @@ fn profile() -> Result<PathBuf, &'static str> {
 }
 
 pub async fn run() -> Result<(), &'static str> {
+    #[cfg(feature = "standalone")]
+    verify_bundle().map_err(|_| "BUNDLE_INTEGRITY_FAILED")?;
     // Validate explicit mode and bootstrap before touching profile data.
     let args: Vec<String> = std::env::args().skip(1).collect();
     let sid = current_user_sid().map_err(|_| "IPC_ACCESS_FAILED")?;
@@ -309,33 +311,79 @@ async fn connection(mut pipe: NamedPipeServer, core: Core, tasks: mpsc::Sender<S
 }
 
 fn verify_artifact(value: &Value) -> Result<PathBuf, ErrorCode> {
-    let path = Path::new(value["path"].as_str().ok_or(ErrorCode::ExecutionFailed)?);
-    let metadata = std::fs::symlink_metadata(path).map_err(|_| ErrorCode::ExecutionFailed)?;
-    if !metadata.is_file() || metadata.file_type().is_symlink() {
-        return Err(ErrorCode::ExecutionFailed);
-    }
-    let canonical = std::fs::canonicalize(path).map_err(|_| ErrorCode::ExecutionFailed)?;
-    let normalized = canonical
-        .to_string_lossy()
-        .trim_start_matches(r"\\?\")
-        .to_lowercase();
-    if normalized != path.to_string_lossy().to_lowercase() {
-        return Err(ErrorCode::ExecutionFailed);
-    }
-    let bytes = std::fs::read(path).map_err(|_| ErrorCode::ExecutionFailed)?;
-    if format!("{:x}", Sha256::digest(bytes))
-        != value["sha256"].as_str().ok_or(ErrorCode::ExecutionFailed)?
+    #[cfg(feature = "standalone")]
     {
-        return Err(ErrorCode::ExecutionFailed);
+        let root = std::env::current_exe().map_err(|_| ErrorCode::ExecutionFailed)?;
+        let root = root
+            .parent()
+            .and_then(Path::parent)
+            .ok_or(ErrorCode::ExecutionFailed)?;
+        let artifact =
+            serde_json::from_value(value.clone()).map_err(|_| ErrorCode::ExecutionFailed)?;
+        return crate::bundle::verify(root, &artifact).map_err(|_| ErrorCode::ExecutionFailed);
     }
-    Ok(path.into())
+    #[cfg(not(feature = "standalone"))]
+    {
+        let path = Path::new(value["path"].as_str().ok_or(ErrorCode::ExecutionFailed)?);
+        let metadata = std::fs::symlink_metadata(path).map_err(|_| ErrorCode::ExecutionFailed)?;
+        if !metadata.is_file() || metadata.file_type().is_symlink() {
+            return Err(ErrorCode::ExecutionFailed);
+        }
+        let canonical = std::fs::canonicalize(path).map_err(|_| ErrorCode::ExecutionFailed)?;
+        let normalized = canonical
+            .to_string_lossy()
+            .trim_start_matches(r"\\?\")
+            .to_lowercase();
+        if normalized != path.to_string_lossy().to_lowercase() {
+            return Err(ErrorCode::ExecutionFailed);
+        }
+        let bytes = std::fs::read(path).map_err(|_| ErrorCode::ExecutionFailed)?;
+        if format!("{:x}", Sha256::digest(bytes))
+            != value["sha256"].as_str().ok_or(ErrorCode::ExecutionFailed)?
+        {
+            return Err(ErrorCode::ExecutionFailed);
+        }
+        Ok(path.into())
+    }
+}
+
+#[cfg(feature = "standalone")]
+fn verify_bundle() -> Result<(), ErrorCode> {
+    let config: Value =
+        serde_json::from_str(runner_config()).map_err(|_| ErrorCode::ExecutionFailed)?;
+    for artifact in config["files"]
+        .as_array()
+        .ok_or(ErrorCode::ExecutionFailed)?
+    {
+        verify_artifact(artifact)?;
+    }
+    Ok(())
+}
+fn runner_config() -> &'static str {
+    #[cfg(feature = "standalone")]
+    {
+        include_str!(concat!(env!("FLOWTOOLS_BUNDLE_BUILD_DIR"), "/runner.json"))
+    }
+    #[cfg(not(feature = "standalone"))]
+    {
+        include_str!("../.generated/runner.json")
+    }
 }
 
 async fn execute(spec: &RunSpec, core: Core, workspace: &Path) -> Result<Value, ErrorCode> {
-    let config: Value = serde_json::from_str(include_str!("../.generated/runner.json"))
-        .map_err(|_| ErrorCode::ExecutionFailed)?;
-    let bun = verify_artifact(&config["bun"])?;
-    let runner = verify_artifact(&config["runner"])?;
+    // Hashing build-owned binaries must not block the IPC scheduler.
+    let (bun, runner) = tokio::task::spawn_blocking(|| {
+        #[cfg(feature = "standalone")]
+        verify_bundle()?;
+        let config: Value =
+            serde_json::from_str(runner_config()).map_err(|_| ErrorCode::ExecutionFailed)?;
+        Ok::<_, ErrorCode>((
+            verify_artifact(&config["bun"])?,
+            verify_artifact(&config["runner"])?,
+        ))
+    })
+    .await
+    .map_err(|_| ErrorCode::ExecutionFailed)??;
     core.lock().await.check_run(&spec.run_id)?;
     let mut command = tokio::process::Command::new(bun);
     std::fs::create_dir(workspace).map_err(|_| ErrorCode::ExecutionFailed)?;

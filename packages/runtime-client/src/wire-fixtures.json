@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "manifests": [
     {
-      "digest": "b9a2b081f82ce43e8b996922cd51008ebc8094940f59ba6486cbe7d76cc31655",
+      "digest": "aa50110fe95a458f2cc1b91c994f86bf325a52a16c8c643951452e06262c2906",
       "manifest": {
         "commands": [
           {
@@ -109,7 +109,7 @@
               "input": "required",
               "output": "required"
             },
-            "supportsColdStart": false
+            "supportsColdStart": true
           }
         ],
         "dependencies": {
@@ -160,7 +160,7 @@
       }
     },
     {
-      "digest": "7c1e28c15bcbcdbd3f309df6619b7dff4cf3145b882d2b70f8eef9614e0b99ce",
+      "digest": "947e52b940df4c876352df17ea8595d9ea5c7ea25bec3c6bee2afad507a76f80",
       "manifest": {
         "commands": [
           {
@@ -263,7 +263,7 @@
               "input": "required",
               "output": "required"
             },
-            "supportsColdStart": false
+            "supportsColdStart": true
           }
         ],
         "dependencies": {
@@ -314,7 +314,7 @@
       }
     },
     {
-      "digest": "6f48f6789cf6725dd369243201307a17b8725c1e3eb693703ec5788320e9e4be",
+      "digest": "a2d4a12e49c32670347cde3eb0240ca876f3dda1b219af05b8546c67177704ff",
       "manifest": {
         "commands": [
           {
@@ -427,7 +427,7 @@
               "input": "required",
               "output": "required"
             },
-            "supportsColdStart": false
+            "supportsColdStart": true
           }
         ],
         "dependencies": {
@@ -478,7 +478,7 @@
       }
     },
     {
-      "digest": "04af325c53ab3bc17c0a196bb98c860a7b238d1478cbda8adb47b9cc6b3db9df",
+      "digest": "d8a77414973a4863e5b65dd1be738cb16416662044452d12b6b0ce20b9e1fa9e",
       "manifest": {
         "commands": [
           {
@@ -580,7 +580,7 @@
               "input": "required",
               "output": "required"
             },
-            "supportsColdStart": false
+            "supportsColdStart": true
           }
         ],
         "dependencies": {
@@ -631,7 +631,7 @@
       }
     },
     {
-      "digest": "0c62ebbba95b2b716f695bbb05fed9ccec4fb029853e839a7b9f25e90169dfb9",
+      "digest": "785998a0023540a56e711c9fc17985c220553a6654f2c2db147bd7bbdfdca447",
       "manifest": {
         "commands": [
           {
@@ -739,7 +739,7 @@
               "input": "required",
               "output": "required"
             },
-            "supportsColdStart": false
+            "supportsColdStart": true
           }
         ],
         "dependencies": {
@@ -790,7 +790,7 @@
       }
     },
     {
-      "digest": "90d932390e26d9f21eb368727517db5057c696ffd9df11596f39e848f156d9f2",
+      "digest": "6335b9a045524004bd11521e04868fde76a9a854ba2d784bc5033af1e37b81a0",
       "manifest": {
         "commands": [
           {
@@ -890,7 +890,7 @@
               "input": "required",
               "output": "required"
             },
-            "supportsColdStart": false
+            "supportsColdStart": true
           }
         ],
         "dependencies": {
@@ -941,7 +941,7 @@
       }
     },
     {
-      "digest": "d090498c6069bb053adde2983217bc66a830f90c40b675d721926d106f6c2b1b",
+      "digest": "2ee823bcfc50b8d6451612175cc9adc0e3cbbddbf01e1ae7809ad6c46f7d5f49",
       "manifest": {
         "commands": [
           {
@@ -1073,7 +1073,7 @@
               "input": "required",
               "output": "required"
             },
-            "supportsColdStart": false
+            "supportsColdStart": true
           }
         ],
         "dependencies": {
@@ -1124,7 +1124,7 @@
       }
     },
     {
-      "digest": "6f41403818a573ef7aa31abeabed75b0afeae7046863cd215dc7a56c937004cc",
+      "digest": "8448961499ad2b254826925f5bee5eb838a1f696734260548255bfb427e3aee3",
       "manifest": {
         "commands": [
           {
@@ -1243,7 +1243,7 @@
               "input": "required",
               "output": "required"
             },
-            "supportsColdStart": false
+            "supportsColdStart": true
           }
         ],
         "dependencies": {
@@ -1294,7 +1294,7 @@
       }
     },
     {
-      "digest": "21316ccc710c5882da054a2a8814bf650f78148c4051e27fb30d117770da2138",
+      "digest": "13b616507a4b398c9cef0794e1018655e96d57166cd71f4dfdd4a88b4f8c6178",
       "manifest": {
         "commands": [
           {
@@ -1414,7 +1414,7 @@
               "input": "required",
               "output": "required"
             },
-            "supportsColdStart": false
+            "supportsColdStart": true
           }
         ],
         "dependencies": {
@@ -1465,7 +1465,7 @@
       }
     },
     {
-      "digest": "9691ab6aed870dee3cceb1b9693227d3896e071e59a01cf363f5713e65cf9c9d",
+      "digest": "dffec374de51c233c88d916b3292688383f0fb953d6b3ff419b33376eff63e68",
       "manifest": {
         "commands": [
           {
@@ -1606,7 +1606,7 @@
               "input": "required",
               "output": "required"
             },
-            "supportsColdStart": false
+            "supportsColdStart": true
           }
         ],
         "dependencies": {
@@ -1657,7 +1657,7 @@
       }
     },
     {
-      "digest": "51d8603dc0ba1a3be8645a2adc3d47a470db7b3c68a03dfe9c2600c879b95aaa",
+      "digest": "c44718973f325668d1c54c36187f658212bd6034f4ef0e578c8813e321c2276f",
       "manifest": {
         "commands": [
           {
@@ -1750,7 +1750,7 @@
               "input": "required",
               "output": "required"
             },
-            "supportsColdStart": false
+            "supportsColdStart": true
           }
         ],
         "dependencies": {

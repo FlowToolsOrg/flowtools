@@ -1096,6 +1096,11 @@ impl RuntimeCore {
     }
 
     pub fn shutdown(&mut self) {
+        // A transient policy Host never owns restored business execution.
+        if self.management_only {
+            self.sessions.clear();
+            return;
+        }
         let runs: Vec<String> = self.jobs.keys().cloned().collect();
         for run in runs {
             self.cancel(&run);
@@ -1180,6 +1185,17 @@ mod tests {
             .unwrap()
             .contains("PRIVATE_PAYLOAD_CANARY"));
         drop(core);
+        let mut management = RuntimeCore::managed(
+            HashMap::from([("admin".into(), "local-manager".into())]),
+            DataStore::open(&database).unwrap(),
+            true,
+            false,
+        )
+        .unwrap();
+        management.shutdown();
+        assert_eq!(management.state(&receipt.run_id), Some(JobState::Queued));
+        assert!(management.pending_runs().is_empty());
+        drop(management);
         let mut core = reopen();
         let cli = open(&mut core, "cli", "cli");
         let Outcome::Receipt(retry) = core

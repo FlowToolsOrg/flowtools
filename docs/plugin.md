@@ -826,3 +826,12 @@ and broker-checked CAS; raw task payloads use separate DPAPI private storage.
 Interrupted non-idempotent writes require review. [Evidence](validation/g3-durable-jobs.md).
 Independent CLI distribution and GUI integration remain P1.4a/P1.4b; all maturity
 labels stay prototype and independent security review remains pending.
+
+### G3 P1.4a standalone CLI
+
+Windows x64 CLI-only bundle and bounded, authenticated cold-start coordination
+are implemented for the fixed T1 inventory. See [standalone CLI evidence](validation/g3-standalone-cli.md).
+The package pins relative compiled artifacts and supports explicit GUI-free init,
+runtime start/status/stop and granted bundle execution. Source CLI/GUI integration
+and operational diagnostics remain P1.4b/P1.5b. Maturity remains prototype;
+signed releases, third-party sandbox and independent security review are pending.

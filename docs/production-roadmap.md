@@ -1026,7 +1026,7 @@ G4 服务依赖 -> G5 签名安装与隔离 -> G6 工具链 -> G7 办公闭环 -
 | P2.6a | done        | P2.3a               | 移除 Debug reset、迁移/备份、Runtime 单写者与异步 data/revision；保留旧数据        |
 | P2.4a | done        | P2.3a、P2.6a        | CLI-only init/策略管理、持久 grants、冷启动/后台/effects、撤销 epoch；无默认放行   |
 | P1.3b | implemented | P2.4a、P2.6a        | 实际执行、durable receipt/同 key 恢复、幂等/取消；未知状态不重试非幂等副作用       |
-| P1.4a | pending     | P1.3b               | CLI-only runtime/runner 分发、受控冷启动；未安装 GUI、50 并发启动验收              |
+| P1.4a | implemented | P1.3b               | CLI-only runtime/runner 分发、受控冷启动；未安装 GUI、50 并发启动验收              |
 | P1.4b | pending     | P1.4a               | GUI/CLI 同任务和数据，jobs status/watch/cancel、完整 text/JSON/退出码回归          |
 | P1.5b | pending     | P1.4b               | run/调用链诊断与隐私红线；实际异常/撤销/恢复可诊断                                 |
 | P1.6a | pending     | P1.1、P1.3b         | T1/fixture 的 plan-only DAG/lock、服务接口和工具声明；缺失/冲突/循环拒绝           |
@@ -1912,3 +1912,12 @@ and broker-checked CAS; raw task payloads use separate DPAPI private storage.
 Interrupted non-idempotent writes require review. [Evidence](validation/g3-durable-jobs.md).
 Independent CLI distribution and GUI integration remain P1.4a/P1.4b; all maturity
 labels stay prototype and independent security review remains pending.
+
+### G3 P1.4a standalone CLI
+
+Windows x64 CLI-only bundle and bounded, authenticated cold-start coordination
+are implemented for the fixed T1 inventory. See [standalone CLI evidence](validation/g3-standalone-cli.md).
+The package pins relative compiled artifacts and supports explicit GUI-free init,
+runtime start/status/stop and granted bundle execution. Source CLI/GUI integration
+and operational diagnostics remain P1.4b/P1.5b. Maturity remains prototype;
+signed releases, third-party sandbox and independent security review are pending.

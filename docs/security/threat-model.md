@@ -419,3 +419,12 @@ binds receipts and replay to Host identity, immutable action/package lock and
 durable grant epochs. Private DPAPI payloads are separate from metadata. Running
 non-idempotent tasks interrupt after crash. This T1 lifetime guard is not a
 third-party sandbox; SEC risks and independent security review remain open.
+
+### G3 P1.4a standalone CLI
+
+Windows x64 CLI-only bundle and bounded, authenticated cold-start coordination
+are implemented for the fixed T1 inventory. See [standalone CLI evidence](../validation/g3-standalone-cli.md).
+The package pins relative compiled artifacts and supports explicit GUI-free init,
+runtime start/status/stop and granted bundle execution. Source CLI/GUI integration
+and operational diagnostics remain P1.4b/P1.5b. Maturity remains prototype;
+signed releases, third-party sandbox and independent security review are pending.

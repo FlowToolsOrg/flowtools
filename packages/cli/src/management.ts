@@ -1,6 +1,7 @@
 import type { Call, PermissionGrant } from '@flowtools/runtime-client'
 
 import { spawn } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { once } from 'node:events'
 import { lstat, readFile, realpath } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
@@ -12,7 +13,13 @@ import { RuntimeClient } from '@flowtools/runtime-client'
 import { connectNamedPipe } from '@flowtools/runtime-client/node'
 import { Command } from 'commander'
 
+import { connectHost } from './host'
+
 declare const __FLOWTOOLS_NATIVE_BUILD_PATH__: string
+declare const __FLOWTOOLS_BUNDLE_RUNTIME_LOCK__: {
+  path: string
+  sha256: string
+} | null
 
 export function userProfile(explicit?: string): string {
   const path =
@@ -24,9 +31,13 @@ export function userProfile(explicit?: string): string {
 }
 
 export async function runtimeExecutable(): Promise<string> {
-  // Build-owned local path until P1.4a supplies the independently verified bundle.
-  const path =
-    typeof __FLOWTOOLS_NATIVE_BUILD_PATH__ === 'string'
+  const lock =
+    typeof __FLOWTOOLS_BUNDLE_RUNTIME_LOCK__ === 'object'
+      ? __FLOWTOOLS_BUNDLE_RUNTIME_LOCK__
+      : null
+  const path = lock
+    ? fileURLToPath(new URL('../../../' + lock.path, import.meta.url))
+    : typeof __FLOWTOOLS_NATIVE_BUILD_PATH__ === 'string'
       ? __FLOWTOOLS_NATIVE_BUILD_PATH__
       : fileURLToPath(
           new URL(
@@ -41,12 +52,26 @@ export async function runtimeExecutable(): Promise<string> {
     (await realpath(path)).toLowerCase() !== path.toLowerCase()
   )
     throw new Error('SETUP_REQUIRED')
+  if (
+    lock &&
+    createHash('sha256')
+      .update(await readFile(path))
+      .digest('hex') !== lock.sha256
+  )
+    throw new Error('BUNDLE_INTEGRITY_FAILED')
   return path
 }
 
 export async function readBootstrap(profile: string) {
   const path = join(profile, 'bootstrap.json')
-  if ((await lstat(path)).size > 2048) throw new Error('INVALID_REQUEST')
+  const stat = await lstat(path)
+  if (
+    !stat.isFile() ||
+    stat.isSymbolicLink() ||
+    stat.size > 2048 ||
+    (await realpath(path)).toLowerCase() !== path.toLowerCase()
+  )
+    throw new Error('INVALID_REQUEST')
   const value: unknown = JSON.parse(await readFile(path, 'utf8'))
   if (
     !value ||
@@ -71,6 +96,20 @@ export async function readBootstrap(profile: string) {
 }
 
 export async function startManagement(profile: string, initialize: boolean) {
+  if (!initialize) {
+    try {
+      const client = await connectHost(profile, true)
+      return {
+        client,
+        async close() {
+          client.close()
+        },
+      }
+    } catch (error) {
+      if (!(error instanceof Error) || error.message !== 'RUNTIME_DISCONNECTED')
+        throw error
+    }
+  }
   const child = spawn(
     await runtimeExecutable(),
     [

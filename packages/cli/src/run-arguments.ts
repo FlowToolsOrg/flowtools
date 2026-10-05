@@ -3,6 +3,7 @@ import type { OutputFormat } from './types'
 import { CLIInputError } from './schema'
 
 export interface RunArguments {
+  profile?: string
   commandId: string
   format: OutputFormat
   input?: string
@@ -24,6 +25,7 @@ export function parseRunArguments(args: string[]): RunArguments {
     '--timeout': 'timeout',
     '--command': 'command',
     '--batch-input': 'batch',
+    '--profile': 'profile',
   }
   const flags: string[] = []
   let help = false
@@ -71,6 +73,7 @@ export function parseRunArguments(args: string[]): RunArguments {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(commandId))
     throw new CLIInputError('INVALID_INPUT_SHAPE', 'Invalid command identity')
   return {
+    profile: host.get('profile'),
     commandId,
     format: format as OutputFormat,
     input,

@@ -30,7 +30,10 @@ function registerEnabledFixture(
     type: manifestType,
     loader: () => Promise.resolve({ default: plugin }),
   })
-  registry.updateState(id, { plugin, state: 'enabled' })
+  registry.updateState(id, { plugin })
+  registry.transition(id, 'loading')
+  registry.transition(id, 'loaded')
+  registry.transition(id, 'enabled')
 }
 
 describe('plugin command registration', () => {

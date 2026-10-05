@@ -1,0 +1,20 @@
+{
+  "name": "@flowtools/runtime-core",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "generate": "bun run generate-catalog.ts && cargo run --locked --manifest-path Cargo.toml --bin export-runtime-bindings",
+    "verify:bindings": "cargo run --locked --manifest-path Cargo.toml --bin export-runtime-bindings -- --check",
+    "build": "bun run generate-catalog.ts && cargo build --locked --manifest-path Cargo.toml",
+    "lint": "oxlint --type-aware --type-check *.ts && cargo fmt --manifest-path Cargo.toml -- --check && cargo clippy --locked --manifest-path Cargo.toml --all-targets -- -D warnings",
+    "check-types": "tsgo --noEmit && cargo check --locked --manifest-path Cargo.toml --all-targets",
+    "test": "bun run generate-catalog.ts && bun run ../../scripts/check-rust-tests.ts Cargo.toml && cargo test --locked --manifest-path Cargo.toml"
+  },
+  "dependencies": {
+    "@flowtools/plugins": "workspace:*",
+    "@flowtools/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:"
+  }
+}

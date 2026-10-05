@@ -62,12 +62,19 @@ Run from repository root:
 - `pwsh -NoProfile -File scripts/check-ci.ps1`: run the Windows CI gates from a
   clean checkout; each native nonzero exit terminates the task and generated
   tracked/untracked file drift fails validation.
-- `bun run build:packages`: bootstrap SDK/UI/CLI/plugins declaration artifacts
+- `bun run build:packages`: bootstrap SDK/UI/CLI/plugins/Runtime client artifacts
   before lint/type checks in a fresh checkout.
 - `bun run generate:hosts`: generate Web/Desktop route trees and Desktop Rust
   command bindings before lint/type checks in a fresh checkout. Never replace
   Rust-derived bindings with handwritten DTO copies. Bindings generation uses
   a codegen-only binary and mock runtime, not desktop launch or user databases.
+- Runtime client consumers must declare their workspace dependency and use its
+  public exports. Bootstrap its artifacts before lint/types in a fresh checkout.
+  The three Rust-derived Runtime source artifacts have explicit LF Git attributes
+  so Windows CRLF checkout plus LF codegen leaves the worktree clean. Preserve
+  the content-drift gate; do not refresh/stage generated files to bypass it.
+  Package-specific uncached native build tasks must explicitly retain `^build`
+  and `CARGO_TARGET_DIR` passthrough; Turbo overrides do not inherit them.
 - `bun run dev`: starts workspace `dev` tasks via Turbo.
 - `bun run build`: builds workspaces (`turbo run build`).
 - `bun run lint`: runs workspace lint tasks.
@@ -156,7 +163,9 @@ Keep Turbo strict environment mode. Pass through Windows `PATHEXT` for native
 command discovery and `CARGO_TARGET_DIR` for build/test native cache placement;
 do not pass through host secrets or switch to loose mode to fix tool discovery.
 Remote CI acceptance and required status-check settings are separate roadmap
-work; local commit permission does not authorize pushes or repository settings.
+work; local commit permission alone does not authorize pushes or repository
+settings. The standing project authorization below permits feature-branch pushes
+and PR creation; repository settings still require separate authorization.
 Windows MSVC binding integration tests require the Common Controls v6 manifest
 directives in `src-tauri/build.rs`; Tauri's app manifest does not cover them.
 Keep these directives test-target scoped to avoid duplicate app manifests.
@@ -440,6 +449,16 @@ files in the same change:
 
 ## Commit and Pull Request Guidelines
 
+The maintainer authorized automatic project PR delivery on 2026-10-05. After
+completing each requested task and its applicable checks, make focused commits,
+push the `codex/` feature branch to `origin`, and create or update a PR against
+the verified default branch using the repository template. Return its URL and
+current validation/review status without asking again for push or PR permission.
+Record incomplete acceptance or independent security review explicitly; use a
+draft when implementation or required validation remains incomplete. This
+authorization does not include merging, deployment, repository settings changes
+or bypassing checks. Later explicit user instructions take precedence.
+
 Use Conventional Commits, for example:
 
 - `feat(ui): add plugin card variants`
@@ -527,3 +546,43 @@ Turbo build outputs include `dist` and `.generated` so the compiled catalog is
 restored with cached artifacts. CI still forces builds and never caches JS output
 as a substitute for quality gates.
 See [CLI v1 contract](./docs/cli-contract-v1.md); keep unsupported platform scope explicit.
+
+## G2 lifecycle progress
+
+P1.2a uses one SDK lifecycle controller with registry-owned per-plugin queues.
+Loader and LifecycleManager share load/activate/deactivate/unload ordering.
+State transitions reject illegal edges; failed hooks retain their cause and
+cleanup failures until explicit unload/reload recovery. Disabled instances are
+reused without loading again. Removal requires completed cleanup.
+P1.2b adds reactive command projection, generation leases, execution draining,
+and cooperative load/activation/view/runner resource scopes. Enabled module state
+is separate from a resident runner; only explicitly owned runner resources count
+as running. Web GUI executions acquire the current registry instance. Updates
+and removal drain accepted calls and clean resources; cleanup errors block removal.
+P1.3a adds `packages/runtime-core`, `apps/runtime`, `packages/runtime-client`
+and a fixed T1 `packages/plugin-runner`. Windows validation uses a current-user
+ACL named pipe, Host-bound connection proofs and disposable profiles. Task facts
+live in Rust; GUI/Node clients query the same runId. Receipts are distinct from
+terminal execution results; foreground disconnect cancels, explicit background
+jobs survive. This only evaluates pure built-in commands: side effects require
+APPROVAL_REQUIRED. No user DB migration, production unattended execution, cold
+start, new grants, third-party runner or OS sandbox is delivered. P1.5a adds Rust-derived wire/golden drift checks, stable refusal codes,
+redacted events and actionable version/disconnection diagnostics. G2 is complete
+for its declared Windows/T1/disposable-profile scope. Runtime/core Rust builds are uncached; generate:hosts
+creates Rust-derived client DTO/schema and Desktop bindings before quality gates.
+See [G2 acceptance](./docs/validation/g2-runtime.md).
+
+P1.5a: `bun run verify:runtime-contracts` compares generated types, JSON Schema
+and full Manifest/wire fixtures without rewriting tracked artifacts. Both Rust
+and TS validate the same fixtures/digests. Manifest fixture files use controlled
+LF text; runtime package integrity retains actual build file hashes. Connection
+loss never auto-resubmits;
+a submit with a lost response marks acceptance unknown. Reconnect checks instance
+identity; same-key retries preserve input/package/background/deadline. Diagnostic
+exports allow only version/code/summary/action/acceptance status, excluding private
+exception text and payloads. Desktop validation also binds the actual configured
+origin. Production builds exclude the DEV validation panel. Durable restart
+recovery, user data/grants and independent CLI distribution remain G3 scope.
+Validation must use the metadata-only native preflight before launching a Host
+or GUI; literal identifier strings cannot establish the compiled identity.
+Explicit validation refuses incorrect native identity before plugins/database IO.

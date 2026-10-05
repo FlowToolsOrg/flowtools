@@ -11,7 +11,8 @@
       "outputs": ["dist/**/*", ".generated/**/*"]
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^lint"],
+      "passThroughEnv": ["CARGO_TARGET_DIR"]
     },
     "lint:fix": {
       "dependsOn": ["^lint:fix"],
@@ -21,7 +22,8 @@
       "dependsOn": ["^format"]
     },
     "check-types": {
-      "dependsOn": ["^check-types"]
+      "dependsOn": ["^check-types"],
+      "passThroughEnv": ["CARGO_TARGET_DIR"]
     },
     "test": {
       "dependsOn": ["^test"],
@@ -32,6 +34,16 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "@flowtools/runtime-core#build": {
+      "dependsOn": ["^build"],
+      "passThroughEnv": ["CARGO_TARGET_DIR"],
+      "cache": false
+    },
+    "@flowtools/runtime#build": {
+      "dependsOn": ["^build"],
+      "passThroughEnv": ["CARGO_TARGET_DIR"],
+      "cache": false
     }
   }
 }

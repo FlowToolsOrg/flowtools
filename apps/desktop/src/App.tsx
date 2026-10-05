@@ -86,6 +86,9 @@ const DevelopmentHtmlPluginSurface =
     ? lazy(() => import('./runtime/development-html-plugin-surface'))
     : null
 const recentStorageKey = 'flowtools.desktop.recentCommandIds'
+const ValidationRuntimePanel = import.meta.env.DEV
+  ? lazy(() => import('./runtime/validation-runtime-panel'))
+  : null
 
 const builtInActions: IndexedCommand[] = [
   {
@@ -524,7 +527,19 @@ function usePluginInventory() {
 }
 
 function RootLayout() {
-  return <Outlet />
+  const params = new URLSearchParams(window.location.search)
+  return (
+    <>
+      <Outlet />
+      {ValidationRuntimePanel &&
+        params.get('execution-validation') === '20261003' &&
+        params.get('runtime-validation') === '1' && (
+          <Suspense fallback={<p>Connecting Runtime</p>}>
+            <ValidationRuntimePanel />
+          </Suspense>
+        )}
+    </>
+  )
 }
 
 function LauncherView() {

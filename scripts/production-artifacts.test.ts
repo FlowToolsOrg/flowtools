@@ -68,6 +68,8 @@ for (const marker of [
   'development-html-plugin-surface',
   'development-plugin-file-loader',
   '/@fs/private-checkout/main.html',
+  'Prototype · disposable Runtime profile',
+  'validation-runtime-panel',
 ]) {
   test(`rejects real external execution fingerprint: ${marker}`, () => {
     expect(() =>

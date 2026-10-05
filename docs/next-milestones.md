@@ -1,7 +1,7 @@
 # FlowTools 下一阶段目标与实施设计
 
 - 决策日期：2026-10-04
-- 状态：accepted-design；G1 已完成，G2–G8 实施项仍 pending，不证明隔离或生产能力已交付
+- 状态：accepted-design；G1、G2 固定 Windows/T1 验证范围已完成；G3–G8 实施项仍 pending，不证明隔离或生产能力已交付
 - 决策来源：维护者已确认的产品讨论；实施责任由 Repository Maintainer 分配
 - 进度来源：[生产路线图](./production-roadmap.md)
 - 安全来源：[信任边界](./adr/0001-plugin-trust-boundaries.md)、
@@ -119,14 +119,17 @@ false、数组、required/default 和 JSON 错误都有稳定结果及非零退�
 
 ## 4. G2：生命周期与无界面运行内核
 
-### 拟新增模块与所有权
+### 模块与目标所有权
+
+四个新模块已交付 G2 验证基础；下表中的 broker、数据、安装服务与 T3 adapter
+仍是后续目标，分别等待 G3/G5，不能从目录存在推断已实现。
 
 | 模块                                             | 职责                                         | 禁止承担                           |
 | ------------------------------------------------ | -------------------------------------------- | ---------------------------------- |
 | `packages/runtime-core`（Rust crate）            | 会话、broker、registry、任务、数据与安装服务 | 依赖 Tauri WebView 或 React        |
 | `apps/runtime`（Rust binary：flowtools-runtime） | IPC server、单实例、启动与关停               | 插件自行启动的任意服务             |
 | `packages/runtime-client`（TS）                  | typed client、传输、重连、订阅               | 独立 grants/安装/插件数据库        |
-| `packages/plugin-runner`（拟新增受管执行入口）   | T1 命令执行，后继 T3 runtime adapter         | 把普通 Bun/Node 进程宣称为 sandbox |
+| `packages/plugin-runner`（受管执行入口）         | T1 命令执行，后继 T3 runtime adapter         | 把普通 Bun/Node 进程宣称为 sandbox |
 | 现有 Desktop Rust/UI、CLI                        | 客户端、UI 展示与平台交互 adapter            | 各自持久化第二套业务事实           |
 
 Runtime core 的 wire DTO 由 Rust 定义并沿用 Specta 生成 TS；TS Manifest/Schema
@@ -405,4 +408,27 @@ G0 已在 2026-10-04 收口；完整根门禁、实际 production artifacts 与�
 [CLI v1](./cli-contract-v1.md)，同源参考见 [生成文档](./builtin-commands.md)。
 三端实际 T1 入口在加载前检查同一 Manifest，外部默认拒绝保持；父项 P1.1 完成。
 实际检查范围与本机资源故障记录见 [G1 验收](./validation/g1-command-contract.md)。
-后续顺序为 G2，Host、runtime-client、后台任务、grant 与独立 CLI 尚未实现。
+G1 完成当时的后续顺序为 G2；当前 Host/client 验证基础已交付，
+grant、durable jobs 与独立 CLI 分发仍待 G3，见下方最终范围。
+
+P1.2a 已实施单一生命周期与每插件锁，见 [G2 验收](./validation/g2-runtime.md)。
+
+P1.2b 已实施命令投影、代际租约、在途排空及协作资源 ownership；保持 T1/prototype 范围。
+
+### G2 P1.3a progress (2026-10-04)
+
+P1.2a/P1.2b and P1.3a are implemented and independently validated. The four
+headless modules now exist for fixed T1 / Windows validation profiles; Unix,
+production cold start, user DB ownership and durable recovery remain future
+stages. Native GUI and Node CLI fixture query the same actual Base64 task.
+[G2 evidence](./validation/g2-runtime.md) records native identity/profile and
+residual boundaries. P1.5a is implemented; G2 Windows/T1 validation scope is complete.
+
+### G2 final scope (2026-10-05)
+
+P1.2a/P1.2b/P1.3a/P1.5a delivered in separate commits. Generated wire/metadata
+golden checks, stable errors, redacted diagnostics, actual managed T1 failure/
+deadline/output rejection, shared native GUI/Node runId and disconnection policy
+are verified. G3 is next; current non-durable tasks have no crash restoration.
+Instance change returns INSTANCE_MISMATCH; it never invents an interrupted result
+or retries unknown business actions. Prototype labels and SEC open states remain.

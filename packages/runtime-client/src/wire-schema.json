@@ -1,0 +1,754 @@
+{
+  "request": {
+    "$defs": {
+      "Call": {
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "session.open",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/OpenSession"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "runtime.status",
+                "type": "string"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "plugins.list",
+                "type": "string"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "jobs.submit",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/SubmitJob"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "jobs.status",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/JobKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "jobs.cancel",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/JobKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "jobs.events",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/EventCursor"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "EventCursor": {
+        "additionalProperties": false,
+        "properties": {
+          "afterSequence": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "runId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId",
+          "afterSequence"
+        ],
+        "type": "object"
+      },
+      "JobKey": {
+        "additionalProperties": false,
+        "properties": {
+          "runId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId"
+        ],
+        "type": "object"
+      },
+      "OpenSession": {
+        "additionalProperties": false,
+        "properties": {
+          "clientVersion": {
+            "type": "string"
+          },
+          "expectedInstanceId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "clientVersion"
+        ],
+        "type": "object"
+      },
+      "SessionProof": {
+        "additionalProperties": false,
+        "properties": {
+          "instanceId": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sessionId",
+          "instanceId"
+        ],
+        "type": "object"
+      },
+      "SubmitJob": {
+        "additionalProperties": false,
+        "properties": {
+          "background": {
+            "type": "boolean"
+          },
+          "commandId": {
+            "type": "string"
+          },
+          "deadline": {
+            "format": "double",
+            "type": "number"
+          },
+          "idempotencyKey": {
+            "type": "string"
+          },
+          "input": true,
+          "pluginId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pluginId",
+          "commandId",
+          "input",
+          "idempotencyKey",
+          "background",
+          "deadline"
+        ],
+        "type": "object"
+      }
+    },
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+      "call": {
+        "$ref": "#/$defs/Call"
+      },
+      "requestId": {
+        "type": "string"
+      },
+      "session": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/SessionProof"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "version": {
+        "format": "uint16",
+        "maximum": 65535,
+        "minimum": 0,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "version",
+      "requestId",
+      "call"
+    ],
+    "title": "Request",
+    "type": "object"
+  },
+  "response": {
+    "$defs": {
+      "ErrorCode": {
+        "enum": [
+          "PROTOCOL_MISMATCH",
+          "CLIENT_INCOMPATIBLE",
+          "FRAME_TOO_LARGE",
+          "INVALID_REQUEST",
+          "SESSION_INVALID",
+          "INSTANCE_MISMATCH",
+          "APPROVAL_REQUIRED",
+          "PLUGIN_NOT_FOUND",
+          "INPUT_INVALID",
+          "JOB_NOT_FOUND",
+          "IDEMPOTENCY_CONFLICT",
+          "TIMEOUT",
+          "ABORTED",
+          "EXECUTION_FAILED",
+          "OUTPUT_INVALID",
+          "RUNTIME_BUSY",
+          "RUNTIME_DISCONNECTED",
+          "INVALID_RESPONSE"
+        ],
+        "type": "string"
+      },
+      "ExecutionResult": {
+        "anyOf": [
+          {
+            "properties": {
+              "data": true,
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "error": {
+                "$ref": "#/$defs/RuntimeError"
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "success",
+              "error"
+            ],
+            "type": "object"
+          }
+        ],
+        "description": "Versioned extension of PluginExecutionResult; a receipt is a different type.",
+        "properties": {
+          "durationMs": {
+            "format": "double",
+            "type": "number"
+          },
+          "finishedAt": {
+            "format": "double",
+            "type": "number"
+          },
+          "formatVersion": {
+            "format": "uint16",
+            "maximum": 65535,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "inputSummary": {
+            "$ref": "#/$defs/InputSummary"
+          },
+          "pluginId": {
+            "type": "string"
+          },
+          "pluginVersion": {
+            "type": "string"
+          },
+          "runId": {
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "required": [
+          "formatVersion",
+          "runId",
+          "pluginId",
+          "pluginVersion",
+          "startedAt",
+          "finishedAt",
+          "durationMs",
+          "inputSummary"
+        ],
+        "type": "object",
+        "unevaluatedProperties": false
+      },
+      "InputSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "size": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "size"
+        ],
+        "type": "object"
+      },
+      "JobEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "runId": {
+            "type": "string"
+          },
+          "sequence": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "state": {
+            "$ref": "#/$defs/JobState"
+          }
+        },
+        "required": [
+          "runId",
+          "sequence",
+          "state"
+        ],
+        "type": "object"
+      },
+      "JobReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "acceptedAt": {
+            "format": "double",
+            "type": "number"
+          },
+          "formatVersion": {
+            "format": "uint16",
+            "maximum": 65535,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "instanceId": {
+            "type": "string"
+          },
+          "receiptType": {
+            "type": "string"
+          },
+          "runId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "formatVersion",
+          "receiptType",
+          "runId",
+          "instanceId",
+          "acceptedAt"
+        ],
+        "type": "object"
+      },
+      "JobSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "commandId": {
+            "type": "string"
+          },
+          "deadline": {
+            "format": "double",
+            "type": "number"
+          },
+          "dependencyLock": {
+            "type": "string"
+          },
+          "formatVersion": {
+            "format": "uint16",
+            "maximum": 65535,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "grantEpoch": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "packageDigest": {
+            "type": "string"
+          },
+          "packageVersion": {
+            "type": "string"
+          },
+          "parentRunId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pluginId": {
+            "type": "string"
+          },
+          "resources": true,
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ExecutionResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rootCaller": {
+            "type": "string"
+          },
+          "runId": {
+            "type": "string"
+          },
+          "sequence": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "state": {
+            "$ref": "#/$defs/JobState"
+          }
+        },
+        "required": [
+          "formatVersion",
+          "runId",
+          "rootCaller",
+          "pluginId",
+          "commandId",
+          "packageVersion",
+          "packageDigest",
+          "dependencyLock",
+          "deadline",
+          "grantEpoch",
+          "resources",
+          "state",
+          "sequence"
+        ],
+        "type": "object"
+      },
+      "JobState": {
+        "enum": [
+          "accepted",
+          "queued",
+          "running",
+          "cancelling",
+          "succeeded",
+          "failed",
+          "cancelled",
+          "interrupted"
+        ],
+        "type": "string"
+      },
+      "Outcome": {
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/SessionProof"
+              },
+              "type": {
+                "const": "session",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/RuntimeStatus"
+              },
+              "type": {
+                "const": "status",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/$defs/PluginStatus"
+                },
+                "type": "array"
+              },
+              "type": {
+                "const": "plugins",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/JobReceipt"
+              },
+              "type": {
+                "const": "receipt",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/JobSnapshot"
+              },
+              "type": {
+                "const": "job",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/$defs/JobEvent"
+                },
+                "type": "array"
+              },
+              "type": {
+                "const": "events",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/RuntimeError"
+              },
+              "type": {
+                "const": "error",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "PluginStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "installed": {
+            "type": "boolean"
+          },
+          "pluginId": {
+            "type": "string"
+          },
+          "running": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pluginId",
+          "version",
+          "installed",
+          "enabled",
+          "running"
+        ],
+        "type": "object"
+      },
+      "RuntimeError": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "$ref": "#/$defs/ErrorCode"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
+      "RuntimeStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "instanceId": {
+            "type": "string"
+          },
+          "jobs": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "mode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "instanceId",
+          "mode",
+          "jobs"
+        ],
+        "type": "object"
+      },
+      "SessionProof": {
+        "additionalProperties": false,
+        "properties": {
+          "instanceId": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sessionId",
+          "instanceId"
+        ],
+        "type": "object"
+      }
+    },
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+      "outcome": {
+        "$ref": "#/$defs/Outcome"
+      },
+      "requestId": {
+        "type": "string"
+      },
+      "version": {
+        "format": "uint16",
+        "maximum": 65535,
+        "minimum": 0,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "version",
+      "requestId",
+      "outcome"
+    ],
+    "title": "Response",
+    "type": "object"
+  }
+}

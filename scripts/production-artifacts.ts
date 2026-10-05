@@ -21,6 +21,8 @@ const externalMarkers = [
   'development-html-plugin-bridge',
   'development-plugin-file-loader',
   '/@fs/',
+  'Prototype · disposable Runtime profile',
+  'validation-runtime-panel',
 ] as const
 const certificationNames = new Set([
   'certified',

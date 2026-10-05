@@ -4,14 +4,16 @@ import type {
   RegisteredCommand,
 } from '@flowtools/sdk'
 
+import { projectPluginCommands } from '@flowtools/sdk'
+
 export function registerPluginCommands(
   registry: PluginRegistry,
   commandRegistry: CommandRegistry,
   navigate: (path: string) => void
-): void {
-  for (const entry of registry.getEnabled()) {
+): () => void {
+  return projectPluginCommands(registry, commandRegistry, entry => {
     if (!entry.plugin) {
-      continue
+      return []
     }
 
     const pluginId = entry.id
@@ -19,7 +21,7 @@ export function registerPluginCommands(
     const pluginType = entry.plugin.type
 
     if (pluginType !== 'app' && pluginType !== 'tool') {
-      continue
+      return []
     }
 
     const command: RegisteredCommand = {
@@ -34,6 +36,6 @@ export function registerPluginCommands(
       handler: () => navigate(`/tools/${pluginId}`),
     }
 
-    commandRegistry.register(command)
-  }
+    return [command]
+  })
 }

@@ -36,7 +36,7 @@
   "type": "module",
   "scripts": {
     "build": "turbo run build",
-    "build:packages": "turbo run build --filter=@flowtools/sdk --filter=@flowtools/ui --filter=@flowtools/cli --filter=@flowtools/plugins",
+    "build:packages": "turbo run build --filter=@flowtools/sdk --filter=@flowtools/ui --filter=@flowtools/cli --filter=@flowtools/plugins --filter=@flowtools/runtime-client",
     "dev": "turbo run dev",
     "dev:web": "turbo run dev --filter=@flowtools/web",
     "dev:desktop": "bun run --cwd apps/desktop tauri dev",
@@ -52,13 +52,14 @@
     "generate:manifests": "bun run scripts/generate-manifests.ts",
     "generate:command-docs": "bun run scripts/generate-command-docs.ts",
     "verify:command-docs": "bun run scripts/generate-command-docs.ts --check",
-    "generate:hosts": "bun run --cwd apps/web-vite generate:routes && bun run --cwd apps/desktop generate",
+    "generate:hosts": "bun run --cwd packages/runtime-core generate && bun run --cwd apps/web-vite generate:routes && bun run --cwd apps/desktop generate",
     "inspect:html-plugins": "bun run scripts/inspect-html-plugins.ts",
     "verify:plugin-catalog": "bun run scripts/verify-plugin-catalog.ts",
     "verify:production-entrypoints": "bun run scripts/verify-production-entrypoints.ts",
     "docs:check": "bun run scripts/docs-check.ts",
     "verify:manifests": "bun run scripts/verify-manifests.ts",
-    "verify:workspace-tasks": "bun run scripts/verify-workspace-tasks.ts"
+    "verify:workspace-tasks": "bun run scripts/verify-workspace-tasks.ts",
+    "verify:runtime-contracts": "bun run --cwd packages/runtime-core verify:bindings"
   },
   "dependencies": {
     "es-toolkit": "catalog:",

@@ -5,6 +5,8 @@ mod dto;
 mod error;
 mod models;
 mod repositories;
+#[cfg(all(windows, any(debug_assertions, feature = "codegen")))]
+mod validation_runtime;
 
 use app_state::AppState;
 use commands::{
@@ -16,8 +18,17 @@ use tauri::Manager;
 use tauri_specta::{collect_commands, Builder};
 use tokio::sync::Mutex;
 
+pub(crate) const RUNTIME_VALIDATION_IDENTIFIER: &str = "com.flowtools.g2-validation-20261004";
+#[cfg(all(windows, debug_assertions))]
+const RUNTIME_VALIDATION_PREFLIGHT: &str = "flowtools-runtime-validation-preflight-v1";
+
+fn validation_startup_allowed(debug: bool, identifier: &str, requested: bool) -> bool {
+    !requested || (debug && cfg!(windows) && identifier == RUNTIME_VALIDATION_IDENTIFIER)
+}
+
 fn command_builder<R: tauri::Runtime>() -> Builder<R> {
-    Builder::<R>::new().commands(collect_commands![
+    #[cfg(not(all(windows, any(debug_assertions, feature = "codegen"))))]
+    let builder = Builder::<R>::new().commands(collect_commands![
         get_plugins,
         get_plugin,
         add_plugin,
@@ -25,7 +36,20 @@ fn command_builder<R: tauri::Runtime>() -> Builder<R> {
         enable_plugin,
         disable_plugin,
         remove_plugin
-    ])
+    ]);
+    #[cfg(all(windows, any(debug_assertions, feature = "codegen")))]
+    let builder = Builder::<R>::new().commands(collect_commands![
+        get_plugins,
+        get_plugin,
+        add_plugin,
+        update_plugin,
+        enable_plugin,
+        disable_plugin,
+        remove_plugin,
+        validation_runtime::validation_runtime::<tauri::Wry>,
+        validation_runtime::validation_runtime_disconnect::<tauri::Wry>
+    ]);
+    builder
 }
 
 #[cfg(feature = "codegen")]
@@ -39,6 +63,42 @@ pub fn export_bindings(
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let context = tauri::generate_context!();
+    // Metadata-only preflight: no Builder, plugins, bindings writes or DB access.
+    if std::env::args().nth(1).as_deref() == Some("--runtime-validation-identity") {
+        #[cfg(all(windows, debug_assertions))]
+        {
+            println!("{RUNTIME_VALIDATION_PREFLIGHT}");
+            println!("{}", context.config().identifier);
+            println!(
+                "{}",
+                context
+                    .config()
+                    .build
+                    .dev_url
+                    .as_ref()
+                    .map_or("", |url| url.as_str())
+            );
+            println!(
+                "{}",
+                context
+                    .config()
+                    .app
+                    .windows
+                    .first()
+                    .map_or("", |window| window.title.as_str())
+            );
+        }
+        return;
+    }
+    if !validation_startup_allowed(
+        cfg!(debug_assertions),
+        &context.config().identifier,
+        std::env::var("FLOWTOOLS_RUNTIME_VALIDATION").as_deref() == Ok("1"),
+    ) {
+        eprintln!("VALIDATION_IDENTITY_REQUIRED");
+        std::process::exit(1);
+    }
     let commands_builder = command_builder::<tauri::Wry>();
 
     #[cfg(debug_assertions)]
@@ -80,10 +140,37 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(log_plugin_builder.build());
 
+    #[cfg(all(windows, debug_assertions))]
+    let tauri_builder = tauri_builder
+        .manage(validation_runtime::ValidationRuntimeConnection::default())
+        .on_window_event(|window, event| {
+            if matches!(event, tauri::WindowEvent::Destroyed) {
+                validation_runtime::on_destroyed(window);
+            }
+        });
+
     #[cfg(debug_assertions)]
     let tauri_builder = tauri_builder.plugin(tauri_plugin_devtools::init());
 
     tauri_builder
-        .run(tauri::generate_context!())
+        .run(context)
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod startup_tests {
+    use super::*;
+
+    #[test]
+    fn explicit_validation_refuses_default_identity_before_runtime_initialization() {
+        for identifier in ["com.hmsuiji.desktop", RUNTIME_VALIDATION_IDENTIFIER] {
+            for debug in [false, true] {
+                assert!(validation_startup_allowed(debug, identifier, false));
+                assert_eq!(
+                    validation_startup_allowed(debug, identifier, true),
+                    cfg!(windows) && debug && identifier == RUNTIME_VALIDATION_IDENTIFIER
+                );
+            }
+        }
+    }
 }

@@ -1,0 +1,2174 @@
+{
+  "formatVersion": 1,
+  "manifests": [
+    {
+      "digest": "b9a2b081f82ce43e8b996922cd51008ebc8094940f59ba6486cbe7d76cc31655",
+      "manifest": {
+        "commands": [
+          {
+            "description": "文本与 Base64 编码互转",
+            "effects": [],
+            "headless": true,
+            "id": "run",
+            "inputSchema": {
+              "additionalProperties": false,
+              "properties": {
+                "mode": {
+                  "default": "encode",
+                  "description": "Encode or decode mode",
+                  "enum": [
+                    "encode",
+                    "decode"
+                  ],
+                  "type": "string"
+                },
+                "text": {
+                  "description": "Text to encode or decode",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "text"
+              ],
+              "type": "object"
+            },
+            "interaction": "none",
+            "name": "执行Base64 编解码",
+            "outputSchema": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "text",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "text"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "json",
+                      "type": "string"
+                    },
+                    "value": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "input": {
+                          "type": "string"
+                        },
+                        "mode": {
+                          "enum": [
+                            "encode",
+                            "decode"
+                          ],
+                          "type": "string"
+                        },
+                        "result": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "result",
+                        "mode",
+                        "input"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "permissions": [],
+            "resources": {
+              "maxInputBytes": 1048576,
+              "maxOutputBytes": 1048576,
+              "timeoutMs": 30000
+            },
+            "runtimeValidation": {
+              "input": "required",
+              "output": "required"
+            },
+            "supportsColdStart": false
+          }
+        ],
+        "dependencies": {
+          "services": [],
+          "tools": []
+        },
+        "description": "文本与 Base64 编码互转",
+        "engines": {
+          "host": "^0.1.0",
+          "sdk": ">=0.0.0 <1.0.0"
+        },
+        "entries": {
+          "executor": "plugin-base64-encoder.commands.js",
+          "ui": "plugin-base64-encoder.js"
+        },
+        "files": [
+          {
+            "path": "plugin-base64-encoder.commands.js",
+            "sha256": "f72a0a413627ff2bd576e67abdce73a1599f1fa50fd28eb3c6601500cac7fe9e",
+            "size": 69
+          },
+          {
+            "path": "plugin-base64-encoder.js",
+            "sha256": "0e5c6b94bd69a01820257a29934ae518b620aad2c3f22eb53afa9d917383627d",
+            "size": 60
+          }
+        ],
+        "formatVersion": 1,
+        "id": "plugin-base64-encoder",
+        "maturity": "prototype",
+        "name": "Base64 编解码",
+        "publisher": "flowtools",
+        "signature": {
+          "status": "unsigned"
+        },
+        "targets": [
+          {
+            "arch": "x64",
+            "platform": "windows"
+          },
+          {
+            "arch": "wasm32",
+            "platform": "web"
+          }
+        ],
+        "type": "app",
+        "version": "0.1.0"
+      }
+    },
+    {
+      "digest": "7c1e28c15bcbcdbd3f309df6619b7dff4cf3145b882d2b70f8eef9614e0b99ce",
+      "manifest": {
+        "commands": [
+          {
+            "description": "HEX/RGB/HSL 颜色格式互转",
+            "effects": [],
+            "headless": true,
+            "id": "run",
+            "inputSchema": {
+              "additionalProperties": false,
+              "properties": {
+                "color": {
+                  "description": "Color value (hex like #3b82f6 or rgb(59,130,246))",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "color"
+              ],
+              "type": "object"
+            },
+            "interaction": "none",
+            "name": "执行颜色转换器",
+            "outputSchema": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "text",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "text"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "json",
+                      "type": "string"
+                    },
+                    "value": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "result": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "hex": {
+                              "type": "string"
+                            },
+                            "hsl": {
+                              "type": "string"
+                            },
+                            "rgb": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "hex",
+                            "rgb",
+                            "hsl"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "result"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "permissions": [],
+            "resources": {
+              "maxInputBytes": 1048576,
+              "maxOutputBytes": 1048576,
+              "timeoutMs": 30000
+            },
+            "runtimeValidation": {
+              "input": "required",
+              "output": "required"
+            },
+            "supportsColdStart": false
+          }
+        ],
+        "dependencies": {
+          "services": [],
+          "tools": []
+        },
+        "description": "HEX/RGB/HSL 颜色格式互转",
+        "engines": {
+          "host": "^0.1.0",
+          "sdk": ">=0.0.0 <1.0.0"
+        },
+        "entries": {
+          "executor": "plugin-color-converter.commands.js",
+          "ui": "plugin-color-converter.js"
+        },
+        "files": [
+          {
+            "path": "plugin-color-converter.commands.js",
+            "sha256": "e4316c25b71242357f164c83ff2afebd5e7eb2fe771da6b8d7a1311fd45cb2e2",
+            "size": 70
+          },
+          {
+            "path": "plugin-color-converter.js",
+            "sha256": "a751061480016b853d4f9ec2e57517457ec3acd280a31961981b8084e0410c72",
+            "size": 61
+          }
+        ],
+        "formatVersion": 1,
+        "id": "plugin-color-converter",
+        "maturity": "prototype",
+        "name": "颜色转换器",
+        "publisher": "flowtools",
+        "signature": {
+          "status": "unsigned"
+        },
+        "targets": [
+          {
+            "arch": "x64",
+            "platform": "windows"
+          },
+          {
+            "arch": "wasm32",
+            "platform": "web"
+          }
+        ],
+        "type": "app",
+        "version": "0.1.0"
+      }
+    },
+    {
+      "digest": "6f48f6789cf6725dd369243201307a17b8725c1e3eb693703ec5788320e9e4be",
+      "manifest": {
+        "commands": [
+          {
+            "description": "生成 SHA-1/SHA-256/SHA-384/SHA-512 哈希值",
+            "effects": [],
+            "headless": true,
+            "id": "run",
+            "inputSchema": {
+              "additionalProperties": false,
+              "properties": {
+                "algorithm": {
+                  "default": "SHA-256",
+                  "description": "Hash algorithm to use",
+                  "enum": [
+                    "SHA-1",
+                    "SHA-256",
+                    "SHA-384",
+                    "SHA-512"
+                  ],
+                  "type": "string"
+                },
+                "text": {
+                  "description": "Text to hash",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "text"
+              ],
+              "type": "object"
+            },
+            "interaction": "none",
+            "name": "执行哈希生成器",
+            "outputSchema": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "text",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "text"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "json",
+                      "type": "string"
+                    },
+                    "value": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "algorithm": {
+                          "enum": [
+                            "SHA-1",
+                            "SHA-256",
+                            "SHA-384",
+                            "SHA-512"
+                          ],
+                          "type": "string"
+                        },
+                        "bytes": {
+                          "maximum": 9007199254740991,
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "result": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "result",
+                        "algorithm",
+                        "bytes"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "permissions": [],
+            "resources": {
+              "maxInputBytes": 1048576,
+              "maxOutputBytes": 1048576,
+              "timeoutMs": 30000
+            },
+            "runtimeValidation": {
+              "input": "required",
+              "output": "required"
+            },
+            "supportsColdStart": false
+          }
+        ],
+        "dependencies": {
+          "services": [],
+          "tools": []
+        },
+        "description": "生成 SHA-1/SHA-256/SHA-384/SHA-512 哈希值",
+        "engines": {
+          "host": "^0.1.0",
+          "sdk": ">=0.0.0 <1.0.0"
+        },
+        "entries": {
+          "executor": "plugin-hash-generator.commands.js",
+          "ui": "plugin-hash-generator.js"
+        },
+        "files": [
+          {
+            "path": "plugin-hash-generator.commands.js",
+            "sha256": "55afacae841fd10694282d663c48ab575cfde29cbfa2c52cf03e78006f841e5d",
+            "size": 69
+          },
+          {
+            "path": "plugin-hash-generator.js",
+            "sha256": "8ecd64b7f5be375061b181be39c54a40d04055251fe139a098a28f2bcf87a40c",
+            "size": 60
+          }
+        ],
+        "formatVersion": 1,
+        "id": "plugin-hash-generator",
+        "maturity": "prototype",
+        "name": "哈希生成器",
+        "publisher": "flowtools",
+        "signature": {
+          "status": "unsigned"
+        },
+        "targets": [
+          {
+            "arch": "x64",
+            "platform": "windows"
+          },
+          {
+            "arch": "wasm32",
+            "platform": "web"
+          }
+        ],
+        "type": "app",
+        "version": "0.1.0"
+      }
+    },
+    {
+      "digest": "04af325c53ab3bc17c0a196bb98c860a7b238d1478cbda8adb47b9cc6b3db9df",
+      "manifest": {
+        "commands": [
+          {
+            "description": "在线图片与 Base64 编码互相转换",
+            "effects": [],
+            "headless": true,
+            "id": "run",
+            "inputSchema": {
+              "additionalProperties": false,
+              "properties": {
+                "base64": {
+                  "description": "Base64 string to get info about",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "interaction": "none",
+            "name": "执行图片 Base64 互转",
+            "outputSchema": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "text",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "text"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "json",
+                      "type": "string"
+                    },
+                    "value": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "result": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "dataUrl": {
+                              "type": "string"
+                            },
+                            "estimatedBytes": {
+                              "maximum": 9007199254740991,
+                              "minimum": 0,
+                              "type": "integer"
+                            },
+                            "hasPrefix": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "dataUrl",
+                            "estimatedBytes",
+                            "hasPrefix"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "result"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "permissions": [],
+            "resources": {
+              "maxInputBytes": 1048576,
+              "maxOutputBytes": 1048576,
+              "timeoutMs": 30000
+            },
+            "runtimeValidation": {
+              "input": "required",
+              "output": "required"
+            },
+            "supportsColdStart": false
+          }
+        ],
+        "dependencies": {
+          "services": [],
+          "tools": []
+        },
+        "description": "在线图片与 Base64 编码互相转换",
+        "engines": {
+          "host": "^0.1.0",
+          "sdk": ">=0.0.0 <1.0.0"
+        },
+        "entries": {
+          "executor": "plugin-image-base64.commands.js",
+          "ui": "plugin-image-base64.js"
+        },
+        "files": [
+          {
+            "path": "plugin-image-base64.commands.js",
+            "sha256": "9369bdf7e88c6ba4d1bc18117f9e6be4cf5bc6200ef6d5bb17f894f02cec792d",
+            "size": 67
+          },
+          {
+            "path": "plugin-image-base64.js",
+            "sha256": "9ade96f550b17eed677945f9fc41d103a1cf8442a44adaccb351b0a094b56c4f",
+            "size": 58
+          }
+        ],
+        "formatVersion": 1,
+        "id": "plugin-image-base64",
+        "maturity": "prototype",
+        "name": "图片 Base64 互转",
+        "publisher": "flowtools",
+        "signature": {
+          "status": "unsigned"
+        },
+        "targets": [
+          {
+            "arch": "x64",
+            "platform": "windows"
+          },
+          {
+            "arch": "wasm32",
+            "platform": "web"
+          }
+        ],
+        "type": "app",
+        "version": "0.1.0"
+      }
+    },
+    {
+      "digest": "0c62ebbba95b2b716f695bbb05fed9ccec4fb029853e839a7b9f25e90169dfb9",
+      "manifest": {
+        "commands": [
+          {
+            "description": "JSON 格式化、压缩、验证工具",
+            "effects": [],
+            "headless": true,
+            "id": "run",
+            "inputSchema": {
+              "additionalProperties": false,
+              "properties": {
+                "mode": {
+                  "default": "format",
+                  "description": "Processing mode",
+                  "enum": [
+                    "format",
+                    "minify",
+                    "validate"
+                  ],
+                  "type": "string"
+                },
+                "text": {
+                  "description": "JSON string to process",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "text"
+              ],
+              "type": "object"
+            },
+            "interaction": "none",
+            "name": "执行JSON 格式化",
+            "outputSchema": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "text",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "text"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "json",
+                      "type": "string"
+                    },
+                    "value": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "result": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "error": {
+                              "type": "string"
+                            },
+                            "valid": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "valid"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "result"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "permissions": [],
+            "resources": {
+              "maxInputBytes": 1048576,
+              "maxOutputBytes": 1048576,
+              "timeoutMs": 30000
+            },
+            "runtimeValidation": {
+              "input": "required",
+              "output": "required"
+            },
+            "supportsColdStart": false
+          }
+        ],
+        "dependencies": {
+          "services": [],
+          "tools": []
+        },
+        "description": "JSON 格式化、压缩、验证工具",
+        "engines": {
+          "host": "^0.1.0",
+          "sdk": ">=0.0.0 <1.0.0"
+        },
+        "entries": {
+          "executor": "plugin-json-formatter.commands.js",
+          "ui": "plugin-json-formatter.js"
+        },
+        "files": [
+          {
+            "path": "plugin-json-formatter.commands.js",
+            "sha256": "67ddfb0760fd91c90ae94ecc51393d142bc5a11a94e7fdbffbc32fff7d507c62",
+            "size": 69
+          },
+          {
+            "path": "plugin-json-formatter.js",
+            "sha256": "0d6edf137de07be6b04bb9470c6f4d3f06014be36adeda6e8da33822b72b7624",
+            "size": 60
+          }
+        ],
+        "formatVersion": 1,
+        "id": "plugin-json-formatter",
+        "maturity": "prototype",
+        "name": "JSON 格式化",
+        "publisher": "flowtools",
+        "signature": {
+          "status": "unsigned"
+        },
+        "targets": [
+          {
+            "arch": "x64",
+            "platform": "windows"
+          },
+          {
+            "arch": "wasm32",
+            "platform": "web"
+          }
+        ],
+        "type": "app",
+        "version": "0.1.0"
+      }
+    },
+    {
+      "digest": "90d932390e26d9f21eb368727517db5057c696ffd9df11596f39e848f156d9f2",
+      "manifest": {
+        "commands": [
+          {
+            "description": "在线名单随机点名工具",
+            "effects": [],
+            "headless": true,
+            "id": "run",
+            "inputSchema": {
+              "additionalProperties": false,
+              "properties": {
+                "count": {
+                  "default": 1,
+                  "description": "Number of names to pick",
+                  "type": "number"
+                },
+                "names": {
+                  "description": "List of names (newline or comma separated)",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "names"
+              ],
+              "type": "object"
+            },
+            "interaction": "none",
+            "name": "执行随机点名",
+            "outputSchema": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "text",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "text"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "json",
+                      "type": "string"
+                    },
+                    "value": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "result": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "total": {
+                          "maximum": 9007199254740991,
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "result",
+                        "total"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "permissions": [],
+            "resources": {
+              "maxInputBytes": 1048576,
+              "maxOutputBytes": 1048576,
+              "timeoutMs": 30000
+            },
+            "runtimeValidation": {
+              "input": "required",
+              "output": "required"
+            },
+            "supportsColdStart": false
+          }
+        ],
+        "dependencies": {
+          "services": [],
+          "tools": []
+        },
+        "description": "在线名单随机点名工具",
+        "engines": {
+          "host": "^0.1.0",
+          "sdk": ">=0.0.0 <1.0.0"
+        },
+        "entries": {
+          "executor": "plugin-random-picker.commands.js",
+          "ui": "plugin-random-picker.js"
+        },
+        "files": [
+          {
+            "path": "plugin-random-picker.commands.js",
+            "sha256": "da6244da5179e648978d1fe000050062e70129e3fd7dc8197a65e674059d4171",
+            "size": 68
+          },
+          {
+            "path": "plugin-random-picker.js",
+            "sha256": "444aac5f982882d2028fa70096468141e65005fe1c9ac36195b63ca3e76a273f",
+            "size": 59
+          }
+        ],
+        "formatVersion": 1,
+        "id": "plugin-random-picker",
+        "maturity": "prototype",
+        "name": "随机点名",
+        "publisher": "flowtools",
+        "signature": {
+          "status": "unsigned"
+        },
+        "targets": [
+          {
+            "arch": "x64",
+            "platform": "windows"
+          },
+          {
+            "arch": "wasm32",
+            "platform": "web"
+          }
+        ],
+        "type": "app",
+        "version": "0.1.0"
+      }
+    },
+    {
+      "digest": "d090498c6069bb053adde2983217bc66a830f90c40b675d721926d106f6c2b1b",
+      "manifest": {
+        "commands": [
+          {
+            "description": "测试和调试正则表达式",
+            "effects": [],
+            "headless": true,
+            "id": "run",
+            "inputSchema": {
+              "additionalProperties": false,
+              "properties": {
+                "flags": {
+                  "default": "g",
+                  "description": "Regex flags (e.g., \"gi\", \"gm\")",
+                  "type": "string"
+                },
+                "pattern": {
+                  "description": "Regular expression pattern",
+                  "type": "string"
+                },
+                "text": {
+                  "description": "Text to test against",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "pattern",
+                "text"
+              ],
+              "type": "object"
+            },
+            "interaction": "none",
+            "name": "执行正则表达式测试",
+            "outputSchema": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "text",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "text"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "json",
+                      "type": "string"
+                    },
+                    "value": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "flags": {
+                          "type": "string"
+                        },
+                        "matchCount": {
+                          "maximum": 9007199254740991,
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "pattern": {
+                          "type": "string"
+                        },
+                        "result": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "groups": {
+                                "additionalProperties": true,
+                                "type": "object"
+                              },
+                              "index": {
+                                "maximum": 9007199254740991,
+                                "minimum": 0,
+                                "type": "integer"
+                              },
+                              "match": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "match",
+                              "index"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "result",
+                        "pattern",
+                        "flags",
+                        "matchCount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "permissions": [],
+            "resources": {
+              "maxInputBytes": 1048576,
+              "maxOutputBytes": 1048576,
+              "timeoutMs": 30000
+            },
+            "runtimeValidation": {
+              "input": "required",
+              "output": "required"
+            },
+            "supportsColdStart": false
+          }
+        ],
+        "dependencies": {
+          "services": [],
+          "tools": []
+        },
+        "description": "测试和调试正则表达式",
+        "engines": {
+          "host": "^0.1.0",
+          "sdk": ">=0.0.0 <1.0.0"
+        },
+        "entries": {
+          "executor": "plugin-regex-tester.commands.js",
+          "ui": "plugin-regex-tester.js"
+        },
+        "files": [
+          {
+            "path": "plugin-regex-tester.commands.js",
+            "sha256": "71a314380e46ad427bcec9a97a88ef1b0dfc97fa54bc751868435c1f036762ef",
+            "size": 67
+          },
+          {
+            "path": "plugin-regex-tester.js",
+            "sha256": "aad07086eedd2c95516a58f9fa26a9679f1acf4e8d8f918d6463c9b845f0408b",
+            "size": 58
+          }
+        ],
+        "formatVersion": 1,
+        "id": "plugin-regex-tester",
+        "maturity": "prototype",
+        "name": "正则表达式测试",
+        "publisher": "flowtools",
+        "signature": {
+          "status": "unsigned"
+        },
+        "targets": [
+          {
+            "arch": "x64",
+            "platform": "windows"
+          },
+          {
+            "arch": "wasm32",
+            "platform": "web"
+          }
+        ],
+        "type": "app",
+        "version": "0.1.0"
+      }
+    },
+    {
+      "digest": "6f41403818a573ef7aa31abeabed75b0afeae7046863cd215dc7a56c937004cc",
+      "manifest": {
+        "commands": [
+          {
+            "description": "计算文本的交集、差集、并集",
+            "effects": [],
+            "headless": true,
+            "id": "run",
+            "inputSchema": {
+              "additionalProperties": false,
+              "properties": {
+                "operation": {
+                  "default": "intersection",
+                  "description": "Set operation to perform",
+                  "enum": [
+                    "intersection",
+                    "union",
+                    "difference"
+                  ],
+                  "type": "string"
+                },
+                "setA": {
+                  "description": "Set A items (newline-separated)",
+                  "type": "string"
+                },
+                "setB": {
+                  "description": "Set B items (newline-separated)",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "setA",
+                "setB"
+              ],
+              "type": "object"
+            },
+            "interaction": "none",
+            "name": "执行文本集合运算",
+            "outputSchema": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "text",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "text"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "json",
+                      "type": "string"
+                    },
+                    "value": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "count": {
+                          "maximum": 9007199254740991,
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "operation": {
+                          "enum": [
+                            "intersection",
+                            "union",
+                            "difference"
+                          ],
+                          "type": "string"
+                        },
+                        "result": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "result",
+                        "operation",
+                        "count"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "permissions": [],
+            "resources": {
+              "maxInputBytes": 1048576,
+              "maxOutputBytes": 1048576,
+              "timeoutMs": 30000
+            },
+            "runtimeValidation": {
+              "input": "required",
+              "output": "required"
+            },
+            "supportsColdStart": false
+          }
+        ],
+        "dependencies": {
+          "services": [],
+          "tools": []
+        },
+        "description": "计算文本的交集、差集、并集",
+        "engines": {
+          "host": "^0.1.0",
+          "sdk": ">=0.0.0 <1.0.0"
+        },
+        "entries": {
+          "executor": "plugin-text-ops.commands.js",
+          "ui": "plugin-text-ops.js"
+        },
+        "files": [
+          {
+            "path": "plugin-text-ops.commands.js",
+            "sha256": "a983de82d49d28da7bac7b13fffe1203fc72fec2f3a1ed2451a81c9f97b6d06a",
+            "size": 63
+          },
+          {
+            "path": "plugin-text-ops.js",
+            "sha256": "f3ba01e13d032070dd440629d2ba195c1d95c5617424c3f4b8c1421048098d02",
+            "size": 54
+          }
+        ],
+        "formatVersion": 1,
+        "id": "plugin-text-ops",
+        "maturity": "prototype",
+        "name": "文本集合运算",
+        "publisher": "flowtools",
+        "signature": {
+          "status": "unsigned"
+        },
+        "targets": [
+          {
+            "arch": "x64",
+            "platform": "windows"
+          },
+          {
+            "arch": "wasm32",
+            "platform": "web"
+          }
+        ],
+        "type": "app",
+        "version": "0.1.0"
+      }
+    },
+    {
+      "digest": "21316ccc710c5882da054a2a8814bf650f78148c4051e27fb30d117770da2138",
+      "manifest": {
+        "commands": [
+          {
+            "description": "Unix 时间戳与日期时间互转",
+            "effects": [],
+            "headless": true,
+            "id": "run",
+            "inputSchema": {
+              "additionalProperties": false,
+              "properties": {
+                "date": {
+                  "description": "Date string to convert to timestamp (ISO format)",
+                  "type": "string"
+                },
+                "timestamp": {
+                  "description": "Unix timestamp to convert to date",
+                  "type": "string"
+                },
+                "unit": {
+                  "default": "seconds",
+                  "description": "Timestamp unit",
+                  "enum": [
+                    "seconds",
+                    "milliseconds"
+                  ],
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "interaction": "none",
+            "name": "执行时间戳转换",
+            "outputSchema": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "text",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "text"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "json",
+                      "type": "string"
+                    },
+                    "value": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "date": {
+                          "type": "string"
+                        },
+                        "iso": {
+                          "type": "string"
+                        },
+                        "result": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        },
+                        "timestamp": {
+                          "type": "string"
+                        },
+                        "unit": {
+                          "enum": [
+                            "seconds",
+                            "milliseconds"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "result",
+                        "unit"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "permissions": [],
+            "resources": {
+              "maxInputBytes": 1048576,
+              "maxOutputBytes": 1048576,
+              "timeoutMs": 30000
+            },
+            "runtimeValidation": {
+              "input": "required",
+              "output": "required"
+            },
+            "supportsColdStart": false
+          }
+        ],
+        "dependencies": {
+          "services": [],
+          "tools": []
+        },
+        "description": "Unix 时间戳与日期时间互转",
+        "engines": {
+          "host": "^0.1.0",
+          "sdk": ">=0.0.0 <1.0.0"
+        },
+        "entries": {
+          "executor": "plugin-timestamp-converter.commands.js",
+          "ui": "plugin-timestamp-converter.js"
+        },
+        "files": [
+          {
+            "path": "plugin-timestamp-converter.commands.js",
+            "sha256": "b3d42a6a77d05695b99cb77b4bbcbe906897aaa0c3b472ad8ea3e892df89d318",
+            "size": 74
+          },
+          {
+            "path": "plugin-timestamp-converter.js",
+            "sha256": "7342114f747c2b54f4f259a3a4818527d284b7246155b119c6cc81aec0ac5302",
+            "size": 65
+          }
+        ],
+        "formatVersion": 1,
+        "id": "plugin-timestamp-converter",
+        "maturity": "prototype",
+        "name": "时间戳转换",
+        "publisher": "flowtools",
+        "signature": {
+          "status": "unsigned"
+        },
+        "targets": [
+          {
+            "arch": "x64",
+            "platform": "windows"
+          },
+          {
+            "arch": "wasm32",
+            "platform": "web"
+          }
+        ],
+        "type": "app",
+        "version": "0.1.0"
+      }
+    },
+    {
+      "digest": "9691ab6aed870dee3cceb1b9693227d3896e071e59a01cf363f5713e65cf9c9d",
+      "manifest": {
+        "commands": [
+          {
+            "description": "执行Todo List的默认操作",
+            "effects": [
+              "data-read",
+              "data-write"
+            ],
+            "headless": true,
+            "id": "run",
+            "inputSchema": {
+              "additionalProperties": false,
+              "properties": {
+                "deadline": {
+                  "description": "Deadline date (YYYY-MM-DD)",
+                  "type": "string"
+                },
+                "todo": {
+                  "description": "Todo item text to add",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "interaction": "none",
+            "name": "执行Todo List",
+            "outputSchema": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "text",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "text"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "json",
+                      "type": "string"
+                    },
+                    "value": {
+                      "anyOf": [
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "result": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "added": {
+                                  "type": "string"
+                                },
+                                "total": {
+                                  "maximum": 9007199254740991,
+                                  "minimum": 0,
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "added",
+                                "total"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "result"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "count": {
+                              "maximum": 9007199254740991,
+                              "minimum": 0,
+                              "type": "integer"
+                            },
+                            "result": {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            }
+                          },
+                          "required": [
+                            "result",
+                            "count"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "permissions": [
+              {
+                "capability": "storage",
+                "operations": [
+                  "get",
+                  "set"
+                ],
+                "scopes": [
+                  "plugin-data"
+                ]
+              }
+            ],
+            "resources": {
+              "maxInputBytes": 1048576,
+              "maxOutputBytes": 1048576,
+              "timeoutMs": 30000
+            },
+            "runtimeValidation": {
+              "input": "required",
+              "output": "required"
+            },
+            "supportsColdStart": false
+          }
+        ],
+        "dependencies": {
+          "services": [],
+          "tools": []
+        },
+        "description": "执行Todo List",
+        "engines": {
+          "host": "^0.1.0",
+          "sdk": ">=0.0.0 <1.0.0"
+        },
+        "entries": {
+          "executor": "plugin-todo-list.commands.js",
+          "ui": "plugin-todo-list.js"
+        },
+        "files": [
+          {
+            "path": "plugin-todo-list.commands.js",
+            "sha256": "70788481c2c7192668889e4ea99f4129e0cd2d28995e7e447855b9e9e47fda0a",
+            "size": 64
+          },
+          {
+            "path": "plugin-todo-list.js",
+            "sha256": "54d3176636ffb33caca61c532455f678e75ea05f37ed9df4a1c39440293f3e5a",
+            "size": 55
+          }
+        ],
+        "formatVersion": 1,
+        "id": "plugin-todo-list",
+        "maturity": "prototype",
+        "name": "Todo List",
+        "publisher": "flowtools",
+        "signature": {
+          "status": "unsigned"
+        },
+        "targets": [
+          {
+            "arch": "x64",
+            "platform": "windows"
+          },
+          {
+            "arch": "wasm32",
+            "platform": "web"
+          }
+        ],
+        "type": "app",
+        "version": "0.0.1"
+      }
+    },
+    {
+      "digest": "51d8603dc0ba1a3be8645a2adc3d47a470db7b3c68a03dfe9c2600c879b95aaa",
+      "manifest": {
+        "commands": [
+          {
+            "description": "在线生成随机 UUID v4",
+            "effects": [],
+            "headless": true,
+            "id": "run",
+            "inputSchema": {
+              "additionalProperties": false,
+              "properties": {
+                "count": {
+                  "default": 1,
+                  "description": "Number of UUIDs to generate (1-100)",
+                  "type": "number"
+                }
+              },
+              "type": "object"
+            },
+            "interaction": "none",
+            "name": "执行UUID 生成器",
+            "outputSchema": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "text",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "text"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "json",
+                      "type": "string"
+                    },
+                    "value": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "count": {
+                          "maximum": 9007199254740991,
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "result": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "result",
+                        "count"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "permissions": [],
+            "resources": {
+              "maxInputBytes": 1048576,
+              "maxOutputBytes": 1048576,
+              "timeoutMs": 30000
+            },
+            "runtimeValidation": {
+              "input": "required",
+              "output": "required"
+            },
+            "supportsColdStart": false
+          }
+        ],
+        "dependencies": {
+          "services": [],
+          "tools": []
+        },
+        "description": "在线生成随机 UUID v4",
+        "engines": {
+          "host": "^0.1.0",
+          "sdk": ">=0.0.0 <1.0.0"
+        },
+        "entries": {
+          "executor": "plugin-uuid-generator.commands.js",
+          "ui": "plugin-uuid-generator.js"
+        },
+        "files": [
+          {
+            "path": "plugin-uuid-generator.commands.js",
+            "sha256": "de2714a8489f6fd2e8b7f13a345838f73dc9beb45bcab443c43e9fb1c5d87d64",
+            "size": 69
+          },
+          {
+            "path": "plugin-uuid-generator.js",
+            "sha256": "7ac54aed08f70a38d98fa48bc3b9dee39475853cbfc987f8b4c97359af5fa58e",
+            "size": 60
+          }
+        ],
+        "formatVersion": 1,
+        "id": "plugin-uuid-generator",
+        "maturity": "prototype",
+        "name": "UUID 生成器",
+        "publisher": "flowtools",
+        "signature": {
+          "status": "unsigned"
+        },
+        "targets": [
+          {
+            "arch": "x64",
+            "platform": "windows"
+          },
+          {
+            "arch": "wasm32",
+            "platform": "web"
+          }
+        ],
+        "type": "app",
+        "version": "0.1.0"
+      }
+    },
+    {
+      "digest": "f3ed3985543d4478ec3217feee394966a7765d924a2ed98fa3948078e0de598f",
+      "manifest": {
+        "commands": [
+          {
+            "description": "测试常用网站的网络延迟（Ping）",
+            "effects": [
+              "network-read"
+            ],
+            "headless": true,
+            "id": "run",
+            "inputSchema": {
+              "additionalProperties": false,
+              "properties": {
+                "urls": {
+                  "description": "URLs to test; runtime validates URL syntax",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "type": "object"
+            },
+            "interaction": "none",
+            "name": "执行网站延迟测试",
+            "outputSchema": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "text",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "text"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "json",
+                      "type": "string"
+                    },
+                    "value": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "average": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "result": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "tested": {
+                          "maximum": 9007199254740991,
+                          "minimum": 0,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "result",
+                        "average",
+                        "tested"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "permissions": [
+              {
+                "capability": "network",
+                "operations": [
+                  "request"
+                ],
+                "scopes": [
+                  "input:urls",
+                  "built-in-default-sites"
+                ]
+              }
+            ],
+            "resources": {
+              "maxInputBytes": 1048576,
+              "maxOutputBytes": 1048576,
+              "timeoutMs": 30000
+            },
+            "runtimeValidation": {
+              "input": "required",
+              "output": "required"
+            },
+            "supportsColdStart": false
+          }
+        ],
+        "dependencies": {
+          "services": [],
+          "tools": []
+        },
+        "description": "测试常用网站的网络延迟（Ping）",
+        "engines": {
+          "host": "^0.1.0",
+          "sdk": ">=0.0.0 <1.0.0"
+        },
+        "entries": {
+          "executor": "plugin-website-latency.commands.js",
+          "ui": "plugin-website-latency.js"
+        },
+        "files": [
+          {
+            "path": "plugin-website-latency.commands.js",
+            "sha256": "54a282079a14bde0c6be3674e11f64dddb1972fdb89c521ca0a5c034014c9ff7",
+            "size": 70
+          },
+          {
+            "path": "plugin-website-latency.js",
+            "sha256": "6c5aba028c64818e8c3a13d2edb0c1d35d3b21d32cd64c5c7f7ec30a4ae1f46f",
+            "size": 61
+          }
+        ],
+        "formatVersion": 1,
+        "id": "plugin-website-latency",
+        "maturity": "prototype",
+        "name": "网站延迟测试",
+        "publisher": "flowtools",
+        "signature": {
+          "status": "unsigned"
+        },
+        "targets": [
+          {
+            "arch": "x64",
+            "platform": "windows"
+          },
+          {
+            "arch": "wasm32",
+            "platform": "web"
+          }
+        ],
+        "type": "app",
+        "version": "0.1.0"
+      }
+    }
+  ],
+  "request": {
+    "call": {
+      "method": "jobs.submit",
+      "payload": {
+        "background": true,
+        "commandId": "run",
+        "deadline": 10000.0,
+        "idempotencyKey": "fixture-job",
+        "input": {
+          "text": "hello"
+        },
+        "pluginId": "plugin-base64-encoder"
+      }
+    },
+    "requestId": "fixture-request",
+    "session": null,
+    "version": 1
+  },
+  "responses": [
+    {
+      "outcome": {
+        "data": {
+          "code": "PROTOCOL_MISMATCH"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "CLIENT_INCOMPATIBLE"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "FRAME_TOO_LARGE"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "INVALID_REQUEST"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "SESSION_INVALID"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "INSTANCE_MISMATCH"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "APPROVAL_REQUIRED"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "PLUGIN_NOT_FOUND"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "INPUT_INVALID"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "JOB_NOT_FOUND"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "IDEMPOTENCY_CONFLICT"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "TIMEOUT"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "ABORTED"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "EXECUTION_FAILED"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "OUTPUT_INVALID"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "RUNTIME_BUSY"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "RUNTIME_DISCONNECTED"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "INVALID_RESPONSE"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    }
+  ]
+}

@@ -60,6 +60,10 @@ fn exports_current_bindings_without_launching_a_host() {
         "removePlugin",
         "cliAvailable",
         "createdAt",
+        "validationRuntime",
+        "validationRuntimeDisconnect",
+        "JobReceipt",
+        "SessionProof",
     ] {
         assert!(
             first.contains(expected),

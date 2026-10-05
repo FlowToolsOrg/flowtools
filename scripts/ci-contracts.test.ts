@@ -2,9 +2,15 @@
 
 import { expect, test } from 'bun:test'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 interface WorkflowStep {
@@ -92,13 +98,17 @@ test('runs bounded Windows gates without caching JS build products', async () =>
   ).json()) as {
     globalPassThroughEnv: string[]
     tasks: Record<
-      'test' | 'build',
+      'test' | 'build' | 'lint' | 'check-types',
       { passThroughEnv: string[]; outputs: string[] }
     >
   }
   expect(turbo.globalPassThroughEnv).toEqual(['PATHEXT'])
   expect(turbo.tasks.test.passThroughEnv).toEqual(['CARGO_TARGET_DIR'])
   expect(turbo.tasks.build.passThroughEnv).toEqual(['CARGO_TARGET_DIR'])
+  expect(turbo.tasks.lint.passThroughEnv).toEqual(['CARGO_TARGET_DIR'])
+  expect(turbo.tasks['check-types'].passThroughEnv).toEqual([
+    'CARGO_TARGET_DIR',
+  ])
   expect(turbo.tasks.build.outputs).toEqual(['dist/**/*', '.generated/**/*'])
   const job = workflow.jobs.quality
   expect(job.name).toBe('Windows quality gates')
@@ -112,6 +122,17 @@ test('runs bounded Windows gates without caching JS build products', async () =>
   for (const step of job.steps.filter(item => item.with?.path)) {
     expect(step.with?.path).not.toMatch(/node_modules|\.turbo|\bdist\b/)
   }
+  const rawWorkflow = await Bun.file(
+    new URL('../.github/workflows/windows-quality.yml', import.meta.url)
+  ).text()
+  expect(rawWorkflow).toContain(
+    "hashFiles('Cargo.lock', 'apps/desktop/src-tauri/Cargo.lock')"
+  )
+  const rawTurbo = (await Bun.file(
+    new URL('../turbo.json', import.meta.url)
+  ).json()) as { tasks: Record<string, { cache?: boolean }> }
+  expect(rawTurbo['tasks']['@flowtools/runtime#build'].cache).toBe(false)
+  expect(rawTurbo['tasks']['@flowtools/runtime-core#build'].cache).toBe(false)
   const entry = await Bun.file(
     new URL('./check-ci.ps1', import.meta.url)
   ).text()
@@ -127,12 +148,161 @@ test('runs bounded Windows gates without caching JS build products', async () =>
   expect(entry).toContain("'install', '--frozen-lockfile'")
   expect(entry).toContain("'run', 'docs:check'")
   expect(entry).toContain("'run', 'verify:plugin-catalog'")
+  expect(entry).toContain("'run', 'verify:runtime-contracts'")
+  expect(entry.indexOf("'generate:hosts'")).toBeLessThan(
+    entry.indexOf("'verify:runtime-contracts'")
+  )
+  expect(entry.indexOf("'verify:runtime-contracts'")).toBeLessThan(
+    entry.indexOf("'lint'")
+  )
   expect(entry.indexOf("'verify:plugin-catalog'")).toBeLessThan(
     entry.indexOf("'lint'")
   )
   expect(entry.indexOf("'docs:check'")).toBeLessThan(entry.indexOf("'lint'"))
   expect(entry).toContain("'check', '--locked'")
 })
+
+test('clean bootstrap builds the declared Runtime client used by the native harness', async () => {
+  const root = (await Bun.file(
+    new URL('../package.json', import.meta.url)
+  ).json()) as { scripts: Record<string, string> }
+  const consumer = (await Bun.file(
+    new URL('../apps/ui-test/package.json', import.meta.url)
+  ).json()) as { devDependencies: Record<string, string> }
+  const harness = await Bun.file(
+    new URL(
+      '../apps/ui-test/scripts/validate-runtime-hosts.ts',
+      import.meta.url
+    )
+  ).text()
+  expect(root.scripts['build:packages']).toContain(
+    '--filter=@flowtools/runtime-client'
+  )
+  expect(consumer.devDependencies['@flowtools/runtime-client']).toBe(
+    'workspace:*'
+  )
+  expect(harness).toContain("from '@flowtools/runtime-client'")
+  expect(harness).toContain("from '@flowtools/runtime-client/node'")
+  expect(harness).not.toContain('runtime-client/dist')
+})
+
+test('uncached native builds retain their actual Turbo prerequisite graph', () => {
+  const plan = spawnSync(
+    process.execPath,
+    [
+      'x',
+      '--no-install',
+      'turbo',
+      'run',
+      'build',
+      '--filter=@flowtools/runtime-client',
+      '--dry=json',
+    ],
+    {
+      cwd: fileURLToPath(new URL('../', import.meta.url)),
+      encoding: 'utf8',
+      maxBuffer: 4 * 1024 * 1024,
+    }
+  )
+  if (plan.status !== 0) {
+    throw new Error(`Turbo build plan failed: ${plan.stderr}`)
+  }
+  const tasks = (
+    JSON.parse(plan.stdout) as {
+      tasks: {
+        taskId: string
+        dependencies: string[]
+        resolvedTaskDefinition: {
+          cache: boolean
+          passThroughEnv: string[] | null
+        }
+      }[]
+    }
+  ).tasks
+  const dependencies = (taskId: string) =>
+    tasks.find(task => task.taskId === taskId)?.dependencies
+  for (const taskId of [
+    '@flowtools/runtime#build',
+    '@flowtools/runtime-core#build',
+  ]) {
+    const task = tasks.find(task => task.taskId === taskId)
+    expect(task?.resolvedTaskDefinition.cache).toBe(false)
+    expect(task?.resolvedTaskDefinition.passThroughEnv).toEqual([
+      'CARGO_TARGET_DIR',
+    ])
+  }
+  expect(dependencies('@flowtools/runtime#build')).toEqual(
+    expect.arrayContaining([
+      '@flowtools/plugin-runner#build',
+      '@flowtools/runtime-core#build',
+    ])
+  )
+  expect(dependencies('@flowtools/runtime-core#build')).toEqual(
+    expect.arrayContaining(['@flowtools/plugins#build', '@flowtools/sdk#build'])
+  )
+}, 30_000)
+
+test('Runtime codegen stays clean after Windows CRLF checkout and rejects content drift', () => {
+  const fixture = mkdtempSync(join(tmpdir(), 'flowtools-ci-generated-'))
+  const attributes = readFileSync(
+    new URL('../.gitattributes', import.meta.url),
+    'utf8'
+  )
+  const files = ['bindings.ts', 'wire-schema.json', 'wire-fixtures.json'].map(
+    name => `packages/runtime-client/src/${name}`
+  )
+  const runGit = (args: string[]) => {
+    const result = spawnSync('git', args, { cwd: fixture, encoding: 'utf8' })
+    if (result.status !== 0) {
+      throw new Error(`Git fixture failed: ${result.stderr}`)
+    }
+  }
+  try {
+    runGit(['init', '--quiet'])
+    runGit(['config', 'core.autocrlf', 'true'])
+    writeFileSync(join(fixture, '.gitattributes'), attributes)
+    for (const file of files) {
+      mkdirSync(dirname(join(fixture, file)), { recursive: true })
+      writeFileSync(join(fixture, file), 'generated\nfixture\n')
+    }
+    runGit(['add', '.'])
+    runGit([
+      '-c',
+      'user.name=CI fixture',
+      '-c',
+      'user.email=ci@fixture.invalid',
+      'commit',
+      '--quiet',
+      '-m',
+      'fixture',
+    ])
+    runGit(['checkout-index', '--force', '--all'])
+    for (const file of files) {
+      expect(readFileSync(join(fixture, file), 'utf8')).toBe(
+        'generated\nfixture\n'
+      )
+      // The Rust generator writes LF regardless of the checkout platform.
+      writeFileSync(join(fixture, file), 'generated\nfixture\n')
+    }
+    const clean = runPowerShell(
+      `. ${helperPath}; Assert-CleanWorktree`,
+      fixture
+    )
+    expect(clean.status).toBe(0)
+    writeFileSync(join(fixture, files[0]!), 'changed\nfixture\n')
+    const dirty = runPowerShell(
+      `. ${helperPath}; Assert-CleanWorktree`,
+      fixture
+    )
+    expect(dirty.status).toBe(1)
+    expect(dirty.stdout).toContain(files[0]!)
+  } finally {
+    if (dirname(resolve(fixture)) !== resolve(tmpdir())) {
+      throw new Error('Fixture cleanup target escaped temporary directory')
+    }
+    rmSync(fixture, { recursive: true, force: true })
+  }
+}, 30_000)
 
 test('browser gate bounds file concurrency without replacing or narrowing the runner', async () => {
   const config = await Bun.file(

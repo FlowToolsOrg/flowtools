@@ -643,4 +643,56 @@ P1.1c 三端的内置入口使用同一纯 Manifest：Web/Desktop 在固定 UI i
 契约/身份，JSON run 使用共享 Manifest executor；CLI 还验证实际包文件。
 commands/describe/help 不加载 code；flag 解析与生成文档同源。batch v1 为顺序
 真实执行，无第二份任务/业务数据库。见 [CLI 契约](./docs/cli-contract-v1.md)。
-Host/runtime-client、grant 与独立 CLI 发行仍为 G2/G3，未实现跨进程调用。
+Host/runtime-client、grant 与独立 CLI 发行仍为 G2/G3，G2 已实现验证模式跨进程调用；生产接入仍待 G3。
+
+## G2 lifecycle progress
+
+P1.2a uses one SDK lifecycle controller with registry-owned per-plugin queues.
+Loader and LifecycleManager share load/activate/deactivate/unload ordering.
+State transitions reject illegal edges; failed hooks retain their cause and
+cleanup failures until explicit unload/reload recovery. Disabled instances are
+reused without loading again. Removal requires completed cleanup.
+P1.2b adds reactive command projection, generation leases, execution draining,
+and cooperative load/activation/view/runner resource scopes. Enabled module state
+is separate from a resident runner; only explicitly owned runner resources count
+as running. Web GUI executions acquire the current registry instance. Updates
+and removal drain accepted calls and clean resources; cleanup errors block removal.
+P1.3a adds `packages/runtime-core`, `apps/runtime`, `packages/runtime-client`
+and a fixed T1 `packages/plugin-runner`. Windows validation uses a current-user
+ACL named pipe, Host-bound connection proofs and disposable profiles. Task facts
+live in Rust; GUI/Node clients query the same runId. Receipts are distinct from
+terminal execution results; foreground disconnect cancels, explicit background
+jobs survive. This only evaluates pure built-in commands: side effects require
+APPROVAL_REQUIRED. No user DB migration, production unattended execution, cold
+start, new grants, third-party runner or OS sandbox is delivered. P1.5a adds Rust-derived wire/golden drift checks, stable refusal codes,
+redacted events and actionable version/disconnection diagnostics. G2 is complete
+for its declared Windows/T1/disposable-profile scope. Runtime/core Rust builds are uncached; generate:hosts
+creates Rust-derived client DTO/schema and Desktop bindings before quality gates.
+See [G2 acceptance](./docs/validation/g2-runtime.md).
+
+P1.5a: `bun run verify:runtime-contracts` compares generated types, JSON Schema
+and full Manifest/wire fixtures without rewriting tracked artifacts. Both Rust
+and TS validate the same fixtures/digests. Manifest fixture files use controlled
+LF text; runtime package integrity retains actual build file hashes. Connection
+loss never auto-resubmits;
+a submit with a lost response marks acceptance unknown. Reconnect checks instance
+identity; same-key retries preserve input/package/background/deadline. Diagnostic
+exports allow only version/code/summary/action/acceptance status, excluding private
+exception text and payloads. Desktop validation also binds the actual configured
+origin. Production builds exclude the DEV validation panel. Durable restart
+recovery, user data/grants and independent CLI distribution remain G3 scope.
+Validation must use the metadata-only native preflight before launching a Host
+or GUI; literal identifier strings cannot establish the compiled identity.
+Explicit validation refuses incorrect native identity before plugins/database IO.
+
+## Architecture change delivery
+
+Clean-checkout bootstrapping includes the Runtime client before consumer
+lint/types. The validation harness imports its declared package exports.
+Rust-derived Runtime artifacts use explicit LF Git attributes, preserving the
+read-only generation and final clean-worktree gates on Windows.
+
+Architecture changes follow the automatic feature-branch push and PR workflow
+authorized on 2026-10-05 in [AGENTS.md](./AGENTS.md). Keep evidence and pending
+security review visible in the PR; publication of a PR does not advance maturity
+or authorize merging, deployment or repository settings changes.

@@ -2,8 +2,10 @@ import { expect, test } from 'bun:test'
 
 import base64 from '@flowtools/plugins/plugin-base64-encoder'
 import latency from '@flowtools/plugins/plugin-website-latency'
+import { PluginRegistry, PluginLoader } from '@flowtools/sdk'
 
-import { runWebPlugin } from '../runtime/plugin-runtime'
+import { runWebPlugin, runWebRegisteredPlugin } from '../runtime/plugin-runtime'
+import { pluginRegistryInternals } from '../stores/plugin-registry-store'
 
 test('serialized command schema rejects undeclared fields and unavailable identities', async () => {
   expect(
@@ -15,6 +17,35 @@ test('serialized command schema rejects undeclared fields and unavailable identi
       { text: 'hello' }
     )
   ).toMatchObject({ success: false, error: { code: 'NOT_RUNNABLE' } })
+})
+
+test('GUI execution refuses disabled plugins and uses the current registry instance', async () => {
+  const previous = pluginRegistryInternals._registry
+  const registry = new PluginRegistry()
+  const loader = new PluginLoader(registry)
+  registry.register({
+    id: base64.meta.id,
+    name: base64.meta.name,
+    version: base64.meta.version,
+    type: base64.type,
+    loader: async () => ({ default: base64 }),
+  })
+  pluginRegistryInternals._registry = registry
+  try {
+    expect(
+      await runWebRegisteredPlugin(base64.meta.id, { text: 'hello' })
+    ).toMatchObject({ success: false, error: { code: 'NOT_RUNNABLE' } })
+    await loader.enable(base64.meta.id)
+    expect(
+      await runWebRegisteredPlugin(base64.meta.id, { text: 'hello' })
+    ).toMatchObject({ success: true, data: { value: { result: 'aGVsbG8=' } } })
+    await loader.disable(base64.meta.id)
+    expect(
+      await runWebRegisteredPlugin(base64.meta.id, { text: 'hello' })
+    ).toMatchObject({ success: false, error: { code: 'NOT_RUNNABLE' } })
+  } finally {
+    pluginRegistryInternals._registry = previous
+  }
 })
 
 test('Web runs actual app entry through SDK schema and execution envelope', async () => {

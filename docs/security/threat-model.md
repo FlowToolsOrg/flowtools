@@ -209,6 +209,8 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
   但不能抢占同步循环或撤回已发生副作用；
   UI/Headless 同进程没有完整 CPU/内存/输出/并发硬配额。
 - 证据：[SDK watchdog](../../packages/sdk/src/registry/watchdog.ts)、
+  [T1 生命周期与资源回收](../../packages/sdk/src/registry/plugin-loader.ts)、
+  [资源与在途调用回归](../../packages/sdk/test/command-projection.test.ts)、
   [CLI runner](../../packages/cli/src/runner.ts)、
   [正则插件](../../plugins/plugin-regex-tester/index.tsx)
 - Owner：Runtime / Desktop / CLI
@@ -217,6 +219,8 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 - 验证：P2.1/P2.2/P2.7；死循环、忽略 abort、内存/输出洪泛、崩溃 fixture；
   deadline 后 Host 保持响应、无孤儿进程/未释放资源。
 - 残余风险：共享 OS 资源或 WebView 引擎缺陷仍会影响 Host；UI 隔离需平台证明。
+  G2 P1.2a/b 每插件锁、代际 handler 与资源 scope 仅约束合作 T1；hook/handler
+  忽略清理或同步阻塞仍可阻止排空，不是强制终止或进程沙箱，本项仍 open。
 
 ### SEC-011 Legacy preload、资源与远程导航
 
@@ -348,3 +352,43 @@ Manifest executor；SDK 回归覆盖非法 runtime validator/default 后预算�
 这不是持久 grant 或撤销服务。batch 顺序执行但没有事务/回滚，实际异常仍有
 副作用残余风险。SEC-001/002/005/010 保持 open，ADR 无设计变更，工程自检通过，
 独立安全 Reviewer pending；没有新增外部安装/可执行路径/原始 native API。
+
+### G2 P1.3a engineering evidence (2026-10-04)
+
+SEC-001/003/006/009/010/012 remain open. Sources: runtime-core catalog/protocol/
+runtime, apps/runtime server/security, plugin-runner, runtime-client and Desktop
+validation_runtime.rs. Rejection evidence: exact embedded Manifest metadata,
+unknown IDs/input/side effects, connection-bound proofs, native origin/identity/
+mode table, current-user protected pipe ACL and duplicate first listener. GUI
+and Node query one Runtime task in a disposable profile. Token never reaches
+Desktop JS; native code supplies the endpoint and caller credential. Event data
+is state/sequence/runId only. Revocation is connection close; foreground jobs
+cancel and background jobs keep their explicit validation submission contract.
+Profiles preserve fixture workspaces, with no automatic durable job recovery.
+Root/workspace build gates cover generated artifacts; no reviewer approval is
+implied. ADR-0001/0002 accepted designs unchanged. Same-account compromise,
+TOCTOU replacement, process trees, OS budgets, third-party sandbox, persistent
+grants and Debug user-DB reset are not resolved. Security Reviewer/date/conclusion:
+independent reviewer pending / not approved; Codex engineering checks only.
+
+### G2 P1.5a diagnostic evidence (2026-10-04)
+
+SEC-003/006/009/010/012 remain open. Source/rejection evidence adds Rust codegen
+and runtime deadline/event tests, TS codec/diagnostics golden/privacy tests,
+actual Node raw frame/version/injection/foreground disconnect/output budget tests
+and managed child package mismatch/deadline kill/wait. Native identity checks now
+require the actual configured origin, preventing alternate localhost port reuse.
+Oversized request IDs are bounded before replay-cache insertion; frame and output
+budgets cannot publish private errors. Production artifact tests and post-build
+gate also refuse the DEV validation panel. Recovery remains explicit same-instance
+query; no automatic retries, grants or persistent payloads are introduced.
+ADR-0001/0002 unchanged. Reviewer/date/conclusion: independent reviewer pending /
+not approved; Codex engineering verification only. Residual same-user compromise,
+TOCTOU, process trees/OS budgets, durable recovery and Debug DB reset remain.
+
+Validation startup evidence: metadata-only preflight reads actual compiled config
+before a GUI/Host starts; unsupported stale binaries refuse before execution.
+Explicit validation rejects the default identifier before Builder/plugins/DB IO.
+This repairs a reproduced harness identity bug: Cargo tests rebuilt the default
+binary, and a literal-ID scan allowed its 23:33 Debug DB reset. Data preservation
+was declined; no pre-reset recovery is claimed. Ordinary Debug reset remains open.

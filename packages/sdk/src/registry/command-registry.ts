@@ -62,6 +62,10 @@ export class CommandRegistry {
    * Register a command.
    */
   register(command: RegisteredCommand): void {
+    const existing = this.commands.get(command.id)
+    if (existing && existing.pluginId !== command.pluginId) {
+      throw new Error('Command id belongs to another plugin')
+    }
     this.commands.set(command.id, command)
     this.notify()
   }
@@ -179,7 +183,7 @@ export class CommandRegistry {
     }
 
     await cmd.handler()
-    this.recordRecent(commandId)
+    if (this.commands.get(commandId) === cmd) this.recordRecent(commandId)
   }
 
   /**

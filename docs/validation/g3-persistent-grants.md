@@ -48,3 +48,5 @@ Desktop clippy 和实际 production entrypoint 重建 gate 通过。
 private directory 实现使用官方 [CreateDirectoryW](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createdirectoryw)
 与 [SetNamedSecurityInfoW](https://learn.microsoft.com/en-us/windows/win32/api/aclapi/nf-aclapi-setnamedsecurityinfow)
 的 security descriptor / protected inheritable ACL；实际 ACL 另有 native 回归。
+
+CI follow-up: remote runs 37307885413 and 37307878058 exposed missing runner.json at native lint after removing the client-to-Host dependency cycle. Root build:packages now explicitly includes Native Runtime; its actual Turbo bootstrap graph is regression-tested, including all prerequisite edges and CARGO_TARGET_DIR passthrough. Local parallel bootstrap hit V8 Zone Allocation OOM; serial bootstrap retains all tasks and bounds the local peak. No gate or drift check was removed.

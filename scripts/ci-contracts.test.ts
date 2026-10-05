@@ -187,15 +187,15 @@ test('clean bootstrap builds the declared Runtime client used by the native harn
 })
 
 test('uncached native builds retain their actual Turbo prerequisite graph', () => {
+  const rootPackage = JSON.parse(
+    readFileSync(new URL('../package.json', import.meta.url), 'utf8')
+  ) as { scripts: Record<string, string> }
   const plan = spawnSync(
     process.execPath,
     [
       'x',
       '--no-install',
-      'turbo',
-      'run',
-      'build',
-      '--filter=@flowtools/runtime',
+      ...rootPackage.scripts['build:packages']!.split(' '),
       '--dry=json',
     ],
     {
@@ -255,6 +255,9 @@ test('uncached native builds retain their actual Turbo prerequisite graph', () =
 
 test('Runtime codegen stays clean after Windows CRLF checkout and rejects content drift', () => {
   const fixture = mkdtempSync(join(tmpdir(), 'flowtools-ci-generated-'))
+  if (dirname(resolve(fixture)) !== resolve(tmpdir())) {
+    throw new Error('Fixture cleanup target escaped temporary directory')
+  }
   const attributes = readFileSync(
     new URL('../.gitattributes', import.meta.url),
     'utf8'
@@ -308,9 +311,6 @@ test('Runtime codegen stays clean after Windows CRLF checkout and rejects conten
     expect(dirty.status).toBe(1)
     expect(dirty.stdout).toContain(files[0]!)
   } finally {
-    if (dirname(resolve(fixture)) !== resolve(tmpdir())) {
-      throw new Error('Fixture cleanup target escaped temporary directory')
-    }
     rmSync(fixture, { recursive: true, force: true })
   }
 }, 30_000)

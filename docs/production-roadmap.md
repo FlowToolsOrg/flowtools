@@ -1843,3 +1843,12 @@ compiled identity/origin/title before any GUI/Host launch. Explicit validation
 also rejects incorrect identity before native plugin/DB initialization. This
 repairs the reproduced stale-artifact incident recorded in G2 acceptance; ordinary
 Debug DB reset remains an open risk, with no claim of user-data recovery.
+
+### Project PR delivery authorization
+
+2026-10-05: the maintainer authorized automatic feature-branch pushes and PR
+creation for completed project tasks. Follow [AGENTS.md](../AGENTS.md), retain
+one focused commit per completed milestone, report applicable checks and pending
+acceptance/review, and return the PR link without repeated push/PR approval.
+This does not authorize merging, deployment, repository settings changes or
+bypassing quality gates, and does not change roadmap acceptance criteria.

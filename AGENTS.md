@@ -156,7 +156,9 @@ Keep Turbo strict environment mode. Pass through Windows `PATHEXT` for native
 command discovery and `CARGO_TARGET_DIR` for build/test native cache placement;
 do not pass through host secrets or switch to loose mode to fix tool discovery.
 Remote CI acceptance and required status-check settings are separate roadmap
-work; local commit permission does not authorize pushes or repository settings.
+work; local commit permission alone does not authorize pushes or repository
+settings. The standing project authorization below permits feature-branch pushes
+and PR creation; repository settings still require separate authorization.
 Windows MSVC binding integration tests require the Common Controls v6 manifest
 directives in `src-tauri/build.rs`; Tauri's app manifest does not cover them.
 Keep these directives test-target scoped to avoid duplicate app manifests.
@@ -439,6 +441,16 @@ files in the same change:
 - `docs/production-roadmap.md`
 
 ## Commit and Pull Request Guidelines
+
+The maintainer authorized automatic project PR delivery on 2026-10-05. After
+completing each requested task and its applicable checks, make focused commits,
+push the `codex/` feature branch to `origin`, and create or update a PR against
+the verified default branch using the repository template. Return its URL and
+current validation/review status without asking again for push or PR permission.
+Record incomplete acceptance or independent security review explicitly; use a
+draft when implementation or required validation remains incomplete. This
+authorization does not include merging, deployment, repository settings changes
+or bypassing checks. Later explicit user instructions take precedence.
 
 Use Conventional Commits, for example:
 

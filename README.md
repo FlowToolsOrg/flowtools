@@ -729,3 +729,11 @@ recovery, user data/grants and independent CLI distribution remain G3 scope.
 Validation must use the metadata-only native preflight before launching a Host
 or GUI; literal identifier strings cannot establish the compiled identity.
 Explicit validation refuses incorrect native identity before plugins/database IO.
+
+## Project PR delivery
+
+The maintainer authorized automatic feature-branch push and PR creation on
+2026-10-05. Completed tasks include applicable checks, focused commits and a PR
+link with current validation/review status. Follow the standing authorization in
+[AGENTS.md](./AGENTS.md); merging, deployment and repository settings require
+separate authorization.

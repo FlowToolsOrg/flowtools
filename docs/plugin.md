@@ -763,3 +763,11 @@ recovery, user data/grants and independent CLI distribution remain G3 scope.
 Validation must use the metadata-only native preflight before launching a Host
 or GUI; literal identifier strings cannot establish the compiled identity.
 Explicit validation refuses incorrect native identity before plugins/database IO.
+
+## Plugin change delivery
+
+Completed plugin tasks follow the automatic feature-branch push and PR workflow
+authorized on 2026-10-05 in [AGENTS.md](../AGENTS.md). Include applicable plugin
+validation and security-review evidence in the PR; pending reviews remain
+explicit. Merging, deployment and repository settings require separate
+authorization.

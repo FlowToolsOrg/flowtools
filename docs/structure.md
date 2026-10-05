@@ -330,3 +330,10 @@ recovery, user data/grants and independent CLI distribution remain G3 scope.
 Validation must use the metadata-only native preflight before launching a Host
 or GUI; literal identifier strings cannot establish the compiled identity.
 Explicit validation refuses incorrect native identity before plugins/database IO.
+
+## Workspace change delivery
+
+Completed workspace tasks follow the automatic feature-branch push and PR
+workflow authorized on 2026-10-05 in [AGENTS.md](../AGENTS.md). Preserve applicable
+quality gates and focused commits, and return the PR link and current status.
+Merging, deployment and repository settings require separate authorization.

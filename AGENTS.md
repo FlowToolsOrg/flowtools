@@ -437,7 +437,7 @@ Current validation gate:
 The reproducible Web/Tauri execution acceptance harness is
 `apps/ui-test/scripts/validate-execution-hosts.ts` (run with Node, not Bun).
 Follow `docs/validation/p0-execution-hosts.md`. Never launch the default Debug
-desktop against user data: startup currently resets its database. Use the
+desktop against user data. Startup now preserves its database; use the
 dedicated validation config, fresh test identity/profile and loopback-only
 child-process CDP; never persist remote debugging in production configuration.
 Screenshot inspection and keyboard checks do not certify NVDA or other platforms.
@@ -599,3 +599,16 @@ recovery, user data/grants and independent CLI distribution remain G3 scope.
 Validation must use the metadata-only native preflight before launching a Host
 or GUI; literal identifier strings cannot establish the compiled identity.
 Explicit validation refuses incorrect native identity before plugins/database IO.
+
+## G3 P2.6a shared data foundation
+
+Runtime owns one SQLite writer with versioned migrations, backup/recovery,
+plugin namespaces, revision/CAS and atomic transactions. The asynchronous
+`@flowtools/sdk/data` API and Runtime client share that writer; they expose no
+raw SQL, namespace or file path. Legacy Todo sources require explicit validated
+import and remain preserved. Desktop Debug startup no longer deletes its DB;
+corrupt/unsupported data fails closed. Dedicated native validation connects the
+actual WebView and CLI to the same data. Normal user UI integration, durable
+grants/jobs and independent distribution remain subsequent G3 subitems.
+
+Evidence: [P2.6a scope and validation](./docs/validation/g3-shared-data.md).

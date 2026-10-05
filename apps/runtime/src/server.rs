@@ -1,5 +1,6 @@
 use crate::security::{create_pipe, current_user_sid};
 use flowtools_runtime_core::{
+    data::DataStore,
     protocol::*,
     runtime::{now, RunSpec, RuntimeCore},
 };
@@ -31,7 +32,11 @@ fn token(name: &str) -> Result<String, &'static str> {
 fn profile() -> Result<PathBuf, &'static str> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     // No default launch, production profile, arbitrary executable or network mode.
-    if args.len() != 3 || args[0] != "--validation-profile" || args[2] != "--validation" {
+    if !matches!(args.len(), 3 | 4)
+        || args[0] != "--validation-profile"
+        || args[2] != "--validation"
+        || (args.len() == 4 && args[3] != "--validation-data")
+    {
         return Err("SETUP_REQUIRED");
     }
     let path = PathBuf::from(&args[1]);
@@ -108,10 +113,14 @@ pub async fn run() -> Result<(), &'static str> {
     let pipe_name = format!(r"\\.\pipe\flowtools-validation-{digest:x}");
     let mut listener =
         create_pipe(&pipe_name, &sid, true).map_err(|_| "RUNTIME_ALREADY_RUNNING")?;
-    let core = Arc::new(Mutex::new(RuntimeCore::validation(
-        cli_token,
-        desktop_token,
-    )));
+    let store =
+        DataStore::open(&path.join("runtime.sqlite")).map_err(|_| "RUNTIME_DATA_UNAVAILABLE")?;
+    let runtime = if args.contains(&"--validation-data".into()) {
+        RuntimeCore::validation_data(cli_token, desktop_token, store)
+    } else {
+        RuntimeCore::validation(cli_token, desktop_token).with_data_store(store)
+    };
+    let core = Arc::new(Mutex::new(runtime));
     println!(
         "{}",
         json!({"type":"ready", "pipe":pipe_name, "protocolMajor":1})

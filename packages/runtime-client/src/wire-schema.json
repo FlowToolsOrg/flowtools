@@ -410,8 +410,163 @@
               "payload"
             ],
             "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "data.read",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/DataRead"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "data.write",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/DataWrite"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "data.transaction",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/DataTransaction"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "data.import-legacy",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/DataImport"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
           }
         ]
+      },
+      "DataImport": {
+        "additionalProperties": false,
+        "properties": {
+          "import": {
+            "$ref": "#/$defs/LegacyImport"
+          },
+          "pluginId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pluginId",
+          "import"
+        ],
+        "type": "object"
+      },
+      "DataMutation": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "key": {
+            "type": "string"
+          },
+          "value": true
+        },
+        "required": [
+          "key",
+          "expectedRevision",
+          "value"
+        ],
+        "type": "object"
+      },
+      "DataRead": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "pluginId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pluginId",
+          "key"
+        ],
+        "type": "object"
+      },
+      "DataTransaction": {
+        "additionalProperties": false,
+        "properties": {
+          "mutations": {
+            "items": {
+              "$ref": "#/$defs/DataMutation"
+            },
+            "type": "array"
+          },
+          "pluginId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pluginId",
+          "mutations"
+        ],
+        "type": "object"
+      },
+      "DataWrite": {
+        "additionalProperties": false,
+        "properties": {
+          "mutation": {
+            "$ref": "#/$defs/DataMutation"
+          },
+          "pluginId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pluginId",
+          "mutation"
+        ],
+        "type": "object"
       },
       "EventCursor": {
         "additionalProperties": false,
@@ -442,6 +597,32 @@
           "runId"
         ],
         "type": "object"
+      },
+      "LegacyImport": {
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "$ref": "#/$defs/LegacySource"
+          },
+          "sourceDigest": {
+            "type": "string"
+          },
+          "value": true
+        },
+        "required": [
+          "source",
+          "sourceDigest",
+          "value"
+        ],
+        "type": "object"
+      },
+      "LegacySource": {
+        "enum": [
+          "cli-v0",
+          "desktop-localstorage-v1",
+          "web-localstorage-v1"
+        ],
+        "type": "string"
       },
       "OpenSession": {
         "additionalProperties": false,
@@ -549,6 +730,26 @@
   },
   "response": {
     "$defs": {
+      "DataSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "value": true
+        },
+        "required": [
+          "key",
+          "revision",
+          "value"
+        ],
+        "type": "object"
+      },
       "ErrorCode": {
         "enum": [
           "PROTOCOL_MISMATCH",
@@ -563,6 +764,11 @@
           "SCOPE_DENIED",
           "GRANT_REVOKED",
           "BUDGET_EXCEEDED",
+          "REVISION_CONFLICT",
+          "STORE_BUSY",
+          "STORE_CORRUPT",
+          "SCHEMA_UNSUPPORTED",
+          "STORAGE_FAILED",
           "PLUGIN_NOT_FOUND",
           "INPUT_INVALID",
           "JOB_NOT_FOUND",
@@ -922,6 +1128,43 @@
               },
               "type": {
                 "const": "events",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/DataSnapshot"
+              },
+              "type": {
+                "const": "data",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/$defs/DataSnapshot"
+                },
+                "type": "array"
+              },
+              "type": {
+                "const": "data-batch",
                 "type": "string"
               }
             },

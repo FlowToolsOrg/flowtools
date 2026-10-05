@@ -39,6 +39,14 @@ pub enum Call {
     Cancel(JobKey),
     #[serde(rename = "jobs.events")]
     Events(EventCursor),
+    #[serde(rename = "data.read")]
+    DataRead(DataRead),
+    #[serde(rename = "data.write")]
+    DataWrite(DataWrite),
+    #[serde(rename = "data.transaction")]
+    DataTransaction(DataTransaction),
+    #[serde(rename = "data.import-legacy")]
+    DataImport(DataImport),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
@@ -74,6 +82,62 @@ pub struct EventCursor {
     pub after_sequence: u32,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DataRead {
+    pub plugin_id: String,
+    pub key: String,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DataMutation {
+    pub key: String,
+    pub expected_revision: u32,
+    #[specta(type = specta_typescript::Unknown)]
+    pub value: Value,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DataWrite {
+    pub plugin_id: String,
+    pub mutation: DataMutation,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DataTransaction {
+    pub plugin_id: String,
+    pub mutations: Vec<DataMutation>,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DataSnapshot {
+    pub key: String,
+    pub revision: u32,
+    #[specta(type = specta_typescript::Unknown)]
+    pub value: Value,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum LegacySource {
+    CliV0,
+    DesktopLocalstorageV1,
+    WebLocalstorageV1,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct LegacyImport {
+    pub source: LegacySource,
+    pub source_digest: String,
+    #[specta(type = specta_typescript::Unknown)]
+    pub value: Value,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DataImport {
+    pub plugin_id: String,
+    pub import: LegacyImport,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Type, schemars::JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ErrorCode {
@@ -101,6 +165,16 @@ pub enum ErrorCode {
     GrantRevoked,
     #[serde(rename = "BUDGET_EXCEEDED")]
     BudgetExceeded,
+    #[serde(rename = "REVISION_CONFLICT")]
+    RevisionConflict,
+    #[serde(rename = "STORE_BUSY")]
+    StoreBusy,
+    #[serde(rename = "STORE_CORRUPT")]
+    StoreCorrupt,
+    #[serde(rename = "SCHEMA_UNSUPPORTED")]
+    SchemaUnsupported,
+    #[serde(rename = "STORAGE_FAILED")]
+    StorageFailed,
     #[serde(rename = "PLUGIN_NOT_FOUND")]
     PluginNotFound,
     #[serde(rename = "INPUT_INVALID")]
@@ -126,7 +200,7 @@ pub enum ErrorCode {
 }
 
 impl ErrorCode {
-    pub const ALL: [Self; 23] = [
+    pub const ALL: [Self; 28] = [
         Self::ProtocolMismatch,
         Self::ClientIncompatible,
         Self::FrameTooLarge,
@@ -139,6 +213,11 @@ impl ErrorCode {
         Self::ScopeDenied,
         Self::GrantRevoked,
         Self::BudgetExceeded,
+        Self::RevisionConflict,
+        Self::StoreBusy,
+        Self::StoreCorrupt,
+        Self::SchemaUnsupported,
+        Self::StorageFailed,
         Self::PluginNotFound,
         Self::InputInvalid,
         Self::JobNotFound,
@@ -182,6 +261,10 @@ pub enum Outcome {
     Job(Box<JobSnapshot>),
     #[serde(rename = "events")]
     Events(Vec<JobEvent>),
+    #[serde(rename = "data")]
+    Data(DataSnapshot),
+    #[serde(rename = "data-batch")]
+    DataBatch(Vec<DataSnapshot>),
     #[serde(rename = "error")]
     Error(RuntimeError),
 }

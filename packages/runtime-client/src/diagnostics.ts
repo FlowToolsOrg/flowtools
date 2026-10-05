@@ -3,6 +3,23 @@ import type { ErrorCode } from './bindings'
 import { RuntimeClientError } from './client'
 
 const explanations = {
+  REVISION_CONFLICT: [
+    '共享数据已被其他客户端修改',
+    '读取最新 revision，检查冲突后重新操作。',
+  ],
+  STORE_BUSY: [
+    '当前数据 profile 已有写入者',
+    '连接现有 Runtime；不另建或删除数据库。',
+  ],
+  STORE_CORRUPT: ['数据库完整性检查失败', '保留原数据，从已验证备份主动恢复。'],
+  SCHEMA_UNSUPPORTED: [
+    '数据库版本不兼容',
+    '使用兼容版本或已验证的升级前备份。',
+  ],
+  STORAGE_FAILED: [
+    '共享数据写入或恢复失败',
+    '保留原数据，检查权限和可用空间后重试。',
+  ],
   PROTOCOL_MISMATCH: [
     '通信协议版本不匹配',
     '安装与 Runtime 匹配的客户端版本。',

@@ -109,6 +109,10 @@ export class RuntimeClient {
       'jobs.status': 'job',
       'jobs.cancel': 'job',
       'jobs.events': 'events',
+      'data.read': 'data',
+      'data.write': 'data',
+      'data.transaction': 'data-batch',
+      'data.import-legacy': 'data',
     } satisfies Record<Call['method'], Outcome['type']>
     if (response.outcome.type !== expected[call.method])
       throw new RuntimeClientError(

@@ -1,3 +1,4 @@
+import type { DataCapability } from '../data'
 import type { ClipboardCapability } from './capabilities/clipboard'
 import type { DBCapability } from './capabilities/db'
 import type { DialogCapability } from './capabilities/dialog'
@@ -87,6 +88,8 @@ export interface PluginRuntimeContextValue {
    * Optional namespaced storage capability.
    */
   storage?: StorageCapability
+  /** Asynchronous Host-bound shared data; legacy synchronous storage is separate. */
+  data?: DataCapability
   /**
    * Optional host-managed app store capability.
    */

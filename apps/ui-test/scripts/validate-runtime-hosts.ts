@@ -7,7 +7,12 @@ import { tmpdir } from 'node:os'
 import { resolve, join } from 'node:path'
 import { createInterface } from 'node:readline'
 
-import { RuntimeClient } from '@flowtools/runtime-client'
+import {
+  PluginDataClient,
+  RuntimeClient,
+  type Request,
+  type Response,
+} from '@flowtools/runtime-client'
 import { connectNamedPipe } from '@flowtools/runtime-client/node'
 import { chromium } from 'playwright'
 
@@ -43,7 +48,7 @@ const cliToken = randomBytes(32).toString('hex')
 const desktopToken = randomBytes(32).toString('hex')
 const host = spawn(
   join(root, 'target/debug/flowtools-runtime.exe'),
-  ['--validation-profile', runtimeProfile, '--validation'],
+  ['--validation-profile', runtimeProfile, '--validation', '--validation-data'],
   {
     windowsHide: true,
     stdio: ['pipe', 'pipe', 'pipe'],
@@ -157,6 +162,73 @@ try {
     await page.getByTestId('runtime-job-status').innerText(),
     /不自动重新提交/
   )
+  // Actual WebView -> native-bound Desktop session -> same SQLite writer.
+  const data = new PluginDataClient(cli, 'plugin-todo-list')
+  await data.write({
+    key: 'todos',
+    expectedRevision: 0,
+    value: [{ todo: 'native shared fixture', deadline: '' }],
+  })
+  const nativeData = await page.evaluate(async () => {
+    const invoke = (
+      window as unknown as {
+        __TAURI_INTERNALS__: {
+          invoke<T>(this: void, command: string, args?: unknown): Promise<T>
+        }
+      }
+    ).__TAURI_INTERNALS__.invoke
+    await invoke('validation_runtime_disconnect')
+    const exchange = (request: Request) =>
+      invoke<Response>('validation_runtime', { request })
+    const opened = await exchange({
+      version: 1,
+      requestId: 'native-data-open',
+      session: null,
+      call: {
+        method: 'session.open',
+        payload: {
+          token: '',
+          clientVersion: '0.1.0',
+          expectedInstanceId: null,
+        },
+      },
+    })
+    if (opened.outcome.type !== 'session') throw new Error('Native handshake')
+    const session = opened.outcome.data
+    const read = await exchange({
+      version: 1,
+      requestId: 'native-data-read',
+      session,
+      call: {
+        method: 'data.read',
+        payload: { pluginId: 'plugin-todo-list', key: 'todos' },
+      },
+    })
+    const write = await exchange({
+      version: 1,
+      requestId: 'native-data-write',
+      session,
+      call: {
+        method: 'data.write',
+        payload: {
+          pluginId: 'plugin-todo-list',
+          mutation: {
+            key: 'todos',
+            expectedRevision: 1,
+            value: [{ todo: 'native edit fixture', deadline: '' }],
+          },
+        },
+      },
+    })
+    return { read, write }
+  })
+  assert.equal(nativeData.read.outcome.type, 'data')
+  assert.equal(nativeData.write.outcome.type, 'data')
+  const sharedData = await data.read('todos')
+  assert.equal(sharedData.revision, 2)
+  assert.deepEqual(sharedData.value, [
+    { todo: 'native edit fixture', deadline: '' },
+  ])
   // Only the fixture Host is stopped; reload exercises a real handshake failure.
   host.stdin.end()
   const [hostExitCode] = (await hostExit) as unknown[]
@@ -178,6 +250,7 @@ try {
         keyboard: true,
         sharedRunId: receipt.runId,
         state: job.state,
+        nativeSharedDataRevision: sharedData.revision,
         connectionDiagnostic: 'RUNTIME_DISCONNECTED',
         identity: config.identifier,
         scope: 'prototype validation only',

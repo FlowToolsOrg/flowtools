@@ -208,6 +208,10 @@ clipboard、tool operation 等窄接口；不向第三方提供 raw invoke/SQL/s
 
 ### P2.6a 单写者数据与恢复
 
+2026-10-05 已完成固定 T1 / Windows 基础与实际双客户端、native WebView
+传输验收，见 [P2.6a 证据](./validation/g3-shared-data.md)。普通用户 UI
+切换、durable jobs 和持久 grants 分别由后续 G3 子项交付。
+
 Runtime 作为 SQLite 单写者，分开 core metadata、grants、jobs 和 plugin data。
 新增异步 SDK data API，支持 Host-bound namespace、revision/CAS 与事务；旧同步
 store 通过 hydration + 订阅或明确兼容 adapter 过渡，不假设跨进程仍能同步访问。

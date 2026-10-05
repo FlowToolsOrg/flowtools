@@ -1,6 +1,7 @@
 use crate::{
-    broker::{BrokerSession, CapabilityBroker, CommandIdentity},
+    broker::{BrokerSession, CapabilityBroker, CapabilityOperation, CommandIdentity, Grant, Scope},
     catalog::{digest, BuiltinCatalog},
+    data::DataStore,
     protocol::*,
 };
 use serde_json::{json, Value};
@@ -49,6 +50,7 @@ pub struct RuntimeCore {
     keys: HashMap<(String, String), String>,
     pending: HashMap<String, RunSpec>,
     broker: CapabilityBroker,
+    data: DataStore,
 }
 
 impl RuntimeCore {
@@ -66,7 +68,35 @@ impl RuntimeCore {
             keys: HashMap::new(),
             pending: HashMap::new(),
             broker: CapabilityBroker::default(),
+            data: DataStore::memory().expect("Validation data schema"),
         }
+    }
+
+    pub fn with_data_store(mut self, store: DataStore) -> Self {
+        self.data = store;
+        self
+    }
+
+    /// Explicit disposable-profile fixture only. Not a production user grant.
+    pub fn validation_data(cli_token: String, desktop_token: String, store: DataStore) -> Self {
+        let mut core = Self::validation(cli_token, desktop_token).with_data_store(store);
+        let (manifest, command) = core.catalog.command("plugin-todo-list", "run").unwrap();
+        for caller in ["validation-cli", "validation-desktop"] {
+            core.broker
+                .approve(
+                    CommandIdentity::from_manifest(caller, manifest, command),
+                    Grant {
+                        effects: vec!["data-read".into(), "data-write".into()],
+                        scopes: vec![Scope::PluginData {
+                            key_prefix: "todos".into(),
+                        }],
+                        expires_at: now() + 3_600_000.0,
+                        max_calls: 16,
+                    },
+                )
+                .expect("Fixed validation policy");
+        }
+        core
     }
 
     pub fn handle(&mut self, connection: &str, request: Request) -> Response {
@@ -194,8 +224,107 @@ impl RuntimeCore {
                         .collect(),
                 ))
             }
+            Call::DataRead(read) => {
+                self.data_call(&caller, &read.plugin_id, |broker, session, store| {
+                    broker
+                        .invoke(
+                            session,
+                            &CapabilityOperation::DataRead {
+                                key: read.key.clone(),
+                            },
+                            now(),
+                            |identity| store.read(&namespace(identity), &read.key),
+                        )
+                        .map(Outcome::Data)
+                })
+            }
+            Call::DataWrite(write) => {
+                self.data_call(&caller, &write.plugin_id, |broker, session, store| {
+                    broker
+                        .invoke(
+                            session,
+                            &CapabilityOperation::DataWrite {
+                                key: write.mutation.key.clone(),
+                            },
+                            now(),
+                            |identity| store.write(&namespace(identity), &write.mutation),
+                        )
+                        .map(Outcome::Data)
+                })
+            }
+            Call::DataTransaction(transaction) => {
+                self.data_call(&caller, &transaction.plugin_id, |broker, session, store| {
+                    let Some((last, prior)) = transaction.mutations.split_last() else {
+                        return Err(ErrorCode::InvalidRequest);
+                    };
+                    // All checks and SQLite commit execute under the same Runtime lock.
+                    for mutation in prior {
+                        broker.invoke(
+                            session,
+                            &CapabilityOperation::DataWrite {
+                                key: mutation.key.clone(),
+                            },
+                            now(),
+                            |_| Ok(()),
+                        )?;
+                    }
+                    broker
+                        .invoke(
+                            session,
+                            &CapabilityOperation::DataWrite {
+                                key: last.key.clone(),
+                            },
+                            now(),
+                            |identity| {
+                                store.transaction(&namespace(identity), &transaction.mutations)
+                            },
+                        )
+                        .map(Outcome::DataBatch)
+                })
+            }
+            Call::DataImport(import) => {
+                self.data_call(&caller, &import.plugin_id, |broker, session, store| {
+                    if import.plugin_id != "plugin-todo-list" {
+                        return Err(ErrorCode::PluginNotFound);
+                    }
+                    broker
+                        .invoke(
+                            session,
+                            &CapabilityOperation::DataWrite {
+                                key: "todos".into(),
+                            },
+                            now(),
+                            |identity| store.import_todos(&namespace(identity), &import.import),
+                        )
+                        .map(Outcome::Data)
+                })
+            }
             Call::Open(_) => unreachable!(),
         }
+    }
+
+    fn data_call(
+        &mut self,
+        caller: &str,
+        plugin_id: &str,
+        action: impl FnOnce(
+            &mut CapabilityBroker,
+            &BrokerSession,
+            &mut DataStore,
+        ) -> Result<Outcome, ErrorCode>,
+    ) -> Result<Outcome, ErrorCode> {
+        let (manifest, command) = self.catalog.command(plugin_id, "run")?;
+        let identity = CommandIdentity::from_manifest(caller, manifest, command);
+        let at = now();
+        let session = self.broker.bind(
+            identity,
+            command.clone(),
+            at + command["resources"]["timeoutMs"].as_f64().unwrap_or(0.0),
+            at,
+        )?;
+        let result = action(&mut self.broker, &session, &mut self.data);
+        self.broker.close(&session);
+        result
     }
 
     fn submit(
@@ -506,6 +635,10 @@ fn valid_key(key: &str) -> bool {
         && key
             .bytes()
             .all(|v| v.is_ascii_alphanumeric() || v == b'-' || v == b'_')
+}
+
+fn namespace(identity: &CommandIdentity) -> String {
+    format!("{}:{}", identity.publisher, identity.plugin_id)
 }
 
 #[cfg(test)]

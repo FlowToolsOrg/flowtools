@@ -160,3 +160,11 @@ query/token 的 URL；限制体积、保留期与导出范围。授权/撤销/�
   与崩溃租约恢复均有 fixture。
 
 这些属于待实现的验收目标，不由 `docs:check` 或本 ADR 的通过代替。
+
+2026-10-05 P2.6a update: Runtime single-writer SQLite, CAS/transactions,
+N-1 migration/rollback, explicit source-preserving import and backup recovery
+are covered in [shared data acceptance](../validation/g3-shared-data.md). Ordinary Desktop Debug reset
+is removed and corrupt legacy DB startup preserves the original. Historical
+G2 reset evidence above remains accurate for that incident; no lost user data
+recovery is claimed. Durable grants/jobs and third-party boundaries remain open.
+Security Reviewer/date/conclusion: pending independent review.

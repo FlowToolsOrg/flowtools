@@ -792,3 +792,16 @@ pending G3 subitems. Existing Desktop/Web adapters are not replaced by this step
 File/tool descriptors are not IO implementations; network origin checks are not
 DNS/redirect enforcement. Maturity stays prototype and SEC risks remain open.
 Evidence: [P2.3a scope and validation](./validation/g3-capability-broker.md).
+
+## G3 P2.6a shared data foundation
+
+Runtime owns one SQLite writer with versioned migrations, backup/recovery,
+plugin namespaces, revision/CAS and atomic transactions. The asynchronous
+`@flowtools/sdk/data` API and Runtime client share that writer; they expose no
+raw SQL, namespace or file path. Legacy Todo sources require explicit validated
+import and remain preserved. Desktop Debug startup no longer deletes its DB;
+corrupt/unsupported data fails closed. Dedicated native validation connects the
+actual WebView and CLI to the same data. Normal user UI integration, durable
+grants/jobs and independent distribution remain subsequent G3 subitems.
+
+Evidence: [P2.6a scope and validation](./validation/g3-shared-data.md).

@@ -346,7 +346,7 @@ Host runtime 用 `pickCapability(...)` 做权限裁剪：
 
 新增或修改插件元数据时，前端通过 Tauri Specta 生成的 binding 调用后端命令；
 后端返回 `PluginDto`，再由 desktop UI 同步到本地 registry/store。当前 schema
-变更依赖 dev 模式重置数据库；发布环境需要单独补充版本化 migration。
+Debug 启动保留数据库；旧 Desktop 模型变更仍需显式迁移。Runtime schema 使用版本化事务 migration。
 
 ## 7. Plugin Execution Flow
 
@@ -712,3 +712,16 @@ pending G3 subitems. Existing Desktop/Web adapters are not replaced by this step
 File/tool descriptors are not IO implementations; network origin checks are not
 DNS/redirect enforcement. Maturity stays prototype and SEC risks remain open.
 Evidence: [P2.3a scope and validation](./docs/validation/g3-capability-broker.md).
+
+## G3 P2.6a shared data foundation
+
+Runtime owns one SQLite writer with versioned migrations, backup/recovery,
+plugin namespaces, revision/CAS and atomic transactions. The asynchronous
+`@flowtools/sdk/data` API and Runtime client share that writer; they expose no
+raw SQL, namespace or file path. Legacy Todo sources require explicit validated
+import and remain preserved. Desktop Debug startup no longer deletes its DB;
+corrupt/unsupported data fails closed. Dedicated native validation connects the
+actual WebView and CLI to the same data. Normal user UI integration, durable
+grants/jobs and independent distribution remain subsequent G3 subitems.
+
+Evidence: [P2.6a scope and validation](./docs/validation/g3-shared-data.md).

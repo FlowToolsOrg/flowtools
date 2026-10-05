@@ -135,3 +135,11 @@ broker 不接受调用方指定目标插件 namespace。会话销毁、停用、
   撤销、超时、进程后代、更新/卸载与 Host 崩溃无越权或孤儿资源。
 
 本 ADR 的验收是设计和源码证据审阅；以上攻击 fixture 尚待对应里程碑实现。
+
+2026-10-05 P2.6a update: Runtime single-writer SQLite, CAS/transactions,
+N-1 migration/rollback, explicit source-preserving import and backup recovery
+are covered in [shared data acceptance](../validation/g3-shared-data.md). Ordinary Desktop Debug reset
+is removed and corrupt legacy DB startup preserves the original. Historical
+G2 reset evidence above remains accurate for that incident; no lost user data
+recovery is claimed. Durable grants/jobs and third-party boundaries remain open.
+Security Reviewer/date/conclusion: pending independent review.

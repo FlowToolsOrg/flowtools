@@ -5,9 +5,9 @@
 [下一阶段实施设计](./next-milestones.md) 定义 G0–G8 的顺序与验收。
 G2 已新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`
 （无界面运行服务）、`packages/runtime-client`（生成 DTO 的 TS 客户端）和
-`packages/plugin-runner`（受管执行入口）。这些目录已交付 G2 的固定 T1 / 可丢弃 profile 验证基础；G3 授权与用户数据迁移尚未交付。
+`packages/plugin-runner`（受管执行入口）。这些目录已交付 G2 的固定 T1 / 可丢弃 profile 验证基础；G3 T1 broker 与单写者数据基础已交付，持久授权与发行仍待后续子项。
 SDK 已有命令/Manifest；服务依赖和异步 data 契约留待后续。Rust core 当前管理
-验证任务与 P2.3a T1 内存策略 broker；单写者数据、持久 grants、服务锁及工具
+验证任务与 P2.3a T1 内存策略 broker；单写者数据；持久 grants、服务锁及工具
 artifact/lease/GC 仍为后续目标。
 专用 Desktop 与 Node 客户端已使用同一验证服务。
 普通受管 T1 runner 不是 T3 sandbox，Web 原型不自动连接本机服务。
@@ -359,3 +359,16 @@ pending G3 subitems. Existing Desktop/Web adapters are not replaced by this step
 File/tool descriptors are not IO implementations; network origin checks are not
 DNS/redirect enforcement. Maturity stays prototype and SEC risks remain open.
 Evidence: [P2.3a scope and validation](./validation/g3-capability-broker.md).
+
+## G3 P2.6a shared data foundation
+
+Runtime owns one SQLite writer with versioned migrations, backup/recovery,
+plugin namespaces, revision/CAS and atomic transactions. The asynchronous
+`@flowtools/sdk/data` API and Runtime client share that writer; they expose no
+raw SQL, namespace or file path. Legacy Todo sources require explicit validated
+import and remain preserved. Desktop Debug startup no longer deletes its DB;
+corrupt/unsupported data fails closed. Dedicated native validation connects the
+actual WebView and CLI to the same data. Normal user UI integration, durable
+grants/jobs and independent distribution remain subsequent G3 subitems.
+
+Evidence: [P2.6a scope and validation](./validation/g3-shared-data.md).

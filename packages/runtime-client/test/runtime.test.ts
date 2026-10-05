@@ -41,3 +41,17 @@ test('wire schema rejects identity injection and non-finite JSON before transpor
   request.call.payload.deadline = Number.POSITIVE_INFINITY
   expect(() => encodeRequest(request)).toThrow('INVALID_REQUEST')
 })
+
+test('actual GUI and CLI Host clients share durable revisions and reject unauthorized data', async () => {
+  const fixture = Bun.spawn(['node', import.meta.dir + '/data-fixture.mjs'], {
+    stdout: 'pipe',
+    stderr: 'pipe',
+  })
+  const [stdout, stderr, code] = await Promise.all([
+    new Response(fixture.stdout).text(),
+    new Response(fixture.stderr).text(),
+    fixture.exited,
+  ])
+  expect({ code, stderr }).toEqual({ code: 0, stderr: '' })
+  expect(stdout.trim()).toBe('Shared data fixture passed')
+}, 30000)

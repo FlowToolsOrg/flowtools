@@ -91,6 +91,16 @@ pub enum ErrorCode {
     InstanceMismatch,
     #[serde(rename = "APPROVAL_REQUIRED")]
     ApprovalRequired,
+    #[serde(rename = "INTERACTION_REQUIRED")]
+    InteractionRequired,
+    #[serde(rename = "CAPABILITY_UNDECLARED")]
+    CapabilityUndeclared,
+    #[serde(rename = "SCOPE_DENIED")]
+    ScopeDenied,
+    #[serde(rename = "GRANT_REVOKED")]
+    GrantRevoked,
+    #[serde(rename = "BUDGET_EXCEEDED")]
+    BudgetExceeded,
     #[serde(rename = "PLUGIN_NOT_FOUND")]
     PluginNotFound,
     #[serde(rename = "INPUT_INVALID")]
@@ -116,7 +126,7 @@ pub enum ErrorCode {
 }
 
 impl ErrorCode {
-    pub const ALL: [Self; 18] = [
+    pub const ALL: [Self; 23] = [
         Self::ProtocolMismatch,
         Self::ClientIncompatible,
         Self::FrameTooLarge,
@@ -124,6 +134,11 @@ impl ErrorCode {
         Self::SessionInvalid,
         Self::InstanceMismatch,
         Self::ApprovalRequired,
+        Self::InteractionRequired,
+        Self::CapabilityUndeclared,
+        Self::ScopeDenied,
+        Self::GrantRevoked,
+        Self::BudgetExceeded,
         Self::PluginNotFound,
         Self::InputInvalid,
         Self::JobNotFound,

@@ -282,6 +282,7 @@ async fn execute(spec: &RunSpec, core: Core, workspace: &Path) -> Result<Value, 
         .map_err(|_| ErrorCode::ExecutionFailed)?;
     let bun = verify_artifact(&config["bun"])?;
     let runner = verify_artifact(&config["runner"])?;
+    core.lock().await.check_run(&spec.run_id)?;
     let mut command = tokio::process::Command::new(bun);
     std::fs::create_dir(workspace).map_err(|_| ErrorCode::ExecutionFailed)?;
     command
@@ -323,12 +324,12 @@ async fn execute(spec: &RunSpec, core: Core, workspace: &Path) -> Result<Value, 
             if envelope["success"] == true { Ok(envelope["data"].clone()) }
             else { Err(serde_json::from_value(envelope["error"]["code"].clone()).unwrap_or(ErrorCode::ExecutionFailed)) }
         }) => result.unwrap_or(Err(ErrorCode::Timeout)),
-        _ = async {
+        code = async {
             loop {
                 tokio::time::sleep(Duration::from_millis(10)).await;
-                if core.lock().await.state(&spec.run_id) == Some(JobState::Cancelling) { break; }
+                if let Err(code) = core.lock().await.check_run(&spec.run_id) { break code; }
             }
-        } => Err(ErrorCode::Aborted),
+        } => Err(code),
     };
     if result.is_err() {
         let _ = child.kill().await;
@@ -340,6 +341,51 @@ async fn execute(spec: &RunSpec, core: Core, workspace: &Path) -> Result<Value, 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use flowtools_runtime_core::protocol::{Call, OpenSession, SubmitJob, CLIENT_VERSION};
+
+    async fn accepted_run(core: &Core) -> RunSpec {
+        let mut locked = core.lock().await;
+        let Outcome::Session(session) = locked
+            .handle(
+                "fixture",
+                Request {
+                    version: 1,
+                    request_id: uuid::Uuid::new_v4().to_string(),
+                    session: None,
+                    call: Call::Open(OpenSession {
+                        token: "cli".into(),
+                        client_version: CLIENT_VERSION.into(),
+                        expected_instance_id: None,
+                    }),
+                },
+            )
+            .outcome
+        else {
+            panic!("Session");
+        };
+        let Outcome::Receipt(receipt) = locked
+            .handle(
+                "fixture",
+                Request {
+                    version: 1,
+                    request_id: uuid::Uuid::new_v4().to_string(),
+                    session: Some(session),
+                    call: Call::Submit(SubmitJob {
+                        plugin_id: "plugin-base64-encoder".into(),
+                        command_id: "run".into(),
+                        input: json!({"text":"private-canary"}),
+                        idempotency_key: "fixture".into(),
+                        background: false,
+                        deadline: now() + 10000.0,
+                    }),
+                },
+            )
+            .outcome
+        else {
+            panic!("Receipt");
+        };
+        locked.take_run(&receipt.run_id).unwrap()
+    }
     #[tokio::test]
     async fn real_managed_child_refuses_changed_package_and_reaps_on_deadline() {
         let profile = std::env::temp_dir().join(format!(
@@ -356,14 +402,8 @@ mod tests {
             "cli".into(),
             "desktop".into(),
         )));
-        let invalid = RunSpec {
-            run_id: uuid::Uuid::new_v4().to_string(),
-            plugin_id: "plugin-base64-encoder".into(),
-            command_id: "run".into(),
-            input: json!({"text":"private-canary"}),
-            deadline: now() + 10000.0,
-            package_digest: "changed".into(),
-        };
+        let mut invalid = accepted_run(&core).await;
+        invalid.package_digest = "changed".into();
         assert_eq!(
             execute(&invalid, core.clone(), &profile.join(&invalid.run_id))
                 .await
@@ -371,13 +411,12 @@ mod tests {
             ErrorCode::ExecutionFailed
         );
         let expired = RunSpec {
-            run_id: uuid::Uuid::new_v4().to_string(),
             package_digest: digest,
             deadline: now() + 1.0,
             ..invalid
         };
         assert_eq!(
-            execute(&expired, core, &profile.join(&expired.run_id))
+            execute(&expired, core, &profile.join("expired"))
                 .await
                 .unwrap_err(),
             ErrorCode::Timeout

@@ -1022,7 +1022,7 @@ G4 服务依赖 -> G5 签名安装与隔离 -> G6 工具链 -> G7 办公闭环 -
 | P1.2b | done    | P1.2a               | 命令状态投影、进程/视图资源 ownership；更新/卸载无孤儿 handler                     |
 | P1.3a | done    | P1.2                | Runtime core/binary、用户级 IPC、T1 临时 profile 与 job 协议；不接用户数据/第三方  |
 | P1.5a | done    | P1.3a               | versioned DTO、拒绝码、脱敏事件与兼容/失联诊断                                     |
-| P2.3a | pending | P1.3a、P1.5a        | 基础 typed broker，先 T1；同一身份/operation/scope 决策，拒绝无副作用              |
+| P2.3a | done    | P1.3a、P1.5a        | T1 内存策略 broker、Host 绑定身份/operation/scope/epoch/预算；敏感 IO 仍拒绝       |
 | P2.6a | pending | P2.3a               | 移除 Debug reset、迁移/备份、Runtime 单写者与异步 data/revision；保留旧数据        |
 | P2.4a | pending | P2.3a、P2.6a        | CLI-only init/策略管理、持久 grants、冷启动/后台/effects、撤销 epoch；无默认放行   |
 | P1.3b | pending | P2.4a、P2.6a        | 实际执行、durable receipt/同 key 恢复、幂等/取消；未知状态不重试非幂等副作用       |
@@ -1863,3 +1863,18 @@ one focused commit per completed milestone, report applicable checks and pending
 acceptance/review, and return the PR link without repeated push/PR approval.
 This does not authorize merging, deployment, repository settings changes or
 bypassing quality gates, and does not change roadmap acceptance criteria.
+
+### G3 P2.3a implementation evidence
+
+2026-10-05: T0-owned T1 policy broker and opaque managed-runner sessions are
+implemented for the Windows validation Runtime. Declaration, exact package/caller
+identity, manifest and grant scopes, epoch, expiry and per-run budget are checked
+before adapter entry. Rejected sensitive jobs leave no job/payload/key records;
+actual Node/named-pipe regression retains real compiled Base64 execution.
+See [P2.3a acceptance](./validation/g3-capability-broker.md).
+
+This completes the foundational policy subitem only. Approvals remain in-memory
+Rust Host APIs; persistent grants, user-data migration, actual sensitive IO and
+ordinary CLI/GUI Runtime execution are subsequent G3 work. Existing Desktop/Web
+adapters remain unchanged. All maturity labels stay prototype, independent
+security Reviewer is pending and SEC risks remain open.

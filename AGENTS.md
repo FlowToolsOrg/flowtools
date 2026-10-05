@@ -175,6 +175,19 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G3 P2.3a's validation-only T1 policy broker is in
+`packages/runtime-core/src/broker.rs`. Identity comes from the authenticated Host
+caller and embedded catalog, never operation payloads. Rust generates operation
+descriptors, schemas and rejection fixtures. Approve/revoke are transient T0 Rust
+APIs, absent from IPC; do not expose them as run flags or metadata grants. Preserve
+manifest AND grant scopes, exact package identity, epochs, expiry and per-run call
+budgets. Check runner sessions before launch, during execution and at each effect
+commit; async adapters cannot reuse a cached approval. Pure validation T1 is still
+the only runnable scope. File/tool descriptors are not IO adapters and network
+origin matching is not DNS/redirect enforcement. P2.6a/P2.4a must supply the single
+writer and durable management policy before P1.3b/P1.4 production execution.
+See [P2.3a evidence](./docs/validation/g3-capability-broker.md).
+
 ### Accepted next-stage product and runtime design
 
 Follow `docs/next-milestones.md` in G0–G8 dependency order. The target audience is

@@ -1,4 +1,5 @@
 use crate::{
+    broker::{BrokerSession, CapabilityBroker, CommandIdentity},
     catalog::{digest, BuiltinCatalog},
     protocol::*,
 };
@@ -26,6 +27,7 @@ struct Job {
     input_summary: InputSummary,
     action_digest: String,
     events: Vec<JobEvent>,
+    broker_session: Option<BrokerSession>,
 }
 
 /// Payload is transient runner input, never serializable diagnostics/history.
@@ -46,6 +48,7 @@ pub struct RuntimeCore {
     jobs: BTreeMap<String, Job>,
     keys: HashMap<(String, String), String>,
     pending: HashMap<String, RunSpec>,
+    broker: CapabilityBroker,
 }
 
 impl RuntimeCore {
@@ -62,6 +65,7 @@ impl RuntimeCore {
             jobs: BTreeMap::new(),
             keys: HashMap::new(),
             pending: HashMap::new(),
+            broker: CapabilityBroker::default(),
         }
     }
 
@@ -203,6 +207,11 @@ impl RuntimeCore {
         if !valid_key(&submit.idempotency_key) || !submit.deadline.is_finite() {
             return Err(ErrorCode::InvalidRequest);
         }
+        let (manifest, command) = self
+            .catalog
+            .command(&submit.plugin_id, &submit.command_id)?;
+        let identity = CommandIdentity::from_manifest(caller, manifest, command);
+        let grant_epoch = self.broker.authorize_command(&identity, command, now())?;
         let input =
             self.catalog
                 .prepare_input(&submit.plugin_id, &submit.command_id, submit.input)?;
@@ -244,7 +253,7 @@ impl RuntimeCore {
             package_digest: package_digest.clone(),
             dependency_lock: "t1-no-dependencies-v1".into(),
             deadline: submit.deadline,
-            grant_epoch: 0,
+            grant_epoch,
             resources: command["resources"].clone(),
             state: JobState::Accepted,
             sequence: 0,
@@ -265,6 +274,7 @@ impl RuntimeCore {
                 input_summary,
                 action_digest,
                 events: Vec::new(),
+                broker_session: None,
             },
         );
         self.pending.insert(
@@ -299,7 +309,10 @@ impl RuntimeCore {
         let valid = matches!(
             (job.snapshot.state, next),
             (JobState::Accepted, JobState::Queued)
-                | (JobState::Queued, JobState::Running | JobState::Cancelling)
+                | (
+                    JobState::Queued,
+                    JobState::Running | JobState::Cancelling | JobState::Failed
+                )
                 | (
                     JobState::Running,
                     JobState::Succeeded
@@ -327,6 +340,29 @@ impl RuntimeCore {
         if self.jobs[run_id].snapshot.state != JobState::Queued {
             return None;
         }
+        let snapshot = &self.jobs[run_id].snapshot;
+        let (manifest, command) = self
+            .catalog
+            .command(&snapshot.plugin_id, &snapshot.command_id)
+            .ok()?;
+        let identity = CommandIdentity::from_manifest(&snapshot.root_caller, manifest, command);
+        let session = self
+            .broker
+            .authorize_command(&identity, command, now())
+            .and_then(|epoch| {
+                if epoch != snapshot.grant_epoch {
+                    return Err(ErrorCode::GrantRevoked);
+                }
+                self.broker
+                    .bind(identity, command.clone(), snapshot.deadline, now())
+            });
+        match session {
+            Ok(session) => self.jobs.get_mut(run_id)?.broker_session = Some(session),
+            Err(code) => {
+                self.finish(run_id, Err(code));
+                return None;
+            }
+        }
         self.transition(run_id, JobState::Running).ok()?;
         self.jobs.get_mut(run_id)?.started_at = now();
         Some(run)
@@ -334,6 +370,22 @@ impl RuntimeCore {
 
     pub fn state(&self, run_id: &str) -> Option<JobState> {
         self.jobs.get(run_id).map(|j| j.snapshot.state)
+    }
+
+    pub fn check_run(&self, run_id: &str) -> Result<(), ErrorCode> {
+        let job = self.jobs.get(run_id).ok_or(ErrorCode::JobNotFound)?;
+        if job.snapshot.state == JobState::Cancelling {
+            return Err(ErrorCode::Aborted);
+        }
+        if job.snapshot.state != JobState::Running {
+            return Err(ErrorCode::SessionInvalid);
+        }
+        self.broker.check_session(
+            job.broker_session
+                .as_ref()
+                .ok_or(ErrorCode::SessionInvalid)?,
+            now(),
+        )
     }
 
     pub fn finish(&mut self, run_id: &str, result: Result<Value, ErrorCode>) {
@@ -391,6 +443,9 @@ impl RuntimeCore {
             return;
         }
         let job = self.jobs.get_mut(run_id).unwrap();
+        if let Some(session) = job.broker_session.take() {
+            self.broker.close(&session);
+        }
         let finished_at = now().max(job.started_at);
         job.snapshot.result = Some(ExecutionResult {
             format_version: 1,
@@ -597,6 +652,52 @@ mod tests {
                 code: ErrorCode::ProtocolMismatch
             })
         ));
+    }
+
+    #[test]
+    fn capability_denial_creates_no_job_runner_or_pending_payload() {
+        let mut core = RuntimeCore::validation("cli".into(), "desktop".into());
+        let proof = open(&mut core, "conn", "cli");
+        for plugin_id in ["plugin-todo-list", "plugin-website-latency"] {
+            let mut operation = submit();
+            operation.plugin_id = plugin_id.into();
+            operation.input = json!({});
+            let reply = core.handle(
+                "conn",
+                request(Call::Submit(operation), Some(proof.clone())),
+            );
+            assert!(matches!(
+                reply.outcome,
+                Outcome::Error(RuntimeError {
+                    code: ErrorCode::ApprovalRequired
+                })
+            ));
+            assert!(core.jobs.is_empty());
+            assert!(core.pending.is_empty());
+            assert!(core.keys.is_empty());
+        }
+    }
+
+    #[test]
+    fn runner_session_ends_with_job_and_disconnect_cannot_preserve_foreground_access() {
+        let mut core = RuntimeCore::validation("cli".into(), "desktop".into());
+        let proof = open(&mut core, "conn", "cli");
+        let Outcome::Receipt(receipt) = core
+            .handle("conn", request(Call::Submit(submit()), Some(proof)))
+            .outcome
+        else {
+            panic!("Receipt");
+        };
+        core.take_run(&receipt.run_id).unwrap();
+        assert!(core.check_run(&receipt.run_id).is_ok());
+        core.disconnect("conn");
+        assert_eq!(core.check_run(&receipt.run_id), Err(ErrorCode::Aborted));
+        core.finish(&receipt.run_id, Err(ErrorCode::Aborted));
+        assert!(core.jobs[&receipt.run_id].broker_session.is_none());
+        assert_eq!(
+            core.check_run(&receipt.run_id),
+            Err(ErrorCode::SessionInvalid)
+        );
     }
 
     #[test]

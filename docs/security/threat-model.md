@@ -24,6 +24,17 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 
 ## 风险台账
 
+2026-10-05 P2.3a 新增 [T1 policy broker](../../packages/runtime-core/src/broker.rs)
+及 [Runtime 绑定/拒绝回归](../../packages/runtime-core/src/runtime.rs)，并由
+[实际 named-pipe fixture](../../packages/runtime-client/test/native-fixture.mjs)
+验证无授权时不接收敏感任务。Host 内存授权绑定 caller/publisher/版本/digest/
+command；scope、epoch、过期、预算拒绝不会进入 adapter，重新批准不会恢复旧
+session。Rust/TS operation schema 拒绝 raw path/SQL/argv/namespace/身份注入。
+这是 SEC-003/004/005/006/007/009/010 的基础证据，以上风险继续 open。
+没有持久 grant、真实敏感 IO、文件路径竞争/DNS/redirect 防护、用户数据迁移
+或第三方 sandbox；既有 Web/Desktop adapters 与 CLI 执行路径仍待后续迁移。
+完整范围与独立安全审阅缺口见 [P2.3a 验收](../validation/g3-capability-broker.md)。
+
 ### SEC-001 插件包与发布者伪造
 
 - 入口：市场/目录/外部包到安装、加载；高危，open（Tampering/Spoofing）

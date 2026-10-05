@@ -8,6 +8,11 @@
 
 ## 背景
 
+2026-10-05 P2.3a 为验证 Runtime 新增 T1 内存策略 broker 与不可序列化的
+Host runner session；敏感操作在无 grant 时继续拒绝，没有新增第三方执行域。
+见 [基础验收](../validation/g3-capability-broker.md)。持久授权、实际能力 adapter
+与 T2/T3/TL 平台隔离仍由后续 gate 验收，普通子进程的信任等级不变。
+
 同一 JavaScript realm 中的依赖注入、React ErrorBoundary 和 key 前缀只能约束
 合作代码，不能隔离恶意代码。当前外部模块在校验 manifest 前已执行，Desktop
 HTML iframe 也不是经过认证的插件沙箱。证据见

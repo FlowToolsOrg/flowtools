@@ -178,6 +178,9 @@ JobReceipt。consumer 不把 receipt 解析为 `PluginExecutionResult`。
 
 ### P2.3a / P2.4a 默认拒绝与效果授权
 
+P2.3a 已交付 T1 验证 Runtime 的内存策略 broker，见
+[基础验收](./validation/g3-capability-broker.md)。当前仍只执行纯 T1，敏感 IO、
+持久 grants 与管理入口未开放；G3 整体仍 pending。
 实施先完成 P2.3a broker，再完成 P2.6a 迁移与单写者基础，最后交付 P2.4a
 持久 grants；不得为权限临时建立第二套无迁移数据库。
 

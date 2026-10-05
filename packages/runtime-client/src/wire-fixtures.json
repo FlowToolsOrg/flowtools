@@ -1971,6 +1971,71 @@
       }
     }
   ],
+  "operations": [
+    {
+      "operation": "file-read",
+      "parameters": {
+        "handle": "host-handle"
+      }
+    },
+    {
+      "operation": "file-create",
+      "parameters": {
+        "handle": "host-handle"
+      }
+    },
+    {
+      "operation": "file-replace",
+      "parameters": {
+        "handle": "host-handle"
+      }
+    },
+    {
+      "operation": "file-delete",
+      "parameters": {
+        "handle": "host-handle"
+      }
+    },
+    {
+      "operation": "network-read",
+      "parameters": {
+        "method": "HEAD",
+        "origin": "https://example.invalid:443"
+      }
+    },
+    {
+      "operation": "network-send",
+      "parameters": {
+        "method": "POST",
+        "origin": "https://example.invalid:443"
+      }
+    },
+    {
+      "operation": "data-read",
+      "parameters": {
+        "key": "todos"
+      }
+    },
+    {
+      "operation": "data-write",
+      "parameters": {
+        "key": "todos"
+      }
+    },
+    {
+      "operation": "clipboard-read"
+    },
+    {
+      "operation": "clipboard-write"
+    },
+    {
+      "operation": "tool-execute",
+      "parameters": {
+        "action": "probe",
+        "lock": "host-lock"
+      }
+    }
+  ],
   "request": {
     "call": {
       "method": "jobs.submit",
@@ -2054,6 +2119,56 @@
       "outcome": {
         "data": {
           "code": "APPROVAL_REQUIRED"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "INTERACTION_REQUIRED"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "CAPABILITY_UNDECLARED"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "SCOPE_DENIED"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "GRANT_REVOKED"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "BUDGET_EXCEEDED"
         },
         "type": "error"
       },

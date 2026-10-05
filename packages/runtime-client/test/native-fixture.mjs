@@ -78,6 +78,36 @@ try {
   })
   await cli.connect(cliToken)
   await desktop.connect(desktopToken)
+  const beforeDenied = await cli.call({ method: 'runtime.status' })
+  for (const pluginId of ['plugin-todo-list', 'plugin-website-latency']) {
+    await assert.rejects(
+      cli.submit({
+        pluginId,
+        commandId: 'run',
+        input: {},
+        idempotencyKey: 'broker-denied-' + pluginId,
+        background: false,
+        deadline: Date.now() + 10000,
+      }),
+      { code: 'APPROVAL_REQUIRED' }
+    )
+  }
+  assert.deepEqual(await cli.call({ method: 'runtime.status' }), beforeDenied)
+  // Wire callers cannot grant themselves an operation or create runner bindings.
+  for (const method of ['permissions.grant', 'capabilities.invoke']) {
+    const denied = await rawExchange(ready.pipe, {
+      version: 1,
+      requestId: 'broker-spoof',
+      session: null,
+      call: {
+        method,
+        payload: { pluginId: 'plugin-todo-list', granted: true, epoch: 0 },
+      },
+    })
+    partial(denied, {
+      outcome: { type: 'error', data: { code: 'INVALID_REQUEST' } },
+    })
+  }
   const obsolete = new RuntimeClient(await connectNamedPipe(ready.pipe))
   await assert.rejects(obsolete.connect(cliToken, 'old-instance'), {
     code: 'INSTANCE_MISMATCH',

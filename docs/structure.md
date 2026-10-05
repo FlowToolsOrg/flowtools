@@ -7,7 +7,8 @@ G2 已新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps
 （无界面运行服务）、`packages/runtime-client`（生成 DTO 的 TS 客户端）和
 `packages/plugin-runner`（受管执行入口）。这些目录已交付 G2 的固定 T1 / 可丢弃 profile 验证基础；G3 授权与用户数据迁移尚未交付。
 SDK 已有命令/Manifest；服务依赖和异步 data 契约留待后续。Rust core 当前管理
-验证任务；broker、单写者数据、服务锁及工具 artifact/lease/GC 仍为后续目标。
+验证任务与 P2.3a T1 内存策略 broker；单写者数据、持久 grants、服务锁及工具
+artifact/lease/GC 仍为后续目标。
 专用 Desktop 与 Node 客户端已使用同一验证服务。
 普通受管 T1 runner 不是 T3 sandbox，Web 原型不自动连接本机服务。
 
@@ -342,3 +343,19 @@ Completed workspace tasks follow the automatic feature-branch push and PR
 workflow authorized on 2026-10-05 in [AGENTS.md](../AGENTS.md). Preserve applicable
 quality gates and focused commits, and return the PR link and current status.
 Merging, deployment and repository settings require separate authorization.
+
+## G3 P2.3a capability broker foundation
+
+The validation Runtime now uses a T0-owned T1 policy broker with Host-bound
+caller/package/command identity, separate effects and operation scopes, revocation
+epochs, expiry and per-run call budgets. Runner sessions are opaque, checked before
+launch and during execution, and cleaned on cancellation/completion. Rust-derived
+operation descriptors and rejection codes have cross-language schema fixtures.
+
+Approvals are transient Rust Host APIs, absent from the wire. Pure T1 validation
+continues; sensitive IO and ordinary Runtime startup remain denied. Persistent
+grants, shared user data, GUI/CLI migration and independent distribution remain
+pending G3 subitems. Existing Desktop/Web adapters are not replaced by this step.
+File/tool descriptors are not IO implementations; network origin checks are not
+DNS/redirect enforcement. Maturity stays prototype and SEC risks remain open.
+Evidence: [P2.3a scope and validation](./validation/g3-capability-broker.md).

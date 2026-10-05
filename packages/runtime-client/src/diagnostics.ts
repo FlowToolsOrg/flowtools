@@ -25,6 +25,17 @@ const explanations = {
     '此操作需要授权',
     '验证模式只允许纯内置命令，授权功能尚未交付。',
   ],
+  INTERACTION_REQUIRED: ['此命令需要界面交互', '选择支持 headless 的命令。'],
+  CAPABILITY_UNDECLARED: [
+    '命令未声明此能力操作',
+    '检查命令效果与 operation 声明，声明不能替代授权。',
+  ],
+  SCOPE_DENIED: ['参数超出授权范围', '使用已批准的资源，或主动申请新的范围。'],
+  GRANT_REVOKED: [
+    '授权已撤销或过期',
+    '查询任务结果；重新批准后主动发起新任务。',
+  ],
+  BUDGET_EXCEEDED: ['操作超过资源预算', '减少调用次数或使用获准的资源预算。'],
   PLUGIN_NOT_FOUND: [
     '插件或命令不在固定清单中',
     '检查插件 ID 和命令 ID，并构建内置插件。',

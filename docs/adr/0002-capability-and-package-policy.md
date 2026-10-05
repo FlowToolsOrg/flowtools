@@ -127,6 +127,11 @@ query/token 的 URL；限制体积、保留期与导出范围。授权/撤销/�
 
 ## 当前实现
 
+- P2.3a 已新增验证 Runtime 的 T1 内存策略 broker，Host 绑定命令身份并逐项
+  检查声明、grant、scope、epoch 和预算；授权管理与敏感 IO 尚未开放。
+  [验收与拒绝证据](../validation/g3-capability-broker.md)。此基础不改变本文
+  production 默认拒绝策略；持久授权与数据仍等待 P2.6a/P2.4a。
+
 - 没有可用于 production 的包签名、Host 范围准入、持久 grant 或 Rust broker。
 - Desktop FS adapter 透传路径给官方插件；仍受其 permission/scope 限制，
   但 SDK 未绑定 per-plugin scope，不能宣称已能读任意 OS 文件或已隔离。

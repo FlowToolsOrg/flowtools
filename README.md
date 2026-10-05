@@ -742,3 +742,19 @@ The maintainer authorized automatic feature-branch push and PR creation on
 link with current validation/review status. Follow the standing authorization in
 [AGENTS.md](./AGENTS.md); merging, deployment and repository settings require
 separate authorization.
+
+## G3 P2.3a capability broker foundation
+
+The validation Runtime now uses a T0-owned T1 policy broker with Host-bound
+caller/package/command identity, separate effects and operation scopes, revocation
+epochs, expiry and per-run call budgets. Runner sessions are opaque, checked before
+launch and during execution, and cleaned on cancellation/completion. Rust-derived
+operation descriptors and rejection codes have cross-language schema fixtures.
+
+Approvals are transient Rust Host APIs, absent from the wire. Pure T1 validation
+continues; sensitive IO and ordinary Runtime startup remain denied. Persistent
+grants, shared user data, GUI/CLI migration and independent distribution remain
+pending G3 subitems. Existing Desktop/Web adapters are not replaced by this step.
+File/tool descriptors are not IO implementations; network origin checks are not
+DNS/redirect enforcement. Maturity stays prototype and SEC risks remain open.
+Evidence: [P2.3a scope and validation](./docs/validation/g3-capability-broker.md).

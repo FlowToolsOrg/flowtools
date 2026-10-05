@@ -36,9 +36,13 @@
       "persistent": true
     },
     "@flowtools/runtime-core#build": {
+      "dependsOn": ["^build"],
+      "passThroughEnv": ["CARGO_TARGET_DIR"],
       "cache": false
     },
     "@flowtools/runtime#build": {
+      "dependsOn": ["^build"],
+      "passThroughEnv": ["CARGO_TARGET_DIR"],
       "cache": false
     }
   }

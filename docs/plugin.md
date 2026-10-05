@@ -766,6 +766,11 @@ Explicit validation refuses incorrect native identity before plugins/database IO
 
 ## Plugin change delivery
 
+Run `build:packages` before lint/types in fresh checkouts; it also builds the
+Runtime client consumed through declared package exports by native validation.
+Git pins the three Rust-derived Runtime source artifacts to LF; generation must
+retain the final clean-worktree gate without staging or accepting content drift.
+
 Completed plugin tasks follow the automatic feature-branch push and PR workflow
 authorized on 2026-10-05 in [AGENTS.md](../AGENTS.md). Include applicable plugin
 validation and security-review evidence in the PR; pending reviews remain

@@ -7,10 +7,9 @@ import { tmpdir } from 'node:os'
 import { resolve, join } from 'node:path'
 import { createInterface } from 'node:readline'
 
+import { RuntimeClient } from '@flowtools/runtime-client'
+import { connectNamedPipe } from '@flowtools/runtime-client/node'
 import { chromium } from 'playwright'
-
-import { RuntimeClient } from '../../../packages/runtime-client/dist/index.js'
-import { connectNamedPipe } from '../../../packages/runtime-client/dist/node.js'
 
 import { assertRuntimeValidationPreflight } from './runtime-validation-preflight.ts'
 

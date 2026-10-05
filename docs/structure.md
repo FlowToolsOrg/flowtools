@@ -333,6 +333,11 @@ Explicit validation refuses incorrect native identity before plugins/database IO
 
 ## Workspace change delivery
 
+`build:packages` includes the Runtime client required by Desktop and the
+`apps/ui-test` native harness. The harness declares its workspace dependency and
+uses public exports. `.gitattributes` pins the three Rust-derived Runtime source
+artifacts to LF so fresh Windows checkout and codegen agree.
+
 Completed workspace tasks follow the automatic feature-branch push and PR
 workflow authorized on 2026-10-05 in [AGENTS.md](../AGENTS.md). Preserve applicable
 quality gates and focused commits, and return the PR link and current status.

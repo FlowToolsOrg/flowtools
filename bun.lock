@@ -94,6 +94,7 @@
         "tailwindcss": "catalog:",
       },
       "devDependencies": {
+        "@flowtools/runtime-client": "workspace:*",
         "@tailwindcss/vite": "^4.2.4",
         "@types/node": "catalog:",
         "@types/react": "catalog:",

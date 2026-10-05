@@ -62,12 +62,19 @@ Run from repository root:
 - `pwsh -NoProfile -File scripts/check-ci.ps1`: run the Windows CI gates from a
   clean checkout; each native nonzero exit terminates the task and generated
   tracked/untracked file drift fails validation.
-- `bun run build:packages`: bootstrap SDK/UI/CLI/plugins declaration artifacts
+- `bun run build:packages`: bootstrap SDK/UI/CLI/plugins/Runtime client artifacts
   before lint/type checks in a fresh checkout.
 - `bun run generate:hosts`: generate Web/Desktop route trees and Desktop Rust
   command bindings before lint/type checks in a fresh checkout. Never replace
   Rust-derived bindings with handwritten DTO copies. Bindings generation uses
   a codegen-only binary and mock runtime, not desktop launch or user databases.
+- Runtime client consumers must declare their workspace dependency and use its
+  public exports. Bootstrap its artifacts before lint/types in a fresh checkout.
+  The three Rust-derived Runtime source artifacts have explicit LF Git attributes
+  so Windows CRLF checkout plus LF codegen leaves the worktree clean. Preserve
+  the content-drift gate; do not refresh/stage generated files to bypass it.
+  Package-specific uncached native build tasks must explicitly retain `^build`
+  and `CARGO_TARGET_DIR` passthrough; Turbo overrides do not inherit them.
 - `bun run dev`: starts workspace `dev` tasks via Turbo.
 - `bun run build`: builds workspaces (`turbo run build`).
 - `bun run lint`: runs workspace lint tasks.

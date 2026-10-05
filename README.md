@@ -732,6 +732,11 @@ Explicit validation refuses incorrect native identity before plugins/database IO
 
 ## Project PR delivery
 
+Clean-checkout CI bootstraps the Runtime client with `build:packages` before
+lint/types. Validation scripts use its declared workspace exports. Rust-derived
+Runtime source artifacts have explicit LF Git attributes; codegen must leave no
+content drift under Windows CRLF checkout.
+
 The maintainer authorized automatic feature-branch push and PR creation on
 2026-10-05. Completed tasks include applicable checks, focused commits and a PR
 link with current validation/review status. Follow the standing authorization in

@@ -687,6 +687,11 @@ Explicit validation refuses incorrect native identity before plugins/database IO
 
 ## Architecture change delivery
 
+Clean-checkout bootstrapping includes the Runtime client before consumer
+lint/types. The validation harness imports its declared package exports.
+Rust-derived Runtime artifacts use explicit LF Git attributes, preserving the
+read-only generation and final clean-worktree gates on Windows.
+
 Architecture changes follow the automatic feature-branch push and PR workflow
 authorized on 2026-10-05 in [AGENTS.md](./AGENTS.md). Keep evidence and pending
 security review visible in the PR; publication of a PR does not advance maturity

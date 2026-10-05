@@ -1846,6 +1846,17 @@ Debug DB reset remains an open risk, with no claim of user-data recovery.
 
 ### Project PR delivery authorization
 
+G2 CI follow-up: a clean Windows checkout exposed missing Runtime client build
+prerequisites and CRLF/LF stat drift in three generated artifacts. Bootstrap now
+includes the client, validation imports declared package exports, and explicit
+LF Git attributes align checkout/codegen. CI regressions retain fatal lint and
+content-drift rejection; this does not advance maturity or close security risks.
+The clean run also exposed missing `^build` on package-specific uncached native
+tasks; they now retain runner/core prerequisites, verified with Turbo's actual
+dry-run dependency graph.
+The same overrides explicitly retain `CARGO_TARGET_DIR` passthrough, without
+loosening strict environment mode or enabling native task caching.
+
 2026-10-05: the maintainer authorized automatic feature-branch pushes and PR
 creation for completed project tasks. Follow [AGENTS.md](../AGENTS.md), retain
 one focused commit per completed milestone, report applicable checks and pending

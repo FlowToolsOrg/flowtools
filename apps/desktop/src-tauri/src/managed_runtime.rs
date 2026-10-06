@@ -396,21 +396,21 @@ pub async fn managed_runtime_control<R: tauri::Runtime>(
         if encoded.len() > 8192 {
             return Err(error(ErrorCode::FrameTooLarge));
         }
-        let app = window.app_handle().clone();
-        let approved = tokio::task::spawn_blocking(move || {
-            app.dialog()
-                .message(format!(
-                    "批准此 Runtime 操作？\n{}\n停止 Runtime 会取消所有活动任务。",
-                    encoded
-                ))
-                .title("FlowTools Runtime approval")
-                .buttons(MessageDialogButtons::OkCancel)
-                .blocking_show()
-        })
-        .await
-        .map_err(|_| error(ErrorCode::InteractionRequired))?;
-        if !approved {
-            return Err(error(ErrorCode::ApprovalRequired));
+        let prompts = crate::managed_approval::runtime_prompts(&call, initialize).map_err(error)?;
+        for prompt in prompts {
+            let app = window.app_handle().clone();
+            let approved = tokio::task::spawn_blocking(move || {
+                app.dialog()
+                    .message(prompt)
+                    .title("FlowTools Runtime approval")
+                    .buttons(MessageDialogButtons::OkCancel)
+                    .blocking_show()
+            })
+            .await
+            .map_err(|_| error(ErrorCode::InteractionRequired))?;
+            if !approved {
+                return Err(error(ErrorCode::ApprovalRequired));
+            }
         }
     }
     let (mut pipe, proof, child) = manager(profile, initialize).await?;
@@ -441,11 +441,17 @@ pub async fn managed_runtime_storage<R: tauri::Runtime>(
 ) -> Result<StorageReport, RuntimeError> {
     let profile = check(&window)?;
     flowtools_runtime_core::recovery::validate_action(&action).map_err(error)?;
-    if !matches!(action, StorageAction::List) {
-        let encoded =
-            serde_json::to_string(&action).map_err(|_| error(ErrorCode::InvalidRequest))?;
+    if let Some(prompt) = crate::managed_approval::storage_prompt(&action).map_err(error)? {
         let app = window.app_handle().clone();
-        let approved = tokio::task::spawn_blocking(move || app.dialog().message(format!("批准离线数据操作？\n{encoded}\n恢复会回滚数据、撤销全部授权并中断未完成任务。原数据将保留；不会自动重放任务。请先停止 Runtime。")) .title("FlowTools storage approval").buttons(MessageDialogButtons::OkCancel).blocking_show()).await.map_err(|_|error(ErrorCode::InteractionRequired))?;
+        let approved = tokio::task::spawn_blocking(move || {
+            app.dialog()
+                .message(prompt)
+                .title("FlowTools storage approval")
+                .buttons(MessageDialogButtons::OkCancel)
+                .blocking_show()
+        })
+        .await
+        .map_err(|_| error(ErrorCode::InteractionRequired))?;
         if !approved {
             return Err(error(ErrorCode::ApprovalRequired));
         }

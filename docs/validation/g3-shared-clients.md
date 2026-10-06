@@ -23,6 +23,13 @@ native memory. The business allowlist cannot reach management APIs. Native
 Dialog confirmation owns initialization/grants/cold policy/full stop. Revocation
 is immediate. DEV/main/configured-origin checks reject external windows/origins;
 release distribution is intentionally denied until its packaging gate exists.
+Native consent uses short labelled fields instead of a single JSON line.
+Identical GUI/CLI grants share one prompt with both callers shown; different
+scopes or background rights stay separate. Long values are wrapped and paged,
+with no policy import until every page is confirmed. Cancelling any page aborts
+the whole import before the manager opens. Initialize, stop, backup, restore and
+retry explain their own effects. Scope, exact digest, expiry, call budget and
+cold/background flags remain visible; credentials and business inputs are absent.
 Desktop depends on the Runtime workspace so builds/tests cannot race its native
 bootstrap artifact. Wire client 0.2.0 rejects old 0.1.0 at handshake; no DB schema
 change is required. This is not a third-party sandbox or a signed release.

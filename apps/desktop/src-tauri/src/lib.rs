@@ -4,6 +4,8 @@ mod db;
 mod dto;
 mod error;
 #[cfg(windows)]
+mod managed_approval;
+#[cfg(windows)]
 mod managed_runtime;
 mod models;
 mod repositories;

@@ -82,7 +82,8 @@ now live in Runtime tests, with explicit grants and a fresh managed profile.
 The SDK library adapter still tests actual built plugins with controlled context.
 
 P1.4b implementation and automated/native shared-client scope are delivered.
-Native consent clicking is still pending because Windows Computer Use is
-unavailable. The PR stays Draft; no manual waiver, independent security approval,
+Native consent clicking, actual cold start and recovery state refresh passed the
+2026-10-06 [Computer Use acceptance](g3-desktop-acceptance-fixes.md).
+The PR stays Draft; no manual waiver, independent security approval,
 NVDA, other platform, signed release or third-party isolation is claimed.
-P1.5b is the next independently committed implementation item.
+P1.5b implementation is recorded in the [recovery evidence](g3-diagnostics-recovery.md).

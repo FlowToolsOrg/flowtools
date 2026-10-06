@@ -823,7 +823,9 @@ work belongs to Runtime. Native Todo uses async revisions/CAS and no client
 persistent store; original local prototype data remains for deliberate import.
 
 See [shared client evidence](docs/validation/g3-shared-clients.md). All scopes stay
-prototype, with independent security review and native consent acceptance pending.
+prototype. Windows native consent and recovery UI fixes have actual
+[acceptance evidence](docs/validation/g3-desktop-acceptance-fixes.md);
+independent security review remains pending.
 
 ### G3 P1.5b diagnostics and offline recovery
 
@@ -844,5 +846,5 @@ through diagnosis, while quarantined outputs expire; new runs retain normal resu
 Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
 
 See [diagnostic/recovery evidence](docs/validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
-security review, actual native consent clicks, assistive technology and other
-platform acceptance are pending; these checks do not authorize production.
+security review, assistive technology and other platform acceptance are pending;
+these checks do not authorize production.

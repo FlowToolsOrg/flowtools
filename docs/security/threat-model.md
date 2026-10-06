@@ -35,6 +35,17 @@ session。Rust/TS operation schema 拒绝 raw path/SQL/argv/namespace/身份注�
 或第三方 sandbox；既有 Web/Desktop adapters 与 CLI 执行路径仍待后续迁移。
 完整范围与独立安全审阅缺口见 [P2.3a 验收](../validation/g3-capability-broker.md)。
 
+2026-10-06 G3 Desktop 修复补充了
+[原生授权与恢复实窗证据](../validation/g3-desktop-acceptance-fixes.md)。
+[内部确认格式化与拒绝测试](../../apps/desktop/src-tauri/src/managed_approval.rs)
+覆盖完整 scope/调用方、分页取消前统一确认、控制字符和非法操作拒绝；
+[真实冷启动回归](../../apps/desktop/src-tauri/src/managed_runtime.rs)
+保持未授权拒绝，并消除成功 helper 等待后台 stderr EOF 的假超时。
+[恢复 UI 回归](../../apps/ui-test/src/test/runtime/managed-runtime-panel.test.tsx)
+验证真实策略重读、失败清除旧授权/回执、取消不改变原状态和无自动写入重试。
+既有 origin/identity/allowlist 与持久策略边界不变，不新增原生入口或第三方执行。
+SEC-002/003/004/006/009/010/013/015 均继续 open；独立安全审阅仍待维护者完成。
+
 ### SEC-001 插件包与发布者伪造
 
 - 入口：市场/目录/外部包到安装、加载；高危，open（Tampering/Spoofing）

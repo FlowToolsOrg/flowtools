@@ -5,6 +5,7 @@ import type {
   RuntimeStatus,
   RunDiagnostic,
   StorageReport,
+  StorageAction,
 } from '@flowtools/runtime-client'
 
 import { useEffect, useState } from 'react'
@@ -12,6 +13,7 @@ import { useEffect, useState } from 'react'
 import {
   describeRuntimeError,
   RuntimeExecutionError,
+  RuntimeClientError,
   withSubmittedRuntimeJob,
 } from '@flowtools/runtime-client'
 
@@ -30,6 +32,7 @@ export function ManagedRuntimePanel() {
   const [status, setStatus] = useState<RuntimeStatus>()
   const [jobs, setJobs] = useState<JobSnapshot[]>([])
   const [permissions, setPermissions] = useState<PermissionRecord[]>([])
+  const [permissionsUnverified, setPermissionsUnverified] = useState(false)
   const [message, setMessage] = useState('尚未连接')
   const [busy, setBusy] = useState(false)
   const [pluginId, setPluginId] = useState('plugin-todo-list')
@@ -38,11 +41,24 @@ export function ManagedRuntimePanel() {
   const [diagnostic, setDiagnostic] = useState<RunDiagnostic>()
   const [storage, setStorage] = useState<StorageReport>()
   const [backupId, setBackupId] = useState('')
-  const report = (error: unknown) => {
+  const report = (error: unknown, domain: 'runtime' | 'task') => {
     const diagnostic = describeRuntimeError(error)
+    if (diagnostic.code === 'TIMEOUT' && domain === 'runtime') {
+      setMessage(
+        'TIMEOUT：Runtime 连接或管理操作等待超时；操作可能已生效，请刷新核对当前状态和授权。不会自动重试写入。'
+      )
+      return
+    }
     setMessage(
       `${diagnostic.code}：${diagnostic.summary}；${diagnostic.action}${error instanceof RuntimeExecutionError ? `；原幂等键 ${error.idempotencyKey}${error.runId ? `；runId ${error.runId}` : ''}` : ''}`
     )
+  }
+  const refreshPermissions = async () => {
+    const grants = await controlManagedRuntime({ method: 'permissions.list' })
+    if (grants.type !== 'permissions')
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    setPermissions(grants.data)
+    setPermissionsUnverified(false)
   }
   const refresh = async () => {
     const client = await connectManagedRuntime()
@@ -50,21 +66,63 @@ export function ManagedRuntimePanel() {
       const outcome = await client.call({ method: 'runtime.status' })
       if (outcome.type === 'status') setStatus(outcome.data)
       setJobs(await client.jobs())
-      const grants = await controlManagedRuntime({ method: 'permissions.list' })
-      if (grants.type === 'permissions') setPermissions(grants.data)
+      await refreshPermissions()
       setMessage('已连接共享 Runtime')
     } finally {
       client.close()
     }
   }
-  const action = async (run: () => Promise<void>) => {
+  const action = async (
+    run: () => Promise<void>,
+    domain: 'runtime' | 'task' = 'runtime'
+  ) => {
     setBusy(true)
     try {
       await run()
     } catch (error) {
-      report(error)
+      report(error, domain)
     } finally {
       setBusy(false)
+    }
+  }
+  const invalidateRuntimeView = () => {
+    setStatus(undefined)
+    setJobs([])
+    setDiagnostic(undefined)
+    setPermissions([])
+    setPermissionsUnverified(true)
+  }
+  const recover = async (
+    operation: Extract<StorageAction, { operation: 'restore' | 'retry' }>
+  ) => {
+    let recovered: StorageReport
+    try {
+      recovered = await storageManagedRuntime(operation)
+    } catch (error) {
+      // Consent cancellation changes nothing. Other failures may follow a partial
+      // replacement/revocation; cached approvals must not claim current authority.
+      if (describeRuntimeError(error).code !== 'APPROVAL_REQUIRED') {
+        invalidateRuntimeView()
+        setStorage(undefined)
+        setBackupId('')
+      }
+      throw error
+    }
+    setStorage(recovered)
+    invalidateRuntimeView()
+    setMessage(
+      recovered.recovery?.phase === 'complete'
+        ? recovered.recovery.grantsRevoked
+          ? '恢复已完成并撤销原授权；核对数据和当前授权后重新批准。'
+          : '恢复已完成；请核对数据和当前授权。'
+        : '恢复尚未完成；请核对恢复记录后继续。'
+    )
+    try {
+      // This is the T0 read-only policy query, not a business/cold-start connection.
+      await refreshPermissions()
+    } catch {
+      // Keep the completed recovery receipt while showing authority as unverified.
+      setPermissionsUnverified(true)
     }
   }
   useEffect(() => {
@@ -100,7 +158,14 @@ export function ManagedRuntimePanel() {
         background,
       })),
     }
-    await controlManagedRuntime({ method: 'policy.import', payload: policy })
+    const approved = await controlManagedRuntime({
+      method: 'policy.import',
+      payload: policy,
+    })
+    if (approved.type !== 'permissions')
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    setPermissions(approved.data)
+    setPermissionsUnverified(false)
     await refresh()
   }
   return (
@@ -230,11 +295,16 @@ export function ManagedRuntimePanel() {
                 }
               )
               await refresh()
-            })
+            }, 'task')
           }
         >
           提交任务
         </Button>
+        {permissionsUnverified && (
+          <p role="status" data-testid="managed-permissions-status">
+            当前授权状态尚未核对；请刷新后再操作。
+          </p>
+        )}
         <ul aria-label="Runtime 授权" className="space-y-2">
           {permissions.map(record => (
             <li key={`${record.identity.pluginId}-${record.identity.caller}`}>
@@ -380,14 +450,7 @@ export function ManagedRuntimePanel() {
                 !storage?.recovery ||
                 storage.recovery.phase === 'complete'
               }
-              onPress={() =>
-                void action(async () => {
-                  setStorage(
-                    await storageManagedRuntime({ operation: 'retry' })
-                  )
-                  setMessage('原恢复已完成；请重新批准授权')
-                })
-              }
+              onPress={() => void action(() => recover({ operation: 'retry' }))}
             >
               继续未完成恢复
             </Button>
@@ -421,17 +484,12 @@ export function ManagedRuntimePanel() {
             variant="danger"
             isDisabled={busy || !backupId}
             onPress={() =>
-              void action(async () => {
-                setStorage(
-                  await storageManagedRuntime({
-                    operation: 'restore',
-                    parameters: { backupId },
-                  })
-                )
-                setStatus(undefined)
-                setJobs([])
-                setMessage('已恢复并撤销全部授权；核对数据后重新批准')
-              })
+              void action(() =>
+                recover({
+                  operation: 'restore',
+                  parameters: { backupId },
+                })
+              )
             }
           >
             恢复所选备份

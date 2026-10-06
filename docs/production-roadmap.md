@@ -9,7 +9,7 @@
 > 2026-10-04 产品决策：面向知识工作者/普通办公用户，GUI 与外部 agents
 > 共用命令；支持独立 CLI、轻量后台内核、集中管理和共享二进制工具依赖。
 > 低代码、内置 AI 助手与模型接入保留为未来插件。具体顺序与实现见
-> [下一阶段目标与实施设计](./next-milestones.md)。G1、G2 固定验证范围已完成；G3 七项已实现为 Windows/T1 prototype，独立安全审阅和原生确认验收仍 pending；G4–G8 尚待实施。
+> [下一阶段目标与实施设计](./next-milestones.md)。G1、G2 固定验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认和恢复修复已实窗复验，独立安全审阅与辅助技术验收仍 pending；G4–G8 尚待实施。
 
 本文档是 FlowTools 从 Demo 级原型走向生产版本的执行台账。它不以
 “页面已存在”或“类型已定义”作为完成标准，而以真实执行、失败可恢复、
@@ -1943,7 +1943,9 @@ work belongs to Runtime. Native Todo uses async revisions/CAS and no client
 persistent store; original local prototype data remains for deliberate import.
 
 See [shared client evidence](validation/g3-shared-clients.md). All scopes stay
-prototype, with independent security review and native consent acceptance pending.
+prototype. Windows native consent and recovery UI fixes have actual
+[acceptance evidence](validation/g3-desktop-acceptance-fixes.md);
+independent security review remains pending.
 
 ### G3 P1.5b diagnostics and offline recovery
 
@@ -1964,5 +1966,5 @@ through diagnosis, while quarantined outputs expire; new runs retain normal resu
 Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
 
 See [diagnostic/recovery evidence](validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
-security review, actual native consent clicks, assistive technology and other
-platform acceptance are pending; these checks do not authorize production.
+security review, assistive technology and other platform acceptance are pending;
+these checks do not authorize production.

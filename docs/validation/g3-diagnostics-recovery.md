@@ -77,8 +77,10 @@ Actual crash/revoke diagnostic coverage remains in jobs-fixture.mjs.
 Native UI uses `node apps/ui-test/scripts/validate-managed-hosts.ts` after building
 the dedicated config, preflight identity and fresh private test database. It checks
 initial launcher, shared real runs/data, actual metadata-only diagnostic and routing.
-Native consent clicks remain unverified: fixture grants are explicit CLI T0 setup,
-not confirmation evidence. NVDA, other platforms, signed distribution, same-account
+Fixture grants are explicit CLI T0 setup, not confirmation evidence. Separate
+2026-10-06 [Computer Use acceptance](g3-desktop-acceptance-fixes.md) verifies actual
+native confirmation/cancellation, restore failure and same-journal retry with
+fresh policy records. NVDA, other platforms, signed distribution, same-account
 compromise protection and independent security review remain pending.
 
 2026-10-06: all eleven uncached root test and forced build tasks passed in
@@ -101,4 +103,4 @@ The final Desktop status text fix clears an earlier busy error after a successfu
 backup list, and the actual Native harness verifies that message.
 
 No risk or maturity label is advanced by passing these checks. Independent security
-review, actual Native consent clicks, NVDA and other platform acceptance remain pending.
+review, NVDA and other platform acceptance remain pending.

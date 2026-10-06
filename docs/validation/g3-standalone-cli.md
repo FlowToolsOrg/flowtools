@@ -62,3 +62,10 @@ contract/manifest/docs/catalog checks and production artifact refusal also pass.
 The new 300-second process integration budget includes bundle compilation and
 all fifty independent launchers; it does not change the 30/10-second startup
 lock/handshake limits or ordinary unit-test budgets. Remote CI is tracked in PR.
+
+Windows path regression: native executable/bootstrap reads now check each
+ancestor for redirection and canonicalize regular files, accepting legitimate
+DOS short-name aliases used by runner temporary profiles. Junction and size
+rejections remain covered; bounded native startup codes propagate without raw
+stderr. The first remote P1.4a gate failed initialization and is rerun after
+this correction; local evidence above does not imply remote acceptance.

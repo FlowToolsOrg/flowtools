@@ -43,10 +43,18 @@ test('compiled CLI initializes without GUI, requires interaction or explicit pol
     (await run(['init', '--interactive', '--profile', profile])).value.error
       ?.code
   ).toBe('INTERACTION_REQUIRED')
-  expect(
-    (await run(['init', '--policy', policy, '--profile', profile])).value
-      .success
-  ).toBe(true)
+  const initialized = await run([
+    'init',
+    '--policy',
+    policy,
+    '--profile',
+    profile,
+  ])
+  expect(initialized).toMatchObject({
+    code: 0,
+    stderr: '',
+    value: { success: true },
+  })
   const bootstrapBefore = await readFile(
     join(profile, 'bootstrap.json'),
     'utf8'

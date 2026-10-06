@@ -3,7 +3,7 @@ import type { Call, PermissionGrant } from '@flowtools/runtime-client'
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { once } from 'node:events'
-import { lstat, readFile, realpath } from 'node:fs/promises'
+import { lstat, readFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { createInterface } from 'node:readline'
 import { createInterface as createPrompt } from 'node:readline/promises'
@@ -14,6 +14,7 @@ import { connectNamedPipe } from '@flowtools/runtime-client/node'
 import { Command } from 'commander'
 
 import { connectHost } from './host'
+import { regularFile } from './regular-file'
 
 declare const __FLOWTOOLS_NATIVE_BUILD_PATH__: string
 declare const __FLOWTOOLS_BUNDLE_RUNTIME_LOCK__: {
@@ -35,7 +36,7 @@ export async function runtimeExecutable(): Promise<string> {
     typeof __FLOWTOOLS_BUNDLE_RUNTIME_LOCK__ === 'object'
       ? __FLOWTOOLS_BUNDLE_RUNTIME_LOCK__
       : null
-  const path = lock
+  const candidate = lock
     ? fileURLToPath(new URL('../../../' + lock.path, import.meta.url))
     : typeof __FLOWTOOLS_NATIVE_BUILD_PATH__ === 'string'
       ? __FLOWTOOLS_NATIVE_BUILD_PATH__
@@ -45,13 +46,7 @@ export async function runtimeExecutable(): Promise<string> {
             import.meta.url
           )
         )
-  const stat = await lstat(path)
-  if (
-    !stat.isFile() ||
-    stat.isSymbolicLink() ||
-    (await realpath(path)).toLowerCase() !== path.toLowerCase()
-  )
-    throw new Error('SETUP_REQUIRED')
+  const path = await regularFile(candidate)
   if (
     lock &&
     createHash('sha256')
@@ -63,15 +58,7 @@ export async function runtimeExecutable(): Promise<string> {
 }
 
 export async function readBootstrap(profile: string) {
-  const path = join(profile, 'bootstrap.json')
-  const stat = await lstat(path)
-  if (
-    !stat.isFile() ||
-    stat.isSymbolicLink() ||
-    stat.size > 2048 ||
-    (await realpath(path)).toLowerCase() !== path.toLowerCase()
-  )
-    throw new Error('INVALID_REQUEST')
+  const path = await regularFile(join(profile, 'bootstrap.json'), 2048)
   const value: unknown = JSON.parse(await readFile(path, 'utf8'))
   if (
     !value ||
@@ -127,6 +114,11 @@ export async function startManagement(profile: string, initialize: boolean) {
     }
   )
   const exited = once(child, 'exit')
+  // Native startup emits only a stable code. Never return arbitrary stderr.
+  let failure = ''
+  child.stderr.on('data', (bytes: Buffer) => {
+    if (failure.length < 256) failure += bytes.toString('utf8')
+  })
   const lines = createInterface({ input: child.stdout })
   let client: RuntimeClient | undefined
   const timeout = setTimeout(() => child.kill(), 10000)
@@ -144,7 +136,9 @@ export async function startManagement(profile: string, initialize: boolean) {
         return { pipe: value.pipe }
       }),
       exited.then(() => {
-        throw new Error('SETUP_REQUIRED')
+        throw new Error(
+          /^[A-Z_]+\s*$/.test(failure) ? failure.trim() : 'SETUP_REQUIRED'
+        )
       }),
     ])
     client = new RuntimeClient(await connectNamedPipe(ready.pipe))

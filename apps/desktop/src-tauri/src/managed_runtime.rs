@@ -152,21 +152,26 @@ async fn native_output(
     let mut errors = BufReader::new(stderr.take(256));
     let mut failure = String::new();
     let mut line = String::new();
-    let (read, status, _) = tokio::time::timeout(std::time::Duration::from_secs(45), async {
-        tokio::join!(
-            reader.read_line(&mut line),
-            child.wait(),
-            errors.read_line(&mut failure)
-        )
+    tokio::time::timeout(std::time::Duration::from_secs(45), async {
+        let (read, status) = tokio::join!(reader.read_line(&mut line), child.wait());
+        read.map_err(|_| error(ErrorCode::RuntimeDisconnected))?;
+        let status = status.map_err(|_| error(ErrorCode::RuntimeDisconnected))?;
+        // A detached Host can retain an inherited stderr handle after the helper
+        // exits. Successful helpers have no diagnostic stderr to wait for.
+        if !status.success() {
+            errors
+                .read_line(&mut failure)
+                .await
+                .map_err(|_| error(ErrorCode::RuntimeDisconnected))?;
+        }
+        Ok(std::process::Output {
+            status,
+            stdout: line.into_bytes(),
+            stderr: failure.into_bytes(),
+        })
     })
     .await
-    .map_err(|_| error(ErrorCode::Timeout))?;
-    read.map_err(|_| error(ErrorCode::RuntimeDisconnected))?;
-    Ok(std::process::Output {
-        status: status.map_err(|_| error(ErrorCode::RuntimeDisconnected))?,
-        stdout: line.into_bytes(),
-        stderr: failure.into_bytes(),
-    })
+    .map_err(|_| error(ErrorCode::Timeout))?
 }
 
 async fn exchange(pipe: &mut NamedPipeClient, request: &Request) -> Result<Response, RuntimeError> {
@@ -493,6 +498,77 @@ pub fn destroyed<R: tauri::Runtime>(window: &tauri::Window<R>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn cold_helper_finishes_while_the_started_host_is_still_running() {
+        let profile = std::env::temp_dir().join(format!(
+            "flowtools-validation-desktop-cold-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let (pipe, _, temporary) = manager(profile.clone(), true).await.unwrap();
+        drop(pipe);
+        temporary.unwrap().close().await;
+        let denied = native_output("--ensure-runtime", &profile).await.unwrap();
+        assert!(!denied.status.success());
+        assert_eq!(
+            String::from_utf8(denied.stderr).unwrap().trim(),
+            "COLD_START_DENIED"
+        );
+        let (mut pipe, proof, temporary) = manager(profile.clone(), false).await.unwrap();
+        let response = exchange(
+            &mut pipe,
+            &Request {
+                version: PROTOCOL_MAJOR,
+                request_id: uuid(),
+                session: Some(proof),
+                call: Call::Policy(BootstrapPolicy { cold_start: true }),
+            },
+        )
+        .await
+        .unwrap();
+        assert!(matches!(response.outcome, Outcome::Policy(_)));
+        drop(pipe);
+        temporary.unwrap().close().await;
+
+        let cold = tokio::time::timeout(
+            std::time::Duration::from_secs(12),
+            native_output("--ensure-runtime", &profile),
+        )
+        .await;
+        // Always stop the exact disposable Host, including when the regression fails.
+        let (mut pipe, proof, temporary) = manager(profile.clone(), false).await.unwrap();
+        assert!(
+            temporary.is_none(),
+            "cold helper must have started the Host"
+        );
+        let status = exchange(
+            &mut pipe,
+            &Request {
+                version: PROTOCOL_MAJOR,
+                request_id: uuid(),
+                session: Some(proof.clone()),
+                call: Call::Stop,
+            },
+        )
+        .await
+        .unwrap();
+        assert!(matches!(status.outcome, Outcome::Stopping));
+        drop(pipe);
+        assert!(
+            cold.is_ok(),
+            "native output waited for background Host stderr EOF"
+        );
+        let output = cold.unwrap().unwrap();
+        assert!(output.status.success());
+        let endpoint: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(endpoint["type"], "endpoint");
+        assert!(output.stderr.is_empty());
+    }
+
     #[test]
     fn managed_bridge_is_native_origin_bound_and_manager_calls_never_use_business_transport() {
         for debug in [false, true] {

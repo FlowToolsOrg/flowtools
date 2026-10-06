@@ -35,8 +35,13 @@ Closing GUI releases native sessions; explicit background tasks belong to Host.
 
 The actual cold-start regression reproduced waiting for descendant stdio EOF
 after the helper exited. Node/Rust native adapters now bound the helper's first
-line and exit rather than waiting for background Host pipe EOF. CLI job control
-passes after correction; no business retry or global timeout was introduced.
+line and exit rather than waiting for background Host pipe EOF. Native consent
+retesting found that Desktop still waited for successful helper stderr EOF.
+Desktop now reads stderr only on a nonzero helper exit, within the existing
+45-second bound. A real disposable-profile Rust regression fails on the old
+code while its newly started Host is alive, then stops that Host; it also checks
+the unapproved cold-start rejection. No business retry or timeout extension was
+introduced.
 
 Actual Native acceptance (2026-10-06) passed with
 `node apps/ui-test/scripts/validate-managed-hosts.ts`: initial launcher, keyboard

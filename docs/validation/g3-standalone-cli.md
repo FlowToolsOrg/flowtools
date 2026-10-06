@@ -69,3 +69,10 @@ DOS short-name aliases used by runner temporary profiles. Junction and size
 rejections remain covered; bounded native startup codes propagate without raw
 stderr. The first remote P1.4a gate failed initialization and is rerun after
 this correction; local evidence above does not imply remote acceptance.
+
+2026-10-06 CI fixture correction: P1.4b remote Windows runs failed with EPERM
+renaming the previously exercised native directory. The junction rejection now
+uses a fresh sibling bundle, preserving all assertions, the pinned launcher and
+50 concurrent cold starts. This avoids renaming recently mapped executables;
+it does not retry a failed assertion, loosen timeouts or grant execution. The
+actual standalone fixture passed after correction; final remote status is pending.

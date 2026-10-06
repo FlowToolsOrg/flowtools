@@ -267,12 +267,18 @@ try {
   assert.equal(JSON.parse(denied.stdout).error.code, 'BUNDLE_INTEGRITY_FAILED')
   assert.equal((await run(['runtime', 'status', '--profile', profile])).code, 1)
   await copyFile(savedRunner, runner)
-  const native = join(bundle, 'native'),
-    nativeReal = join(bundle, 'native.real')
+  // A fresh redirected fixture avoids renaming a directory whose executables
+  // were just mapped by Windows/AV. The same pinned launcher must reject it.
+  const redirected = join(scratch, 'redirected')
+  await cp(bundle, redirected, {
+    recursive: true,
+    filter: source => source !== join(bundle, 'native'),
+  })
+  const native = join(redirected, 'native'),
+    nativeReal = join(bundle, 'native')
   assert.ok(
     native.startsWith(scratch + '\\') && nativeReal.startsWith(scratch + '\\')
   )
-  await rename(native, nativeReal)
   const junction = spawnSync(
     join(process.env.SystemRoot ?? 'C:/Windows', 'System32/cmd.exe'),
     ['/d', '/c', 'mklink', '/J', native, nativeReal],
@@ -280,11 +286,15 @@ try {
   )
   assert.equal(junction.status, 0, junction.stderr)
   assert.equal((await lstat(native)).isSymbolicLink(), true)
-  denied = await run(['runtime', 'start', '--profile', profile])
+  denied = await processResult(
+    join(redirected, 'flowtools.exe'),
+    ['runtime', 'start', '--profile', profile],
+    scratch,
+    env
+  )
   assert.equal(denied.code, 1)
   assert.equal(JSON.parse(denied.stdout).error.code, 'BUNDLE_INVALID')
   await rmdir(native)
-  await rename(nativeReal, native)
 } finally {
   if (running) await run(['runtime', 'stop', '--profile', profile])
 }

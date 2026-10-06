@@ -823,4 +823,26 @@ work belongs to Runtime. Native Todo uses async revisions/CAS and no client
 persistent store; original local prototype data remains for deliberate import.
 
 See [shared client evidence](docs/validation/g3-shared-clients.md). All scopes stay
-prototype, with independent security review and P1.5b acceptance pending.
+prototype, with independent security review and native consent acceptance pending.
+
+### G3 P1.5b diagnostics and offline recovery
+
+Fixed Windows T1 runs now expose `jobs diagnose <runId>` and a native Desktop
+metadata summary/export. Identity, package/dependency lock, grant epoch, state,
+sequence, time and stable failure code are allowlisted; inputs, outputs, paths,
+credentials and arbitrary exception messages are excluded. Wire client is exactly
+0.3.0; older clients fail before business IO. Protocol major and DB schema stay 1/2.
+
+Offline `runtime storage list/create/restore <backup-id>/retry` reserves the same
+current-user profile and first native pipe before SQLite IO. Restore/retry require
+CLI `--confirm` or actual native confirmation. Logical UUIDs select same-profile
+backups; clients cannot choose backup paths. Pending recovery blocks Host startup.
+Restoration stages SQLite data, revokes grants, disables cold start, interrupts
+unfinished jobs and quarantines original DB/private payloads. Retry continues the
+same journal; it never replays business work. Old result metadata remains queryable
+through diagnosis, while quarantined outputs expire; new runs retain normal results.
+Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
+
+See [diagnostic/recovery evidence](docs/validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
+security review, actual native consent clicks, assistive technology and other
+platform acceptance are pending; these checks do not authorize production.

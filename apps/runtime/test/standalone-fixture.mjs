@@ -119,6 +119,13 @@ let policy = { formatVersion: 1, coldStart: false, grants: [] }
 const policyPath = join(scratch, 'policy.json')
 await writeFile(policyPath, JSON.stringify(policy))
 success(await run(['init', '--profile', profile, '--policy', policyPath]))
+const offlineStatus = await run(['runtime', 'status', '--profile', profile])
+assert.equal(offlineStatus.code, 1)
+assert.deepEqual(JSON.parse(offlineStatus.stdout).error, {
+  code: 'RUNTIME_DISCONNECTED',
+  phase: 'connect',
+  stage: 'pipe',
+})
 let denied = await run(['runtime', 'start', '--profile', profile])
 assert.equal(denied.code, 1)
 assert.equal(JSON.parse(denied.stdout).error.code, 'COLD_START_DENIED')

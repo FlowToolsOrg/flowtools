@@ -410,6 +410,23 @@
             "additionalProperties": false,
             "properties": {
               "method": {
+                "const": "jobs.diagnose",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/JobKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
                 "const": "jobs.list",
                 "type": "string"
               }
@@ -1236,6 +1253,7 @@
           "REVISION_CONFLICT",
           "STORE_BUSY",
           "STORE_CORRUPT",
+          "RECOVERY_PENDING",
           "SCHEMA_UNSUPPORTED",
           "STORAGE_FAILED",
           "ACCEPTANCE_UNKNOWN",
@@ -1621,6 +1639,23 @@
             "additionalProperties": false,
             "properties": {
               "data": {
+                "$ref": "#/$defs/RunDiagnostic"
+              },
+              "type": {
+                "const": "diagnostic",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
                 "items": {
                   "$ref": "#/$defs/JobEvent"
                 },
@@ -1867,6 +1902,120 @@
         ],
         "type": "string"
       },
+      "RunDiagnostic": {
+        "additionalProperties": false,
+        "description": "Metadata allowlist only; never payloads, arbitrary messages, paths or credentials.",
+        "properties": {
+          "acceptedAt": {
+            "format": "double",
+            "type": "number"
+          },
+          "background": {
+            "type": "boolean"
+          },
+          "commandId": {
+            "type": "string"
+          },
+          "dependencyLock": {
+            "type": "string"
+          },
+          "durationMs": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "failureCode": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ErrorCode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "finishedAt": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "formatVersion": {
+            "format": "uint16",
+            "maximum": 65535,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "grantEpoch": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "packageDigest": {
+            "type": "string"
+          },
+          "packageVersion": {
+            "type": "string"
+          },
+          "parentRunId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pluginId": {
+            "type": "string"
+          },
+          "requiresReview": {
+            "type": "boolean"
+          },
+          "resultExpired": {
+            "type": "boolean"
+          },
+          "rootCaller": {
+            "type": "string"
+          },
+          "runId": {
+            "type": "string"
+          },
+          "sequence": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "startedAt": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "state": {
+            "$ref": "#/$defs/JobState"
+          }
+        },
+        "required": [
+          "formatVersion",
+          "runId",
+          "rootCaller",
+          "pluginId",
+          "commandId",
+          "packageVersion",
+          "packageDigest",
+          "dependencyLock",
+          "grantEpoch",
+          "state",
+          "sequence",
+          "acceptedAt",
+          "background",
+          "resultExpired",
+          "requiresReview"
+        ],
+        "type": "object"
+      },
       "RuntimeError": {
         "additionalProperties": false,
         "properties": {
@@ -2106,6 +2255,227 @@
       "outcome"
     ],
     "title": "Response",
+    "type": "object"
+  },
+  "storageAction": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "description": "Offline T0 storage actions; never part of business Call or caller-selected paths.",
+    "oneOf": [
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "list",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "create",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "restore",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {
+              "backupId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "backupId"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "parameters"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "retry",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation"
+        ],
+        "type": "object"
+      }
+    ],
+    "title": "StorageAction"
+  },
+  "storageReport": {
+    "$defs": {
+      "BackupInfo": {
+        "additionalProperties": false,
+        "properties": {
+          "bytes": {
+            "format": "double",
+            "type": "number"
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ErrorCode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "schemaVersion": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "usable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "bytes",
+          "usable"
+        ],
+        "type": "object"
+      },
+      "ErrorCode": {
+        "enum": [
+          "PROTOCOL_MISMATCH",
+          "CLIENT_INCOMPATIBLE",
+          "FRAME_TOO_LARGE",
+          "INVALID_REQUEST",
+          "SESSION_INVALID",
+          "INSTANCE_MISMATCH",
+          "APPROVAL_REQUIRED",
+          "INTERACTION_REQUIRED",
+          "CAPABILITY_UNDECLARED",
+          "SCOPE_DENIED",
+          "GRANT_REVOKED",
+          "BUDGET_EXCEEDED",
+          "REVISION_CONFLICT",
+          "STORE_BUSY",
+          "STORE_CORRUPT",
+          "RECOVERY_PENDING",
+          "SCHEMA_UNSUPPORTED",
+          "STORAGE_FAILED",
+          "ACCEPTANCE_UNKNOWN",
+          "EXECUTION_INTERRUPTED",
+          "RESULT_EXPIRED",
+          "COLD_START_DENIED",
+          "PLUGIN_NOT_FOUND",
+          "INPUT_INVALID",
+          "JOB_NOT_FOUND",
+          "IDEMPOTENCY_CONFLICT",
+          "TIMEOUT",
+          "ABORTED",
+          "EXECUTION_FAILED",
+          "OUTPUT_INVALID",
+          "RUNTIME_BUSY",
+          "RUNTIME_DISCONNECTED",
+          "INVALID_RESPONSE"
+        ],
+        "type": "string"
+      },
+      "RecoveryPhase": {
+        "enum": [
+          "prepared",
+          "replaced",
+          "complete"
+        ],
+        "type": "string"
+      },
+      "RecoveryReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "backupId": {
+            "type": "string"
+          },
+          "grantsRevoked": {
+            "type": "boolean"
+          },
+          "payloadsQuarantined": {
+            "type": "boolean"
+          },
+          "phase": {
+            "$ref": "#/$defs/RecoveryPhase"
+          },
+          "recoveryId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "recoveryId",
+          "backupId",
+          "phase",
+          "grantsRevoked",
+          "payloadsQuarantined"
+        ],
+        "type": "object"
+      }
+    },
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+      "backups": {
+        "items": {
+          "$ref": "#/$defs/BackupInfo"
+        },
+        "type": "array"
+      },
+      "formatVersion": {
+        "format": "uint16",
+        "maximum": 65535,
+        "minimum": 0,
+        "type": "integer"
+      },
+      "recovery": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/RecoveryReceipt"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "formatVersion",
+      "backups"
+    ],
+    "title": "StorageReport",
     "type": "object"
   }
 }

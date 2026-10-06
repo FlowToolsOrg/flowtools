@@ -61,7 +61,7 @@ pub fn safe_path(path: &Path) -> Result<(), ErrorCode> {
     Ok(())
 }
 
-fn healthy(connection: &Connection) -> Result<(), ErrorCode> {
+pub(crate) fn healthy(connection: &Connection) -> Result<(), ErrorCode> {
     let result: String = connection
         .query_row("PRAGMA quick_check", [], |row| row.get(0))
         .map_err(db_error)?;
@@ -168,11 +168,12 @@ impl DataStore {
         hook: impl FnOnce() -> Result<(), ErrorCode>,
     ) -> Result<Self, ErrorCode> {
         safe_path(path)?;
-        if path
-            .parent()
-            .is_some_and(|parent| parent.join("runtime-recovery-pending").exists())
-        {
-            return Err(ErrorCode::StorageFailed);
+        if let Some(parent) = path.parent() {
+            let pending = parent.join("runtime-recovery-pending");
+            safe_path(&pending)?;
+            if pending.exists() {
+                return Err(ErrorCode::RecoveryPending);
+            }
         }
         let mut store = Self {
             connection: Connection::open(path).map_err(db_error)?,
@@ -390,6 +391,12 @@ impl DataStore {
     pub fn restore_backup(path: &Path, backup: &Path) -> Result<PathBuf, ErrorCode> {
         safe_path(path)?;
         safe_path(backup)?;
+        let parent = path.parent().ok_or(ErrorCode::StorageFailed)?;
+        let marker = parent.join("runtime-recovery-pending");
+        safe_path(&marker)?;
+        if marker.exists() {
+            return Err(ErrorCode::RecoveryPending);
+        }
         if path.parent() != backup.parent()
             || !backup
                 .file_name()
@@ -407,19 +414,15 @@ impl DataStore {
         if version == 0 || version > SCHEMA_VERSION {
             return Err(ErrorCode::SchemaUnsupported);
         }
-        let parent = path.parent().ok_or(ErrorCode::StorageFailed)?;
         let stage = parent.join(format!("runtime-recovery-{}.sqlite", uuid::Uuid::new_v4()));
         source
             .backup(rusqlite::MAIN_DB, &stage, None)
             .map_err(db_error)?;
         let quarantine = parent.join(format!("runtime-corrupt-{}.sqlite", uuid::Uuid::new_v4()));
         // Interrupted or failed replacement must never look like a fresh profile.
-        let marker = parent.join("runtime-recovery-pending");
-        safe_path(&marker)?;
         let marker_file = std::fs::OpenOptions::new()
             .write(true)
-            .create(true)
-            .truncate(true)
+            .create_new(true)
             .open(&marker)
             .map_err(|_| ErrorCode::StorageFailed)?;
         marker_file

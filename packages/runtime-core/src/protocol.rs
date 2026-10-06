@@ -5,7 +5,7 @@ use specta::Type;
 
 pub const PROTOCOL_MAJOR: u16 = 1;
 pub const MAX_FRAME_BYTES: usize = 1_048_576;
-pub const CLIENT_VERSION: &str = "0.2.0";
+pub const CLIENT_VERSION: &str = "0.3.0";
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -38,6 +38,8 @@ pub enum Call {
     Lookup(IdempotencyKey),
     #[serde(rename = "jobs.status")]
     Job(JobKey),
+    #[serde(rename = "jobs.diagnose")]
+    Diagnose(JobKey),
     #[serde(rename = "jobs.list")]
     Jobs,
     #[serde(rename = "jobs.cancel")]
@@ -249,6 +251,8 @@ pub enum ErrorCode {
     StoreBusy,
     #[serde(rename = "STORE_CORRUPT")]
     StoreCorrupt,
+    #[serde(rename = "RECOVERY_PENDING")]
+    RecoveryPending,
     #[serde(rename = "SCHEMA_UNSUPPORTED")]
     SchemaUnsupported,
     #[serde(rename = "STORAGE_FAILED")]
@@ -286,7 +290,7 @@ pub enum ErrorCode {
 }
 
 impl ErrorCode {
-    pub const ALL: [Self; 32] = [
+    pub const ALL: [Self; 33] = [
         Self::AcceptanceUnknown,
         Self::ExecutionInterrupted,
         Self::ResultExpired,
@@ -306,6 +310,7 @@ impl ErrorCode {
         Self::RevisionConflict,
         Self::StoreBusy,
         Self::StoreCorrupt,
+        Self::RecoveryPending,
         Self::SchemaUnsupported,
         Self::StorageFailed,
         Self::PluginNotFound,
@@ -351,6 +356,8 @@ pub enum Outcome {
     Job(Box<JobSnapshot>),
     #[serde(rename = "jobs")]
     Jobs(Vec<JobSnapshot>),
+    #[serde(rename = "diagnostic")]
+    Diagnostic(RunDiagnostic),
     #[serde(rename = "events")]
     Events(Vec<JobEvent>),
     #[serde(rename = "data")]
@@ -484,6 +491,82 @@ pub struct JobEvent {
     pub run_id: String,
     pub sequence: u32,
     pub state: JobState,
+}
+
+/// Metadata allowlist only; never payloads, arbitrary messages, paths or credentials.
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RunDiagnostic {
+    pub format_version: u16,
+    pub run_id: String,
+    pub parent_run_id: Option<String>,
+    pub root_caller: String,
+    pub plugin_id: String,
+    pub command_id: String,
+    pub package_version: String,
+    pub package_digest: String,
+    pub dependency_lock: String,
+    pub grant_epoch: u32,
+    pub state: JobState,
+    pub sequence: u32,
+    pub accepted_at: f64,
+    pub started_at: Option<f64>,
+    pub finished_at: Option<f64>,
+    pub duration_ms: Option<f64>,
+    pub background: bool,
+    pub failure_code: Option<ErrorCode>,
+    pub result_expired: bool,
+    pub requires_review: bool,
+}
+
+/// Offline T0 storage actions; never part of business Call or caller-selected paths.
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(
+    tag = "operation",
+    content = "parameters",
+    rename_all = "kebab-case",
+    deny_unknown_fields
+)]
+pub enum StorageAction {
+    List,
+    Create,
+    Restore {
+        #[serde(rename = "backupId")]
+        backup_id: String,
+    },
+    Retry,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct BackupInfo {
+    pub id: String,
+    pub bytes: f64,
+    pub schema_version: Option<u32>,
+    pub usable: bool,
+    pub error_code: Option<ErrorCode>,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum RecoveryPhase {
+    Prepared,
+    Replaced,
+    Complete,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RecoveryReceipt {
+    pub recovery_id: String,
+    pub backup_id: String,
+    pub phase: RecoveryPhase,
+    pub grants_revoked: bool,
+    pub payloads_quarantined: bool,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct StorageReport {
+    pub format_version: u16,
+    pub backups: Vec<BackupInfo>,
+    pub recovery: Option<RecoveryReceipt>,
 }
 
 #[cfg(test)]

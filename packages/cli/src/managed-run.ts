@@ -8,7 +8,7 @@ import { createExecutionFailure } from '@flowtools/sdk/execution'
 
 import { getBuiltinPluginInfo } from './discovery'
 import { connectHost } from './host'
-import { userProfile } from './management'
+import { userProfile } from './native-runtime'
 
 export async function runManagedPlugin(
   pluginId: string,

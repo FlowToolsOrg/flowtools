@@ -442,3 +442,25 @@ explicit validation mode and safe absolute fixture root. Its regression refuses
 production identity/missing mode/relative paths. This closes the test-profile
 reuse defect caused by Windows Known Folder API ignoring APPDATA overrides;
 SEC-015 and the other G3 risks remain open pending independent review.
+
+### G3 P1.5b diagnostics and offline recovery
+
+Fixed Windows T1 runs now expose `jobs diagnose <runId>` and a native Desktop
+metadata summary/export. Identity, package/dependency lock, grant epoch, state,
+sequence, time and stable failure code are allowlisted; inputs, outputs, paths,
+credentials and arbitrary exception messages are excluded. Wire client is exactly
+0.3.0; older clients fail before business IO. Protocol major and DB schema stay 1/2.
+
+Offline `runtime storage list/create/restore <backup-id>/retry` reserves the same
+current-user profile and first native pipe before SQLite IO. Restore/retry require
+CLI `--confirm` or actual native confirmation. Logical UUIDs select same-profile
+backups; clients cannot choose backup paths. Pending recovery blocks Host startup.
+Restoration stages SQLite data, revokes grants, disables cold start, interrupts
+unfinished jobs and quarantines original DB/private payloads. Retry continues the
+same journal; it never replays business work. Old result metadata remains queryable
+through diagnosis, while quarantined outputs expire; new runs retain normal results.
+Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
+
+See [diagnostic/recovery evidence](../validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
+security review, actual native consent clicks, assistive technology and other
+platform acceptance are pending; these checks do not authorize production.

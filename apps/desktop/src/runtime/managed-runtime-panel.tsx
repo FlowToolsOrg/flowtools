@@ -3,6 +3,8 @@ import type {
   PermissionRecord,
   PolicyImport,
   RuntimeStatus,
+  RunDiagnostic,
+  StorageReport,
 } from '@flowtools/runtime-client'
 
 import { useEffect, useState } from 'react'
@@ -18,7 +20,11 @@ import { Button, Card, Input, Label, TextField } from '@heroui/react'
 import { builtInManifestData } from '../plugin/manifests'
 
 import { isTauriRuntime } from './desktop-capabilities'
-import { connectManagedRuntime, controlManagedRuntime } from './managed-client'
+import {
+  connectManagedRuntime,
+  controlManagedRuntime,
+  storageManagedRuntime,
+} from './managed-client'
 
 export function ManagedRuntimePanel() {
   const [status, setStatus] = useState<RuntimeStatus>()
@@ -29,6 +35,9 @@ export function ManagedRuntimePanel() {
   const [pluginId, setPluginId] = useState('plugin-todo-list')
   const [input, setInput] = useState('{}')
   const [background, setBackground] = useState(false)
+  const [diagnostic, setDiagnostic] = useState<RunDiagnostic>()
+  const [storage, setStorage] = useState<StorageReport>()
+  const [backupId, setBackupId] = useState('')
   const report = (error: unknown) => {
     const diagnostic = describeRuntimeError(error)
     setMessage(
@@ -145,7 +154,9 @@ export function ManagedRuntimePanel() {
                 await controlManagedRuntime({ method: 'runtime.stop' })
                 setStatus(undefined)
                 setJobs([])
-                setMessage('Runtime 已停止；活动任务已取消')
+                setMessage(
+                  '停止请求已接受；Runtime 正在取消并排空活动任务。备份前请确认写入者已释放。'
+                )
               })
             }
           >
@@ -260,6 +271,23 @@ export function ManagedRuntimePanel() {
               <span>
                 {job.runId} · {job.pluginId} · {job.rootCaller} · {job.state}
               </span>
+              <Button
+                size="sm"
+                variant="secondary"
+                isDisabled={busy}
+                onPress={() =>
+                  void action(async () => {
+                    const client = await connectManagedRuntime()
+                    try {
+                      setDiagnostic(await client.diagnose(job.runId))
+                    } finally {
+                      client.close()
+                    }
+                  })
+                }
+              >
+                诊断 {job.runId}
+              </Button>
               {!['succeeded', 'failed', 'cancelled', 'interrupted'].includes(
                 job.state
               ) && (
@@ -284,6 +312,131 @@ export function ManagedRuntimePanel() {
             </li>
           ))}
         </ul>
+        {diagnostic && (
+          <section aria-label="运行诊断" className="space-y-2">
+            <p>
+              {diagnostic.requiresReview
+                ? '需核对实际副作用后决定下一步；不会自动重试。'
+                : '以下摘要只包含运行元数据。'}
+            </p>
+            <pre className="overflow-auto" data-testid="managed-run-diagnostic">
+              {JSON.stringify(diagnostic, null, 2)}
+            </pre>
+            <Button
+              variant="secondary"
+              onPress={() => {
+                const url = URL.createObjectURL(
+                  new Blob([JSON.stringify(diagnostic, null, 2)], {
+                    type: 'application/json',
+                  })
+                )
+                const link = document.createElement('a')
+                link.href = url
+                link.download = `flowtools-run-${diagnostic.runId}.json`
+                link.click()
+                URL.revokeObjectURL(url)
+              }}
+            >
+              导出诊断摘要
+            </Button>
+          </section>
+        )}
+        <section aria-label="Runtime 备份恢复" className="space-y-2">
+          <p>
+            先停止 Runtime
+            再备份或恢复。恢复会回滚数据、撤销所有授权并中断未完成任务；原库和私有任务正文保留供核对。
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="secondary"
+              isDisabled={busy || !isTauriRuntime()}
+              onPress={() =>
+                void action(async () => {
+                  setStorage(await storageManagedRuntime({ operation: 'list' }))
+                  setMessage('已读取离线备份')
+                })
+              }
+            >
+              读取备份
+            </Button>
+            <Button
+              variant="secondary"
+              isDisabled={busy || !isTauriRuntime()}
+              onPress={() =>
+                void action(async () => {
+                  setStorage(
+                    await storageManagedRuntime({ operation: 'create' })
+                  )
+                  setMessage('备份已创建')
+                })
+              }
+            >
+              创建备份
+            </Button>
+            <Button
+              variant="danger"
+              isDisabled={
+                busy ||
+                !storage?.recovery ||
+                storage.recovery.phase === 'complete'
+              }
+              onPress={() =>
+                void action(async () => {
+                  setStorage(
+                    await storageManagedRuntime({ operation: 'retry' })
+                  )
+                  setMessage('原恢复已完成；请重新批准授权')
+                })
+              }
+            >
+              继续未完成恢复
+            </Button>
+          </div>
+          {storage?.recovery && (
+            <p data-testid="managed-recovery-state">
+              {storage.recovery.recoveryId} · {storage.recovery.phase} ·{' '}
+              {storage.recovery.grantsRevoked ? '授权已撤销' : '恢复待完成'}
+            </p>
+          )}
+          <label className="block">
+            已验证备份{' '}
+            <select
+              aria-label="Runtime 备份"
+              value={backupId}
+              onChange={event => setBackupId(event.target.value)}
+            >
+              <option value="">请选择</option>
+              {storage?.backups.map(backup => (
+                <option
+                  key={backup.id}
+                  value={backup.id}
+                  disabled={!backup.usable}
+                >
+                  {backup.id} · {backup.schemaVersion ?? backup.errorCode}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button
+            variant="danger"
+            isDisabled={busy || !backupId}
+            onPress={() =>
+              void action(async () => {
+                setStorage(
+                  await storageManagedRuntime({
+                    operation: 'restore',
+                    parameters: { backupId },
+                  })
+                )
+                setStatus(undefined)
+                setJobs([])
+                setMessage('已恢复并撤销全部授权；核对数据后重新批准')
+              })
+            }
+          >
+            恢复所选备份
+          </Button>
+        </section>
       </Card.Content>
     </Card>
   )

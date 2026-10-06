@@ -4,7 +4,7 @@ import { Command } from 'commander'
 import { validateCommandInput } from './command-schema'
 import { getBuiltinCommandManifest } from './discovery'
 import { connectHost } from './host'
-import { userProfile } from './management'
+import { userProfile } from './native-runtime'
 
 type Options = { profile?: string; format: string }
 function output(value: unknown, options: Options) {
@@ -83,7 +83,14 @@ export function addJobCommands(program: Command) {
         )
       }
     )
-  for (const name of ['list', 'status', 'watch', 'cancel', 'lookup'] as const) {
+  for (const name of [
+    'list',
+    'status',
+    'diagnose',
+    'watch',
+    'cancel',
+    'lookup',
+  ] as const) {
     jobs
       .command(name === 'list' ? name : name + ' <id>')
       .option('--profile <directory>')
@@ -96,6 +103,8 @@ export function addJobCommands(program: Command) {
         try {
           if (name === 'list') output(await client.jobs(), options)
           else if (name === 'status') output(await client.job(id), options)
+          else if (name === 'diagnose')
+            output(await client.diagnose(id), options)
           else if (name === 'cancel') output(await client.cancel(id), options)
           else if (name === 'lookup') {
             const receipt = await client.call({

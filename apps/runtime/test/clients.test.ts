@@ -1,6 +1,22 @@
 import { expect, test } from 'bun:test'
 import { fileURLToPath } from 'node:url'
 
+test('compiled CLI diagnoses actual runs and retries real Windows blocked recovery without replay or grants', async () => {
+  const fixture = Bun.spawn(
+    ['node', fileURLToPath(new URL('./recovery-fixture.ts', import.meta.url))],
+    { stdout: 'pipe', stderr: 'pipe' }
+  )
+  const [stdout, stderr, code] = await Promise.all([
+    new Response(fixture.stdout).text(),
+    new Response(fixture.stderr).text(),
+    fixture.exited,
+  ])
+  expect({ code, stderr }).toEqual({ code: 0, stderr: '' })
+  expect(stdout.trim()).toBe(
+    'Native recovery and private diagnostics fixture passed'
+  )
+}, 60000)
+
 test('actual managed Host durably executes Todo and recovers lost ACK, crash and revoke', async () => {
   const fixture = Bun.spawn(
     ['node', fileURLToPath(new URL('./jobs-fixture.mjs', import.meta.url))],

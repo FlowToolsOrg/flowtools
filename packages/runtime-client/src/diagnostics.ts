@@ -28,6 +28,10 @@ const explanations = {
     '连接现有 Runtime；不另建或删除数据库。',
   ],
   STORE_CORRUPT: ['数据库完整性检查失败', '保留原数据，从已验证备份主动恢复。'],
+  RECOVERY_PENDING: [
+    '上次恢复尚未完成',
+    '停止 Runtime，核对备份后主动重试同一次恢复；不新建或删除数据库。',
+  ],
   SCHEMA_UNSUPPORTED: [
     '数据库版本不兼容',
     '使用兼容版本或已验证的升级前备份。',

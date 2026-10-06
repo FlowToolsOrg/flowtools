@@ -137,8 +137,13 @@ pub async fn run() -> Result<(), &'static str> {
     };
     let mut listener =
         create_pipe(&pipe_name, &sid, true).map_err(|_| "RUNTIME_ALREADY_RUNNING")?;
-    let store =
-        DataStore::open(&path.join("runtime.sqlite")).map_err(|_| "RUNTIME_DATA_UNAVAILABLE")?;
+    let store = DataStore::open(&path.join("runtime.sqlite")).map_err(|code| match code {
+        ErrorCode::RecoveryPending => "RECOVERY_PENDING",
+        ErrorCode::StoreCorrupt => "STORE_CORRUPT",
+        ErrorCode::StoreBusy => "STORE_BUSY",
+        ErrorCode::SchemaUnsupported => "SCHEMA_UNSUPPORTED",
+        _ => "STORAGE_FAILED",
+    })?;
     let runtime = if let Some((cli_token, desktop_token)) = credentials {
         if args.contains(&"--validation-data".into()) {
             RuntimeCore::validation_data(cli_token, desktop_token, store)
@@ -186,9 +191,7 @@ pub async fn run() -> Result<(), &'static str> {
             _ = tick.tick() => {if core.lock().await.stopping() {break;}}
             _ = stdin.read(&mut byte), if stdin_lifetime => break,
             result = listener.connect(), if connections.len() < 15 => {
-                result.map_err(|_| "IPC_ACCESS_FAILED")?;
-                let connected = listener;
-                listener = create_pipe(&pipe_name, &sid, false).map_err(|_| "IPC_ACCESS_FAILED")?;
+                let Some(connected) = accept_connection(&mut listener, result, &pipe_name, &sid).map_err(|_| "IPC_ACCESS_FAILED")? else { continue; };
                 let core = core.clone();
                 let tasks = tasks.clone();
                 connections.spawn(async move { connection(connected, core, tasks).await; });
@@ -224,6 +227,24 @@ pub async fn run() -> Result<(), &'static str> {
         return Err("RUNNER_DRAIN_FAILED");
     }
     Ok(())
+}
+
+fn accept_connection(
+    listener: &mut NamedPipeServer,
+    result: std::io::Result<()>,
+    name: &str,
+    sid: &str,
+) -> std::io::Result<Option<NamedPipeServer>> {
+    let accepted = match result {
+        Ok(()) => true,
+        // A client may disappear before the server observes its connection.
+        // That peer's failure must not terminate the shared Host.
+        Err(error) if matches!(error.raw_os_error(), Some(109 | 232 | 233)) => false,
+        Err(error) => return Err(error),
+    };
+    // Create before dropping the old handle, preserving exclusive pipe ownership.
+    let previous = std::mem::replace(listener, create_pipe(name, sid, false)?);
+    Ok(accepted.then_some(previous))
 }
 
 async fn send(pipe: &mut NamedPipeServer, response: &Response) -> std::io::Result<()> {
@@ -461,6 +482,73 @@ async fn execute(spec: &RunSpec, core: Core, workspace: &Path) -> Result<Value, 
 mod tests {
     use super::*;
     use flowtools_runtime_core::protocol::{Call, OpenSession, SubmitJob, CLIENT_VERSION};
+
+    #[tokio::test]
+    async fn aborted_pipe_peers_preserve_owner_and_next_real_handshake() {
+        use tokio::net::windows::named_pipe::ClientOptions;
+        let name = format!(r"\\.\pipe\flowtools-aborted-test-{}", uuid::Uuid::new_v4());
+        let sid = current_user_sid().unwrap();
+        let mut listener = create_pipe(&name, &sid, true).unwrap();
+        drop(ClientOptions::new().open(&name).unwrap());
+        let early = listener.connect().await;
+        drop(accept_connection(&mut listener, early, &name, &sid).unwrap());
+        for code in [109, 232, 233] {
+            assert!(accept_connection(
+                &mut listener,
+                Err(std::io::Error::from_raw_os_error(code)),
+                &name,
+                &sid
+            )
+            .unwrap()
+            .is_none());
+            assert!(create_pipe(&name, &sid, true).is_err());
+        }
+        assert!(accept_connection(
+            &mut listener,
+            Err(std::io::Error::from_raw_os_error(5)),
+            &name,
+            &sid
+        )
+        .is_err());
+        let mut peer = ClientOptions::new().open(&name).unwrap();
+        listener.connect().await.unwrap();
+        let connected = accept_connection(&mut listener, Ok(()), &name, &sid)
+            .unwrap()
+            .unwrap();
+        let core = Arc::new(Mutex::new(RuntimeCore::validation(
+            "cli".into(),
+            "desktop".into(),
+        )));
+        let (tasks, _receiver) = mpsc::channel(128);
+        let worker = tokio::spawn(connection(connected, core, tasks));
+        let request = serde_json::to_vec(&Request {
+            version: 1,
+            request_id: "after-aborted-peer".into(),
+            session: None,
+            call: Call::Open(OpenSession {
+                token: "cli".into(),
+                client_version: CLIENT_VERSION.into(),
+                expected_instance_id: None,
+            }),
+        })
+        .unwrap();
+        peer.write_u32_le(request.len() as u32).await.unwrap();
+        peer.write_all(&request).await.unwrap();
+        let length = peer.read_u32_le().await.unwrap();
+        let mut response = vec![0; length as usize];
+        peer.read_exact(&mut response).await.unwrap();
+        assert!(matches!(
+            serde_json::from_slice::<Response>(&response)
+                .unwrap()
+                .outcome,
+            Outcome::Session(_)
+        ));
+        drop(peer);
+        tokio::time::timeout(Duration::from_secs(1), worker)
+            .await
+            .unwrap()
+            .unwrap();
+    }
 
     async fn accepted_run(core: &Core) -> RunSpec {
         let mut locked = core.lock().await;

@@ -2248,6 +2248,16 @@
     {
       "outcome": {
         "data": {
+          "code": "RECOVERY_PENDING"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
           "code": "SCHEMA_UNSUPPORTED"
         },
         "type": "error"

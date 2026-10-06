@@ -91,7 +91,15 @@ async fn bootstrap(profile: PathBuf, manager: bool, cold: bool) -> Result<Bootst
     if cold {
         let output = native_output("--ensure-runtime", &profile).await?;
         if !output.status.success() {
-            return Err(error(ErrorCode::ColdStartDenied));
+            let code = match std::str::from_utf8(&output.stderr).unwrap_or("").trim() {
+                "RECOVERY_PENDING" => ErrorCode::RecoveryPending,
+                "STORE_CORRUPT" => ErrorCode::StoreCorrupt,
+                "STORE_BUSY" => ErrorCode::StoreBusy,
+                "SCHEMA_UNSUPPORTED" => ErrorCode::SchemaUnsupported,
+                "STORAGE_FAILED" => ErrorCode::StorageFailed,
+                _ => ErrorCode::ColdStartDenied,
+            };
+            return Err(error(code));
         }
     }
     let output = native_output(
@@ -128,7 +136,7 @@ async fn native_output(
     let mut child = launcher
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
-        .stderr(Stdio::null())
+        .stderr(Stdio::piped())
         .kill_on_drop(true)
         .spawn()
         .map_err(|_| error(ErrorCode::RuntimeDisconnected))?;
@@ -137,9 +145,19 @@ async fn native_output(
         .take()
         .ok_or_else(|| error(ErrorCode::RuntimeDisconnected))?;
     let mut reader = BufReader::new(stdout.take(2048));
+    let stderr = child
+        .stderr
+        .take()
+        .ok_or_else(|| error(ErrorCode::RuntimeDisconnected))?;
+    let mut errors = BufReader::new(stderr.take(256));
+    let mut failure = String::new();
     let mut line = String::new();
-    let (read, status) = tokio::time::timeout(std::time::Duration::from_secs(45), async {
-        tokio::join!(reader.read_line(&mut line), child.wait())
+    let (read, status, _) = tokio::time::timeout(std::time::Duration::from_secs(45), async {
+        tokio::join!(
+            reader.read_line(&mut line),
+            child.wait(),
+            errors.read_line(&mut failure)
+        )
     })
     .await
     .map_err(|_| error(ErrorCode::Timeout))?;
@@ -147,7 +165,7 @@ async fn native_output(
     Ok(std::process::Output {
         status: status.map_err(|_| error(ErrorCode::RuntimeDisconnected))?,
         stdout: line.into_bytes(),
-        stderr: vec![],
+        stderr: failure.into_bytes(),
     })
 }
 
@@ -185,6 +203,7 @@ fn business(call: &Call) -> bool {
             | Call::Submit(_)
             | Call::Lookup(_)
             | Call::Job(_)
+            | Call::Diagnose(_)
             | Call::Cancel(_)
             | Call::Events(_)
             | Call::DataRead(_)
@@ -408,6 +427,58 @@ pub async fn managed_runtime_control<R: tauri::Runtime>(
         Outcome::Error(failure) => Err(failure),
         outcome => Ok(outcome),
     }
+}
+#[tauri::command]
+#[specta::specta]
+pub async fn managed_runtime_storage<R: tauri::Runtime>(
+    window: tauri::WebviewWindow<R>,
+    action: StorageAction,
+) -> Result<StorageReport, RuntimeError> {
+    let profile = check(&window)?;
+    flowtools_runtime_core::recovery::validate_action(&action).map_err(error)?;
+    if !matches!(action, StorageAction::List) {
+        let encoded =
+            serde_json::to_string(&action).map_err(|_| error(ErrorCode::InvalidRequest))?;
+        let app = window.app_handle().clone();
+        let approved = tokio::task::spawn_blocking(move || app.dialog().message(format!("批准离线数据操作？\n{encoded}\n恢复会回滚数据、撤销全部授权并中断未完成任务。原数据将保留；不会自动重放任务。请先停止 Runtime。")) .title("FlowTools storage approval").buttons(MessageDialogButtons::OkCancel).blocking_show()).await.map_err(|_|error(ErrorCode::InteractionRequired))?;
+        if !approved {
+            return Err(error(ErrorCode::ApprovalRequired));
+        }
+    }
+    let mut launcher = tokio::process::Command::from(command("--storage", &profile)?);
+    let mut child = launcher
+        .arg(serde_json::to_string(&action).map_err(|_| error(ErrorCode::InvalidRequest))?)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .kill_on_drop(true)
+        .spawn()
+        .map_err(|_| error(ErrorCode::StorageFailed))?;
+    let stdout = child
+        .stdout
+        .take()
+        .ok_or_else(|| error(ErrorCode::StorageFailed))?;
+    let mut reader = BufReader::new(stdout.take(MAX_FRAME_BYTES as u64));
+    let mut line = String::new();
+    let (read, status) = tokio::time::timeout(std::time::Duration::from_secs(45), async {
+        tokio::join!(reader.read_line(&mut line), child.wait())
+    })
+    .await
+    .map_err(|_| error(ErrorCode::Timeout))?;
+    read.map_err(|_| error(ErrorCode::StorageFailed))?;
+    if !status
+        .map_err(|_| error(ErrorCode::StorageFailed))?
+        .success()
+    {
+        #[derive(serde::Deserialize)]
+        struct Failure {
+            error: RuntimeError,
+        }
+        return Err(serde_json::from_str::<Failure>(&line)
+            .map(|f| f.error)
+            .unwrap_or_else(|_| error(ErrorCode::StorageFailed)));
+    }
+    serde_json::from_str(&line).map_err(|_| error(ErrorCode::InvalidResponse))
 }
 pub fn destroyed<R: tauri::Runtime>(window: &tauri::Window<R>) {
     if window.label() == "main" {

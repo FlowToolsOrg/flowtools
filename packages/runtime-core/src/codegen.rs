@@ -32,9 +32,11 @@ pub fn artifacts() -> Result<Vec<(&'static str, String)>, Box<dyn std::error::Er
     let types = specta::Types::default()
         .register::<CapabilityOperation>()
         .register::<Request>()
-        .register::<Response>();
+        .register::<Response>()
+        .register::<StorageAction>()
+        .register::<StorageReport>();
     let bindings = format!("// Generated from Rust. Do not edit.\nexport const PROTOCOL_MAJOR = {PROTOCOL_MAJOR} as const\nexport const CLIENT_VERSION = '{CLIENT_VERSION}' as const\n{}", specta_typescript::Typescript::default().export(&types, specta_serde::Format)?);
-    let schemas = json!({ "request": schemars::schema_for!(Request), "response": schemars::schema_for!(Response), "capabilityOperation": schemars::schema_for!(CapabilityOperation) });
+    let schemas = json!({ "request": schemars::schema_for!(Request), "response": schemars::schema_for!(Response), "capabilityOperation": schemars::schema_for!(CapabilityOperation), "storageAction": schemars::schema_for!(StorageAction), "storageReport": schemars::schema_for!(StorageReport) });
     let request = Request {
         version: PROTOCOL_MAJOR,
         request_id: "fixture-request".into(),

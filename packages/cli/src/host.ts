@@ -4,7 +4,25 @@ import { RuntimeClient, RuntimeClientError } from '@flowtools/runtime-client'
 import { connectNamedPipe } from '@flowtools/runtime-client/node'
 import { Command } from 'commander'
 
-import { readBootstrap, runtimeExecutable, userProfile } from './management'
+import { readBootstrap, runtimeExecutable, userProfile } from './native-runtime'
+import { addStorageCommands } from './storage'
+
+export class RuntimeReadinessError extends RuntimeClientError {
+  readonly stage: 'pipe' | 'authenticate' | undefined
+  constructor(
+    error: RuntimeClientError,
+    readonly phase: 'connect' | 'query' | 'reconnect',
+    stage?: 'pipe' | 'authenticate'
+  ) {
+    super(error.code)
+    this.stage =
+      stage ??
+      ('stage' in error &&
+      (error.stage === 'pipe' || error.stage === 'authenticate')
+        ? error.stage
+        : undefined)
+  }
+}
 
 async function endpoint(profile: string, start: boolean): Promise<string> {
   const executable = await runtimeExecutable()
@@ -85,20 +103,31 @@ async function endpoint(profile: string, start: boolean): Promise<string> {
 export async function connectHost(
   profile: string,
   manager = false,
-  cold = false
+  cold = false,
+  expectedInstanceId: string | null = null
 ): Promise<RuntimeClient> {
   const credentials = await readBootstrap(profile)
   const pipe = await endpoint(profile, false)
   const connect = async () => {
-    const client = new RuntimeClient(await connectNamedPipe(pipe))
+    let client: RuntimeClient
+    try {
+      client = new RuntimeClient(await connectNamedPipe(pipe))
+    } catch (error) {
+      throw error instanceof RuntimeClientError
+        ? new RuntimeReadinessError(error, 'connect', 'pipe')
+        : error
+    }
     try {
       await client.connect(
-        manager ? credentials.managementToken : credentials.cliToken
+        manager ? credentials.managementToken : credentials.cliToken,
+        expectedInstanceId
       )
       return client
     } catch (error) {
       client.close()
-      throw error
+      throw error instanceof RuntimeClientError
+        ? new RuntimeReadinessError(error, 'connect', 'authenticate')
+        : error
     }
   }
   try {
@@ -133,20 +162,34 @@ export function addRuntimeCommands(program: Command) {
   const runtime = program
     .command('runtime')
     .description('Control the shared headless Host')
+  addStorageCommands(runtime)
   for (const command of ['status', 'start', 'stop'] as const) {
     runtime
       .command(command)
       .option('--profile <directory>')
       .action(async (options: { profile?: string }) => {
-        const client = await connectHost(
-          userProfile(options.profile),
-          command === 'stop',
-          command === 'start'
-        )
+        const profile = userProfile(options.profile)
+        let client: RuntimeClient
         try {
-          const outcome = await client.call({
-            method: command === 'stop' ? 'runtime.stop' : 'runtime.status',
-          })
+          client = await connectHost(
+            profile,
+            command === 'stop',
+            command === 'start'
+          )
+        } catch (error) {
+          if (error instanceof RuntimeClientError)
+            throw new RuntimeReadinessError(error, 'connect')
+          throw error
+        }
+        try {
+          const outcome =
+            command === 'stop'
+              ? await client.call({ method: 'runtime.stop' })
+              : await readControlStatus(client, async instance => {
+                  client.close()
+                  client = await connectHost(profile, false, false, instance)
+                  return client
+                })
           if (
             command === 'start' &&
             outcome.type === 'status' &&
@@ -164,5 +207,46 @@ export function addRuntimeCommands(program: Command) {
           client.close()
         }
       })
+  }
+}
+
+/** Bounded recovery of a read-only readiness query, never a business submit. */
+export async function readControlStatus(
+  client: RuntimeClient,
+  reconnect: (instance: string | null) => Promise<RuntimeClient>
+) {
+  const instance = client.instanceId ?? null
+  const deadline = Date.now() + 10000
+  while (true) {
+    try {
+      return await client.call({ method: 'runtime.status' })
+    } catch (error) {
+      if (
+        !(error instanceof RuntimeClientError) ||
+        error.code !== 'RUNTIME_DISCONNECTED' ||
+        Date.now() >= deadline
+      )
+        throw error instanceof RuntimeClientError
+          ? new RuntimeReadinessError(error, 'query')
+          : error
+      while (true) {
+        try {
+          client = await reconnect(instance)
+          break
+        } catch (error) {
+          if (
+            error instanceof RuntimeClientError &&
+            error.code === 'RUNTIME_DISCONNECTED' &&
+            Date.now() < deadline
+          ) {
+            await new Promise(resolve => setTimeout(resolve, 25))
+            continue
+          }
+          throw error instanceof RuntimeClientError
+            ? new RuntimeReadinessError(error, 'reconnect')
+            : error
+        }
+      }
+    }
   }
 }

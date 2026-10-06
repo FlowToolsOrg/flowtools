@@ -1,7 +1,7 @@
 # FlowTools 下一阶段目标与实施设计
 
 - 决策日期：2026-10-04
-- 状态：accepted-design；G1、G2 固定 Windows/T1 验证范围已完成；G3–G8 实施项仍 pending，不证明隔离或生产能力已交付
+- 状态：accepted-design；G1、G2 固定 Windows/T1 验证范围已完成；G3 七项已实现为 Windows/T1 prototype，独立安全审阅和原生确认验收仍 pending；G4–G8 尚待实施
 - 决策来源：维护者已确认的产品讨论；实施责任由 Repository Maintainer 分配
 - 进度来源：[生产路线图](./production-roadmap.md)
 - 安全来源：[信任边界](./adr/0001-plugin-trust-boundaries.md)、
@@ -478,4 +478,26 @@ work belongs to Runtime. Native Todo uses async revisions/CAS and no client
 persistent store; original local prototype data remains for deliberate import.
 
 See [shared client evidence](validation/g3-shared-clients.md). All scopes stay
-prototype, with independent security review and P1.5b acceptance pending.
+prototype, with independent security review and native consent acceptance pending.
+
+### G3 P1.5b diagnostics and offline recovery
+
+Fixed Windows T1 runs now expose `jobs diagnose <runId>` and a native Desktop
+metadata summary/export. Identity, package/dependency lock, grant epoch, state,
+sequence, time and stable failure code are allowlisted; inputs, outputs, paths,
+credentials and arbitrary exception messages are excluded. Wire client is exactly
+0.3.0; older clients fail before business IO. Protocol major and DB schema stay 1/2.
+
+Offline `runtime storage list/create/restore <backup-id>/retry` reserves the same
+current-user profile and first native pipe before SQLite IO. Restore/retry require
+CLI `--confirm` or actual native confirmation. Logical UUIDs select same-profile
+backups; clients cannot choose backup paths. Pending recovery blocks Host startup.
+Restoration stages SQLite data, revokes grants, disables cold start, interrupts
+unfinished jobs and quarantines original DB/private payloads. Retry continues the
+same journal; it never replays business work. Old result metadata remains queryable
+through diagnosis, while quarantined outputs expire; new runs retain normal results.
+Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
+
+See [diagnostic/recovery evidence](validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
+security review, actual native consent clicks, assistive technology and other
+platform acceptance are pending; these checks do not authorize production.

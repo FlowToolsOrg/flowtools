@@ -55,6 +55,14 @@ test('compiled CLI initializes without GUI, requires interaction or explicit pol
     stderr: '',
     value: { success: true },
   })
+  expect(await run(['runtime', 'status', '--profile', profile])).toMatchObject({
+    code: 1,
+    stderr: '',
+    value: {
+      success: false,
+      error: { code: 'RUNTIME_DISCONNECTED', phase: 'connect' },
+    },
+  })
   const bootstrapBefore = await readFile(
     join(profile, 'bootstrap.json'),
     'utf8'

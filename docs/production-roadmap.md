@@ -9,7 +9,7 @@
 > 2026-10-04 产品决策：面向知识工作者/普通办公用户，GUI 与外部 agents
 > 共用命令；支持独立 CLI、轻量后台内核、集中管理和共享二进制工具依赖。
 > 低代码、内置 AI 助手与模型接入保留为未来插件。具体顺序与实现见
-> [下一阶段目标与实施设计](./next-milestones.md)。G1、G2 固定验证范围已完成，G3–G8 实施项仍 pending。
+> [下一阶段目标与实施设计](./next-milestones.md)。G1、G2 固定验证范围已完成；G3 七项已实现为 Windows/T1 prototype，独立安全审阅和原生确认验收仍 pending；G4–G8 尚待实施。
 
 本文档是 FlowTools 从 Demo 级原型走向生产版本的执行台账。它不以
 “页面已存在”或“类型已定义”作为完成标准，而以真实执行、失败可恢复、
@@ -1028,7 +1028,7 @@ G4 服务依赖 -> G5 签名安装与隔离 -> G6 工具链 -> G7 办公闭环 -
 | P1.3b | implemented | P2.4a、P2.6a        | 实际执行、durable receipt/同 key 恢复、幂等/取消；未知状态不重试非幂等副作用       |
 | P1.4a | implemented | P1.3b               | CLI-only runtime/runner 分发、受控冷启动；未安装 GUI、50 并发启动验收              |
 | P1.4b | implemented | P1.4a               | GUI/CLI 同任务和数据，jobs status/watch/cancel、完整 text/JSON/退出码回归          |
-| P1.5b | pending     | P1.4b               | run/调用链诊断与隐私红线；实际异常/撤销/恢复可诊断                                 |
+| P1.5b | implemented | P1.4b               | run/调用链诊断与隐私红线；实际异常/撤销/恢复可诊断                                 |
 | P1.6a | pending     | P1.1、P1.3b         | T1/fixture 的 plan-only DAG/lock、服务接口和工具声明；缺失/冲突/循环拒绝           |
 | P1.6b | pending     | P1.6a、P2.4a        | Host RPC/委托 scope、排空后切服务版本、租约/反向依赖；前置服务不能代理越权         |
 | P2.5a | pending     | P1.6                | plugin/tool 签名、trust root、撤销/离线/回滚协议及 fixtures；冻结后方能实现准入    |
@@ -1943,4 +1943,26 @@ work belongs to Runtime. Native Todo uses async revisions/CAS and no client
 persistent store; original local prototype data remains for deliberate import.
 
 See [shared client evidence](validation/g3-shared-clients.md). All scopes stay
-prototype, with independent security review and P1.5b acceptance pending.
+prototype, with independent security review and native consent acceptance pending.
+
+### G3 P1.5b diagnostics and offline recovery
+
+Fixed Windows T1 runs now expose `jobs diagnose <runId>` and a native Desktop
+metadata summary/export. Identity, package/dependency lock, grant epoch, state,
+sequence, time and stable failure code are allowlisted; inputs, outputs, paths,
+credentials and arbitrary exception messages are excluded. Wire client is exactly
+0.3.0; older clients fail before business IO. Protocol major and DB schema stay 1/2.
+
+Offline `runtime storage list/create/restore <backup-id>/retry` reserves the same
+current-user profile and first native pipe before SQLite IO. Restore/retry require
+CLI `--confirm` or actual native confirmation. Logical UUIDs select same-profile
+backups; clients cannot choose backup paths. Pending recovery blocks Host startup.
+Restoration stages SQLite data, revokes grants, disables cold start, interrupts
+unfinished jobs and quarantines original DB/private payloads. Retry continues the
+same journal; it never replays business work. Old result metadata remains queryable
+through diagnosis, while quarantined outputs expire; new runs retain normal results.
+Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
+
+See [diagnostic/recovery evidence](validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
+security review, actual native consent clicks, assistive technology and other
+platform acceptance are pending; these checks do not authorize production.

@@ -300,7 +300,18 @@ impl RuntimeCore {
         if let Some(ref payloads) = self.private_jobs {
             if let Some(ref mut result) = snapshot.result {
                 if let ExecutionOutcome::Success { data, .. } = &mut result.outcome {
-                    if now() >= job.accepted_at + 86_400_000.0 {
+                    if now() >= job.accepted_at + 86_400_000.0
+                        || self
+                            .data
+                            .connection
+                            .query_row(
+                                "SELECT count(*) FROM core_metadata WHERE key=?1",
+                                [format!("recovery-output:{}", run)],
+                                |row| row.get::<_, u32>(0),
+                            )
+                            .map_err(|_| ErrorCode::StorageFailed)?
+                            != 0
+                    {
                         return Err(ErrorCode::ResultExpired);
                     }
                     *data = payloads.read(run, "output")?;
@@ -554,8 +565,69 @@ impl RuntimeCore {
                 let run = self
                     .keys
                     .get(&(caller.clone(), key.idempotency_key))
-                    .ok_or(ErrorCode::JobNotFound)?;
+                    .ok_or_else(|| {
+                        let restored = self.data.connection.query_row("SELECT count(*) FROM core_metadata WHERE key='recovery-generation'", [], |row| row.get::<_, u32>(0)).unwrap_or(1) != 0;
+                        if restored { ErrorCode::AcceptanceUnknown } else { ErrorCode::JobNotFound }
+                    })?;
                 Ok(Outcome::Receipt(self.receipt(run)))
+            }
+            Call::Diagnose(key) => {
+                let job = self.jobs.get(&key.run_id).ok_or(ErrorCode::JobNotFound)?;
+                let snapshot = &job.snapshot;
+                let result = snapshot.result.as_ref();
+                let failure_code = result.and_then(|result| match &result.outcome {
+                    ExecutionOutcome::Failure { error, .. } => Some(error.code.clone()),
+                    _ => None,
+                });
+                let restored: bool = self
+                    .data
+                    .connection
+                    .query_row(
+                        "SELECT count(*) FROM core_metadata WHERE key=?1",
+                        [format!("recovery-output:{}", key.run_id)],
+                        |row| row.get::<_, u32>(0),
+                    )
+                    .map_err(|_| ErrorCode::StorageFailed)?
+                    != 0;
+                let result_expired = snapshot.state == JobState::Succeeded
+                    && (restored || now() >= job.accepted_at + 86_400_000.0);
+                let effects = self
+                    .catalog
+                    .command(&snapshot.plugin_id, &snapshot.command_id)
+                    .is_ok_and(|(_, command)| {
+                        command["effects"]
+                            .as_array()
+                            .is_some_and(|effects| !effects.is_empty())
+                    });
+                Ok(Outcome::Diagnostic(RunDiagnostic {
+                    format_version: 1,
+                    run_id: snapshot.run_id.clone(),
+                    parent_run_id: snapshot.parent_run_id.clone(),
+                    root_caller: snapshot.root_caller.clone(),
+                    plugin_id: snapshot.plugin_id.clone(),
+                    command_id: snapshot.command_id.clone(),
+                    package_version: snapshot.package_version.clone(),
+                    package_digest: snapshot.package_digest.clone(),
+                    dependency_lock: snapshot.dependency_lock.clone(),
+                    grant_epoch: snapshot.grant_epoch,
+                    state: snapshot.state,
+                    sequence: snapshot.sequence,
+                    accepted_at: job.accepted_at,
+                    started_at: (job.started_at > 0.0).then_some(job.started_at),
+                    finished_at: result.map(|result| result.finished_at),
+                    duration_ms: if job.started_at > 0.0 {
+                        result.map(|result| result.duration_ms)
+                    } else {
+                        None
+                    },
+                    background: job.background,
+                    failure_code: failure_code.clone(),
+                    result_expired,
+                    requires_review: snapshot.state == JobState::Interrupted
+                        || (effects
+                            && matches!(snapshot.state, JobState::Failed | JobState::Cancelled))
+                        || failure_code == Some(ErrorCode::AcceptanceUnknown),
+                }))
             }
             Call::Job(key) => Ok(Outcome::Job(Box::new(self.job_snapshot(&key.run_id)?))),
             Call::Jobs => {
@@ -1155,6 +1227,82 @@ fn namespace(identity: &CommandIdentity) -> String {
     format!("{}:{}", identity.publisher, identity.plugin_id)
 }
 
+/// Offline recovery never replays accepted work; preserve its metadata for review.
+pub(crate) fn interrupt_restored_jobs(connection: &rusqlite::Connection) -> Result<(), ErrorCode> {
+    let rows = connection
+        .prepare("SELECT run_id,metadata FROM jobs LIMIT 1025")
+        .map_err(|_| ErrorCode::StoreCorrupt)?
+        .query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+        })
+        .map_err(|_| ErrorCode::StoreCorrupt)?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|_| ErrorCode::StoreCorrupt)?;
+    if rows.len() > 1024 {
+        return Err(ErrorCode::BudgetExceeded);
+    }
+    for (run, value) in rows {
+        let mut stored: StoredJob =
+            serde_json::from_str(&value).map_err(|_| ErrorCode::StoreCorrupt)?;
+        if stored.snapshot.run_id != run
+            || stored.format_version != 1
+            || value.len() > 32768
+            || uuid::Uuid::parse_str(&run).is_err()
+            || !valid_key(&stored.idempotency_key)
+        {
+            return Err(ErrorCode::StoreCorrupt);
+        }
+        if stored.snapshot.state == JobState::Succeeded {
+            connection
+                .execute(
+                    "INSERT OR REPLACE INTO core_metadata(key,value) VALUES(?1,'true')",
+                    [format!("recovery-output:{run}")],
+                )
+                .map_err(|_| ErrorCode::StorageFailed)?;
+        }
+        if !stored.snapshot.state.terminal() {
+            stored.snapshot.state = JobState::Interrupted;
+            stored.snapshot.sequence = stored
+                .snapshot
+                .sequence
+                .checked_add(1)
+                .ok_or(ErrorCode::BudgetExceeded)?;
+            stored.events.push(JobEvent {
+                run_id: run.clone(),
+                sequence: stored.snapshot.sequence,
+                state: JobState::Interrupted,
+            });
+            let finished = now();
+            stored.snapshot.result = Some(ExecutionResult {
+                format_version: 1,
+                run_id: run.clone(),
+                plugin_id: stored.snapshot.plugin_id.clone(),
+                plugin_version: stored.snapshot.package_version.clone(),
+                started_at: stored.started_at.max(stored.accepted_at),
+                finished_at: finished,
+                duration_ms: finished - stored.started_at.max(stored.accepted_at),
+                input_summary: stored.input_summary.clone(),
+                outcome: ExecutionOutcome::Failure {
+                    success: false,
+                    error: RuntimeError {
+                        code: ErrorCode::ExecutionInterrupted,
+                    },
+                },
+            });
+            connection
+                .execute(
+                    "UPDATE jobs SET metadata=?1 WHERE run_id=?2",
+                    rusqlite::params![
+                        serde_json::to_string(&stored).map_err(|_| ErrorCode::StorageFailed)?,
+                        run
+                    ],
+                )
+                .map_err(|_| ErrorCode::StorageFailed)?;
+        }
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1290,6 +1438,7 @@ mod tests {
         else {
             panic!("Receipt")
         };
+        let queued_backup = core.data.backup().unwrap();
         let accepted = core.data.load_jobs().unwrap();
         assert_eq!(accepted.len(), 1);
         assert!(!serde_json::to_string(&accepted)
@@ -1370,6 +1519,32 @@ mod tests {
         assert_eq!(
             core.jobs[&receipt.run_id].events.last().unwrap().state,
             JobState::Interrupted
+        );
+        drop(core);
+        let backup_id = queued_backup
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .strip_prefix("runtime-backup-")
+            .unwrap()
+            .strip_suffix(".sqlite")
+            .unwrap()
+            .to_string();
+        crate::recovery::manage(&profile, StorageAction::Restore { backup_id }).unwrap();
+        let mut restored = reopen();
+        assert_eq!(restored.state(&receipt.run_id), Some(JobState::Interrupted));
+        assert!(restored.pending_runs().is_empty());
+        assert!(restored
+            .policy
+            .as_ref()
+            .unwrap()
+            .records
+            .iter()
+            .all(|record| record.grant.is_none()));
+        let cli = open(&mut restored, "cli", "cli");
+        assert!(
+            matches!(restored.handle("cli",request(Call::Diagnose(JobKey{run_id:receipt.run_id}),Some(cli))).outcome,Outcome::Diagnostic(report) if report.requires_review && report.failure_code == Some(ErrorCode::ExecutionInterrupted))
         );
     }
     #[test]

@@ -63,7 +63,7 @@ try {
       method: 'session.open',
       payload: {
         token: cliToken,
-        clientVersion: '0.2.0',
+        clientVersion: '0.3.0',
         expectedInstanceId: null,
         agentId: 'admin',
       },
@@ -159,13 +159,23 @@ try {
   await assert.rejects(desktop.cancel(receipt.runId), {
     code: 'SESSION_INVALID',
   })
-  const cancelled = await cli.submit({ ...job, idempotencyKey: 'cancel' })
+  const cancelled = await cli.submit({
+    ...job,
+    idempotencyKey: 'cancel',
+    deadline: Date.now() + 10000,
+  })
   await cli.cancel(cancelled.runId)
   partial(await desktop.waitForResult(cancelled.runId), {
     state: 'cancelled',
     result: { success: false, error: { code: 'ABORTED' } },
   })
-  const background = await cli.submit({ ...job, idempotencyKey: 'background' })
+  // A different key is a new operation with its own unchanged ten-second budget.
+  // The retry of actual-base64 above retains the original absolute deadline.
+  const background = await cli.submit({
+    ...job,
+    idempotencyKey: 'background',
+    deadline: Date.now() + 10000,
+  })
   cli.close()
   partial(await desktop.waitForResult(background.runId), { state: 'succeeded' })
   const reconnect = new RuntimeClient(await connectNamedPipe(ready.pipe))

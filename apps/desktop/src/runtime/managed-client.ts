@@ -1,10 +1,11 @@
-import type { Call } from '@flowtools/runtime-client'
+import type { Call, StorageAction } from '@flowtools/runtime-client'
 import type { DataCapability } from '@flowtools/sdk/data'
 
 import {
   PluginDataClient,
   RuntimeClient,
   RuntimeClientError,
+  decodeStorageReport,
 } from '@flowtools/runtime-client'
 
 import { commands } from '../utils/bindings'
@@ -41,6 +42,12 @@ export async function controlManagedRuntime(call: Call, initialize = false) {
   if (response.status === 'error')
     throw new RuntimeClientError(response.error.code)
   return response.data
+}
+export async function storageManagedRuntime(action: StorageAction) {
+  const response = await commands.managedRuntimeStorage(action)
+  if (response.status === 'error')
+    throw new RuntimeClientError(response.error.code)
+  return decodeStorageReport(response.data)
 }
 export function managedPluginData(
   pluginId: string,

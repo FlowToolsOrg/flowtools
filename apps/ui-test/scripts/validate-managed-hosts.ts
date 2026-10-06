@@ -183,7 +183,7 @@ try {
           method: 'session.open',
           payload: {
             token: '',
-            clientVersion: '0.2.0',
+            clientVersion: '0.3.0',
             expectedInstanceId: null,
           },
         },
@@ -361,9 +361,21 @@ try {
     .filter({ hasText: background.runId })
     .filter({ hasText: 'succeeded' })
     .waitFor()
-  await page.waitForFunction(
-    () =>
-      !document.querySelector('[aria-label="共享 Runtime"] button[disabled]')
+  await page.waitForFunction(runId => {
+    const button = Array.from(
+      document.querySelectorAll<HTMLButtonElement>(
+        '[aria-label="共享 Runtime"] button'
+      )
+    ).find(item => item.textContent === `诊断 ${runId}`)
+    return button && !button.disabled
+  }, background.runId)
+  assert.equal(
+    await page.getByRole('button', { name: '继续未完成恢复' }).isDisabled(),
+    true
+  )
+  assert.equal(
+    await page.getByRole('button', { name: '恢复所选备份' }).isDisabled(),
+    true
   )
   await page
     .getByTestId('managed-job')
@@ -373,6 +385,77 @@ try {
     path: join(output, 'desktop-shared-jobs.png'),
     fullPage: true,
   })
+  await page
+    .getByRole('button', { name: `诊断 ${background.runId}`, exact: true })
+    .click()
+  const diagnostic = JSON.parse(
+    await page.getByTestId('managed-run-diagnostic').innerText()
+  ) as { runId: string; state: string }
+  assert.equal(diagnostic.runId, background.runId)
+  assert.equal(diagnostic.state, 'succeeded')
+  const summary = await page.getByTestId('managed-run-diagnostic').innerText()
+  for (const secret of [
+    'GUI background fixture',
+    'inputSummary',
+    'resources',
+    'bootstrap',
+    '"result":',
+  ])
+    assert.ok(!summary.includes(secret))
+  await page.getByRole('region', { name: '运行诊断' }).scrollIntoViewIfNeeded()
+  await page.screenshot({
+    path: join(output, 'desktop-run-diagnostic.png'),
+    fullPage: true,
+  })
+  const downloadReady = page.waitForEvent('download')
+  await page.getByRole('button', { name: '导出诊断摘要', exact: true }).click()
+  const download = await downloadReady
+  assert.equal(
+    download.suggestedFilename(),
+    `flowtools-run-${background.runId}.json`
+  )
+  const exportPath = join(output, 'desktop-run-diagnostic.json')
+  await download.saveAs(exportPath)
+  assert.deepEqual(JSON.parse(await readFile(exportPath, 'utf8')), diagnostic)
+  await page.getByRole('button', { name: '读取备份', exact: true }).click()
+  await page
+    .getByTestId('managed-runtime-status')
+    .filter({ hasText: 'STORE_BUSY' })
+    .waitFor()
+  await cli(['runtime', 'stop'])
+  const offlineBackup = await cli(['runtime', 'storage', 'create'])
+  assert.equal(offlineBackup.success, true)
+  const backups = (
+    offlineBackup.data as {
+      backups: { id: string; usable: boolean; schemaVersion: number }[]
+    }
+  ).backups
+  assert.equal(backups.length, 1)
+  assert.equal(backups[0].usable, true)
+  assert.equal(backups[0].schemaVersion, 2)
+  await page.getByRole('button', { name: '读取备份', exact: true }).click()
+  const selectedBackup = page.locator(
+    `select[aria-label="Runtime 备份"] option[value="${backups[0].id}"]`
+  )
+  await selectedBackup.waitFor({ state: 'attached' })
+  assert.equal(await selectedBackup.textContent(), `${backups[0].id} · 2`)
+  await page
+    .getByTestId('managed-runtime-status')
+    .filter({ hasText: '已读取离线备份' })
+    .waitFor()
+  await page
+    .getByRole('combobox', { name: 'Runtime 备份' })
+    .selectOption(backups[0].id)
+  assert.equal(
+    await page.getByRole('combobox', { name: 'Runtime 备份' }).inputValue(),
+    backups[0].id
+  )
+  assert.ok(
+    !(
+      await page.getByRole('region', { name: 'Runtime 备份恢复' }).innerText()
+    ).includes(profile)
+  )
+  await cli(['runtime', 'start'])
   // Business transport cannot obtain manager rights, even in the trusted main WebView.
   const refused = await page.evaluate(async () => {
     const invoke = (
@@ -416,7 +499,7 @@ try {
         method: 'session.open',
         payload: {
           token: '',
-          clientVersion: '0.2.0',
+          clientVersion: '0.3.0',
           expectedInstanceId: null,
         },
       },
@@ -468,6 +551,9 @@ try {
         backgroundAfterGuiExit: receipt.runId,
         state: terminal?.state,
         businessManagerRefusal: refused,
+        runDiagnostic: diagnostic,
+        nativeDiagnosticDownload: true,
+        offlineNativeBackupList: true,
         nativeConsentClick: 'pending - Computer Use unavailable',
         scope: 'Windows T1 prototype',
       },

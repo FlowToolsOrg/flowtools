@@ -7,6 +7,7 @@ import type {
   Outcome,
   Request,
   Response,
+  RunDiagnostic,
   SessionProof,
   SubmitJob,
 } from './bindings'
@@ -111,6 +112,7 @@ export class RuntimeClient {
       'jobs.submit': 'receipt',
       'jobs.lookup': 'receipt',
       'jobs.status': 'job',
+      'jobs.diagnose': 'diagnostic',
       'jobs.list': 'jobs',
       'jobs.cancel': 'job',
       'jobs.events': 'events',
@@ -161,6 +163,20 @@ export class RuntimeClient {
       outcome.type !== 'jobs' ||
       outcome.data.length > 128 ||
       outcome.data.some(job => job.result !== null)
+    )
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    return outcome.data
+  }
+
+  async diagnose(runId: string): Promise<RunDiagnostic> {
+    const outcome = await this.call({
+      method: 'jobs.diagnose',
+      payload: { runId },
+    })
+    if (
+      outcome.type !== 'diagnostic' ||
+      outcome.data.runId !== runId ||
+      outcome.data.formatVersion !== 1
     )
       throw new RuntimeClientError('INVALID_RESPONSE')
     return outcome.data

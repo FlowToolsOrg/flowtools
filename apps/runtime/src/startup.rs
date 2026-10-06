@@ -87,6 +87,9 @@ fn present(pipe: &str) -> bool {
 
 // The named mutex is acquired and released on this synchronous OS thread.
 pub fn dispatch(args: &[String]) -> Option<Result<(), &'static str>> {
+    if args.first().is_some_and(|arg| arg == "--storage") {
+        return Some(storage(args));
+    }
     if args.len() != 2
         || !matches!(
             args[0].as_str(),
@@ -160,6 +163,14 @@ pub fn dispatch(args: &[String]) -> Option<Result<(), &'static str>> {
                     if code.trim() == "BUNDLE_INTEGRITY_FAILED" {
                         return Err("BUNDLE_INTEGRITY_FAILED");
                     }
+                    match code.trim() {
+                        "RECOVERY_PENDING" => return Err("RECOVERY_PENDING"),
+                        "STORE_CORRUPT" => return Err("STORE_CORRUPT"),
+                        "STORE_BUSY" => return Err("STORE_BUSY"),
+                        "SCHEMA_UNSUPPORTED" => return Err("SCHEMA_UNSUPPORTED"),
+                        "STORAGE_FAILED" => return Err("STORAGE_FAILED"),
+                        _ => {}
+                    }
                     return Err("STARTUP_DENIED_OR_FAILED");
                 }
                 // Readiness reader may drop its pipe; the Host emits no further stdout.
@@ -172,6 +183,45 @@ pub fn dispatch(args: &[String]) -> Option<Result<(), &'static str>> {
         );
         Ok(())
     })())
+}
+
+fn storage(args: &[String]) -> Result<(), &'static str> {
+    use flowtools_runtime_core::{protocol::StorageAction, recovery};
+    let result = (|| {
+        if args.len() != 3 || args[2].len() > 8192 {
+            return Err(flowtools_runtime_core::protocol::ErrorCode::InvalidRequest);
+        }
+        let action: StorageAction = serde_json::from_str(&args[2])
+            .map_err(|_| flowtools_runtime_core::protocol::ErrorCode::InvalidRequest)?;
+        let (path, _) = profile::load(Path::new(&args[1]))?;
+        let sid = security::current_user_sid()
+            .map_err(|_| flowtools_runtime_core::protocol::ErrorCode::StorageFailed)?;
+        let pipe = profile::pipe(&path, &sid);
+        let _lock = lock(&pipe, &sid)
+            .map_err(|_| flowtools_runtime_core::protocol::ErrorCode::StoreBusy)?;
+        // Reserve the same first pipe as online startup before opening SQLite.
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .map_err(|_| flowtools_runtime_core::protocol::ErrorCode::StorageFailed)?;
+        let _enter = runtime.enter();
+        let _reservation = security::create_pipe(&pipe, &sid, true)
+            .map_err(|_| flowtools_runtime_core::protocol::ErrorCode::StoreBusy)?;
+        recovery::manage(&path, action)
+    })();
+    match result {
+        Ok(report) => {
+            println!(
+                "{}",
+                serde_json::to_string(&report).map_err(|_| "INVALID_RESPONSE")?
+            );
+            Ok(())
+        }
+        Err(code) => {
+            println!("{}", serde_json::json!({"error":{"code":code}}));
+            Err("STORAGE_OPERATION_FAILED")
+        }
+    }
 }
 
 #[cfg(test)]

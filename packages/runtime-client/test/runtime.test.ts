@@ -1,6 +1,41 @@
 import { expect, test } from 'bun:test'
 
-import { encodeRequest } from '../src/codec'
+import {
+  encodeRequest,
+  decodeResponse,
+  encodeStorageAction,
+  decodeStorageReport,
+} from '../src/codec'
+
+test('storage schema exposes logical backup identities and rejects paths and forged diagnostic payloads', () => {
+  expect(() =>
+    encodeStorageAction({
+      operation: 'restore',
+      parameters: { backupId: 'one', path: 'C:/private' },
+    })
+  ).toThrow('INVALID_REQUEST')
+  expect(() =>
+    encodeStorageAction({ operation: 'run', parameters: { argv: [] } })
+  ).toThrow('INVALID_REQUEST')
+  expect(() =>
+    decodeStorageReport({
+      formatVersion: 1,
+      backups: [],
+      recovery: null,
+      token: 'private',
+    })
+  ).toThrow('INVALID_RESPONSE')
+  expect(() =>
+    decodeResponse({
+      version: 1,
+      requestId: 'one',
+      outcome: {
+        type: 'diagnostic',
+        data: { runId: 'one', input: 'private', output: 'private' },
+      },
+    })
+  ).toThrow('INVALID_RESPONSE')
+})
 
 test('wire schema rejects identity injection and non-finite JSON before transport', () => {
   const request = {

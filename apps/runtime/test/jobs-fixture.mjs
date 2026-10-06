@@ -219,6 +219,10 @@ try {
   const interrupted = await cli.job(crashing.runId)
   assert.equal(interrupted.state, 'interrupted')
   assert.equal(interrupted.result.error.code, 'EXECUTION_INTERRUPTED')
+  const interruptedDiagnosis = await cli.diagnose(crashing.runId)
+  assert.equal(interruptedDiagnosis.failureCode, 'EXECUTION_INTERRUPTED')
+  assert.equal(interruptedDiagnosis.requiresReview, true)
+  assert.ok(!JSON.stringify(interruptedDiagnosis).includes('CRASH_CANARY'))
   const afterCrash = await new PluginDataClient(cli, 'plugin-todo-list').read(
     'todos'
   )
@@ -247,6 +251,10 @@ try {
   })
   const failure = await cli.waitForResult(revoked.runId)
   assert.equal(failure.result.error.code, 'GRANT_REVOKED')
+  const revokeDiagnosis = await cli.diagnose(revoked.runId)
+  assert.equal(revokeDiagnosis.failureCode, 'GRANT_REVOKED')
+  assert.equal(revokeDiagnosis.requiresReview, true)
+  assert.ok(!JSON.stringify(revokeDiagnosis).includes('REVOKE_CANARY'))
   // Receipt lookup remains available after revocation; it never repeats a write.
   assert.equal(
     (

@@ -294,9 +294,18 @@ fn pending_recovery_refuses_fresh_database_creation() {
     let path = directory.join("runtime.sqlite");
     assert!(matches!(
         DataStore::open(&path),
-        Err(ErrorCode::StorageFailed)
+        Err(ErrorCode::RecoveryPending)
     ));
     assert!(!path.exists());
+    assert_eq!(
+        DataStore::restore_backup(&path, &directory.join("runtime-backup-unread.sqlite")).err(),
+        Some(ErrorCode::RecoveryPending)
+    );
+    assert_eq!(std::fs::read_dir(&directory).unwrap().count(), 1);
+    assert_eq!(
+        std::fs::read(directory.join("runtime-recovery-pending")).unwrap(),
+        b"pending"
+    );
 }
 
 #[test]

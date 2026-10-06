@@ -28,12 +28,22 @@ import {
 import Database from '@tauri-apps/plugin-sql'
 import { LazyStore } from '@tauri-apps/plugin-store'
 
+import { managedPluginData } from './managed-client'
+
 interface DesktopRuntimeOptions {
   pluginId: string
   pluginType: 'app' | 'tool'
   permissions?: readonly Permission[]
   storeShape?: PluginStoreShape
   mode?: RuntimeMode
+}
+
+const runtimeDisposers = new WeakMap<PluginRuntimeContextValue, () => void>()
+export function disposeDesktopRuntimeContext(
+  context: PluginRuntimeContextValue
+) {
+  runtimeDisposers.get(context)?.()
+  runtimeDisposers.delete(context)
 }
 
 const storagePrefix = 'flowtools:desktop:plugin'
@@ -57,7 +67,10 @@ export function createDesktopRuntimeContext(
 ): PluginRuntimeContextValue {
   const allowedPermissions = new Set(options.permissions ?? [])
 
-  return {
+  const managed = isTauriRuntime() && options.pluginId === 'plugin-todo-list'
+  const shared = managed ? managedPluginData(options.pluginId) : undefined
+  const context: PluginRuntimeContextValue = {
+    data: shared?.data,
     env: {
       pluginId: options.pluginId,
       pluginType: options.pluginType,
@@ -86,11 +99,13 @@ export function createDesktopRuntimeContext(
       allowedPermissions,
       createNotificationCapability
     ),
-    storage: pickCapability('storage', allowedPermissions, () =>
-      createStorageCapability(options.pluginId)
-    ),
+    storage: managed
+      ? undefined
+      : pickCapability('storage', allowedPermissions, () =>
+          createStorageCapability(options.pluginId)
+        ),
     store:
-      options.pluginType === 'app'
+      !managed && options.pluginType === 'app'
         ? getOrCreatePluginStoreCapability(
             options.pluginId,
             options.storeShape,
@@ -107,6 +122,8 @@ export function createDesktopRuntimeContext(
       now: () => Date.now(),
     },
   }
+  if (shared) runtimeDisposers.set(context, shared.close)
+  return context
 }
 
 function createUiCapability(pluginId: string): PluginRuntimeContextValue['ui'] {

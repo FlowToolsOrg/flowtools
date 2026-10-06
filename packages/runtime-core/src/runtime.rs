@@ -519,6 +519,11 @@ impl RuntimeCore {
                 }
                 .into(),
                 jobs: self.jobs.len() as u32,
+                active_jobs: self
+                    .jobs
+                    .values()
+                    .filter(|job| !job.snapshot.state.terminal())
+                    .count() as u32,
             })),
             Call::Plugins => Ok(Outcome::Plugins(
                 self.catalog
@@ -526,6 +531,7 @@ impl RuntimeCore {
                     .map(|(id, manifest)| PluginStatus {
                         plugin_id: id.clone(),
                         version: manifest["version"].as_str().unwrap().into(),
+                        package_digest: digest(manifest),
                         installed: true,
                         enabled: true,
                         running: self.jobs.values().any(|job| {
@@ -552,9 +558,37 @@ impl RuntimeCore {
                 Ok(Outcome::Receipt(self.receipt(run)))
             }
             Call::Job(key) => Ok(Outcome::Job(Box::new(self.job_snapshot(&key.run_id)?))),
+            Call::Jobs => {
+                let mut jobs: Vec<&Job> = self.jobs.values().collect();
+                jobs.sort_by(|a, b| {
+                    a.snapshot
+                        .state
+                        .terminal()
+                        .cmp(&b.snapshot.state.terminal())
+                        .then_with(|| b.accepted_at.total_cmp(&a.accepted_at))
+                        .then_with(|| a.snapshot.run_id.cmp(&b.snapshot.run_id))
+                });
+                Ok(Outcome::Jobs(
+                    jobs.into_iter()
+                        .take(128)
+                        .map(|job| {
+                            let mut snapshot = job.snapshot.clone();
+                            // Listings are bounded metadata, never a private output query.
+                            snapshot.result = None;
+                            snapshot
+                        })
+                        .collect(),
+                ))
+            }
             Call::Cancel(key) => {
                 let job = self.jobs.get(&key.run_id).ok_or(ErrorCode::JobNotFound)?;
-                if job.snapshot.root_caller != caller {
+                let shared_user = self.policy.is_some()
+                    && matches!(caller.as_str(), "local-cli" | "local-desktop")
+                    && matches!(
+                        job.snapshot.root_caller.as_str(),
+                        "local-cli" | "local-desktop"
+                    );
+                if job.snapshot.root_caller != caller && !shared_user {
                     return Err(ErrorCode::SessionInvalid);
                 }
                 self.cancel(&key.run_id);
@@ -1124,6 +1158,83 @@ fn namespace(identity: &CommandIdentity) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn managed_user_clients_share_metadata_and_cancel_but_not_management_roles() {
+        let mut core = RuntimeCore::managed(
+            HashMap::from([
+                ("cli".into(), "local-cli".into()),
+                ("desktop".into(), "local-desktop".into()),
+                ("admin".into(), "local-manager".into()),
+            ]),
+            DataStore::memory().unwrap(),
+            false,
+            false,
+        )
+        .unwrap();
+        let admin = open(&mut core, "admin", "admin");
+        let (manifest, _) = core
+            .catalog
+            .command("plugin-base64-encoder", "run")
+            .unwrap();
+        let grant = PermissionGrant {
+            plugin_id: "plugin-base64-encoder".into(),
+            command_id: "run".into(),
+            target: GrantTarget::Cli,
+            package_digest: digest(manifest),
+            effects: vec![],
+            scopes: vec![],
+            expires_at: now() + 60_000.0,
+            max_calls: 16,
+            cold_start: false,
+            background: true,
+        };
+        assert!(matches!(
+            core.handle("admin", request(Call::Grant(grant), Some(admin.clone())))
+                .outcome,
+            Outcome::Permissions(_)
+        ));
+        let cli = open(&mut core, "cli", "cli");
+        let desktop = open(&mut core, "desktop", "desktop");
+        let mut operation = submit();
+        operation.input = json!({"text":"SHARED_PRIVATE_OUTPUT_CANARY"});
+        operation.background = true;
+        let Outcome::Receipt(receipt) = core
+            .handle("cli", request(Call::Submit(operation), Some(cli.clone())))
+            .outcome
+        else {
+            panic!("Receipt")
+        };
+        let listed = core
+            .handle("desktop", request(Call::Jobs, Some(desktop.clone())))
+            .outcome;
+        assert!(
+            matches!(&listed, Outcome::Jobs(jobs) if jobs.len() == 1 && jobs[0].run_id == receipt.run_id && jobs[0].result.is_none())
+        );
+        assert!(!serde_json::to_string(&listed)
+            .unwrap()
+            .contains("SHARED_PRIVATE_OUTPUT_CANARY"));
+        assert!(
+            matches!(core.handle("desktop", request(Call::Status, Some(desktop.clone()))).outcome, Outcome::Status(status) if status.active_jobs == 1)
+        );
+        assert!(matches!(
+            core.handle(
+                "admin",
+                request(
+                    Call::Cancel(JobKey {
+                        run_id: receipt.run_id.clone()
+                    }),
+                    Some(admin)
+                )
+            )
+            .outcome,
+            Outcome::Error(RuntimeError {
+                code: ErrorCode::SessionInvalid
+            })
+        ));
+        assert!(
+            matches!(core.handle("desktop", request(Call::Cancel(JobKey { run_id: receipt.run_id }), Some(desktop))).outcome, Outcome::Job(snapshot) if snapshot.state == JobState::Cancelled)
+        );
+    }
     #[test]
     fn durable_receipt_recovery_keeps_keys_private_and_never_replays_running_writes() {
         let profile =

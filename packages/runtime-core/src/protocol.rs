@@ -5,7 +5,7 @@ use specta::Type;
 
 pub const PROTOCOL_MAJOR: u16 = 1;
 pub const MAX_FRAME_BYTES: usize = 1_048_576;
-pub const CLIENT_VERSION: &str = "0.1.0";
+pub const CLIENT_VERSION: &str = "0.2.0";
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -38,6 +38,8 @@ pub enum Call {
     Lookup(IdempotencyKey),
     #[serde(rename = "jobs.status")]
     Job(JobKey),
+    #[serde(rename = "jobs.list")]
+    Jobs,
     #[serde(rename = "jobs.cancel")]
     Cancel(JobKey),
     #[serde(rename = "jobs.events")]
@@ -347,6 +349,8 @@ pub enum Outcome {
     Receipt(JobReceipt),
     #[serde(rename = "job")]
     Job(Box<JobSnapshot>),
+    #[serde(rename = "jobs")]
+    Jobs(Vec<JobSnapshot>),
     #[serde(rename = "events")]
     Events(Vec<JobEvent>),
     #[serde(rename = "data")]
@@ -369,6 +373,7 @@ pub struct RuntimeStatus {
     pub instance_id: String,
     pub mode: String,
     pub jobs: u32,
+    pub active_jobs: u32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
@@ -376,6 +381,7 @@ pub struct RuntimeStatus {
 pub struct PluginStatus {
     pub plugin_id: String,
     pub version: String,
+    pub package_digest: String,
     pub installed: bool,
     pub enabled: bool,
     pub running: bool,

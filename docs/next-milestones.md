@@ -456,3 +456,26 @@ The package pins relative compiled artifacts and supports explicit GUI-free init
 runtime start/status/stop and granted bundle execution. Source CLI/GUI integration
 and operational diagnostics remain P1.4b/P1.5b. Maturity remains prototype;
 signed releases, third-party sandbox and independent security review are pending.
+
+### G3 P1.4b shared Host clients
+
+Desktop and source/standalone CLI execute through the same authenticated T1 Host.
+`jobs submit/list/status/watch/cancel/lookup` expose durable receipts and bounded
+metadata; listings exclude results. Same-user CLI/Desktop sessions can cancel
+one another's tasks; validation callers and T0 management roles retain their
+separate rejection rules. Lost acknowledgements query the original key, never
+create a new effect. The wire client is now exactly 0.2.0; 0.1.0 clients fail the
+handshake before business IO. Protocol major and SQLite schema are unchanged.
+
+The source Desktop prototype pins the build-owned Runtime binary and verifies
+it before native bootstrap. Its main native window and configured DEV origin
+own sessions; credentials/endpoint/executable selectors never enter JavaScript.
+Release Desktop distribution remains a later platform gate. Initialization,
+grants, cold-start changes and full stop require an actual native confirmation;
+revocation is immediate. The GUI shows active task count before full stop.
+Closing GUI disconnects foreground work while explicitly granted background
+work belongs to Runtime. Native Todo uses async revisions/CAS and no client
+persistent store; original local prototype data remains for deliberate import.
+
+See [shared client evidence](validation/g3-shared-clients.md). All scopes stay
+prototype, with independent security review and P1.5b acceptance pending.

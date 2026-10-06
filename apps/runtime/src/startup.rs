@@ -87,13 +87,29 @@ fn present(pipe: &str) -> bool {
 
 // The named mutex is acquired and released on this synchronous OS thread.
 pub fn dispatch(args: &[String]) -> Option<Result<(), &'static str>> {
-    if args.len() != 2 || !matches!(args[0].as_str(), "--ensure-runtime" | "--endpoint") {
+    if args.len() != 2
+        || !matches!(
+            args[0].as_str(),
+            "--ensure-runtime" | "--endpoint" | "--desktop-bootstrap" | "--manager-bootstrap"
+        )
+    {
         return None;
     }
     Some((|| {
-        let (path, _) = profile::load(Path::new(&args[1])).map_err(|_| "SETUP_REQUIRED")?;
+        let (path, bootstrap) = profile::load(Path::new(&args[1])).map_err(|_| "SETUP_REQUIRED")?;
         let sid = security::current_user_sid().map_err(|_| "IPC_ACCESS_FAILED")?;
         let pipe = profile::pipe(&path, &sid);
+        if matches!(
+            args[0].as_str(),
+            "--desktop-bootstrap" | "--manager-bootstrap"
+        ) {
+            // Local T0 native client bootstrap; captured by native Host code, never IPC/JS.
+            println!(
+                "{}",
+                serde_json::json!({"pipe":pipe, "token":if args[0] == "--desktop-bootstrap" {bootstrap.desktop_token} else {bootstrap.management_token}})
+            );
+            return Ok(());
+        }
         if args[0] == "--ensure-runtime" {
             let _lock = lock(&pipe, &sid)?;
             if !present(&pipe) {

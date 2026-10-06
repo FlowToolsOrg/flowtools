@@ -428,3 +428,17 @@ The package pins relative compiled artifacts and supports explicit GUI-free init
 runtime start/status/stop and granted bundle execution. Source CLI/GUI integration
 and operational diagnostics remain P1.4b/P1.5b. Maturity remains prototype;
 signed releases, third-party sandbox and independent security review are pending.
+
+P1.4b source and rejection evidence for SEC-002/003/004/006/009/010/013/015:
+[shared client evidence](../validation/g3-shared-clients.md). Native-only
+credentials, fixed artifact pins, configured-origin checks, native T0 approval,
+metadata-only listings and revision conflicts are additional T1 controls.
+Shared-realm T1 UI, same-user tampering, unverified release distribution and
+independent reviewer approval remain open; no threat is closed by these tests.
+
+P1.4b Native validation metadata directory selection is guarded in
+apps/desktop/src-tauri/src/db/init.rs by the compiled fixture identity, Debug,
+explicit validation mode and safe absolute fixture root. Its regression refuses
+production identity/missing mode/relative paths. This closes the test-profile
+reuse defect caused by Windows Known Folder API ignoring APPDATA overrides;
+SEC-015 and the other G3 risks remain open pending independent review.

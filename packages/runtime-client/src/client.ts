@@ -111,6 +111,7 @@ export class RuntimeClient {
       'jobs.submit': 'receipt',
       'jobs.lookup': 'receipt',
       'jobs.status': 'job',
+      'jobs.list': 'jobs',
       'jobs.cancel': 'job',
       'jobs.events': 'events',
       'data.read': 'data',
@@ -150,6 +151,17 @@ export class RuntimeClient {
       payload: { runId },
     })
     if (outcome.type !== 'job' || outcome.data.runId !== runId)
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    return outcome.data
+  }
+
+  async jobs(): Promise<JobSnapshot[]> {
+    const outcome = await this.call({ method: 'jobs.list' })
+    if (
+      outcome.type !== 'jobs' ||
+      outcome.data.length > 128 ||
+      outcome.data.some(job => job.result !== null)
+    )
       throw new RuntimeClientError('INVALID_RESPONSE')
     return outcome.data
   }

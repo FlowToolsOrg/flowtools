@@ -160,3 +160,9 @@ The package pins relative compiled artifacts and supports explicit GUI-free init
 runtime start/status/stop and granted bundle execution. Source CLI/GUI integration
 and operational diagnostics remain P1.4b/P1.5b. Maturity remains prototype;
 signed releases, third-party sandbox and independent security review are pending.
+
+P1.4b uses native main-window/current-user sessions for shared T1 clients.
+T0 confirmation stays native; listings are metadata only and cross-client
+cancellation applies only to the same local trusted user clients. This does
+not broaden third-party execution, signing or sandbox claims. See
+[shared client evidence](../validation/g3-shared-clients.md).

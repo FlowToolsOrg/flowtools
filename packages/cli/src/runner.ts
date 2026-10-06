@@ -12,7 +12,6 @@ import {
   type PluginManifestV1,
 } from '@flowtools/sdk/manifest'
 
-import { createCLIToolContext } from './context'
 import {
   loadPlugin,
   cliManifestTarget,
@@ -31,10 +30,6 @@ export type RunResult =
       success: false
       error: { code: string; message: string }
     })
-declare const __FLOWTOOLS_BUNDLE_RUNTIME_LOCK__: {
-  path: string
-  sha256: string
-} | null
 interface CLIExecutablePlugin extends ExecutablePlugin {
   manifest?: PluginManifestV1
   type?: 'app' | 'tool'
@@ -122,38 +117,27 @@ export function createPluginRunner(dependencies: PluginRunnerDependencies) {
   }
 }
 
-const defaultPluginRunner = createPluginRunner({
-  loadPlugin: async pluginId => {
-    const plugin = await loadPlugin(pluginId)
-    if (!plugin && getBuiltinPluginInfo(pluginId))
-      throw new Error('Built-in command could not be loaded')
-    return plugin
-  },
-  createContext: (pluginId, plugin) =>
-    createCLIToolContext(pluginId, {
-      pluginType: plugin.type ?? 'app',
-      permissions: plugin.manifest
-        ? plugin.manifest.commands[0]?.permissions.flatMap(request =>
-            request.capability === 'network' || request.capability === 'storage'
-              ? [request.capability]
-              : []
-          )
-        : plugin.meta.permissions,
-    }),
-})
 export const runPlugin = async (
   pluginId: string,
   input: unknown,
   options: PluginRunOptions = {}
 ): Promise<RunResult> => {
-  if (
-    typeof __FLOWTOOLS_BUNDLE_RUNTIME_LOCK__ === 'object' &&
-    __FLOWTOOLS_BUNDLE_RUNTIME_LOCK__
-  ) {
-    const { runManagedPlugin } = await import('./managed-run')
-    return runManagedPlugin(pluginId, input, options)
+  const info = getBuiltinPluginInfo(pluginId)
+  if (!info)
+    return createExecutionFailure(pluginId, null, input, {
+      code: 'PLUGIN_NOT_FOUND',
+      message: 'Plugin is not in the fixed inventory',
+    })
+  try {
+    if (!(await loadPlugin(pluginId))) throw new Error('LOAD_FAILED')
+  } catch {
+    return createExecutionFailure(pluginId, info.version, input, {
+      code: 'LOAD_FAILED',
+      message: 'Compiled built-in contract unavailable',
+    })
   }
-  return defaultPluginRunner(pluginId, input, options)
+  const { runManagedPlugin } = await import('./managed-run')
+  return runManagedPlugin(pluginId, input, options)
 }
 
 /** JSON output is always the shared envelope, including failure metadata. */

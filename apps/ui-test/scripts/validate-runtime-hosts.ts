@@ -76,6 +76,10 @@ const desktop = spawn(desktopExe, [], {
     TEMP: process.env.TEMP,
     TMP: process.env.TMP,
     FLOWTOOLS_RUNTIME_VALIDATION: '1',
+    FLOWTOOLS_DESKTOP_VALIDATION_DATA_ROOT: join(
+      runtimeProfile,
+      'flowtools-validation-desktop'
+    ),
     FLOWTOOLS_RUNTIME_VALIDATION_PIPE: ready.pipe,
     FLOWTOOLS_RUNTIME_VALIDATION_DESKTOP_TOKEN: desktopToken,
     WEBVIEW2_USER_DATA_FOLDER: webviewProfile,
@@ -188,7 +192,7 @@ try {
         method: 'session.open',
         payload: {
           token: '',
-          clientVersion: '0.1.0',
+          clientVersion: '0.2.0',
           expectedInstanceId: null,
         },
       },

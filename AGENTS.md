@@ -175,17 +175,19 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
-G3 P2.3a's validation-only T1 policy broker is in
+G3 P2.3a's T1 policy broker is in
 `packages/runtime-core/src/broker.rs`. Identity comes from the authenticated Host
 caller and embedded catalog, never operation payloads. Rust generates operation
-descriptors, schemas and rejection fixtures. Approve/revoke are transient T0 Rust
-APIs, absent from IPC; do not expose them as run flags or metadata grants. Preserve
+descriptors, schemas and rejection fixtures. The broker's direct approve/revoke
+APIs stay internal to T0 Rust; clients use the separate durable management policy,
+never run flags or metadata grants. Preserve
 manifest AND grant scopes, exact package identity, epochs, expiry and per-run call
 budgets. Check runner sessions before launch, during execution and at each effect
-commit; async adapters cannot reuse a cached approval. Pure validation T1 is still
-the only runnable scope. File/tool descriptors are not IO adapters and network
-origin matching is not DNS/redirect enforcement. P2.6a/P2.4a must supply the single
-writer and durable management policy before P1.3b/P1.4 production execution.
+commit; async adapters cannot reuse a cached approval. P2.6a/P2.4a now supply the
+single writer and durable management policy for fixed Windows/T1 prototype
+execution: pure commands and the typed Todo data adapter. File/tool descriptors
+are not IO adapters and network origin matching is not DNS/redirect enforcement.
+This does not enable third-party or production execution.
 See [P2.3a evidence](./docs/validation/g3-capability-broker.md).
 
 ### Accepted next-stage product and runtime design
@@ -642,3 +644,34 @@ The package pins relative compiled artifacts and supports explicit GUI-free init
 runtime start/status/stop and granted bundle execution. Source CLI/GUI integration
 and operational diagnostics remain P1.4b/P1.5b. Maturity remains prototype;
 signed releases, third-party sandbox and independent security review are pending.
+
+### G3 P1.4b shared Host clients
+
+Desktop and source/standalone CLI execute through the same authenticated T1 Host.
+`jobs submit/list/status/watch/cancel/lookup` expose durable receipts and bounded
+metadata; listings exclude results. Same-user CLI/Desktop sessions can cancel
+one another's tasks; validation callers and T0 management roles retain their
+separate rejection rules. Lost acknowledgements query the original key, never
+create a new effect. The wire client is now exactly 0.2.0; 0.1.0 clients fail the
+handshake before business IO. Protocol major and SQLite schema are unchanged.
+
+The source Desktop prototype pins the build-owned Runtime binary and verifies
+it before native bootstrap. Its main native window and configured DEV origin
+own sessions; credentials/endpoint/executable selectors never enter JavaScript.
+Release Desktop distribution remains a later platform gate. Initialization,
+grants, cold-start changes and full stop require an actual native confirmation;
+revocation is immediate. The GUI shows active task count before full stop.
+Closing GUI disconnects foreground work while explicitly granted background
+work belongs to Runtime. Native Todo uses async revisions/CAS and no client
+persistent store; original local prototype data remains for deliberate import.
+
+See [shared client evidence](docs/validation/g3-shared-clients.md). All scopes stay
+prototype, with independent security review and P1.5b acceptance pending.
+
+For G3 managed Native acceptance, run the Node harness
+`apps/ui-test/scripts/validate-managed-hosts.ts` after building the dedicated
+runtime validation config and passing metadata preflight. Windows Known Folder
+APIs ignore APPDATA overrides: use FLOWTOOLS_DESKTOP_VALIDATION_DATA_ROOT only
+under the guarded dedicated Debug identity/mode, with a fresh absolute fixture
+root. This selector never belongs in production config or business IPC. CLI
+fixture policy is explicit setup; it cannot certify a Native consent click.

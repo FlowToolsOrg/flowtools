@@ -1,5 +1,4 @@
-import { execFile } from 'node:child_process'
-import { promisify } from 'node:util'
+import { spawn } from 'node:child_process'
 
 import { RuntimeClient, RuntimeClientError } from '@flowtools/runtime-client'
 import { connectNamedPipe } from '@flowtools/runtime-client/node'
@@ -7,45 +6,81 @@ import { Command } from 'commander'
 
 import { readBootstrap, runtimeExecutable, userProfile } from './management'
 
-const execute = promisify(execFile)
 async function endpoint(profile: string, start: boolean): Promise<string> {
-  try {
-    const { stdout } = await execute(
-      await runtimeExecutable(),
+  const executable = await runtimeExecutable()
+  const stdout = await new Promise<string>((resolve, reject) => {
+    const child = spawn(
+      executable,
       [start ? '--ensure-runtime' : '--endpoint', profile],
       {
         windowsHide: true,
-        timeout: 35000,
-        maxBuffer: 4096,
+        stdio: ['ignore', 'pipe', 'pipe'],
         env: { SystemRoot: process.env.SystemRoot },
       }
     )
-    const value: unknown = JSON.parse(stdout)
-    if (
-      !value ||
-      typeof value !== 'object' ||
-      !('type' in value) ||
-      value.type !== 'endpoint' ||
-      !('protocolMajor' in value) ||
-      value.protocolMajor !== 1 ||
-      !('pipe' in value) ||
-      typeof value.pipe !== 'string'
-    )
-      throw new Error('INVALID_RESPONSE')
-    return value.pipe
-  } catch (error) {
-    if (
-      error &&
-      typeof error === 'object' &&
-      'stderr' in error &&
-      typeof error.stderr === 'string' &&
-      /^[A-Z_]+\s*$/.test(error.stderr)
-    )
-      throw new Error(error.stderr.trim())
-    throw error instanceof Error && /^[A-Z_]+$/.test(error.message)
-      ? error
-      : new Error('STARTUP_FAILED')
-  }
+    let output = '',
+      failure = '',
+      status: number | null | undefined
+    const cleanup = () => {
+      clearTimeout(timer)
+      child.stdout.destroy()
+      child.stderr.destroy()
+    }
+    const finish = () => {
+      if (status === undefined) return
+      if (status !== 0) {
+        cleanup()
+        reject(
+          new Error(
+            /^[A-Z_]+\s*$/.test(failure) ? failure.trim() : 'STARTUP_FAILED'
+          )
+        )
+        return
+      }
+      if (!output.includes('\n')) return
+      cleanup()
+      resolve(output)
+    }
+    const timer = setTimeout(() => {
+      child.kill()
+      cleanup()
+      reject(new Error('STARTUP_FAILED'))
+    }, 45000)
+    child.stdout.on('data', (bytes: Buffer) => {
+      output += bytes.toString('utf8')
+      if (output.length > 4096) {
+        child.kill()
+        cleanup()
+        reject(new Error('INVALID_RESPONSE'))
+      } else finish()
+    })
+    child.stderr.on('data', (bytes: Buffer) => {
+      if (failure.length < 256) failure += bytes.toString('utf8')
+    })
+    child.once('error', () => {
+      cleanup()
+      reject(new Error('STARTUP_FAILED'))
+    })
+    // A background descendant may inherit the outer pipe: wait for the bounded
+    // helper line + process exit, never for every descendant's stdio EOF.
+    child.once('exit', code => {
+      status = code
+      finish()
+    })
+  })
+  const value: unknown = JSON.parse(stdout)
+  if (
+    !value ||
+    typeof value !== 'object' ||
+    !('type' in value) ||
+    value.type !== 'endpoint' ||
+    !('protocolMajor' in value) ||
+    value.protocolMajor !== 1 ||
+    !('pipe' in value) ||
+    typeof value.pipe !== 'string'
+  )
+    throw new Error('INVALID_RESPONSE')
+  return value.pipe
 }
 export async function connectHost(
   profile: string,

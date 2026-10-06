@@ -9,6 +9,7 @@ import { createInterface } from 'node:readline'
 import { createInterface as createPrompt } from 'node:readline/promises'
 import { fileURLToPath } from 'node:url'
 
+import { RuntimeExecutionError } from '@flowtools/runtime-client'
 import { RuntimeClient } from '@flowtools/runtime-client'
 import { connectNamedPipe } from '@flowtools/runtime-client/node'
 import { Command } from 'commander'
@@ -314,7 +315,19 @@ export function managementFailure(error: unknown) {
       ? error.message
       : 'INVALID_REQUEST'
   process.stdout.write(
-    JSON.stringify({ formatVersion: 1, success: false, error: { code } }) + '\n'
+    JSON.stringify({
+      formatVersion: 1,
+      success: false,
+      error: {
+        code,
+        ...(error instanceof RuntimeExecutionError
+          ? {
+              idempotencyKey: error.idempotencyKey,
+              ...(error.runId ? { runId: error.runId } : {}),
+            }
+          : {}),
+      },
+    }) + '\n'
   )
   process.exitCode = 1
 }

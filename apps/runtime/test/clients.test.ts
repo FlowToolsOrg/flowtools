@@ -65,3 +65,20 @@ test('actual GUI and CLI Host clients share durable revisions and reject unautho
   expect({ code, stderr }).toEqual({ code: 0, stderr: '' })
   expect(stdout.trim()).toBe('Shared data fixture passed')
 }, 30000)
+
+test('compiled CLI shares receipts, metadata, terminal formats and revocation with native Host', async () => {
+  const fixture = Bun.spawn(
+    [
+      'node',
+      fileURLToPath(new URL('./job-control-fixture.mjs', import.meta.url)),
+    ],
+    { stdout: 'pipe', stderr: 'pipe' }
+  )
+  const [stdout, stderr, code] = await Promise.all([
+    new Response(fixture.stdout).text(),
+    new Response(fixture.stderr).text(),
+    fixture.exited,
+  ])
+  expect({ code, stderr }).toEqual({ code: 0, stderr: '' })
+  expect(stdout.trim()).toBe('Compiled shared job control fixture passed')
+}, 60000)

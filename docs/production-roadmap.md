@@ -1027,7 +1027,7 @@ G4 服务依赖 -> G5 签名安装与隔离 -> G6 工具链 -> G7 办公闭环 -
 | P2.4a | done        | P2.3a、P2.6a        | CLI-only init/策略管理、持久 grants、冷启动/后台/effects、撤销 epoch；无默认放行   |
 | P1.3b | implemented | P2.4a、P2.6a        | 实际执行、durable receipt/同 key 恢复、幂等/取消；未知状态不重试非幂等副作用       |
 | P1.4a | implemented | P1.3b               | CLI-only runtime/runner 分发、受控冷启动；未安装 GUI、50 并发启动验收              |
-| P1.4b | pending     | P1.4a               | GUI/CLI 同任务和数据，jobs status/watch/cancel、完整 text/JSON/退出码回归          |
+| P1.4b | implemented | P1.4a               | GUI/CLI 同任务和数据，jobs status/watch/cancel、完整 text/JSON/退出码回归          |
 | P1.5b | pending     | P1.4b               | run/调用链诊断与隐私红线；实际异常/撤销/恢复可诊断                                 |
 | P1.6a | pending     | P1.1、P1.3b         | T1/fixture 的 plan-only DAG/lock、服务接口和工具声明；缺失/冲突/循环拒绝           |
 | P1.6b | pending     | P1.6a、P2.4a        | Host RPC/委托 scope、排空后切服务版本、租约/反向依赖；前置服务不能代理越权         |
@@ -1921,3 +1921,26 @@ The package pins relative compiled artifacts and supports explicit GUI-free init
 runtime start/status/stop and granted bundle execution. Source CLI/GUI integration
 and operational diagnostics remain P1.4b/P1.5b. Maturity remains prototype;
 signed releases, third-party sandbox and independent security review are pending.
+
+### G3 P1.4b shared Host clients
+
+Desktop and source/standalone CLI execute through the same authenticated T1 Host.
+`jobs submit/list/status/watch/cancel/lookup` expose durable receipts and bounded
+metadata; listings exclude results. Same-user CLI/Desktop sessions can cancel
+one another's tasks; validation callers and T0 management roles retain their
+separate rejection rules. Lost acknowledgements query the original key, never
+create a new effect. The wire client is now exactly 0.2.0; 0.1.0 clients fail the
+handshake before business IO. Protocol major and SQLite schema are unchanged.
+
+The source Desktop prototype pins the build-owned Runtime binary and verifies
+it before native bootstrap. Its main native window and configured DEV origin
+own sessions; credentials/endpoint/executable selectors never enter JavaScript.
+Release Desktop distribution remains a later platform gate. Initialization,
+grants, cold-start changes and full stop require an actual native confirmation;
+revocation is immediate. The GUI shows active task count before full stop.
+Closing GUI disconnects foreground work while explicitly granted background
+work belongs to Runtime. Native Todo uses async revisions/CAS and no client
+persistent store; original local prototype data remains for deliberate import.
+
+See [shared client evidence](validation/g3-shared-clients.md). All scopes stay
+prototype, with independent security review and P1.5b acceptance pending.

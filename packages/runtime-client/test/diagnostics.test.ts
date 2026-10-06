@@ -177,7 +177,12 @@ test('request-id or method mismatch rejects, and transport rejection codes survi
               ? { type, data: [] }
               : {
                   type,
-                  data: { instanceId: 'fixture', mode: 'validation', jobs: 0 },
+                  data: {
+                    instanceId: 'fixture',
+                    mode: 'validation',
+                    jobs: 0,
+                    activeJobs: 0,
+                  },
                 },
         }
       },

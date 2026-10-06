@@ -410,6 +410,19 @@
             "additionalProperties": false,
             "properties": {
               "method": {
+                "const": "jobs.list",
+                "type": "string"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
                 "const": "jobs.cancel",
                 "type": "string"
               },
@@ -1589,6 +1602,26 @@
             "properties": {
               "data": {
                 "items": {
+                  "$ref": "#/$defs/JobSnapshot"
+                },
+                "type": "array"
+              },
+              "type": {
+                "const": "jobs",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "items": {
                   "$ref": "#/$defs/JobEvent"
                 },
                 "type": "array"
@@ -1804,6 +1837,9 @@
           "installed": {
             "type": "boolean"
           },
+          "packageDigest": {
+            "type": "string"
+          },
           "pluginId": {
             "type": "string"
           },
@@ -1817,6 +1853,7 @@
         "required": [
           "pluginId",
           "version",
+          "packageDigest",
           "installed",
           "enabled",
           "running"
@@ -1845,6 +1882,11 @@
       "RuntimeStatus": {
         "additionalProperties": false,
         "properties": {
+          "activeJobs": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
           "instanceId": {
             "type": "string"
           },
@@ -1860,7 +1902,8 @@
         "required": [
           "instanceId",
           "mode",
-          "jobs"
+          "jobs",
+          "activeJobs"
         ],
         "type": "object"
       },

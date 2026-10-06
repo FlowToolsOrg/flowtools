@@ -25,6 +25,7 @@ import {
   scanPlugins,
 } from './discovery'
 import { addRuntimeCommands } from './host'
+import { addJobCommands } from './jobs'
 import { addManagementCommands, managementFailure } from './management'
 import { parseRunArguments, requestedRunFormat } from './run-arguments'
 import { printExecutionResult, runPlugin } from './runner'
@@ -39,6 +40,7 @@ const program = new Command()
 
 addManagementCommands(program)
 addRuntimeCommands(program)
+addJobCommands(program)
 
 function writeJson(value: unknown) {
   process.stdout.write(JSON.stringify(value, null, 2) + '\n')
@@ -360,7 +362,9 @@ main().catch(error => {
     )
   )
     return
-  if (['init', 'permissions', 'runtime'].includes(process.argv[2] ?? '')) {
+  if (
+    ['init', 'permissions', 'runtime', 'jobs'].includes(process.argv[2] ?? '')
+  ) {
     managementFailure(error)
     return
   }

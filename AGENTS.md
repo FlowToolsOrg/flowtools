@@ -706,3 +706,8 @@ blocked-write/disappeared-peer/Todo-commit rejection regressions. Keep window
 zoom shortcuts enabled in main and validation configurations. See
 [terminal verification](./docs/validation/g3-terminal-validation.md); complete
 keyboard/200% zoom, NVDA and independent security approval remain pending.
+
+The managed Native harness must support literal IPv4 and IPv6 loopback CDP while
+checking all actual listeners and matching the responding endpoint. Preserve the
+25-second startup budget, redirect refusal and non-loopback/mismatch regressions;
+never persist CDP arguments in production configuration.

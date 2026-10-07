@@ -17,6 +17,10 @@ import { promisify } from 'node:util'
 
 import { chromium } from 'playwright'
 
+import {
+  assertLoopbackCdpEndpoint,
+  loopbackCdpCandidates,
+} from './loopback-cdp.ts'
 import { assertRuntimeValidationPreflight } from './runtime-validation-preflight.ts'
 
 // Run with Node. CLI policy is an explicit disposable fixture, never GUI consent.
@@ -139,14 +143,33 @@ const desktopExit = once(desktop, 'exit')
 let browser: Awaited<ReturnType<typeof chromium.connectOverCDP>> | undefined
 let failed = false
 try {
-  for (let attempt = 0; attempt < 100; attempt++) {
+  const cdpDeadline = Date.now() + 25000
+  let cdpUrl: string | undefined
+  for (let attempt = 0; attempt < 100 && Date.now() < cdpDeadline; attempt++) {
     try {
-      await fetch('http://127.0.0.1:9224/json/version')
+      cdpUrl = await Promise.any(
+        loopbackCdpCandidates.map(async endpoint => {
+          const response = await fetch(`${endpoint}/json/version`, {
+            redirect: 'error',
+            signal: AbortSignal.timeout(
+              Math.max(1, Math.min(250, cdpDeadline - Date.now()))
+            ),
+          })
+          assert.ok(response.ok)
+          return endpoint
+        })
+      )
       break
     } catch {
-      await new Promise(resolve => setTimeout(resolve, 250))
+      await new Promise(resolve =>
+        setTimeout(
+          resolve,
+          Math.max(0, Math.min(250, cdpDeadline - Date.now()))
+        )
+      )
     }
   }
+  assert.ok(cdpUrl, 'Native CDP did not become ready within 25 seconds')
   const addresses = execFileSync(
     'pwsh',
     [
@@ -156,13 +179,8 @@ try {
     ],
     { windowsHide: true, encoding: 'utf8' }
   )
-  assert.ok(
-    addresses
-      .trim()
-      .split(/\s+/)
-      .every(address => address === '127.0.0.1' || address === '::1')
-  )
-  browser = await chromium.connectOverCDP('http://127.0.0.1:9224')
+  assertLoopbackCdpEndpoint(addresses, cdpUrl)
+  browser = await chromium.connectOverCDP(cdpUrl)
   const page = browser.contexts()[0]!.pages()[0]!
   const nativeData = (call: Call) =>
     page.evaluate(async call => {

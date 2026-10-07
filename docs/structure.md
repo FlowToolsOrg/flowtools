@@ -456,3 +456,6 @@ Main and validation Tauri configurations enable window zoom shortcuts.
 [Terminal verification](validation/g3-terminal-validation.md) records source,
 regression and fresh Native harness evidence, with keyboard/zoom, NVDA and
 independent-review gaps explicitly pending.
+
+`apps/ui-test/scripts/loopback-cdp.ts` validates the Native harness's observed
+IPv4/IPv6 listeners and responding endpoint; it does not configure production CDP.

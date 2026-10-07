@@ -26,6 +26,12 @@ performed by Codex; it is not an independent security approval or production gat
 - The eight real CLI execution contracts and strict stop hook passed. The full
   clean Windows quality script and current-head remote results are recorded in
   the PR; older green runs do not prove the current revision.
+- Final Native revalidation found an IPv6-only `::1` CDP listener while the
+  harness attached only to IPv4. The harness now probes both literal loopback
+  addresses within the same 25-second budget, refuses redirects and checks every
+  actual listener before attaching to the endpoint that replied. Three regression
+  tests reject wildcard/public/mixed listeners and unrelated endpoints. No
+  production debugging configuration or startup budget was added.
 
 The Native harness supplies explicit T0 fixture policy. It does not click native
 consent and does not certify a complete keyboard or screen-reader interaction.
@@ -39,6 +45,12 @@ in this change.
 Reviewer: Codex, 2026-10-07. Conclusion: the scoped stop repair preserves the
 examined authorization/data boundaries; the findings above have regressions.
 Independent reviewer/date/conclusion: pending, no approval claimed.
+
+Cancellation-storage failure can leave durable job states unchanged. The stopping
+receipt acknowledges process stop, not a fabricated durable cancellation. The
+new fault regression proves same-process effect denial; persisted states need
+inspection before restart/recovery. Crash/power-loss cancellation durability is
+not certified by this check.
 
 | Boundary                                | Source and rejection evidence                                                                                                                                                                                                                                                                                                                                                       | Limit                                                                                       |
 | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |

@@ -55,6 +55,13 @@ Reviewer 为 Codex 自查；实际独立 Reviewer、日期与批准结论仍 pen
 窗口 zoomHotkeysEnabled 不新增 native command、权限、CSP 或数据/网络 scope。
 上述 SEC 风险与 ADR-0001/0002 仍 open，maturity 不变。
 
+同轮 Native harness 的 IPv6-only 回环失败增加了
+[监听地址/端点拒绝回归](../../apps/desktop/test/loopback-cdp.test.ts)：两种 literal
+loopback 均可用，但 public/wildcard/mixed listener、未监听的端点、凭据或额外
+路径均拒绝；禁止 readiness 重定向，保留 25 秒预算及仅子进程调试配置。
+取消持久化失败时的检查仅证明本进程不再提交效果；旧 durable 状态须在重启前
+核对，不伪造 durable cancelled 或崩溃/断电保证。
+
 ### SEC-001 插件包与发布者伪造
 
 - 入口：市场/目录/外部包到安装、加载；高危，open（Tampering/Spoofing）

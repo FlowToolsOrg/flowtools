@@ -57,3 +57,8 @@ CSP, remote URL, file/network/data scope, package entry or maturity label change
 OS termination and crashes can still lose a reply and require explicit state
 reread. Windows/T1 tests are not third-party isolation or production approval.
 Independent reviewer/date/conclusion remains pending.
+
+When cancellation storage fails, durable metadata may retain its old state. This
+regression proves same-process effect denial, not durable cancellation after a
+crash/restart. Inspect persisted states before restarting/recovering; the stopping
+receipt is not proof that a failed storage write committed.

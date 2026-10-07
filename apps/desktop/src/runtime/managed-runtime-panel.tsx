@@ -307,7 +307,16 @@ export function ManagedRuntimePanel() {
         )}
         <ul aria-label="Runtime 授权" className="space-y-2">
           {permissions.map(record => (
-            <li key={`${record.identity.pluginId}-${record.identity.caller}`}>
+            <li
+              key={JSON.stringify([
+                record.identity.caller,
+                record.identity.publisher,
+                record.identity.pluginId,
+                record.identity.version,
+                record.identity.packageDigest,
+                record.identity.commandId,
+              ])}
+            >
               {record.identity.pluginId} · {record.identity.caller} · epoch{' '}
               {record.epoch} · {record.grant ? '已授权' : '已撤销'}
               {record.grant && (

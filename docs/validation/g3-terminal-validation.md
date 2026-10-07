@@ -33,6 +33,12 @@ performed by Codex; it is not an independent security approval or production gat
   actual listener before attaching to the endpoint that replied. Three regression
   tests reject wildcard/public/mixed listeners and unrelated endpoints. No
   production debugging configuration or startup budget was added.
+- Final native client logs exposed duplicate React keys when a previous revoked
+  package and its newly granted replacement shared a plugin/caller. Permission
+  rows now use all six Host-issued command identity fields, without changing grant
+  enforcement. A pinned-Chromium regression failed on the old keys and passed
+  after repair; refresh, revocation and removal retain exactly the expected rows
+  without duplicate-key errors.
 
 The Native harness supplies explicit T0 fixture policy. It does not click native
 consent and does not certify a complete keyboard or screen-reader interaction.

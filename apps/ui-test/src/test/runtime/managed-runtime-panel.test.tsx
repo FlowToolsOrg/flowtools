@@ -148,6 +148,62 @@ async function connectedPanel() {
   return { screen, user }
 }
 
+it('keeps old and current package permissions distinct through refresh and revocation', async () => {
+  const current = records[0]!
+  const previous: PermissionRecord = {
+    ...current,
+    identity: { ...current.identity, packageDigest: 'b'.repeat(64) },
+    epoch: 7,
+    grant: null,
+  }
+  records = [previous, current]
+  vi.mocked(controlManagedRuntime).mockImplementation(async call => {
+    if (call.method === 'permissions.revoke') {
+      expect(call.payload).toEqual({
+        pluginId: current.identity.pluginId,
+        commandId: current.identity.commandId,
+        target: 'desktop',
+      })
+      records = [previous, { ...current, epoch: 2, grant: null }]
+      return { type: 'permissions', data: records }
+    }
+    if (call.method === 'permissions.list')
+      return { type: 'permissions', data: records }
+    throw new Error('Unexpected management call')
+  })
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+  try {
+    const { screen, user } = await connectedPanel()
+    const list = screen.getByRole('list', { name: 'Runtime 授权' })
+    await expect.element(list).toHaveTextContent('epoch 7 · 已撤销')
+    expect(list.getByRole('listitem').elements()).toHaveLength(2)
+    await user.click(
+      screen.getByRole('button', { name: '撤销 plugin-todo-list desktop' })
+    )
+    await expect.element(list).toHaveTextContent('epoch 2 · 已撤销')
+    await expect.element(list).not.toHaveTextContent('已授权')
+    expect(list.getByRole('listitem').elements()).toHaveLength(2)
+    records = [records[1]!]
+    await user.click(
+      screen.getByRole('button', { name: '启动 / 刷新 Runtime' })
+    )
+    await expect.element(list).not.toHaveTextContent('epoch 7')
+    expect(list.getByRole('listitem').elements()).toHaveLength(1)
+    expect(
+      consoleError.mock.calls.some(([message]) =>
+        String(message).includes('same key')
+      )
+    ).toBe(false)
+    expect(
+      vi
+        .mocked(controlManagedRuntime)
+        .mock.calls.filter(([call]) => call.method === 'permissions.revoke')
+    ).toHaveLength(1)
+  } finally {
+    consoleError.mockRestore()
+  }
+})
+
 for (const operation of ['restore', 'retry'] as const) {
   it(`${operation} shows fresh revoked permissions after completion`, async () => {
     if (operation === 'retry') recoveryPhase = 'prepared'

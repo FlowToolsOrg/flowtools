@@ -882,3 +882,10 @@ Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
 See [diagnostic/recovery evidence](validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
 security review, assistive technology and other platform acceptance are pending;
 these checks do not authorize production.
+
+Authenticated T0 stop immediately cancels queued/running business work, then
+delivers a bounded stopping receipt before process drain. It neither retries work
+nor treats disconnection as success. Desktop window zoom shortcuts are enabled.
+[Terminal verification](validation/g3-terminal-validation.md) records regressions
+and fresh Native harness results; complete keyboard/zoom, NVDA and independent
+security approval remain pending.

@@ -699,3 +699,10 @@ Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
 See [diagnostic/recovery evidence](docs/validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
 security review, assistive technology and other platform acceptance are pending;
 these checks do not authorize production.
+
+G3 stop admission must cancel business work before waiting for its receipt.
+Preserve the receipt barrier, bounded peer wait, worker drain and deterministic
+blocked-write/disappeared-peer/Todo-commit rejection regressions. Keep window
+zoom shortcuts enabled in main and validation configurations. See
+[terminal verification](./docs/validation/g3-terminal-validation.md); complete
+keyboard/200% zoom, NVDA and independent security approval remain pending.

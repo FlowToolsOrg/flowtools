@@ -46,6 +46,15 @@ session。Rust/TS operation schema 拒绝 raw path/SQL/argv/namespace/身份注�
 既有 origin/identity/allowlist 与持久策略边界不变，不新增原生入口或第三方执行。
 SEC-002/003/004/006/009/010/013/015 均继续 open；独立安全审阅仍待维护者完成。
 
+2026-10-07 [末端工程自查](../validation/g3-terminal-validation.md) 复核身份、scope、
+epoch、效果提交、诊断隐私及恢复边界，并记录了
+[停止回执竞态修复](../validation/g3-runtime-stop-receipt.md)：接受 T0 stop 即取消
+排队/活跃任务，传输在有界回执屏障之后退出；失联不伪装成功，Todo 无迟到写入。
+新增确定性拒绝/回执测试与真实 Native harness 通过仅补充工程证据。
+Reviewer 为 Codex 自查；实际独立 Reviewer、日期与批准结论仍 pending。
+窗口 zoomHotkeysEnabled 不新增 native command、权限、CSP 或数据/网络 scope。
+上述 SEC 风险与 ADR-0001/0002 仍 open，maturity 不变。
+
 ### SEC-001 插件包与发布者伪造
 
 - 入口：市场/目录/外部包到安装、加载；高危，open（Tampering/Spoofing）

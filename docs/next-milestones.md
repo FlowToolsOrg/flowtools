@@ -4,6 +4,11 @@
 - 状态：accepted-design；G1、G2 固定 Windows/T1 验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认和恢复修复已实窗复验，独立安全审阅与辅助技术验收仍 pending；G4–G8 尚待实施
 - 决策来源：维护者已确认的产品讨论；实施责任由 Repository Maintainer 分配
 - 进度来源：[生产路线图](./production-roadmap.md)
+
+2026-10-07 [末端校验](./validation/g3-terminal-validation.md) 已补充停止回执竞态、
+停止前取消任务回归和新的 Native GUI/CLI 集成证据。窗口缩放快捷键已启用；
+完整键盘/200% 缩放、NVDA 与独立安全批准仍 pending。
+
 - 安全来源：[信任边界](./adr/0001-plugin-trust-boundaries.md)、
   [能力与包策略](./adr/0002-capability-and-package-policy.md)、
   [威胁模型](./security/threat-model.md)

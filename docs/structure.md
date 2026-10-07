@@ -449,3 +449,10 @@ Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
 See [diagnostic/recovery evidence](validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
 security review, assistive technology and other platform acceptance are pending;
 these checks do not authorize production.
+
+`apps/runtime/src/server.rs` owns the bounded stop-receipt barrier;
+`packages/runtime-core/src/runtime.rs` cancels business work before acknowledgement.
+Main and validation Tauri configurations enable window zoom shortcuts.
+[Terminal verification](validation/g3-terminal-validation.md) records source,
+regression and fresh Native harness evidence, with keyboard/zoom, NVDA and
+independent-review gaps explicitly pending.

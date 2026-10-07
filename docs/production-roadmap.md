@@ -1968,3 +1968,9 @@ Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
 See [diagnostic/recovery evidence](validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
 security review, assistive technology and other platform acceptance are pending;
 these checks do not authorize production.
+
+2026-10-07 [terminal verification](validation/g3-terminal-validation.md) adds
+deterministic stop-receipt/cancellation regressions and a fresh Native GUI/CLI
+harness pass. Window zoom shortcuts are enabled; complete keyboard/200% zoom,
+NVDA and independent security approval remain pending. G3 stays Windows/T1
+prototype; no parent milestone, risk or maturity gate is advanced.

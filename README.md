@@ -848,3 +848,8 @@ Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
 See [diagnostic/recovery evidence](docs/validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
 security review, assistive technology and other platform acceptance are pending;
 these checks do not authorize production.
+
+2026-10-07 [terminal verification](docs/validation/g3-terminal-validation.md)
+records the stop-receipt race repair, cancellation before acknowledgement, and a
+fresh Native GUI/CLI harness pass. Window zoom shortcuts are enabled; complete
+keyboard/200% zoom, NVDA and independent security approval remain pending.

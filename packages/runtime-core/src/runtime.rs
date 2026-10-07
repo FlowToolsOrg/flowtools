@@ -959,6 +959,9 @@ impl RuntimeCore {
     }
 
     pub fn take_run(&mut self, run_id: &str) -> Option<RunSpec> {
+        if self.stopping {
+            return None;
+        }
         let mut run = self.pending.remove(run_id)?;
         if self.jobs[run_id].snapshot.state != JobState::Queued {
             return None;
@@ -1052,6 +1055,10 @@ impl RuntimeCore {
 
     pub fn check_run(&self, run_id: &str) -> Result<(), ErrorCode> {
         let job = self.jobs.get(run_id).ok_or(ErrorCode::JobNotFound)?;
+        // A failed cancellation commit must not leave a live effect window.
+        if self.stopping {
+            return Err(ErrorCode::Aborted);
+        }
         if job.snapshot.state == JobState::Cancelling {
             return Err(ErrorCode::Aborted);
         }
@@ -1311,95 +1318,123 @@ mod tests {
     use super::*;
     #[test]
     fn authorized_stop_cancels_queued_and_running_work_before_receipt_delivery() {
-        let mut core = RuntimeCore::managed(
-            HashMap::from([
-                ("cli".into(), "local-cli".into()),
-                ("admin".into(), "local-manager".into()),
-            ]),
-            DataStore::memory().unwrap(),
-            false,
-            false,
-        )
-        .unwrap();
-        let admin = open(&mut core, "admin", "admin");
-        let (manifest, _) = core.catalog.command("plugin-todo-list", "run").unwrap();
-        let grant = PermissionGrant {
-            plugin_id: "plugin-todo-list".into(),
-            command_id: "run".into(),
-            target: GrantTarget::Cli,
-            package_digest: digest(manifest),
-            effects: vec!["data-read".into(), "data-write".into()],
-            scopes: vec![Scope::PluginData {
-                key_prefix: "todos".into(),
-            }],
-            expires_at: now() + 60_000.0,
-            max_calls: 16,
-            cold_start: false,
-            background: true,
-        };
-        assert!(matches!(
-            core.handle("admin", request(Call::Grant(grant), Some(admin.clone())))
-                .outcome,
-            Outcome::Permissions(_)
-        ));
-        let cli = open(&mut core, "cli", "cli");
-        let mut runs = Vec::new();
-        for key in ["running", "queued"] {
-            let Outcome::Receipt(receipt) = core
-                .handle(
-                    "cli",
-                    request(
-                        Call::Submit(SubmitJob {
-                            plugin_id: "plugin-todo-list".into(),
-                            command_id: "run".into(),
-                            input: json!({"todo":"stop-fixture"}),
-                            idempotency_key: key.into(),
-                            background: true,
-                            deadline: now() + 20_000.0,
-                        }),
-                        Some(cli.clone()),
-                    ),
-                )
-                .outcome
-            else {
-                panic!("Receipt");
-            };
-            runs.push(receipt.run_id);
-        }
-        core.take_run(&runs[0]).unwrap();
-        assert!(matches!(
-            core.handle("cli", request(Call::Stop, Some(cli))).outcome,
-            Outcome::Error(RuntimeError {
-                code: ErrorCode::SessionInvalid
-            })
-        ));
-        assert!(!core.stopping());
-        assert_eq!(core.check_run(&runs[0]), Ok(()));
-        assert!(matches!(
-            core.handle("admin", request(Call::Stop, Some(admin))).outcome,
-            Outcome::Stopping
-        ));
-        assert!(core.stopping());
-        assert_eq!(core.state(&runs[1]), Some(JobState::Cancelled));
-        assert!(core.take_run(&runs[1]).is_none());
-        assert_eq!(core.check_run(&runs[0]), Err(ErrorCode::Aborted));
-        assert_eq!(
-            core.commit_mutations(
-                &runs[0],
-                &[DataMutation {
-                    key: "todos".into(),
-                    expected_revision: 0,
-                    value: json!([{"todo":"must-not-commit","deadline":""}]),
+        for persist_failure in [false, true] {
+            let profile = std::env::temp_dir()
+                .join(format!("flowtools-validation-stop-data-{}", Uuid::new_v4()));
+            std::fs::create_dir(&profile).unwrap();
+            let mut core = RuntimeCore::managed(
+                HashMap::from([
+                    ("cli".into(), "local-cli".into()),
+                    ("admin".into(), "local-manager".into()),
+                ]),
+                DataStore::open(&profile.join("runtime.sqlite")).unwrap(),
+                false,
+                false,
+            )
+            .unwrap();
+            let admin = open(&mut core, "admin", "admin");
+            let (manifest, _) = core.catalog.command("plugin-todo-list", "run").unwrap();
+            let grant = PermissionGrant {
+                plugin_id: "plugin-todo-list".into(),
+                command_id: "run".into(),
+                target: GrantTarget::Cli,
+                package_digest: digest(manifest),
+                effects: vec!["data-read".into(), "data-write".into()],
+                scopes: vec![Scope::PluginData {
+                    key_prefix: "todos".into(),
                 }],
-            ),
-            Err(ErrorCode::Aborted)
-        );
-        assert_eq!(
-            core.data.read("flowtools:plugin-todo-list", "todos").unwrap().revision,
-            0
-        );
-        core.shutdown();
-        assert_eq!(core.state(&runs[0]), Some(JobState::Cancelling));
+                expires_at: now() + 60_000.0,
+                max_calls: 16,
+                cold_start: false,
+                background: true,
+            };
+            assert!(matches!(
+                core.handle("admin", request(Call::Grant(grant), Some(admin.clone())))
+                    .outcome,
+                Outcome::Permissions(_)
+            ));
+            let cli = open(&mut core, "cli", "cli");
+            let mut runs = Vec::new();
+            for key in ["running", "queued"] {
+                let Outcome::Receipt(receipt) = core
+                    .handle(
+                        "cli",
+                        request(
+                            Call::Submit(SubmitJob {
+                                plugin_id: "plugin-todo-list".into(),
+                                command_id: "run".into(),
+                                input: json!({"todo":"stop-fixture"}),
+                                idempotency_key: key.into(),
+                                background: true,
+                                deadline: now() + 20_000.0,
+                            }),
+                            Some(cli.clone()),
+                        ),
+                    )
+                    .outcome
+                else {
+                    panic!("Receipt");
+                };
+                runs.push(receipt.run_id);
+            }
+            core.take_run(&runs[0]).unwrap();
+            if persist_failure {
+                core.data.connection.execute_batch(
+                "CREATE TRIGGER stop_storage_failure BEFORE UPDATE ON jobs BEGIN SELECT RAISE(FAIL,'fixture'); END;"
+            ).unwrap();
+            }
+            assert!(matches!(
+                core.handle("cli", request(Call::Stop, Some(cli))).outcome,
+                Outcome::Error(RuntimeError {
+                    code: ErrorCode::SessionInvalid
+                })
+            ));
+            assert!(!core.stopping());
+            assert_eq!(core.check_run(&runs[0]), Ok(()));
+            assert!(matches!(
+                core.handle("admin", request(Call::Stop, Some(admin)))
+                    .outcome,
+                Outcome::Stopping
+            ));
+            assert!(core.stopping());
+            assert_eq!(
+                core.state(&runs[1]),
+                Some(if persist_failure {
+                    JobState::Queued
+                } else {
+                    JobState::Cancelled
+                })
+            );
+            assert!(core.take_run(&runs[1]).is_none());
+            assert_eq!(core.check_run(&runs[0]), Err(ErrorCode::Aborted));
+            assert_eq!(
+                core.commit_mutations(
+                    &runs[0],
+                    &[DataMutation {
+                        key: "todos".into(),
+                        expected_revision: 0,
+                        value: json!([{"todo":"must-not-commit","deadline":""}]),
+                    }],
+                ),
+                Err(ErrorCode::Aborted)
+            );
+            assert_eq!(
+                core.data
+                    .read("flowtools:plugin-todo-list", "todos")
+                    .unwrap()
+                    .revision,
+                0
+            );
+            core.shutdown();
+            assert_eq!(
+                core.state(&runs[0]),
+                Some(if persist_failure {
+                    JobState::Running
+                } else {
+                    JobState::Cancelling
+                })
+            );
+        }
     }
 
     #[test]

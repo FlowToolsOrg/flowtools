@@ -37,7 +37,11 @@ blocked`), then passed with the barrier. It reads the complete authenticated
   stop and verifies work remains active. Authorized T0 stop must cancel queued
   work and reject active mutations before receipt delivery, leaving revision zero.
   It failed before immediate cancellation (`Queued` versus `Cancelled`), then
-  passed after the repair.
+  passed after the repair. The same fixture injects an actual SQLite trigger
+  failure while saving cancellation. It reproduced `check_run = Ok` after stop;
+  the stopping flag now independently denies launches and effect commits even
+  when cancellation cannot be persisted. Durable metadata is not fabricated as
+  cancelled on that failure; the Todo revision remains zero.
 - All 39 core and eight native Host Rust tests passed. The eight real compiled
   CLI tests and their strict stop hook passed; the full repository gate and fresh
   remote runs are recorded separately in the PR.

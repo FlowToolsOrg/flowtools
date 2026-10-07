@@ -8,7 +8,10 @@ performed by Codex; it is not an independent security approval or production gat
 - [Stop receipt/cancellation repair](g3-runtime-stop-receipt.md): a real remote
   failure led to two deterministic regressions, each failing before its repair.
   Host now cancels business work before waiting for the authenticated stop receipt
-  to be consumed. All 39 core and eight Host Rust tests passed, and clippy passed.
+  to be consumed. A SQLite cancellation-write failure also reproduced a live
+  execution check; the stopping flag now independently denies launches/effects
+  without fabricating a persisted cancellation. All 39 core and eight Host Rust
+  tests passed, and clippy passed.
 - Desktop's main window and both isolated validation configurations now enable
   Tauri `zoomHotkeysEnabled`. The installed Tauri/Wry default was false, disabling
   user zoom shortcuts. The configuration/identity contract and dedicated native
@@ -31,7 +34,8 @@ checks are recorded in [Desktop acceptance fixes](g3-desktop-acceptance-fixes.md
 
 ## Security engineering review
 
-Review baseline: `c8b692b` and the window zoom configuration in this change.
+Review baseline: `c8b692b`, window zoom configuration and the fail-stop checks
+in this change.
 Reviewer: Codex, 2026-10-07. Conclusion: the scoped stop repair preserves the
 examined authorization/data boundaries; the findings above have regressions.
 Independent reviewer/date/conclusion: pending, no approval claimed.

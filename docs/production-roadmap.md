@@ -9,7 +9,7 @@
 > 2026-10-04 产品决策：面向知识工作者/普通办公用户，GUI 与外部 agents
 > 共用命令；支持独立 CLI、轻量后台内核、集中管理和共享二进制工具依赖。
 > 低代码、内置 AI 助手与模型接入保留为未来插件。具体顺序与实现见
-> [下一阶段目标与实施设计](./next-milestones.md)。G1、G2 固定验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认和恢复修复已实窗复验，独立安全审阅与辅助技术验收仍 pending；G4–G8 尚待实施。
+> [下一阶段目标与实施设计](./next-milestones.md)。G1、G2 固定验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4–G8 尚待实施。
 
 本文档是 FlowTools 从 Demo 级原型走向生产版本的执行台账。它不以
 “页面已存在”或“类型已定义”作为完成标准，而以真实执行、失败可恢复、
@@ -1966,11 +1966,13 @@ through diagnosis, while quarantined outputs expire; new runs retain normal resu
 Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
 
 See [diagnostic/recovery evidence](validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
-security review, assistive technology and other platform acceptance are pending;
+security review, full blind-user workflow and other platform acceptance are pending;
 these checks do not authorize production.
 
 2026-10-07 [terminal verification](validation/g3-terminal-validation.md) adds
 deterministic stop-receipt/cancellation regressions and a fresh Native GUI/CLI
-harness pass. Window zoom shortcuts are enabled; complete keyboard/200% zoom,
-NVDA and independent security approval remain pending. G3 stays Windows/T1
-prototype; no parent milestone, risk or maturity gate is advanced.
+harness pass. Actual Windows keyboard focus/native consent, 200% zoom/reflow and
+NVDA Speech Viewer output were subsequently verified. Independent security
+approval remains pending; human listening, a full blind-user workflow and other
+platforms are not certified. G3 stays Windows/T1 prototype; no parent milestone,
+risk or maturity gate is advanced.

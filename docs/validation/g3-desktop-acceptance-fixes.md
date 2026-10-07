@@ -82,6 +82,8 @@ Host-owned identity/policy enforcement continue to apply. The recovery UI reads
 real policy epochs rather than guessing them or constructing a second store.
 
 Independent security reviewer/date/conclusion: pending, no approval claimed.
-NVDA, complete keyboard/zoom acceptance, other platforms and signed distribution
+The later [terminal verification](g3-terminal-validation.md) records actual
+Windows keyboard/native consent, 200% zoom/reflow and NVDA Speech Viewer output.
+Human listening, full blind-user workflow, other platforms and signed distribution
 remain separate work owned by the Repository Maintainer. Passing these checks
 does not enable third-party execution, certify an OS sandbox or authorize production.

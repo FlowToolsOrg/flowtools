@@ -697,15 +697,19 @@ through diagnosis, while quarantined outputs expire; new runs retain normal resu
 Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
 
 See [diagnostic/recovery evidence](docs/validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
-security review, assistive technology and other platform acceptance are pending;
+security review, full blind-user workflow and other platform acceptance are pending;
 these checks do not authorize production.
 
 G3 stop admission must cancel business work before waiting for its receipt.
 Preserve the receipt barrier, bounded peer wait, worker drain and deterministic
 blocked-write/disappeared-peer/Todo-commit rejection regressions. Keep window
 zoom shortcuts enabled in main and validation configurations. See
-[terminal verification](./docs/validation/g3-terminal-validation.md); complete
-keyboard/200% zoom, NVDA and independent security approval remain pending.
+[terminal verification](./docs/validation/g3-terminal-validation.md) for actual
+Windows keyboard/native consent, 200% zoom/reflow and NVDA Speech Viewer evidence.
+Independent security approval remains pending. Do not equate this with human
+listening, a full blind-user workflow or other-platform certification.
+Permission row keys must include all Host-issued command identity fields so old
+revoked packages and their replacements remain distinct during refresh/revocation.
 
 The managed Native harness must support literal IPv4 and IPv6 loopback CDP while
 checking all actual listeners and matching the responding endpoint. Preserve the

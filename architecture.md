@@ -800,12 +800,13 @@ through diagnosis, while quarantined outputs expire; new runs retain normal resu
 Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
 
 See [diagnostic/recovery evidence](docs/validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
-security review, assistive technology and other platform acceptance are pending;
+security review, full blind-user workflow and other platform acceptance are pending;
 these checks do not authorize production.
 
 Authorized stop cancels queued/running work before the connection waits to deliver
 its stopping receipt. A bounded receipt barrier precedes process drain. Desktop
 window zoom shortcuts are enabled, including isolated validation windows.
 [Terminal verification](docs/validation/g3-terminal-validation.md) records the
-fresh Native harness and self-review; full keyboard/zoom, NVDA and independent
-security approval remain pending.
+fresh Native harness, actual Windows keyboard/native consent, 200% zoom/reflow and
+NVDA Speech Viewer output. Independent security approval remains pending; human
+listening, a full blind-user workflow and other platforms are not certified.

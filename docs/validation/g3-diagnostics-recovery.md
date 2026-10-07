@@ -80,8 +80,10 @@ initial launcher, shared real runs/data, actual metadata-only diagnostic and rou
 Fixture grants are explicit CLI T0 setup, not confirmation evidence. Separate
 2026-10-06 [Computer Use acceptance](g3-desktop-acceptance-fixes.md) verifies actual
 native confirmation/cancellation, restore failure and same-journal retry with
-fresh policy records. NVDA, other platforms, signed distribution, same-account
-compromise protection and independent security review remain pending.
+fresh policy records. Later [terminal verification](g3-terminal-validation.md)
+adds actual Windows keyboard/native consent, 200% zoom/reflow and NVDA Speech
+Viewer evidence. Other platforms, signed distribution, same-account compromise
+protection and independent security review remain pending.
 
 2026-10-06: all eleven uncached root test and forced build tasks passed in
 sequence; all eleven lint/type tasks passed with zero lint warnings. Core has 38
@@ -103,4 +105,4 @@ The final Desktop status text fix clears an earlier busy error after a successfu
 backup list, and the actual Native harness verifies that message.
 
 No risk or maturity label is advanced by passing these checks. Independent security
-review, NVDA and other platform acceptance remain pending.
+review, full blind-user workflow and other platform acceptance remain pending.

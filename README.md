@@ -846,10 +846,12 @@ through diagnosis, while quarantined outputs expire; new runs retain normal resu
 Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
 
 See [diagnostic/recovery evidence](docs/validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
-security review, assistive technology and other platform acceptance are pending;
+security review, full blind-user workflow and other platform acceptance are pending;
 these checks do not authorize production.
 
 2026-10-07 [terminal verification](docs/validation/g3-terminal-validation.md)
 records the stop-receipt race repair, cancellation before acknowledgement, and a
-fresh Native GUI/CLI harness pass. Window zoom shortcuts are enabled; complete
-keyboard/200% zoom, NVDA and independent security approval remain pending.
+fresh Native GUI/CLI harness pass. Actual Windows keyboard focus/native consent,
+200% zoom/reflow and NVDA Speech Viewer output were subsequently verified.
+Independent security approval remains pending; no human listening, full blind-user
+workflow or other-platform certification is claimed.

@@ -447,15 +447,17 @@ through diagnosis, while quarantined outputs expire; new runs retain normal resu
 Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
 
 See [diagnostic/recovery evidence](validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
-security review, assistive technology and other platform acceptance are pending;
+security review, full blind-user workflow and other platform acceptance are pending;
 these checks do not authorize production.
 
 `apps/runtime/src/server.rs` owns the bounded stop-receipt barrier;
 `packages/runtime-core/src/runtime.rs` cancels business work before acknowledgement.
 Main and validation Tauri configurations enable window zoom shortcuts.
 [Terminal verification](validation/g3-terminal-validation.md) records source,
-regression and fresh Native harness evidence, with keyboard/zoom, NVDA and
-independent-review gaps explicitly pending.
+regression, fresh Native harness and actual Windows keyboard/native consent,
+200% zoom/reflow and NVDA Speech Viewer evidence. Independent review remains
+pending; human listening, a full blind-user workflow and other platforms are not
+certified.
 
 `apps/ui-test/scripts/loopback-cdp.ts` validates the Native harness's observed
 IPv4/IPv6 listeners and responding endpoint; it does not configure production CDP.

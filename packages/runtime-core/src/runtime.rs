@@ -515,6 +515,9 @@ impl RuntimeCore {
             }
             Call::Stop => {
                 self.stopping = true;
+                // Stop admission and effects before the transport waits to deliver
+                // its receipt. The later process drain is independently bounded.
+                self.shutdown();
                 Ok(Outcome::Stopping)
             }
             Call::Status => Ok(Outcome::Status(RuntimeStatus {
@@ -1306,6 +1309,99 @@ pub(crate) fn interrupt_restored_jobs(connection: &rusqlite::Connection) -> Resu
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn authorized_stop_cancels_queued_and_running_work_before_receipt_delivery() {
+        let mut core = RuntimeCore::managed(
+            HashMap::from([
+                ("cli".into(), "local-cli".into()),
+                ("admin".into(), "local-manager".into()),
+            ]),
+            DataStore::memory().unwrap(),
+            false,
+            false,
+        )
+        .unwrap();
+        let admin = open(&mut core, "admin", "admin");
+        let (manifest, _) = core.catalog.command("plugin-todo-list", "run").unwrap();
+        let grant = PermissionGrant {
+            plugin_id: "plugin-todo-list".into(),
+            command_id: "run".into(),
+            target: GrantTarget::Cli,
+            package_digest: digest(manifest),
+            effects: vec!["data-read".into(), "data-write".into()],
+            scopes: vec![Scope::PluginData {
+                key_prefix: "todos".into(),
+            }],
+            expires_at: now() + 60_000.0,
+            max_calls: 16,
+            cold_start: false,
+            background: true,
+        };
+        assert!(matches!(
+            core.handle("admin", request(Call::Grant(grant), Some(admin.clone())))
+                .outcome,
+            Outcome::Permissions(_)
+        ));
+        let cli = open(&mut core, "cli", "cli");
+        let mut runs = Vec::new();
+        for key in ["running", "queued"] {
+            let Outcome::Receipt(receipt) = core
+                .handle(
+                    "cli",
+                    request(
+                        Call::Submit(SubmitJob {
+                            plugin_id: "plugin-todo-list".into(),
+                            command_id: "run".into(),
+                            input: json!({"todo":"stop-fixture"}),
+                            idempotency_key: key.into(),
+                            background: true,
+                            deadline: now() + 20_000.0,
+                        }),
+                        Some(cli.clone()),
+                    ),
+                )
+                .outcome
+            else {
+                panic!("Receipt");
+            };
+            runs.push(receipt.run_id);
+        }
+        core.take_run(&runs[0]).unwrap();
+        assert!(matches!(
+            core.handle("cli", request(Call::Stop, Some(cli))).outcome,
+            Outcome::Error(RuntimeError {
+                code: ErrorCode::SessionInvalid
+            })
+        ));
+        assert!(!core.stopping());
+        assert_eq!(core.check_run(&runs[0]), Ok(()));
+        assert!(matches!(
+            core.handle("admin", request(Call::Stop, Some(admin))).outcome,
+            Outcome::Stopping
+        ));
+        assert!(core.stopping());
+        assert_eq!(core.state(&runs[1]), Some(JobState::Cancelled));
+        assert!(core.take_run(&runs[1]).is_none());
+        assert_eq!(core.check_run(&runs[0]), Err(ErrorCode::Aborted));
+        assert_eq!(
+            core.commit_mutations(
+                &runs[0],
+                &[DataMutation {
+                    key: "todos".into(),
+                    expected_revision: 0,
+                    value: json!([{"todo":"must-not-commit","deadline":""}]),
+                }],
+            ),
+            Err(ErrorCode::Aborted)
+        );
+        assert_eq!(
+            core.data.read("flowtools:plugin-todo-list", "todos").unwrap().revision,
+            0
+        );
+        core.shutdown();
+        assert_eq!(core.state(&runs[0]), Some(JobState::Cancelling));
+    }
+
     #[test]
     fn managed_user_clients_share_metadata_and_cancel_but_not_management_roles() {
         let mut core = RuntimeCore::managed(

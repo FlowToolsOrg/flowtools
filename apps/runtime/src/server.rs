@@ -14,7 +14,7 @@ use std::{
     time::Duration,
 };
 use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt},
+    io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt},
     net::windows::named_pipe::NamedPipeServer,
     sync::{mpsc, Mutex, Semaphore},
 };
@@ -185,16 +185,18 @@ pub async fn run() -> Result<(), &'static str> {
     let mut stdin = tokio::io::stdin();
     let mut byte = [0u8; 1];
     let mut tick = tokio::time::interval(Duration::from_millis(25));
+    let stop_reply = Arc::new(Semaphore::new(1));
     loop {
         tokio::select! {
             _ = tokio::signal::ctrl_c() => break,
-            _ = tick.tick() => {if core.lock().await.stopping() {break;}}
+            _ = tick.tick() => {if stop_ready(&core, &stop_reply).await {break;}}
             _ = stdin.read(&mut byte), if stdin_lifetime => break,
             result = listener.connect(), if connections.len() < 15 => {
                 let Some(connected) = accept_connection(&mut listener, result, &pipe_name, &sid).map_err(|_| "IPC_ACCESS_FAILED")? else { continue; };
                 let core = core.clone();
                 let tasks = tasks.clone();
-                connections.spawn(async move { connection(connected, core, tasks).await; });
+                let stop_reply = stop_reply.clone();
+                connections.spawn(async move { connection(connected, core, tasks, stop_reply).await; });
             }
             Some(_) = connections.join_next(), if !connections.is_empty() => {}
             Some(run_id) = pending_tasks.recv() => {
@@ -247,7 +249,11 @@ fn accept_connection(
     Ok(accepted.then_some(previous))
 }
 
-async fn send(pipe: &mut NamedPipeServer, response: &Response) -> std::io::Result<()> {
+async fn stop_ready(core: &Core, stop_reply: &Semaphore) -> bool {
+    core.lock().await.stopping() && stop_reply.available_permits() != 0
+}
+
+async fn send(pipe: &mut (impl AsyncWrite + Unpin), response: &Response) -> std::io::Result<()> {
     let bytes = serde_json::to_vec(response)?;
     if bytes.len() > MAX_FRAME_BYTES {
         return Err(std::io::Error::other("Response budget"));
@@ -260,7 +266,12 @@ async fn send(pipe: &mut NamedPipeServer, response: &Response) -> std::io::Resul
     .map_err(|_| std::io::Error::other("Response timeout"))?
 }
 
-async fn connection(mut pipe: NamedPipeServer, core: Core, tasks: mpsc::Sender<String>) {
+async fn connection(
+    mut pipe: impl AsyncRead + AsyncWrite + Unpin,
+    core: Core,
+    tasks: mpsc::Sender<String>,
+    stop_reply: Arc<Semaphore>,
+) {
     let connection_id = uuid::Uuid::new_v4().to_string();
     let mut request_ids = HashSet::new();
     let mut recent_ids = VecDeque::new();
@@ -314,7 +325,15 @@ async fn connection(mut pipe: NamedPipeServer, core: Core, tasks: mpsc::Sender<S
         if recent_ids.len() > 256 {
             request_ids.remove(&recent_ids.pop_front().unwrap());
         }
-        let response = core.lock().await.handle(&connection_id, request);
+        let (response, stop_receipt) = {
+            let mut core = core.lock().await;
+            let response = core.handle(&connection_id, request);
+            // Claim the receipt barrier under the same lock that marks stopping.
+            // The shutdown tick cannot abort this connection between those steps.
+            let receipt = matches!(response.outcome, Outcome::Stopping)
+                .then(|| stop_reply.clone().try_acquire_owned().expect("Single stop"));
+            (response, receipt)
+        };
         let run_id = match &response.outcome {
             Outcome::Receipt(receipt) => Some(receipt.run_id.clone()),
             _ => None,
@@ -324,7 +343,18 @@ async fn connection(mut pipe: NamedPipeServer, core: Core, tasks: mpsc::Sender<S
                 break;
             }
         }
-        if send(&mut pipe, &response).await.is_err() {
+        let sent = send(&mut pipe, &response).await;
+        if stop_receipt.is_some() {
+            // Windows may discard unread pipe data when the server handle closes.
+            // Our clients close after reading the receipt. A disappeared or idle
+            // manager cannot prevent shutdown indefinitely; keep the 5s IO bound.
+            if sent.is_ok() {
+                let _ = tokio::time::timeout(Duration::from_secs(5), pipe.read_u8()).await;
+            }
+            drop(stop_receipt);
+            break;
+        }
+        if sent.is_err() {
             break;
         }
     }
@@ -520,7 +550,12 @@ mod tests {
             "desktop".into(),
         )));
         let (tasks, _receiver) = mpsc::channel(128);
-        let worker = tokio::spawn(connection(connected, core, tasks));
+        let worker = tokio::spawn(connection(
+            connected,
+            core,
+            tasks,
+            Arc::new(Semaphore::new(1)),
+        ));
         let request = serde_json::to_vec(&Request {
             version: 1,
             request_id: "after-aborted-peer".into(),
@@ -548,6 +583,94 @@ mod tests {
             .await
             .unwrap()
             .unwrap();
+    }
+
+    #[tokio::test]
+    async fn stop_waits_for_the_complete_receipt_and_client_close() {
+        for read_receipt in [true, false] {
+            let profile = std::env::temp_dir().join(format!(
+                "flowtools-validation-stop-{}",
+                uuid::Uuid::new_v4()
+            ));
+            std::fs::create_dir(&profile).unwrap();
+            let store = DataStore::open(&profile.join("runtime.sqlite")).unwrap();
+            let core = Arc::new(Mutex::new(
+                RuntimeCore::managed(
+                    std::collections::HashMap::from([("manager".into(), "local-manager".into())]),
+                    store,
+                    false,
+                    false,
+                )
+                .unwrap(),
+            ));
+            let stop_reply = Arc::new(Semaphore::new(1));
+            // A one-byte transport forces the receipt write to wait for the reader.
+            // No timing luck or retries are needed to reproduce the shutdown race.
+            let (server, mut peer) = tokio::io::duplex(1);
+            let (tasks, _receiver) = mpsc::channel(128);
+            let worker = tokio::spawn(connection(server, core.clone(), tasks, stop_reply.clone()));
+            let request = Request {
+                version: 1,
+                request_id: "open".into(),
+                session: None,
+                call: Call::Open(OpenSession {
+                    token: "manager".into(),
+                    client_version: CLIENT_VERSION.into(),
+                    expected_instance_id: None,
+                }),
+            };
+            async fn write(peer: &mut tokio::io::DuplexStream, request: &Request) {
+                let bytes = serde_json::to_vec(request).unwrap();
+                peer.write_u32_le(bytes.len() as u32).await.unwrap();
+                peer.write_all(&bytes).await.unwrap();
+            }
+            async fn read(peer: &mut tokio::io::DuplexStream) -> Response {
+                let size = peer.read_u32_le().await.unwrap();
+                let mut bytes = vec![0; size as usize];
+                peer.read_exact(&mut bytes).await.unwrap();
+                serde_json::from_slice(&bytes).unwrap()
+            }
+            write(&mut peer, &request).await;
+            let Outcome::Session(session) = read(&mut peer).await.outcome else {
+                panic!("Authenticated manager");
+            };
+            write(
+                &mut peer,
+                &Request {
+                    request_id: "stop".into(),
+                    session: Some(session),
+                    call: Call::Stop,
+                    ..request
+                },
+            )
+            .await;
+            tokio::time::timeout(Duration::from_secs(1), async {
+                while !core.lock().await.stopping() {
+                    tokio::task::yield_now().await;
+                }
+            })
+            .await
+            .unwrap();
+            assert!(
+                !stop_ready(&core, &stop_reply).await,
+                "Receipt is still blocked"
+            );
+            if read_receipt {
+                let response = read(&mut peer).await;
+                assert_eq!(response.request_id, "stop");
+                assert!(matches!(response.outcome, Outcome::Stopping));
+                assert!(
+                    !stop_ready(&core, &stop_reply).await,
+                    "Client still owns its pipe"
+                );
+            }
+            drop(peer);
+            tokio::time::timeout(Duration::from_secs(1), worker)
+                .await
+                .unwrap()
+                .unwrap();
+            assert!(stop_ready(&core, &stop_reply).await);
+        }
     }
 
     async fn accepted_run(core: &Core) -> RunSpec {

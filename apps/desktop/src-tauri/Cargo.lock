@@ -1209,6 +1209,7 @@ dependencies = [
  "jiff",
  "serde",
  "serde_json",
+ "sha2 0.10.9",
  "specta",
  "specta-typescript",
  "tauri",
@@ -1658,6 +1659,7 @@ name = "flowtools-runtime-core"
 version = "0.1.0"
 dependencies = [
  "jsonschema",
+ "rusqlite",
  "schemars 1.2.1",
  "serde",
  "serde_json",
@@ -1666,6 +1668,7 @@ dependencies = [
  "specta-serde",
  "specta-typescript",
  "uuid",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

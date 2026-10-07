@@ -50,6 +50,18 @@ export class CLIInputError extends Error {
   }
 }
 
+/** Bundled module copies may have distinct constructors; keep the error contract stable. */
+export function isCLIInputError(error: unknown): error is CLIInputError {
+  return (
+    error instanceof Error &&
+    error.name === 'CLIInputError' &&
+    'code' in error &&
+    ['INVALID_JSON', 'INVALID_INPUT_SHAPE', 'SCHEMA_VALIDATION'].includes(
+      String(error.code)
+    )
+  )
+}
+
 /**
  * Convert a Zod schema to a JSON Schema and extract field metadata.
  */

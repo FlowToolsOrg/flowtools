@@ -16,12 +16,12 @@ test('serialized command schema rejects undeclared fields and unavailable identi
   ).toMatchObject({ success: false, error: { code: 'NOT_RUNNABLE' } })
 })
 
-test('Desktop runs actual app entry through SDK schema and execution envelope', async () => {
+test('Desktop requires the authenticated native Host and validates before IPC', async () => {
   expect(await runDesktopPlugin(base64, { text: 'hello' })).toMatchObject({
-    success: true,
+    success: false,
     pluginId: base64.meta.id,
     pluginVersion: base64.meta.version,
-    data: { type: 'json', value: { result: 'aGVsbG8=' } },
+    error: { code: 'CONTEXT_FAILED' },
   })
   expect(await runDesktopPlugin(base64, { text: 3 })).toMatchObject({
     success: false,
@@ -38,13 +38,12 @@ test('Desktop runs actual app entry through SDK schema and execution envelope', 
   ).toMatchObject({ success: false, error: { code: 'ABORTED' } })
 })
 
-test('Desktop exposes an actual built-in capability exception as a failed envelope', async () => {
+test('caller metadata cannot bypass native Host grants', async () => {
   const denied = { ...latency, meta: { ...latency.meta, permissions: [] } }
   expect(await runDesktopPlugin(denied, { urls: [] })).toMatchObject({
     success: false,
     error: {
-      code: 'EXECUTION_FAILED',
-      message: 'Network capability is unavailable',
+      code: 'CONTEXT_FAILED',
     },
   })
 })

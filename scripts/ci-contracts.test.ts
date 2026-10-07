@@ -187,15 +187,15 @@ test('clean bootstrap builds the declared Runtime client used by the native harn
 })
 
 test('uncached native builds retain their actual Turbo prerequisite graph', () => {
+  const rootPackage = JSON.parse(
+    readFileSync(new URL('../package.json', import.meta.url), 'utf8')
+  ) as { scripts: Record<string, string> }
   const plan = spawnSync(
     process.execPath,
     [
       'x',
       '--no-install',
-      'turbo',
-      'run',
-      'build',
-      '--filter=@flowtools/runtime-client',
+      ...rootPackage.scripts['build:packages']!.split(' '),
       '--dry=json',
     ],
     {
@@ -235,15 +235,29 @@ test('uncached native builds retain their actual Turbo prerequisite graph', () =
     expect.arrayContaining([
       '@flowtools/plugin-runner#build',
       '@flowtools/runtime-core#build',
+      '@flowtools/runtime-client#build',
     ])
   )
   expect(dependencies('@flowtools/runtime-core#build')).toEqual(
     expect.arrayContaining(['@flowtools/plugins#build', '@flowtools/sdk#build'])
   )
+  expect(dependencies('@flowtools/cli#build')).toEqual(
+    expect.arrayContaining(['@flowtools/runtime-client#build'])
+  )
+  expect(
+    tasks.find(task => task.taskId === '@flowtools/cli#build')
+      ?.resolvedTaskDefinition.passThroughEnv
+  ).toEqual(['CARGO_TARGET_DIR'])
+  expect(dependencies('@flowtools/runtime-client#build')).not.toContain(
+    '@flowtools/runtime#build'
+  )
 }, 30_000)
 
 test('Runtime codegen stays clean after Windows CRLF checkout and rejects content drift', () => {
   const fixture = mkdtempSync(join(tmpdir(), 'flowtools-ci-generated-'))
+  if (dirname(resolve(fixture)) !== resolve(tmpdir())) {
+    throw new Error('Fixture cleanup target escaped temporary directory')
+  }
   const attributes = readFileSync(
     new URL('../.gitattributes', import.meta.url),
     'utf8'
@@ -297,9 +311,6 @@ test('Runtime codegen stays clean after Windows CRLF checkout and rejects conten
     expect(dirty.status).toBe(1)
     expect(dirty.stdout).toContain(files[0]!)
   } finally {
-    if (dirname(resolve(fixture)) !== resolve(tmpdir())) {
-      throw new Error('Fixture cleanup target escaped temporary directory')
-    }
     rmSync(fixture, { recursive: true, force: true })
   }
 }, 30_000)

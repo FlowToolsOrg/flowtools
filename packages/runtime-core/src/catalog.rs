@@ -53,14 +53,25 @@ impl BuiltinCatalog {
         &self,
         id: &str,
         command_id: &str,
+        input: Value,
+    ) -> Result<Value, ErrorCode> {
+        self.prepare_input_mode(id, command_id, input, false)
+    }
+
+    pub fn prepare_input_mode(
+        &self,
+        id: &str,
+        command_id: &str,
         mut input: Value,
+        managed: bool,
     ) -> Result<Value, ErrorCode> {
         let (_, command) = self.command(id, command_id)?;
         // No side effects/capabilities before G3 broker/grants. Pure T1 evaluation only.
-        if command["effects"].as_array().is_none_or(|v| !v.is_empty())
-            || command["permissions"]
-                .as_array()
-                .is_none_or(|v| !v.is_empty())
+        if !(managed && id == "plugin-todo-list")
+            && (command["effects"].as_array().is_none_or(|v| !v.is_empty())
+                || command["permissions"]
+                    .as_array()
+                    .is_none_or(|v| !v.is_empty()))
         {
             return Err(ErrorCode::ApprovalRequired);
         }

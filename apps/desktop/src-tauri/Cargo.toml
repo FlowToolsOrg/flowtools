@@ -30,6 +30,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
+sha2 = "0.10"
 
 [dependencies]
 flowtools-runtime-core = { path = "../../../packages/runtime-core" }
@@ -37,6 +38,7 @@ tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+sha2 = "0.10"
 tauri-plugin-fs = "2"
 tauri-plugin-log = "2"
 tauri-plugin-dialog = "2"
@@ -47,7 +49,7 @@ specta = { version = "=2.0.0-rc.25", features = ["serde_json"] }
 specta-typescript = "0.0.12"
 tauri-specta = { version = "=2.0.0-rc.25", features = ["derive", "typescript"] }
 base64 = "0.22.1"
-tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "io-util", "time"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "io-util", "time", "process"] }
 tauri-plugin-devtools = "2.0.0"
 toasty = { version = "0.7", features = ["sqlite", "jiff"] }
 jiff = { version = "0.2.29", features = ["serde"] }

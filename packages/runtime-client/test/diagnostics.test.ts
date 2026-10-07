@@ -2,6 +2,8 @@ import { expect, test } from 'bun:test'
 import { createHash } from 'node:crypto'
 
 import { parseManifestCatalog } from '@flowtools/sdk/manifest'
+import { manifestPackageDigest } from '@flowtools/sdk/manifest/package'
+import Ajv2020 from 'ajv/dist/2020'
 
 import { builtInCLIManifests } from '../../cli/src/builtin-manifests'
 import { RuntimeClient, RuntimeClientError } from '../src/client'
@@ -9,6 +11,32 @@ import { decodeResponse, encodeRequest } from '../src/codec'
 import { describeRuntimeError } from '../src/diagnostics'
 import fixtures from '../src/wire-fixtures.json'
 import schemas from '../src/wire-schema.json'
+
+test('Rust capability descriptors share strict schema without adding wire authority', () => {
+  const validate = new Ajv2020({ strict: false }).compile(
+    schemas.capabilityOperation
+  )
+  expect(fixtures.operations).toHaveLength(11)
+  for (const operation of fixtures.operations) {
+    expect(validate(operation)).toBe(true)
+    expect(validate({ ...operation, pluginId: 'host', granted: true })).toBe(
+      false
+    )
+  }
+  for (const value of [
+    { operation: 'data-read', parameters: { key: 'todos', namespace: 'host' } },
+    {
+      operation: 'file-read',
+      parameters: { handle: 'one', path: 'C:/private' },
+    },
+    {
+      operation: 'tool-execute',
+      parameters: { lock: 'one', action: 'probe', argv: [] },
+    },
+    { operation: 'native-invoke', parameters: { command: 'delete' } },
+  ])
+    expect(validate(value)).toBe(false)
+})
 
 test('Rust-derived golden protocol and full metadata match TS validators and digests', () => {
   expect(() => encodeRequest(fixtures.request)).not.toThrow()
@@ -51,6 +79,7 @@ test('Rust-derived golden protocol and full metadata match TS validators and dig
           )
         : value
   for (const item of fixtures.manifests) {
+    expect(manifestPackageDigest(item.manifest)).toBe(item.digest)
     expect(
       createHash('sha256')
         .update(JSON.stringify(canonical(item.manifest)))
@@ -148,7 +177,12 @@ test('request-id or method mismatch rejects, and transport rejection codes survi
               ? { type, data: [] }
               : {
                   type,
-                  data: { instanceId: 'fixture', mode: 'validation', jobs: 0 },
+                  data: {
+                    instanceId: 'fixture',
+                    mode: 'validation',
+                    jobs: 0,
+                    activeJobs: 0,
+                  },
                 },
         }
       },

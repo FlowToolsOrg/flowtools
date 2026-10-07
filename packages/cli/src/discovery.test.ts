@@ -227,7 +227,7 @@ test('compiled CLI refuses an oversized default before importing code', async ()
   expect(output.stdout + output.stderr).not.toContain(sourceCanary)
 }, 30_000)
 
-test('compiled CLI carries false, negative and array flags into runtime validation and real Base64 run', async () => {
+test('compiled SDK adapter carries false, negative and array flags into runtime validation and real Base64 run', async () => {
   const sample = fixture()
   const dist = join(sample.plugins, 'dist')
   cpSync(join(packageRoot, '../../plugins/dist'), dist, { recursive: true })
@@ -264,9 +264,21 @@ test('compiled CLI carries false, negative and array flags into runtime validati
     }
   }
   writeFileSync(path, JSON.stringify(catalog))
-  const output = await invoke(sample.cli, [
-    'run',
-    builtinId,
+  const executeFixture = async (args: string[]) => {
+    const source = `import {loadPlugin, getBuiltinCommandManifest, createPluginRunner, createCLIToolContext, parseCommandFlags} from ${JSON.stringify(pathToFileURL(sample.api).href)};
+      const args = ${JSON.stringify(args)};
+      const command = getBuiltinCommandManifest('${builtinId}').commands[0];
+      const batch = args[0] === '--batch-input';
+      const inputs = batch ? JSON.parse(args[1]) : [parseCommandFlags(command,args.slice(0,args.indexOf('--format')))];
+      const run = createPluginRunner({loadPlugin,createContext: id => createCLIToolContext(id,{pluginType:'app',permissions:[]})});
+      const results = [];
+      for(const input of inputs) results.push(await run('${builtinId}',input));
+      const success = results.every(result => result.success);
+      console.log(JSON.stringify(batch ? {formatVersion:1,type:'batch',success,results} : results[0]));
+      process.exitCode = success ? 0 : 1;`
+    return invoke(source, [], true)
+  }
+  const output = await executeFixture([
     '--text',
     'hello',
     '--active',
@@ -286,9 +298,7 @@ test('compiled CLI carries false, negative and array flags into runtime validati
     data: { value: { result: 'aGVsbG8=' } },
   })
   const input = { text: 'hello', active: false, offset: -2, items: ['a', 'b'] }
-  const batch = await invoke(sample.cli, [
-    'run',
-    builtinId,
+  const batch = await executeFixture([
     '--batch-input',
     JSON.stringify([
       input,

@@ -3,6 +3,10 @@ mod commands;
 mod db;
 mod dto;
 mod error;
+#[cfg(windows)]
+mod managed_approval;
+#[cfg(windows)]
+mod managed_runtime;
 mod models;
 mod repositories;
 #[cfg(all(windows, any(debug_assertions, feature = "codegen")))]
@@ -27,7 +31,7 @@ fn validation_startup_allowed(debug: bool, identifier: &str, requested: bool) ->
 }
 
 fn command_builder<R: tauri::Runtime>() -> Builder<R> {
-    #[cfg(not(all(windows, any(debug_assertions, feature = "codegen"))))]
+    #[cfg(not(windows))]
     let builder = Builder::<R>::new().commands(collect_commands![
         get_plugins,
         get_plugin,
@@ -36,6 +40,20 @@ fn command_builder<R: tauri::Runtime>() -> Builder<R> {
         enable_plugin,
         disable_plugin,
         remove_plugin
+    ]);
+    #[cfg(all(windows, not(any(debug_assertions, feature = "codegen"))))]
+    let builder = Builder::<R>::new().commands(collect_commands![
+        get_plugins,
+        get_plugin,
+        add_plugin,
+        update_plugin,
+        enable_plugin,
+        disable_plugin,
+        remove_plugin,
+        managed_runtime::managed_runtime::<tauri::Wry>,
+        managed_runtime::managed_runtime_disconnect::<tauri::Wry>,
+        managed_runtime::managed_runtime_storage::<tauri::Wry>,
+        managed_runtime::managed_runtime_control::<tauri::Wry>
     ]);
     #[cfg(all(windows, any(debug_assertions, feature = "codegen")))]
     let builder = Builder::<R>::new().commands(collect_commands![
@@ -46,6 +64,10 @@ fn command_builder<R: tauri::Runtime>() -> Builder<R> {
         enable_plugin,
         disable_plugin,
         remove_plugin,
+        managed_runtime::managed_runtime::<tauri::Wry>,
+        managed_runtime::managed_runtime_disconnect::<tauri::Wry>,
+        managed_runtime::managed_runtime_storage::<tauri::Wry>,
+        managed_runtime::managed_runtime_control::<tauri::Wry>,
         validation_runtime::validation_runtime::<tauri::Wry>,
         validation_runtime::validation_runtime_disconnect::<tauri::Wry>
     ]);
@@ -139,6 +161,15 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(log_plugin_builder.build());
+
+    #[cfg(windows)]
+    let tauri_builder = tauri_builder
+        .manage(managed_runtime::ManagedConnections::default())
+        .on_window_event(|window, event| {
+            if matches!(event, tauri::WindowEvent::Destroyed) {
+                managed_runtime::destroyed(window);
+            }
+        });
 
     #[cfg(all(windows, debug_assertions))]
     let tauri_builder = tauri_builder

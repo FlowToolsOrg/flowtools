@@ -1,4 +1,8 @@
-import { expect, test } from 'bun:test'
+import { beforeAll, afterAll, expect, test } from 'bun:test'
+import { createHash } from 'node:crypto'
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { resolve } from 'node:path'
 
 import {
@@ -6,12 +10,73 @@ import {
   type CommandManifestV1,
 } from '@flowtools/sdk/manifest'
 
+const scratch = await mkdtemp(
+  join(tmpdir(), 'flowtools-validation-cli-contract-')
+)
+const profile = join(scratch, 'profile')
+const root = resolve(import.meta.dir, '../../..')
+function canonical(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonical)
+  if (value && typeof value === 'object')
+    return Object.fromEntries(
+      Object.entries(value)
+        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .map(([key, item]) => [key, canonical(item)])
+    )
+  return value
+}
+beforeAll(async () => {
+  const catalog = JSON.parse(
+    await readFile(
+      join(root, 'packages/runtime-core/.generated/catalog.json'),
+      'utf8'
+    )
+  ) as { plugins: { id: string }[] }
+  const policy = join(scratch, 'policy.json')
+  const grants = ['plugin-base64-encoder', 'plugin-random-picker'].map(
+    pluginId => ({
+      pluginId,
+      commandId: 'run',
+      target: 'cli',
+      packageDigest: createHash('sha256')
+        .update(
+          JSON.stringify(
+            canonical(catalog.plugins.find(item => item.id === pluginId))
+          )
+        )
+        .digest('hex'),
+      effects: [],
+      scopes: [],
+      expiresAt: Date.now() + 3600000,
+      maxCalls: 32,
+      coldStart: true,
+      background: false,
+    })
+  )
+  await writeFile(
+    policy,
+    JSON.stringify({ formatVersion: 1, coldStart: true, grants })
+  )
+  const output = await invoke([
+    'init',
+    '--policy',
+    policy,
+    '--profile',
+    profile,
+  ])
+  expect(output).toMatchObject({ code: 0, stderr: '' })
+}, 30000)
+afterAll(async () => {
+  const output = await invoke(['runtime', 'stop', '--profile', profile])
+  expect(output).toMatchObject({ code: 0, stderr: '' })
+}, 30000)
 async function invoke(args: string[]) {
   const child = Bun.spawn(
     [
-      process.execPath,
-      resolve(import.meta.dir, '../../packages/cli/dist/cli.mjs'),
+      'node',
+      join(root, 'packages/cli/dist/cli.mjs'),
       ...args,
+      ...(args[0] === 'run' ? ['--profile', profile] : []),
     ],
     {
       stdout: 'pipe',

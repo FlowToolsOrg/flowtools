@@ -13,3 +13,7 @@ sha2.workspace = true
 uuid.workspace = true
 jsonschema = { version = "=0.33.0", default-features = false }
 schemars = { version = "=1.2.1", features = ["derive"] }
+rusqlite = { version = "=0.39.0", features = ["bundled", "backup"] }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "=0.61.2", features = ["Win32_Storage_FileSystem", "Win32_Foundation", "Win32_Security_Cryptography"] }

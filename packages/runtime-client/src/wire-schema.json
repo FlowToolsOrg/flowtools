@@ -1,6 +1,315 @@
 {
+  "capabilityOperation": {
+    "$defs": {
+      "ReadMethod": {
+        "enum": [
+          "GET",
+          "HEAD"
+        ],
+        "type": "string"
+      },
+      "SendMethod": {
+        "enum": [
+          "POST",
+          "PUT",
+          "PATCH",
+          "DELETE"
+        ],
+        "type": "string"
+      }
+    },
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "description": "Narrow operations: no caller/plugin/namespace, raw paths, SQL, argv or env.\nFile handles and tool locks must be issued by a future Host adapter.",
+    "oneOf": [
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "file-read",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {
+              "handle": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "handle"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "parameters"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "file-create",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {
+              "handle": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "handle"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "parameters"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "file-replace",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {
+              "handle": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "handle"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "parameters"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "file-delete",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {
+              "handle": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "handle"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "parameters"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "network-read",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "$ref": "#/$defs/ReadMethod"
+              },
+              "origin": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "origin",
+              "method"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "parameters"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "network-send",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "$ref": "#/$defs/SendMethod"
+              },
+              "origin": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "origin",
+              "method"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "parameters"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "data-read",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {
+              "key": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "key"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "parameters"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "data-write",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {
+              "key": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "key"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "parameters"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "clipboard-read",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "clipboard-write",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "tool-execute",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {
+              "action": {
+                "type": "string"
+              },
+              "lock": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "lock",
+              "action"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "parameters"
+        ],
+        "type": "object"
+      }
+    ],
+    "title": "CapabilityOperation"
+  },
   "request": {
     "$defs": {
+      "BootstrapPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "coldStart": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "coldStart"
+        ],
+        "type": "object"
+      },
       "Call": {
         "oneOf": [
           {
@@ -67,6 +376,23 @@
             "additionalProperties": false,
             "properties": {
               "method": {
+                "const": "jobs.lookup",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/IdempotencyKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
                 "const": "jobs.status",
                 "type": "string"
               },
@@ -77,6 +403,36 @@
             "required": [
               "method",
               "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "jobs.diagnose",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/JobKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "jobs.list",
+                "type": "string"
+              }
+            },
+            "required": [
+              "method"
             ],
             "type": "object"
           },
@@ -113,8 +469,257 @@
               "payload"
             ],
             "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "data.read",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/DataRead"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "data.write",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/DataWrite"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "data.transaction",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/DataTransaction"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "data.import-legacy",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/DataImport"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "permissions.list",
+                "type": "string"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "permissions.grant",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/PermissionGrant"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "permissions.revoke",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/PermissionKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "policy.set",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/BootstrapPolicy"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "policy.import",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/PolicyImport"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "runtime.stop",
+                "type": "string"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "type": "object"
           }
         ]
+      },
+      "DataImport": {
+        "additionalProperties": false,
+        "properties": {
+          "import": {
+            "$ref": "#/$defs/LegacyImport"
+          },
+          "pluginId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pluginId",
+          "import"
+        ],
+        "type": "object"
+      },
+      "DataMutation": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "key": {
+            "type": "string"
+          },
+          "value": true
+        },
+        "required": [
+          "key",
+          "expectedRevision",
+          "value"
+        ],
+        "type": "object"
+      },
+      "DataRead": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "pluginId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pluginId",
+          "key"
+        ],
+        "type": "object"
+      },
+      "DataTransaction": {
+        "additionalProperties": false,
+        "properties": {
+          "mutations": {
+            "items": {
+              "$ref": "#/$defs/DataMutation"
+            },
+            "type": "array"
+          },
+          "pluginId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pluginId",
+          "mutations"
+        ],
+        "type": "object"
+      },
+      "DataWrite": {
+        "additionalProperties": false,
+        "properties": {
+          "mutation": {
+            "$ref": "#/$defs/DataMutation"
+          },
+          "pluginId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pluginId",
+          "mutation"
+        ],
+        "type": "object"
       },
       "EventCursor": {
         "additionalProperties": false,
@@ -134,6 +739,25 @@
         ],
         "type": "object"
       },
+      "GrantTarget": {
+        "enum": [
+          "cli",
+          "desktop"
+        ],
+        "type": "string"
+      },
+      "IdempotencyKey": {
+        "additionalProperties": false,
+        "properties": {
+          "idempotencyKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotencyKey"
+        ],
+        "type": "object"
+      },
       "JobKey": {
         "additionalProperties": false,
         "properties": {
@@ -145,6 +769,32 @@
           "runId"
         ],
         "type": "object"
+      },
+      "LegacyImport": {
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "$ref": "#/$defs/LegacySource"
+          },
+          "sourceDigest": {
+            "type": "string"
+          },
+          "value": true
+        },
+        "required": [
+          "source",
+          "sourceDigest",
+          "value"
+        ],
+        "type": "object"
+      },
+      "LegacySource": {
+        "enum": [
+          "cli-v0",
+          "desktop-localstorage-v1",
+          "web-localstorage-v1"
+        ],
+        "type": "string"
       },
       "OpenSession": {
         "additionalProperties": false,
@@ -167,6 +817,276 @@
           "clientVersion"
         ],
         "type": "object"
+      },
+      "PermissionGrant": {
+        "additionalProperties": false,
+        "properties": {
+          "background": {
+            "type": "boolean"
+          },
+          "coldStart": {
+            "type": "boolean"
+          },
+          "commandId": {
+            "type": "string"
+          },
+          "effects": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "expiresAt": {
+            "format": "double",
+            "type": "number"
+          },
+          "maxCalls": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "packageDigest": {
+            "type": "string"
+          },
+          "pluginId": {
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "$ref": "#/$defs/Scope"
+            },
+            "type": "array"
+          },
+          "target": {
+            "$ref": "#/$defs/GrantTarget"
+          }
+        },
+        "required": [
+          "pluginId",
+          "commandId",
+          "target",
+          "packageDigest",
+          "effects",
+          "scopes",
+          "expiresAt",
+          "maxCalls",
+          "coldStart",
+          "background"
+        ],
+        "type": "object"
+      },
+      "PermissionKey": {
+        "additionalProperties": false,
+        "properties": {
+          "commandId": {
+            "type": "string"
+          },
+          "pluginId": {
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/$defs/GrantTarget"
+          }
+        },
+        "required": [
+          "pluginId",
+          "commandId",
+          "target"
+        ],
+        "type": "object"
+      },
+      "PolicyImport": {
+        "additionalProperties": false,
+        "properties": {
+          "coldStart": {
+            "type": "boolean"
+          },
+          "formatVersion": {
+            "format": "uint16",
+            "maximum": 65535,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "grants": {
+            "items": {
+              "$ref": "#/$defs/PermissionGrant"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "formatVersion",
+          "coldStart",
+          "grants"
+        ],
+        "type": "object"
+      },
+      "ReadMethod": {
+        "enum": [
+          "GET",
+          "HEAD"
+        ],
+        "type": "string"
+      },
+      "Scope": {
+        "description": "Exact, Host-approved scopes; there are no wildcard grants.",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "file-handle",
+                "type": "string"
+              },
+              "scope": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "scope"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "network-read",
+                "type": "string"
+              },
+              "scope": {
+                "additionalProperties": false,
+                "properties": {
+                  "method": {
+                    "$ref": "#/$defs/ReadMethod"
+                  },
+                  "origin": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "origin",
+                  "method"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "kind",
+              "scope"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "network-send",
+                "type": "string"
+              },
+              "scope": {
+                "additionalProperties": false,
+                "properties": {
+                  "method": {
+                    "$ref": "#/$defs/SendMethod"
+                  },
+                  "origin": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "origin",
+                  "method"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "kind",
+              "scope"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "plugin-data",
+                "type": "string"
+              },
+              "scope": {
+                "additionalProperties": false,
+                "properties": {
+                  "key_prefix": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "key_prefix"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "kind",
+              "scope"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "clipboard",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "tool-lock",
+                "type": "string"
+              },
+              "scope": {
+                "additionalProperties": false,
+                "properties": {
+                  "action": {
+                    "type": "string"
+                  },
+                  "lock": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "lock",
+                  "action"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "kind",
+              "scope"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "SendMethod": {
+        "enum": [
+          "POST",
+          "PUT",
+          "PATCH",
+          "DELETE"
+        ],
+        "type": "string"
       },
       "SessionProof": {
         "additionalProperties": false,
@@ -252,6 +1172,70 @@
   },
   "response": {
     "$defs": {
+      "BootstrapPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "coldStart": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "coldStart"
+        ],
+        "type": "object"
+      },
+      "CommandIdentity": {
+        "additionalProperties": false,
+        "properties": {
+          "caller": {
+            "type": "string"
+          },
+          "commandId": {
+            "type": "string"
+          },
+          "packageDigest": {
+            "type": "string"
+          },
+          "pluginId": {
+            "type": "string"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "caller",
+          "publisher",
+          "pluginId",
+          "version",
+          "packageDigest",
+          "commandId"
+        ],
+        "type": "object"
+      },
+      "DataSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "value": true
+        },
+        "required": [
+          "key",
+          "revision",
+          "value"
+        ],
+        "type": "object"
+      },
       "ErrorCode": {
         "enum": [
           "PROTOCOL_MISMATCH",
@@ -261,6 +1245,21 @@
           "SESSION_INVALID",
           "INSTANCE_MISMATCH",
           "APPROVAL_REQUIRED",
+          "INTERACTION_REQUIRED",
+          "CAPABILITY_UNDECLARED",
+          "SCOPE_DENIED",
+          "GRANT_REVOKED",
+          "BUDGET_EXCEEDED",
+          "REVISION_CONFLICT",
+          "STORE_BUSY",
+          "STORE_CORRUPT",
+          "RECOVERY_PENDING",
+          "SCHEMA_UNSUPPORTED",
+          "STORAGE_FAILED",
+          "ACCEPTANCE_UNKNOWN",
+          "EXECUTION_INTERRUPTED",
+          "RESULT_EXPIRED",
+          "COLD_START_DENIED",
           "PLUGIN_NOT_FOUND",
           "INPUT_INVALID",
           "JOB_NOT_FOUND",
@@ -351,6 +1350,13 @@
         ],
         "type": "object",
         "unevaluatedProperties": false
+      },
+      "GrantTarget": {
+        "enum": [
+          "cli",
+          "desktop"
+        ],
+        "type": "string"
       },
       "InputSummary": {
         "additionalProperties": false,
@@ -614,6 +1620,43 @@
             "properties": {
               "data": {
                 "items": {
+                  "$ref": "#/$defs/JobSnapshot"
+                },
+                "type": "array"
+              },
+              "type": {
+                "const": "jobs",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/RunDiagnostic"
+              },
+              "type": {
+                "const": "diagnostic",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "items": {
                   "$ref": "#/$defs/JobEvent"
                 },
                 "type": "array"
@@ -626,6 +1669,93 @@
             "required": [
               "type",
               "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/DataSnapshot"
+              },
+              "type": {
+                "const": "data",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/$defs/DataSnapshot"
+                },
+                "type": "array"
+              },
+              "type": {
+                "const": "data-batch",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/$defs/PermissionRecord"
+                },
+                "type": "array"
+              },
+              "type": {
+                "const": "permissions",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/BootstrapPolicy"
+              },
+              "type": {
+                "const": "policy",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "stopping",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
             ],
             "type": "object"
           },
@@ -648,6 +1778,91 @@
           }
         ]
       },
+      "PermissionGrant": {
+        "additionalProperties": false,
+        "properties": {
+          "background": {
+            "type": "boolean"
+          },
+          "coldStart": {
+            "type": "boolean"
+          },
+          "commandId": {
+            "type": "string"
+          },
+          "effects": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "expiresAt": {
+            "format": "double",
+            "type": "number"
+          },
+          "maxCalls": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "packageDigest": {
+            "type": "string"
+          },
+          "pluginId": {
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "$ref": "#/$defs/Scope"
+            },
+            "type": "array"
+          },
+          "target": {
+            "$ref": "#/$defs/GrantTarget"
+          }
+        },
+        "required": [
+          "pluginId",
+          "commandId",
+          "target",
+          "packageDigest",
+          "effects",
+          "scopes",
+          "expiresAt",
+          "maxCalls",
+          "coldStart",
+          "background"
+        ],
+        "type": "object"
+      },
+      "PermissionRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "epoch": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "grant": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/PermissionGrant"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "identity": {
+            "$ref": "#/$defs/CommandIdentity"
+          }
+        },
+        "required": [
+          "identity",
+          "epoch"
+        ],
+        "type": "object"
+      },
       "PluginStatus": {
         "additionalProperties": false,
         "properties": {
@@ -656,6 +1871,9 @@
           },
           "installed": {
             "type": "boolean"
+          },
+          "packageDigest": {
+            "type": "string"
           },
           "pluginId": {
             "type": "string"
@@ -670,9 +1888,131 @@
         "required": [
           "pluginId",
           "version",
+          "packageDigest",
           "installed",
           "enabled",
           "running"
+        ],
+        "type": "object"
+      },
+      "ReadMethod": {
+        "enum": [
+          "GET",
+          "HEAD"
+        ],
+        "type": "string"
+      },
+      "RunDiagnostic": {
+        "additionalProperties": false,
+        "description": "Metadata allowlist only; never payloads, arbitrary messages, paths or credentials.",
+        "properties": {
+          "acceptedAt": {
+            "format": "double",
+            "type": "number"
+          },
+          "background": {
+            "type": "boolean"
+          },
+          "commandId": {
+            "type": "string"
+          },
+          "dependencyLock": {
+            "type": "string"
+          },
+          "durationMs": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "failureCode": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ErrorCode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "finishedAt": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "formatVersion": {
+            "format": "uint16",
+            "maximum": 65535,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "grantEpoch": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "packageDigest": {
+            "type": "string"
+          },
+          "packageVersion": {
+            "type": "string"
+          },
+          "parentRunId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pluginId": {
+            "type": "string"
+          },
+          "requiresReview": {
+            "type": "boolean"
+          },
+          "resultExpired": {
+            "type": "boolean"
+          },
+          "rootCaller": {
+            "type": "string"
+          },
+          "runId": {
+            "type": "string"
+          },
+          "sequence": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "startedAt": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "state": {
+            "$ref": "#/$defs/JobState"
+          }
+        },
+        "required": [
+          "formatVersion",
+          "runId",
+          "rootCaller",
+          "pluginId",
+          "commandId",
+          "packageVersion",
+          "packageDigest",
+          "dependencyLock",
+          "grantEpoch",
+          "state",
+          "sequence",
+          "acceptedAt",
+          "background",
+          "resultExpired",
+          "requiresReview"
         ],
         "type": "object"
       },
@@ -691,6 +2031,11 @@
       "RuntimeStatus": {
         "additionalProperties": false,
         "properties": {
+          "activeJobs": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
           "instanceId": {
             "type": "string"
           },
@@ -706,9 +2051,170 @@
         "required": [
           "instanceId",
           "mode",
-          "jobs"
+          "jobs",
+          "activeJobs"
         ],
         "type": "object"
+      },
+      "Scope": {
+        "description": "Exact, Host-approved scopes; there are no wildcard grants.",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "file-handle",
+                "type": "string"
+              },
+              "scope": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "scope"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "network-read",
+                "type": "string"
+              },
+              "scope": {
+                "additionalProperties": false,
+                "properties": {
+                  "method": {
+                    "$ref": "#/$defs/ReadMethod"
+                  },
+                  "origin": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "origin",
+                  "method"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "kind",
+              "scope"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "network-send",
+                "type": "string"
+              },
+              "scope": {
+                "additionalProperties": false,
+                "properties": {
+                  "method": {
+                    "$ref": "#/$defs/SendMethod"
+                  },
+                  "origin": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "origin",
+                  "method"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "kind",
+              "scope"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "plugin-data",
+                "type": "string"
+              },
+              "scope": {
+                "additionalProperties": false,
+                "properties": {
+                  "key_prefix": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "key_prefix"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "kind",
+              "scope"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "clipboard",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "tool-lock",
+                "type": "string"
+              },
+              "scope": {
+                "additionalProperties": false,
+                "properties": {
+                  "action": {
+                    "type": "string"
+                  },
+                  "lock": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "lock",
+                  "action"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "kind",
+              "scope"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "SendMethod": {
+        "enum": [
+          "POST",
+          "PUT",
+          "PATCH",
+          "DELETE"
+        ],
+        "type": "string"
       },
       "SessionProof": {
         "additionalProperties": false,
@@ -749,6 +2255,227 @@
       "outcome"
     ],
     "title": "Response",
+    "type": "object"
+  },
+  "storageAction": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "description": "Offline T0 storage actions; never part of business Call or caller-selected paths.",
+    "oneOf": [
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "list",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "create",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "restore",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {
+              "backupId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "backupId"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "parameters"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "retry",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation"
+        ],
+        "type": "object"
+      }
+    ],
+    "title": "StorageAction"
+  },
+  "storageReport": {
+    "$defs": {
+      "BackupInfo": {
+        "additionalProperties": false,
+        "properties": {
+          "bytes": {
+            "format": "double",
+            "type": "number"
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ErrorCode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "schemaVersion": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "usable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "bytes",
+          "usable"
+        ],
+        "type": "object"
+      },
+      "ErrorCode": {
+        "enum": [
+          "PROTOCOL_MISMATCH",
+          "CLIENT_INCOMPATIBLE",
+          "FRAME_TOO_LARGE",
+          "INVALID_REQUEST",
+          "SESSION_INVALID",
+          "INSTANCE_MISMATCH",
+          "APPROVAL_REQUIRED",
+          "INTERACTION_REQUIRED",
+          "CAPABILITY_UNDECLARED",
+          "SCOPE_DENIED",
+          "GRANT_REVOKED",
+          "BUDGET_EXCEEDED",
+          "REVISION_CONFLICT",
+          "STORE_BUSY",
+          "STORE_CORRUPT",
+          "RECOVERY_PENDING",
+          "SCHEMA_UNSUPPORTED",
+          "STORAGE_FAILED",
+          "ACCEPTANCE_UNKNOWN",
+          "EXECUTION_INTERRUPTED",
+          "RESULT_EXPIRED",
+          "COLD_START_DENIED",
+          "PLUGIN_NOT_FOUND",
+          "INPUT_INVALID",
+          "JOB_NOT_FOUND",
+          "IDEMPOTENCY_CONFLICT",
+          "TIMEOUT",
+          "ABORTED",
+          "EXECUTION_FAILED",
+          "OUTPUT_INVALID",
+          "RUNTIME_BUSY",
+          "RUNTIME_DISCONNECTED",
+          "INVALID_RESPONSE"
+        ],
+        "type": "string"
+      },
+      "RecoveryPhase": {
+        "enum": [
+          "prepared",
+          "replaced",
+          "complete"
+        ],
+        "type": "string"
+      },
+      "RecoveryReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "backupId": {
+            "type": "string"
+          },
+          "grantsRevoked": {
+            "type": "boolean"
+          },
+          "payloadsQuarantined": {
+            "type": "boolean"
+          },
+          "phase": {
+            "$ref": "#/$defs/RecoveryPhase"
+          },
+          "recoveryId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "recoveryId",
+          "backupId",
+          "phase",
+          "grantsRevoked",
+          "payloadsQuarantined"
+        ],
+        "type": "object"
+      }
+    },
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+      "backups": {
+        "items": {
+          "$ref": "#/$defs/BackupInfo"
+        },
+        "type": "array"
+      },
+      "formatVersion": {
+        "format": "uint16",
+        "maximum": 65535,
+        "minimum": 0,
+        "type": "integer"
+      },
+      "recovery": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/RecoveryReceipt"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "formatVersion",
+      "backups"
+    ],
+    "title": "StorageReport",
     "type": "object"
   }
 }

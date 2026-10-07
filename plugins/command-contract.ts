@@ -164,7 +164,7 @@ export function defineBuiltinCommand<T>(plugin: {
     outputSchema: outputContract,
     runtimeValidation: { input: 'required', output: 'required' },
     headless: true,
-    supportsColdStart: false,
+    supportsColdStart: !network,
     interaction: 'none',
     effects: network
       ? ['network-read']

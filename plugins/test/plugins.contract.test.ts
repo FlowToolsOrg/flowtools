@@ -7,7 +7,7 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { loadPlugin, runPlugin, scanPlugins } from '@flowtools/cli'
+import { createPluginRunner, loadPlugin, scanPlugins } from '@flowtools/cli'
 import { PLUGIN_MARKER } from '@flowtools/sdk'
 
 import base64Plugin from '../plugin-base64-encoder/index.tsx'
@@ -114,7 +114,7 @@ describe('built-in plugin contracts', () => {
   })
 })
 
-describe('CLI integration contract', () => {
+describe('CLI discovery and explicit SDK adapter contract', () => {
   test('imports every built entry through its public package subpath', async () => {
     for (const pluginId of pluginEntryIds) {
       const { default: plugin } = (await import(
@@ -159,6 +159,13 @@ describe('CLI integration contract', () => {
       throw new Error('Expected the loaded plugin schema to parse CLI input')
     }
 
+    const runPlugin = createPluginRunner({
+      loadPlugin,
+      createContext: id => ({
+        ...fakeContext,
+        env: { ...fakeContext.env, pluginId: id },
+      }),
+    })
     expect(
       await runPlugin(pluginId, parsed.data, { timeout: 1_000 })
     ).toMatchObject({

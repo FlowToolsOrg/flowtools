@@ -63,7 +63,7 @@ try {
       method: 'session.open',
       payload: {
         token: cliToken,
-        clientVersion: '0.1.0',
+        clientVersion: '0.3.0',
         expectedInstanceId: null,
         agentId: 'admin',
       },
@@ -78,6 +78,36 @@ try {
   })
   await cli.connect(cliToken)
   await desktop.connect(desktopToken)
+  const beforeDenied = await cli.call({ method: 'runtime.status' })
+  for (const pluginId of ['plugin-todo-list', 'plugin-website-latency']) {
+    await assert.rejects(
+      cli.submit({
+        pluginId,
+        commandId: 'run',
+        input: {},
+        idempotencyKey: 'broker-denied-' + pluginId,
+        background: false,
+        deadline: Date.now() + 10000,
+      }),
+      { code: 'APPROVAL_REQUIRED' }
+    )
+  }
+  assert.deepEqual(await cli.call({ method: 'runtime.status' }), beforeDenied)
+  // Wire callers cannot grant themselves an operation or create runner bindings.
+  for (const method of ['permissions.grant', 'capabilities.invoke']) {
+    const denied = await rawExchange(ready.pipe, {
+      version: 1,
+      requestId: 'broker-spoof',
+      session: null,
+      call: {
+        method,
+        payload: { pluginId: 'plugin-todo-list', granted: true, epoch: 0 },
+      },
+    })
+    partial(denied, {
+      outcome: { type: 'error', data: { code: 'INVALID_REQUEST' } },
+    })
+  }
   const obsolete = new RuntimeClient(await connectNamedPipe(ready.pipe))
   await assert.rejects(obsolete.connect(cliToken, 'old-instance'), {
     code: 'INSTANCE_MISMATCH',
@@ -129,13 +159,23 @@ try {
   await assert.rejects(desktop.cancel(receipt.runId), {
     code: 'SESSION_INVALID',
   })
-  const cancelled = await cli.submit({ ...job, idempotencyKey: 'cancel' })
+  const cancelled = await cli.submit({
+    ...job,
+    idempotencyKey: 'cancel',
+    deadline: Date.now() + 10000,
+  })
   await cli.cancel(cancelled.runId)
   partial(await desktop.waitForResult(cancelled.runId), {
     state: 'cancelled',
     result: { success: false, error: { code: 'ABORTED' } },
   })
-  const background = await cli.submit({ ...job, idempotencyKey: 'background' })
+  // A different key is a new operation with its own unchanged ten-second budget.
+  // The retry of actual-base64 above retains the original absolute deadline.
+  const background = await cli.submit({
+    ...job,
+    idempotencyKey: 'background',
+    deadline: Date.now() + 10000,
+  })
   cli.close()
   partial(await desktop.waitForResult(background.runId), { state: 'succeeded' })
   const reconnect = new RuntimeClient(await connectNamedPipe(ready.pipe))

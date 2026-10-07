@@ -8,6 +8,11 @@
 
 ## 背景
 
+2026-10-05 P2.3a 为验证 Runtime 新增 T1 内存策略 broker 与不可序列化的
+Host runner session；敏感操作在无 grant 时继续拒绝，没有新增第三方执行域。
+见 [基础验收](../validation/g3-capability-broker.md)。持久授权、实际能力 adapter
+与 T2/T3/TL 平台隔离仍由后续 gate 验收，普通子进程的信任等级不变。
+
 同一 JavaScript realm 中的依赖注入、React ErrorBoundary 和 key 前缀只能约束
 合作代码，不能隔离恶意代码。当前外部模块在校验 manifest 前已执行，Desktop
 HTML iframe 也不是经过认证的插件沙箱。证据见
@@ -130,3 +135,56 @@ broker 不接受调用方指定目标插件 namespace。会话销毁、停用、
   撤销、超时、进程后代、更新/卸载与 Host 崩溃无越权或孤儿资源。
 
 本 ADR 的验收是设计和源码证据审阅；以上攻击 fixture 尚待对应里程碑实现。
+
+2026-10-05 P2.6a update: Runtime single-writer SQLite, CAS/transactions,
+N-1 migration/rollback, explicit source-preserving import and backup recovery
+are covered in [shared data acceptance](../validation/g3-shared-data.md). Ordinary Desktop Debug reset
+is removed and corrupt legacy DB startup preserves the original. Historical
+G2 reset evidence above remains accurate for that incident; no lost user data
+recovery is claimed. Durable grants/jobs and third-party boundaries remain open.
+Security Reviewer/date/conclusion: pending independent review.
+
+2026-10-05 P2.4a: [persistent policy evidence](../validation/g3-persistent-grants.md) adds Host-bound management, current-user private profile ACL, atomic grant import and durable epoch/audit. T1 only; same-account compromise, isolation, signing and independent Security Reviewer/date/conclusion remain pending.
+
+2026-10-05 P1.3b: [durable job evidence](../validation/g3-durable-jobs.md)
+binds receipts and replay to Host identity, immutable action/package lock and
+durable grant epochs. Private DPAPI payloads are separate from metadata. Running
+non-idempotent tasks interrupt after crash. This T1 lifetime guard is not a
+third-party sandbox; SEC risks and independent security review remain open.
+
+### G3 P1.4a standalone CLI
+
+Windows x64 CLI-only bundle and bounded, authenticated cold-start coordination
+are implemented for the fixed T1 inventory. See [standalone CLI evidence](../validation/g3-standalone-cli.md).
+The package pins relative compiled artifacts and supports explicit GUI-free init,
+runtime start/status/stop and granted bundle execution. Source CLI/GUI integration
+and operational diagnostics remain P1.4b/P1.5b. Maturity remains prototype;
+signed releases, third-party sandbox and independent security review are pending.
+
+P1.4b uses native main-window/current-user sessions for shared T1 clients.
+T0 confirmation stays native; listings are metadata only and cross-client
+cancellation applies only to the same local trusted user clients. This does
+not broaden third-party execution, signing or sandbox claims. See
+[shared client evidence](../validation/g3-shared-clients.md).
+
+### G3 P1.5b diagnostics and offline recovery
+
+Fixed Windows T1 runs now expose `jobs diagnose <runId>` and a native Desktop
+metadata summary/export. Identity, package/dependency lock, grant epoch, state,
+sequence, time and stable failure code are allowlisted; inputs, outputs, paths,
+credentials and arbitrary exception messages are excluded. Wire client is exactly
+0.3.0; older clients fail before business IO. Protocol major and DB schema stay 1/2.
+
+Offline `runtime storage list/create/restore <backup-id>/retry` reserves the same
+current-user profile and first native pipe before SQLite IO. Restore/retry require
+CLI `--confirm` or actual native confirmation. Logical UUIDs select same-profile
+backups; clients cannot choose backup paths. Pending recovery blocks Host startup.
+Restoration stages SQLite data, revokes grants, disables cold start, interrupts
+unfinished jobs and quarantines original DB/private payloads. Retry continues the
+same journal; it never replays business work. Old result metadata remains queryable
+through diagnosis, while quarantined outputs expire; new runs retain normal results.
+Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
+
+See [diagnostic/recovery evidence](../validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
+security review, actual native consent clicks, assistive technology and other
+platform acceptance are pending; these checks do not authorize production.

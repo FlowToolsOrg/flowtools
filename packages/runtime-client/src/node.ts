@@ -10,7 +10,9 @@ import { decodeResponse, encodeRequest, MAX_FRAME_BYTES } from './codec'
 export async function connectNamedPipe(
   path: string
 ): Promise<RuntimeTransport> {
-  if (!/^\\\\\.\\pipe\\flowtools-validation-[a-f0-9]{64}$/.test(path))
+  if (
+    !/^\\\\\.\\pipe\\flowtools-(?:validation|managed)-[a-f0-9]{64}$/.test(path)
+  )
     throw new RuntimeClientError('INVALID_REQUEST')
   const socket = createConnection(path)
   socket.on('error', () => {})

@@ -5,9 +5,10 @@
 [下一阶段实施设计](./next-milestones.md) 定义 G0–G8 的顺序与验收。
 G2 已新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`
 （无界面运行服务）、`packages/runtime-client`（生成 DTO 的 TS 客户端）和
-`packages/plugin-runner`（受管执行入口）。这些目录已交付 G2 的固定 T1 / 可丢弃 profile 验证基础；G3 授权与用户数据迁移尚未交付。
+`packages/plugin-runner`（受管执行入口）。这些目录已交付 G2 的固定 T1 / 可丢弃 profile 验证基础；G3 T1 broker 与单写者数据基础已交付，持久授权与发行仍待后续子项。
 SDK 已有命令/Manifest；服务依赖和异步 data 契约留待后续。Rust core 当前管理
-验证任务；broker、单写者数据、服务锁及工具 artifact/lease/GC 仍为后续目标。
+验证任务与 P2.3a T1 内存策略 broker；单写者数据；持久 grants、服务锁及工具
+artifact/lease/GC 仍为后续目标。
 专用 Desktop 与 Node 客户端已使用同一验证服务。
 普通受管 T1 runner 不是 T3 sandbox，Web 原型不自动连接本机服务。
 
@@ -342,3 +343,121 @@ Completed workspace tasks follow the automatic feature-branch push and PR
 workflow authorized on 2026-10-05 in [AGENTS.md](../AGENTS.md). Preserve applicable
 quality gates and focused commits, and return the PR link and current status.
 Merging, deployment and repository settings require separate authorization.
+
+## G3 P2.3a capability broker foundation
+
+The validation Runtime now uses a T0-owned T1 policy broker with Host-bound
+caller/package/command identity, separate effects and operation scopes, revocation
+epochs, expiry and per-run call budgets. Runner sessions are opaque, checked before
+launch and during execution, and cleaned on cancellation/completion. Rust-derived
+operation descriptors and rejection codes have cross-language schema fixtures.
+
+Approvals are transient Rust Host APIs, absent from the wire. Pure T1 validation
+continues; sensitive IO and ordinary Runtime startup remain denied. Persistent
+grants, shared user data, GUI/CLI migration and independent distribution remain
+pending G3 subitems. Existing Desktop/Web adapters are not replaced by this step.
+File/tool descriptors are not IO implementations; network origin checks are not
+DNS/redirect enforcement. Maturity stays prototype and SEC risks remain open.
+Evidence: [P2.3a scope and validation](./validation/g3-capability-broker.md).
+
+## G3 P2.6a shared data foundation
+
+Runtime owns one SQLite writer with versioned migrations, backup/recovery,
+plugin namespaces, revision/CAS and atomic transactions. The asynchronous
+`@flowtools/sdk/data` API and Runtime client share that writer; they expose no
+raw SQL, namespace or file path. Legacy Todo sources require explicit validated
+import and remain preserved. Desktop Debug startup no longer deletes its DB;
+corrupt/unsupported data fails closed. Dedicated native validation connects the
+actual WebView and CLI to the same data. Normal user UI integration, durable
+grants/jobs and independent distribution remain subsequent G3 subitems.
+
+Evidence: [P2.6a scope and validation](./validation/g3-shared-data.md).
+
+## G3 P2.4a persistent grants and CLI management
+
+The single Runtime DB persists version/hash-bound grants, revocation epochs,
+bootstrap policy and bounded metadata-only policy audit. CLI-only interactive
+init or explicit policy import uses a Host-bound management role; management
+mode cannot run plugins. Private Windows profiles and inherited credentials
+require the current-user protected ACL. Package changes/rollback never restore
+old grants. Independent distribution and ordinary GUI/CLI execution integration
+remain the next G3 subitems; maturity stays prototype.
+
+Evidence: [P2.4a validation and boundaries](./validation/g3-persistent-grants.md).
+
+### G3 P1.3b durable execution
+
+Windows managed T1 jobs now commit accepted metadata before receipt and preserve
+caller-bound idempotency across restart. Actual Todo uses Host-owned async data
+and broker-checked CAS; raw task payloads use separate DPAPI private storage.
+Interrupted non-idempotent writes require review. [Evidence](validation/g3-durable-jobs.md).
+Independent CLI distribution and GUI integration remain P1.4a/P1.4b; all maturity
+labels stay prototype and independent security review remains pending.
+
+### G3 P1.4a standalone CLI
+
+Windows x64 CLI-only bundle and bounded, authenticated cold-start coordination
+are implemented for the fixed T1 inventory. See [standalone CLI evidence](validation/g3-standalone-cli.md).
+The package pins relative compiled artifacts and supports explicit GUI-free init,
+runtime start/status/stop and granted bundle execution. Source CLI/GUI integration
+and operational diagnostics remain P1.4b/P1.5b. Maturity remains prototype;
+signed releases, third-party sandbox and independent security review are pending.
+
+### G3 P1.4b shared Host clients
+
+Desktop and source/standalone CLI execute through the same authenticated T1 Host.
+`jobs submit/list/status/watch/cancel/lookup` expose durable receipts and bounded
+metadata; listings exclude results. Same-user CLI/Desktop sessions can cancel
+one another's tasks; validation callers and T0 management roles retain their
+separate rejection rules. Lost acknowledgements query the original key, never
+create a new effect. The wire client is now exactly 0.2.0; 0.1.0 clients fail the
+handshake before business IO. Protocol major and SQLite schema are unchanged.
+
+The source Desktop prototype pins the build-owned Runtime binary and verifies
+it before native bootstrap. Its main native window and configured DEV origin
+own sessions; credentials/endpoint/executable selectors never enter JavaScript.
+Release Desktop distribution remains a later platform gate. Initialization,
+grants, cold-start changes and full stop require an actual native confirmation;
+revocation is immediate. The GUI shows active task count before full stop.
+Closing GUI disconnects foreground work while explicitly granted background
+work belongs to Runtime. Native Todo uses async revisions/CAS and no client
+persistent store; original local prototype data remains for deliberate import.
+
+See [shared client evidence](validation/g3-shared-clients.md). All scopes stay
+prototype. Windows native consent and recovery UI fixes have actual
+[acceptance evidence](validation/g3-desktop-acceptance-fixes.md);
+independent security review remains pending.
+
+### G3 P1.5b diagnostics and offline recovery
+
+Fixed Windows T1 runs now expose `jobs diagnose <runId>` and a native Desktop
+metadata summary/export. Identity, package/dependency lock, grant epoch, state,
+sequence, time and stable failure code are allowlisted; inputs, outputs, paths,
+credentials and arbitrary exception messages are excluded. Wire client is exactly
+0.3.0; older clients fail before business IO. Protocol major and DB schema stay 1/2.
+
+Offline `runtime storage list/create/restore <backup-id>/retry` reserves the same
+current-user profile and first native pipe before SQLite IO. Restore/retry require
+CLI `--confirm` or actual native confirmation. Logical UUIDs select same-profile
+backups; clients cannot choose backup paths. Pending recovery blocks Host startup.
+Restoration stages SQLite data, revokes grants, disables cold start, interrupts
+unfinished jobs and quarantines original DB/private payloads. Retry continues the
+same journal; it never replays business work. Old result metadata remains queryable
+through diagnosis, while quarantined outputs expire; new runs retain normal results.
+Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
+
+See [diagnostic/recovery evidence](validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
+security review, full blind-user workflow and other platform acceptance are pending;
+these checks do not authorize production.
+
+`apps/runtime/src/server.rs` owns the bounded stop-receipt barrier;
+`packages/runtime-core/src/runtime.rs` cancels business work before acknowledgement.
+Main and validation Tauri configurations enable window zoom shortcuts.
+[Terminal verification](validation/g3-terminal-validation.md) records source,
+regression, fresh Native harness and actual Windows keyboard/native consent,
+200% zoom/reflow and NVDA Speech Viewer evidence. Independent review remains
+pending; human listening, a full blind-user workflow and other platforms are not
+certified.
+
+`apps/ui-test/scripts/loopback-cdp.ts` validates the Native harness's observed
+IPv4/IPv6 listeners and responding endpoint; it does not configure production CDP.

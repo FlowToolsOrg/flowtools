@@ -10,8 +10,8 @@ import type { PluginMeta } from '@flowtools/sdk/types'
 import type { z as Zod } from 'zod'
 
 import { lstatSync, realpathSync, readFileSync } from 'node:fs'
-import { join, relative, resolve } from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { dirname, join, relative, resolve } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 import { parsePluginManifest, equalJsonValues } from '@flowtools/sdk/manifest'
 import { verifyManifestPackage } from '@flowtools/sdk/manifest/package'
@@ -20,7 +20,13 @@ import { z } from 'zod'
 
 import { builtInCLIManifests } from './builtin-manifests'
 
-const PLUGINS_DIR = resolve(import.meta.dir, '..', '..', '..', 'plugins')
+const PLUGINS_DIR = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '..',
+  '..',
+  '..',
+  'plugins'
+)
 const DIST_DIR = join(PLUGINS_DIR, 'dist')
 const CATALOG_DIR = join(PLUGINS_DIR, '.generated')
 const inventory = new Map<string, CLIPluginInfo>(

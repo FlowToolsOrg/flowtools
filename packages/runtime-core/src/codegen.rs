@@ -1,4 +1,5 @@
 use crate::{
+    broker::{CapabilityOperation, ReadMethod, SendMethod},
     catalog::{digest, BuiltinCatalog},
     protocol::*,
 };
@@ -29,10 +30,13 @@ fn manifest_fixture(manifest: &Value) -> Value {
 
 pub fn artifacts() -> Result<Vec<(&'static str, String)>, Box<dyn std::error::Error>> {
     let types = specta::Types::default()
+        .register::<CapabilityOperation>()
         .register::<Request>()
-        .register::<Response>();
+        .register::<Response>()
+        .register::<StorageAction>()
+        .register::<StorageReport>();
     let bindings = format!("// Generated from Rust. Do not edit.\nexport const PROTOCOL_MAJOR = {PROTOCOL_MAJOR} as const\nexport const CLIENT_VERSION = '{CLIENT_VERSION}' as const\n{}", specta_typescript::Typescript::default().export(&types, specta_serde::Format)?);
-    let schemas = json!({ "request": schemars::schema_for!(Request), "response": schemars::schema_for!(Response) });
+    let schemas = json!({ "request": schemars::schema_for!(Request), "response": schemars::schema_for!(Response), "capabilityOperation": schemars::schema_for!(CapabilityOperation), "storageAction": schemars::schema_for!(StorageAction), "storageReport": schemars::schema_for!(StorageReport) });
     let request = Request {
         version: PROTOCOL_MAJOR,
         request_id: "fixture-request".into(),
@@ -61,8 +65,41 @@ pub fn artifacts() -> Result<Vec<(&'static str, String)>, Box<dyn std::error::Er
             json!({"digest":digest(&fixture),"manifest":fixture})
         })
         .collect();
-    let fixtures =
-        json!({"formatVersion":1,"request":request,"responses":errors,"manifests":manifests});
+    let operations = vec![
+        CapabilityOperation::FileRead {
+            handle: "host-handle".into(),
+        },
+        CapabilityOperation::FileCreate {
+            handle: "host-handle".into(),
+        },
+        CapabilityOperation::FileReplace {
+            handle: "host-handle".into(),
+        },
+        CapabilityOperation::FileDelete {
+            handle: "host-handle".into(),
+        },
+        CapabilityOperation::NetworkRead {
+            origin: "https://example.invalid:443".into(),
+            method: ReadMethod::HEAD,
+        },
+        CapabilityOperation::NetworkSend {
+            origin: "https://example.invalid:443".into(),
+            method: SendMethod::POST,
+        },
+        CapabilityOperation::DataRead {
+            key: "todos".into(),
+        },
+        CapabilityOperation::DataWrite {
+            key: "todos".into(),
+        },
+        CapabilityOperation::ClipboardRead,
+        CapabilityOperation::ClipboardWrite,
+        CapabilityOperation::ToolExecute {
+            lock: "host-lock".into(),
+            action: "probe".into(),
+        },
+    ];
+    let fixtures = json!({"formatVersion":1,"request":request,"responses":errors,"manifests":manifests,"operations":operations});
     Ok(vec![
         ("bindings.ts", bindings),
         (
@@ -112,6 +149,12 @@ mod tests {
             assert!(jsonschema::is_valid(&schemas["response"], value));
         }
         let catalog = BuiltinCatalog::embedded();
+        assert_eq!(fixtures["operations"].as_array().unwrap().len(), 11);
+        for value in fixtures["operations"].as_array().unwrap() {
+            let operation: CapabilityOperation = serde_json::from_value(value.clone()).unwrap();
+            assert_eq!(&serde_json::to_value(operation).unwrap(), value);
+            assert!(jsonschema::is_valid(&schemas["capabilityOperation"], value));
+        }
         assert_eq!(fixtures["manifests"].as_array().unwrap().len(), 12);
         for fixture in fixtures["manifests"].as_array().unwrap() {
             let (built, _) = catalog

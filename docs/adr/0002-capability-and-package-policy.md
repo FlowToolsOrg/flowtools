@@ -127,6 +127,11 @@ query/token 的 URL；限制体积、保留期与导出范围。授权/撤销/�
 
 ## 当前实现
 
+- P2.3a 已新增验证 Runtime 的 T1 内存策略 broker，Host 绑定命令身份并逐项
+  检查声明、grant、scope、epoch 和预算；授权管理与敏感 IO 尚未开放。
+  [验收与拒绝证据](../validation/g3-capability-broker.md)。此基础不改变本文
+  production 默认拒绝策略；持久授权与数据仍等待 P2.6a/P2.4a。
+
 - 没有可用于 production 的包签名、Host 范围准入、持久 grant 或 Rust broker。
 - Desktop FS adapter 透传路径给官方插件；仍受其 permission/scope 限制，
   但 SDK 未绑定 per-plugin scope，不能宣称已能读任意 OS 文件或已隔离。
@@ -155,3 +160,56 @@ query/token 的 URL；限制体积、保留期与导出范围。授权/撤销/�
   与崩溃租约恢复均有 fixture。
 
 这些属于待实现的验收目标，不由 `docs:check` 或本 ADR 的通过代替。
+
+2026-10-05 P2.6a update: Runtime single-writer SQLite, CAS/transactions,
+N-1 migration/rollback, explicit source-preserving import and backup recovery
+are covered in [shared data acceptance](../validation/g3-shared-data.md). Ordinary Desktop Debug reset
+is removed and corrupt legacy DB startup preserves the original. Historical
+G2 reset evidence above remains accurate for that incident; no lost user data
+recovery is claimed. Durable grants/jobs and third-party boundaries remain open.
+Security Reviewer/date/conclusion: pending independent review.
+
+2026-10-05 P2.4a: [persistent policy evidence](../validation/g3-persistent-grants.md) adds Host-bound management, current-user private profile ACL, atomic grant import and durable epoch/audit. T1 only; same-account compromise, isolation, signing and independent Security Reviewer/date/conclusion remain pending.
+
+2026-10-05 P1.3b: [durable job evidence](../validation/g3-durable-jobs.md)
+binds receipts and replay to Host identity, immutable action/package lock and
+durable grant epochs. Private DPAPI payloads are separate from metadata. Running
+non-idempotent tasks interrupt after crash. This T1 lifetime guard is not a
+third-party sandbox; SEC risks and independent security review remain open.
+
+### G3 P1.4a standalone CLI
+
+Windows x64 CLI-only bundle and bounded, authenticated cold-start coordination
+are implemented for the fixed T1 inventory. See [standalone CLI evidence](../validation/g3-standalone-cli.md).
+The package pins relative compiled artifacts and supports explicit GUI-free init,
+runtime start/status/stop and granted bundle execution. Source CLI/GUI integration
+and operational diagnostics remain P1.4b/P1.5b. Maturity remains prototype;
+signed releases, third-party sandbox and independent security review are pending.
+
+P1.4b uses native main-window/current-user sessions for shared T1 clients.
+T0 confirmation stays native; listings are metadata only and cross-client
+cancellation applies only to the same local trusted user clients. This does
+not broaden third-party execution, signing or sandbox claims. See
+[shared client evidence](../validation/g3-shared-clients.md).
+
+### G3 P1.5b diagnostics and offline recovery
+
+Fixed Windows T1 runs now expose `jobs diagnose <runId>` and a native Desktop
+metadata summary/export. Identity, package/dependency lock, grant epoch, state,
+sequence, time and stable failure code are allowlisted; inputs, outputs, paths,
+credentials and arbitrary exception messages are excluded. Wire client is exactly
+0.3.0; older clients fail before business IO. Protocol major and DB schema stay 1/2.
+
+Offline `runtime storage list/create/restore <backup-id>/retry` reserves the same
+current-user profile and first native pipe before SQLite IO. Restore/retry require
+CLI `--confirm` or actual native confirmation. Logical UUIDs select same-profile
+backups; clients cannot choose backup paths. Pending recovery blocks Host startup.
+Restoration stages SQLite data, revokes grants, disables cold start, interrupts
+unfinished jobs and quarantines original DB/private payloads. Retry continues the
+same journal; it never replays business work. Old result metadata remains queryable
+through diagnosis, while quarantined outputs expire; new runs retain normal results.
+Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
+
+See [diagnostic/recovery evidence](../validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
+security review, actual native consent clicks, assistive technology and other
+platform acceptance are pending; these checks do not authorize production.

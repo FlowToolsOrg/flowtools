@@ -1,22 +1,41 @@
 import { expect, test } from 'bun:test'
 
-import { encodeRequest } from '../src/codec'
+import {
+  encodeRequest,
+  decodeResponse,
+  encodeStorageAction,
+  decodeStorageReport,
+} from '../src/codec'
 
-test('actual Node clients and native Host share real T1 tasks and cancellation', async () => {
-  // Bun's Windows net.Socket missed a response after switching pipes. Exercise the
-  // supported Node transport in a real Node process, with every assertion intact.
-  const fixture = Bun.spawn(['node', import.meta.dir + '/native-fixture.mjs'], {
-    stdout: 'pipe',
-    stderr: 'pipe',
-  })
-  const [stdout, stderr, code] = await Promise.all([
-    new Response(fixture.stdout).text(),
-    new Response(fixture.stderr).text(),
-    fixture.exited,
-  ])
-  expect({ code, stderr }).toEqual({ code: 0, stderr: '' })
-  expect(stdout.trim()).toBe('Native fixture passed')
-}, 30000)
+test('storage schema exposes logical backup identities and rejects paths and forged diagnostic payloads', () => {
+  expect(() =>
+    encodeStorageAction({
+      operation: 'restore',
+      parameters: { backupId: 'one', path: 'C:/private' },
+    })
+  ).toThrow('INVALID_REQUEST')
+  expect(() =>
+    encodeStorageAction({ operation: 'run', parameters: { argv: [] } })
+  ).toThrow('INVALID_REQUEST')
+  expect(() =>
+    decodeStorageReport({
+      formatVersion: 1,
+      backups: [],
+      recovery: null,
+      token: 'private',
+    })
+  ).toThrow('INVALID_RESPONSE')
+  expect(() =>
+    decodeResponse({
+      version: 1,
+      requestId: 'one',
+      outcome: {
+        type: 'diagnostic',
+        data: { runId: 'one', input: 'private', output: 'private' },
+      },
+    })
+  ).toThrow('INVALID_RESPONSE')
+})
 
 test('wire schema rejects identity injection and non-finite JSON before transport', () => {
   const request = {

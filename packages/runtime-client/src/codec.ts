@@ -1,4 +1,9 @@
-import type { Request, Response } from './bindings'
+import type {
+  Request,
+  Response,
+  StorageAction,
+  StorageReport,
+} from './bindings'
 
 import { isJsonValue } from '@flowtools/sdk/manifest'
 import Ajv2020 from 'ajv/dist/2020'
@@ -19,6 +24,24 @@ ajv.addFormat('uint32', {
 })
 const validateRequest = ajv.compile<Request>(schemas.request)
 const validateResponse = ajv.compile<Response>(schemas.response)
+const validateStorageAction = ajv.compile<StorageAction>(schemas.storageAction)
+const validateStorageReport = ajv.compile<StorageReport>(schemas.storageReport)
+
+export function encodeStorageAction(value: unknown): string {
+  if (!isJsonValue(value) || !validateStorageAction(value))
+    throw new Error('INVALID_REQUEST')
+  return JSON.stringify(value)
+}
+export function decodeStorageReport(value: unknown): StorageReport {
+  if (
+    !isJsonValue(value) ||
+    !validateStorageReport(value) ||
+    value.formatVersion !== 1 ||
+    value.backups.length > 64
+  )
+    throw new Error('INVALID_RESPONSE')
+  return value
+}
 
 export function encodeRequest(request: unknown): string {
   if (!isJsonValue(request) || !validateRequest(request))

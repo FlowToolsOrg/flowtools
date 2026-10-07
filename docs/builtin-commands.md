@@ -12,7 +12,7 @@ See [CLI contract](./cli-contract-v1.md) for JSON, flags, batch and stable error
 
 Version: 0.1.0; maturity: prototype.
 Targets: windows/x64, web/wasm32.
-Headless: true; cold start: false; interaction: none.
+Headless: true; cold start: true; interaction: none.
 Effects: none.
 Permission requests: [].
 Runtime validation: {"input":"required","output":"required"}.
@@ -121,7 +121,7 @@ HEX/RGB/HSL 颜色格式互转
 
 Version: 0.1.0; maturity: prototype.
 Targets: windows/x64, web/wasm32.
-Headless: true; cold start: false; interaction: none.
+Headless: true; cold start: true; interaction: none.
 Effects: none.
 Permission requests: [].
 Runtime validation: {"input":"required","output":"required"}.
@@ -228,7 +228,7 @@ Output schema:
 
 Version: 0.1.0; maturity: prototype.
 Targets: windows/x64, web/wasm32.
-Headless: true; cold start: false; interaction: none.
+Headless: true; cold start: true; interaction: none.
 Effects: none.
 Permission requests: [].
 Runtime validation: {"input":"required","output":"required"}.
@@ -339,7 +339,7 @@ Output schema:
 
 Version: 0.1.0; maturity: prototype.
 Targets: windows/x64, web/wasm32.
-Headless: true; cold start: false; interaction: none.
+Headless: true; cold start: true; interaction: none.
 Effects: none.
 Permission requests: [].
 Runtime validation: {"input":"required","output":"required"}.
@@ -445,7 +445,7 @@ JSON 格式化、压缩、验证工具
 
 Version: 0.1.0; maturity: prototype.
 Targets: windows/x64, web/wasm32.
-Headless: true; cold start: false; interaction: none.
+Headless: true; cold start: true; interaction: none.
 Effects: none.
 Permission requests: [].
 Runtime validation: {"input":"required","output":"required"}.
@@ -557,7 +557,7 @@ Output schema:
 
 Version: 0.1.0; maturity: prototype.
 Targets: windows/x64, web/wasm32.
-Headless: true; cold start: false; interaction: none.
+Headless: true; cold start: true; interaction: none.
 Effects: none.
 Permission requests: [].
 Runtime validation: {"input":"required","output":"required"}.
@@ -666,7 +666,7 @@ Output schema:
 
 Version: 0.1.0; maturity: prototype.
 Targets: windows/x64, web/wasm32.
-Headless: true; cold start: false; interaction: none.
+Headless: true; cold start: true; interaction: none.
 Effects: none.
 Permission requests: [].
 Runtime validation: {"input":"required","output":"required"}.
@@ -803,7 +803,7 @@ Output schema:
 
 Version: 0.1.0; maturity: prototype.
 Targets: windows/x64, web/wasm32.
-Headless: true; cold start: false; interaction: none.
+Headless: true; cold start: true; interaction: none.
 Effects: none.
 Permission requests: [].
 Runtime validation: {"input":"required","output":"required"}.
@@ -923,7 +923,7 @@ Unix 时间戳与日期时间互转
 
 Version: 0.1.0; maturity: prototype.
 Targets: windows/x64, web/wasm32.
-Headless: true; cold start: false; interaction: none.
+Headless: true; cold start: true; interaction: none.
 Effects: none.
 Permission requests: [].
 Runtime validation: {"input":"required","output":"required"}.
@@ -1048,7 +1048,7 @@ Output schema:
 
 Version: 0.0.1; maturity: prototype.
 Targets: windows/x64, web/wasm32.
-Headless: true; cold start: false; interaction: none.
+Headless: true; cold start: true; interaction: none.
 Effects: data-read, data-write.
 Permission requests: [{"capability":"storage","operations":["get","set"],"scopes":["plugin-data"]}].
 Runtime validation: {"input":"required","output":"required"}.
@@ -1178,7 +1178,7 @@ Output schema:
 
 Version: 0.1.0; maturity: prototype.
 Targets: windows/x64, web/wasm32.
-Headless: true; cold start: false; interaction: none.
+Headless: true; cold start: true; interaction: none.
 Effects: none.
 Permission requests: [].
 Runtime validation: {"input":"required","output":"required"}.

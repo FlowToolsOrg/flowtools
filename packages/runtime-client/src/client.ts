@@ -7,6 +7,7 @@ import type {
   Outcome,
   Request,
   Response,
+  RunDiagnostic,
   SessionProof,
   SubmitJob,
 } from './bindings'
@@ -100,15 +101,31 @@ export class RuntimeClient {
         call.method === 'jobs.submit'
       )
     if (response.outcome.type === 'error')
-      throw new RuntimeClientError(response.outcome.data.code)
+      throw new RuntimeClientError(
+        response.outcome.data.code,
+        response.outcome.data.code === 'ACCEPTANCE_UNKNOWN'
+      )
     const expected = {
       'session.open': 'session',
       'runtime.status': 'status',
       'plugins.list': 'plugins',
       'jobs.submit': 'receipt',
+      'jobs.lookup': 'receipt',
       'jobs.status': 'job',
+      'jobs.diagnose': 'diagnostic',
+      'jobs.list': 'jobs',
       'jobs.cancel': 'job',
       'jobs.events': 'events',
+      'data.read': 'data',
+      'data.write': 'data',
+      'data.transaction': 'data-batch',
+      'data.import-legacy': 'data',
+      'permissions.list': 'permissions',
+      'permissions.grant': 'permissions',
+      'permissions.revoke': 'permissions',
+      'policy.set': 'policy',
+      'policy.import': 'permissions',
+      'runtime.stop': 'stopping',
     } satisfies Record<Call['method'], Outcome['type']>
     if (response.outcome.type !== expected[call.method])
       throw new RuntimeClientError(
@@ -136,6 +153,31 @@ export class RuntimeClient {
       payload: { runId },
     })
     if (outcome.type !== 'job' || outcome.data.runId !== runId)
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    return outcome.data
+  }
+
+  async jobs(): Promise<JobSnapshot[]> {
+    const outcome = await this.call({ method: 'jobs.list' })
+    if (
+      outcome.type !== 'jobs' ||
+      outcome.data.length > 128 ||
+      outcome.data.some(job => job.result !== null)
+    )
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    return outcome.data
+  }
+
+  async diagnose(runId: string): Promise<RunDiagnostic> {
+    const outcome = await this.call({
+      method: 'jobs.diagnose',
+      payload: { runId },
+    })
+    if (
+      outcome.type !== 'diagnostic' ||
+      outcome.data.runId !== runId ||
+      outcome.data.formatVersion !== 1
+    )
       throw new RuntimeClientError('INVALID_RESPONSE')
     return outcome.data
   }

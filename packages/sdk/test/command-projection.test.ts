@@ -2,6 +2,7 @@ import type { PluginManifestEntry } from '../src/registry/types'
 import type { FlowToolPlugin } from '../src/types/plugin'
 
 import { expect, test } from 'bun:test'
+import { fileURLToPath } from 'node:url'
 
 import { projectPluginCommands } from '../src/registry/command-projection'
 import { CommandRegistry } from '../src/registry/command-registry'
@@ -127,56 +128,20 @@ test('dependency refusal does not activate or publish commands', async () => {
 })
 
 test('reload and uninstall clean timers, subscriptions, views and real child process', async () => {
-  const { registry, loader, manifest, plugin } = fixture()
-  const target = new EventTarget()
-  let listeners = 0
-  let timers = 0
-  let views = 0
-  plugin.lifecycle = {
-    onLoad: scope => {
-      const timer = setInterval(() => {}, 1000)
-      timers++
-      scope.add(() => {
-        clearInterval(timer)
-        timers--
-      })
-    },
-    onActivate: scope => {
-      const listener = () => {
-        listeners++
-      }
-      target.addEventListener('fixture', listener)
-      scope.add(() => target.removeEventListener('fixture', listener))
-    },
-  }
-  await loader.enable('fixture')
-  expect(registry.isRunning('fixture')).toBe(false)
+  // Real subprocess lifecycle runs in Node: Bun's Windows termination notification
+  // can exceed the normal unit deadline even with an exit listener and handshake.
   const child = Bun.spawn(
-    [process.execPath, '-e', 'setInterval(() => {}, 1000)'],
-    { stdout: 'ignore', stderr: 'ignore' }
+    ['node', fileURLToPath(new URL('./resource-fixture.mjs', import.meta.url))],
+    { stdout: 'pipe', stderr: 'pipe' }
   )
-  registry.resourceScope('fixture', 'runner').add(async () => {
-    child.kill()
-    await child.exited
-  })
-  views++
-  registry.resourceScope('fixture', 'view').add(() => {
-    views--
-  })
-  expect(registry.isRunning('fixture')).toBe(true)
-  await loader.reload('fixture')
-  expect(await child.exited).toBeNumber()
-  expect(registry.isRunning('fixture')).toBe(false)
-  expect(views).toBe(0)
-  expect(timers).toBe(1)
-  target.dispatchEvent(new Event('fixture'))
-  expect(listeners).toBe(1)
-  await loader.update('fixture', manifest)
-  await loader.uninstall('fixture')
-  target.dispatchEvent(new Event('fixture'))
-  expect(listeners).toBe(1)
-  expect(timers).toBe(0)
-})
+  const [stdout, stderr, code] = await Promise.all([
+    new Response(child.stdout).text(),
+    new Response(child.stderr).text(),
+    child.exited,
+  ])
+  expect({ code, stderr }).toEqual({ code: 0, stderr: '' })
+  expect(stdout.trim()).toBe('Resource cleanup fixture passed')
+}, 30_000)
 
 test('resource cleanup failure remains owned and blocks uninstall until recovered', async () => {
   const { registry, loader } = fixture()

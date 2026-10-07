@@ -346,7 +346,7 @@ Host runtime 用 `pickCapability(...)` 做权限裁剪：
 
 新增或修改插件元数据时，前端通过 Tauri Specta 生成的 binding 调用后端命令；
 后端返回 `PluginDto`，再由 desktop UI 同步到本地 registry/store。当前 schema
-变更依赖 dev 模式重置数据库；发布环境需要单独补充版本化 migration。
+Debug 启动保留数据库；旧 Desktop 模型变更仍需显式迁移。Runtime schema 使用版本化事务 migration。
 
 ## 7. Plugin Execution Flow
 
@@ -696,3 +696,117 @@ Architecture changes follow the automatic feature-branch push and PR workflow
 authorized on 2026-10-05 in [AGENTS.md](./AGENTS.md). Keep evidence and pending
 security review visible in the PR; publication of a PR does not advance maturity
 or authorize merging, deployment or repository settings changes.
+
+## G3 P2.3a capability broker foundation
+
+The validation Runtime now uses a T0-owned T1 policy broker with Host-bound
+caller/package/command identity, separate effects and operation scopes, revocation
+epochs, expiry and per-run call budgets. Runner sessions are opaque, checked before
+launch and during execution, and cleaned on cancellation/completion. Rust-derived
+operation descriptors and rejection codes have cross-language schema fixtures.
+
+Approvals are transient Rust Host APIs, absent from the wire. Pure T1 validation
+continues; sensitive IO and ordinary Runtime startup remain denied. Persistent
+grants, shared user data, GUI/CLI migration and independent distribution remain
+pending G3 subitems. Existing Desktop/Web adapters are not replaced by this step.
+File/tool descriptors are not IO implementations; network origin checks are not
+DNS/redirect enforcement. Maturity stays prototype and SEC risks remain open.
+Evidence: [P2.3a scope and validation](./docs/validation/g3-capability-broker.md).
+
+## G3 P2.6a shared data foundation
+
+Runtime owns one SQLite writer with versioned migrations, backup/recovery,
+plugin namespaces, revision/CAS and atomic transactions. The asynchronous
+`@flowtools/sdk/data` API and Runtime client share that writer; they expose no
+raw SQL, namespace or file path. Legacy Todo sources require explicit validated
+import and remain preserved. Desktop Debug startup no longer deletes its DB;
+corrupt/unsupported data fails closed. Dedicated native validation connects the
+actual WebView and CLI to the same data. Normal user UI integration, durable
+grants/jobs and independent distribution remain subsequent G3 subitems.
+
+Evidence: [P2.6a scope and validation](./docs/validation/g3-shared-data.md).
+
+## G3 P2.4a persistent grants and CLI management
+
+The single Runtime DB persists version/hash-bound grants, revocation epochs,
+bootstrap policy and bounded metadata-only policy audit. CLI-only interactive
+init or explicit policy import uses a Host-bound management role; management
+mode cannot run plugins. Private Windows profiles and inherited credentials
+require the current-user protected ACL. Package changes/rollback never restore
+old grants. Independent distribution and ordinary GUI/CLI execution integration
+remain the next G3 subitems; maturity stays prototype.
+
+Evidence: [P2.4a validation and boundaries](./docs/validation/g3-persistent-grants.md).
+
+### G3 P1.3b durable execution
+
+Windows managed T1 jobs now commit accepted metadata before receipt and preserve
+caller-bound idempotency across restart. Actual Todo uses Host-owned async data
+and broker-checked CAS; raw task payloads use separate DPAPI private storage.
+Interrupted non-idempotent writes require review. [Evidence](docs/validation/g3-durable-jobs.md).
+Independent CLI distribution and GUI integration remain P1.4a/P1.4b; all maturity
+labels stay prototype and independent security review remains pending.
+
+### G3 P1.4a standalone CLI
+
+Windows x64 CLI-only bundle and bounded, authenticated cold-start coordination
+are implemented for the fixed T1 inventory. See [standalone CLI evidence](docs/validation/g3-standalone-cli.md).
+The package pins relative compiled artifacts and supports explicit GUI-free init,
+runtime start/status/stop and granted bundle execution. Source CLI/GUI integration
+and operational diagnostics remain P1.4b/P1.5b. Maturity remains prototype;
+signed releases, third-party sandbox and independent security review are pending.
+
+### G3 P1.4b shared Host clients
+
+Desktop and source/standalone CLI execute through the same authenticated T1 Host.
+`jobs submit/list/status/watch/cancel/lookup` expose durable receipts and bounded
+metadata; listings exclude results. Same-user CLI/Desktop sessions can cancel
+one another's tasks; validation callers and T0 management roles retain their
+separate rejection rules. Lost acknowledgements query the original key, never
+create a new effect. The wire client is now exactly 0.2.0; 0.1.0 clients fail the
+handshake before business IO. Protocol major and SQLite schema are unchanged.
+
+The source Desktop prototype pins the build-owned Runtime binary and verifies
+it before native bootstrap. Its main native window and configured DEV origin
+own sessions; credentials/endpoint/executable selectors never enter JavaScript.
+Release Desktop distribution remains a later platform gate. Initialization,
+grants, cold-start changes and full stop require an actual native confirmation;
+revocation is immediate. The GUI shows active task count before full stop.
+Closing GUI disconnects foreground work while explicitly granted background
+work belongs to Runtime. Native Todo uses async revisions/CAS and no client
+persistent store; original local prototype data remains for deliberate import.
+
+See [shared client evidence](docs/validation/g3-shared-clients.md). All scopes stay
+prototype. Windows native consent and recovery UI fixes have actual
+[acceptance evidence](docs/validation/g3-desktop-acceptance-fixes.md);
+independent security review remains pending.
+
+### G3 P1.5b diagnostics and offline recovery
+
+Fixed Windows T1 runs now expose `jobs diagnose <runId>` and a native Desktop
+metadata summary/export. Identity, package/dependency lock, grant epoch, state,
+sequence, time and stable failure code are allowlisted; inputs, outputs, paths,
+credentials and arbitrary exception messages are excluded. Wire client is exactly
+0.3.0; older clients fail before business IO. Protocol major and DB schema stay 1/2.
+
+Offline `runtime storage list/create/restore <backup-id>/retry` reserves the same
+current-user profile and first native pipe before SQLite IO. Restore/retry require
+CLI `--confirm` or actual native confirmation. Logical UUIDs select same-profile
+backups; clients cannot choose backup paths. Pending recovery blocks Host startup.
+Restoration stages SQLite data, revokes grants, disables cold start, interrupts
+unfinished jobs and quarantines original DB/private payloads. Retry continues the
+same journal; it never replays business work. Old result metadata remains queryable
+through diagnosis, while quarantined outputs expire; new runs retain normal results.
+Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
+
+See [diagnostic/recovery evidence](docs/validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
+security review, full blind-user workflow and other platform acceptance are pending;
+these checks do not authorize production.
+
+Authorized stop cancels queued/running work before the connection waits to deliver
+its stopping receipt. A bounded receipt barrier precedes process drain. Desktop
+window zoom shortcuts are enabled, including isolated validation windows.
+[Terminal verification](docs/validation/g3-terminal-validation.md) records the
+fresh Native harness, actual Windows keyboard/native consent, 200% zoom/reflow and
+NVDA Speech Viewer output. Independent security approval remains pending; human
+listening, a full blind-user workflow and other platforms are not certified.

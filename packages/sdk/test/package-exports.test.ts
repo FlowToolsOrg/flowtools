@@ -11,12 +11,13 @@ interface PackageManifest {
 }
 
 const expectedSymbols: Record<string, readonly string[]> = {
+  './data': ['inspectLegacyTodos', 'hydratePluginData'],
   './manifest': [
     'pluginManifestSchema',
     'executeManifestCommand',
     'exportOperationSchema',
   ],
-  './manifest/package': ['verifyManifestPackage'],
+  './manifest/package': ['verifyManifestPackage', 'manifestPackageDigest'],
   './development': ['DevelopmentPluginFileLoader', 'setupImportMap'],
   './compat/catalog': ['htmlPluginCatalogSchema', 'portablePluginPathSchema'],
   '.': ['definePlugin', 'result'],
@@ -43,6 +44,7 @@ describe('package exports', () => {
     for (const path of [
       'index.js',
       'execution.js',
+      'data.js',
       'compat/catalog.js',
       'manifest.js',
       'manifest/package.js',

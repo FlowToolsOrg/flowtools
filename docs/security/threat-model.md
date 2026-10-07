@@ -24,6 +24,44 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 
 ## 风险台账
 
+2026-10-05 P2.3a 新增 [T1 policy broker](../../packages/runtime-core/src/broker.rs)
+及 [Runtime 绑定/拒绝回归](../../packages/runtime-core/src/runtime.rs)，并由
+[实际 named-pipe fixture](../../packages/runtime-client/test/native-fixture.mjs)
+验证无授权时不接收敏感任务。Host 内存授权绑定 caller/publisher/版本/digest/
+command；scope、epoch、过期、预算拒绝不会进入 adapter，重新批准不会恢复旧
+session。Rust/TS operation schema 拒绝 raw path/SQL/argv/namespace/身份注入。
+这是 SEC-003/004/005/006/007/009/010 的基础证据，以上风险继续 open。
+没有持久 grant、真实敏感 IO、文件路径竞争/DNS/redirect 防护、用户数据迁移
+或第三方 sandbox；既有 Web/Desktop adapters 与 CLI 执行路径仍待后续迁移。
+完整范围与独立安全审阅缺口见 [P2.3a 验收](../validation/g3-capability-broker.md)。
+
+2026-10-06 G3 Desktop 修复补充了
+[原生授权与恢复实窗证据](../validation/g3-desktop-acceptance-fixes.md)。
+[内部确认格式化与拒绝测试](../../apps/desktop/src-tauri/src/managed_approval.rs)
+覆盖完整 scope/调用方、分页取消前统一确认、控制字符和非法操作拒绝；
+[真实冷启动回归](../../apps/desktop/src-tauri/src/managed_runtime.rs)
+保持未授权拒绝，并消除成功 helper 等待后台 stderr EOF 的假超时。
+[恢复 UI 回归](../../apps/ui-test/src/test/runtime/managed-runtime-panel.test.tsx)
+验证真实策略重读、失败清除旧授权/回执、取消不改变原状态和无自动写入重试。
+既有 origin/identity/allowlist 与持久策略边界不变，不新增原生入口或第三方执行。
+SEC-002/003/004/006/009/010/013/015 均继续 open；独立安全审阅仍待维护者完成。
+
+2026-10-07 [末端工程自查](../validation/g3-terminal-validation.md) 复核身份、scope、
+epoch、效果提交、诊断隐私及恢复边界，并记录了
+[停止回执竞态修复](../validation/g3-runtime-stop-receipt.md)：接受 T0 stop 即取消
+排队/活跃任务，传输在有界回执屏障之后退出；失联不伪装成功，Todo 无迟到写入。
+新增确定性拒绝/回执测试与真实 Native harness 通过仅补充工程证据。
+Reviewer 为 Codex 自查；实际独立 Reviewer、日期与批准结论仍 pending。
+窗口 zoomHotkeysEnabled 不新增 native command、权限、CSP 或数据/网络 scope。
+上述 SEC 风险与 ADR-0001/0002 仍 open，maturity 不变。
+
+同轮 Native harness 的 IPv6-only 回环失败增加了
+[监听地址/端点拒绝回归](../../apps/desktop/test/loopback-cdp.test.ts)：两种 literal
+loopback 均可用，但 public/wildcard/mixed listener、未监听的端点、凭据或额外
+路径均拒绝；禁止 readiness 重定向，保留 25 秒预算及仅子进程调试配置。
+取消持久化失败时的检查仅证明本进程不再提交效果；旧 durable 状态须在重启前
+核对，不伪造 durable cancelled 或崩溃/断电保证。
+
 ### SEC-001 插件包与发布者伪造
 
 - 入口：市场/目录/外部包到安装、加载；高危，open（Tampering/Spoofing）
@@ -392,3 +430,64 @@ Explicit validation rejects the default identifier before Builder/plugins/DB IO.
 This repairs a reproduced harness identity bug: Cargo tests rebuilt the default
 binary, and a literal-ID scan allowed its 23:33 Debug DB reset. Data preservation
 was declined; no pre-reset recovery is claimed. Ordinary Debug reset remains open.
+
+2026-10-05 P2.6a update: Runtime single-writer SQLite, CAS/transactions,
+N-1 migration/rollback, explicit source-preserving import and backup recovery
+are covered in [shared data acceptance](../validation/g3-shared-data.md). Ordinary Desktop Debug reset
+is removed and corrupt legacy DB startup preserves the original. Historical
+G2 reset evidence above remains accurate for that incident; no lost user data
+recovery is claimed. Durable grants/jobs and third-party boundaries remain open.
+Security Reviewer/date/conclusion: pending independent review.
+
+2026-10-05 P2.4a: [persistent policy evidence](../validation/g3-persistent-grants.md) adds Host-bound management, current-user private profile ACL, atomic grant import and durable epoch/audit. T1 only; same-account compromise, isolation, signing and independent Security Reviewer/date/conclusion remain pending.
+
+2026-10-05 P1.3b: [durable job evidence](../validation/g3-durable-jobs.md)
+binds receipts and replay to Host identity, immutable action/package lock and
+durable grant epochs. Private DPAPI payloads are separate from metadata. Running
+non-idempotent tasks interrupt after crash. This T1 lifetime guard is not a
+third-party sandbox; SEC risks and independent security review remain open.
+
+### G3 P1.4a standalone CLI
+
+Windows x64 CLI-only bundle and bounded, authenticated cold-start coordination
+are implemented for the fixed T1 inventory. See [standalone CLI evidence](../validation/g3-standalone-cli.md).
+The package pins relative compiled artifacts and supports explicit GUI-free init,
+runtime start/status/stop and granted bundle execution. Source CLI/GUI integration
+and operational diagnostics remain P1.4b/P1.5b. Maturity remains prototype;
+signed releases, third-party sandbox and independent security review are pending.
+
+P1.4b source and rejection evidence for SEC-002/003/004/006/009/010/013/015:
+[shared client evidence](../validation/g3-shared-clients.md). Native-only
+credentials, fixed artifact pins, configured-origin checks, native T0 approval,
+metadata-only listings and revision conflicts are additional T1 controls.
+Shared-realm T1 UI, same-user tampering, unverified release distribution and
+independent reviewer approval remain open; no threat is closed by these tests.
+
+P1.4b Native validation metadata directory selection is guarded in
+apps/desktop/src-tauri/src/db/init.rs by the compiled fixture identity, Debug,
+explicit validation mode and safe absolute fixture root. Its regression refuses
+production identity/missing mode/relative paths. This closes the test-profile
+reuse defect caused by Windows Known Folder API ignoring APPDATA overrides;
+SEC-015 and the other G3 risks remain open pending independent review.
+
+### G3 P1.5b diagnostics and offline recovery
+
+Fixed Windows T1 runs now expose `jobs diagnose <runId>` and a native Desktop
+metadata summary/export. Identity, package/dependency lock, grant epoch, state,
+sequence, time and stable failure code are allowlisted; inputs, outputs, paths,
+credentials and arbitrary exception messages are excluded. Wire client is exactly
+0.3.0; older clients fail before business IO. Protocol major and DB schema stay 1/2.
+
+Offline `runtime storage list/create/restore <backup-id>/retry` reserves the same
+current-user profile and first native pipe before SQLite IO. Restore/retry require
+CLI `--confirm` or actual native confirmation. Logical UUIDs select same-profile
+backups; clients cannot choose backup paths. Pending recovery blocks Host startup.
+Restoration stages SQLite data, revokes grants, disables cold start, interrupts
+unfinished jobs and quarantines original DB/private payloads. Retry continues the
+same journal; it never replays business work. Old result metadata remains queryable
+through diagnosis, while quarantined outputs expire; new runs retain normal results.
+Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
+
+See [diagnostic/recovery evidence](../validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
+security review, actual native consent clicks, assistive technology and other
+platform acceptance are pending; these checks do not authorize production.

@@ -3,6 +3,43 @@ import type { ErrorCode } from './bindings'
 import { RuntimeClientError } from './client'
 
 const explanations = {
+  ACCEPTANCE_UNKNOWN: [
+    '任务提交是否完成尚未确认',
+    '保留原幂等键并查询回执；不要用新键重试写入。',
+  ],
+  EXECUTION_INTERRUPTED: [
+    '执行进程在完成确认前中断',
+    '检查实际数据或副作用，再主动决定是否发起新任务。',
+  ],
+  RESULT_EXPIRED: [
+    '私有任务结果已超过保留时间',
+    '任务元数据仍保留；检查原业务数据，不自动重放。',
+  ],
+  COLD_START_DENIED: [
+    '当前策略未允许冷启动 Runtime',
+    '通过交互式初始化或主动导入策略配置冷启动；不自动打开 GUI。',
+  ],
+  REVISION_CONFLICT: [
+    '共享数据已被其他客户端修改',
+    '读取最新 revision，检查冲突后重新操作。',
+  ],
+  STORE_BUSY: [
+    '当前数据 profile 已有写入者',
+    '连接现有 Runtime；不另建或删除数据库。',
+  ],
+  STORE_CORRUPT: ['数据库完整性检查失败', '保留原数据，从已验证备份主动恢复。'],
+  RECOVERY_PENDING: [
+    '上次恢复尚未完成',
+    '停止 Runtime，核对备份后主动重试同一次恢复；不新建或删除数据库。',
+  ],
+  SCHEMA_UNSUPPORTED: [
+    '数据库版本不兼容',
+    '使用兼容版本或已验证的升级前备份。',
+  ],
+  STORAGE_FAILED: [
+    '共享数据写入或恢复失败',
+    '保留原数据，检查权限和可用空间后重试。',
+  ],
   PROTOCOL_MISMATCH: [
     '通信协议版本不匹配',
     '安装与 Runtime 匹配的客户端版本。',
@@ -23,8 +60,19 @@ const explanations = {
   ],
   APPROVAL_REQUIRED: [
     '此操作需要授权',
-    '验证模式只允许纯内置命令，授权功能尚未交付。',
+    '主动导入与当前包和调用方匹配的授权；验证模式只允许纯内置命令。',
   ],
+  INTERACTION_REQUIRED: ['此命令需要界面交互', '选择支持 headless 的命令。'],
+  CAPABILITY_UNDECLARED: [
+    '命令未声明此能力操作',
+    '检查命令效果与 operation 声明，声明不能替代授权。',
+  ],
+  SCOPE_DENIED: ['参数超出授权范围', '使用已批准的资源，或主动申请新的范围。'],
+  GRANT_REVOKED: [
+    '授权已撤销或过期',
+    '查询任务结果；重新批准后主动发起新任务。',
+  ],
+  BUDGET_EXCEEDED: ['操作超过资源预算', '减少调用次数或使用获准的资源预算。'],
   PLUGIN_NOT_FOUND: [
     '插件或命令不在固定清单中',
     '检查插件 ID 和命令 ID，并构建内置插件。',

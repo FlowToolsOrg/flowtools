@@ -62,8 +62,12 @@ import {
   catalogPresentation,
   permissionPresentation,
 } from './runtime/catalog-presentation'
-import { createDesktopRuntimeContext } from './runtime/desktop-capabilities'
+import {
+  createDesktopRuntimeContext,
+  disposeDesktopRuntimeContext,
+} from './runtime/desktop-capabilities'
 import { unsafeHtmlPreviewEnabled } from './runtime/html-development-policy'
+import { ManagedRuntimePanel } from './runtime/managed-runtime-panel'
 import { commands as desktopCommands } from './utils/bindings'
 import './App.css'
 
@@ -1083,6 +1087,7 @@ function SettingsView() {
       title="设置"
     >
       <div className="grid gap-4">
+        <ManagedRuntimePanel />
         <SettingsRow
           label="外观"
           value={
@@ -1721,6 +1726,11 @@ function ReactAppPluginPanel({ plugin }: { plugin: AppPlugin }) {
         storeShape: plugin.store,
       }),
     [plugin]
+  )
+
+  useEffect(
+    () => () => disposeDesktopRuntimeContext(runtimeContext),
+    [runtimeContext]
   )
 
   return (

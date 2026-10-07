@@ -1,10 +1,11 @@
+use crate::broker::{CommandIdentity, Scope};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use specta::Type;
 
 pub const PROTOCOL_MAJOR: u16 = 1;
 pub const MAX_FRAME_BYTES: usize = 1_048_576;
-pub const CLIENT_VERSION: &str = "0.1.0";
+pub const CLIENT_VERSION: &str = "0.3.0";
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -33,12 +34,93 @@ pub enum Call {
     Plugins,
     #[serde(rename = "jobs.submit")]
     Submit(SubmitJob),
+    #[serde(rename = "jobs.lookup")]
+    Lookup(IdempotencyKey),
     #[serde(rename = "jobs.status")]
     Job(JobKey),
+    #[serde(rename = "jobs.diagnose")]
+    Diagnose(JobKey),
+    #[serde(rename = "jobs.list")]
+    Jobs,
     #[serde(rename = "jobs.cancel")]
     Cancel(JobKey),
     #[serde(rename = "jobs.events")]
     Events(EventCursor),
+    #[serde(rename = "data.read")]
+    DataRead(DataRead),
+    #[serde(rename = "data.write")]
+    DataWrite(DataWrite),
+    #[serde(rename = "data.transaction")]
+    DataTransaction(DataTransaction),
+    #[serde(rename = "data.import-legacy")]
+    DataImport(DataImport),
+    #[serde(rename = "permissions.list")]
+    Permissions,
+    #[serde(rename = "permissions.grant")]
+    Grant(PermissionGrant),
+    #[serde(rename = "permissions.revoke")]
+    Revoke(PermissionKey),
+    #[serde(rename = "policy.set")]
+    Policy(BootstrapPolicy),
+    #[serde(rename = "policy.import")]
+    PolicyImport(PolicyImport),
+    #[serde(rename = "runtime.stop")]
+    Stop,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum GrantTarget {
+    Cli,
+    Desktop,
+}
+impl GrantTarget {
+    pub fn caller(&self) -> &'static str {
+        match self {
+            Self::Cli => "local-cli",
+            Self::Desktop => "local-desktop",
+        }
+    }
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PermissionKey {
+    pub plugin_id: String,
+    pub command_id: String,
+    pub target: GrantTarget,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PermissionGrant {
+    pub plugin_id: String,
+    pub command_id: String,
+    pub target: GrantTarget,
+    pub package_digest: String,
+    pub effects: Vec<String>,
+    pub scopes: Vec<Scope>,
+    pub expires_at: f64,
+    pub max_calls: u32,
+    pub cold_start: bool,
+    pub background: bool,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PermissionRecord {
+    pub identity: CommandIdentity,
+    pub epoch: u32,
+    pub grant: Option<PermissionGrant>,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct BootstrapPolicy {
+    pub cold_start: bool,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PolicyImport {
+    pub format_version: u16,
+    pub cold_start: bool,
+    pub grants: Vec<PermissionGrant>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
@@ -69,9 +151,71 @@ pub struct JobKey {
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct IdempotencyKey {
+    pub idempotency_key: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct EventCursor {
     pub run_id: String,
     pub after_sequence: u32,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DataRead {
+    pub plugin_id: String,
+    pub key: String,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DataMutation {
+    pub key: String,
+    pub expected_revision: u32,
+    #[specta(type = specta_typescript::Unknown)]
+    pub value: Value,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DataWrite {
+    pub plugin_id: String,
+    pub mutation: DataMutation,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DataTransaction {
+    pub plugin_id: String,
+    pub mutations: Vec<DataMutation>,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DataSnapshot {
+    pub key: String,
+    pub revision: u32,
+    #[specta(type = specta_typescript::Unknown)]
+    pub value: Value,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum LegacySource {
+    CliV0,
+    DesktopLocalstorageV1,
+    WebLocalstorageV1,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct LegacyImport {
+    pub source: LegacySource,
+    pub source_digest: String,
+    #[specta(type = specta_typescript::Unknown)]
+    pub value: Value,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DataImport {
+    pub plugin_id: String,
+    pub import: LegacyImport,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Type, schemars::JsonSchema)]
@@ -91,6 +235,36 @@ pub enum ErrorCode {
     InstanceMismatch,
     #[serde(rename = "APPROVAL_REQUIRED")]
     ApprovalRequired,
+    #[serde(rename = "INTERACTION_REQUIRED")]
+    InteractionRequired,
+    #[serde(rename = "CAPABILITY_UNDECLARED")]
+    CapabilityUndeclared,
+    #[serde(rename = "SCOPE_DENIED")]
+    ScopeDenied,
+    #[serde(rename = "GRANT_REVOKED")]
+    GrantRevoked,
+    #[serde(rename = "BUDGET_EXCEEDED")]
+    BudgetExceeded,
+    #[serde(rename = "REVISION_CONFLICT")]
+    RevisionConflict,
+    #[serde(rename = "STORE_BUSY")]
+    StoreBusy,
+    #[serde(rename = "STORE_CORRUPT")]
+    StoreCorrupt,
+    #[serde(rename = "RECOVERY_PENDING")]
+    RecoveryPending,
+    #[serde(rename = "SCHEMA_UNSUPPORTED")]
+    SchemaUnsupported,
+    #[serde(rename = "STORAGE_FAILED")]
+    StorageFailed,
+    #[serde(rename = "ACCEPTANCE_UNKNOWN")]
+    AcceptanceUnknown,
+    #[serde(rename = "EXECUTION_INTERRUPTED")]
+    ExecutionInterrupted,
+    #[serde(rename = "RESULT_EXPIRED")]
+    ResultExpired,
+    #[serde(rename = "COLD_START_DENIED")]
+    ColdStartDenied,
     #[serde(rename = "PLUGIN_NOT_FOUND")]
     PluginNotFound,
     #[serde(rename = "INPUT_INVALID")]
@@ -116,7 +290,11 @@ pub enum ErrorCode {
 }
 
 impl ErrorCode {
-    pub const ALL: [Self; 18] = [
+    pub const ALL: [Self; 33] = [
+        Self::AcceptanceUnknown,
+        Self::ExecutionInterrupted,
+        Self::ResultExpired,
+        Self::ColdStartDenied,
         Self::ProtocolMismatch,
         Self::ClientIncompatible,
         Self::FrameTooLarge,
@@ -124,6 +302,17 @@ impl ErrorCode {
         Self::SessionInvalid,
         Self::InstanceMismatch,
         Self::ApprovalRequired,
+        Self::InteractionRequired,
+        Self::CapabilityUndeclared,
+        Self::ScopeDenied,
+        Self::GrantRevoked,
+        Self::BudgetExceeded,
+        Self::RevisionConflict,
+        Self::StoreBusy,
+        Self::StoreCorrupt,
+        Self::RecoveryPending,
+        Self::SchemaUnsupported,
+        Self::StorageFailed,
         Self::PluginNotFound,
         Self::InputInvalid,
         Self::JobNotFound,
@@ -165,8 +354,22 @@ pub enum Outcome {
     Receipt(JobReceipt),
     #[serde(rename = "job")]
     Job(Box<JobSnapshot>),
+    #[serde(rename = "jobs")]
+    Jobs(Vec<JobSnapshot>),
+    #[serde(rename = "diagnostic")]
+    Diagnostic(RunDiagnostic),
     #[serde(rename = "events")]
     Events(Vec<JobEvent>),
+    #[serde(rename = "data")]
+    Data(DataSnapshot),
+    #[serde(rename = "data-batch")]
+    DataBatch(Vec<DataSnapshot>),
+    #[serde(rename = "permissions")]
+    Permissions(Vec<PermissionRecord>),
+    #[serde(rename = "policy")]
+    Policy(BootstrapPolicy),
+    #[serde(rename = "stopping")]
+    Stopping,
     #[serde(rename = "error")]
     Error(RuntimeError),
 }
@@ -177,6 +380,7 @@ pub struct RuntimeStatus {
     pub instance_id: String,
     pub mode: String,
     pub jobs: u32,
+    pub active_jobs: u32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
@@ -184,6 +388,7 @@ pub struct RuntimeStatus {
 pub struct PluginStatus {
     pub plugin_id: String,
     pub version: String,
+    pub package_digest: String,
     pub installed: bool,
     pub enabled: bool,
     pub running: bool,
@@ -286,6 +491,82 @@ pub struct JobEvent {
     pub run_id: String,
     pub sequence: u32,
     pub state: JobState,
+}
+
+/// Metadata allowlist only; never payloads, arbitrary messages, paths or credentials.
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RunDiagnostic {
+    pub format_version: u16,
+    pub run_id: String,
+    pub parent_run_id: Option<String>,
+    pub root_caller: String,
+    pub plugin_id: String,
+    pub command_id: String,
+    pub package_version: String,
+    pub package_digest: String,
+    pub dependency_lock: String,
+    pub grant_epoch: u32,
+    pub state: JobState,
+    pub sequence: u32,
+    pub accepted_at: f64,
+    pub started_at: Option<f64>,
+    pub finished_at: Option<f64>,
+    pub duration_ms: Option<f64>,
+    pub background: bool,
+    pub failure_code: Option<ErrorCode>,
+    pub result_expired: bool,
+    pub requires_review: bool,
+}
+
+/// Offline T0 storage actions; never part of business Call or caller-selected paths.
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(
+    tag = "operation",
+    content = "parameters",
+    rename_all = "kebab-case",
+    deny_unknown_fields
+)]
+pub enum StorageAction {
+    List,
+    Create,
+    Restore {
+        #[serde(rename = "backupId")]
+        backup_id: String,
+    },
+    Retry,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct BackupInfo {
+    pub id: String,
+    pub bytes: f64,
+    pub schema_version: Option<u32>,
+    pub usable: bool,
+    pub error_code: Option<ErrorCode>,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum RecoveryPhase {
+    Prepared,
+    Replaced,
+    Complete,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RecoveryReceipt {
+    pub recovery_id: String,
+    pub backup_id: String,
+    pub phase: RecoveryPhase,
+    pub grants_revoked: bool,
+    pub payloads_quarantined: bool,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct StorageReport {
+    pub format_version: u16,
+    pub backups: Vec<BackupInfo>,
+    pub recovery: Option<RecoveryReceipt>,
 }
 
 #[cfg(test)]

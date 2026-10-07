@@ -2,6 +2,7 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "composite": true,
+    "noEmit": true,
     "module": "esnext",
     "target": "esnext",
     "moduleResolution": "bundler",

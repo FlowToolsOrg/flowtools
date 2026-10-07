@@ -3,12 +3,22 @@ name = "flowtools-runtime"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+standalone = []
+bundle-launcher = []
+
+[[bin]]
+name = "flowtools"
+path = "src/launcher.rs"
+required-features = ["bundle-launcher"]
+
 [dependencies]
 flowtools-runtime-core = { path = "../../packages/runtime-core" }
 serde_json.workspace = true
+serde.workspace = true
 tokio.workspace = true
 sha2.workspace = true
 uuid.workspace = true
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_Security", "Win32_Security_Authorization", "Win32_System_Threading", "Win32_System_Memory", "Win32_System_Pipes"] }
+windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_Security", "Win32_Security_Authorization", "Win32_Storage_FileSystem", "Win32_System_Threading", "Win32_System_JobObjects", "Win32_System_Memory", "Win32_System_Pipes"] }

@@ -14,6 +14,7 @@ test('manual acceptance uses a visible test identity without production config o
       windows: [
         {
           label: 'main',
+          zoomHotkeysEnabled: true,
           title: 'FlowTools manual validation - test data only',
           url: '/?execution-validation=20261004-manual',
           width: 1200,

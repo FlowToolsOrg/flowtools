@@ -15,7 +15,8 @@ performed by Codex; it is not an independent security approval or production gat
 - Desktop's main window and both isolated validation configurations now enable
   Tauri `zoomHotkeysEnabled`. The installed Tauri/Wry default was false, disabling
   user zoom shortcuts. The configuration/identity contract and dedicated native
-  compilation passed. Actual 200% keyboard zoom/reflow remains unverified.
+  compilation passed. Actual keyboard zoom/reflow was subsequently checked at
+  200% in the isolated native window, including a 1126 × 930 window size.
 - Rebuilt Runtime and the dedicated compiled identity, then ran the existing
   `node apps/ui-test/scripts/validate-managed-hosts.ts` against a fresh private
   profile. Initial launcher, keyboard Todo Add, shared revision 4, preservation
@@ -37,6 +38,59 @@ The Native harness supplies explicit T0 fixture policy. It does not click native
 consent and does not certify a complete keyboard or screen-reader interaction.
 The earlier actual native confirmation/cancellation and recovery-failure/retry
 checks are recorded in [Desktop acceptance fixes](g3-desktop-acceptance-fixes.md).
+
+## Actual keyboard, zoom and NVDA checks
+
+Computer Use was restored and the maintainer unlocked Windows. The checks used
+the dedicated visible validation identity, a fresh fixture profile and signed
+NVDA 2026.2 portable with add-ons disabled and a private configuration. No user
+database, production identity or persistent remote debugging was used.
+
+- Tab and Shift+Tab reached the command selector, background checkbox, JSON
+  input, task submission, diagnosis/export, backup selector and recovery actions.
+  Focus rings remained visible. The command list expanded/collapsed by keyboard;
+  the checkbox announced checked/unchecked and disabled controls were skipped.
+- Native initialization, grant, stop, backup, restore and retry dialogs received
+  keyboard focus. Confirmation/cancellation returned to the invoking page control.
+  NVDA's actual Speech Viewer output included the dialog title, readable scope and
+  consequences, confirmation/cancel buttons and resulting status changes.
+- Ctrl+plus reached 110%, 125%, 150%, 175% and 200%, announced by NVDA. At 200%,
+  Chinese recovery consequences wrapped and the export/backup/restore controls
+  remained reachable. Long diagnostic JSON had horizontal and vertical scrolling.
+  Resizing from 1202 × 930 to 1126 × 930 retained these controls; Ctrl+0 restored
+  the original zoom. This is not a mobile-width or other-platform claim.
+- A real Todo task succeeded and its diagnosis was actually exported. The JSON
+  contained only allowlisted run metadata. The earlier failed fixture task retained
+  `EXECUTION_FAILED` and `requiresReview: true`. After keyboard focus was moved
+  through diagnosis/export, NVDA browse reading announced the warning to check
+  actual side effects and that no automatic retry would occur.
+- NVDA read the shared Runtime, shared Todo data, run diagnosis and backup/recovery
+  regions, input/combobox/checkbox/button names and statuses. Keyboard Todo Add
+  changed the shared Runtime revision from 1 to 2 and announced the new revision.
+- Online backup reading returned `STORE_BUSY`. After an acknowledged stop and
+  actual Host exit, offline reading and schema-2 backup creation succeeded. A
+  temporary read-only, no-delete file handle caused real `STORAGE_FAILED`; the UI
+  cleared stale grants and exposed the pending journal. Cancelling retry preserved
+  its recovery ID; confirming after releasing the handle completed the same journal,
+  reread revoked grants and did not replay business work. NVDA announced failure,
+  retry consequences and completion. A new explicit grant was required afterward.
+
+The first visible launch accidentally selected an old local Runtime binary because
+the test build omitted `CARGO_TARGET_DIR`. Its failed task remains in the evidence.
+The test configuration was corrected, rebuilt and identity checked before the
+successful run; this setup failure was not hidden as a successful attempt.
+
+NVDA evidence is actual Speech Viewer output observed during real UI actions, not
+UIA names or synthetic speech. It does not certify human listening, voice quality,
+an entire blind-user workflow or all NVDA shortcut combinations. Temporary private
+reading-key mappings were tried because the automation interface did not correctly
+send Insert chords; the final side-effect warning was read with ordinary browse
+Down keys after Tab/Shift+Tab positioned focus. No NVDA add-on or application
+accessibility shim was installed.
+
+![Native window at 200% zoom](assets/g3-terminal-zoom-200.jpg)
+
+![Actual NVDA side-effect warning output](assets/g3-terminal-nvda-side-effects.jpg)
 
 ## Security engineering review
 
@@ -66,14 +120,8 @@ evidence, without accepting production risk or advancing maturity.
 
 ## Outstanding acceptance
 
-Complete Tab/Shift+Tab navigation, native-dialog focus return, actual 200% zoom
-and NVDA are still pending. The official NVDA 2026.2 portable download passed
-Authenticode validation, but after the interrupted session Computer Use's callable
-entrypoint was absent. Neither NVDA utterances nor actual zoom were then observed;
-installation preparation, screenshots and UIA names are not screen-reader proof.
-
 An actual independent reviewer must record their name, date, reviewed revision,
 scope and conclusion. CI and Codex self-review cannot supply that approval. PR
-remains Draft while required acceptance is incomplete. Other platforms, signed
+remains Draft while this required approval is incomplete. Other platforms, signed
 distribution and production readiness are not part of this Windows/T1 result.
 The maintainer's local checklist and checkmarks remain ignored and unmodified.

@@ -4,6 +4,7 @@
     "windows": [
       {
         "label": "main",
+        "zoomHotkeysEnabled": true,
         "title": "FlowTools G2 Runtime validation",
         "url": "/?execution-validation=20261003",
         "width": 1200,

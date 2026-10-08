@@ -810,3 +810,25 @@ window zoom shortcuts are enabled, including isolated validation windows.
 fresh Native harness, actual Windows keyboard/native consent, 200% zoom/reflow and
 NVDA Speech Viewer output. Independent security approval remains pending; human
 listening, a full blind-user workflow and other platforms are not certified.
+
+## E01a host contribution directory
+
+The [E parallel design](./docs/host-extensions.md) introduces extension contracts
+without changing G0–G8 sequencing or Manifest v1. E01a
+places a standalone non-React API in `@flowtools/sdk/extensions`: strict bounded
+JSON parsing, a Host-created in-memory registry and PluginRegistry projection.
+Current kinds are `theme`, `locale`, `settings`; values remain opaque until the
+corresponding E02/E03/E04 schemas and application behavior are delivered.
+
+The Host derives plugin ID/version from PluginRegistry and obtains a local
+owner epoch from the contribution registry, never from the document. Enabled
+and dependency-satisfied current instances contribute; lifecycle cleanup withdraws
+them. Atomic replacement, replacement-specific disposal, stale-owner refusal and
+stable immutable snapshots protect cooperative T1 consistency across reinstalls.
+They do not authenticate an untrusted caller or isolate same-realm code.
+
+There is no new loader, persistence, native IPC, CSS injection or grant. Service
+transport and package/resource enforcement stay with G4–G6; actual UI/tokens and
+layout integration coordinate with G7. [E01a evidence](./docs/validation/e01-contributions.md)
+records the completed fixed T1 engineering scope and successful clean Windows
+CI. Prototype maturity and open security risks are unchanged.

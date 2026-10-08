@@ -52,6 +52,7 @@ export function isJsonValue(value: unknown): value is JsonValue {
     if (typeof item === 'number') return Number.isFinite(item)
     if (typeof item !== 'object' || ancestors.has(item)) return false
     const array = Array.isArray(item)
+    if (array && Object.getPrototypeOf(item) !== Array.prototype) return false
     if (
       !array &&
       Object.getPrototypeOf(item) !== Object.prototype &&
@@ -68,6 +69,16 @@ export function isJsonValue(value: unknown): value is JsonValue {
         ['__proto__', 'constructor', 'prototype'].includes(key)
       )
         return false
+      if (array) {
+        const index = Number(key)
+        if (
+          !Number.isSafeInteger(index) ||
+          index < 0 ||
+          index >= item.length ||
+          String(index) !== key
+        )
+          return false
+      }
       const descriptor = Object.getOwnPropertyDescriptor(item, key)
       return Boolean(
         descriptor?.enumerable &&

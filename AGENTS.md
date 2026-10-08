@@ -715,3 +715,32 @@ The managed Native harness must support literal IPv4 and IPv6 loopback CDP while
 checking all actual listeners and matching the responding endpoint. Preserve the
 25-second startup budget, redirect refusal and non-loopback/mismatch regressions;
 never persist CDP arguments in production configuration.
+
+## E host extension contracts
+
+Follow [the E01–E10 backlog](./docs/host-extensions.md) for this parallel line.
+G4–G7 are owned by another collaborator; coordinate shared files before real
+host integration. Keep changes additive and use existing Runtime service,
+data, grant, package and resource contracts. Do not reorder or complete G0–G8
+because an E contract passes its own tests.
+
+E01a uses only `@flowtools/sdk/extensions`: strict formatVersion 1 documents
+contain `theme`, `locale` and `settings` bounded JSON. The Host creates the
+registry, derives plugin ID/version from PluginRegistry and obtains a registry-
+issued owner epoch. Strict document/contribution envelopes reject unknown
+fields. Opaque `value` can contain ordinary JSON keys such as pluginId or
+permissions; the Host never derives owner, grants or operations from them.
+Only enabled, dependency-satisfied current instances project contributions; disabling,
+unloading and disposal withdraw them. Preserve replacement-specific cleanup,
+stale-owner refusal across uninstall/reinstall, reentrant-disable checks, frozen
+values, atomic rejection, stable snapshots and bounded owner metadata.
+
+E01a does not change Manifest v1 or add a loader, CSS application, translation,
+settings persistence, native API or third-party execution. Future kind-specific
+schemas and selections require their own E02/E03/E04 gates; arbitrary JSON is
+not an executable instruction. Keep T1 bookkeeping distinct from authentication,
+package integrity, grants and sandboxing. Record actual evidence in
+[E01a validation](./docs/validation/e01-contributions.md). Its fixed T1 engineering
+scope passed clean Windows CI; E01 and E02–E10 remain pending. Keep
+SEC-002/003/007/010 open and independent security review pending. Each completed E submilestone
+requires its own validation record and focused commit before the next begins.

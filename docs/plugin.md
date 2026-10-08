@@ -891,3 +891,26 @@ and fresh Native harness results, plus actual Windows keyboard/native consent,
 200% zoom/reflow and NVDA Speech Viewer output. Independent security approval
 remains pending; human listening, a full blind-user workflow and other platforms
 are not certified.
+
+## E01a 声明式数据贡献
+
+[E 宿主扩展设计](./host-extensions.md) 规划主题、语言、设置和后续业务扩展。
+E01a 固定 T1 工程范围已通过 clean Windows CI，公开子入口为
+`@flowtools/sdk/extensions`。贡献文档使用
+formatVersion 1 和 `contributions` 数组；每项含 kebab-case `id`、
+`kind: 'theme' | 'locale' | 'settings'`、有界 JSON `value`。ID 在同一文档中
+跨 kind 唯一，快照 key 由 Host 生成 `pluginId:contributionId`。
+
+插件只提供数据，Host 管理目录与 owner。文档和单项 contribution envelope
+不能增加 pluginId、版本、generation 或 permissions 等未知字段；`value`
+是不透明普通 JSON，可以包含这些名称的业务键，Host 不据此派生身份或权限。
+`parseExtensionContributions()` 复制并冻结数据；
+`ExtensionContributionRegistry` 和 `projectPluginContributions()` 是 Host
+管理 API，不是插件获授的能力。Host 从插件状态绑定 ID/版本，owner epoch
+由 `createOwner(pluginId, version)` 发放；只投影 enabled 且依赖满足的当前实例。
+
+目前没有修改 Manifest v1，也没有自动从包读取贡献。Host 必须自行选择可信
+文档来源；第三方包读取与准入以后复用 G5。贡献存在不代表已经选中、应用或
+授权：主题 tokens、统一文本接口、设置 Schema 与持久化分别待 E02/E03/E04。
+不要通过贡献值注入 CSS、修改 Host DOM 或申请原生权限。当前范围与待验证项见
+[E01a 验收](./validation/e01-contributions.md)；maturity 保持 prototype。

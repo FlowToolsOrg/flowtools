@@ -188,3 +188,24 @@ Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
 See [diagnostic/recovery evidence](../validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
 security review, actual native consent clicks, assistive technology and other
 platform acceptance are pending; these checks do not authorize production.
+
+### E01a 数据贡献目录补充（2026-10-08）
+
+[E 宿主扩展设计](../host-extensions.md) 遵守本 ADR 的既有信任等级。
+E01a 的 `@flowtools/sdk/extensions` 仅在合作 T1 范围增加 Host 创建的内存
+数据目录；Host 从 PluginRegistry 绑定 ID/版本，owner epoch 由贡献目录
+发放。严格 envelope 拒绝额外身份字段；不透明 `value` 可包含同名普通 JSON
+业务键，但 Host 不据此派生身份、grant 或操作。epoch 与替换专属清理解决
+生命周期一致性，不替代
+认证会话、publisher/hash 校验、授权 epoch 或 OS 隔离。
+
+贡献 JSON 不执行代码、不授予能力、不注入 CSS 或修改 Host DOM。将来主题、
+语言和视图贡献只能通过各扩展点的受控解析与呈现；权限、身份和恢复界面的
+可信含义由 Host 保持。T2/T3/TL 不能因贡献声明或 enabled 状态进入主 realm。
+将来第三方资源准入仍须通过 G5 的包/隔离边界，服务与资源调用仍使用 Runtime。
+
+本子项不改变 Manifest v1、Runtime wire、原生/API/CSP/Tauri permission 或
+持久化 scope。解析预算、旧 owner、重装与停用清理的 SDK 工程回归见
+[E01a 验收](../validation/e01-contributions.md)，固定 T1 工程范围和 clean Windows
+CI 已通过。SEC-002/003/007/010 继续
+open；独立安全 Reviewer/日期/批准结论 pending，当前 maturity 为 prototype。

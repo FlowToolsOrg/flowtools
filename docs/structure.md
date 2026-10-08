@@ -461,3 +461,18 @@ certified.
 
 `apps/ui-test/scripts/loopback-cdp.ts` validates the Native harness's observed
 IPv4/IPv6 listeners and responding endpoint; it does not configure production CDP.
+
+## E01a 宿主贡献目录
+
+[E01–E10 平行清单](./host-extensions.md) 保留原 G0–G8 顺序；G4–G7 由另一位
+协作者负责，真实宿主接入需协调共享文件。E01a 固定 T1 工程范围已完成，
+clean Windows CI 通过；模块位于
+`packages/sdk/src/extensions/`，通过非 React 子入口 `@flowtools/sdk/extensions`
+公开解析、内存目录和 PluginRegistry 投影；验收见
+[E01a 记录](./validation/e01-contributions.md)。
+
+本目录只保存 `theme`、`locale`、`settings` 的有界 JSON，Host 从插件状态
+绑定 ID/版本并取得目录发放的 owner epoch；停用、卸载和投影销毁撤下内容。
+主题、语言和设置业务解析分别待 E02/E03/E04；布局插槽、Provider 与资源交接
+也尚未交付。不修改 Manifest v1，不新建 Runtime 数据库、服务传输、授权或
+加载路径。未来验证页面留在独立消费面，真实页面/tokens 接入与 G7 对齐。

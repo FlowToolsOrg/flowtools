@@ -10,16 +10,26 @@ use std::collections::{BTreeMap, HashMap};
 async fn concurrent_activation_serializes_providers_and_cancel_preserves_other_root() {
     let fixture = Fixture::new().await;
     let (first, task1) = fixture.run("wait").await;
-    fixture.wait_running_c(&first).await;
+    // B already owns its provider gate; overlap B/C startup with the second A.
+    fixture.wait_running_provider(&first, "fixture-b").await;
     let (second, task2) = fixture.run("echo").await;
     tokio::time::timeout(Duration::from_secs(5), async {
         loop {
             let core = fixture.core.lock().await;
+            core.check_run(&first)
+                .expect("First root must remain valid until both service states are ready");
+            core.check_run(&second)
+                .expect("Second root must remain valid until both service states are ready");
             if core
                 .service_diagnostics(&second)
                 .unwrap()
                 .iter()
                 .any(|call| call.provider.id == "fixture-b" && call.state == "queued")
+                && core
+                    .service_diagnostics(&first)
+                    .unwrap()
+                    .iter()
+                    .any(|call| call.provider.id == "fixture-c" && call.state == "running")
             {
                 assert_eq!(
                     core.service_diagnostics(&first)
@@ -401,17 +411,20 @@ impl Fixture {
         (receipt.run_id, task)
     }
     async fn wait_running_c(&self, root: &str) {
+        self.wait_running_provider(root, "fixture-c").await;
+    }
+    async fn wait_running_provider(&self, root: &str, provider: &str) {
         // Readiness is bounded by the existing Host deadline, not a startup SLA.
         // A terminal/expired root fails immediately; no retry or deadline extension.
         loop {
             let core = self.core.lock().await;
             core.check_run(root)
-                .expect("Root must remain valid until provider C is running");
+                .expect("Root must remain valid until the provider is running");
             if core
                 .service_diagnostics(root)
                 .unwrap()
                 .iter()
-                .any(|c| c.provider.id == "fixture-c" && c.state == "running")
+                .any(|c| c.provider.id == provider && c.state == "running")
             {
                 break;
             }

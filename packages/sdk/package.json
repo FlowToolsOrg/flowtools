@@ -18,6 +18,10 @@
       "types": "./dist/dependencies.d.ts",
       "import": "./dist/dependencies.js"
     },
+    "./extensions": {
+      "types": "./dist/extensions.d.ts",
+      "import": "./dist/extensions.js"
+    },
     "./data": {
       "types": "./dist/data.d.ts",
       "import": "./dist/data.js"

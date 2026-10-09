@@ -751,3 +751,51 @@ mismatched catalog journals. Never turn these T1 checks into sandbox claims.
 The A/B/C bundle is build-only in plugin-runner's ignored `.generated/g4-services`,
 not production inventory. Run `test:dependencies` for real native regressions.
 See [scope and evidence](docs/validation/g4-service-calls.md); G5/G6 remain pending.
+
+## E host extension contracts
+
+Follow [the E01–E10 backlog](./docs/host-extensions.md) for this parallel line.
+G4–G7 are owned by another collaborator; coordinate shared files before real
+host integration. Keep changes additive and use existing Runtime service,
+data, grant, package and resource contracts. Do not reorder or complete G0–G8
+because an E contract passes its own tests.
+
+E01a uses only `@flowtools/sdk/extensions`: strict formatVersion 1 documents
+contain `theme`, `locale` and `settings` bounded JSON. The Host creates the
+registry, derives plugin ID/version from PluginRegistry and obtains a registry-
+issued owner epoch. Strict document/contribution envelopes reject unknown
+fields. Opaque `value` can contain ordinary JSON keys such as pluginId or
+permissions; the Host never derives owner, grants or operations from them.
+Only enabled, dependency-satisfied current instances project contributions; disabling,
+unloading and disposal withdraw them. Preserve replacement-specific cleanup,
+stale-owner refusal across uninstall/reinstall, reentrant-disable checks, frozen
+values, atomic rejection, stable snapshots and bounded owner metadata.
+
+E01a does not change Manifest v1 or add a loader, CSS application, translation,
+settings persistence, native API or third-party execution. Future kind-specific
+schemas and selections require their own E02/E03/E04 gates; arbitrary JSON is
+not an executable instruction. Keep T1 bookkeeping distinct from authentication,
+package integrity, grants and sandboxing. Record actual evidence in
+[E01a validation](./docs/validation/e01-contributions.md). Its fixed T1 engineering
+scope passed clean Windows CI; E01 and E02–E10 remain pending. Keep
+SEC-002/003/007/010 open and independent security review pending. Each completed E submilestone
+requires its own validation record and focused commit before the next begins.
+
+E02a defines pure structured theme resolution in `extensions/appearance.ts`.
+Keep Host defaults complete and Host selection explicit. Preserve partial-token
+merge order, mode isolation, fallback after withdrawal, atomic override refusal,
+immutable stable results and system reduced-motion precedence. Reject arbitrary
+CSS/URLs/remote fonts and bound payloads before serialization. CSS/DOM adapters,
+persistence and real-host UI are separate E02b/G7 gates; record actual validation
+in [E02a evidence](./docs/validation/e02-theme-contracts.md).
+
+E02b's Host-owned `AppearanceScope` is exported only from `@flowtools/ui`, with
+an explicit static `@flowtools/ui/appearance.css` asset imported after HeroUI.
+Revalidate structured tokens; bind both base variables and HeroUI/Tailwind aliases
+inside the subtree. Keep plugin resources free of selectors/styles/URLs, and
+recovery controls outside the preview scope. The independent UI-test route is
+`/?appearance-validation=1`; its fixtures do not change the fixed CLI inventory
+or authorize code loading. Keep computed-style, apply/cancel/reset, media-change
+and withdrawal recovery regressions. Real-host pages, outside portals and
+persistent preferences require separate integration gates. Record scope and
+screenshots in [E02b evidence](./docs/validation/e02-theme-adapter.md).

@@ -31,7 +31,34 @@ export default defineConfig({
 
     'no-floating-promises': 'off',
     // Correctness
-    'tailwindcss/no-unknown-classes': 'error',
+    // Exact static stylesheet classes, shared by root and workspace lint.
+    // Unknown utilities still fail; no wildcard prefix exemption.
+    'tailwindcss/no-unknown-classes': [
+      'error',
+      {
+        allowlist: [
+          'flowtools-appearance',
+          'appearance-lab',
+          'appearance-lab__header',
+          'appearance-lab__eyebrow',
+          'appearance-lab__layout',
+          'appearance-lab__controls',
+          'appearance-lab__check',
+          'appearance-lab__apply',
+          'appearance-lab__saved',
+          'appearance-lab__recovery',
+          'appearance-lab__stage',
+          'appearance-lab__preview-label',
+          'appearance-lab__canvas',
+          'appearance-lab__workspace',
+          'appearance-lab__mark',
+          'appearance-lab__count',
+          'appearance-lab__feature',
+          'appearance-lab__cards',
+          'appearance-lab__motion',
+        ],
+      },
+    ],
     'tailwindcss/no-duplicate-classes': 'error',
     'tailwindcss/no-conflicting-classes': 'error',
     'tailwindcss/no-deprecated-classes': 'error',

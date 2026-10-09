@@ -1985,3 +1985,34 @@ NVDA Speech Viewer output were subsequently verified. Independent security
 approval remains pending; human listening, a full blind-user workflow and other
 platforms are not certified. G3 stays Windows/T1 prototype; no parent milestone,
 risk or maturity gate is advanced.
+
+## E：宿主扩展平行线（2026-10-08）
+
+维护者接受 [E01–E10 业务清单](./host-extensions.md)，用于 SDK 贡献契约、
+主题、统一文本接口、设置以及后续 Provider/上下文/资源/布局扩展。
+G0–G8 原顺序和完成条件不变；G4–G7 由另一位协作者实施，真实服务、包准入、
+资源与页面接入按各自 gate 协作，不从 E 线重复建设 Runtime 基础。
+
+| 子项                               | 状态                   | 当前范围与退出条件                                                                                                                                          |
+| ---------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| E01a 数据贡献目录基础              | done                   | 严格 formatVersion 1 的 theme/locale/settings JSON、Host owner、原子替换、代际清理、稳定快照与生命周期投影；clean Windows CI 全链通过；固定 T1 工程范围完成 |
+| E01 完整贡献管理                   | pending（E01a 为前置） | 后续菜单/视图等贡献；增加已支持贡献无需改宿主业务代码                                                                                                       |
+| 第一批 E02/E03/E04 与 E10 基础规则 | pending                | 独立验证面上的主题、内置中英和插件翻译、Schema 设置；失败/停用回退                                                                                          |
+| 第二批 E05/E06/E08                 | pending                | Provider 选择、上下文动作、按需激活；复用 G4 服务机制                                                                                                       |
+| 第三批 E07/E09 与完整 E10          | pending                | 真实资源交接、受控界面插槽、兼容诊断；协调 G5–G7                                                                                                            |
+
+E01a 不修改 Manifest v1 或 Runtime wire，不应用主题/翻译/设置，不新增
+持久化、加载或授权。E01a 完成也不完成 E01/E02/E03/E04 或提升 maturity。
+[验收记录](./validation/e01-contributions.md) 记录 SDK 自动化与 clean Windows CI
+全链通过；E01 父项和 E02–E10 仍 pending，SEC-002/003/007/010
+仍 open，独立安全 Reviewer/日期/批准结论仍 pending。
+
+E02 分项：E02a 主题数据内核工程范围完成，见 [独立验收](./validation/e02-theme-contracts.md)；
+E02b HeroUI 映射与独立验证面工程范围完成，G7 真实页面接入另行协调。
+E02a 的 tokens 校验、默认补齐、显式选择、覆盖和撤下回退不完成 E02 父项；
+E02a 不增加 CSS、持久化、包加载或权限能力，不提升 maturity。
+
+E02b 子项工程范围完成：`AppearanceScope`、固定静态 CSS 和 UI-test 独立页面，
+聚焦浏览器、截图与 clean Windows CI 全链通过；见 [E02b](./validation/e02-theme-adapter.md)。
+真实 Web/Desktop 页面、外部 portal、完整组件覆盖与偏好持久化仍待各自 gate，
+不推进 E02 父项或 G7 完成状态。

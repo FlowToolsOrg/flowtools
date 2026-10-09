@@ -485,3 +485,31 @@ IPv4/IPv6 listeners and responding endpoint; it does not configure production CD
 - RuntimeClient/CLI expose read-only unload plans and service diagnostics.
 - [Evidence](validation/g4-service-calls.md): build-only actual A/B/C fixtures,
   no new installer or plugin-owned namespace store.
+
+## E01a 宿主贡献目录
+
+[E01–E10 平行清单](./host-extensions.md) 保留原 G0–G8 顺序；G4–G7 由另一位
+协作者负责，真实宿主接入需协调共享文件。E01a 固定 T1 工程范围已完成，
+clean Windows CI 通过；模块位于
+`packages/sdk/src/extensions/`，通过非 React 子入口 `@flowtools/sdk/extensions`
+公开解析、内存目录和 PluginRegistry 投影；验收见
+[E01a 记录](./validation/e01-contributions.md)。
+
+本目录只保存 `theme`、`locale`、`settings` 的有界 JSON，Host 从插件状态
+绑定 ID/版本并取得目录发放的 owner epoch；停用、卸载和投影销毁撤下内容。
+主题、语言和设置业务解析分别待 E02/E03/E04；布局插槽、Provider 与资源交接
+也尚未交付。不修改 Manifest v1，不新建 Runtime 数据库、服务传输、授权或
+加载路径。未来验证页面留在独立消费面，真实页面/tokens 接入与 G7 对齐。
+
+E02a 的 `packages/sdk/src/extensions/appearance.ts` 定义主题/个人覆盖解析和
+Host 默认值驱动的纯 resolver，经同一非 React 子入口导出；测试位于
+`packages/sdk/test/appearance.test.ts`，验收见 [E02a](./validation/e02-theme-contracts.md)。
+本子项不增加 UI 组件、CSS adapter、全局 store 或 Runtime 持久化；E02b 再接
+HeroUI 和独立消费页面，G7 真实页面接入仍待协调。
+
+E02b 的 `packages/ui/src/components/appearance/` 提供 Host 用
+`AppearanceScope` 与内部变量映射，`packages/ui/src/appearance.css` 作为显式
+公开静态资产分发。独立页面与可信 fixture 位于 `apps/ui-test/src/appearance/`，
+浏览器回归位于 `apps/ui-test/src/test/appearance/`；入口 query 只选择验证页面。
+实际验收和截图见 [E02b](./validation/e02-theme-adapter.md)。未修改真实宿主
+页面、插件清单、Runtime 或持久设置，G7 接入仍待协调。

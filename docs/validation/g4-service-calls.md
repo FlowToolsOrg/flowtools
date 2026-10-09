@@ -108,3 +108,40 @@ flowtools dependencies calls <run-id> --profile <profile> --format json
 本机 Bun 1.4.2、Rust 1.99.0、Node 26.5.0；远端固定 Bun 1.3.14 /
 Rust 1.96.0 CI 尚未执行。用户要求仅保留本地提交。
 没有人工安全批准、生产认证或其他平台验收；G5/G6 仍按依赖顺序另行实施。
+
+## 2026-10-09 主分支集成与交付复核
+
+维护者后续明确授权推送，以上“仅保留本地提交”是此前交付状态。
+P1.6a / P1.6b 提交现为 `c32adcb` / `ecf8812`，作者与提交者均为当前
+GitHub 登录账号 `Getaway-Wuji`，使用其 GitHub noreply 邮箱；两条实现提交的
+文件树与此前验收版本完全一致。集成主分支 `14a7e79` 时保留了 E01/E02 的
+扩展和主题实现，以及 G4 的公开导出、构建入口和文档。
+
+集成复核处理了以下测试问题，未降低断言、增加超时或启用失败重试：
+
+- SDK 导出 fixture 在支持时使用 Node 同步 loader hooks，旧 Node 20 仍使用
+  实际异步 loader；新增两项注册选择回归，保留 ESM/CJS 拒绝和空 stderr 断言。
+- 旧远端 CI 的服务并发用例命中额外 5 秒排队就绪限制。改为 B 取得执行锁后
+  启动第二个真实 A，使 B/C 与第二个 A 的启动重叠；保留 5 秒检查上限、
+  9.5 秒 Host 预算及全部取消、串行和实际返回值断言，并检查两个根任务有效。
+- 管理用例的子进程创建开销使完整正确流程超过 60 秒。现验证独立发行包采用的
+  Node 编译 CLI 消费路径，保持原 60 秒限制、原环境和全部授权/撤销断言。
+  这不证明 Bun 在本机的进程创建开销已修复。
+- 独立发行包曾出现一次 `connect/pipe` 阶段失败，尚未确定唯一底层原因。
+  增加 50 个启动结果的有限错误码、阶段和耗时诊断；并发数量、时限和所有
+  断言不变。随后专项与全仓检查均通过，不能据此宣称底层连接问题已修复。
+
+集成后的全仓 `test` 11/11、零缓存通过（7m39.383s）：SDK 257 项、CLI
+100 项、Core 73 项 Rust、Native 17 项 Rust、Chromium 27 文件 72 项；
+管理、恢复与独立发行包 50 并发冷启动完整通过；Desktop 88 项 JS、21 项
+Rust 和 3 项原生 binding 测试通过。测试结束后顺序执行全仓 `build`，
+11/11 强制构建通过（48.993s）。全仓 lint/types 与变更后的 Runtime、SDK
+定向 lint/types、Rust fmt/all-targets clippy 均通过。
+生产入口复核中 Web 22 / Desktop 24 个产物保持 byte-identical，未发现已知
+unsafe/certification 开关或 canary 泄漏；portable catalog、generated manifests
+及 Rust-derived Runtime contracts 的只读检查也通过。
+
+失败路径仍依赖 Tokio 运行时关闭、`kill_on_drop` 和 Windows Job Object
+析构终止子进程；正常路径有实际排空断言，但没有独立 fixture 级异常排空验收。
+远端固定版本 CI 的当前结果以 PR Checks 为准；独立人工安全审查仍 pending，
+SEC-014/SEC-015 保持 open，交付 PR 保持 Draft，maturity 仍为 prototype。

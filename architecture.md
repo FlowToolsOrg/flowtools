@@ -833,3 +833,41 @@ Read-only client/CLI inspection never activates or grants a service. Controlled
 fixture snapshots validate this prototype; signed cross-package installation and
 OS isolation remain G5, shared tool storage/GC G6.
 See [implementation and validation](docs/validation/g4-service-calls.md).
+
+## E01a host contribution directory
+
+The [E parallel design](./docs/host-extensions.md) introduces extension contracts
+without changing G0–G8 sequencing or Manifest v1. E01a
+places a standalone non-React API in `@flowtools/sdk/extensions`: strict bounded
+JSON parsing, a Host-created in-memory registry and PluginRegistry projection.
+Current kinds are `theme`, `locale`, `settings`; values remain opaque until the
+corresponding E02/E03/E04 schemas and application behavior are delivered.
+
+The Host derives plugin ID/version from PluginRegistry and obtains a local
+owner epoch from the contribution registry, never from the document. Enabled
+and dependency-satisfied current instances contribute; lifecycle cleanup withdraws
+them. Atomic replacement, replacement-specific disposal, stale-owner refusal and
+stable immutable snapshots protect cooperative T1 consistency across reinstalls.
+They do not authenticate an untrusted caller or isolate same-realm code.
+
+There is no new loader, persistence, native IPC, CSS injection or grant. Service
+transport and package/resource enforcement stay with G4–G6; actual UI/tokens and
+layout integration coordinate with G7. [E01a evidence](./docs/validation/e01-contributions.md)
+records the completed fixed T1 engineering scope and successful clean Windows
+CI. Prototype maturity and open security risks are unchanged.
+
+E02a's `appearance.ts` consumes that Host-owned snapshot through a pure resolver.
+It validates structured tokens and complete Host light/dark defaults, then merges
+theme common/mode and user common/mode layers. Choice belongs to the Host; absent
+or invalid themes recover to defaults, while invalid overrides are ignored as a
+whole. It adds no global store, CSS/DOM adapter or Runtime protocol. HeroUI mapping
+and real-host integration remain separate E02b/G7 gates. See [E02a evidence](./docs/validation/e02-theme-contracts.md).
+
+E02b places HeroUI-specific presentation in `packages/ui`: `AppearanceScope`
+revalidates tokens and maps them to fixed subtree variables and local presets.
+The explicit static stylesheet scopes Card/Button adaptations and reduced motion;
+the component never changes document-root styles or injects plugin CSS. The
+UI-test consumer owns in-memory draft/applied choices, subscriptions and recovery
+controls outside that subtree. See [E02b validation](./docs/validation/e02-theme-adapter.md).
+There is no new Runtime store, global theme service or third-party admission.
+Outside portals, real-host integration and persistent settings remain separate.

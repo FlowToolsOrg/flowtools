@@ -744,3 +744,11 @@ package integrity, grants and sandboxing. Record actual evidence in
 scope passed clean Windows CI; E01 and E02–E10 remain pending. Keep
 SEC-002/003/007/010 open and independent security review pending. Each completed E submilestone
 requires its own validation record and focused commit before the next begins.
+
+E02a defines pure structured theme resolution in `extensions/appearance.ts`.
+Keep Host defaults complete and Host selection explicit. Preserve partial-token
+merge order, mode isolation, fallback after withdrawal, atomic override refusal,
+immutable stable results and system reduced-motion precedence. Reject arbitrary
+CSS/URLs/remote fonts and bound payloads before serialization. CSS/DOM adapters,
+persistence and real-host UI are separate E02b/G7 gates; record actual validation
+in [E02a evidence](./docs/validation/e02-theme-contracts.md).

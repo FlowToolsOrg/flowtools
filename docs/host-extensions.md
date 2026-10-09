@@ -4,6 +4,7 @@
 - 当前成熟度：`prototype`；E01a 固定 T1 工程范围已完成并通过 clean Windows CI。
 - 范围：SDK 扩展契约、资源格式与独立验证面；真实宿主接入分项验收。
 - 相关证据：[E01a 验收记录](./validation/e01-contributions.md)。
+- E02a 主题数据内核工程范围完成；[独立验收记录](./validation/e02-theme-contracts.md)。
 
 这条平行线让插件通过稳定接口贡献外观、文字、设置和业务能力。
 新增同类业务功能应通常只需增加插件；新增原生权限或底层能力仍由 Host
@@ -102,6 +103,45 @@ E01a 不修改现有 Manifest v1，不增加插件文件加载、动态执行、
 未来从已安装包读取资源必须先通过 G5 的包身份和准入，再连接同一目录。
 
 ## 第一批：主题、语言与设置
+
+E02 拆为独立子项，保留父项 pending：E02a 是纯 SDK 主题数据内核；E02b
+再交付 HeroUI 映射与独立验证页面；真实 Web/Desktop 页面接入与 G7 协调。
+E02a 不以数据解析成功宣称组件已经改变外观。
+
+E02a 在 `@flowtools/sdk/extensions` 提供 `parseAppearanceTheme(value)`、
+`parseAppearanceOverrides(value)` 和 `createAppearanceResolver(hostDefaults)`。
+Host 提供经过完整校验的浅/深色默认 tokens；主题贡献是严格 formatVersion 1：
+
+```json
+{
+  "formatVersion": 1,
+  "title": "Ocean",
+  "common": { "radii": { "panelRem": 1.25, "controlRem": 0.75 } },
+  "modes": {
+    "light": {
+      "colors": {
+        "accent": { "space": "srgb", "red": 10, "green": 100, "blue": 160 }
+      }
+    }
+  }
+}
+```
+
+颜色使用 sRGB 或 OKLCH 数值结构与 FlowTools 语义角色；圆角为 0–3 rem，
+边框为 0–4 px，字号为 12–24 px，行高为 1–2。首期字体为 system/serif/mono
+本地族别名，阴影为 none/soft/raised；不接受任意 CSS、URL、远程字体或布局树。
+单个主题/覆盖文档复用 64 KiB 字节预算，接受后复制冻结。
+
+Resolver 接受目录快照、明确选择的 `pluginId:contributionId`、用户模式、
+系统有效模式、系统减少动画偏好和个人覆盖。解析顺序是 Host 当前模式默认 →
+主题 common → 主题模式 → 用户 common → 用户模式。注册主题不会自动选中；
+同名贡献按插件命名空间区分。单一模式缺项继承对应 Host 默认，不沿用上一个模式。
+
+结果包含请求/有效 key、Host owner、完整 tokens、模式与回退原因；连续相同
+结果保持引用稳定。坏主题或撤下的主题回退到 Host 默认并保留请求 key，重新
+可用时恢复；非法个人覆盖整体忽略并返回稳定错误码。系统减少动画偏好优先。
+预览可调用同一个纯解析器，但本项不保存选择、不应用 CSS、不改变目录或执行插件。
+Host 应订阅 E01 目录变化并重新解析；本项不另建全局状态或持久存储。
 
 第一批按 E01a → E02 → E03a/b/c → E04 推进，逐项独立提交；E10 的版本、
 错误和清理规则贯穿各子项。先使用独立验证面，避免直接重写 G7 页面。

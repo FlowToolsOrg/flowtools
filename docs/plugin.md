@@ -914,3 +914,11 @@ formatVersion 1 和 `contributions` 数组；每项含 kebab-case `id`、
 授权：主题 tokens、统一文本接口、设置 Schema 与持久化分别待 E02/E03/E04。
 不要通过贡献值注入 CSS、修改 Host DOM 或申请原生权限。当前范围与待验证项见
 [E01a 验收](./validation/e01-contributions.md)；maturity 保持 prototype。
+
+E02a 为 `kind: 'theme'` 提供独立 `parseAppearanceTheme()` 业务校验，格式为
+`{ formatVersion: 1, title, common?, modes?: { light?, dark? } }`。tokens、边界和
+示例见 [主题规则](./host-extensions.md)；不接受任意 CSS、URL 或远程字体。
+Host 通过 `createAppearanceResolver(defaults)` 明确选择目录 key，按当前模式
+补齐缺项、合并合法个人覆盖，并在停用或坏主题时回退。发布或启用不自动选择。
+这只是纯数据内核，CSS 应用、预览页面和持久偏好仍由后续子项交付；
+[E02a 验收](./validation/e02-theme-contracts.md) 不证明实际组件外观已改变。

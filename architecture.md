@@ -832,3 +832,10 @@ transport and package/resource enforcement stay with G4–G6; actual UI/tokens a
 layout integration coordinate with G7. [E01a evidence](./docs/validation/e01-contributions.md)
 records the completed fixed T1 engineering scope and successful clean Windows
 CI. Prototype maturity and open security risks are unchanged.
+
+E02a's `appearance.ts` consumes that Host-owned snapshot through a pure resolver.
+It validates structured tokens and complete Host light/dark defaults, then merges
+theme common/mode and user common/mode layers. Choice belongs to the Host; absent
+or invalid themes recover to defaults, while invalid overrides are ignored as a
+whole. It adds no global store, CSS/DOM adapter or Runtime protocol. HeroUI mapping
+and real-host integration remain separate E02b/G7 gates. See [E02a evidence](./docs/validation/e02-theme-contracts.md).

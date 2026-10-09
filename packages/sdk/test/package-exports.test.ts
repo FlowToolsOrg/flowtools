@@ -16,6 +16,9 @@ const expectedSymbols: Record<string, readonly string[]> = {
     'parseExtensionContributions',
     'ExtensionContributionRegistry',
     'projectPluginContributions',
+    'parseAppearanceTheme',
+    'parseAppearanceOverrides',
+    'createAppearanceResolver',
   ],
   './data': ['inspectLegacyTodos', 'hydratePluginData'],
   './manifest': [

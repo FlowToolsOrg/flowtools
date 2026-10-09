@@ -476,3 +476,9 @@ clean Windows CI 通过；模块位于
 主题、语言和设置业务解析分别待 E02/E03/E04；布局插槽、Provider 与资源交接
 也尚未交付。不修改 Manifest v1，不新建 Runtime 数据库、服务传输、授权或
 加载路径。未来验证页面留在独立消费面，真实页面/tokens 接入与 G7 对齐。
+
+E02a 的 `packages/sdk/src/extensions/appearance.ts` 定义主题/个人覆盖解析和
+Host 默认值驱动的纯 resolver，经同一非 React 子入口导出；测试位于
+`packages/sdk/test/appearance.test.ts`，验收见 [E02a](./validation/e02-theme-contracts.md)。
+本子项不增加 UI 组件、CSS adapter、全局 store 或 Runtime 持久化；E02b 再接
+HeroUI 和独立消费页面，G7 真实页面接入仍待协调。

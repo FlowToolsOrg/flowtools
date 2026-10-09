@@ -1,4 +1,24 @@
 export {
+  AppearanceError,
+  createAppearanceResolver,
+  parseAppearanceOverrides,
+  parseAppearanceTheme,
+} from './appearance'
+export type {
+  AppearanceColor,
+  AppearanceColorRole,
+  AppearanceDefaults,
+  AppearanceErrorCode,
+  AppearanceMode,
+  AppearanceOverrides,
+  AppearanceRequest,
+  AppearanceShadow,
+  AppearanceTheme,
+  AppearanceTokenPatch,
+  AppearanceTokens,
+  ResolvedAppearance,
+} from './appearance'
+export {
   extensionContributionLimits,
   parseExtensionContributions,
 } from './schema'

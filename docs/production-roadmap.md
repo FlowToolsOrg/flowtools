@@ -1997,3 +1997,8 @@ E01a 不修改 Manifest v1 或 Runtime wire，不应用主题/翻译/设置，�
 [验收记录](./validation/e01-contributions.md) 记录 SDK 自动化与 clean Windows CI
 全链通过；E01 父项和 E02–E10 仍 pending，SEC-002/003/007/010
 仍 open，独立安全 Reviewer/日期/批准结论仍 pending。
+
+E02 分项：E02a 主题数据内核工程范围完成，见 [独立验收](./validation/e02-theme-contracts.md)；
+E02b HeroUI 映射与独立验证面 pending，G7 真实页面接入另行协调。
+E02a 的 tokens 校验、默认补齐、显式选择、覆盖和撤下回退不完成 E02 父项；
+不增加 CSS、持久化、包加载或权限能力，不提升 maturity。

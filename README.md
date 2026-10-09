@@ -871,3 +871,9 @@ This is contribution bookkeeping, not theme application, translation, settings
 persistence, loading or authorization. Manifest v1 and Runtime wire stay unchanged.
 See [E01a scope and validation](./docs/validation/e01-contributions.md).
 Maturity stays prototype; independent security review remains pending.
+
+E02a adds a pure theme contract in the same subpath: structured semantic colors,
+radius, border, typography, shadow and motion tokens. The Host supplies defaults
+and explicit selection; missing/invalid themes fall back without losing that
+selection. User overrides are validated atomically. This does not apply CSS or
+complete the E02 UI milestone. See [theme scope and evidence](./docs/validation/e02-theme-contracts.md).

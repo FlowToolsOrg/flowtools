@@ -38,6 +38,9 @@ const {
   ExtensionContributionRegistry,
   parseExtensionContributions,
   projectPluginContributions,
+  AppearanceError,
+  createAppearanceResolver,
+  parseAppearanceTheme,
 } = await import('@flowtools/sdk/extensions')
 
 assert.equal(typeof projectPluginContributions, 'function')
@@ -52,6 +55,86 @@ assert.equal(registry.getSnapshot()[0].key, 'node-fixture:theme')
 assert.ok(Object.isFrozen(registry.getSnapshot()[0].value))
 dispose()
 assert.equal(registry.getSnapshot().length, 0)
+
+// Exercise the compiled theme API in the same React/transpiler-free consumer.
+const colors = Object.fromEntries(
+  [
+    'canvas',
+    'text',
+    'panel',
+    'panelText',
+    'overlay',
+    'overlayText',
+    'mutedText',
+    'control',
+    'controlText',
+    'field',
+    'fieldText',
+    'fieldPlaceholder',
+    'accent',
+    'accentText',
+    'border',
+    'separator',
+    'focus',
+    'success',
+    'successText',
+    'warning',
+    'warningText',
+    'danger',
+    'dangerText',
+  ].map(key => [key, { space: 'srgb', red: 128, green: 128, blue: 128 }])
+)
+const baseline = {
+  colors,
+  radii: { panelRem: 0.625, controlRem: 0.625 },
+  borders: { panelPx: 1, fieldPx: 1 },
+  typography: { fontFamily: 'system', fontSizePx: 16, lineHeight: 1.5 },
+  shadows: { panel: 'soft', overlay: 'raised', field: 'none' },
+  motion: 'system',
+}
+const resolve = createAppearanceResolver({
+  formatVersion: 1,
+  title: 'Node baseline',
+  modes: { light: baseline, dark: baseline },
+})
+const themeOwner = registry.createOwner('node-fixture', '1.0.0')
+const removeTheme = registry.replace(themeOwner, {
+  formatVersion: 1,
+  contributions: [
+    {
+      id: 'theme',
+      kind: 'theme',
+      value: parseAppearanceTheme({
+        formatVersion: 1,
+        title: 'Node theme',
+        common: { radii: { panelRem: 1.25 } },
+      }),
+    },
+  ],
+})
+const request = {
+  selectedKey: 'node-fixture:theme',
+  mode: 'system',
+  systemMode: 'light',
+}
+assert.equal(
+  resolve({ ...request, contributions: registry.getSnapshot() }).tokens.radii
+    .panelRem,
+  1.25
+)
+assert.throws(
+  () =>
+    parseAppearanceTheme({
+      formatVersion: 1,
+      title: 'Unsafe',
+      common: { colors: { accent: 'url(https://fixture.invalid)' } },
+    }),
+  AppearanceError
+)
+removeTheme()
+const recovered = resolve({ ...request, contributions: registry.getSnapshot() })
+assert.equal(recovered.fallback, 'missing-theme')
+assert.equal(recovered.tokens.radii.panelRem, 0.625)
 
 let executions = 0
 class ExecutableArray extends Array {

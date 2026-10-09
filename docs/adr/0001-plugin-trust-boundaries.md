@@ -209,3 +209,12 @@ E01a 的 `@flowtools/sdk/extensions` 仅在合作 T1 范围增加 Host 创建的
 [E01a 验收](../validation/e01-contributions.md)，固定 T1 工程范围和 clean Windows
 CI 已通过。SEC-002/003/007/010 继续
 open；独立安全 Reviewer/日期/批准结论 pending，当前 maturity 为 prototype。
+
+### E02a 主题数据内核（2026-10-09）
+
+[E02a](../validation/e02-theme-contracts.md) 增加有限语义 tokens 的纯数据解析，
+身份来自 Host 贡献目录，选择由 Host 明确提供。任意 CSS、URL、远程字体、
+布局树和超预算数据拒绝；坏主题/撤下回退，非法个人覆盖整体忽略。
+本项不应用 CSS、不接触 DOM，不新增 IPC、存储、加载或授权能力。
+主题值不能改变权限/身份含义；后续可信恢复与 UI adapter 单独验收。
+T1 合作范围、prototype、open 风险和独立安全审阅 pending 均保持不变。

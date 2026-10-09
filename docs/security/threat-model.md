@@ -519,3 +519,13 @@ T1 同 realm 代码可绕过接口，预算不构成强制 CPU/内存限制，ow
 Owner：SDK / Host / Security；ADR-0001/0002 原信任边界与包策略不变。
 工程实现和测试不关闭风险，不升级 maturity。安全 Reviewer/日期/结论：
 独立 Reviewer pending / pending / 未批准。
+
+### E02a 主题解析补充（2026-10-09）
+
+SEC-002/003/007/010 继续 open。新增 [纯主题解析](../../packages/sdk/src/extensions/appearance.ts)
+限制语义 token、数值范围、字体/阴影枚举和序列化前字节预算，不执行 CSS 或 URL。
+Host 管理选择与 owner；同名扩展按目录命名空间区分。坏主题/撤下恢复默认，
+非法个人覆盖整体忽略，系统减少动画偏好优先，回归见 [E02a](../validation/e02-theme-contracts.md)。
+没有新的 native command、CSP、远程资源、数据 scope、grant、IPC 或持久化。
+T1 仍可绕过 SDK；真实 CSS scope、可信恢复呈现、对比度和第三方包准入未由
+本项验证。Owner：SDK / UI / Host / Security；独立审阅 pending，prototype 不变。

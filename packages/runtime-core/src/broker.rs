@@ -115,6 +115,7 @@ struct Binding {
     epoch: u32,
     deadline: f64,
     calls: u32,
+    parents: Vec<BrokerSession>,
 }
 
 #[derive(Default)]
@@ -280,12 +281,24 @@ impl CapabilityBroker {
                 epoch,
                 deadline,
                 calls: 0,
+                parents: vec![],
             },
         );
         Ok(BrokerSession { id })
     }
 
     pub fn check_session(&self, session: &BrokerSession, at: f64) -> Result<(), ErrorCode> {
+        let binding = self
+            .bindings
+            .get(&session.id)
+            .ok_or(ErrorCode::SessionInvalid)?;
+        for parent in &binding.parents {
+            self.check_binding(parent, at)?;
+        }
+        self.check_binding(session, at)
+    }
+
+    fn check_binding(&self, session: &BrokerSession, at: f64) -> Result<(), ErrorCode> {
         let binding = self
             .bindings
             .get(&session.id)
@@ -307,6 +320,67 @@ impl CapabilityBroker {
         Ok(())
     }
 
+    /// Host-only delegation. Every hop keeps the original policy epoch/budget.
+    pub fn delegate(
+        &mut self,
+        parent: &BrokerSession,
+        identity: CommandIdentity,
+        command: Value,
+        deadline: f64,
+        at: f64,
+    ) -> Result<BrokerSession, ErrorCode> {
+        self.check_session(parent, at)?;
+        self.require_command_grant(&identity, at)?;
+        let binding = self
+            .bindings
+            .get(&parent.id)
+            .ok_or(ErrorCode::SessionInvalid)?;
+        if binding.parents.len() >= 15 {
+            return Err(ErrorCode::BudgetExceeded);
+        }
+        if deadline > binding.deadline {
+            return Err(ErrorCode::BudgetExceeded);
+        }
+        let mut parents = binding.parents.clone();
+        parents.push(parent.clone());
+        for ancestor in &parents {
+            let upper = &self.bindings[&ancestor.id].command;
+            if !command["effects"].as_array().is_some_and(|effects| {
+                effects.iter().all(|effect| {
+                    upper["effects"]
+                        .as_array()
+                        .is_some_and(|allowed| allowed.contains(effect))
+                })
+            }) {
+                return Err(ErrorCode::CapabilityUndeclared);
+            }
+            self.check_call_budget(ancestor)?;
+        }
+        let child = self.bind(identity, command, deadline, at)?;
+        for ancestor in &parents {
+            self.bindings.get_mut(&ancestor.id).unwrap().calls += 1;
+        }
+        self.bindings.get_mut(&child.id).unwrap().parents = parents;
+        Ok(child)
+    }
+
+    fn check_call_budget(&self, session: &BrokerSession) -> Result<(), ErrorCode> {
+        let binding = self
+            .bindings
+            .get(&session.id)
+            .ok_or(ErrorCode::SessionInvalid)?;
+        let max = self
+            .policies
+            .get(&binding.identity)
+            .and_then(|policy| policy.grant.as_ref())
+            .map_or(64, |grant| grant.max_calls);
+        if binding.calls >= max {
+            Err(ErrorCode::BudgetExceeded)
+        } else {
+            Ok(())
+        }
+    }
+
     /// Authorization and adapter entry share the Host's mutable broker lock.
     /// Do not return a reusable permission ticket or defer a side effect outside
     /// this callback. Async adapters need a fresh check at their commit point.
@@ -318,6 +392,35 @@ impl CapabilityBroker {
         adapter: impl FnOnce(&CommandIdentity) -> Result<T, ErrorCode>,
     ) -> Result<T, ErrorCode> {
         self.check_session(session, at)?;
+        let binding = &self.bindings[&session.id];
+        let identity = binding.identity.clone();
+        let mut chain = binding.parents.clone();
+        chain.push(session.clone());
+        for hop in &chain {
+            let caller = &self.bindings[&hop.id].identity;
+            // PluginData is an own-namespace grant; it never grants another provider's data.
+            if matches!(
+                operation,
+                CapabilityOperation::DataRead { .. } | CapabilityOperation::DataWrite { .. }
+            ) && (caller.publisher != identity.publisher
+                || caller.plugin_id != identity.plugin_id)
+            {
+                return Err(ErrorCode::ScopeDenied);
+            }
+            self.check_operation(hop, operation)?;
+            self.check_call_budget(hop)?;
+        }
+        for hop in &chain {
+            self.bindings.get_mut(&hop.id).unwrap().calls += 1;
+        }
+        adapter(&identity)
+    }
+
+    fn check_operation(
+        &self,
+        session: &BrokerSession,
+        operation: &CapabilityOperation,
+    ) -> Result<(), ErrorCode> {
         let binding = &self.bindings[&session.id];
         let (effect, capability, method) = operation.declaration();
         if !binding.command["effects"]
@@ -367,9 +470,7 @@ impl CapabilityBroker {
         if binding.calls >= grant.max_calls {
             return Err(ErrorCode::BudgetExceeded);
         }
-        let binding = self.bindings.get_mut(&session.id).unwrap();
-        binding.calls += 1;
-        adapter(&binding.identity)
+        Ok(())
     }
 
     pub fn close(&mut self, session: &BrokerSession) {
@@ -526,6 +627,60 @@ mod tests {
                 max_calls: 2,
             },
         )
+    }
+
+    #[test]
+    fn delegated_calls_share_ancestor_budget_deadline_epoch_and_namespace() {
+        let (mut broker, a, command, mut grant) = fixture();
+        grant.max_calls = 2;
+        let mut b = a.clone();
+        b.plugin_id = "provider-b".into();
+        let mut c = a.clone();
+        c.plugin_id = "provider-c".into();
+        for identity in [&a, &b, &c] {
+            broker.approve(identity.clone(), grant.clone()).unwrap();
+        }
+        let root = broker
+            .bind(a.clone(), command.clone(), 100.0, 10.0)
+            .unwrap();
+        assert_eq!(
+            broker
+                .delegate(&root, b.clone(), command.clone(), 101.0, 11.0)
+                .err(),
+            Some(ErrorCode::BudgetExceeded)
+        );
+        let middle = broker
+            .delegate(&root, b, command.clone(), 90.0, 11.0)
+            .unwrap();
+        let leaf = broker
+            .delegate(&middle, c, command.clone(), 80.0, 12.0)
+            .unwrap();
+        assert_eq!(
+            broker.invoke::<()>(
+                &leaf,
+                &CapabilityOperation::DataRead {
+                    key: "todos".into()
+                },
+                13.0,
+                |_| panic!("Cross-provider namespace IO")
+            ),
+            Err(ErrorCode::ScopeDenied)
+        );
+        assert_eq!(
+            broker.delegate(&root, a.clone(), command, 70.0, 13.0).err(),
+            Some(ErrorCode::BudgetExceeded)
+        );
+        assert_eq!(broker.check_session(&leaf, 80.0), Err(ErrorCode::Timeout));
+        broker.revoke(&a).unwrap();
+        assert_eq!(
+            broker.check_session(&leaf, 14.0),
+            Err(ErrorCode::GrantRevoked)
+        );
+        broker.approve(a, grant).unwrap();
+        assert_eq!(
+            broker.check_session(&leaf, 14.0),
+            Err(ErrorCode::GrantRevoked)
+        );
     }
 
     #[test]

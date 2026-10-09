@@ -180,6 +180,8 @@ pub async fn run() -> Result<(), &'static str> {
     }
     let mut scheduled = HashSet::new();
     let permits = Arc::new(Semaphore::new(4));
+    let runner_backend =
+        Arc::new(service_runner::RunnerBackend::fixed().map_err(|_| "RUNNER_CONFIG_FAILED")?);
     let stdin_lifetime =
         std::env::var("FLOWTOOLS_RUNTIME_VALIDATION_STDIN_LIFETIME").as_deref() == Ok("1");
     let mut stdin = tokio::io::stdin();
@@ -204,11 +206,12 @@ pub async fn run() -> Result<(), &'static str> {
                 let worker_core = core.clone();
                 let permits = permits.clone();
                 let workspace = path.join(&run_id);
+                let backend=runner_backend.clone();
                 workers.spawn(async move {
                     let Ok(_permit) = permits.acquire_owned().await else { return; };
                     let spec = worker_core.lock().await.take_run(&run_id);
                     if let Some(spec) = spec {
-                        let result = execute(&spec, worker_core.clone(), &workspace).await;
+                        let result = service_runner::execute(spec.clone(),None,worker_core.clone(),workspace,backend).await;
                         worker_core.lock().await.finish(&spec.run_id, result);
                     }
                 });
@@ -221,6 +224,9 @@ pub async fn run() -> Result<(), &'static str> {
     while connections.join_next().await.is_some() {}
     let drained = tokio::time::timeout(Duration::from_secs(5), async {
         while workers.join_next().await.is_some() {}
+        while core.lock().await.active_service_calls() != 0 {
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
     })
     .await;
     if drained.is_err() {
@@ -421,91 +427,19 @@ fn runner_config() -> &'static str {
     }
 }
 
+#[path = "service_runner.rs"]
+mod service_runner;
+
+#[cfg(test)]
 async fn execute(spec: &RunSpec, core: Core, workspace: &Path) -> Result<Value, ErrorCode> {
-    // Hashing build-owned binaries must not block the IPC scheduler.
-    let (bun, runner) = tokio::task::spawn_blocking(|| {
-        #[cfg(feature = "standalone")]
-        verify_bundle()?;
-        let config: Value =
-            serde_json::from_str(runner_config()).map_err(|_| ErrorCode::ExecutionFailed)?;
-        Ok::<_, ErrorCode>((
-            verify_artifact(&config["bun"])?,
-            verify_artifact(&config["runner"])?,
-        ))
-    })
+    service_runner::execute(
+        spec.clone(),
+        None,
+        core,
+        workspace.into(),
+        Arc::new(service_runner::RunnerBackend::fixed()?),
+    )
     .await
-    .map_err(|_| ErrorCode::ExecutionFailed)??;
-    core.lock().await.check_run(&spec.run_id)?;
-    let mut command = tokio::process::Command::new(bun);
-    std::fs::create_dir(workspace).map_err(|_| ErrorCode::ExecutionFailed)?;
-    command
-        .arg(runner)
-        .current_dir(workspace)
-        .env_clear()
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .kill_on_drop(true);
-    // Bun needs the Windows system directory, never the parent's credential/token env.
-    if let Some(system_root) = std::env::var_os("SystemRoot") {
-        command.env("SystemRoot", system_root);
-    }
-    let mut child = command.spawn().map_err(|_| ErrorCode::ExecutionFailed)?;
-    let _job = match crate::process_job::ProcessJob::bind(&child) {
-        Ok(job) => job,
-        Err(_) => {
-            let _ = child.kill().await;
-            let _ = child.wait().await;
-            return Err(ErrorCode::ExecutionFailed);
-        }
-    };
-    let mut payload = json!({"pluginId":spec.plugin_id,"commandId":spec.command_id,"input":spec.input,"packageDigest":spec.package_digest});
-    if spec.data.is_some() {
-        payload["data"] = serde_json::to_value(&spec.data).map_err(|_| ErrorCode::InputInvalid)?;
-    }
-    let bytes = serde_json::to_vec(&payload).map_err(|_| ErrorCode::InputInvalid)?;
-    let mut stdin = child.stdin.take().ok_or(ErrorCode::ExecutionFailed)?;
-    let mut stdout = child
-        .stdout
-        .take()
-        .ok_or(ErrorCode::ExecutionFailed)?
-        .take((MAX_FRAME_BYTES + 1) as u64);
-    let duration = Duration::from_millis((spec.deadline - now()).max(0.0) as u64);
-    let result = tokio::select! {
-        result = tokio::time::timeout(duration, async {
-            stdin.write_all(&bytes).await.map_err(|_| ErrorCode::ExecutionFailed)?;
-            stdin.shutdown().await.map_err(|_| ErrorCode::ExecutionFailed)?;
-            drop(stdin);
-            let mut output = Vec::new();
-            stdout.read_to_end(&mut output).await.map_err(|_| ErrorCode::ExecutionFailed)?;
-            if output.len() > MAX_FRAME_BYTES { return Err(ErrorCode::OutputInvalid); }
-            let status = child.wait().await.map_err(|_| ErrorCode::ExecutionFailed)?;
-            if !status.success() { return Err(ErrorCode::ExecutionFailed); }
-            let envelope: Value = serde_json::from_slice(&output).map_err(|_| ErrorCode::OutputInvalid)?;
-            if envelope.as_object().is_none_or(|v| v.len()!=2) {return Err(ErrorCode::OutputInvalid);}
-            let mutations:Vec<flowtools_runtime_core::protocol::DataMutation>=serde_json::from_value(envelope["mutations"].clone()).map_err(|_|ErrorCode::OutputInvalid)?;
-            let execution=&envelope["execution"];
-            if execution["pluginId"] != spec.plugin_id { return Err(ErrorCode::OutputInvalid); }
-            if execution["success"] == true {
-                let data=execution["data"].clone();
-                if !flowtools_runtime_core::catalog::BuiltinCatalog::embedded().output_valid(&spec.plugin_id,&spec.command_id,&data) {return Err(ErrorCode::OutputInvalid);}
-                core.lock().await.commit_mutations(&spec.run_id,&mutations)?;
-                Ok(data)
-            }
-            else { Err(serde_json::from_value(execution["error"]["code"].clone()).unwrap_or(ErrorCode::ExecutionFailed)) }
-        }) => result.unwrap_or(Err(ErrorCode::Timeout)),
-        code = async {
-            loop {
-                tokio::time::sleep(Duration::from_millis(10)).await;
-                if let Err(code) = core.lock().await.check_run(&spec.run_id) { break code; }
-            }
-        } => Err(code),
-    };
-    if result.is_err() {
-        let _ = child.kill().await;
-        let _ = child.wait().await;
-    }
-    result
 }
 
 #[cfg(test)]
@@ -753,3 +687,7 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+#[path = "service_tests.rs"]
+mod service_tests;

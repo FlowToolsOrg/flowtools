@@ -1,5 +1,6 @@
 use crate::broker::{CommandIdentity, Scope};
 use crate::dependencies::DependencyPlan;
+use crate::services::{ProviderChangePlan, ServiceCallDiagnostic};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use specta::Type;
@@ -35,6 +36,10 @@ pub enum Call {
     Plugins,
     #[serde(rename = "dependencies.plan")]
     DependencyPlan(DependencyPlanRequest),
+    #[serde(rename = "dependencies.unload-plan")]
+    ProviderUnloadPlan(ProviderKey),
+    #[serde(rename = "services.calls")]
+    ServiceCalls(JobKey),
     #[serde(rename = "jobs.submit")]
     Submit(SubmitJob),
     #[serde(rename = "jobs.lookup")]
@@ -151,6 +156,12 @@ pub struct SubmitJob {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct DependencyPlanRequest {
     pub plugin_ids: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ProviderKey {
+    pub plugin_id: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
@@ -386,6 +397,10 @@ pub enum Outcome {
     Plugins(Vec<PluginStatus>),
     #[serde(rename = "dependency-plan")]
     DependencyPlan(DependencyPlan),
+    #[serde(rename = "provider-change-plan")]
+    ProviderChangePlan(ProviderChangePlan),
+    #[serde(rename = "service-calls")]
+    ServiceCalls(Vec<ServiceCallDiagnostic>),
     #[serde(rename = "receipt")]
     Receipt(JobReceipt),
     #[serde(rename = "job")]

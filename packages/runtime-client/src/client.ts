@@ -8,6 +8,8 @@ import type {
   JobSnapshot,
   Outcome,
   PackagePin,
+  ProviderChangePlan,
+  ServiceCallDiagnostic,
   Request,
   Response,
   RunDiagnostic,
@@ -48,6 +50,89 @@ export class RuntimeClient {
 
   get instanceId(): string | undefined {
     return this.proof?.instanceId
+  }
+
+  private validPin(pin: PackagePin): boolean {
+    return (
+      dependencyIdSchema.safeParse(pin.publisher).success &&
+      dependencyIdSchema.safeParse(pin.id).success &&
+      dependencyVersionSchema.safeParse(pin.version).success &&
+      dependencyDigestSchema.safeParse(pin.digest).success
+    )
+  }
+
+  async providerUnloadPlan(pluginId: string): Promise<ProviderChangePlan> {
+    if (!dependencyIdSchema.safeParse(pluginId).success)
+      throw new RuntimeClientError('DEPENDENCY_INVALID')
+    const outcome = await this.call({
+      method: 'dependencies.unload-plan',
+      payload: { pluginId },
+    })
+    if (outcome.type !== 'provider-change-plan')
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    const plan = outcome.data
+    if (
+      plan.mode !== 'plan-only' ||
+      !dependencyDigestSchema.safeParse(plan.digest).success ||
+      !this.validPin(plan.provider) ||
+      plan.provider.id !== pluginId ||
+      plan.replacement !== null ||
+      plan.consumers.length > 128 ||
+      plan.affectedLocks.length > 129 ||
+      plan.consumers.some(
+        id =>
+          !dependencyIdSchema.safeParse(id.publisher).success ||
+          !dependencyIdSchema.safeParse(id.id).success
+      ) ||
+      plan.affectedLocks.some(
+        hash => !dependencyDigestSchema.safeParse(hash).success
+      )
+    )
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    return plan
+  }
+
+  async serviceCalls(rootRunId: string): Promise<ServiceCallDiagnostic[]> {
+    const uuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+    if (!uuid.test(rootRunId)) throw new RuntimeClientError('INVALID_REQUEST')
+    const outcome = await this.call({
+      method: 'services.calls',
+      payload: { runId: rootRunId },
+    })
+    if (outcome.type !== 'service-calls')
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    const calls = outcome.data
+    if (
+      calls.length > 64 ||
+      new Set(calls.map(call => call.runId)).size !== calls.length ||
+      calls.some(
+        call =>
+          call.rootRunId !== rootRunId ||
+          !uuid.test(call.runId) ||
+          !uuid.test(call.parentRunId) ||
+          ![
+            'local-cli',
+            'local-desktop',
+            'validation-cli',
+            'validation-desktop',
+          ].includes(call.rootCaller) ||
+          !this.validPin(call.provider) ||
+          !dependencyIdSchema.safeParse(call.consumer.id).success ||
+          !dependencyIdSchema.safeParse(call.consumer.publisher).success ||
+          !dependencyIdSchema.safeParse(call.service).success ||
+          !dependencyIdSchema.safeParse(call.operation).success ||
+          !dependencyDigestSchema.safeParse(call.dependencyLock).success ||
+          typeof call.deadline !== 'number' ||
+          !Number.isFinite(call.deadline) ||
+          call.deadline <= 0 ||
+          !['queued', 'running', 'succeeded', 'failed', 'interrupted'].includes(
+            call.state
+          )
+      )
+    )
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    return calls
   }
 
   async connect(
@@ -121,6 +206,8 @@ export class RuntimeClient {
       'runtime.status': 'status',
       'plugins.list': 'plugins',
       'dependencies.plan': 'dependency-plan',
+      'dependencies.unload-plan': 'provider-change-plan',
+      'services.calls': 'service-calls',
       'jobs.submit': 'receipt',
       'jobs.lookup': 'receipt',
       'jobs.status': 'job',

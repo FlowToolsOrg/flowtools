@@ -46,7 +46,7 @@
     "format": "turbo run format",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
-    "test:dependencies": "bun run build:packages && bun test packages/sdk/test/dependencies.test.ts packages/runtime-client/test/dependency-plan.test.ts packages/cli/src/entry.test.ts && bun run --cwd packages/runtime-core test && bun test apps/runtime/test/cli-execution.test.ts",
+    "test:dependencies": "bun run build:packages && bun test packages/sdk/test/dependencies.test.ts packages/sdk/test/services.test.ts packages/runtime-client/test/dependency-plan.test.ts packages/runtime-client/test/services.test.ts packages/plugin-runner/test/protocol.test.ts packages/cli/src/entry.test.ts && bun run --cwd packages/runtime-core test && bun run --cwd apps/runtime test",
     "smoke:plugins": "bun run build:packages && bun run --cwd plugins smoke:plugins",
     "lint:staged": "lint-staged",
     "prepare": "husky",

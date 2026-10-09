@@ -223,3 +223,15 @@ references without explicit selectors fail resolution. Planning is read-only,
 not an install transaction, activation or permission grant. Durable execution
 lock binding/RPC is P1.6b and signed transaction admission is P2.5b. See
 [validation scope](../validation/g4-dependency-plans.md).
+
+### G4 P1.6b locks and transitions
+
+Fixed T1 accepted jobs persist exact locks; idempotent retry retains the old lock.
+Provider grants never replace ancestor grants. Prototype cross-provider private
+data is denied. Candidate updates validate the DAG, stop new admissions, drain
+queued/active references, back up and migrate before changing the current catalog.
+Prepared/uncertain journal states or database/catalog mismatch fail closed.
+Cascade disable requires the complete current plan confirmation and persists
+through restart. Old locks/catalogs/backups remain available for controlled recovery.
+Signed artifact installation, filesystem/database transaction recovery and tool GC
+remain G5/G6. See [evidence](../validation/g4-service-calls.md).

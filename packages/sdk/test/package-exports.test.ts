@@ -11,6 +11,7 @@ interface PackageManifest {
 }
 
 const expectedSymbols: Record<string, readonly string[]> = {
+  './services': ['executeManifestService', 'serviceTargetSchema'],
   './dependencies': [
     'serviceDefinitionSchema',
     'serviceDependencySchema',
@@ -51,6 +52,7 @@ describe('package exports', () => {
       'index.js',
       'execution.js',
       'dependencies.js',
+      'services.js',
       'data.js',
       'compat/catalog.js',
       'manifest.js',

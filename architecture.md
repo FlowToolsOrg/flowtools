@@ -820,3 +820,16 @@ clients send fixed root plugin IDs and cannot supply catalog, publishers or path
 Services share one provider package version per plan; tools are independently
 pinned per consumer. This step is plan-only and leaves durable job locks intact.
 See [contracts and validation](docs/validation/g4-dependency-plans.md).
+
+### G4 P1.6b service runtime
+
+Runtime Core binds accepted immutable locks and nested broker sessions; every
+effect checks the whole ancestor chain at commit. Native service runner owns
+bounded bidirectional child pipes and one serial gate per provider, independent
+of root job permits. The shared SDK validates actual headless service handlers.
+Host-controlled backup/journal/migration follows complete lease/process drain;
+uncertain commits stop admission and catalog mismatch requires recovery.
+Read-only client/CLI inspection never activates or grants a service. Controlled
+fixture snapshots validate this prototype; signed cross-package installation and
+OS isolation remain G5, shared tool storage/GC G6.
+See [implementation and validation](docs/validation/g4-service-calls.md).

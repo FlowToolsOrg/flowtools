@@ -119,7 +119,22 @@ pub fn artifacts() -> Result<Vec<(&'static str, String)>, Box<dyn std::error::Er
         },
     )
     .map_err(|_| "Invalid build-owned dependency plan")?;
-    let fixtures = json!({"formatVersion":1,"request":request,"responses":errors,"manifests":manifests,"operations":operations,"dependencyPlan":dependency_plan});
+    let mut registry = crate::services::ServiceRegistry::default();
+    registry
+        .set_catalog(
+            &BuiltinCatalog::from_host_manifests(
+                manifests
+                    .iter()
+                    .map(|item| item["manifest"].clone())
+                    .collect(),
+            )
+            .map_err(|_| "Invalid fixture catalog")?,
+        )
+        .map_err(|_| "Invalid fixture graph")?;
+    let unload = registry
+        .change_plan(&dependency_plan.lock.packages[0], None)
+        .map_err(|_| "Invalid unload fixture")?;
+    let fixtures = json!({"formatVersion":1,"request":request,"responses":errors,"manifests":manifests,"operations":operations,"dependencyPlan":dependency_plan,"providerUnloadPlan":unload});
     Ok(vec![
         ("bindings.ts", bindings),
         (

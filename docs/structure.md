@@ -5,10 +5,12 @@
 [下一阶段实施设计](./next-milestones.md) 定义 G0–G8 的顺序与验收。
 G2 已新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`
 （无界面运行服务）、`packages/runtime-client`（生成 DTO 的 TS 客户端）和
-`packages/plugin-runner`（受管执行入口）。这些目录已交付 G2 的固定 T1 / 可丢弃 profile 验证基础；G3 T1 broker 与单写者数据基础已交付，持久授权与发行仍待后续子项。
-SDK 已有命令/Manifest、依赖声明与 plan-only 锁；服务 RPC 留待 P1.6b。Rust core 当前管理
-验证任务与 P2.3a T1 内存策略 broker；单写者数据；持久 grants、服务锁及工具
-artifact/lease/GC 仍为后续目标。
+`packages/plugin-runner`（受管执行入口）。这些目录已交付 G2 的固定 T1 / 可丢弃
+profile 验证基础；G3 T1 broker、单写者数据、持久授权与独立 CLI 发行已在
+固定 Windows/T1 prototype 范围验证。
+SDK 已有命令/Manifest、依赖声明及 P1.6b 服务执行契约。Rust core 当前管理
+验证任务、T1 broker、单写者数据与持久 grants、accepted 服务锁及调用租约。
+第三方包准入、隔离和真实工具 artifact/lease/GC 仍为后续目标。
 专用 Desktop 与 Node 客户端已使用同一验证服务。
 普通受管 T1 runner 不是 T3 sandbox，Web 原型不自动连接本机服务。
 
@@ -471,3 +473,15 @@ IPv4/IPv6 listeners and responding endpoint; it does not configure production CD
 - `packages/cli/src/dependencies.ts`: read-only Host plan command, text/JSON.
 - [Validation scope](validation/g4-dependency-plans.md): fixed T1 and disposable
   fixtures. No new installer, service execution process or plugin namespace store.
+
+### G4 P1.6b service modules
+
+- `packages/sdk/src/services/`: pure service selector and execution contract.
+- `packages/plugin-runner/src/protocol.ts`: bounded Host/child service frames.
+- `packages/runtime-core/src/services.rs`: accepted locks, leases, call metadata,
+  reverse dependency plans; `runtime.rs` owns backup/journal/migration boundaries.
+- `apps/runtime/src/service_runner.rs`: verified fixed runner, serial providers
+  and actual Windows process group drain; no Tauri dependency.
+- RuntimeClient/CLI expose read-only unload plans and service diagnostics.
+- [Evidence](validation/g4-service-calls.md): build-only actual A/B/C fixtures,
+  no new installer or plugin-owned namespace store.

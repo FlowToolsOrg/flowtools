@@ -904,3 +904,17 @@ selectors for one provider contribute intersected package constraints.
 The Host owns resolution and lock generation. A lock is identity/integrity data,
 never a grant or install authorization. See
 [contracts and validation](validation/g4-dependency-plans.md).
+
+### G4 P1.6b service handlers
+
+Services use `@flowtools/sdk/services` and a separate compiled
+`entries.services` artifact. Handlers reuse executable plugin metadata/run and
+runtime validators; `executeManifestService` enforces headless schemas and budgets.
+`ctx.services.call({publisher,id,service,operation}, json)` requests Host-selected
+dependencies; it cannot choose versions, paths, caller identity or grants.
+Root and provider scopes intersect across all hops. Prototype artifact reads
+accept opaque handles; actual file IO exists only in controlled native tests.
+Cross-provider data access, network and tool adapters remain unavailable.
+Host owns leases and update/unload confirmation. Current production inventory
+has no service definitions; installing a service artifact remains G5.
+See [scope and validation](validation/g4-service-calls.md).

@@ -315,17 +315,24 @@ loopback 均可用，但 public/wildcard/mixed listener、未监听的端点、�
 
 ### SEC-014 服务依赖代理越权与版本漂移
 
-- 入口：Host 的 `dependencies.plan` 与内部 resolver；服务 RPC、更新/卸载
-  在 P1.6b 实现；高危，open
+- 入口：Host 的 `dependencies.plan`、只读卸载/诊断和内部固定 T1 服务 RPC、
+  provider 更新/停用事务；高危，open
 - 现状：P1.6a 增加固定 T1/fixture 的只读 DAG/不可变锁，输入仅固定 pluginIds，
   Host 绑定 publisher、目录和平台。计划不安装、激活、授予权限或接受任务；
-  生产服务委托边界及独立安全批准仍 pending。
+  P1.6b 持久 accepted locks、祖先 scope/epoch/budget 收敛、串行 provider leases、
+  实际进程组排空、备份/迁移 journal 和重启匹配拒绝已有 controlled fixtures。
+  跨 provider 私有数据默认拒绝；真实文件 IO 仅存在 native 测试 adapter。
+  固定 Bun T1 不是 OS 沙箱；生产服务委托边界及独立安全批准仍 pending。
 - 证据：[插件契约](../../packages/sdk/src/types/plugin.ts)、
   [命令契约](../../packages/sdk/src/types/command.ts)、
   [插件 loader](../../packages/sdk/src/registry/plugin-loader.ts)、
   [计划入口](../../packages/runtime-core/src/runtime.rs)、
   [声明](../../packages/sdk/src/dependencies/schema.ts)、
-  [验证记录](../validation/g4-dependency-plans.md)
+  [依赖验证](../validation/g4-dependency-plans.md)、
+  [调用/租约](../../packages/runtime-core/src/services.rs)、
+  [实际 child runner](../../apps/runtime/src/service_runner.rs)、
+  [真实拒绝回归](../../apps/runtime/src/service_tests.rs)、
+  [服务验证记录](../validation/g4-service-calls.md)
 - Owner：SDK / Runtime / Security
 - 缓解：明确 publisher/interface/version、确定 DAG/lock、服务单 profile 单版本；
   Host 保留 root caller/provider/parentRunId、可委托 handles、剩余预算与 epoch，
@@ -344,7 +351,9 @@ loopback 均可用，但 public/wildcard/mixed listener、未监听的端点、�
   已验证的原生工具访问约束。FFmpeg 等工具仍属待实现目标，默认入口未开放。
 - 证据：[Desktop adapter](../../apps/desktop/src/runtime/desktop-capabilities.ts)、
   [Rust 依赖](../../apps/desktop/src-tauri/Cargo.toml)、
-  [当前 Host 初始化](../../apps/desktop/src-tauri/src/lib.rs)
+  [当前 Host 初始化](../../apps/desktop/src-tauri/src/lib.rs)、
+  [固定 T1 服务租约范围](../validation/g4-service-calls.md)；
+  accepted lock 保留工具 pins，不代表真实工具磁盘租约或 GC 已实现
 - Owner：Runtime / Rust / Security / Release
 - 缓解：签名/hash/来源/平台/build flavor 准入、无安装脚本、typed operations、
   scoped handles/协议/输出提交、实际平台 file/network 限制、任务私有环境和

@@ -14,7 +14,7 @@ export type BootstrapPolicy = {
 	coldStart: boolean,
 };
 
-export type Call = { method: "session.open"; payload: OpenSession } | { method: "runtime.status" } | { method: "plugins.list" } | { method: "dependencies.plan"; payload: DependencyPlanRequest } | { method: "jobs.submit"; payload: SubmitJob } | { method: "jobs.lookup"; payload: IdempotencyKey } | { method: "jobs.status"; payload: JobKey } | { method: "jobs.diagnose"; payload: JobKey } | { method: "jobs.list" } | { method: "jobs.cancel"; payload: JobKey } | { method: "jobs.events"; payload: EventCursor } | { method: "data.read"; payload: DataRead } | { method: "data.write"; payload: DataWrite } | { method: "data.transaction"; payload: DataTransaction } | { method: "data.import-legacy"; payload: DataImport } | { method: "permissions.list" } | { method: "permissions.grant"; payload: PermissionGrant } | { method: "permissions.revoke"; payload: PermissionKey } | { method: "policy.set"; payload: BootstrapPolicy } | { method: "policy.import"; payload: PolicyImport } | { method: "runtime.stop" };
+export type Call = { method: "session.open"; payload: OpenSession } | { method: "runtime.status" } | { method: "plugins.list" } | { method: "dependencies.plan"; payload: DependencyPlanRequest } | { method: "dependencies.unload-plan"; payload: ProviderKey } | { method: "services.calls"; payload: JobKey } | { method: "jobs.submit"; payload: SubmitJob } | { method: "jobs.lookup"; payload: IdempotencyKey } | { method: "jobs.status"; payload: JobKey } | { method: "jobs.diagnose"; payload: JobKey } | { method: "jobs.list" } | { method: "jobs.cancel"; payload: JobKey } | { method: "jobs.events"; payload: EventCursor } | { method: "data.read"; payload: DataRead } | { method: "data.write"; payload: DataWrite } | { method: "data.transaction"; payload: DataTransaction } | { method: "data.import-legacy"; payload: DataImport } | { method: "permissions.list" } | { method: "permissions.grant"; payload: PermissionGrant } | { method: "permissions.revoke"; payload: PermissionKey } | { method: "policy.set"; payload: BootstrapPolicy } | { method: "policy.import"; payload: PolicyImport } | { method: "runtime.stop" };
 
 /**
  *  Narrow operations: no caller/plugin/namespace, raw paths, SQL, argv or env.
@@ -218,7 +218,7 @@ export type OpenSession = {
 	expectedInstanceId: string | null,
 };
 
-export type Outcome = { type: "session"; data: SessionProof } | { type: "status"; data: RuntimeStatus } | { type: "plugins"; data: PluginStatus[] } | { type: "dependency-plan"; data: DependencyPlan } | { type: "receipt"; data: JobReceipt } | { type: "job"; data: JobSnapshot } | { type: "jobs"; data: JobSnapshot[] } | { type: "diagnostic"; data: RunDiagnostic } | { type: "events"; data: JobEvent[] } | { type: "data"; data: DataSnapshot } | { type: "data-batch"; data: DataSnapshot[] } | { type: "permissions"; data: PermissionRecord[] } | { type: "policy"; data: BootstrapPolicy } | { type: "stopping" } | { type: "error"; data: RuntimeError };
+export type Outcome = { type: "session"; data: SessionProof } | { type: "status"; data: RuntimeStatus } | { type: "plugins"; data: PluginStatus[] } | { type: "dependency-plan"; data: DependencyPlan } | { type: "provider-change-plan"; data: ProviderChangePlan } | { type: "service-calls"; data: ServiceCallDiagnostic[] } | { type: "receipt"; data: JobReceipt } | { type: "job"; data: JobSnapshot } | { type: "jobs"; data: JobSnapshot[] } | { type: "diagnostic"; data: RunDiagnostic } | { type: "events"; data: JobEvent[] } | { type: "data"; data: DataSnapshot } | { type: "data-batch"; data: DataSnapshot[] } | { type: "permissions"; data: PermissionRecord[] } | { type: "policy"; data: BootstrapPolicy } | { type: "stopping" } | { type: "error"; data: RuntimeError };
 
 export type PackagePin = {
 	publisher: string,
@@ -265,6 +265,19 @@ export type PolicyImport = {
 	formatVersion: number,
 	coldStart: boolean,
 	grants: PermissionGrant[],
+};
+
+export type ProviderChangePlan = {
+	mode: string,
+	digest: string,
+	provider: PackagePin,
+	replacement: PackagePin | null,
+	consumers: DependencyIdentity[],
+	affectedLocks: string[],
+};
+
+export type ProviderKey = {
+	pluginId: string,
 };
 
 export type ReadMethod = "GET" | "HEAD";
@@ -347,6 +360,21 @@ export type Scope = { kind: "file-handle"; scope: string } | { kind: "network-re
 } };
 
 export type SendMethod = "POST" | "PUT" | "PATCH" | "DELETE";
+
+export type ServiceCallDiagnostic = {
+	runId: string,
+	parentRunId: string,
+	rootRunId: string,
+	rootCaller: string,
+	consumer: DependencyIdentity,
+	provider: PackagePin,
+	service: string,
+	operation: string,
+	dependencyLock: string,
+	deadline: number | null,
+	state: string,
+	failureCode: ErrorCode | null,
+};
 
 export type ServicePin = {
 	consumer: DependencyIdentity,

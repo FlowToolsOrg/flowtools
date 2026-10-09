@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "bun build src/runner.ts --target bun --outfile dist/runner.js",
+    "build": "bun build src/runner.ts --target bun --outfile dist/runner.js && bun run test/services/prepare.ts",
     "lint": "oxlint --type-aware --type-check src test",
     "check-types": "tsgo --noEmit",
     "test": "bun run build && bun test test"

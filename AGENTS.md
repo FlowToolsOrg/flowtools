@@ -726,5 +726,28 @@ Preserve old manifest digests when optional service fields are omitted. Services
 use one provider package version with intersected interface/package constraints;
 tools bind consumer/target/flavor/digest independently. Legacy bare selectors
 are metadata, not executable resolution. Plans must leave jobs/grants untouched.
-P1.6b owns execution binding/RPC/drain; G5 owns signed installation. Keep these
+P1.6b implements fixed T1 execution binding/RPC/drain; G5 owns signed installation. Keep these
 boundaries and [validation evidence](docs/validation/g4-dependency-plans.md).
+
+### G4 P1.6b service execution
+
+Use the pure SDK `@flowtools/sdk/services` execution contract. Only Host-bound
+runner pipes request logical service selectors and bounded JSON; no public
+catalog/apply/update/service-invoke wire API. Preserve root caller, immediate
+consumer, provider package pin and parentRunId from T0 bindings, never payloads.
+Match the complete manifest digest to the Host package pin before importing a
+compiled service entry, then verify package bytes. Keep the import side-effect
+rejection test and matching-pin control; this is not package signing or a sandbox.
+Intersect every ancestor declaration/grant with leaf scopes and epochs; retain
+shared call/output budgets, deadlines and cancellation. Cross-provider PluginData
+delegation is denied. New capabilities still require actual Host adapters.
+Accepted roots and queued/active service calls hold version references. Provider
+gates are separate from root concurrency and remain held until the actual owned
+process group is empty. Default dependent unload fails; cascade requires the
+current complete plan confirmation. Updates validate candidate DAG/interfaces,
+drain old users, back up, migrate transactionally and preserve old locks/catalogs.
+Uncertain storage/process drain stops admission; restart rejects prepared or
+mismatched catalog journals. Never turn these T1 checks into sandbox claims.
+The A/B/C bundle is build-only in plugin-runner's ignored `.generated/g4-services`,
+not production inventory. Run `test:dependencies` for real native regressions.
+See [scope and evidence](docs/validation/g4-service-calls.md); G5/G6 remain pending.

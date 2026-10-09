@@ -17,6 +17,27 @@ async function invoke(args: string[]) {
   return { stdout, stderr, code }
 }
 
+test('dependency inspection rejects malformed selectors before profile IO', async () => {
+  for (const args of [
+    ['unload-plan', '../untrusted'],
+    ['calls', '00000000-00000000-00000000-00000000000'],
+  ]) {
+    const output = await invoke([
+      'dependencies',
+      ...args,
+      '--profile',
+      'private-profile-canary',
+      '--format',
+      'json',
+    ])
+    expect(output.code).toBe(1)
+    expect(JSON.parse(output.stdout).success).toBe(false)
+    expect(output.stdout + output.stderr).not.toContain(
+      'private-profile-canary'
+    )
+  }
+}, 30_000)
+
 test('dependency plan rejects unknown identities before native or profile IO', async () => {
   const output = await invoke([
     'dependencies',

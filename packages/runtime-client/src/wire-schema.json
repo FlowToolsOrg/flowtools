@@ -376,6 +376,40 @@
             "additionalProperties": false,
             "properties": {
               "method": {
+                "const": "dependencies.unload-plan",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ProviderKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "services.calls",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/JobKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
                 "const": "jobs.submit",
                 "type": "string"
               },
@@ -951,6 +985,18 @@
           "formatVersion",
           "coldStart",
           "grants"
+        ],
+        "type": "object"
+      },
+      "ProviderKey": {
+        "additionalProperties": false,
+        "properties": {
+          "pluginId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pluginId"
         ],
         "type": "object"
       },
@@ -1794,6 +1840,43 @@
             "additionalProperties": false,
             "properties": {
               "data": {
+                "$ref": "#/$defs/ProviderChangePlan"
+              },
+              "type": {
+                "const": "provider-change-plan",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/$defs/ServiceCallDiagnostic"
+                },
+                "type": "array"
+              },
+              "type": {
+                "const": "service-calls",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
                 "$ref": "#/$defs/JobReceipt"
               },
               "type": {
@@ -2125,6 +2208,50 @@
           "installed",
           "enabled",
           "running"
+        ],
+        "type": "object"
+      },
+      "ProviderChangePlan": {
+        "additionalProperties": false,
+        "properties": {
+          "affectedLocks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "consumers": {
+            "items": {
+              "$ref": "#/$defs/DependencyIdentity"
+            },
+            "type": "array"
+          },
+          "digest": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "provider": {
+            "$ref": "#/$defs/PackagePin"
+          },
+          "replacement": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/PackagePin"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "mode",
+          "digest",
+          "provider",
+          "consumers",
+          "affectedLocks"
         ],
         "type": "object"
       },
@@ -2467,6 +2594,69 @@
           "DELETE"
         ],
         "type": "string"
+      },
+      "ServiceCallDiagnostic": {
+        "additionalProperties": false,
+        "properties": {
+          "consumer": {
+            "$ref": "#/$defs/DependencyIdentity"
+          },
+          "deadline": {
+            "format": "double",
+            "type": "number"
+          },
+          "dependencyLock": {
+            "type": "string"
+          },
+          "failureCode": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ErrorCode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "operation": {
+            "type": "string"
+          },
+          "parentRunId": {
+            "type": "string"
+          },
+          "provider": {
+            "$ref": "#/$defs/PackagePin"
+          },
+          "rootCaller": {
+            "type": "string"
+          },
+          "rootRunId": {
+            "type": "string"
+          },
+          "runId": {
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId",
+          "parentRunId",
+          "rootRunId",
+          "rootCaller",
+          "consumer",
+          "provider",
+          "service",
+          "operation",
+          "dependencyLock",
+          "deadline",
+          "state"
+        ],
+        "type": "object"
       },
       "ServicePin": {
         "additionalProperties": false,

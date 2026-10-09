@@ -877,3 +877,11 @@ radius, border, typography, shadow and motion tokens. The Host supplies defaults
 and explicit selection; missing/invalid themes fall back without losing that
 selection. User overrides are validated atomically. This does not apply CSS or
 complete the E02 UI milestone. See [theme scope and evidence](./docs/validation/e02-theme-contracts.md).
+
+E02b adds the Host-owned `AppearanceScope` from `@flowtools/ui` and explicit
+`@flowtools/ui/appearance.css` asset. An independent UI-test preview demonstrates
+colors, radius, typography, preview/cancel/reset and withdrawal recovery:
+`bun run --cwd apps/ui-test dev`, then `/?appearance-validation=1`.
+See [adapter validation and screenshots](./docs/validation/e02-theme-adapter.md)
+for actual checks and remaining acceptance. Real Web/Desktop integration, portal
+mounting, persistent preferences and the parent E02 remain pending.

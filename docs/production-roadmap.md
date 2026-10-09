@@ -1999,6 +1999,11 @@ E01a 不修改 Manifest v1 或 Runtime wire，不应用主题/翻译/设置，�
 仍 open，独立安全 Reviewer/日期/批准结论仍 pending。
 
 E02 分项：E02a 主题数据内核工程范围完成，见 [独立验收](./validation/e02-theme-contracts.md)；
-E02b HeroUI 映射与独立验证面 pending，G7 真实页面接入另行协调。
+E02b HeroUI 映射与独立验证面工程范围完成，G7 真实页面接入另行协调。
 E02a 的 tokens 校验、默认补齐、显式选择、覆盖和撤下回退不完成 E02 父项；
-不增加 CSS、持久化、包加载或权限能力，不提升 maturity。
+E02a 不增加 CSS、持久化、包加载或权限能力，不提升 maturity。
+
+E02b 子项工程范围完成：`AppearanceScope`、固定静态 CSS 和 UI-test 独立页面，
+聚焦浏览器、截图与 clean Windows CI 全链通过；见 [E02b](./validation/e02-theme-adapter.md)。
+真实 Web/Desktop 页面、外部 portal、完整组件覆盖与偏好持久化仍待各自 gate，
+不推进 E02 父项或 G7 完成状态。

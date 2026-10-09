@@ -529,3 +529,14 @@ Host 管理选择与 owner；同名扩展按目录命名空间区分。坏主题
 没有新的 native command、CSP、远程资源、数据 scope、grant、IPC 或持久化。
 T1 仍可绕过 SDK；真实 CSS scope、可信恢复呈现、对比度和第三方包准入未由
 本项验证。Owner：SDK / UI / Host / Security；独立审阅 pending，prototype 不变。
+
+### E02b UI adapter 补充（2026-10-09）
+
+SEC-002/003/007/010 保持 open。[作用域组件](../../packages/ui/src/components/appearance/appearance-scope.tsx)
+和[固定映射](../../packages/ui/src/components/appearance/appearance-style.ts) 重新校验
+tokens，只输出固定变量名、本地字体/阴影和数值颜色；拒绝伪造 CSS/无穷值。
+[浏览器回归](../../apps/ui-test/src/test/appearance/appearance.test.tsx) 验证恢复控制
+隔离与真实目录撤下回退，实际范围见 [E02b](../validation/e02-theme-adapter.md)。
+没有新 loader、IPC、原生/CSP/权限/数据 scope 或持久化。T1 可绕过 SDK，外观
+组件不是安全沙箱。真实宿主权限/身份/恢复含义、外部浮层与第三方包安全未获认证。
+Owner：UI / Host / Security；独立 Reviewer/日期/结论 pending / pending / 未批准。

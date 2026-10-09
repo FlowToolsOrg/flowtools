@@ -482,3 +482,10 @@ Host 默认值驱动的纯 resolver，经同一非 React 子入口导出；测�
 `packages/sdk/test/appearance.test.ts`，验收见 [E02a](./validation/e02-theme-contracts.md)。
 本子项不增加 UI 组件、CSS adapter、全局 store 或 Runtime 持久化；E02b 再接
 HeroUI 和独立消费页面，G7 真实页面接入仍待协调。
+
+E02b 的 `packages/ui/src/components/appearance/` 提供 Host 用
+`AppearanceScope` 与内部变量映射，`packages/ui/src/appearance.css` 作为显式
+公开静态资产分发。独立页面与可信 fixture 位于 `apps/ui-test/src/appearance/`，
+浏览器回归位于 `apps/ui-test/src/test/appearance/`；入口 query 只选择验证页面。
+实际验收和截图见 [E02b](./validation/e02-theme-adapter.md)。未修改真实宿主
+页面、插件清单、Runtime 或持久设置，G7 接入仍待协调。

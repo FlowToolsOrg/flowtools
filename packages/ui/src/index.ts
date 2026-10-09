@@ -1,5 +1,9 @@
 export { cn } from './utils/class-name'
 export {
+  AppearanceScope,
+  type AppearanceScopeProps,
+} from './components/appearance/appearance-scope'
+export {
   ExecutionPanel,
   type ExecutionPanelProps,
 } from './components/run-panel/execution-panel'

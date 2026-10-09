@@ -752,3 +752,14 @@ immutable stable results and system reduced-motion precedence. Reject arbitrary
 CSS/URLs/remote fonts and bound payloads before serialization. CSS/DOM adapters,
 persistence and real-host UI are separate E02b/G7 gates; record actual validation
 in [E02a evidence](./docs/validation/e02-theme-contracts.md).
+
+E02b's Host-owned `AppearanceScope` is exported only from `@flowtools/ui`, with
+an explicit static `@flowtools/ui/appearance.css` asset imported after HeroUI.
+Revalidate structured tokens; bind both base variables and HeroUI/Tailwind aliases
+inside the subtree. Keep plugin resources free of selectors/styles/URLs, and
+recovery controls outside the preview scope. The independent UI-test route is
+`/?appearance-validation=1`; its fixtures do not change the fixed CLI inventory
+or authorize code loading. Keep computed-style, apply/cancel/reset, media-change
+and withdrawal recovery regressions. Real-host pages, outside portals and
+persistent preferences require separate integration gates. Record scope and
+screenshots in [E02b evidence](./docs/validation/e02-theme-adapter.md).

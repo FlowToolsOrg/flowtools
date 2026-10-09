@@ -2,12 +2,14 @@
 
 import { expect, test } from 'bun:test'
 import { spawnSync } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
 import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
   writeFileSync,
+  unlinkSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
@@ -43,6 +45,37 @@ const workflow = Bun.YAML.parse(
     new URL('../.github/workflows/windows-quality.yml', import.meta.url)
   ).text()
 ) as Workflow
+
+test('root and workspace lint accept defined CSS classes and reject unknown ones', () => {
+  const root = fileURLToPath(new URL('../', import.meta.url))
+  const consumer = join(root, 'apps', 'ui-test')
+  const fixture = join(consumer, 'src', `lint-probe-${randomUUID()}.tsx`)
+  try {
+    for (const cwd of [root, consumer]) {
+      writeFileSync(
+        fixture,
+        'export const probe = <div className="appearance-lab" />\n'
+      )
+      const allowed = spawnSync(process.execPath, ['x', 'oxlint', fixture], {
+        cwd,
+        encoding: 'utf8',
+      })
+      expect(allowed.status, allowed.stdout + allowed.stderr).toBe(0)
+      writeFileSync(
+        fixture,
+        'export const probe = <div className="appearance-lab-unknown" />\n'
+      )
+      const denied = spawnSync(process.execPath, ['x', 'oxlint', fixture], {
+        cwd,
+        encoding: 'utf8',
+      })
+      expect(denied.status, denied.stdout + denied.stderr).toBe(1)
+      expect(denied.stdout + denied.stderr).toContain('no-unknown-classes')
+    }
+  } finally {
+    unlinkSync(fixture)
+  }
+}, 30_000)
 
 function psLiteral(value: string): string {
   return `'${value.replaceAll("'", "''")}'`

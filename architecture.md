@@ -839,3 +839,12 @@ theme common/mode and user common/mode layers. Choice belongs to the Host; absen
 or invalid themes recover to defaults, while invalid overrides are ignored as a
 whole. It adds no global store, CSS/DOM adapter or Runtime protocol. HeroUI mapping
 and real-host integration remain separate E02b/G7 gates. See [E02a evidence](./docs/validation/e02-theme-contracts.md).
+
+E02b places HeroUI-specific presentation in `packages/ui`: `AppearanceScope`
+revalidates tokens and maps them to fixed subtree variables and local presets.
+The explicit static stylesheet scopes Card/Button adaptations and reduced motion;
+the component never changes document-root styles or injects plugin CSS. The
+UI-test consumer owns in-memory draft/applied choices, subscriptions and recovery
+controls outside that subtree. See [E02b validation](./docs/validation/e02-theme-adapter.md).
+There is no new Runtime store, global theme service or third-party admission.
+Outside portals, real-host integration and persistent settings remain separate.

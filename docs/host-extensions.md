@@ -5,6 +5,7 @@
 - 范围：SDK 扩展契约、资源格式与独立验证面；真实宿主接入分项验收。
 - 相关证据：[E01a 验收记录](./validation/e01-contributions.md)。
 - E02a 主题数据内核工程范围完成；[独立验收记录](./validation/e02-theme-contracts.md)。
+- E02b HeroUI adapter 与独立预览工程范围完成；[验收与截图](./validation/e02-theme-adapter.md)。
 
 这条平行线让插件通过稳定接口贡献外观、文字、设置和业务能力。
 新增同类业务功能应通常只需增加插件；新增原生权限或底层能力仍由 Host
@@ -107,6 +108,12 @@ E01a 不修改现有 Manifest v1，不增加插件文件加载、动态执行、
 E02 拆为独立子项，保留父项 pending：E02a 是纯 SDK 主题数据内核；E02b
 再交付 HeroUI 映射与独立验证页面；真实 Web/Desktop 页面接入与 G7 协调。
 E02a 不以数据解析成功宣称组件已经改变外观。
+
+E02b 由 `@flowtools/ui` 的 Host-only `AppearanceScope` 和显式静态 CSS 资产
+实现子树呈现，重验 tokens 并重绑 HeroUI 的根层派生别名。验证页使用真实
+HeroUI / 共享 wrapper，恢复与预览控制放在主题作用域外；选择仅存在内存中。
+本项不覆盖外部 portal、所有控件、固定布局或真实宿主页面，不保存重启偏好；
+父 E02 仍 pending。使用与实际证据见 [E02b](./validation/e02-theme-adapter.md)。
 
 E02a 在 `@flowtools/sdk/extensions` 提供 `parseAppearanceTheme(value)`、
 `parseAppearanceOverrides(value)` 和 `createAppearanceResolver(hostDefaults)`。

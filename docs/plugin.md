@@ -922,3 +922,11 @@ Host 通过 `createAppearanceResolver(defaults)` 明确选择目录 key，按当
 补齐缺项、合并合法个人覆盖，并在停用或坏主题时回退。发布或启用不自动选择。
 这只是纯数据内核，CSS 应用、预览页面和持久偏好仍由后续子项交付；
 [E02a 验收](./validation/e02-theme-contracts.md) 不证明实际组件外观已改变。
+
+E02b 的 Host 适配器为 `@flowtools/ui` 的 `AppearanceScope`；消费方在
+Tailwind/HeroUI 后显式导入 `@flowtools/ui/appearance.css`，传入 resolver 结果与
+区域 label。适配器重验 tokens 并映射固定 CSS 变量，不接收主题 CSS 或选择器。
+`@flowtools/ui/plugin` 不导出该组件。共享 UI 的 Tailwind 类仍需由消费应用扫描。
+独立预览入口、截图与边界见 [E02b 验收](./validation/e02-theme-adapter.md)。
+覆盖层需由 Host 挂在作用域内并单独验收；保存偏好、真实宿主页面和第三方包接入
+尚未交付。外观选择及 enabled 状态不授予能力，恢复入口应保持在可信 Host 控制中。

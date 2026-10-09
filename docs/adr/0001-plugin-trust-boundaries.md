@@ -218,3 +218,11 @@ open；独立安全 Reviewer/日期/批准结论 pending，当前 maturity 为 p
 本项不应用 CSS、不接触 DOM，不新增 IPC、存储、加载或授权能力。
 主题值不能改变权限/身份含义；后续可信恢复与 UI adapter 单独验收。
 T1 合作范围、prototype、open 风险和独立安全审阅 pending 均保持不变。
+
+### E02b 受控主题呈现（2026-10-09）
+
+Host-only UI adapter 重验结构化 tokens，生成固定作用域变量；静态 CSS 由
+FlowTools 提供，资源不能提供选择器、URL、字体路径或任意 style。独立验证页的
+恢复控制位于主题子树外。见 [E02b](../validation/e02-theme-adapter.md)。
+这不建立第三方 CSS/DOM 隔离，不改变包准入、原生能力、持久化或权限含义。
+外部 portal、真实 Host 恢复策略与第三方执行仍须分别验收；原 ADR 边界不变。

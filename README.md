@@ -855,3 +855,13 @@ fresh Native GUI/CLI harness pass. Actual Windows keyboard focus/native consent,
 200% zoom/reflow and NVDA Speech Viewer output were subsequently verified.
 Independent security approval remains pending; no human listening, full blind-user
 workflow or other-platform certification is claimed.
+
+### G4 P1.6a dependency plans
+
+The SDK dependencies subpath declares versioned services/operations and pinned
+tool selectors. Runtime resolves its fixed inventory to deterministic immutable
+locks with bounded search, dependency order and reverse dependencies. The CLI
+`dependencies plan <plugin-ids...>` queries an existing Host in text or JSON.
+Plans do not install, activate or grant access. Existing T1 execution is unchanged;
+RPC and draining updates belong to P1.6b. See the
+[scope and validation record](docs/validation/g4-dependency-plans.md).

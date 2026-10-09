@@ -715,3 +715,16 @@ The managed Native harness must support literal IPv4 and IPv6 loopback CDP while
 checking all actual listeners and matching the responding endpoint. Preserve the
 25-second startup budget, redirect refusal and non-loopback/mismatch regressions;
 never persist CDP arguments in production configuration.
+
+### G4 P1.6a dependency plans
+
+SDK dependency declarations are pure data in `@flowtools/sdk/dependencies`.
+Runtime owns fixed catalog, target, bounded npm-range resolution and immutable
+locks; wire `dependencies.plan` accepts only known `pluginIds`. Never expose an
+arbitrary catalog, publisher, artifact path or installation through this call.
+Preserve old manifest digests when optional service fields are omitted. Services
+use one provider package version with intersected interface/package constraints;
+tools bind consumer/target/flavor/digest independently. Legacy bare selectors
+are metadata, not executable resolution. Plans must leave jobs/grants untouched.
+P1.6b owns execution binding/RPC/drain; G5 owns signed installation. Keep these
+boundaries and [validation evidence](docs/validation/g4-dependency-plans.md).

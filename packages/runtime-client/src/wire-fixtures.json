@@ -1,4 +1,48 @@
 {
+  "dependencyPlan": {
+    "formatVersion": 1,
+    "lock": {
+      "digest": "bf79c892cdb5eaea813861e72134ce8c29e22ba0c86b0dcf4f1187660d16cd46",
+      "edges": [],
+      "formatVersion": 1,
+      "packages": [
+        {
+          "digest": "aa50110fe95a458f2cc1b91c994f86bf325a52a16c8c643951452e06262c2906",
+          "id": "plugin-base64-encoder",
+          "publisher": "flowtools",
+          "version": "0.1.0"
+        }
+      ],
+      "reverseDependencies": [
+        {
+          "consumers": [],
+          "provider": {
+            "id": "plugin-base64-encoder",
+            "publisher": "flowtools"
+          }
+        }
+      ],
+      "roots": [
+        {
+          "id": "plugin-base64-encoder",
+          "publisher": "flowtools"
+        }
+      ],
+      "services": [],
+      "target": {
+        "arch": "x64",
+        "platform": "windows"
+      },
+      "tools": [],
+      "topology": [
+        {
+          "id": "plugin-base64-encoder",
+          "publisher": "flowtools"
+        }
+      ]
+    },
+    "mode": "plan-only"
+  },
   "formatVersion": 1,
   "manifests": [
     {
@@ -2055,6 +2099,86 @@
     "version": 1
   },
   "responses": [
+    {
+      "outcome": {
+        "data": {
+          "code": "DEPENDENCY_INVALID"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "DEPENDENCY_MISSING"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "DEPENDENCY_CONFLICT"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "DEPENDENCY_DUPLICATE_PROVIDER"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "DEPENDENCY_CYCLE"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "DEPENDENCY_PLATFORM_MISMATCH"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "DEPENDENCY_ARTIFACT_MISMATCH"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "DEPENDENCY_BUDGET_EXCEEDED"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
     {
       "outcome": {
         "data": {

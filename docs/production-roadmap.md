@@ -9,7 +9,7 @@
 > 2026-10-04 产品决策：面向知识工作者/普通办公用户，GUI 与外部 agents
 > 共用命令；支持独立 CLI、轻量后台内核、集中管理和共享二进制工具依赖。
 > 低代码、内置 AI 助手与模型接入保留为未来插件。具体顺序与实现见
-> [下一阶段目标与实施设计](./next-milestones.md)。G1、G2 固定验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4–G8 尚待实施。
+> [下一阶段目标与实施设计](./next-milestones.md)。G1、G2 固定验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4 P1.6a 已实现，P1.6b 与 G5–G8 尚待实施。
 
 本文档是 FlowTools 从 Demo 级原型走向生产版本的执行台账。它不以
 “页面已存在”或“类型已定义”作为完成标准，而以真实执行、失败可恢复、
@@ -1029,7 +1029,7 @@ G4 服务依赖 -> G5 签名安装与隔离 -> G6 工具链 -> G7 办公闭环 -
 | P1.4a | implemented | P1.3b               | CLI-only runtime/runner 分发、受控冷启动；未安装 GUI、50 并发启动验收              |
 | P1.4b | implemented | P1.4a               | GUI/CLI 同任务和数据，jobs status/watch/cancel、完整 text/JSON/退出码回归          |
 | P1.5b | implemented | P1.4b               | run/调用链诊断与隐私红线；实际异常/撤销/恢复可诊断                                 |
-| P1.6a | pending     | P1.1、P1.3b         | T1/fixture 的 plan-only DAG/lock、服务接口和工具声明；缺失/冲突/循环拒绝           |
+| P1.6a | done        | P1.1、P1.3b         | 2026-10-08；确定 lock、共享 semver fixtures 与实际 Host/CLI；独立提交及验收见下文  |
 | P1.6b | pending     | P1.6a、P2.4a        | Host RPC/委托 scope、排空后切服务版本、租约/反向依赖；前置服务不能代理越权         |
 | P2.5a | pending     | P1.6                | plugin/tool 签名、trust root、撤销/离线/回滚协议及 fixtures；冻结后方能实现准入    |
 | P2.5b | pending     | P2.5a、P2.3a        | staging/journal、签名准入、artifact 安装与恢复；安装不等于允许执行                 |
@@ -1208,7 +1208,10 @@ Phase 1 内核退出标准：P1.1–P1.5 全部 `done`；三端真实执行契�
 
 ### P1.6 插件依赖锁与服务调用
 
-- 状态：`pending`
+- 状态：`in-progress`（P1.6a 已实现；P1.6b 尚待实现与独立验证）
+- P1.6a 提交：`feat(runtime): resolve immutable dependency plans (P1.6a)`；
+  [依赖计划验收](./validation/g4-dependency-plans.md)记录固定 Windows/T1 范围、
+  全仓自动门禁与实际编译 CLI/Host。SEC-014/015 和独立安全批准仍 open/pending。
 - Owner：SDK / Runtime；Repository Maintainer 指定实施责任人
 - 依赖：P1.1、P1.3b、P2.4a
 - 子项：P1.6a、P1.6b；对应 G4
@@ -1731,14 +1734,14 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 
 ### Phase 1
 
-| ID   | 状态    | 负责人        | 依赖               | Commit / 验证记录               |
-| ---- | ------- | ------------- | ------------------ | ------------------------------- |
-| P1.1 | done    | Codex         | P0.1, P0.4         | a/b/c 完成；G1 验收见文档       |
-| P1.2 | pending | TBD           | P1.1               | -                               |
-| P1.3 | pending | TBD           | P1.2               | -                               |
-| P1.4 | pending | TBD           | P1.1, P1.3         | -                               |
-| P1.5 | pending | TBD           | P1.3               | -                               |
-| P1.6 | pending | SDK / Runtime | P1.1、P1.3b、P2.4a | G4 设计完成；实施与验证 pending |
+| ID   | 状态        | 负责人        | 依赖               | Commit / 验证记录                                  |
+| ---- | ----------- | ------------- | ------------------ | -------------------------------------------------- |
+| P1.1 | done        | Codex         | P0.1, P0.4         | a/b/c 完成；G1 验收见文档                          |
+| P1.2 | pending     | TBD           | P1.1               | -                                                  |
+| P1.3 | pending     | TBD           | P1.2               | -                                                  |
+| P1.4 | pending     | TBD           | P1.1, P1.3         | -                                                  |
+| P1.5 | pending     | TBD           | P1.3               | -                                                  |
+| P1.6 | in-progress | SDK / Runtime | P1.1、P1.3b、P2.4a | P1.6a 已实现；P1.6b 的 RPC/委托/排空与卸载尚待验收 |
 
 ### Phase 2
 

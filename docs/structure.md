@@ -6,7 +6,7 @@
 G2 已新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`
 （无界面运行服务）、`packages/runtime-client`（生成 DTO 的 TS 客户端）和
 `packages/plugin-runner`（受管执行入口）。这些目录已交付 G2 的固定 T1 / 可丢弃 profile 验证基础；G3 T1 broker 与单写者数据基础已交付，持久授权与发行仍待后续子项。
-SDK 已有命令/Manifest；服务依赖和异步 data 契约留待后续。Rust core 当前管理
+SDK 已有命令/Manifest、依赖声明与 plan-only 锁；服务 RPC 留待 P1.6b。Rust core 当前管理
 验证任务与 P2.3a T1 内存策略 broker；单写者数据；持久 grants、服务锁及工具
 artifact/lease/GC 仍为后续目标。
 专用 Desktop 与 Node 客户端已使用同一验证服务。
@@ -461,3 +461,13 @@ certified.
 
 `apps/ui-test/scripts/loopback-cdp.ts` validates the Native harness's observed
 IPv4/IPv6 listeners and responding endpoint; it does not configure production CDP.
+
+### G4 P1.6a dependency modules
+
+- `packages/sdk/src/dependencies/`: strict data-only service/tool declarations;
+  public subpath `@flowtools/sdk/dependencies`.
+- `packages/runtime-core/src/dependencies/`: Host-owned resolver and lock DTOs;
+  generated RuntimeClient bindings/schema derive from Rust.
+- `packages/cli/src/dependencies.ts`: read-only Host plan command, text/JSON.
+- [Validation scope](validation/g4-dependency-plans.md): fixed T1 and disposable
+  fixtures. No new installer, service execution process or plugin namespace store.

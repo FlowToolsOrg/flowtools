@@ -11,6 +11,12 @@ interface PackageManifest {
 }
 
 const expectedSymbols: Record<string, readonly string[]> = {
+  './dependencies': [
+    'serviceDefinitionSchema',
+    'serviceDependencySchema',
+    'toolDependencySchema',
+    'parseDependencyDeclarations',
+  ],
   './data': ['inspectLegacyTodos', 'hydratePluginData'],
   './manifest': [
     'pluginManifestSchema',
@@ -44,6 +50,7 @@ describe('package exports', () => {
     for (const path of [
       'index.js',
       'execution.js',
+      'dependencies.js',
       'data.js',
       'compat/catalog.js',
       'manifest.js',

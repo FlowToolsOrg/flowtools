@@ -1,0 +1,91 @@
+[
+  { "value": "1.2.3", "canonicalValid": true, "rangeValid": true },
+  { "value": "v1.2.3", "canonicalValid": false, "rangeValid": true },
+  { "value": "1.2.3+build.7", "canonicalValid": false, "rangeValid": true },
+  {
+    "value": "900719925474099.0.0",
+    "canonicalValid": true,
+    "rangeValid": true
+  },
+  {
+    "value": "900719925474100.0.0",
+    "canonicalValid": false,
+    "rangeValid": false
+  },
+  {
+    "value": "1.900719925474099.0",
+    "canonicalValid": true,
+    "rangeValid": true
+  },
+  {
+    "value": "1.900719925474100.0",
+    "canonicalValid": false,
+    "rangeValid": false
+  },
+  {
+    "value": "1.0.900719925474099",
+    "canonicalValid": true,
+    "rangeValid": true
+  },
+  {
+    "value": "1.0.900719925474100",
+    "canonicalValid": false,
+    "rangeValid": false
+  },
+  {
+    "value": "^900719925474099.0.0",
+    "canonicalValid": false,
+    "rangeValid": true
+  },
+  {
+    "value": "^900719925474100.0.0",
+    "canonicalValid": false,
+    "rangeValid": false
+  },
+  {
+    "value": ">=1.0.0 <900719925474100.0.0",
+    "canonicalValid": false,
+    "rangeValid": false
+  },
+  {
+    "value": "1.0.0-900719925474099",
+    "canonicalValid": true,
+    "rangeValid": true
+  },
+  {
+    "value": "1.0.0-900719925474100",
+    "canonicalValid": false,
+    "rangeValid": false
+  },
+  {
+    "value": "^1.0.0-900719925474100",
+    "canonicalValid": false,
+    "rangeValid": false
+  },
+  {
+    "value": "1.0.0-alpha900719925474100",
+    "canonicalValid": true,
+    "rangeValid": true
+  },
+  {
+    "value": "1.0.0+900719925474100",
+    "canonicalValid": false,
+    "rangeValid": true
+  },
+  {
+    "value": "* || >900719925474100.0.0",
+    "canonicalValid": false,
+    "rangeValid": false
+  },
+  {
+    "value": "1.x.900719925474100",
+    "canonicalValid": false,
+    "rangeValid": false
+  },
+  { "value": "01.2.3", "canonicalValid": false, "rangeValid": false },
+  { "value": ">=01.2.3", "canonicalValid": false, "rangeValid": false },
+  { "value": "1.0.0-01", "canonicalValid": false, "rangeValid": false },
+  { "value": "^1.0.0-01", "canonicalValid": false, "rangeValid": false },
+  { "value": "1.2.3alpha", "canonicalValid": false, "rangeValid": false },
+  { "value": "1||2", "canonicalValid": false, "rangeValid": true }
+]

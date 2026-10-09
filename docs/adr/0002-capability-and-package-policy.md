@@ -213,3 +213,13 @@ Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
 See [diagnostic/recovery evidence](../validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
 security review, actual native consent clicks, assistive technology and other
 platform acceptance are pending; these checks do not authorize production.
+
+### G4 P1.6a lock authority
+
+The Host alone resolves service package/interface ranges and exact tool selectors
+to a deterministic lock. Service packages share one version within the plan;
+tools can have distinct immutable artifacts for different consumers. Legacy
+references without explicit selectors fail resolution. Planning is read-only,
+not an install transaction, activation or permission grant. Durable execution
+lock binding/RPC is P1.6b and signed transaction admission is P2.5b. See
+[validation scope](../validation/g4-dependency-plans.md).

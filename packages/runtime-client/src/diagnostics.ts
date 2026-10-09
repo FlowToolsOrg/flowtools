@@ -102,6 +102,38 @@ const explanations = {
     'Runtime 响应未通过契约校验',
     '核对客户端/Runtime 版本，并查询已接收任务。',
   ],
+  DEPENDENCY_INVALID: [
+    '依赖声明或计划请求不符合契约',
+    '检查固定插件 ID、重复根节点和明确的服务接口声明。',
+  ],
+  DEPENDENCY_MISSING: [
+    '固定清单中缺少所需依赖',
+    '检查内置包与依赖声明；计划不会下载或安装外部包。',
+  ],
+  DEPENDENCY_CONFLICT: [
+    '依赖版本或服务接口要求冲突',
+    '调整同一 profile 内的版本要求，使服务提供者满足所有调用方。',
+  ],
+  DEPENDENCY_DUPLICATE_PROVIDER: [
+    '固定清单包含重复的依赖提供者',
+    '修正清单中的精确 publisher、插件 ID 与版本，不选择任意副本。',
+  ],
+  DEPENDENCY_CYCLE: [
+    '服务依赖形成循环',
+    '移除循环引用后重新生成计划；计划不会激活任何提供者。',
+  ],
+  DEPENDENCY_PLATFORM_MISMATCH: [
+    '依赖产物不支持当前平台',
+    '使用与 Host 平台和架构匹配的固定产物。',
+  ],
+  DEPENDENCY_ARTIFACT_MISMATCH: [
+    '依赖产物摘要或构建规格不匹配',
+    '核对固定产物的摘要与构建规格，不替换成其他可执行文件。',
+  ],
+  DEPENDENCY_BUDGET_EXCEEDED: [
+    '依赖计划超过资源限制',
+    '减少根插件、依赖图规模或版本候选数量后重新请求计划。',
+  ],
 } satisfies Record<ErrorCode, readonly [string, string]>
 
 /** Exportable allowlist only: never spread exception messages, inputs or results. */

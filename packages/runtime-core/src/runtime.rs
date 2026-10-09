@@ -558,6 +558,69 @@ impl RuntimeCore {
                     })
                     .collect(),
             )),
+            Call::DependencyPlan(request) => {
+                use crate::dependencies::{
+                    DependencyCatalog, DependencyIdentity, DependencyTarget,
+                };
+                if request.plugin_ids.is_empty() {
+                    return Err(ErrorCode::DependencyInvalid);
+                }
+                if request.plugin_ids.len() > 64 {
+                    return Err(ErrorCode::DependencyBudgetExceeded);
+                }
+                if request
+                    .plugin_ids
+                    .iter()
+                    .any(|id| !crate::dependencies::valid_dependency_id(id))
+                    || request
+                        .plugin_ids
+                        .iter()
+                        .collect::<std::collections::BTreeSet<_>>()
+                        .len()
+                        != request.plugin_ids.len()
+                {
+                    return Err(ErrorCode::DependencyInvalid);
+                }
+                let manifests: Vec<_> = self.catalog.list().map(|(_, m)| m.clone()).collect();
+                let mut roots = Vec::new();
+                for id in request.plugin_ids {
+                    let manifest = manifests
+                        .iter()
+                        .find(|m| m["id"] == id)
+                        .ok_or(ErrorCode::DependencyMissing)?;
+                    roots.push(DependencyIdentity {
+                        publisher: manifest["publisher"]
+                            .as_str()
+                            .ok_or(ErrorCode::DependencyInvalid)?
+                            .into(),
+                        id,
+                    });
+                }
+                let platform = match std::env::consts::OS {
+                    "windows" => "windows",
+                    "macos" => "macos",
+                    "linux" => "linux",
+                    _ => return Err(ErrorCode::DependencyPlatformMismatch),
+                };
+                let arch = match std::env::consts::ARCH {
+                    "x86_64" => "x64",
+                    "aarch64" => "arm64",
+                    _ => return Err(ErrorCode::DependencyPlatformMismatch),
+                };
+                let catalog = DependencyCatalog::from_manifests(manifests, vec![])
+                    .map_err(ErrorCode::from)?;
+                Ok(Outcome::DependencyPlan(
+                    catalog
+                        .resolve(
+                            &roots,
+                            &DependencyTarget {
+                                platform: platform.into(),
+                                arch: arch.into(),
+                            },
+                        )
+                        .map_err(ErrorCode::from)?,
+                ))
+            }
             Call::Submit(submit) => self
                 .submit(connection, &caller, submit)
                 .map(Outcome::Receipt),
@@ -1316,6 +1379,76 @@ pub(crate) fn interrupt_restored_jobs(connection: &rusqlite::Connection) -> Resu
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn dependency_plans_bind_host_inventory_and_do_not_submit_or_grant() {
+        let mut core = RuntimeCore::validation("cli-token".into(), "desktop-token".into());
+        let session = open(&mut core, "cli", "cli-token");
+        let before_jobs = core.jobs.len();
+        let before_pending = core.pending.len();
+        let call = || {
+            Call::DependencyPlan(DependencyPlanRequest {
+                plugin_ids: vec!["plugin-base64-encoder".into()],
+            })
+        };
+        let Outcome::DependencyPlan(first) = core
+            .handle("cli", request(call(), Some(session.clone())))
+            .outcome
+        else {
+            panic!("Expected a Host-generated plan");
+        };
+        let Outcome::DependencyPlan(second) = core
+            .handle("cli", request(call(), Some(session.clone())))
+            .outcome
+        else {
+            panic!("Expected a deterministic plan");
+        };
+        assert_eq!(
+            serde_json::to_value(first).unwrap(),
+            serde_json::to_value(second).unwrap()
+        );
+        assert_eq!(core.jobs.len(), before_jobs);
+        assert_eq!(core.pending.len(), before_pending);
+        for ids in [
+            vec![],
+            vec!["other-publisher/service".into()],
+            vec!["missing-plugin".into()],
+            vec!["plugin-base64-encoder".into(); 2],
+            vec!["plugin-base64-encoder".into(); 65],
+        ] {
+            assert!(matches!(
+                core.handle(
+                    "cli",
+                    request(
+                        Call::DependencyPlan(DependencyPlanRequest { plugin_ids: ids }),
+                        Some(session.clone())
+                    )
+                )
+                .outcome,
+                Outcome::Error(RuntimeError {
+                    code: ErrorCode::DependencyMissing
+                        | ErrorCode::DependencyInvalid
+                        | ErrorCode::DependencyBudgetExceeded
+                })
+            ));
+        }
+        // No caller can provide the catalog, publisher, platform or artifact path.
+        for extra in ["catalog", "publisher", "target", "path"] {
+            let mut payload = json!({"pluginIds":["plugin-base64-encoder"]});
+            payload[extra] = json!("untrusted");
+            assert!(serde_json::from_value::<Call>(
+                json!({"method":"dependencies.plan","payload":payload})
+            )
+            .is_err());
+        }
+        assert!(matches!(
+            core.handle("other-connection", request(call(), Some(session)))
+                .outcome,
+            Outcome::Error(RuntimeError {
+                code: ErrorCode::SessionInvalid
+            })
+        ));
+    }
+
     #[test]
     fn authorized_stop_cancels_queued_and_running_work_before_receipt_delivery() {
         for persist_failure in [false, true] {

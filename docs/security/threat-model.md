@@ -315,12 +315,17 @@ loopback 均可用，但 public/wildcard/mixed listener、未监听的端点、�
 
 ### SEC-014 服务依赖代理越权与版本漂移
 
-- 入口：规划中的依赖 resolver、插件服务 RPC、更新/卸载；高危，open
-- 现状：当前 Registry/Loader 不提供生产依赖 DAG、不可变锁或服务委托身份；
-  插件依赖是新设计范围，未通过 fixtures，不能推断前置插件有安全共享机制。
+- 入口：Host 的 `dependencies.plan` 与内部 resolver；服务 RPC、更新/卸载
+  在 P1.6b 实现；高危，open
+- 现状：P1.6a 增加固定 T1/fixture 的只读 DAG/不可变锁，输入仅固定 pluginIds，
+  Host 绑定 publisher、目录和平台。计划不安装、激活、授予权限或接受任务；
+  生产服务委托边界及独立安全批准仍 pending。
 - 证据：[插件契约](../../packages/sdk/src/types/plugin.ts)、
   [命令契约](../../packages/sdk/src/types/command.ts)、
-  [插件 loader](../../packages/sdk/src/registry/plugin-loader.ts)
+  [插件 loader](../../packages/sdk/src/registry/plugin-loader.ts)、
+  [计划入口](../../packages/runtime-core/src/runtime.rs)、
+  [声明](../../packages/sdk/src/dependencies/schema.ts)、
+  [验证记录](../validation/g4-dependency-plans.md)
 - Owner：SDK / Runtime / Security
 - 缓解：明确 publisher/interface/version、确定 DAG/lock、服务单 profile 单版本；
   Host 保留 root caller/provider/parentRunId、可委托 handles、剩余预算与 epoch，

@@ -1,4 +1,5 @@
 use crate::broker::{CommandIdentity, Scope};
+use crate::dependencies::DependencyPlan;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use specta::Type;
@@ -32,6 +33,8 @@ pub enum Call {
     Status,
     #[serde(rename = "plugins.list")]
     Plugins,
+    #[serde(rename = "dependencies.plan")]
+    DependencyPlan(DependencyPlanRequest),
     #[serde(rename = "jobs.submit")]
     Submit(SubmitJob),
     #[serde(rename = "jobs.lookup")]
@@ -141,6 +144,13 @@ pub struct SubmitJob {
     pub idempotency_key: String,
     pub background: bool,
     pub deadline: f64,
+}
+
+/// Roots only: package inventory, identities and target are Host-owned.
+#[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DependencyPlanRequest {
+    pub plugin_ids: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
@@ -287,10 +297,34 @@ pub enum ErrorCode {
     RuntimeDisconnected,
     #[serde(rename = "INVALID_RESPONSE")]
     InvalidResponse,
+    #[serde(rename = "DEPENDENCY_INVALID")]
+    DependencyInvalid,
+    #[serde(rename = "DEPENDENCY_MISSING")]
+    DependencyMissing,
+    #[serde(rename = "DEPENDENCY_CONFLICT")]
+    DependencyConflict,
+    #[serde(rename = "DEPENDENCY_DUPLICATE_PROVIDER")]
+    DependencyDuplicateProvider,
+    #[serde(rename = "DEPENDENCY_CYCLE")]
+    DependencyCycle,
+    #[serde(rename = "DEPENDENCY_PLATFORM_MISMATCH")]
+    DependencyPlatformMismatch,
+    #[serde(rename = "DEPENDENCY_ARTIFACT_MISMATCH")]
+    DependencyArtifactMismatch,
+    #[serde(rename = "DEPENDENCY_BUDGET_EXCEEDED")]
+    DependencyBudgetExceeded,
 }
 
 impl ErrorCode {
-    pub const ALL: [Self; 33] = [
+    pub const ALL: [Self; 41] = [
+        Self::DependencyInvalid,
+        Self::DependencyMissing,
+        Self::DependencyConflict,
+        Self::DependencyDuplicateProvider,
+        Self::DependencyCycle,
+        Self::DependencyPlatformMismatch,
+        Self::DependencyArtifactMismatch,
+        Self::DependencyBudgetExceeded,
         Self::AcceptanceUnknown,
         Self::ExecutionInterrupted,
         Self::ResultExpired,
@@ -350,6 +384,8 @@ pub enum Outcome {
     Status(RuntimeStatus),
     #[serde(rename = "plugins")]
     Plugins(Vec<PluginStatus>),
+    #[serde(rename = "dependency-plan")]
+    DependencyPlan(DependencyPlan),
     #[serde(rename = "receipt")]
     Receipt(JobReceipt),
     #[serde(rename = "job")]

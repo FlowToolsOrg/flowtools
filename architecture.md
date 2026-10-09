@@ -810,3 +810,13 @@ window zoom shortcuts are enabled, including isolated validation windows.
 fresh Native harness, actual Windows keyboard/native consent, 200% zoom/reflow and
 NVDA Speech Viewer output. Independent security approval remains pending; human
 listening, a full blind-user workflow and other platforms are not certified.
+
+### G4 P1.6a dependency plans
+
+`packages/sdk/src/dependencies` owns data-only service/tool declarations.
+`packages/runtime-core/src/dependencies` owns the catalog, bounded npm-compatible
+resolver and immutable lock. Only Host-selected inventory/target enter resolution;
+clients send fixed root plugin IDs and cannot supply catalog, publishers or paths.
+Services share one provider package version per plan; tools are independently
+pinned per consumer. This step is plan-only and leaves durable job locks intact.
+See [contracts and validation](docs/validation/g4-dependency-plans.md).

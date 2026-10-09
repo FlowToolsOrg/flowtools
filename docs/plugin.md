@@ -891,3 +891,16 @@ and fresh Native harness results, plus actual Windows keyboard/native consent,
 200% zoom/reflow and NVDA Speech Viewer output. Independent security approval
 remains pending; human listening, a full blind-user workflow and other platforms
 are not certified.
+
+### G4 P1.6a dependency declarations
+
+Optional Manifest `services` contains service IDs, semantic interface versions
+and headless, non-interactive operations using the existing command schemas.
+Nonempty definitions require a declared `entries.services` file. Service references
+pin `publisher/id/version` plus `service/interfaceVersion`; tool references also
+pin `target/buildFlavor/digest`. Legacy references remain readable metadata but
+cannot resolve runnable dependencies without their selectors. Multiple service
+selectors for one provider contribute intersected package constraints.
+The Host owns resolution and lock generation. A lock is identity/integrity data,
+never a grant or install authorization. See
+[contracts and validation](validation/g4-dependency-plans.md).

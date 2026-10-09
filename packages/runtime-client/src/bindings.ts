@@ -14,7 +14,7 @@ export type BootstrapPolicy = {
 	coldStart: boolean,
 };
 
-export type Call = { method: "session.open"; payload: OpenSession } | { method: "runtime.status" } | { method: "plugins.list" } | { method: "jobs.submit"; payload: SubmitJob } | { method: "jobs.lookup"; payload: IdempotencyKey } | { method: "jobs.status"; payload: JobKey } | { method: "jobs.diagnose"; payload: JobKey } | { method: "jobs.list" } | { method: "jobs.cancel"; payload: JobKey } | { method: "jobs.events"; payload: EventCursor } | { method: "data.read"; payload: DataRead } | { method: "data.write"; payload: DataWrite } | { method: "data.transaction"; payload: DataTransaction } | { method: "data.import-legacy"; payload: DataImport } | { method: "permissions.list" } | { method: "permissions.grant"; payload: PermissionGrant } | { method: "permissions.revoke"; payload: PermissionKey } | { method: "policy.set"; payload: BootstrapPolicy } | { method: "policy.import"; payload: PolicyImport } | { method: "runtime.stop" };
+export type Call = { method: "session.open"; payload: OpenSession } | { method: "runtime.status" } | { method: "plugins.list" } | { method: "dependencies.plan"; payload: DependencyPlanRequest } | { method: "jobs.submit"; payload: SubmitJob } | { method: "jobs.lookup"; payload: IdempotencyKey } | { method: "jobs.status"; payload: JobKey } | { method: "jobs.diagnose"; payload: JobKey } | { method: "jobs.list" } | { method: "jobs.cancel"; payload: JobKey } | { method: "jobs.events"; payload: EventCursor } | { method: "data.read"; payload: DataRead } | { method: "data.write"; payload: DataWrite } | { method: "data.transaction"; payload: DataTransaction } | { method: "data.import-legacy"; payload: DataImport } | { method: "permissions.list" } | { method: "permissions.grant"; payload: PermissionGrant } | { method: "permissions.revoke"; payload: PermissionKey } | { method: "policy.set"; payload: BootstrapPolicy } | { method: "policy.import"; payload: PolicyImport } | { method: "runtime.stop" };
 
 /**
  *  Narrow operations: no caller/plugin/namespace, raw paths, SQL, argv or env.
@@ -84,7 +84,57 @@ export type DataWrite = {
 	mutation: DataMutation,
 };
 
-export type ErrorCode = "PROTOCOL_MISMATCH" | "CLIENT_INCOMPATIBLE" | "FRAME_TOO_LARGE" | "INVALID_REQUEST" | "SESSION_INVALID" | "INSTANCE_MISMATCH" | "APPROVAL_REQUIRED" | "INTERACTION_REQUIRED" | "CAPABILITY_UNDECLARED" | "SCOPE_DENIED" | "GRANT_REVOKED" | "BUDGET_EXCEEDED" | "REVISION_CONFLICT" | "STORE_BUSY" | "STORE_CORRUPT" | "RECOVERY_PENDING" | "SCHEMA_UNSUPPORTED" | "STORAGE_FAILED" | "ACCEPTANCE_UNKNOWN" | "EXECUTION_INTERRUPTED" | "RESULT_EXPIRED" | "COLD_START_DENIED" | "PLUGIN_NOT_FOUND" | "INPUT_INVALID" | "JOB_NOT_FOUND" | "IDEMPOTENCY_CONFLICT" | "TIMEOUT" | "ABORTED" | "EXECUTION_FAILED" | "OUTPUT_INVALID" | "RUNTIME_BUSY" | "RUNTIME_DISCONNECTED" | "INVALID_RESPONSE";
+/**
+ *  Service edges form the provider DAG. Tool pins are leaves, retaining the exact
+ *  consumer and artifact separately without activating any plugin provider.
+ */
+export type DependencyEdge = {
+	consumer: DependencyIdentity,
+	provider: DependencyIdentity,
+	service: string,
+};
+
+export type DependencyIdentity = {
+	publisher: string,
+	id: string,
+};
+
+/**
+ *  Value pins, never grants, executable paths, installation or activation receipts.
+ *  The digest binds every other field and excludes the digest field itself.
+ */
+export type DependencyLock = {
+	formatVersion: number,
+	digest: string,
+	target: DependencyTarget,
+	roots: DependencyIdentity[],
+	packages: PackagePin[],
+	services: ServicePin[],
+	tools: ToolPin[],
+	edges: DependencyEdge[],
+	/**  Providers before consumers; deterministic identity order breaks ties. */
+	topology: DependencyIdentity[],
+	/**  Direct service consumers, including providers without consumers. */
+	reverseDependencies: ReverseDependency[],
+};
+
+export type DependencyPlan = {
+	formatVersion: number,
+	mode: string,
+	lock: DependencyLock,
+};
+
+/**  Roots only: package inventory, identities and target are Host-owned. */
+export type DependencyPlanRequest = {
+	pluginIds: string[],
+};
+
+export type DependencyTarget = {
+	platform: string,
+	arch: string,
+};
+
+export type ErrorCode = "PROTOCOL_MISMATCH" | "CLIENT_INCOMPATIBLE" | "FRAME_TOO_LARGE" | "INVALID_REQUEST" | "SESSION_INVALID" | "INSTANCE_MISMATCH" | "APPROVAL_REQUIRED" | "INTERACTION_REQUIRED" | "CAPABILITY_UNDECLARED" | "SCOPE_DENIED" | "GRANT_REVOKED" | "BUDGET_EXCEEDED" | "REVISION_CONFLICT" | "STORE_BUSY" | "STORE_CORRUPT" | "RECOVERY_PENDING" | "SCHEMA_UNSUPPORTED" | "STORAGE_FAILED" | "ACCEPTANCE_UNKNOWN" | "EXECUTION_INTERRUPTED" | "RESULT_EXPIRED" | "COLD_START_DENIED" | "PLUGIN_NOT_FOUND" | "INPUT_INVALID" | "JOB_NOT_FOUND" | "IDEMPOTENCY_CONFLICT" | "TIMEOUT" | "ABORTED" | "EXECUTION_FAILED" | "OUTPUT_INVALID" | "RUNTIME_BUSY" | "RUNTIME_DISCONNECTED" | "INVALID_RESPONSE" | "DEPENDENCY_INVALID" | "DEPENDENCY_MISSING" | "DEPENDENCY_CONFLICT" | "DEPENDENCY_DUPLICATE_PROVIDER" | "DEPENDENCY_CYCLE" | "DEPENDENCY_PLATFORM_MISMATCH" | "DEPENDENCY_ARTIFACT_MISMATCH" | "DEPENDENCY_BUDGET_EXCEEDED";
 
 export type EventCursor = {
 	runId: string,
@@ -168,7 +218,14 @@ export type OpenSession = {
 	expectedInstanceId: string | null,
 };
 
-export type Outcome = { type: "session"; data: SessionProof } | { type: "status"; data: RuntimeStatus } | { type: "plugins"; data: PluginStatus[] } | { type: "receipt"; data: JobReceipt } | { type: "job"; data: JobSnapshot } | { type: "jobs"; data: JobSnapshot[] } | { type: "diagnostic"; data: RunDiagnostic } | { type: "events"; data: JobEvent[] } | { type: "data"; data: DataSnapshot } | { type: "data-batch"; data: DataSnapshot[] } | { type: "permissions"; data: PermissionRecord[] } | { type: "policy"; data: BootstrapPolicy } | { type: "stopping" } | { type: "error"; data: RuntimeError };
+export type Outcome = { type: "session"; data: SessionProof } | { type: "status"; data: RuntimeStatus } | { type: "plugins"; data: PluginStatus[] } | { type: "dependency-plan"; data: DependencyPlan } | { type: "receipt"; data: JobReceipt } | { type: "job"; data: JobSnapshot } | { type: "jobs"; data: JobSnapshot[] } | { type: "diagnostic"; data: RunDiagnostic } | { type: "events"; data: JobEvent[] } | { type: "data"; data: DataSnapshot } | { type: "data-batch"; data: DataSnapshot[] } | { type: "permissions"; data: PermissionRecord[] } | { type: "policy"; data: BootstrapPolicy } | { type: "stopping" } | { type: "error"; data: RuntimeError };
+
+export type PackagePin = {
+	publisher: string,
+	id: string,
+	version: string,
+	digest: string,
+};
 
 export type PermissionGrant = {
 	pluginId: string,
@@ -235,6 +292,11 @@ export type Response = {
 	outcome: Outcome,
 };
 
+export type ReverseDependency = {
+	provider: DependencyIdentity,
+	consumers: DependencyIdentity[],
+};
+
 /**  Metadata allowlist only; never payloads, arbitrary messages, paths or credentials. */
 export type RunDiagnostic = {
 	formatVersion: number,
@@ -286,6 +348,13 @@ export type Scope = { kind: "file-handle"; scope: string } | { kind: "network-re
 
 export type SendMethod = "POST" | "PUT" | "PATCH" | "DELETE";
 
+export type ServicePin = {
+	consumer: DependencyIdentity,
+	provider: PackagePin,
+	service: string,
+	version: string,
+};
+
 export type SessionProof = {
 	sessionId: string,
 	instanceId: string,
@@ -309,4 +378,14 @@ export type SubmitJob = {
 	idempotencyKey: string,
 	background: boolean,
 	deadline: number | null,
+};
+
+export type ToolPin = {
+	consumer: DependencyIdentity,
+	publisher: string,
+	id: string,
+	version: string,
+	target: DependencyTarget,
+	buildFlavor: string,
+	digest: string,
 };

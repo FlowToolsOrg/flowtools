@@ -1,107 +1,27 @@
-import { satisfies, valid, validRange } from 'semver'
+import { satisfies, valid } from 'semver'
 import { z } from 'zod'
 
 import { portablePluginPathSchema } from '../compat/catalog'
+import {
+  dependencyIdSchema,
+  dependencyVersionSchema,
+  dependencyRangeSchema,
+  dependencyTargetSchema,
+} from '../dependencies/primitives'
+import {
+  dependencyDeclarationsSchema,
+  serviceDefinitionsSchema,
+} from '../dependencies/schema'
 import { pluginMaturitySchema } from '../types/maturity'
 
-import { isJsonValue, operationSchema } from './json-schema'
+import { commandManifestSchema, type CommandManifestV1 } from './command'
+import { isJsonValue } from './json-schema'
 
-export const manifestIdSchema = z
-  .string()
-  .max(128)
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
-const version = z
-  .string()
-  .max(128)
-  .refine(value => valid(value) === value, 'Expected canonical semver')
-const range = z
-  .string()
-  .min(1)
-  .max(256)
-  .refine(value => validRange(value) !== null, 'Expected semver range')
+export { commandManifestSchema, type CommandManifestV1 } from './command'
+export const manifestIdSchema = dependencyIdSchema
+const version = dependencyVersionSchema
+const range = dependencyRangeSchema
 const unique = <T>(values: T[]) => new Set(values).size === values.length
-const dependency = z.strictObject({
-  publisher: manifestIdSchema,
-  id: manifestIdSchema,
-  version: range,
-})
-
-export const commandManifestSchema = z
-  .strictObject({
-    id: manifestIdSchema,
-    name: z.string().min(1).max(256),
-    description: z.string().min(1).max(4096),
-    inputSchema: operationSchema,
-    outputSchema: operationSchema,
-    runtimeValidation: z.strictObject({
-      input: z.enum(['schema-only', 'required']),
-      output: z.enum(['schema-only', 'required']),
-    }),
-    headless: z.boolean(),
-    supportsColdStart: z.boolean(),
-    interaction: z.enum(['none', 'optional', 'required']),
-    effects: z
-      .array(
-        z.enum([
-          'file-read',
-          'file-create',
-          'file-replace',
-          'file-delete',
-          'network-read',
-          'network-send',
-          'clipboard-read',
-          'clipboard-write',
-          'data-read',
-          'data-write',
-          'notification',
-          'tool-execute',
-        ])
-      )
-      .max(32)
-      .refine(unique),
-    permissions: z
-      .array(
-        z.strictObject({
-          capability: z.enum([
-            'fs',
-            'network',
-            'clipboard',
-            'dialog',
-            'notification',
-            'storage',
-            'db',
-            'native',
-            'tool',
-          ]),
-          operations: z.array(manifestIdSchema).min(1).max(32).refine(unique),
-          scopes: z.array(z.string().min(1).max(1024)).max(64).refine(unique),
-        })
-      )
-      .max(32),
-    resources: z.strictObject({
-      timeoutMs: z.number().int().min(1).max(2_147_483_647),
-      maxInputBytes: z.number().int().min(1).max(1_048_576),
-      maxOutputBytes: z.number().int().min(1).max(16_777_216),
-    }),
-  })
-  .superRefine((command, ctx) => {
-    if (
-      command.supportsColdStart &&
-      (!command.headless || command.interaction === 'required')
-    )
-      ctx.addIssue({
-        code: 'custom',
-        message:
-          'Cold start requires headless execution without required interaction',
-      })
-    if (command.inputSchema.type !== 'object')
-      ctx.addIssue({
-        code: 'custom',
-        message: 'Command input must be an object schema',
-      })
-    if (!unique(command.permissions.map(permission => permission.capability)))
-      ctx.addIssue({ code: 'custom', message: 'Duplicate capability request' })
-  })
 
 export const pluginManifestSchema = z
   .strictObject({
@@ -114,15 +34,7 @@ export const pluginManifestSchema = z
     type: z.enum(['app', 'tool']),
     maturity: pluginMaturitySchema,
     engines: z.strictObject({ host: range, sdk: range }),
-    targets: z
-      .array(
-        z.strictObject({
-          platform: z.enum(['windows', 'macos', 'linux', 'web']),
-          arch: z.enum(['x64', 'arm64', 'wasm32']),
-        })
-      )
-      .min(1)
-      .max(16),
+    targets: z.array(dependencyTargetSchema).min(1).max(16),
     entries: z.strictObject({
       ui: portablePluginPathSchema.optional(),
       executor: portablePluginPathSchema.optional(),
@@ -139,10 +51,8 @@ export const pluginManifestSchema = z
       .min(1)
       .max(1024),
     commands: z.array(commandManifestSchema).max(256),
-    dependencies: z.strictObject({
-      services: z.array(dependency).max(128),
-      tools: z.array(dependency).max(128),
-    }),
+    services: serviceDefinitionsSchema.optional(),
+    dependencies: dependencyDeclarationsSchema,
     // Signing protocol/trust roots are deliberately deferred to P2.5a.
     signature: z.strictObject({ status: z.literal('unsigned') }),
   })
@@ -165,17 +75,20 @@ export const pluginManifestSchema = z
       fail('Entries must be present and distinct')
     if (manifest.commands.length && !manifest.entries.executor)
       fail('Commands require an executor entry')
+    // Omitted definitions preserve old Manifest bytes and legacy metadata.
+    // Explicit definitions must describe exactly the dedicated services entry.
+    if (
+      manifest.services !== undefined &&
+      manifest.services.length > 0 !== Boolean(manifest.entries.services)
+    )
+      fail('Service definitions must match the services entry')
     if (
       entries.some(entry => !manifest.files.some(file => file.path === entry))
     )
       fail('Entry is missing from package file inventory')
-    for (const dependencies of Object.values(manifest.dependencies))
-      if (!unique(dependencies.map(item => `${item.publisher}/${item.id}`)))
-        fail('Duplicate dependency identity')
   })
 
 export type PluginManifestV1 = z.infer<typeof pluginManifestSchema>
-export type CommandManifestV1 = z.infer<typeof commandManifestSchema>
 export interface ManifestTarget {
   hostVersion: string
   sdkVersion: string

@@ -188,3 +188,12 @@ Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
 See [diagnostic/recovery evidence](../validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
 security review, actual native consent clicks, assistive technology and other
 platform acceptance are pending; these checks do not authorize production.
+
+### G4 P1.6a plan boundary
+
+`dependencies.plan` is a session-bound read-only query of the fixed Host catalog.
+Clients supply root plugin IDs, never catalog, publisher, target or executable
+paths. Its immutable lock records identity/integrity and does not convey grants,
+activate services or authorize installation. Execution delegation remains P1.6b;
+third-party installation/isolation remains G5. See
+[validation scope](../validation/g4-dependency-plans.md); SEC-014/015 remain open.

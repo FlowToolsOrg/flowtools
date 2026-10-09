@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test'
+import { fileURLToPath } from 'node:url'
 
 interface ExportTarget {
   types: string
@@ -11,6 +12,14 @@ interface PackageManifest {
 }
 
 const expectedSymbols: Record<string, readonly string[]> = {
+  './extensions': [
+    'parseExtensionContributions',
+    'ExtensionContributionRegistry',
+    'projectPluginContributions',
+    'parseAppearanceTheme',
+    'parseAppearanceOverrides',
+    'createAppearanceResolver',
+  ],
   './data': ['inspectLegacyTodos', 'hydratePluginData'],
   './manifest': [
     'pluginManifestSchema',
@@ -40,10 +49,29 @@ const expectedSymbols: Record<string, readonly string[]> = {
 }
 
 describe('package exports', () => {
+  test('compiled extensions work in Node without React or source execution', async () => {
+    const child = Bun.spawn(
+      [
+        'node',
+        fileURLToPath(
+          new URL('./extension-export-fixture.mjs', import.meta.url)
+        ),
+      ],
+      { stdout: 'pipe', stderr: 'pipe' }
+    )
+    const [stdout, stderr, code] = await Promise.all([
+      new Response(child.stdout).text(),
+      new Response(child.stderr).text(),
+      child.exited,
+    ])
+    expect({ code, stderr }).toEqual({ code: 0, stderr: '' })
+    expect(stdout.trim()).toBe('Compiled Node extension export fixture passed')
+  })
   test('execution/catalog subpaths are usable without React or source transpilers', async () => {
     for (const path of [
       'index.js',
       'execution.js',
+      'extensions.js',
       'data.js',
       'compat/catalog.js',
       'manifest.js',

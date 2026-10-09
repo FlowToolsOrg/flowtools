@@ -855,3 +855,33 @@ fresh Native GUI/CLI harness pass. Actual Windows keyboard focus/native consent,
 200% zoom/reflow and NVDA Speech Viewer output were subsequently verified.
 Independent security approval remains pending; no human listening, full blind-user
 workflow or other-platform certification is claimed.
+
+## E host extension contracts
+
+The accepted [E01–E10 parallel backlog](./docs/host-extensions.md) covers themes,
+localization, settings, providers, context actions, resource handoff, events and
+UI slots. It leaves G0–G8 order and the collaborator-owned G4–G7 work unchanged;
+service, package, resource and real-host integration use those existing gates.
+
+E01a is implemented for the fixed T1 engineering scope and passed clean Windows
+CI. `@flowtools/sdk/extensions` provides a non-React,
+Host-owned in-memory directory for strict formatVersion 1 `theme`, `locale`
+and `settings` JSON contributions, scoped to current Host-issued owners.
+This is contribution bookkeeping, not theme application, translation, settings
+persistence, loading or authorization. Manifest v1 and Runtime wire stay unchanged.
+See [E01a scope and validation](./docs/validation/e01-contributions.md).
+Maturity stays prototype; independent security review remains pending.
+
+E02a adds a pure theme contract in the same subpath: structured semantic colors,
+radius, border, typography, shadow and motion tokens. The Host supplies defaults
+and explicit selection; missing/invalid themes fall back without losing that
+selection. User overrides are validated atomically. This does not apply CSS or
+complete the E02 UI milestone. See [theme scope and evidence](./docs/validation/e02-theme-contracts.md).
+
+E02b adds the Host-owned `AppearanceScope` from `@flowtools/ui` and explicit
+`@flowtools/ui/appearance.css` asset. An independent UI-test preview demonstrates
+colors, radius, typography, preview/cancel/reset and withdrawal recovery:
+`bun run --cwd apps/ui-test dev`, then `/?appearance-validation=1`.
+See [adapter validation and screenshots](./docs/validation/e02-theme-adapter.md)
+for actual checks and remaining acceptance. Real Web/Desktop integration, portal
+mounting, persistent preferences and the parent E02 remain pending.

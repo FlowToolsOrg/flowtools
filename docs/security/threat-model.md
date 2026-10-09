@@ -491,3 +491,52 @@ Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
 See [diagnostic/recovery evidence](../validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
 security review, actual native consent clicks, assistive technology and other
 platform acceptance are pending; these checks do not authorize production.
+
+### E01a 数据贡献目录工程范围（2026-10-08）
+
+SEC-002/003/007/010 继续 open。本子项新增的
+[严格贡献解析](../../packages/sdk/src/extensions/schema.ts)、
+[Host 内存目录](../../packages/sdk/src/extensions/registry.ts) 与
+[生命周期投影](../../packages/sdk/src/extensions/projection.ts) 属于合作 T1
+元数据一致性控制，实际回归与门禁状态见
+[E01a 记录](../validation/e01-contributions.md)。固定 T1 工程范围的 SDK 自动化
+与 clean Windows CI 全链已通过；没有新的生产安全批准。
+
+Host 从 PluginRegistry 绑定 ID/版本并取得目录发放的 owner epoch；文档
+的严格 envelope 拒绝额外身份字段。不透明 `value` 可包含 pluginId/permissions
+等普通 JSON 业务键，但 Host 不从 value 派生身份、grant 或操作；不实施递归
+身份键黑名单。旧 owner 不能覆盖/撤下新 owner，替换专属 disposer 不删除后续
+替换；同一目录实例内重装不复用旧 epoch。文档和目录设置数量/
+字节预算，数据复制冻结，非法替换保留先前有效内容。停用、卸载、依赖不满足
+和投影销毁撤下贡献，不保留持久执行状态。
+
+没有新的代码 loader、IPC、native command、Tauri permission、CSP、远程 URL、
+file/network/data scope 或 grant。`theme`、`locale`、`settings` 仍只是有界
+JSON，业务 Schema、选择与应用待 E02/E03/E04；声明或启用不能授权 IO。
+T1 同 realm 代码可绕过接口，预算不构成强制 CPU/内存限制，owner epoch
+不证明 publisher/hash 或调用方认证，主题/翻译的可信 UI 呈现尚待实现。
+
+Owner：SDK / Host / Security；ADR-0001/0002 原信任边界与包策略不变。
+工程实现和测试不关闭风险，不升级 maturity。安全 Reviewer/日期/结论：
+独立 Reviewer pending / pending / 未批准。
+
+### E02a 主题解析补充（2026-10-09）
+
+SEC-002/003/007/010 继续 open。新增 [纯主题解析](../../packages/sdk/src/extensions/appearance.ts)
+限制语义 token、数值范围、字体/阴影枚举和序列化前字节预算，不执行 CSS 或 URL。
+Host 管理选择与 owner；同名扩展按目录命名空间区分。坏主题/撤下恢复默认，
+非法个人覆盖整体忽略，系统减少动画偏好优先，回归见 [E02a](../validation/e02-theme-contracts.md)。
+没有新的 native command、CSP、远程资源、数据 scope、grant、IPC 或持久化。
+T1 仍可绕过 SDK；真实 CSS scope、可信恢复呈现、对比度和第三方包准入未由
+本项验证。Owner：SDK / UI / Host / Security；独立审阅 pending，prototype 不变。
+
+### E02b UI adapter 补充（2026-10-09）
+
+SEC-002/003/007/010 保持 open。[作用域组件](../../packages/ui/src/components/appearance/appearance-scope.tsx)
+和[固定映射](../../packages/ui/src/components/appearance/appearance-style.ts) 重新校验
+tokens，只输出固定变量名、本地字体/阴影和数值颜色；拒绝伪造 CSS/无穷值。
+[浏览器回归](../../apps/ui-test/src/test/appearance/appearance.test.tsx) 验证恢复控制
+隔离与真实目录撤下回退，实际范围见 [E02b](../validation/e02-theme-adapter.md)。
+没有新 loader、IPC、原生/CSP/权限/数据 scope 或持久化。T1 可绕过 SDK，外观
+组件不是安全沙箱。真实宿主权限/身份/恢复含义、外部浮层与第三方包安全未获认证。
+Owner：UI / Host / Security；独立 Reviewer/日期/结论 pending / pending / 未批准。

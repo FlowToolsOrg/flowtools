@@ -891,3 +891,42 @@ and fresh Native harness results, plus actual Windows keyboard/native consent,
 200% zoom/reflow and NVDA Speech Viewer output. Independent security approval
 remains pending; human listening, a full blind-user workflow and other platforms
 are not certified.
+
+## E01a 声明式数据贡献
+
+[E 宿主扩展设计](./host-extensions.md) 规划主题、语言、设置和后续业务扩展。
+E01a 固定 T1 工程范围已通过 clean Windows CI，公开子入口为
+`@flowtools/sdk/extensions`。贡献文档使用
+formatVersion 1 和 `contributions` 数组；每项含 kebab-case `id`、
+`kind: 'theme' | 'locale' | 'settings'`、有界 JSON `value`。ID 在同一文档中
+跨 kind 唯一，快照 key 由 Host 生成 `pluginId:contributionId`。
+
+插件只提供数据，Host 管理目录与 owner。文档和单项 contribution envelope
+不能增加 pluginId、版本、generation 或 permissions 等未知字段；`value`
+是不透明普通 JSON，可以包含这些名称的业务键，Host 不据此派生身份或权限。
+`parseExtensionContributions()` 复制并冻结数据；
+`ExtensionContributionRegistry` 和 `projectPluginContributions()` 是 Host
+管理 API，不是插件获授的能力。Host 从插件状态绑定 ID/版本，owner epoch
+由 `createOwner(pluginId, version)` 发放；只投影 enabled 且依赖满足的当前实例。
+
+目前没有修改 Manifest v1，也没有自动从包读取贡献。Host 必须自行选择可信
+文档来源；第三方包读取与准入以后复用 G5。贡献存在不代表已经选中、应用或
+授权：主题 tokens、统一文本接口、设置 Schema 与持久化分别待 E02/E03/E04。
+不要通过贡献值注入 CSS、修改 Host DOM 或申请原生权限。当前范围与待验证项见
+[E01a 验收](./validation/e01-contributions.md)；maturity 保持 prototype。
+
+E02a 为 `kind: 'theme'` 提供独立 `parseAppearanceTheme()` 业务校验，格式为
+`{ formatVersion: 1, title, common?, modes?: { light?, dark? } }`。tokens、边界和
+示例见 [主题规则](./host-extensions.md)；不接受任意 CSS、URL 或远程字体。
+Host 通过 `createAppearanceResolver(defaults)` 明确选择目录 key，按当前模式
+补齐缺项、合并合法个人覆盖，并在停用或坏主题时回退。发布或启用不自动选择。
+这只是纯数据内核，CSS 应用、预览页面和持久偏好仍由后续子项交付；
+[E02a 验收](./validation/e02-theme-contracts.md) 不证明实际组件外观已改变。
+
+E02b 的 Host 适配器为 `@flowtools/ui` 的 `AppearanceScope`；消费方在
+Tailwind/HeroUI 后显式导入 `@flowtools/ui/appearance.css`，传入 resolver 结果与
+区域 label。适配器重验 tokens 并映射固定 CSS 变量，不接收主题 CSS 或选择器。
+`@flowtools/ui/plugin` 不导出该组件。共享 UI 的 Tailwind 类仍需由消费应用扫描。
+独立预览入口、截图与边界见 [E02b 验收](./validation/e02-theme-adapter.md)。
+覆盖层需由 Host 挂在作用域内并单独验收；保存偏好、真实宿主页面和第三方包接入
+尚未交付。外观选择及 enabled 状态不授予能力，恢复入口应保持在可信 Host 控制中。

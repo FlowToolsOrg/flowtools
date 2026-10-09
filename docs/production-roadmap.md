@@ -9,7 +9,7 @@
 > 2026-10-04 产品决策：面向知识工作者/普通办公用户，GUI 与外部 agents
 > 共用命令；支持独立 CLI、轻量后台内核、集中管理和共享二进制工具依赖。
 > 低代码、内置 AI 助手与模型接入保留为未来插件。具体顺序与实现见
-> [下一阶段目标与实施设计](./next-milestones.md)。G1、G2 固定验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4–G8 尚待实施。
+> [下一阶段目标与实施设计](./next-milestones.md)。G1、G2 固定验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G5 P2.5a 只读包协议已实施；G4、G5 其余子项与 G6–G8 尚待实施。
 
 本文档是 FlowTools 从 Demo 级原型走向生产版本的执行台账。它不以
 “页面已存在”或“类型已定义”作为完成标准，而以真实执行、失败可恢复、
@@ -1352,6 +1352,13 @@ cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 - 状态：`pending`
 - 负责人：`TBD (Plugin Platform / Security)`
 - 依赖：P1.1、P2.3
+
+P2.5a 的包协议、作者 helper 与只读 Rust verifier 已实施为 prototype，
+验证见 [G5 P2.5a](./validation/g5-package-protocol.md)，格式冻结于
+[ADR-0003](./adr/0003-signed-package-protocol.md)。它只验证描述与传入字节，
+不解包、安装、创建 grants 或开放第三方执行；真实 trust pins/持久 floor
+仍 pending。G4 P1.6a/b 尚未实施，P2.5b 的依赖锁/事务安装必须等待它。
+P2.5 父项与 G5 整体验收仍 pending，独立安全批准 pending。
 
 交付物：
 

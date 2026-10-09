@@ -2,6 +2,13 @@
 
 ## 下一阶段结构与当前实现
 
+G5 P2.5a 新增 SDK `src/manifest/signed-package.ts` 作者 contract，以及 Rust
+core `src/packages.rs` 只读签名/trust verifier；公开 Node golden 与 SDK/Rust
+拒绝测试共用原始字节。installer/artifact store/dependencies/第三方 runner
+仍为后续模块，验证 receipt 不能通过现有 loader 执行。
+见 [协议](./adr/0003-signed-package-protocol.md)、
+[验证边界](./validation/g5-package-protocol.md)。
+
 [下一阶段实施设计](./next-milestones.md) 定义 G0–G8 的顺序与验收。
 G2 已新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`
 （无界面运行服务）、`packages/runtime-client`（生成 DTO 的 TS 客户端）和

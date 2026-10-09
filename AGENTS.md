@@ -175,6 +175,17 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G5 P2.5a is a read-only signed-descriptor prototype. Follow
+[ADR-0003](./docs/adr/0003-signed-package-protocol.md) for exact DSSE payload bytes,
+Ed25519 strict verification, T0 trust pins, publisher scopes, root double-sign
+rotation, append-only revocations and offline/rollback refusal. SDK authoring
+helpers never create trust or grants. Public fixture keys must never become
+production pins. The verifier receipt is not an installed/executable identity:
+archive extraction, full Manifest/Host/SDK/dependency validation, durable floors
+and installation journal belong to P2.5b. G4 locks must pass before opening that
+path; T2/T3/TL remain denied until their platform/runtime gates pass. Keep this
+boundary and [P2.5a regressions](./docs/validation/g5-package-protocol.md).
+
 G3 P2.3a's T1 policy broker is in
 `packages/runtime-core/src/broker.rs`. Identity comes from the authenticated Host
 caller and embedded catalog, never operation payloads. Rust generates operation

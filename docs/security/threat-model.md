@@ -24,6 +24,16 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 
 ## 风险台账
 
+2026-10-09 G5 P2.5a 添加
+[只读签名验证](../../packages/runtime-core/src/packages.rs)、
+[SDK 作者格式](../../packages/sdk/src/manifest/signed-package.ts) 和
+[跨语言/拒绝证据](../validation/g5-package-protocol.md)，格式见
+[ADR-0003](../adr/0003-signed-package-protocol.md)。验证覆盖签名原始字节、
+publisher 范围、双签根轮换、累计撤销、过期/时间回退、版本不可变与受控回滚。
+无真实 pins、持久 trust floors、安装、归档解包或第三方执行；G4 locks 和
+平台隔离尚待实施。SEC-001/002/008/014/015 保持 open，Reviewer 为 Codex
+工程自查，独立实际安全 Reviewer/date/conclusion pending。
+
 2026-10-05 P2.3a 新增 [T1 policy broker](../../packages/runtime-core/src/broker.rs)
 及 [Runtime 绑定/拒绝回归](../../packages/runtime-core/src/runtime.rs)，并由
 [实际 named-pipe fixture](../../packages/runtime-client/test/native-fixture.mjs)

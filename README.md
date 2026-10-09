@@ -1,5 +1,12 @@
 # Flow Tool
 
+G5 P2.5a adds a prototype signed-package authoring contract and read-only Rust
+verification using DSSE/Ed25519, scoped publisher roots, rotation, revocation
+and offline/rollback refusal fixtures. See the [protocol](./docs/adr/0003-signed-package-protocol.md)
+and [validation](./docs/validation/g5-package-protocol.md). Installation and
+third-party execution remain pending; G4 dependency locks must precede P2.5b.
+There are no production trust pins or persistent trust floors in this step.
+
 > An extensible, cross-platform toolbox powered by a plugin runtime.
 > Plugin Runtime for AI Age
 

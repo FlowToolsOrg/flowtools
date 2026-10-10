@@ -1,7 +1,7 @@
 # FlowTools 下一阶段目标与实施设计
 
 - 决策日期：2026-10-04
-- 状态：accepted-design；G1、G2 固定 Windows/T1 验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4 P1.6a/P1.6b 固定 Windows/T1 prototype 范围已完成验收；G5–G8 尚待实施
+- 状态：accepted-design；G1、G2 固定 Windows/T1 验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4 P1.6a/P1.6b 已实施为固定 Windows/T1 prototype，综合验收仍 pending；G5 P2.5a 只读包协议已实施为 prototype；P2.5b、G5 其余子项与 G6–G8 尚待实施
 - 决策来源：维护者已确认的产品讨论；实施责任由 Repository Maintainer 分配
 - 进度来源：[生产路线图](./production-roadmap.md)
 
@@ -276,7 +276,8 @@ G4 只用固定 T1 清单和可丢弃 fixtures 验证；依赖变更为 plan-onl
 
 ### P1.6b RPC、调用链与卸载
 
-2026-10-09 固定 Windows/T1 实现、专项回归与全仓门禁已通过，maturity 仍为
+2026-10-09 固定 Windows/T1 实现已提交，并记录专项回归与全仓门禁通过；
+G4 综合验收仍 pending，缺少独立 fixture 级异常排空验收。maturity 为
 prototype，独立安全批准 pending。见
 [服务调用验收记录](./validation/g4-service-calls.md)。公开 client/CLI 只有只读
 卸载计划与诊断；候选切换仅 T0 固定 fixtures，跨包安装仍在 G5。
@@ -301,6 +302,14 @@ providers 空闲退出，后台服务租约由 Host 控制；插件不能自行 
 ## 7. G5：签名安装与真实运行边界
 
 ### P2.5a / P2.5b 包协议与事务安装
+
+2026-10-09：P2.5a 协议和只读验签基础已实施为 prototype，见
+[ADR-0003](./adr/0003-signed-package-protocol.md) 与
+[验证](./validation/g5-package-protocol.md)。签名不是可执行准入；本项不
+包含解包、安装、持久 root/floor 或真实生产 pins。G4 P1.6a/P1.6b 已实施为
+固定 Windows/T1 prototype，综合验收仍 pending；P2.5b 须在该门禁通过后
+将依赖锁与服务语义接入真实签名安装事务，当前尚未实施。G5 其余子项/整体
+验收仍 pending。
 
 先确定 plugin/tool 的签名格式、信任根、publisher provenance、撤销/轮换、
 离线与受控回滚协议，再实现 staging -> 验证 -> artifact store -> metadata commit。

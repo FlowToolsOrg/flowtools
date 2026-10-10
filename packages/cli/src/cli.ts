@@ -19,6 +19,7 @@ import {
   parseCommandFlags,
   validateCommandInput,
 } from './command-schema'
+import { addDependencyCommands } from './dependencies'
 import {
   getBuiltinPluginInfo,
   getBuiltinCommandManifest,
@@ -41,6 +42,7 @@ const program = new Command()
 addManagementCommands(program)
 addRuntimeCommands(program)
 addJobCommands(program)
+addDependencyCommands(program)
 
 function writeJson(value: unknown) {
   process.stdout.write(JSON.stringify(value, null, 2) + '\n')
@@ -363,7 +365,9 @@ main().catch(error => {
   )
     return
   if (
-    ['init', 'permissions', 'runtime', 'jobs'].includes(process.argv[2] ?? '')
+    ['init', 'permissions', 'runtime', 'jobs', 'dependencies'].includes(
+      process.argv[2] ?? ''
+    )
   ) {
     managementFailure(error)
     return

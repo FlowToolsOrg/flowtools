@@ -30,6 +30,65 @@ impl BuiltinCatalog {
         self.manifests.iter()
     }
 
+    /// T0 build/test snapshot constructor; never exposed as a wire/catalog import.
+    /// Callers must supply full SDK-validated, build-owned manifests.
+    pub fn from_host_manifests(manifests: Vec<Value>) -> Result<Self, ErrorCode> {
+        crate::dependencies::DependencyCatalog::from_manifests(manifests.clone(), vec![])
+            .map_err(ErrorCode::from)?;
+        let mut result = BTreeMap::new();
+        for manifest in manifests {
+            let id = manifest["id"]
+                .as_str()
+                .ok_or(ErrorCode::DependencyInvalid)?
+                .to_owned();
+            if result.insert(id, manifest).is_some() {
+                return Err(ErrorCode::DependencyDuplicateProvider);
+            }
+        }
+        Ok(Self { manifests: result })
+    }
+
+    pub fn service_operation(
+        &self,
+        id: &str,
+        service: &str,
+        operation: &str,
+    ) -> Result<(&Value, &Value), ErrorCode> {
+        let manifest = self.manifests.get(id).ok_or(ErrorCode::DependencyMissing)?;
+        let operation = manifest["services"]
+            .as_array()
+            .and_then(|services| services.iter().find(|item| item["id"] == service))
+            .and_then(|item| item["operations"].as_array())
+            .and_then(|operations| operations.iter().find(|item| item["id"] == operation))
+            .ok_or(ErrorCode::DependencyMissing)?;
+        Ok((manifest, operation))
+    }
+
+    pub fn permission_operation(
+        &self,
+        id: &str,
+        command: &str,
+    ) -> Result<(&Value, &Value), ErrorCode> {
+        if let Some(pair) = command.strip_prefix("svc:") {
+            let (service, operation) = pair.split_once(':').ok_or(ErrorCode::InvalidRequest)?;
+            if !crate::dependencies::valid_dependency_id(service)
+                || !crate::dependencies::valid_dependency_id(operation)
+            {
+                return Err(ErrorCode::InvalidRequest);
+            }
+            self.service_operation(id, service, operation)
+        } else {
+            self.command(id, command)
+        }
+    }
+
+    pub fn snapshot_digest(&self) -> String {
+        digest(&serde_json::json!(self
+            .list()
+            .map(|(_, m)| m.clone())
+            .collect::<Vec<_>>()))
+    }
+
     // Fixed T1 only: full metadata must match the TS-validated build artifact.
     pub fn validate_manifest(&self, manifest: &Value) -> Result<(), ErrorCode> {
         let id = manifest["id"].as_str().ok_or(ErrorCode::PluginNotFound)?;
@@ -62,12 +121,12 @@ impl BuiltinCatalog {
         &self,
         id: &str,
         command_id: &str,
-        mut input: Value,
+        input: Value,
         managed: bool,
     ) -> Result<Value, ErrorCode> {
         let (_, command) = self.command(id, command_id)?;
         // No side effects/capabilities before G3 broker/grants. Pure T1 evaluation only.
-        if !(managed && id == "plugin-todo-list")
+        if !managed
             && (command["effects"].as_array().is_none_or(|v| !v.is_empty())
                 || command["permissions"]
                     .as_array()
@@ -75,6 +134,10 @@ impl BuiltinCatalog {
         {
             return Err(ErrorCode::ApprovalRequired);
         }
+        Self::prepare_operation_input(command, input)
+    }
+
+    pub fn prepare_operation_input(command: &Value, mut input: Value) -> Result<Value, ErrorCode> {
         apply_defaults(&command["inputSchema"], &mut input);
         let budget = command["resources"]["maxInputBytes"].as_u64().unwrap_or(0);
         if serde_json::to_vec(&input)

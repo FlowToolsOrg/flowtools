@@ -1,16 +1,29 @@
 import type {
   Call,
+  DependencyIdentity,
+  DependencyPlan,
   ErrorCode,
   JobEvent,
   JobReceipt,
   JobSnapshot,
   Outcome,
+  PackagePin,
+  ProviderChangePlan,
+  ServiceCallDiagnostic,
   Request,
   Response,
   RunDiagnostic,
   SessionProof,
   SubmitJob,
 } from './bindings'
+
+import {
+  dependencyBuildFlavorSchema,
+  dependencyDigestSchema,
+  dependencyIdSchema,
+  dependencyTargetSchema,
+  dependencyVersionSchema,
+} from '@flowtools/sdk/dependencies'
 
 import { CLIENT_VERSION, PROTOCOL_MAJOR } from './bindings'
 import { decodeResponse, encodeRequest } from './codec'
@@ -37,6 +50,89 @@ export class RuntimeClient {
 
   get instanceId(): string | undefined {
     return this.proof?.instanceId
+  }
+
+  private validPin(pin: PackagePin): boolean {
+    return (
+      dependencyIdSchema.safeParse(pin.publisher).success &&
+      dependencyIdSchema.safeParse(pin.id).success &&
+      dependencyVersionSchema.safeParse(pin.version).success &&
+      dependencyDigestSchema.safeParse(pin.digest).success
+    )
+  }
+
+  async providerUnloadPlan(pluginId: string): Promise<ProviderChangePlan> {
+    if (!dependencyIdSchema.safeParse(pluginId).success)
+      throw new RuntimeClientError('DEPENDENCY_INVALID')
+    const outcome = await this.call({
+      method: 'dependencies.unload-plan',
+      payload: { pluginId },
+    })
+    if (outcome.type !== 'provider-change-plan')
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    const plan = outcome.data
+    if (
+      plan.mode !== 'plan-only' ||
+      !dependencyDigestSchema.safeParse(plan.digest).success ||
+      !this.validPin(plan.provider) ||
+      plan.provider.id !== pluginId ||
+      plan.replacement !== null ||
+      plan.consumers.length > 128 ||
+      plan.affectedLocks.length > 129 ||
+      plan.consumers.some(
+        id =>
+          !dependencyIdSchema.safeParse(id.publisher).success ||
+          !dependencyIdSchema.safeParse(id.id).success
+      ) ||
+      plan.affectedLocks.some(
+        hash => !dependencyDigestSchema.safeParse(hash).success
+      )
+    )
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    return plan
+  }
+
+  async serviceCalls(rootRunId: string): Promise<ServiceCallDiagnostic[]> {
+    const uuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+    if (!uuid.test(rootRunId)) throw new RuntimeClientError('INVALID_REQUEST')
+    const outcome = await this.call({
+      method: 'services.calls',
+      payload: { runId: rootRunId },
+    })
+    if (outcome.type !== 'service-calls')
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    const calls = outcome.data
+    if (
+      calls.length > 64 ||
+      new Set(calls.map(call => call.runId)).size !== calls.length ||
+      calls.some(
+        call =>
+          call.rootRunId !== rootRunId ||
+          !uuid.test(call.runId) ||
+          !uuid.test(call.parentRunId) ||
+          ![
+            'local-cli',
+            'local-desktop',
+            'validation-cli',
+            'validation-desktop',
+          ].includes(call.rootCaller) ||
+          !this.validPin(call.provider) ||
+          !dependencyIdSchema.safeParse(call.consumer.id).success ||
+          !dependencyIdSchema.safeParse(call.consumer.publisher).success ||
+          !dependencyIdSchema.safeParse(call.service).success ||
+          !dependencyIdSchema.safeParse(call.operation).success ||
+          !dependencyDigestSchema.safeParse(call.dependencyLock).success ||
+          typeof call.deadline !== 'number' ||
+          !Number.isFinite(call.deadline) ||
+          call.deadline <= 0 ||
+          !['queued', 'running', 'succeeded', 'failed', 'interrupted'].includes(
+            call.state
+          )
+      )
+    )
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    return calls
   }
 
   async connect(
@@ -109,6 +205,9 @@ export class RuntimeClient {
       'session.open': 'session',
       'runtime.status': 'status',
       'plugins.list': 'plugins',
+      'dependencies.plan': 'dependency-plan',
+      'dependencies.unload-plan': 'provider-change-plan',
+      'services.calls': 'service-calls',
       'jobs.submit': 'receipt',
       'jobs.lookup': 'receipt',
       'jobs.status': 'job',
@@ -133,6 +232,31 @@ export class RuntimeClient {
         call.method === 'jobs.submit'
       )
     return response.outcome
+  }
+
+  /** Host-owned fixed inventory only; a plan neither installs nor activates. */
+  async dependenciesPlan(
+    pluginIds: readonly string[]
+  ): Promise<DependencyPlan> {
+    const requested = [...pluginIds]
+    if (requested.length > 64)
+      throw new RuntimeClientError('DEPENDENCY_BUDGET_EXCEEDED')
+    if (
+      requested.length === 0 ||
+      new Set(requested).size !== requested.length ||
+      requested.some(id => !dependencyIdSchema.safeParse(id).success)
+    )
+      throw new RuntimeClientError('DEPENDENCY_INVALID')
+    const outcome = await this.call({
+      method: 'dependencies.plan',
+      payload: { pluginIds: [...requested] },
+    })
+    if (
+      outcome.type !== 'dependency-plan' ||
+      !validDependencyPlan(outcome.data, requested)
+    )
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    return outcome.data
   }
 
   async submit(job: SubmitJob): Promise<JobReceipt> {
@@ -234,4 +358,91 @@ export class RuntimeClient {
     this.proof = null
     this.transport.close()
   }
+}
+
+/** Bounded display/identity checks, not dependency resolution or digest proof. */
+function validDependencyPlan(
+  plan: DependencyPlan,
+  pluginIds: string[]
+): boolean {
+  const lock = plan.lock
+  if (
+    plan.formatVersion !== 1 ||
+    plan.mode !== 'plan-only' ||
+    lock.formatVersion !== 1 ||
+    !dependencyDigestSchema.safeParse(lock.digest).success ||
+    !dependencyTargetSchema.safeParse(lock.target).success ||
+    lock.roots.length === 0 ||
+    lock.roots.length > 64 ||
+    lock.packages.length === 0 ||
+    lock.packages.length > 128 ||
+    lock.services.length > 4096 ||
+    lock.tools.length > 4096 ||
+    lock.edges.length > 4096 ||
+    lock.topology.length > 128 ||
+    lock.reverseDependencies.length > 128
+  )
+    return false
+
+  const identityKey = (identity: DependencyIdentity) =>
+    `${identity.publisher}/${identity.id}`
+  const validIdentity = (identity: DependencyIdentity) =>
+    dependencyIdSchema.safeParse(identity.publisher).success &&
+    dependencyIdSchema.safeParse(identity.id).success
+  const validPackage = (pin: PackagePin) =>
+    validIdentity(pin) &&
+    dependencyVersionSchema.safeParse(pin.version).success &&
+    dependencyDigestSchema.safeParse(pin.digest).success
+  if (lock.packages.some(pin => !validPackage(pin))) return false
+  const packages = new Map(lock.packages.map(pin => [identityKey(pin), pin]))
+  if (packages.size !== lock.packages.length) return false
+  const hasIdentity = (identity: DependencyIdentity) =>
+    validIdentity(identity) && packages.has(identityKey(identity))
+
+  const requested = new Set(pluginIds)
+  const roots = new Set(lock.roots.map(root => root.id))
+  if (
+    roots.size !== lock.roots.length ||
+    roots.size !== requested.size ||
+    lock.roots.some(root => !hasIdentity(root) || !requested.has(root.id)) ||
+    lock.topology.length !== packages.size ||
+    new Set(lock.topology.map(identityKey)).size !== packages.size ||
+    lock.topology.some(identity => !hasIdentity(identity))
+  )
+    return false
+
+  return (
+    lock.services.every(pin => {
+      const provider = packages.get(identityKey(pin.provider))
+      return (
+        hasIdentity(pin.consumer) &&
+        validPackage(pin.provider) &&
+        provider?.version === pin.provider.version &&
+        provider.digest === pin.provider.digest &&
+        dependencyIdSchema.safeParse(pin.service).success &&
+        dependencyVersionSchema.safeParse(pin.version).success
+      )
+    }) &&
+    lock.tools.every(
+      pin =>
+        hasIdentity(pin.consumer) &&
+        validPackage(pin) &&
+        dependencyTargetSchema.safeParse(pin.target).success &&
+        pin.target.platform === lock.target.platform &&
+        pin.target.arch === lock.target.arch &&
+        dependencyBuildFlavorSchema.safeParse(pin.buildFlavor).success
+    ) &&
+    lock.edges.every(
+      edge =>
+        hasIdentity(edge.consumer) &&
+        hasIdentity(edge.provider) &&
+        dependencyIdSchema.safeParse(edge.service).success
+    ) &&
+    lock.reverseDependencies.every(
+      reverse =>
+        hasIdentity(reverse.provider) &&
+        reverse.consumers.length <= 128 &&
+        reverse.consumers.every(hasIdentity)
+    )
+  )
 }

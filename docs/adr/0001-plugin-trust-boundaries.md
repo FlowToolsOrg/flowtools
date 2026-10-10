@@ -189,6 +189,26 @@ See [diagnostic/recovery evidence](../validation/g3-diagnostics-recovery.md). Sc
 security review, actual native consent clicks, assistive technology and other
 platform acceptance are pending; these checks do not authorize production.
 
+### G4 P1.6a plan boundary
+
+`dependencies.plan` is a session-bound read-only query of the fixed Host catalog.
+Clients supply root plugin IDs, never catalog, publisher, target or executable
+paths. Its immutable lock records identity/integrity and does not convey grants,
+activate services or authorize installation. Execution delegation remains P1.6b;
+third-party installation/isolation remains G5. See
+[validation scope](../validation/g4-dependency-plans.md); SEC-014/015 remain open.
+
+### G4 P1.6b delegation boundary
+
+T0 binds root/parent/provider sessions to accepted locks. Every leaf effect
+rechecks all ancestor declarations, grants, scopes, expiry, budgets and epochs.
+Only fixed verified child pipes carry logical selectors/JSON. Actual A/B/C
+fixtures demonstrate refusal before test-only file IO and cancellation/revocation
+across hops. Ordinary T1 Bun is not an OS sandbox. Accepted and active references
+block version changes until owned process groups empty. See
+[evidence and residual risks](../validation/g4-service-calls.md); independent
+security approval remains pending and SEC-014/015 remain open.
+
 ### E01a 数据贡献目录补充（2026-10-08）
 
 [E 宿主扩展设计](../host-extensions.md) 遵守本 ADR 的既有信任等级。

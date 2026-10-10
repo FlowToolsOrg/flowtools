@@ -1,29 +1,23 @@
 import type { DataMutation, DataSnapshot } from '@flowtools/sdk/data'
 import type { ToolContext } from '@flowtools/sdk/types'
 
-import { createHash } from 'node:crypto'
-
 import { createExecutionFailure } from '@flowtools/sdk/execution'
 import { isJsonValue } from '@flowtools/sdk/manifest'
 import { executeManifestCommand } from '@flowtools/sdk/manifest'
+import {
+  executeManifestService,
+  serviceTargetSchema,
+} from '@flowtools/sdk/services'
 
-import { loadPlugin, cliManifestTarget } from '../../cli/src/discovery'
+import {
+  loadPlugin,
+  loadBuiltinServices,
+  cliManifestTarget,
+} from '../../cli/src/discovery'
 
-export function manifestDigest(manifest: unknown): string {
-  const canonical = (value: unknown): unknown => {
-    if (Array.isArray(value)) return value.map(canonical)
-    if (value && typeof value === 'object')
-      return Object.fromEntries(
-        Object.entries(value)
-          .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-          .map(([key, item]) => [key, canonical(item)])
-      )
-    return value
-  }
-  return createHash('sha256')
-    .update(JSON.stringify(canonical(manifest)))
-    .digest('hex')
-}
+import { manifestDigest } from './manifest-digest'
+import { serveRunner, type RunnerFrames } from './protocol'
+export { manifestDigest } from './manifest-digest'
 
 /** Fixed T1 evaluator. No shell/argv/paths/capabilities or user storage input. */
 export async function runValidationCommand(value: unknown) {
@@ -35,20 +29,77 @@ export async function runManagedCommand(value: unknown) {
   return execute(value, true)
 }
 
-async function execute(value: unknown, managed: boolean) {
+async function execute(
+  value: unknown,
+  managed: boolean,
+  frames?: RunnerFrames
+) {
   if (!value || typeof value !== 'object')
     throw new Error('Invalid runner request')
   const request = value as Record<string, unknown>
+  const requestKeys = Object.keys(request)
+    .filter(key => !frames || !['deadline', 'serviceTarget'].includes(key))
+    .sort()
+    .join(',')
   if (
-    Object.keys(request).sort().join(',') !==
+    requestKeys !==
       (managed
         ? 'commandId,data,input,packageDigest,pluginId'
         : 'commandId,input,packageDigest,pluginId') ||
     typeof request.pluginId !== 'string' ||
-    request.commandId !== 'run' ||
+    (request.serviceTarget === undefined && request.commandId !== 'run') ||
     typeof request.packageDigest !== 'string'
   ) {
     throw new Error('Invalid runner request')
+  }
+  if (
+    frames &&
+    (typeof request.deadline !== 'number' ||
+      !Number.isFinite(request.deadline) ||
+      request.deadline <= Date.now())
+  )
+    throw new Error('TIMEOUT')
+  if (frames && request.serviceTarget !== undefined) {
+    const target = serviceTargetSchema.parse(request.serviceTarget)
+    if (
+      target.id !== request.pluginId ||
+      request.commandId !== `svc:${target.service}:${target.operation}` ||
+      request.data !== null
+    )
+      throw new Error('INVALID_REQUEST')
+    const loaded = await loadBuiltinServices(target.id, request.packageDigest)
+    const implementation =
+      loaded?.implementations[target.service]?.[target.operation]
+    if (
+      !loaded ||
+      !implementation ||
+      manifestDigest(loaded.manifest) !== request.packageDigest
+    )
+      throw new Error('LOAD_FAILED')
+    const execution = await executeManifestService(
+      loaded.manifest,
+      target.service,
+      target.operation,
+      implementation,
+      request.input,
+      {
+        env: {
+          pluginId: target.id,
+          pluginType: loaded.manifest.type,
+          platform: 'unknown',
+          mode: 'test',
+        },
+        utils: { now: Date.now },
+        ui: { toast: () => {}, openPanel: () => {}, closePanel: () => {} },
+        signal: new AbortController().signal,
+        log: () => {},
+        services: frames.services,
+        artifacts: frames.artifacts,
+      },
+      cliManifestTarget,
+      { timeoutMs: Math.max(1, (request.deadline as number) - Date.now()) }
+    )
+    return { execution, mutations: [] }
   }
   const mutations: DataMutation[] = []
   const failure = (execution: ReturnType<typeof createExecutionFailure>) => ({
@@ -83,6 +134,7 @@ async function execute(value: unknown, managed: boolean) {
     throw new Error('Package changed')
   if (
     !(managed && snapshot) &&
+    !(frames && plugin.manifest.dependencies.services.length) &&
     (command.effects.length || command.permissions.length)
   ) {
     return failure(
@@ -108,6 +160,8 @@ async function execute(value: unknown, managed: boolean) {
     ui: { toast: () => {}, openPanel: () => {}, closePanel: () => {} },
     signal: new AbortController().signal,
     log: () => {},
+    services: frames?.services,
+    artifacts: frames?.artifacts,
     data: snapshot
       ? {
           async read(key) {
@@ -155,19 +209,7 @@ async function execute(value: unknown, managed: boolean) {
 
 if (import.meta.main) {
   try {
-    const bytes = await Bun.stdin.text()
-    if (Buffer.byteLength(bytes) > 1_048_576)
-      throw new Error('Runner input too large')
-    process.stdout.write(
-      JSON.stringify(
-        'data' in JSON.parse(bytes)
-          ? await runManagedCommand(JSON.parse(bytes))
-          : {
-              execution: await runValidationCommand(JSON.parse(bytes)),
-              mutations: [],
-            }
-      )
-    )
+    await serveRunner((value, frames) => execute(value, true, frames))
   } catch {
     // No exception message, path, payload or inherited environment in diagnostics.
     process.stderr.write('RUNNER_FAILED\n')

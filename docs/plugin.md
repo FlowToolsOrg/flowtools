@@ -892,6 +892,33 @@ and fresh Native harness results, plus actual Windows keyboard/native consent,
 remains pending; human listening, a full blind-user workflow and other platforms
 are not certified.
 
+### G4 P1.6a dependency declarations
+
+Optional Manifest `services` contains service IDs, semantic interface versions
+and headless, non-interactive operations using the existing command schemas.
+Nonempty definitions require a declared `entries.services` file. Service references
+pin `publisher/id/version` plus `service/interfaceVersion`; tool references also
+pin `target/buildFlavor/digest`. Legacy references remain readable metadata but
+cannot resolve runnable dependencies without their selectors. Multiple service
+selectors for one provider contribute intersected package constraints.
+The Host owns resolution and lock generation. A lock is identity/integrity data,
+never a grant or install authorization. See
+[contracts and validation](validation/g4-dependency-plans.md).
+
+### G4 P1.6b service handlers
+
+Services use `@flowtools/sdk/services` and a separate compiled
+`entries.services` artifact. Handlers reuse executable plugin metadata/run and
+runtime validators; `executeManifestService` enforces headless schemas and budgets.
+`ctx.services.call({publisher,id,service,operation}, json)` requests Host-selected
+dependencies; it cannot choose versions, paths, caller identity or grants.
+Root and provider scopes intersect across all hops. Prototype artifact reads
+accept opaque handles; actual file IO exists only in controlled native tests.
+Cross-provider data access, network and tool adapters remain unavailable.
+Host owns leases and update/unload confirmation. Current production inventory
+has no service definitions; installing a service artifact remains G5.
+See [scope and validation](validation/g4-service-calls.md).
+
 ## E01a 声明式数据贡献
 
 [E 宿主扩展设计](./host-extensions.md) 规划主题、语言、设置和后续业务扩展。

@@ -14,7 +14,10 @@ import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 import { parsePluginManifest, equalJsonValues } from '@flowtools/sdk/manifest'
-import { verifyManifestPackage } from '@flowtools/sdk/manifest/package'
+import {
+  manifestPackageDigest,
+  verifyManifestPackage,
+} from '@flowtools/sdk/manifest/package'
 import { resolvePluginMaturity } from '@flowtools/sdk/types'
 import { z } from 'zod'
 
@@ -121,7 +124,10 @@ export function scanPlugins(): CLIPluginInfo[] {
   })
 }
 
-function compiledArtifact(id: string): string | null {
+function compiledArtifact(
+  id: string,
+  kind: 'commands' | 'services' = 'commands'
+): string | null {
   try {
     // A caller-provided path is never joined until host inventory lookup succeeds.
     if (!inventory.has(id)) return null
@@ -132,13 +138,77 @@ function compiledArtifact(id: string): string | null {
     const root = realpathSync(PLUGINS_DIR)
     const dist = realpathSync(DIST_DIR)
     if (relative(root, dist) !== 'dist') return null
-    const entry = join(dist, `${id}.commands.js`)
+    const entry = join(dist, `${id}.${kind}.js`)
     const stat = lstatSync(entry)
     if (!stat.isFile() || stat.isSymbolicLink()) return null
     const canonical = realpathSync(entry)
-    return relative(dist, canonical) === `${id}.commands.js` ? canonical : null
+    return relative(dist, canonical) === `${id}.${kind}.js` ? canonical : null
   } catch {
     return null
+  }
+}
+
+/** The same fixed T1 inventory and package verification, with a separate service artifact. */
+export async function loadBuiltinServices(
+  id: string,
+  expectedPackageDigest: string
+) {
+  if (!inventory.has(id)) return null
+  if (!/^[a-f0-9]{64}$/.test(expectedPackageDigest)) return null
+  const manifest = getBuiltinCommandManifest(id)
+  if (
+    !manifest?.services?.length ||
+    manifest.entries.services !== `${id}.services.js` ||
+    manifestPackageDigest(manifest) !== expectedPackageDigest
+  )
+    return null
+  const artifact = compiledArtifact(id, 'services')
+  if (!artifact) return null
+  verifyManifestPackage(DIST_DIR, manifest, cliManifestTarget)
+  const imported = (await import(pathToFileURL(artifact).href)) as {
+    default?: unknown
+  }
+  if (!imported.default || typeof imported.default !== 'object') return null
+  const services = imported.default as Record<string, unknown>
+  if (
+    Object.keys(services).sort().join(',') !==
+    manifest.services
+      .map(service => service.id)
+      .sort()
+      .join(',')
+  )
+    return null
+  for (const service of manifest.services) {
+    const handlers = services[service.id]
+    if (!handlers || typeof handlers !== 'object') return null
+    const operations = handlers as Record<string, unknown>
+    if (
+      Object.keys(operations).sort().join(',') !==
+      service.operations
+        .map(operation => operation.id)
+        .sort()
+        .join(',')
+    )
+      return null
+    for (const operation of service.operations) {
+      const implementation = operations[operation.id]
+      if (!implementation || typeof implementation !== 'object') return null
+      const handler = implementation as {
+        meta?: { id?: unknown; version?: unknown }
+        run?: unknown
+      }
+      if (
+        handler.meta?.id !== manifest.id ||
+        handler.meta?.version !== manifest.version ||
+        typeof handler.run !== 'function'
+      )
+        return null
+    }
+  }
+  return {
+    manifest,
+    implementations:
+      imported.default as import('@flowtools/sdk/services').ServiceImplementations,
   }
 }
 

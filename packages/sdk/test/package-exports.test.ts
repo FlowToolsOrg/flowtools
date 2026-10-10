@@ -12,6 +12,13 @@ interface PackageManifest {
 }
 
 const expectedSymbols: Record<string, readonly string[]> = {
+  './services': ['executeManifestService', 'serviceTargetSchema'],
+  './dependencies': [
+    'serviceDefinitionSchema',
+    'serviceDependencySchema',
+    'toolDependencySchema',
+    'parseDependencyDeclarations',
+  ],
   './extensions': [
     'parseExtensionContributions',
     'ExtensionContributionRegistry',
@@ -71,6 +78,8 @@ describe('package exports', () => {
     for (const path of [
       'index.js',
       'execution.js',
+      'dependencies.js',
+      'services.js',
       'extensions.js',
       'data.js',
       'compat/catalog.js',

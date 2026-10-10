@@ -10,8 +10,12 @@ use rusqlite::{params, OptionalExtension};
 pub struct PolicyStore {
     pub records: Vec<PermissionRecord>,
     pub cold_start: bool,
+    catalog: BuiltinCatalog,
 }
 impl PolicyStore {
+    pub fn set_catalog(&mut self, catalog: BuiltinCatalog) {
+        self.catalog = catalog;
+    }
     fn audit(
         connection: &rusqlite::Connection,
         action: &str,
@@ -52,13 +56,13 @@ impl PolicyStore {
         let mut changed = self.records.clone();
         let mut identities = std::collections::HashSet::new();
         for grant in import.grants {
-            Self::validate(&grant)?;
+            self.validate(&grant)?;
             if grant.expires_at <= crate::runtime::now()
                 || grant.expires_at > crate::runtime::now() + 31_536_000_000.0
             {
                 return Err(ErrorCode::InvalidRequest);
             }
-            let identity = Self::identity(&grant)?;
+            let identity = self.identity(&grant)?;
             if !identities.insert(identity.clone()) {
                 return Err(ErrorCode::InvalidRequest);
             }
@@ -93,6 +97,13 @@ impl PolicyStore {
         Ok(())
     }
     pub fn load(store: &mut DataStore, catalog_digest: &str) -> Result<Self, ErrorCode> {
+        Self::load_snapshot(store, catalog_digest, BuiltinCatalog::embedded())
+    }
+    pub fn load_snapshot(
+        store: &mut DataStore,
+        catalog_digest: &str,
+        catalog: BuiltinCatalog,
+    ) -> Result<Self, ErrorCode> {
         let previous: Option<String> = store
             .connection
             .query_row(
@@ -137,13 +148,18 @@ impl PolicyStore {
             tx.execute("INSERT INTO core_metadata(key,value) VALUES('catalog-digest',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value",[catalog_digest]).map_err(|_|ErrorCode::StorageFailed)?;
             tx.commit().map_err(|_| ErrorCode::StorageFailed)?;
         }
+        let mut policy = Self {
+            records: vec![],
+            cold_start: false,
+            catalog,
+        };
         for record in &records {
             if let Some(ref grant) = record.grant {
-                let identity = Self::identity(grant)?;
+                let identity = policy.identity(grant)?;
                 if identity != record.identity {
                     return Err(ErrorCode::StoreCorrupt);
                 }
-                Self::validate(grant)?;
+                policy.validate(grant)?;
             }
         }
         let cold_start = store
@@ -156,24 +172,23 @@ impl PolicyStore {
             .optional()
             .map_err(|_| ErrorCode::StorageFailed)?
             .is_some_and(|v| v == "true");
-        Ok(Self {
-            records,
-            cold_start,
-        })
+        policy.records = records;
+        policy.cold_start = cold_start;
+        Ok(policy)
     }
-    fn identity(grant: &PermissionGrant) -> Result<CommandIdentity, ErrorCode> {
-        let catalog = BuiltinCatalog::embedded();
-        let (manifest, command) = catalog.command(&grant.plugin_id, &grant.command_id)?;
-        Ok(CommandIdentity::from_manifest(
-            grant.target.caller(),
-            manifest,
-            command,
-        ))
+    fn identity(&self, grant: &PermissionGrant) -> Result<CommandIdentity, ErrorCode> {
+        let (manifest, command) = self
+            .catalog
+            .permission_operation(&grant.plugin_id, &grant.command_id)?;
+        let mut identity = CommandIdentity::from_manifest(grant.target.caller(), manifest, command);
+        identity.command_id = grant.command_id.clone();
+        Ok(identity)
     }
-    fn validate(grant: &PermissionGrant) -> Result<(), ErrorCode> {
-        let catalog = BuiltinCatalog::embedded();
-        let (_, command) = catalog.command(&grant.plugin_id, &grant.command_id)?;
-        if Self::identity(grant)?.package_digest != grant.package_digest {
+    fn validate(&self, grant: &PermissionGrant) -> Result<(), ErrorCode> {
+        let (_, command) = self
+            .catalog
+            .permission_operation(&grant.plugin_id, &grant.command_id)?;
+        if self.identity(grant)?.package_digest != grant.package_digest {
             return Err(ErrorCode::InvalidRequest);
         }
         if !grant.expires_at.is_finite()
@@ -188,7 +203,7 @@ impl PolicyStore {
         {
             return Err(ErrorCode::InvalidRequest);
         }
-        CapabilityBroker::default().approve(Self::identity(grant)?, Self::capability(grant))?;
+        CapabilityBroker::default().approve(self.identity(grant)?, Self::capability(grant))?;
         Ok(())
     }
     pub fn capability(grant: &PermissionGrant) -> Grant {
@@ -215,8 +230,8 @@ impl PolicyStore {
         {
             return Err(ErrorCode::InvalidRequest);
         }
-        Self::validate(&grant)?;
-        let identity = Self::identity(&grant)?;
+        self.validate(&grant)?;
+        let identity = self.identity(&grant)?;
         if self.records.len() >= 256 && !self.records.iter().any(|r| r.identity == identity) {
             return Err(ErrorCode::BudgetExceeded);
         }

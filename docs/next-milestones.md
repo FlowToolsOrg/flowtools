@@ -1,7 +1,7 @@
 # FlowTools 下一阶段目标与实施设计
 
 - 决策日期：2026-10-04
-- 状态：accepted-design；G1、G2 固定 Windows/T1 验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4–G8 尚待实施
+- 状态：accepted-design；G1、G2 固定 Windows/T1 验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4 P1.6a/P1.6b 固定 Windows/T1 prototype 范围已完成验收；G5–G8 尚待实施
 - 决策来源：维护者已确认的产品讨论；实施责任由 Repository Maintainer 分配
 - 进度来源：[生产路线图](./production-roadmap.md)
 
@@ -267,7 +267,7 @@ G4 只用固定 T1 清单和可丢弃 fixtures 验证；依赖变更为 plan-onl
 - 服务依赖：插件提供 versioned service/operation Schema，经 Host broker 调用。
 - 工具依赖：独立工具包，包含 publisher/id/version/target/buildFlavor/digest。
 
-`packages/sdk/src/dependencies/` 和 Runtime `dependencies/`（拟新增）分别管理
+`packages/sdk/src/dependencies/` 和 Runtime `dependencies/` 已在 P1.6a 新增，分别管理
 声明与解析。服务依赖先采用同一 profile 内单 provider 版本，冲突时明确失败；
 工具允许多版本并存。同一版本区间解析成 Host 生成的不可变 lock，不能仅凭 ID
 或版本号切换 artifact。公开服务依赖 v1 要求 publisher 固定，避免名称抢占。
@@ -275,6 +275,11 @@ G4 只用固定 T1 清单和可丢弃 fixtures 验证；依赖变更为 plan-onl
 依赖解析先生成用户可查看的变更计划；后续安装或授权被拒绝时不得留下半安装状态。
 
 ### P1.6b RPC、调用链与卸载
+
+2026-10-09 固定 Windows/T1 实现、专项回归与全仓门禁已通过，maturity 仍为
+prototype，独立安全批准 pending。见
+[服务调用验收记录](./validation/g4-service-calls.md)。公开 client/CLI 只有只读
+卸载计划与诊断；候选切换仅 T0 固定 fixtures，跨包安装仍在 G5。
 
 Runtime 为调用绑定 root caller、调用插件与 provider，保留 parentRunId。
 有效权限不得超过调用方授权/可委托 scope、服务 operation 上限及 provider 的

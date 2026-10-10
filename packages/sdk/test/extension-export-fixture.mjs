@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict'
-import NodeModule, { register } from 'node:module'
+import NodeModule, * as moduleApi from 'node:module'
 
-// module.register is available on the existing Node 20.19 baseline.
-register(new URL('./extension-dependency-guard.mjs', import.meta.url))
+import { registerDependencyGuard } from './extension-dependency-guard.mjs'
+
+registerDependencyGuard(moduleApi)
 
 // Async ESM hooks do not see ordinary CommonJS requires. This child-process-only
 // guard covers those without changing CommonJS source/named-export semantics.

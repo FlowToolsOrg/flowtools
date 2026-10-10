@@ -856,6 +856,28 @@ fresh Native GUI/CLI harness pass. Actual Windows keyboard focus/native consent,
 Independent security approval remains pending; no human listening, full blind-user
 workflow or other-platform certification is claimed.
 
+### G4 P1.6a dependency plans
+
+The SDK dependencies subpath declares versioned services/operations and pinned
+tool selectors. Runtime resolves its fixed inventory to deterministic immutable
+locks with bounded search, dependency order and reverse dependencies. The CLI
+`dependencies plan <plugin-ids...>` queries an existing Host in text or JSON.
+Plans do not install, activate or grant access. Existing T1 execution is unchanged;
+P1.6b now binds fixed T1 service calls and draining updates. See the
+[scope and validation record](docs/validation/g4-dependency-plans.md).
+
+### G4 P1.6b service calls
+
+Runtime owns accepted locks, root/parent/provider identity, intersected grants,
+deadline/cancellation/call/output budgets and serial provider leases. Controlled
+A/B/C fixtures execute through real compiled handlers and bounded child pipes.
+Updates wait for accepted work and owned processes, then back up and migrate;
+uncertain commits refuse admission and require recovery. CLI
+`dependencies unload-plan` and `dependencies calls` inspect metadata only.
+The twelve production built-ins still declare no services. Signed installation,
+third-party isolation and real tool storage remain G5/G6; maturity is prototype.
+See [implementation and validation](docs/validation/g4-service-calls.md).
+
 ## E host extension contracts
 
 The accepted [E01–E10 parallel backlog](./docs/host-extensions.md) covers themes,

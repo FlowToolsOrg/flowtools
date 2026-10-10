@@ -46,6 +46,31 @@ const workflow = Bun.YAML.parse(
   ).text()
 ) as Workflow
 
+test('native integrity hashing is optimized in the effective workspace without weakening debug checks', () => {
+  const metadata = spawnSync(
+    'cargo',
+    [
+      'metadata',
+      '--locked',
+      '--offline',
+      '--no-deps',
+      '--format-version',
+      '1',
+      '--manifest-path',
+      fileURLToPath(new URL('../apps/runtime/Cargo.toml', import.meta.url)),
+    ],
+    { encoding: 'utf8' }
+  )
+  expect(metadata.status, metadata.stdout + metadata.stderr).toBe(0)
+  const workspace = JSON.parse(metadata.stdout) as { workspace_root: string }
+  const manifest = Bun.TOML.parse(
+    readFileSync(join(workspace.workspace_root, 'Cargo.toml'), 'utf8')
+  ) as { profile: Record<string, unknown> }
+  expect(manifest.profile).toEqual({
+    dev: { package: { sha2: { 'opt-level': 3 } } },
+  })
+})
+
 test('root and workspace lint accept defined CSS classes and reject unknown ones', () => {
   const root = fileURLToPath(new URL('../', import.meta.url))
   const consumer = join(root, 'apps', 'ui-test')

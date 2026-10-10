@@ -1,7 +1,7 @@
 # G4 P1.6b：服务调用链、租约与恢复
 
 - 范围：固定 Windows/T1 inventory 与构建时完整 SDK 校验的可丢弃 A/B/C fixtures。
-- 状态：done；2026-10-09 完成固定 Windows/T1 范围验收，maturity 为 prototype。
+- 状态：P1.6b 实现已提交；G4 综合验收 pending，maturity 为 prototype。
 - 独立提交：`feat(runtime): bind delegated service calls and drain providers (P1.6b)`。
 - 威胁：SEC-014、SEC-015 保持 open；独立人工安全 reviewer/date/conclusion pending。
 
@@ -145,3 +145,46 @@ unsafe/certification 开关或 canary 泄漏；portable catalog、generated mani
 析构终止子进程；正常路径有实际排空断言，但没有独立 fixture 级异常排空验收。
 远端固定版本 CI 的当前结果以 PR Checks 为准；独立人工安全审查仍 pending，
 SEC-014/SEC-015 保持 open，交付 PR 保持 Draft，maturity 仍为 prototype。
+
+## 2026-10-10 CI 执行超时修复
+
+提交 `2784c89` 的 push CI 成功，PR CI 失败。后者的两个错误分别出现在
+并发测试的第二个实际调用返回，以及重启测试的前置 A → B → C 返回，均为
+`Timeout`；5 秒就绪检查已通过，重启/快照断言尚未开始，不能归因于数据恢复。
+
+每个 hop 启动前仍重新读取和验证完整 Bun 文件及 runner。受控性能对照对
+同一 86,096,984 字节文件逐次读入、计算 SHA-256 并比对固定期望摘要：
+
+| sha2 0.10.9 后端         | 原 Debug 单次哈希 | 仅 sha2 opt-level=3 |
+| ------------------------ | ----------------- | ------------------- |
+| 默认硬件后端             | 1.21–1.98 秒      | 34–40 毫秒          |
+| 官方 force-soft 软件后端 | 8.77–9.90 秒      | 163–180 毫秒        |
+
+12 次实际摘要比对均通过；没有缓存、size/mtime 替代或跳过校验。软件后端单次
+校验就可能耗尽 9.5 秒根任务预算，证明原 Debug 热路径存在 CPU 相关开销；
+远端失败日志没有分阶段计时，因此此对照不等于远端 CPU 型号或耗时的直接证据。
+数值仅是本机对照，不是产品启动 SLA。
+
+修复仅在 Runtime/Core 的根 Cargo workspace 为 `sha2` 设置开发包优化级别 3。
+标准 test profile 继承 dev；应用自身仍用 Debug，调试/溢出检查保留。没有修改
+实际执行、逐次完整性校验、权限、租约、进程组排空、任务期限或任何原有断言。
+Desktop 是独立 workspace，本次不改变其编译配置。构建策略回归通过实际
+Runtime manifest 的 Cargo metadata 定位有效 workspace，检查仅有该依赖优化，
+防止放在无效的成员 manifest 或全局弱化调试检查。
+
+固定 Bun 1.3.14 / Rust 1.96.0 的本地复核：
+
+- 全仓 lint/types 均 11/11 强制执行通过；全仓 test 11/11、零缓存通过
+  （4m58.669s），随后顺序 build 11/11 强制执行通过（45.902s）。
+- Core 73 项、Native 17 项（22.16s）、Chromium 72 项、Desktop 89 项 JS、
+  21 项 Rust 和 3 项 binding 均通过；独立发行包 50 并发冷启动通过。
+- 单独启用官方 `sha2/force-soft` 的真实原生测试 17/17 通过（34.21s），
+  包含两项此前失败用例；完整 CI contracts 12/12、102 项断言通过。
+- 冻结依赖安装、workspace tasks、portable catalog、generated manifests、
+  command docs 和 Rust-derived Runtime contracts 只读检查通过。
+- Web 22 / Desktop 24 个生产产物在 opt-in/canary 重建后 byte-identical；
+  Desktop Rust fmt/check/all-targets codegen clippy `-D warnings` 通过。
+
+远端验收以 [PR #9 Checks](https://github.com/FlowToolsOrg/flowtools/pull/9/checks)
+为准。本次仅修复 CI 开销，G4 综合验收与独立人工安全审查仍 pending，
+不推进 G5、maturity 或第三方执行准入。

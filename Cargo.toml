@@ -12,3 +12,8 @@ specta-typescript = "=0.0.12"
 sha2 = "=0.10.9"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "io-util", "io-std", "sync", "time", "signal", "process"] }
 uuid = { version = "=1.23.3", features = ["v4"] }
+
+# Every runner launch hashes the complete runtime; keep the software SHA path
+# usable on CI CPUs too. Tests inherit dev; application debug checks stay enabled.
+[profile.dev.package.sha2]
+opt-level = 3

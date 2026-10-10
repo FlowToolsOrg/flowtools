@@ -359,6 +359,57 @@
             "additionalProperties": false,
             "properties": {
               "method": {
+                "const": "dependencies.plan",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/DependencyPlanRequest"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "dependencies.unload-plan",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ProviderKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "services.calls",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/JobKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
                 "const": "jobs.submit",
                 "type": "string"
               },
@@ -721,6 +772,22 @@
         ],
         "type": "object"
       },
+      "DependencyPlanRequest": {
+        "additionalProperties": false,
+        "description": "Roots only: package inventory, identities and target are Host-owned.",
+        "properties": {
+          "pluginIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "pluginIds"
+        ],
+        "type": "object"
+      },
       "EventCursor": {
         "additionalProperties": false,
         "properties": {
@@ -918,6 +985,18 @@
           "formatVersion",
           "coldStart",
           "grants"
+        ],
+        "type": "object"
+      },
+      "ProviderKey": {
+        "additionalProperties": false,
+        "properties": {
+          "pluginId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pluginId"
         ],
         "type": "object"
       },
@@ -1236,6 +1315,157 @@
         ],
         "type": "object"
       },
+      "DependencyEdge": {
+        "additionalProperties": false,
+        "description": "Service edges form the provider DAG. Tool pins are leaves, retaining the exact\nconsumer and artifact separately without activating any plugin provider.",
+        "properties": {
+          "consumer": {
+            "$ref": "#/$defs/DependencyIdentity"
+          },
+          "provider": {
+            "$ref": "#/$defs/DependencyIdentity"
+          },
+          "service": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "consumer",
+          "provider",
+          "service"
+        ],
+        "type": "object"
+      },
+      "DependencyIdentity": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "publisher": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "publisher",
+          "id"
+        ],
+        "type": "object"
+      },
+      "DependencyLock": {
+        "additionalProperties": false,
+        "description": "Value pins, never grants, executable paths, installation or activation receipts.\nThe digest binds every other field and excludes the digest field itself.",
+        "properties": {
+          "digest": {
+            "type": "string"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/$defs/DependencyEdge"
+            },
+            "type": "array"
+          },
+          "formatVersion": {
+            "format": "uint16",
+            "maximum": 65535,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "packages": {
+            "items": {
+              "$ref": "#/$defs/PackagePin"
+            },
+            "type": "array"
+          },
+          "reverseDependencies": {
+            "description": "Direct service consumers, including providers without consumers.",
+            "items": {
+              "$ref": "#/$defs/ReverseDependency"
+            },
+            "type": "array"
+          },
+          "roots": {
+            "items": {
+              "$ref": "#/$defs/DependencyIdentity"
+            },
+            "type": "array"
+          },
+          "services": {
+            "items": {
+              "$ref": "#/$defs/ServicePin"
+            },
+            "type": "array"
+          },
+          "target": {
+            "$ref": "#/$defs/DependencyTarget"
+          },
+          "tools": {
+            "items": {
+              "$ref": "#/$defs/ToolPin"
+            },
+            "type": "array"
+          },
+          "topology": {
+            "description": "Providers before consumers; deterministic identity order breaks ties.",
+            "items": {
+              "$ref": "#/$defs/DependencyIdentity"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "formatVersion",
+          "digest",
+          "target",
+          "roots",
+          "packages",
+          "services",
+          "tools",
+          "edges",
+          "topology",
+          "reverseDependencies"
+        ],
+        "type": "object"
+      },
+      "DependencyPlan": {
+        "additionalProperties": false,
+        "properties": {
+          "formatVersion": {
+            "format": "uint16",
+            "maximum": 65535,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "lock": {
+            "$ref": "#/$defs/DependencyLock"
+          },
+          "mode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "formatVersion",
+          "mode",
+          "lock"
+        ],
+        "type": "object"
+      },
+      "DependencyTarget": {
+        "additionalProperties": false,
+        "properties": {
+          "arch": {
+            "type": "string"
+          },
+          "platform": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "platform",
+          "arch"
+        ],
+        "type": "object"
+      },
       "ErrorCode": {
         "enum": [
           "PROTOCOL_MISMATCH",
@@ -1270,7 +1500,15 @@
           "OUTPUT_INVALID",
           "RUNTIME_BUSY",
           "RUNTIME_DISCONNECTED",
-          "INVALID_RESPONSE"
+          "INVALID_RESPONSE",
+          "DEPENDENCY_INVALID",
+          "DEPENDENCY_MISSING",
+          "DEPENDENCY_CONFLICT",
+          "DEPENDENCY_DUPLICATE_PROVIDER",
+          "DEPENDENCY_CYCLE",
+          "DEPENDENCY_PLATFORM_MISMATCH",
+          "DEPENDENCY_ARTIFACT_MISMATCH",
+          "DEPENDENCY_BUDGET_EXCEEDED"
         ],
         "type": "string"
       },
@@ -1585,6 +1823,60 @@
             "additionalProperties": false,
             "properties": {
               "data": {
+                "$ref": "#/$defs/DependencyPlan"
+              },
+              "type": {
+                "const": "dependency-plan",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/ProviderChangePlan"
+              },
+              "type": {
+                "const": "provider-change-plan",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/$defs/ServiceCallDiagnostic"
+                },
+                "type": "array"
+              },
+              "type": {
+                "const": "service-calls",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
                 "$ref": "#/$defs/JobReceipt"
               },
               "type": {
@@ -1778,6 +2070,30 @@
           }
         ]
       },
+      "PackagePin": {
+        "additionalProperties": false,
+        "properties": {
+          "digest": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "publisher",
+          "id",
+          "version",
+          "digest"
+        ],
+        "type": "object"
+      },
       "PermissionGrant": {
         "additionalProperties": false,
         "properties": {
@@ -1895,12 +2211,75 @@
         ],
         "type": "object"
       },
+      "ProviderChangePlan": {
+        "additionalProperties": false,
+        "properties": {
+          "affectedLocks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "consumers": {
+            "items": {
+              "$ref": "#/$defs/DependencyIdentity"
+            },
+            "type": "array"
+          },
+          "digest": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "provider": {
+            "$ref": "#/$defs/PackagePin"
+          },
+          "replacement": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/PackagePin"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "mode",
+          "digest",
+          "provider",
+          "consumers",
+          "affectedLocks"
+        ],
+        "type": "object"
+      },
       "ReadMethod": {
         "enum": [
           "GET",
           "HEAD"
         ],
         "type": "string"
+      },
+      "ReverseDependency": {
+        "additionalProperties": false,
+        "properties": {
+          "consumers": {
+            "items": {
+              "$ref": "#/$defs/DependencyIdentity"
+            },
+            "type": "array"
+          },
+          "provider": {
+            "$ref": "#/$defs/DependencyIdentity"
+          }
+        },
+        "required": [
+          "provider",
+          "consumers"
+        ],
+        "type": "object"
       },
       "RunDiagnostic": {
         "additionalProperties": false,
@@ -2216,6 +2595,93 @@
         ],
         "type": "string"
       },
+      "ServiceCallDiagnostic": {
+        "additionalProperties": false,
+        "properties": {
+          "consumer": {
+            "$ref": "#/$defs/DependencyIdentity"
+          },
+          "deadline": {
+            "format": "double",
+            "type": "number"
+          },
+          "dependencyLock": {
+            "type": "string"
+          },
+          "failureCode": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ErrorCode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "operation": {
+            "type": "string"
+          },
+          "parentRunId": {
+            "type": "string"
+          },
+          "provider": {
+            "$ref": "#/$defs/PackagePin"
+          },
+          "rootCaller": {
+            "type": "string"
+          },
+          "rootRunId": {
+            "type": "string"
+          },
+          "runId": {
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId",
+          "parentRunId",
+          "rootRunId",
+          "rootCaller",
+          "consumer",
+          "provider",
+          "service",
+          "operation",
+          "dependencyLock",
+          "deadline",
+          "state"
+        ],
+        "type": "object"
+      },
+      "ServicePin": {
+        "additionalProperties": false,
+        "properties": {
+          "consumer": {
+            "$ref": "#/$defs/DependencyIdentity"
+          },
+          "provider": {
+            "$ref": "#/$defs/PackagePin"
+          },
+          "service": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "consumer",
+          "provider",
+          "service",
+          "version"
+        ],
+        "type": "object"
+      },
       "SessionProof": {
         "additionalProperties": false,
         "properties": {
@@ -2229,6 +2695,42 @@
         "required": [
           "sessionId",
           "instanceId"
+        ],
+        "type": "object"
+      },
+      "ToolPin": {
+        "additionalProperties": false,
+        "properties": {
+          "buildFlavor": {
+            "type": "string"
+          },
+          "consumer": {
+            "$ref": "#/$defs/DependencyIdentity"
+          },
+          "digest": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/$defs/DependencyTarget"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "consumer",
+          "publisher",
+          "id",
+          "version",
+          "target",
+          "buildFlavor",
+          "digest"
         ],
         "type": "object"
       }
@@ -2404,7 +2906,15 @@
           "OUTPUT_INVALID",
           "RUNTIME_BUSY",
           "RUNTIME_DISCONNECTED",
-          "INVALID_RESPONSE"
+          "INVALID_RESPONSE",
+          "DEPENDENCY_INVALID",
+          "DEPENDENCY_MISSING",
+          "DEPENDENCY_CONFLICT",
+          "DEPENDENCY_DUPLICATE_PROVIDER",
+          "DEPENDENCY_CYCLE",
+          "DEPENDENCY_PLATFORM_MISMATCH",
+          "DEPENDENCY_ARTIFACT_MISMATCH",
+          "DEPENDENCY_BUDGET_EXCEEDED"
         ],
         "type": "string"
       },

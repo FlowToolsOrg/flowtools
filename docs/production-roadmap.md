@@ -9,7 +9,7 @@
 > 2026-10-04 产品决策：面向知识工作者/普通办公用户，GUI 与外部 agents
 > 共用命令；支持独立 CLI、轻量后台内核、集中管理和共享二进制工具依赖。
 > 低代码、内置 AI 助手与模型接入保留为未来插件。具体顺序与实现见
-> [下一阶段目标与实施设计](./next-milestones.md)。G1、G2 固定验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G5 P2.5a 只读包协议已实施；G4、G5 其余子项与 G6–G8 尚待实施。
+> [下一阶段目标与实施设计](./next-milestones.md)。G1、G2 固定验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4 P1.6a/P1.6b 已实施为固定 Windows/T1 prototype，综合验收仍 pending；G5 P2.5a 只读包协议已实施为 prototype；P2.5b、G5 其余子项与 G6–G8 尚待实施。
 
 本文档是 FlowTools 从 Demo 级原型走向生产版本的执行台账。它不以
 “页面已存在”或“类型已定义”作为完成标准，而以真实执行、失败可恢复、
@@ -1013,36 +1013,36 @@ G4 服务依赖 -> G5 签名安装与隔离 -> G6 工具链 -> G7 办公闭环 -
 对应模块、协议、错误码、数据/任务恢复和拒绝 fixtures 在
 [实施设计](./next-milestones.md) 中定义；以下全部为待交付子项。
 
-| 子 ID | 状态        | 前置                | 聚焦交付物与验收                                                                   |
-| ----- | ----------- | ------------------- | ---------------------------------------------------------------------------------- |
-| P1.1a | done        | P0.3c、P0.4         | 序列化 Manifest、多操作输入/输出 Schema、冷启动/effects/依赖声明；非法包执行前拒绝 |
-| P1.1b | done        | P1.1a               | UI/commands 分包、十二插件兼容适配；无 React/GUI/source 消费实际命令               |
-| P1.1c | done        | P1.1b               | describe/commands/flags 同源生成；编译 CLI 的机器发现与拒绝回归                    |
-| P1.2a | done        | P1.1                | 单一状态机、锁和 hook 补偿；100 并发操作不重复激活                                 |
-| P1.2b | done        | P1.2a               | 命令状态投影、进程/视图资源 ownership；更新/卸载无孤儿 handler                     |
-| P1.3a | done        | P1.2                | Runtime core/binary、用户级 IPC、T1 临时 profile 与 job 协议；不接用户数据/第三方  |
-| P1.5a | done        | P1.3a               | versioned DTO、拒绝码、脱敏事件与兼容/失联诊断                                     |
-| P2.3a | done        | P1.3a、P1.5a        | T1 内存策略 broker、Host 绑定身份/operation/scope/epoch/预算；敏感 IO 仍拒绝       |
-| P2.6a | done        | P2.3a               | 移除 Debug reset、迁移/备份、Runtime 单写者与异步 data/revision；保留旧数据        |
-| P2.4a | done        | P2.3a、P2.6a        | CLI-only init/策略管理、持久 grants、冷启动/后台/effects、撤销 epoch；无默认放行   |
-| P1.3b | implemented | P2.4a、P2.6a        | 实际执行、durable receipt/同 key 恢复、幂等/取消；未知状态不重试非幂等副作用       |
-| P1.4a | implemented | P1.3b               | CLI-only runtime/runner 分发、受控冷启动；未安装 GUI、50 并发启动验收              |
-| P1.4b | implemented | P1.4a               | GUI/CLI 同任务和数据，jobs status/watch/cancel、完整 text/JSON/退出码回归          |
-| P1.5b | implemented | P1.4b               | run/调用链诊断与隐私红线；实际异常/撤销/恢复可诊断                                 |
-| P1.6a | pending     | P1.1、P1.3b         | T1/fixture 的 plan-only DAG/lock、服务接口和工具声明；缺失/冲突/循环拒绝           |
-| P1.6b | pending     | P1.6a、P2.4a        | Host RPC/委托 scope、排空后切服务版本、租约/反向依赖；前置服务不能代理越权         |
-| P2.5a | pending     | P1.6                | plugin/tool 签名、trust root、撤销/离线/回滚协议及 fixtures；冻结后方能实现准入    |
-| P2.5b | pending     | P2.5a、P2.3a        | staging/journal、签名准入、artifact 安装与恢复；安装不等于允许执行                 |
-| P2.3b | pending     | P2.1、P2.2、P2.3a   | 将验证后 T2/T3/TL 会话接入真实 broker；直接 API/IPC 越权拒绝                       |
-| P2.4b | pending     | P2.3b、P2.4a        | 第三方授权 UI、更新差异、冷启动/调度拒绝与活跃撤销                                 |
-| P2.6b | pending     | P2.3b、P2.6a        | 第三方 namespace、升级/卸载、导入导出和恢复；跨插件读写拒绝                        |
-| P2.8a | pending     | P2.5、P1.6          | 工具包目录/侧载准入、多版本只读共享、locks/leases/journal                          |
-| P2.8b | pending     | P2.8a、P2.2、P2.3b  | FFmpeg typed adapter、实际平台访问约束、进程树/预算/取消                           |
-| P2.8c | pending     | P2.8b、P2.4b、P2.6b | 两插件共享、原子更新指针、回滚/撤销、lease-aware GC 与崩溃恢复                     |
-| P3.1a | pending     | P1.4、P2.3          | 托盘/热键/单实例、轻量驻留与可选自启动；GUI 不决定内核存活                         |
-| P3.1b | pending     | P3.1a、P1.3b、P2.4  | Host 调度/通知、时区/休眠/重复策略；授权到期或撤销不执行                           |
-| P3.4a | pending     | P2.7、P3.1、P3.2    | 文件/媒体/日程三闭环与实际 UI/CLI E2E，发布成熟度仍按范围证据                      |
-| P3.4b | pending     | P3.4a、P3.3         | 扩大插件认证与 Legacy 迁移，每项平台/API/资源矩阵实际通过                          |
+| 子 ID | 状态        | 前置                | 聚焦交付物与验收                                                                            |
+| ----- | ----------- | ------------------- | ------------------------------------------------------------------------------------------- |
+| P1.1a | done        | P0.3c、P0.4         | 序列化 Manifest、多操作输入/输出 Schema、冷启动/effects/依赖声明；非法包执行前拒绝          |
+| P1.1b | done        | P1.1a               | UI/commands 分包、十二插件兼容适配；无 React/GUI/source 消费实际命令                        |
+| P1.1c | done        | P1.1b               | describe/commands/flags 同源生成；编译 CLI 的机器发现与拒绝回归                             |
+| P1.2a | done        | P1.1                | 单一状态机、锁和 hook 补偿；100 并发操作不重复激活                                          |
+| P1.2b | done        | P1.2a               | 命令状态投影、进程/视图资源 ownership；更新/卸载无孤儿 handler                              |
+| P1.3a | done        | P1.2                | Runtime core/binary、用户级 IPC、T1 临时 profile 与 job 协议；不接用户数据/第三方           |
+| P1.5a | done        | P1.3a               | versioned DTO、拒绝码、脱敏事件与兼容/失联诊断                                              |
+| P2.3a | done        | P1.3a、P1.5a        | T1 内存策略 broker、Host 绑定身份/operation/scope/epoch/预算；敏感 IO 仍拒绝                |
+| P2.6a | done        | P2.3a               | 移除 Debug reset、迁移/备份、Runtime 单写者与异步 data/revision；保留旧数据                 |
+| P2.4a | done        | P2.3a、P2.6a        | CLI-only init/策略管理、持久 grants、冷启动/后台/effects、撤销 epoch；无默认放行            |
+| P1.3b | implemented | P2.4a、P2.6a        | 实际执行、durable receipt/同 key 恢复、幂等/取消；未知状态不重试非幂等副作用                |
+| P1.4a | implemented | P1.3b               | CLI-only runtime/runner 分发、受控冷启动；未安装 GUI、50 并发启动验收                       |
+| P1.4b | implemented | P1.4a               | GUI/CLI 同任务和数据，jobs status/watch/cancel、完整 text/JSON/退出码回归                   |
+| P1.5b | implemented | P1.4b               | run/调用链诊断与隐私红线；实际异常/撤销/恢复可诊断                                          |
+| P1.6a | implemented | P1.1、P1.3b         | 2026-10-08；确定 lock、共享 semver fixtures 与实际 Host/CLI；prototype，G4 综合验收 pending |
+| P1.6b | implemented | P1.6a、P2.4a        | 2026-10-09；固定 T1 RPC/委托 scope、排空/备份/迁移与租约已实施；异常排空及综合验收 pending  |
+| P2.5a | implemented | P1.6                | prototype 只读签名/trust root、撤销/离线/回滚协议及 fixtures；事务安装与真实 pins 仍待后续  |
+| P2.5b | pending     | P2.5a、P2.3a        | staging/journal、签名准入、artifact 安装与恢复；安装不等于允许执行                          |
+| P2.3b | pending     | P2.1、P2.2、P2.3a   | 将验证后 T2/T3/TL 会话接入真实 broker；直接 API/IPC 越权拒绝                                |
+| P2.4b | pending     | P2.3b、P2.4a        | 第三方授权 UI、更新差异、冷启动/调度拒绝与活跃撤销                                          |
+| P2.6b | pending     | P2.3b、P2.6a        | 第三方 namespace、升级/卸载、导入导出和恢复；跨插件读写拒绝                                 |
+| P2.8a | pending     | P2.5、P1.6          | 工具包目录/侧载准入、多版本只读共享、locks/leases/journal                                   |
+| P2.8b | pending     | P2.8a、P2.2、P2.3b  | FFmpeg typed adapter、实际平台访问约束、进程树/预算/取消                                    |
+| P2.8c | pending     | P2.8b、P2.4b、P2.6b | 两插件共享、原子更新指针、回滚/撤销、lease-aware GC 与崩溃恢复                              |
+| P3.1a | pending     | P1.4、P2.3          | 托盘/热键/单实例、轻量驻留与可选自启动；GUI 不决定内核存活                                  |
+| P3.1b | pending     | P3.1a、P1.3b、P2.4  | Host 调度/通知、时区/休眠/重复策略；授权到期或撤销不执行                                    |
+| P3.4a | pending     | P2.7、P3.1、P3.2    | 文件/媒体/日程三闭环与实际 UI/CLI E2E，发布成熟度仍按范围证据                               |
+| P3.4b | pending     | P3.4a、P3.3         | 扩大插件认证与 Legacy 迁移，每项平台/API/资源矩阵实际通过                                   |
 
 P1.1/1.2/1.3/1.4/1.5、P2.3/2.4/2.5/2.6、P3.1/3.4 父项分别由上述同前缀
 子项和原验收共同收口。P2.1/P2.2 的平台验证先并行评估，生产执行在 G5 全部
@@ -1208,10 +1208,22 @@ Phase 1 内核退出标准：P1.1–P1.5 全部 `done`；三端真实执行契�
 
 ### P1.6 插件依赖锁与服务调用
 
-- 状态：`pending`
+- 状态：`implemented`（P1.6a/P1.6b 固定 Windows/T1 prototype 已实施；综合验收与独立安全批准 pending）
+- P1.6a 提交：`feat(runtime): resolve immutable dependency plans (P1.6a)`；
+  [依赖计划验收](./validation/g4-dependency-plans.md)记录固定 Windows/T1 范围、
+  全仓自动门禁与实际编译 CLI/Host。SEC-014/015 和独立安全批准仍 open/pending。
 - Owner：SDK / Runtime；Repository Maintainer 指定实施责任人
 - 依赖：P1.1、P1.3b、P2.4a
 - 子项：P1.6a、P1.6b；对应 G4
+- P1.6b 范围：[服务调用验收](./validation/g4-service-calls.md)。真实编译 A/B/C，
+  祖先授权收敛、排空后更新、持久诊断与恢复拒绝；不开放签名安装或第三方执行。
+- P1.6b 已有验证记录：2026-10-09 全仓 lint/types/test/build 11/11、Core 73 / Native 17
+  Rust、66 Chromium 回归、实际 CLI/50 并发冷启动与 22 Web / 24 Desktop
+  production artifacts 通过。只保留本地提交；远端固定版本 CI 和独立人工安全
+  reviewer/date/conclusion 仍 pending，SEC-014/015 保持 open。
+- G4 剩余验收：独立 fixture 级异常排空尚未验证；后续 CI 复核见
+  [服务调用验收记录](./validation/g4-service-calls.md)。已有实现与历史通过记录
+  不代替这一拒绝/回收路径的客观证据，本轮集成不将 G4 标记为 done。
 - 交付：区分构建代码、运行服务与工具依赖；服务单 profile 单版本、工具多版本；
   Host 生成确定 lock、DAG/版本冲突检查、反向依赖和版本租约；服务经 Host RPC，
   root caller/parentRunId/委托 scope 不丢失，前置插件不得扩大调用者授权。
@@ -1357,7 +1369,9 @@ P2.5a 的包协议、作者 helper 与只读 Rust verifier 已实施为 prototyp
 验证见 [G5 P2.5a](./validation/g5-package-protocol.md)，格式冻结于
 [ADR-0003](./adr/0003-signed-package-protocol.md)。它只验证描述与传入字节，
 不解包、安装、创建 grants 或开放第三方执行；真实 trust pins/持久 floor
-仍 pending。G4 P1.6a/b 尚未实施，P2.5b 的依赖锁/事务安装必须等待它。
+仍 pending。G4 P1.6a/P1.6b 已实施为固定 Windows/T1 prototype，综合验收
+仍 pending；P2.5b 须在该门禁通过后接入其锁与服务语义，签名准入、事务安装
+与恢复尚未实施。
 P2.5 父项与 G5 整体验收仍 pending，独立安全批准 pending。
 
 交付物：
@@ -1738,14 +1752,14 @@ Phase 3 总退出标准：P3.1–P3.7 全部 `done`；应用和插件包可验�
 
 ### Phase 1
 
-| ID   | 状态    | 负责人        | 依赖               | Commit / 验证记录               |
-| ---- | ------- | ------------- | ------------------ | ------------------------------- |
-| P1.1 | done    | Codex         | P0.1, P0.4         | a/b/c 完成；G1 验收见文档       |
-| P1.2 | pending | TBD           | P1.1               | -                               |
-| P1.3 | pending | TBD           | P1.2               | -                               |
-| P1.4 | pending | TBD           | P1.1, P1.3         | -                               |
-| P1.5 | pending | TBD           | P1.3               | -                               |
-| P1.6 | pending | SDK / Runtime | P1.1、P1.3b、P2.4a | G4 设计完成；实施与验证 pending |
+| ID   | 状态        | 负责人        | 依赖               | Commit / 验证记录                                                                      |
+| ---- | ----------- | ------------- | ------------------ | -------------------------------------------------------------------------------------- |
+| P1.1 | done        | Codex         | P0.1, P0.4         | a/b/c 完成；G1 验收见文档                                                              |
+| P1.2 | pending     | TBD           | P1.1               | -                                                                                      |
+| P1.3 | pending     | TBD           | P1.2               | -                                                                                      |
+| P1.4 | pending     | TBD           | P1.1, P1.3         | -                                                                                      |
+| P1.5 | pending     | TBD           | P1.3               | -                                                                                      |
+| P1.6 | implemented | SDK / Runtime | P1.1、P1.3b、P2.4a | P1.6a/P1.6b 固定 Windows/T1 prototype 已实施；异常排空、综合验收与独立安全批准 pending |
 
 ### Phase 2
 
@@ -1983,3 +1997,34 @@ NVDA Speech Viewer output were subsequently verified. Independent security
 approval remains pending; human listening, a full blind-user workflow and other
 platforms are not certified. G3 stays Windows/T1 prototype; no parent milestone,
 risk or maturity gate is advanced.
+
+## E：宿主扩展平行线（2026-10-08）
+
+维护者接受 [E01–E10 业务清单](./host-extensions.md)，用于 SDK 贡献契约、
+主题、统一文本接口、设置以及后续 Provider/上下文/资源/布局扩展。
+G0–G8 原顺序和完成条件不变；G4–G7 由另一位协作者实施，真实服务、包准入、
+资源与页面接入按各自 gate 协作，不从 E 线重复建设 Runtime 基础。
+
+| 子项                               | 状态                   | 当前范围与退出条件                                                                                                                                          |
+| ---------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| E01a 数据贡献目录基础              | done                   | 严格 formatVersion 1 的 theme/locale/settings JSON、Host owner、原子替换、代际清理、稳定快照与生命周期投影；clean Windows CI 全链通过；固定 T1 工程范围完成 |
+| E01 完整贡献管理                   | pending（E01a 为前置） | 后续菜单/视图等贡献；增加已支持贡献无需改宿主业务代码                                                                                                       |
+| 第一批 E02/E03/E04 与 E10 基础规则 | pending                | 独立验证面上的主题、内置中英和插件翻译、Schema 设置；失败/停用回退                                                                                          |
+| 第二批 E05/E06/E08                 | pending                | Provider 选择、上下文动作、按需激活；复用 G4 服务机制                                                                                                       |
+| 第三批 E07/E09 与完整 E10          | pending                | 真实资源交接、受控界面插槽、兼容诊断；协调 G5–G7                                                                                                            |
+
+E01a 不修改 Manifest v1 或 Runtime wire，不应用主题/翻译/设置，不新增
+持久化、加载或授权。E01a 完成也不完成 E01/E02/E03/E04 或提升 maturity。
+[验收记录](./validation/e01-contributions.md) 记录 SDK 自动化与 clean Windows CI
+全链通过；E01 父项和 E02–E10 仍 pending，SEC-002/003/007/010
+仍 open，独立安全 Reviewer/日期/批准结论仍 pending。
+
+E02 分项：E02a 主题数据内核工程范围完成，见 [独立验收](./validation/e02-theme-contracts.md)；
+E02b HeroUI 映射与独立验证面工程范围完成，G7 真实页面接入另行协调。
+E02a 的 tokens 校验、默认补齐、显式选择、覆盖和撤下回退不完成 E02 父项；
+E02a 不增加 CSS、持久化、包加载或权限能力，不提升 maturity。
+
+E02b 子项工程范围完成：`AppearanceScope`、固定静态 CSS 和 UI-test 独立页面，
+聚焦浏览器、截图与 clean Windows CI 全链通过；见 [E02b](./validation/e02-theme-adapter.md)。
+真实 Web/Desktop 页面、外部 portal、完整组件覆盖与偏好持久化仍待各自 gate，
+不推进 E02 父项或 G7 完成状态。

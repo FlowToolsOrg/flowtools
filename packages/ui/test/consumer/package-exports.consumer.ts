@@ -1,6 +1,8 @@
 import type { ComponentProps } from 'react'
 
 import {
+  AppearanceScope,
+  type AppearanceScopeProps,
   CommandPalette,
   ExecutionPanel,
   PluginMaturityBadge,
@@ -25,6 +27,7 @@ import {
 } from '@flowtools/ui/plugin'
 
 export const runtimeExports = [
+  AppearanceScope,
   CommandPalette,
   ExecutionPanel,
   PluginMaturityBadge,
@@ -51,6 +54,8 @@ export const toolEntity: ToolEntity = {
 }
 
 export interface ConsumerTypeContract {
+  appearanceProps: AppearanceScopeProps
+  inferredAppearanceProps: ComponentProps<typeof AppearanceScope>
   maturityProps: PluginMaturityBadgeProps
   evidenceProps: PluginCompatibilityBadgeProps
   executionProps: ExecutionPanelProps

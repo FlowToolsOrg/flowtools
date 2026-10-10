@@ -4,7 +4,7 @@
 
 G5 P2.5a 新增 SDK `src/manifest/signed-package.ts` 作者 contract，以及 Rust
 core `src/packages.rs` 只读签名/trust verifier；公开 Node golden 与 SDK/Rust
-拒绝测试共用原始字节。installer/artifact store/dependencies/第三方 runner
+拒绝测试共用原始字节。installer/artifact store/第三方隔离 runner
 仍为后续模块，验证 receipt 不能通过现有 loader 执行。
 见 [协议](./adr/0003-signed-package-protocol.md)、
 [验证边界](./validation/g5-package-protocol.md)。
@@ -12,10 +12,12 @@ core `src/packages.rs` 只读签名/trust verifier；公开 Node golden 与 SDK/
 [下一阶段实施设计](./next-milestones.md) 定义 G0–G8 的顺序与验收。
 G2 已新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`
 （无界面运行服务）、`packages/runtime-client`（生成 DTO 的 TS 客户端）和
-`packages/plugin-runner`（受管执行入口）。这些目录已交付 G2 的固定 T1 / 可丢弃 profile 验证基础；G3 T1 broker 与单写者数据基础已交付，持久授权与发行仍待后续子项。
-SDK 已有命令/Manifest；服务依赖和异步 data 契约留待后续。Rust core 当前管理
-验证任务与 P2.3a T1 内存策略 broker；单写者数据；持久 grants、服务锁及工具
-artifact/lease/GC 仍为后续目标。
+`packages/plugin-runner`（受管执行入口）。这些目录已交付 G2 的固定 T1 / 可丢弃
+profile 验证基础；G3 T1 broker、单写者数据、持久授权与独立 CLI 发行已在
+固定 Windows/T1 prototype 范围验证。
+SDK 已有命令/Manifest、依赖声明及 P1.6b 服务执行契约。Rust core 当前管理
+验证任务、T1 broker、单写者数据与持久 grants、accepted 服务锁及调用租约。
+第三方包准入、隔离和真实工具 artifact/lease/GC 仍为后续目标。
 专用 Desktop 与 Node 客户端已使用同一验证服务。
 普通受管 T1 runner 不是 T3 sandbox，Web 原型不自动连接本机服务。
 
@@ -468,3 +470,53 @@ certified.
 
 `apps/ui-test/scripts/loopback-cdp.ts` validates the Native harness's observed
 IPv4/IPv6 listeners and responding endpoint; it does not configure production CDP.
+
+### G4 P1.6a dependency modules
+
+- `packages/sdk/src/dependencies/`: strict data-only service/tool declarations;
+  public subpath `@flowtools/sdk/dependencies`.
+- `packages/runtime-core/src/dependencies/`: Host-owned resolver and lock DTOs;
+  generated RuntimeClient bindings/schema derive from Rust.
+- `packages/cli/src/dependencies.ts`: read-only Host plan command, text/JSON.
+- [Validation scope](validation/g4-dependency-plans.md): fixed T1 and disposable
+  fixtures. No new installer, service execution process or plugin namespace store.
+
+### G4 P1.6b service modules
+
+- `packages/sdk/src/services/`: pure service selector and execution contract.
+- `packages/plugin-runner/src/protocol.ts`: bounded Host/child service frames.
+- `packages/runtime-core/src/services.rs`: accepted locks, leases, call metadata,
+  reverse dependency plans; `runtime.rs` owns backup/journal/migration boundaries.
+- `apps/runtime/src/service_runner.rs`: verified fixed runner, serial providers
+  and actual Windows process group drain; no Tauri dependency.
+- RuntimeClient/CLI expose read-only unload plans and service diagnostics.
+- [Evidence](validation/g4-service-calls.md): build-only actual A/B/C fixtures,
+  no new installer or plugin-owned namespace store.
+
+## E01a 宿主贡献目录
+
+[E01–E10 平行清单](./host-extensions.md) 保留原 G0–G8 顺序；G4–G7 由另一位
+协作者负责，真实宿主接入需协调共享文件。E01a 固定 T1 工程范围已完成，
+clean Windows CI 通过；模块位于
+`packages/sdk/src/extensions/`，通过非 React 子入口 `@flowtools/sdk/extensions`
+公开解析、内存目录和 PluginRegistry 投影；验收见
+[E01a 记录](./validation/e01-contributions.md)。
+
+本目录只保存 `theme`、`locale`、`settings` 的有界 JSON，Host 从插件状态
+绑定 ID/版本并取得目录发放的 owner epoch；停用、卸载和投影销毁撤下内容。
+主题、语言和设置业务解析分别待 E02/E03/E04；布局插槽、Provider 与资源交接
+也尚未交付。不修改 Manifest v1，不新建 Runtime 数据库、服务传输、授权或
+加载路径。未来验证页面留在独立消费面，真实页面/tokens 接入与 G7 对齐。
+
+E02a 的 `packages/sdk/src/extensions/appearance.ts` 定义主题/个人覆盖解析和
+Host 默认值驱动的纯 resolver，经同一非 React 子入口导出；测试位于
+`packages/sdk/test/appearance.test.ts`，验收见 [E02a](./validation/e02-theme-contracts.md)。
+本子项不增加 UI 组件、CSS adapter、全局 store 或 Runtime 持久化；E02b 再接
+HeroUI 和独立消费页面，G7 真实页面接入仍待协调。
+
+E02b 的 `packages/ui/src/components/appearance/` 提供 Host 用
+`AppearanceScope` 与内部变量映射，`packages/ui/src/appearance.css` 作为显式
+公开静态资产分发。独立页面与可信 fixture 位于 `apps/ui-test/src/appearance/`，
+浏览器回归位于 `apps/ui-test/src/test/appearance/`；入口 query 只选择验证页面。
+实际验收和截图见 [E02b](./validation/e02-theme-adapter.md)。未修改真实宿主
+页面、插件清单、Runtime 或持久设置，G7 接入仍待协调。

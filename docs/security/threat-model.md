@@ -30,8 +30,9 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 [跨语言/拒绝证据](../validation/g5-package-protocol.md)，格式见
 [ADR-0003](../adr/0003-signed-package-protocol.md)。验证覆盖签名原始字节、
 publisher 范围、双签根轮换、累计撤销、过期/时间回退、版本不可变与受控回滚。
-无真实 pins、持久 trust floors、安装、归档解包或第三方执行；G4 locks 和
-平台隔离尚待实施。SEC-001/002/008/014/015 保持 open，Reviewer 为 Codex
+无真实 pins、持久 trust floors、安装、归档解包或第三方执行；G4 locks/RPC
+已实施为固定 Windows/T1 prototype，综合验收仍 pending，第三方平台隔离
+尚待实施。SEC-001/002/008/014/015 保持 open，Reviewer 为 Codex
 工程自查，独立实际安全 Reviewer/date/conclusion pending。
 
 2026-10-05 P2.3a 新增 [T1 policy broker](../../packages/runtime-core/src/broker.rs)
@@ -325,12 +326,24 @@ loopback 均可用，但 public/wildcard/mixed listener、未监听的端点、�
 
 ### SEC-014 服务依赖代理越权与版本漂移
 
-- 入口：规划中的依赖 resolver、插件服务 RPC、更新/卸载；高危，open
-- 现状：当前 Registry/Loader 不提供生产依赖 DAG、不可变锁或服务委托身份；
-  插件依赖是新设计范围，未通过 fixtures，不能推断前置插件有安全共享机制。
+- 入口：Host 的 `dependencies.plan`、只读卸载/诊断和内部固定 T1 服务 RPC、
+  provider 更新/停用事务；高危，open
+- 现状：P1.6a 增加固定 T1/fixture 的只读 DAG/不可变锁，输入仅固定 pluginIds，
+  Host 绑定 publisher、目录和平台。计划不安装、激活、授予权限或接受任务；
+  P1.6b 持久 accepted locks、祖先 scope/epoch/budget 收敛、串行 provider leases、
+  实际进程组排空、备份/迁移 journal 和重启匹配拒绝已有 controlled fixtures。
+  跨 provider 私有数据默认拒绝；真实文件 IO 仅存在 native 测试 adapter。
+  固定 Bun T1 不是 OS 沙箱；生产服务委托边界及独立安全批准仍 pending。
 - 证据：[插件契约](../../packages/sdk/src/types/plugin.ts)、
   [命令契约](../../packages/sdk/src/types/command.ts)、
-  [插件 loader](../../packages/sdk/src/registry/plugin-loader.ts)
+  [插件 loader](../../packages/sdk/src/registry/plugin-loader.ts)、
+  [计划入口](../../packages/runtime-core/src/runtime.rs)、
+  [声明](../../packages/sdk/src/dependencies/schema.ts)、
+  [依赖验证](../validation/g4-dependency-plans.md)、
+  [调用/租约](../../packages/runtime-core/src/services.rs)、
+  [实际 child runner](../../apps/runtime/src/service_runner.rs)、
+  [真实拒绝回归](../../apps/runtime/src/service_tests.rs)、
+  [服务验证记录](../validation/g4-service-calls.md)
 - Owner：SDK / Runtime / Security
 - 缓解：明确 publisher/interface/version、确定 DAG/lock、服务单 profile 单版本；
   Host 保留 root caller/provider/parentRunId、可委托 handles、剩余预算与 epoch，
@@ -349,7 +362,9 @@ loopback 均可用，但 public/wildcard/mixed listener、未监听的端点、�
   已验证的原生工具访问约束。FFmpeg 等工具仍属待实现目标，默认入口未开放。
 - 证据：[Desktop adapter](../../apps/desktop/src/runtime/desktop-capabilities.ts)、
   [Rust 依赖](../../apps/desktop/src-tauri/Cargo.toml)、
-  [当前 Host 初始化](../../apps/desktop/src-tauri/src/lib.rs)
+  [当前 Host 初始化](../../apps/desktop/src-tauri/src/lib.rs)、
+  [固定 T1 服务租约范围](../validation/g4-service-calls.md)；
+  accepted lock 保留工具 pins，不代表真实工具磁盘租约或 GC 已实现
 - Owner：Runtime / Rust / Security / Release
 - 缓解：签名/hash/来源/平台/build flavor 准入、无安装脚本、typed operations、
   scoped handles/协议/输出提交、实际平台 file/network 限制、任务私有环境和
@@ -501,3 +516,52 @@ Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
 See [diagnostic/recovery evidence](../validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
 security review, actual native consent clicks, assistive technology and other
 platform acceptance are pending; these checks do not authorize production.
+
+### E01a 数据贡献目录工程范围（2026-10-08）
+
+SEC-002/003/007/010 继续 open。本子项新增的
+[严格贡献解析](../../packages/sdk/src/extensions/schema.ts)、
+[Host 内存目录](../../packages/sdk/src/extensions/registry.ts) 与
+[生命周期投影](../../packages/sdk/src/extensions/projection.ts) 属于合作 T1
+元数据一致性控制，实际回归与门禁状态见
+[E01a 记录](../validation/e01-contributions.md)。固定 T1 工程范围的 SDK 自动化
+与 clean Windows CI 全链已通过；没有新的生产安全批准。
+
+Host 从 PluginRegistry 绑定 ID/版本并取得目录发放的 owner epoch；文档
+的严格 envelope 拒绝额外身份字段。不透明 `value` 可包含 pluginId/permissions
+等普通 JSON 业务键，但 Host 不从 value 派生身份、grant 或操作；不实施递归
+身份键黑名单。旧 owner 不能覆盖/撤下新 owner，替换专属 disposer 不删除后续
+替换；同一目录实例内重装不复用旧 epoch。文档和目录设置数量/
+字节预算，数据复制冻结，非法替换保留先前有效内容。停用、卸载、依赖不满足
+和投影销毁撤下贡献，不保留持久执行状态。
+
+没有新的代码 loader、IPC、native command、Tauri permission、CSP、远程 URL、
+file/network/data scope 或 grant。`theme`、`locale`、`settings` 仍只是有界
+JSON，业务 Schema、选择与应用待 E02/E03/E04；声明或启用不能授权 IO。
+T1 同 realm 代码可绕过接口，预算不构成强制 CPU/内存限制，owner epoch
+不证明 publisher/hash 或调用方认证，主题/翻译的可信 UI 呈现尚待实现。
+
+Owner：SDK / Host / Security；ADR-0001/0002 原信任边界与包策略不变。
+工程实现和测试不关闭风险，不升级 maturity。安全 Reviewer/日期/结论：
+独立 Reviewer pending / pending / 未批准。
+
+### E02a 主题解析补充（2026-10-09）
+
+SEC-002/003/007/010 继续 open。新增 [纯主题解析](../../packages/sdk/src/extensions/appearance.ts)
+限制语义 token、数值范围、字体/阴影枚举和序列化前字节预算，不执行 CSS 或 URL。
+Host 管理选择与 owner；同名扩展按目录命名空间区分。坏主题/撤下恢复默认，
+非法个人覆盖整体忽略，系统减少动画偏好优先，回归见 [E02a](../validation/e02-theme-contracts.md)。
+没有新的 native command、CSP、远程资源、数据 scope、grant、IPC 或持久化。
+T1 仍可绕过 SDK；真实 CSS scope、可信恢复呈现、对比度和第三方包准入未由
+本项验证。Owner：SDK / UI / Host / Security；独立审阅 pending，prototype 不变。
+
+### E02b UI adapter 补充（2026-10-09）
+
+SEC-002/003/007/010 保持 open。[作用域组件](../../packages/ui/src/components/appearance/appearance-scope.tsx)
+和[固定映射](../../packages/ui/src/components/appearance/appearance-style.ts) 重新校验
+tokens，只输出固定变量名、本地字体/阴影和数值颜色；拒绝伪造 CSS/无穷值。
+[浏览器回归](../../apps/ui-test/src/test/appearance/appearance.test.tsx) 验证恢复控制
+隔离与真实目录撤下回退，实际范围见 [E02b](../validation/e02-theme-adapter.md)。
+没有新 loader、IPC、原生/CSP/权限/数据 scope 或持久化。T1 可绕过 SDK，外观
+组件不是安全沙箱。真实宿主权限/身份/恢复含义、外部浮层与第三方包安全未获认证。
+Owner：UI / Host / Security；独立 Reviewer/日期/结论 pending / pending / 未批准。

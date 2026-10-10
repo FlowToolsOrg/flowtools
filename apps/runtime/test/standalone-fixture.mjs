@@ -101,9 +101,12 @@ const env = {
 }
 /** @param {string[]} args */
 const run = args => processResult(exe, args, scratch, env)
-/** @param {Awaited<ReturnType<typeof run>>} result */
-const success = result => {
-  assert.equal(result.code, 0, result.stdout + result.stderr)
+/**
+ * @param {Awaited<ReturnType<typeof run>>} result
+ * @param {string} [diagnostics]
+ */
+const success = (result, diagnostics) => {
+  assert.equal(result.code, 0, diagnostics ?? result.stdout + result.stderr)
   return /** @type {{command:{supportsColdStart:boolean},data:{instanceId:string,mode:string,value:{result:string}},success:boolean,runId:string}} */ (
     JSON.parse(result.stdout)
   )
@@ -190,14 +193,64 @@ try {
   running = true
   // Launch all fifty independent native launchers before awaiting any result.
   const fifty = await Promise.all(
-    Array.from({ length: 50 }, () =>
-      run(['runtime', 'start', '--profile', profile])
-    )
+    Array.from({ length: 50 }, (_, index) => {
+      const startedAt = performance.now()
+      return run(['runtime', 'start', '--profile', profile]).then(result => ({
+        ...result,
+        index,
+        elapsedMs: Math.round(performance.now() - startedAt),
+      }))
+    })
   )
-  const statuses = fifty.map(success)
-  assert.equal(statuses.length, 50)
-  assert.equal(new Set(statuses.map(result => result.data.instanceId)).size, 1)
-  assert.ok(statuses.every(result => result.data.mode === 'managed'))
+  const diagnostics = JSON.stringify(
+    fifty.map(result => {
+      let errorCode = null,
+        phase = null,
+        stage = null
+      try {
+        const value =
+          /** @type {{error?:{code?:unknown,phase?:unknown,stage?:unknown}}} */ (
+            JSON.parse(result.stdout)
+          )
+        if (
+          typeof value?.error?.code === 'string' &&
+          /^[A-Z][A-Z_]{0,63}$/.test(value.error.code)
+        )
+          errorCode = value.error.code
+        if (
+          typeof value?.error?.phase === 'string' &&
+          ['connect', 'query', 'reconnect'].includes(value.error.phase)
+        )
+          phase = value.error.phase
+        if (
+          typeof value?.error?.stage === 'string' &&
+          ['pipe', 'authenticate'].includes(value.error.stage)
+        )
+          stage = value.error.stage
+      } catch {
+        // Malformed output adds no untrusted text to the aggregate diagnostic.
+      }
+      return {
+        index: result.index,
+        code: result.code,
+        errorCode,
+        phase,
+        stage,
+        elapsedMs: result.elapsedMs,
+      }
+    })
+  )
+  const statuses = fifty.map(result => success(result, diagnostics))
+  assert.equal(statuses.length, 50, diagnostics)
+  assert.equal(
+    new Set(statuses.map(result => result.data.instanceId)).size,
+    1,
+    diagnostics
+  )
+  assert.ok(
+    statuses.every(result => result.data.mode === 'managed'),
+    diagnostics
+  )
   const json = success(
     await run([
       'run',

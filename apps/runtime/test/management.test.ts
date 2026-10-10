@@ -19,7 +19,8 @@ test('compiled CLI initializes without GUI, requires interaction or explicit pol
   )
   const cli = join(root, 'packages/cli/dist/cli.mjs')
   const run = async (args: string[]) => {
-    const child = Bun.spawn([process.execPath, cli, ...args], {
+    // Exercise the compiled CLI's Node consumer and native management lifecycle.
+    const child = Bun.spawn(['node', cli, ...args], {
       stdout: 'pipe',
       stderr: 'pipe',
       env: { SystemRoot: process.env.SystemRoot, PATH: process.env.PATH },

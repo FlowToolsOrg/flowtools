@@ -39,6 +39,35 @@ Rust 拒绝矩阵覆盖篡改/错签/伪发布者/threshold、根轮换、撤销
 - 原有未跟踪 `eval/` 保留，不纳入本提交。未将完整 clean-checkout 脚本的
   初始 clean gate 声称为通过；各质量门禁已执行，生成 tracked 内容无漂移。
 
+## 2026-10-10 主线集成验证边界
+
+本轮合入主线 `97196c2` 已提交的 G4 P1.6a/P1.6b 和 E 线实现；前述
+632 项等结果是 P2.5a 独立提交时的记录。
+P2.5a 的 [PR #8 Checks](https://github.com/FlowToolsOrg/flowtools/pull/8/checks)
+已通过，不代表此次合并后的结果。
+
+实际 Node 进程导入编译 SDK 并验证签名 golden 的集成测试使用 30 秒有界预算。
+旧分支已观测 Windows 并行原生构建争用下，该独立进程需约 8.4 秒完成；
+此预算覆盖冷进程集成开销，断言及其他普通单测 timeout 保持不变。
+这不是产品启动 SLA，也不用于重试失败。
+
+本轮首次 50 并发冷启动检查在最终 reconnect/pipe 阶段失败，未捕获 Host 的原生
+错误码，因此不能将该次失败确定归因于 Windows 231 或 IOCP 回收竞态。
+新增原生回归实际占满 16 个管道实例，观察取消 IOCP 操作后暂未回收的 handle
+使新实例创建返回 231；随后验证保留 listener ownership、等待回收并完成后续
+真实连接。这是独立复现的连接恢复路径证据，不是该次冷启动失败的唯一根因
+证明，也不替代 50 并发冷启动完整重跑或 G4 服务进程异常排空验收。
+
+集成后 Bun 1.3.14 / Rust 1.96.0 全仓 lint/types/test/build 均 11/11 通过；
+根测试合计 778 项，包括 SDK 277、Core 91、Native 18、Chromium 72、
+Desktop 89 项 JS / 21 项 Rust / 3 项 binding。独立发行包 50 个实际 CLI
+同时冷启动的数量、时限和完整断言保持不变，复验通过。
+测试完成后顺序执行全仓强制 build，随后 Web 22 / Desktop 24 个生产产物
+在 opt-in/canary 重编译后 byte-identical。workspace/catalog/Runtime contracts
+只读检查、Desktop fmt/check/all-targets codegen clippy 均通过。
+门禁前后源码 hash 对照只有人工记录的本段文档勘误；生成内容无漂移，
+`eval/` 保留未提交。远端本次集成结果以 PR Checks 为准，独立安全批准仍 pending。
+
 ## 保留边界与后续顺序
 
 P2.5a 不解包、不证实归档安全、不安装、不创建 grants 或 runner sessions。
@@ -47,8 +76,9 @@ full Manifest/Host/SDK/dependencies 校验、ZIP bomb/路径/特殊文件、竞�
 SDK FileLoader、Desktop HTML bridge、CLI 固定清单和 Runtime T1 catalog
 继续拒绝第三方。没有用户数据库或原生 Desktop 启动。
 
-G4 P1.6a/b 尚未实现。先补齐不可变服务锁、RPC 权限交集/取消/更新排空，再
-推进 P2.5b 安装。随后顺序为 P2.1 UI 容器、P2.2 平台隔离可行性与 adapter、
+G4 P1.6a/b 已实施为固定 Windows/T1 prototype，综合验收仍 pending。先补齐
+独立 fixture 级异常排空验收并关闭 G4 门禁，再推进 P2.5b 安装。
+随后顺序为 P2.1 UI 容器、P2.2 平台隔离可行性与 adapter、
 P2.3b 真实会话 broker、P2.4b 第三方授权/撤销、P2.6b 数据迁移/恢复。
 Windows AppContainer + 受限 JS engine + Job 是待实测候选，不在本次冻结为
 已验收方案；普通受管 Bun runner 不能复用为 T3 sandbox。

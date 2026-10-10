@@ -168,4 +168,4 @@ test('published authoring helpers import in Node without React or execution serv
   })
   expect(await new Response(child.stderr).text()).toBe('')
   expect(await child.exited).toBe(0)
-})
+}, 30_000)

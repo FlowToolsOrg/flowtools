@@ -1,6 +1,7 @@
 use crate::{
     broker::{CapabilityOperation, ReadMethod, SendMethod},
     catalog::{digest, BuiltinCatalog},
+    dependencies::{DependencyCatalog, DependencyIdentity, DependencyTarget},
     protocol::*,
 };
 use serde_json::{json, Value};
@@ -99,7 +100,41 @@ pub fn artifacts() -> Result<Vec<(&'static str, String)>, Box<dyn std::error::Er
             action: "probe".into(),
         },
     ];
-    let fixtures = json!({"formatVersion":1,"request":request,"responses":errors,"manifests":manifests,"operations":operations});
+    let dependency_plan = DependencyCatalog::from_manifests(
+        manifests
+            .iter()
+            .map(|item| item["manifest"].clone())
+            .collect(),
+        vec![],
+    )
+    .map_err(|_| "Invalid build-owned dependency catalog")?
+    .resolve(
+        &[DependencyIdentity {
+            publisher: "flowtools".into(),
+            id: "plugin-base64-encoder".into(),
+        }],
+        &DependencyTarget {
+            platform: "windows".into(),
+            arch: "x64".into(),
+        },
+    )
+    .map_err(|_| "Invalid build-owned dependency plan")?;
+    let mut registry = crate::services::ServiceRegistry::default();
+    registry
+        .set_catalog(
+            &BuiltinCatalog::from_host_manifests(
+                manifests
+                    .iter()
+                    .map(|item| item["manifest"].clone())
+                    .collect(),
+            )
+            .map_err(|_| "Invalid fixture catalog")?,
+        )
+        .map_err(|_| "Invalid fixture graph")?;
+    let unload = registry
+        .change_plan(&dependency_plan.lock.packages[0], None)
+        .map_err(|_| "Invalid unload fixture")?;
+    let fixtures = json!({"formatVersion":1,"request":request,"responses":errors,"manifests":manifests,"operations":operations,"dependencyPlan":dependency_plan,"providerUnloadPlan":unload});
     Ok(vec![
         ("bindings.ts", bindings),
         (

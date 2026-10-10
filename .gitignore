@@ -33,6 +33,7 @@ plugins/.generated/
 packages/runtime-core/.generated/
 /target/
 apps/runtime/.generated/
+packages/plugin-runner/.generated/
 tsconfig.tsbuildinfo
 
 

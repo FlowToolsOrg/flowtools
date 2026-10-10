@@ -1,3 +1,5 @@
+import type { DependencyPlan } from '@flowtools/runtime-client'
+
 import { beforeAll, afterAll, expect, test } from 'bun:test'
 import { createHash } from 'node:crypto'
 import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
@@ -91,6 +93,90 @@ async function invoke(args: string[]) {
   return { stdout, stderr, code }
 }
 
+test('compiled CLI reads deterministic dependency plans from the actual Host without jobs or grants', async () => {
+  expect((await invoke(['runtime', 'start', '--profile', profile])).code).toBe(
+    0
+  )
+  const permissions = await invoke([
+    'permissions',
+    'list',
+    '--profile',
+    profile,
+  ])
+  const jobs = await invoke(['jobs', 'list', '--profile', profile])
+  const args = [
+    'dependencies',
+    'plan',
+    'plugin-base64-encoder',
+    '--profile',
+    profile,
+    '--format',
+    'json',
+  ]
+  const first = await invoke(args)
+  const second = await invoke(args)
+  expect(first).toMatchObject({ code: 0, stderr: '' })
+  expect(second.stdout).toBe(first.stdout)
+  const plan = JSON.parse(first.stdout) as {
+    success: true
+    data: DependencyPlan
+  }
+  expect(plan).toMatchObject({
+    success: true,
+    data: {
+      formatVersion: 1,
+      mode: 'plan-only',
+      lock: {
+        roots: [{ publisher: 'flowtools', id: 'plugin-base64-encoder' }],
+      },
+    },
+  })
+  expect(plan.data.lock.digest).toMatch(/^[a-f0-9]{64}$/)
+  expect(plan.data.lock.packages).toHaveLength(1)
+  expect(
+    (await invoke(['permissions', 'list', '--profile', profile])).stdout
+  ).toBe(permissions.stdout)
+  expect((await invoke(['jobs', 'list', '--profile', profile])).stdout).toBe(
+    jobs.stdout
+  )
+  const text = await invoke([
+    'dependencies',
+    'plan',
+    'plugin-base64-encoder',
+    '--profile',
+    profile,
+  ])
+  expect(text).toMatchObject({ code: 0, stderr: '' })
+  expect(text.stdout).toContain(plan.data.lock.digest)
+  expect(text.stdout).toContain('plan-only')
+  expect(text.stdout).toContain('does not install, activate or grant')
+  const unload = await invoke([
+    'dependencies',
+    'unload-plan',
+    'plugin-base64-encoder',
+    '--profile',
+    profile,
+    '--format',
+    'json',
+  ])
+  expect(unload).toMatchObject({ code: 0, stderr: '' })
+  expect(JSON.parse(unload.stdout)).toMatchObject({
+    success: true,
+    data: {
+      mode: 'plan-only',
+      provider: { id: 'plugin-base64-encoder' },
+      replacement: null,
+      consumers: [],
+    },
+  })
+  expect((await invoke(['jobs', 'list', '--profile', profile])).stdout).toBe(
+    jobs.stdout
+  )
+  expect(
+    (await invoke(['permissions', 'list', '--profile', profile])).stdout
+  ).toBe(permissions.stdout)
+}, 30_000)
+
 test('real built-in CLI run produces the SDK envelope from generated flags', async () => {
   const output = await invoke([
     'run',
@@ -108,6 +194,25 @@ test('real built-in CLI run produces the SDK envelope from generated flags', asy
     pluginVersion: '0.1.0',
     data: { type: 'json', value: { result: 'aGVsbG8=' } },
   })
+  const jobs = await invoke(['jobs', 'list', '--profile', profile])
+  const rows = (
+    JSON.parse(jobs.stdout) as { data: { runId: string; pluginId: string }[] }
+  ).data
+  const run = rows.find(job => job.pluginId === 'plugin-base64-encoder')!
+  const calls = await invoke([
+    'dependencies',
+    'calls',
+    run.runId,
+    '--profile',
+    profile,
+    '--format',
+    'json',
+  ])
+  expect(calls).toMatchObject({ code: 0, stderr: '' })
+  expect(JSON.parse(calls.stdout)).toMatchObject({ success: true, data: [] })
+  expect((await invoke(['jobs', 'list', '--profile', profile])).stdout).toBe(
+    jobs.stdout
+  )
 }, 30_000)
 
 test('real built-in CLI schema error is failed JSON with nonzero status', async () => {

@@ -73,7 +73,8 @@ namespace 拥有，调用方不能指定其内部表或路径。
 P2.5a 的实际签名/根/轮换/撤销/离线/回滚格式在
 [ADR-0003](./0003-signed-package-protocol.md) 冻结，并提供只读拒绝 fixtures。
 这没有实现事务安装或第三方执行；真实 pins、持久 trust floors、包解压、
-完整兼容性和 G4 locks 仍由后续 gate 验收。
+完整兼容性和 G4 locks 在签名安装路径中的接入，仍由 P2.5b 与后续 gate
+验收。G4 locks/RPC 已实施为固定 Windows/T1 prototype，综合验收仍 pending。
 
 在执行任何入口代码之前，验证 versioned manifest、文件清单/hash、发布者
 签名与受信 provenance、Host/SDK 版本范围和平台/架构。签名、hash 与 TLS
@@ -218,3 +219,25 @@ Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
 See [diagnostic/recovery evidence](../validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
 security review, actual native consent clicks, assistive technology and other
 platform acceptance are pending; these checks do not authorize production.
+
+### G4 P1.6a lock authority
+
+The Host alone resolves service package/interface ranges and exact tool selectors
+to a deterministic lock. Service packages share one version within the plan;
+tools can have distinct immutable artifacts for different consumers. Legacy
+references without explicit selectors fail resolution. Planning is read-only,
+not an install transaction, activation or permission grant. Durable execution
+lock binding/RPC is P1.6b and signed transaction admission is P2.5b. See
+[validation scope](../validation/g4-dependency-plans.md).
+
+### G4 P1.6b locks and transitions
+
+Fixed T1 accepted jobs persist exact locks; idempotent retry retains the old lock.
+Provider grants never replace ancestor grants. Prototype cross-provider private
+data is denied. Candidate updates validate the DAG, stop new admissions, drain
+queued/active references, back up and migrate before changing the current catalog.
+Prepared/uncertain journal states or database/catalog mismatch fail closed.
+Cascade disable requires the complete current plan confirmation and persists
+through restart. Old locks/catalogs/backups remain available for controlled recovery.
+Signed artifact installation, filesystem/database transaction recovery and tool GC
+remain G5/G6. See [evidence](../validation/g4-service-calls.md).

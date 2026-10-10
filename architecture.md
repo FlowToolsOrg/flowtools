@@ -3,7 +3,8 @@
 G5 P2.5a 的纯字节签名验证位于 `packages/runtime-core/src/packages.rs`；
 SDK `manifest/signed-package.ts` 只负责作者 schema/序列化/PAE。T0 提供可信
 根和 floor；包描述、验证 receipt 不创建安装记录、grant 或 runner session。
-完整安装、G4 依赖锁和第三方平台边界尚未实施，现有默认拒绝继续生效。
+G4 依赖锁与服务调用已实施为固定 Windows/T1 prototype，综合验收仍 pending；
+完整签名安装和第三方平台边界尚未实施，现有默认拒绝继续生效。
 协议与 scope 见 [ADR-0003](./docs/adr/0003-signed-package-protocol.md) 和
 [P2.5a 验证](./docs/validation/g5-package-protocol.md)。
 
@@ -817,3 +818,64 @@ window zoom shortcuts are enabled, including isolated validation windows.
 fresh Native harness, actual Windows keyboard/native consent, 200% zoom/reflow and
 NVDA Speech Viewer output. Independent security approval remains pending; human
 listening, a full blind-user workflow and other platforms are not certified.
+
+### G4 P1.6a dependency plans
+
+`packages/sdk/src/dependencies` owns data-only service/tool declarations.
+`packages/runtime-core/src/dependencies` owns the catalog, bounded npm-compatible
+resolver and immutable lock. Only Host-selected inventory/target enter resolution;
+clients send fixed root plugin IDs and cannot supply catalog, publishers or paths.
+Services share one provider package version per plan; tools are independently
+pinned per consumer. This step is plan-only and leaves durable job locks intact.
+See [contracts and validation](docs/validation/g4-dependency-plans.md).
+
+### G4 P1.6b service runtime
+
+Runtime Core binds accepted immutable locks and nested broker sessions; every
+effect checks the whole ancestor chain at commit. Native service runner owns
+bounded bidirectional child pipes and one serial gate per provider, independent
+of root job permits. The shared SDK validates actual headless service handlers.
+Host-controlled backup/journal/migration follows complete lease/process drain;
+uncertain commits stop admission and catalog mismatch requires recovery.
+Read-only client/CLI inspection never activates or grants a service. Controlled
+fixture snapshots validate this prototype; signed cross-package installation and
+OS isolation remain G5, shared tool storage/GC G6.
+See [implementation and validation](docs/validation/g4-service-calls.md).
+
+## E01a host contribution directory
+
+The [E parallel design](./docs/host-extensions.md) introduces extension contracts
+without changing G0–G8 sequencing or Manifest v1. E01a
+places a standalone non-React API in `@flowtools/sdk/extensions`: strict bounded
+JSON parsing, a Host-created in-memory registry and PluginRegistry projection.
+Current kinds are `theme`, `locale`, `settings`; values remain opaque until the
+corresponding E02/E03/E04 schemas and application behavior are delivered.
+
+The Host derives plugin ID/version from PluginRegistry and obtains a local
+owner epoch from the contribution registry, never from the document. Enabled
+and dependency-satisfied current instances contribute; lifecycle cleanup withdraws
+them. Atomic replacement, replacement-specific disposal, stale-owner refusal and
+stable immutable snapshots protect cooperative T1 consistency across reinstalls.
+They do not authenticate an untrusted caller or isolate same-realm code.
+
+There is no new loader, persistence, native IPC, CSS injection or grant. Service
+transport and package/resource enforcement stay with G4–G6; actual UI/tokens and
+layout integration coordinate with G7. [E01a evidence](./docs/validation/e01-contributions.md)
+records the completed fixed T1 engineering scope and successful clean Windows
+CI. Prototype maturity and open security risks are unchanged.
+
+E02a's `appearance.ts` consumes that Host-owned snapshot through a pure resolver.
+It validates structured tokens and complete Host light/dark defaults, then merges
+theme common/mode and user common/mode layers. Choice belongs to the Host; absent
+or invalid themes recover to defaults, while invalid overrides are ignored as a
+whole. It adds no global store, CSS/DOM adapter or Runtime protocol. HeroUI mapping
+and real-host integration remain separate E02b/G7 gates. See [E02a evidence](./docs/validation/e02-theme-contracts.md).
+
+E02b places HeroUI-specific presentation in `packages/ui`: `AppearanceScope`
+revalidates tokens and maps them to fixed subtree variables and local presets.
+The explicit static stylesheet scopes Card/Button adaptations and reduced motion;
+the component never changes document-root styles or injects plugin CSS. The
+UI-test consumer owns in-memory draft/applied choices, subscriptions and recovery
+controls outside that subtree. See [E02b validation](./docs/validation/e02-theme-adapter.md).
+There is no new Runtime store, global theme service or third-party admission.
+Outside portals, real-host integration and persistent settings remain separate.

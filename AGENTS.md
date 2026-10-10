@@ -726,3 +726,91 @@ The managed Native harness must support literal IPv4 and IPv6 loopback CDP while
 checking all actual listeners and matching the responding endpoint. Preserve the
 25-second startup budget, redirect refusal and non-loopback/mismatch regressions;
 never persist CDP arguments in production configuration.
+
+### G4 P1.6a dependency plans
+
+SDK dependency declarations are pure data in `@flowtools/sdk/dependencies`.
+Runtime owns fixed catalog, target, bounded npm-range resolution and immutable
+locks; wire `dependencies.plan` accepts only known `pluginIds`. Never expose an
+arbitrary catalog, publisher, artifact path or installation through this call.
+Preserve old manifest digests when optional service fields are omitted. Services
+use one provider package version with intersected interface/package constraints;
+tools bind consumer/target/flavor/digest independently. Legacy bare selectors
+are metadata, not executable resolution. Plans must leave jobs/grants untouched.
+P1.6b implements fixed T1 execution binding/RPC/drain; G5 owns signed installation. Keep these
+boundaries and [validation evidence](docs/validation/g4-dependency-plans.md).
+
+### G4 P1.6b service execution
+
+Use the pure SDK `@flowtools/sdk/services` execution contract. Only Host-bound
+runner pipes request logical service selectors and bounded JSON; no public
+catalog/apply/update/service-invoke wire API. Preserve root caller, immediate
+consumer, provider package pin and parentRunId from T0 bindings, never payloads.
+Match the complete manifest digest to the Host package pin before importing a
+compiled service entry, then verify package bytes. Keep the import side-effect
+rejection test and matching-pin control; this is not package signing or a sandbox.
+Intersect every ancestor declaration/grant with leaf scopes and epochs; retain
+shared call/output budgets, deadlines and cancellation. Cross-provider PluginData
+delegation is denied. New capabilities still require actual Host adapters.
+Accepted roots and queued/active service calls hold version references. Provider
+gates are separate from root concurrency and remain held until the actual owned
+process group is empty. Default dependent unload fails; cascade requires the
+current complete plan confirmation. Updates validate candidate DAG/interfaces,
+drain old users, back up, migrate transactionally and preserve old locks/catalogs.
+Uncertain storage/process drain stops admission; restart rejects prepared or
+mismatched catalog journals. Never turn these T1 checks into sandbox claims.
+The A/B/C bundle is build-only in plugin-runner's ignored `.generated/g4-services`,
+not production inventory. Run `test:dependencies` for real native regressions.
+G4 implementation remains prototype; comprehensive acceptance and independent
+security approval are pending, including a separate fixture for abnormal drain.
+See [scope and evidence](docs/validation/g4-service-calls.md). G5 P2.5a is the
+read-only signed-descriptor prototype above; P2.5b, remaining G5 gates and G6
+remain pending.
+
+## E host extension contracts
+
+Follow [the E01–E10 backlog](./docs/host-extensions.md) for this parallel line.
+G4–G7 are owned by another collaborator; coordinate shared files before real
+host integration. Keep changes additive and use existing Runtime service,
+data, grant, package and resource contracts. Do not reorder or complete G0–G8
+because an E contract passes its own tests.
+
+E01a uses only `@flowtools/sdk/extensions`: strict formatVersion 1 documents
+contain `theme`, `locale` and `settings` bounded JSON. The Host creates the
+registry, derives plugin ID/version from PluginRegistry and obtains a registry-
+issued owner epoch. Strict document/contribution envelopes reject unknown
+fields. Opaque `value` can contain ordinary JSON keys such as pluginId or
+permissions; the Host never derives owner, grants or operations from them.
+Only enabled, dependency-satisfied current instances project contributions; disabling,
+unloading and disposal withdraw them. Preserve replacement-specific cleanup,
+stale-owner refusal across uninstall/reinstall, reentrant-disable checks, frozen
+values, atomic rejection, stable snapshots and bounded owner metadata.
+
+E01a does not change Manifest v1 or add a loader, CSS application, translation,
+settings persistence, native API or third-party execution. Future kind-specific
+schemas and selections require their own E02/E03/E04 gates; arbitrary JSON is
+not an executable instruction. Keep T1 bookkeeping distinct from authentication,
+package integrity, grants and sandboxing. Record actual evidence in
+[E01a validation](./docs/validation/e01-contributions.md). Its fixed T1 engineering
+scope passed clean Windows CI; E01 and E02–E10 remain pending. Keep
+SEC-002/003/007/010 open and independent security review pending. Each completed E submilestone
+requires its own validation record and focused commit before the next begins.
+
+E02a defines pure structured theme resolution in `extensions/appearance.ts`.
+Keep Host defaults complete and Host selection explicit. Preserve partial-token
+merge order, mode isolation, fallback after withdrawal, atomic override refusal,
+immutable stable results and system reduced-motion precedence. Reject arbitrary
+CSS/URLs/remote fonts and bound payloads before serialization. CSS/DOM adapters,
+persistence and real-host UI are separate E02b/G7 gates; record actual validation
+in [E02a evidence](./docs/validation/e02-theme-contracts.md).
+
+E02b's Host-owned `AppearanceScope` is exported only from `@flowtools/ui`, with
+an explicit static `@flowtools/ui/appearance.css` asset imported after HeroUI.
+Revalidate structured tokens; bind both base variables and HeroUI/Tailwind aliases
+inside the subtree. Keep plugin resources free of selectors/styles/URLs, and
+recovery controls outside the preview scope. The independent UI-test route is
+`/?appearance-validation=1`; its fixtures do not change the fixed CLI inventory
+or authorize code loading. Keep computed-style, apply/cancel/reset, media-change
+and withdrawal recovery regressions. Real-host pages, outside portals and
+persistent preferences require separate integration gates. Record scope and
+screenshots in [E02b evidence](./docs/validation/e02-theme-adapter.md).

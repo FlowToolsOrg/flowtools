@@ -1,4 +1,5 @@
 import type { DataCapability } from '../data'
+import type { ServiceCapability } from '../services/service-execution'
 import type { ClipboardCapability } from './capabilities/clipboard'
 import type { DBCapability } from './capabilities/db'
 import type { DialogCapability } from './capabilities/dialog'
@@ -90,6 +91,10 @@ export interface PluginRuntimeContextValue {
   storage?: StorageCapability
   /** Asynchronous Host-bound shared data; legacy synchronous storage is separate. */
   data?: DataCapability
+  /** Host-bound service calls use the accepted dependency lock and caller's grants. */
+  services?: ServiceCapability
+  /** Opaque Host-bound handles only; no filesystem paths or executable selectors. */
+  artifacts?: { read(handle: string): Promise<import('../manifest').JsonValue> }
   /**
    * Optional host-managed app store capability.
    */

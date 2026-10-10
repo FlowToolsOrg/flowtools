@@ -2,14 +2,28 @@ use crate::{
     broker::{BrokerSession, CapabilityBroker, CapabilityOperation, CommandIdentity, Grant, Scope},
     catalog::{digest, BuiltinCatalog},
     data::DataStore,
+    dependencies::DependencyLock,
     policy::PolicyStore,
     private_jobs::PrivateJobs,
     protocol::*,
+    services::{ServiceCallDiagnostic, ServiceRegistry, ServiceTarget},
 };
+use rusqlite::OptionalExtension;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, HashMap};
 use uuid::Uuid;
+
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct ProviderJournal {
+    format_version: u16,
+    phase: String,
+    active_catalog: String,
+    pending_catalog: Option<String>,
+    backup_id: String,
+    disabled: Vec<crate::dependencies::DependencyIdentity>,
+}
 
 pub fn now() -> f64 {
     std::time::SystemTime::now()
@@ -33,6 +47,8 @@ struct Job {
     events: Vec<JobEvent>,
     broker_session: Option<BrokerSession>,
     idempotency_key: String,
+    dependency_lock: Option<DependencyLock>,
+    service_calls: Vec<ServiceCallDiagnostic>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -47,6 +63,10 @@ struct StoredJob {
     action_digest: String,
     idempotency_key: String,
     events: Vec<JobEvent>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    dependency_lock: Option<DependencyLock>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    service_calls: Vec<ServiceCallDiagnostic>,
 }
 impl StoredJob {
     fn from_job(job: &Job) -> Self {
@@ -66,11 +86,14 @@ impl StoredJob {
             action_digest: job.action_digest.clone(),
             idempotency_key: job.idempotency_key.clone(),
             events: job.events.clone(),
+            dependency_lock: job.dependency_lock.clone(),
+            service_calls: job.service_calls.clone(),
         }
     }
 }
 
 /// Payload is transient runner input, never serializable diagnostics/history.
+#[derive(Clone)]
 pub struct RunSpec {
     pub run_id: String,
     pub plugin_id: String,
@@ -79,6 +102,20 @@ pub struct RunSpec {
     pub deadline: f64,
     pub package_digest: String,
     pub data: Option<DataSnapshot>,
+}
+
+struct ServiceInvocation {
+    root: String,
+    session: BrokerSession,
+    spec: RunSpec,
+    target: ServiceTarget,
+    failure: Option<ErrorCode>,
+}
+pub struct ServiceRunSpec {
+    pub spec: RunSpec,
+    pub target: ServiceTarget,
+    pub root_run_id: String,
+    pub parent_run_id: String,
 }
 
 pub struct RuntimeCore {
@@ -96,6 +133,10 @@ pub struct RuntimeCore {
     cold_started: bool,
     stopping: bool,
     private_jobs: Option<PrivateJobs>,
+    services: ServiceRegistry,
+    service_invocations: HashMap<String, ServiceInvocation>,
+    retained_catalogs: Vec<BuiltinCatalog>,
+    provider_candidates: HashMap<String, BuiltinCatalog>,
 }
 
 impl RuntimeCore {
@@ -119,6 +160,10 @@ impl RuntimeCore {
             cold_started: false,
             stopping: false,
             private_jobs: None,
+            services: ServiceRegistry::default(),
+            service_invocations: HashMap::new(),
+            retained_catalogs: Vec::new(),
+            provider_candidates: HashMap::new(),
         }
     }
 
@@ -129,17 +174,73 @@ impl RuntimeCore {
 
     pub fn managed(
         tokens: HashMap<String, String>,
-        mut store: DataStore,
+        store: DataStore,
         management_only: bool,
         cold_started: bool,
     ) -> Result<Self, ErrorCode> {
-        let policy = PolicyStore::load(&mut store, &PolicyStore::catalog_digest())?;
+        Self::managed_catalog(
+            tokens,
+            store,
+            management_only,
+            cold_started,
+            BuiltinCatalog::embedded(),
+        )
+    }
+
+    /// Build-owned T0 snapshots only. No wire method can import a catalog.
+    pub fn managed_catalog(
+        tokens: HashMap<String, String>,
+        mut store: DataStore,
+        management_only: bool,
+        cold_started: bool,
+        catalog: BuiltinCatalog,
+    ) -> Result<Self, ErrorCode> {
+        let journal: Option<String> = store
+            .connection
+            .query_row(
+                "SELECT value FROM core_metadata WHERE key='service-catalog-state-v1'",
+                [],
+                |row| row.get(0),
+            )
+            .optional()
+            .map_err(|_| ErrorCode::StorageFailed)?;
+        let disabled = if let Some(text) = journal {
+            let journal: ProviderJournal =
+                serde_json::from_str(&text).map_err(|_| ErrorCode::StoreCorrupt)?;
+            if journal.format_version != 1
+                || journal.disabled.len() > 128
+                || uuid::Uuid::parse_str(&journal.backup_id).is_err()
+            {
+                return Err(ErrorCode::StoreCorrupt);
+            }
+            if journal.phase != "committed"
+                || journal.pending_catalog.is_some()
+                || journal.active_catalog != catalog.snapshot_digest()
+            {
+                return Err(ErrorCode::RecoveryPending);
+            }
+            if journal.disabled.iter().any(|identity| {
+                !catalog
+                    .list()
+                    .any(|(id, m)| id == &identity.id && m["publisher"] == identity.publisher)
+            }) {
+                return Err(ErrorCode::StoreCorrupt);
+            }
+            journal.disabled
+        } else {
+            Vec::new()
+        };
+        let policy =
+            PolicyStore::load_snapshot(&mut store, &catalog.snapshot_digest(), catalog.clone())?;
         if cold_started && !policy.cold_start {
             return Err(ErrorCode::ColdStartDenied);
         }
         let mut core =
             Self::validation("unused-cli".into(), "unused-desktop".into()).with_data_store(store);
         core.tokens = tokens;
+        core.catalog = catalog;
+        core.services.set_catalog(&core.catalog)?;
+        core.services.restore_disabled(disabled);
         core.management_only = management_only;
         core.cold_started = cold_started;
         for record in &policy.records {
@@ -170,7 +271,7 @@ impl RuntimeCore {
             return Ok(());
         }
         for value in self.data.load_jobs()? {
-            let stored: StoredJob =
+            let mut stored: StoredJob =
                 serde_json::from_value(value).map_err(|_| ErrorCode::StoreCorrupt)?;
             if stored.format_version != 1
                 || uuid::Uuid::parse_str(&stored.snapshot.run_id).is_err()
@@ -178,7 +279,105 @@ impl RuntimeCore {
             {
                 return Err(ErrorCode::StoreCorrupt);
             }
+            if let Some(lock) = &stored.dependency_lock {
+                if lock
+                    .verified_digest()
+                    .map_err(|_| ErrorCode::StoreCorrupt)?
+                    != lock.digest
+                    || stored.snapshot.dependency_lock != lock.digest
+                {
+                    return Err(ErrorCode::StoreCorrupt);
+                }
+            } else if stored.snapshot.dependency_lock != "t1-no-dependencies-v1" {
+                return Err(ErrorCode::StoreCorrupt);
+            }
+            if stored.service_calls.len() > 64
+                || stored.service_calls.iter().any(|call| {
+                    call.root_run_id != stored.snapshot.run_id
+                        || call.root_caller != stored.snapshot.root_caller
+                        || call.dependency_lock != stored.snapshot.dependency_lock
+                        || !call.deadline.is_finite()
+                        || call.deadline > stored.snapshot.deadline
+                        || call.run_id == stored.snapshot.run_id
+                        || call.deadline <= 0.0
+                        || uuid::Uuid::parse_str(&call.run_id).is_err()
+                        || uuid::Uuid::parse_str(&call.parent_run_id).is_err()
+                        || !matches!(
+                            call.state.as_str(),
+                            "queued" | "running" | "succeeded" | "failed" | "interrupted"
+                        )
+                        || !crate::dependencies::valid_dependency_id(&call.service)
+                        || !crate::dependencies::valid_dependency_id(&call.operation)
+                })
+            {
+                return Err(ErrorCode::StoreCorrupt);
+            }
             let run = stored.snapshot.run_id.clone();
+            let calls: HashMap<_, _> = stored
+                .service_calls
+                .iter()
+                .map(|call| (call.run_id.as_str(), call))
+                .collect();
+            if calls.len() != stored.service_calls.len() {
+                return Err(ErrorCode::StoreCorrupt);
+            }
+            for call in &stored.service_calls {
+                let lock = stored
+                    .dependency_lock
+                    .as_ref()
+                    .ok_or(ErrorCode::StoreCorrupt)?;
+                let parent = if call.parent_run_id == stored.snapshot.run_id {
+                    let root = lock
+                        .roots
+                        .iter()
+                        .find(|root| root.id == stored.snapshot.plugin_id)
+                        .ok_or(ErrorCode::StoreCorrupt)?;
+                    if call.consumer != *root {
+                        return Err(ErrorCode::StoreCorrupt);
+                    }
+                    None
+                } else {
+                    let parent = calls
+                        .get(call.parent_run_id.as_str())
+                        .ok_or(ErrorCode::StoreCorrupt)?;
+                    if call.consumer != parent.provider.identity()
+                        || call.deadline > parent.deadline
+                    {
+                        return Err(ErrorCode::StoreCorrupt);
+                    }
+                    Some(*parent)
+                };
+                if !lock.services.iter().any(|pin| {
+                    pin.consumer == call.consumer
+                        && pin.provider == call.provider
+                        && pin.service == call.service
+                }) {
+                    return Err(ErrorCode::StoreCorrupt);
+                }
+                let mut cursor = parent;
+                let mut depth = 1;
+                while let Some(ancestor) = cursor {
+                    depth += 1;
+                    if depth > 16 || ancestor.run_id == call.run_id {
+                        return Err(ErrorCode::StoreCorrupt);
+                    }
+                    cursor = if ancestor.parent_run_id == stored.snapshot.run_id {
+                        None
+                    } else {
+                        Some(
+                            *calls
+                                .get(ancestor.parent_run_id.as_str())
+                                .ok_or(ErrorCode::StoreCorrupt)?,
+                        )
+                    };
+                }
+            }
+            for call in &mut stored.service_calls {
+                if matches!(call.state.as_str(), "queued" | "running") {
+                    call.state = "interrupted".into();
+                    call.failure_code = Some(ErrorCode::ExecutionInterrupted);
+                }
+            }
             let key = (
                 stored.snapshot.root_caller.clone(),
                 stored.idempotency_key.clone(),
@@ -199,8 +398,11 @@ impl RuntimeCore {
                     idempotency_key: stored.idempotency_key,
                     events: stored.events,
                     broker_session: None,
+                    dependency_lock: stored.dependency_lock,
+                    service_calls: stored.service_calls,
                 },
             );
+            self.persist_job(&self.jobs[&run])?;
             let job = &self.jobs[&run];
             if job.snapshot.state.terminal() {
                 if now() >= job.accepted_at + 86_400_000.0 {
@@ -228,6 +430,18 @@ impl RuntimeCore {
                 if snapshot.deadline <= now() {
                     return Err(ErrorCode::Timeout);
                 }
+                if let Some(lock) = &job.dependency_lock {
+                    for pin in &lock.packages {
+                        if !catalog.list().any(|(id, m)| {
+                            id == &pin.id
+                                && m["publisher"] == pin.publisher
+                                && m["version"] == pin.version
+                                && digest(m) == pin.digest
+                        }) {
+                            return Err(ErrorCode::DependencyArtifactMismatch);
+                        }
+                    }
+                }
                 Ok(())
             });
             // Queued has never entered a runner. Running Base64 is proven pure and
@@ -236,6 +450,13 @@ impl RuntimeCore {
                 || (snapshot.state == JobState::Running
                     && snapshot.plugin_id == "plugin-base64-encoder");
             if job.background && retryable && authorization.is_ok() {
+                if let Some(lock) = &job.dependency_lock {
+                    self.services.accept(
+                        &run,
+                        lock.clone(),
+                        snapshot.resources["maxOutputBytes"].as_u64().unwrap_or(0) as usize,
+                    )?;
+                }
                 let input = self.private_jobs.as_ref().unwrap().read(&run, "input")?;
                 let prepared = self.catalog.prepare_input_mode(
                     &snapshot.plugin_id,
@@ -547,7 +768,12 @@ impl RuntimeCore {
                         version: manifest["version"].as_str().unwrap().into(),
                         package_digest: digest(manifest),
                         installed: true,
-                        enabled: true,
+                        enabled: self
+                            .services
+                            .enabled(&crate::dependencies::DependencyIdentity {
+                                publisher: manifest["publisher"].as_str().unwrap().into(),
+                                id: id.clone(),
+                            }),
                         running: self.jobs.values().any(|job| {
                             job.snapshot.plugin_id == *id
                                 && matches!(
@@ -557,6 +783,75 @@ impl RuntimeCore {
                         }),
                     })
                     .collect(),
+            )),
+            Call::DependencyPlan(request) => {
+                use crate::dependencies::{
+                    DependencyCatalog, DependencyIdentity, DependencyTarget,
+                };
+                if request.plugin_ids.is_empty() {
+                    return Err(ErrorCode::DependencyInvalid);
+                }
+                if request.plugin_ids.len() > 64 {
+                    return Err(ErrorCode::DependencyBudgetExceeded);
+                }
+                if request
+                    .plugin_ids
+                    .iter()
+                    .any(|id| !crate::dependencies::valid_dependency_id(id))
+                    || request
+                        .plugin_ids
+                        .iter()
+                        .collect::<std::collections::BTreeSet<_>>()
+                        .len()
+                        != request.plugin_ids.len()
+                {
+                    return Err(ErrorCode::DependencyInvalid);
+                }
+                let manifests: Vec<_> = self.catalog.list().map(|(_, m)| m.clone()).collect();
+                let mut roots = Vec::new();
+                for id in request.plugin_ids {
+                    let manifest = manifests
+                        .iter()
+                        .find(|m| m["id"] == id)
+                        .ok_or(ErrorCode::DependencyMissing)?;
+                    roots.push(DependencyIdentity {
+                        publisher: manifest["publisher"]
+                            .as_str()
+                            .ok_or(ErrorCode::DependencyInvalid)?
+                            .into(),
+                        id,
+                    });
+                }
+                let platform = match std::env::consts::OS {
+                    "windows" => "windows",
+                    "macos" => "macos",
+                    "linux" => "linux",
+                    _ => return Err(ErrorCode::DependencyPlatformMismatch),
+                };
+                let arch = match std::env::consts::ARCH {
+                    "x86_64" => "x64",
+                    "aarch64" => "arm64",
+                    _ => return Err(ErrorCode::DependencyPlatformMismatch),
+                };
+                let catalog = DependencyCatalog::from_manifests(manifests, vec![])
+                    .map_err(ErrorCode::from)?;
+                Ok(Outcome::DependencyPlan(
+                    catalog
+                        .resolve(
+                            &roots,
+                            &DependencyTarget {
+                                platform: platform.into(),
+                                arch: arch.into(),
+                            },
+                        )
+                        .map_err(ErrorCode::from)?,
+                ))
+            }
+            Call::ProviderUnloadPlan(key) => Ok(Outcome::ProviderChangePlan(
+                self.provider_unload_plan(&key.plugin_id)?,
+            )),
+            Call::ServiceCalls(key) => Ok(Outcome::ServiceCalls(
+                self.service_diagnostics(&key.run_id)?,
             )),
             Call::Submit(submit) => self
                 .submit(connection, &caller, submit)
@@ -812,10 +1107,25 @@ impl RuntimeCore {
             .command(&submit.plugin_id, &submit.command_id)?;
         let accepted_at = now();
         let package_digest = digest(manifest);
-        let action_digest = digest(
-            &json!({ "package":package_digest, "command":submit.command_id, "lock":"t1-no-dependencies-v1", "input":input, "background":submit.background, "deadline":submit.deadline }),
-        );
         let key = (caller.to_owned(), submit.idempotency_key.clone());
+        // Previously accepted keys keep their immutable lock across updates/recovery.
+        let existing = self
+            .keys
+            .get(&key)
+            .map(|run| self.jobs[run].snapshot.dependency_lock.clone());
+        let dependency_lock = if existing.is_none() {
+            Some(ServiceRegistry::plan(
+                &self.catalog,
+                std::slice::from_ref(&submit.plugin_id),
+            )?)
+        } else {
+            None
+        };
+        let lock_digest =
+            existing.unwrap_or_else(|| dependency_lock.as_ref().unwrap().digest.clone());
+        let action_digest = digest(
+            &json!({ "package":package_digest, "command":submit.command_id, "lock":lock_digest, "input":input, "background":submit.background, "deadline":submit.deadline }),
+        );
         if let Some(run_id) = self.keys.get(&key) {
             let job = &self.jobs[run_id];
             if job.action_digest != action_digest {
@@ -841,6 +1151,11 @@ impl RuntimeCore {
             return Err(ErrorCode::RuntimeBusy);
         }
         let run_id = Uuid::new_v4().to_string();
+        self.services.accept(
+            &run_id,
+            dependency_lock.as_ref().unwrap().clone(),
+            command["resources"]["maxOutputBytes"].as_u64().unwrap_or(0) as usize,
+        )?;
         let snapshot = JobSnapshot {
             format_version: 1,
             run_id: run_id.clone(),
@@ -850,7 +1165,7 @@ impl RuntimeCore {
             command_id: submit.command_id.clone(),
             package_version: manifest["version"].as_str().unwrap().into(),
             package_digest: package_digest.clone(),
-            dependency_lock: "t1-no-dependencies-v1".into(),
+            dependency_lock: lock_digest,
             deadline: submit.deadline,
             grant_epoch,
             resources: command["resources"].clone(),
@@ -875,11 +1190,14 @@ impl RuntimeCore {
                 events: Vec::new(),
                 broker_session: None,
                 idempotency_key: submit.idempotency_key,
+                dependency_lock,
+                service_calls: Vec::new(),
             },
         );
         if let Some(ref payloads) = self.private_jobs {
             if let Err(error) = payloads.write(&run_id, "input", &input) {
                 self.jobs.remove(&run_id);
+                self.services.release_root(&run_id);
                 return Err(error);
             }
             if self.persist_job(&self.jobs[&run_id]).is_err() {
@@ -1054,6 +1372,16 @@ impl RuntimeCore {
     }
 
     pub fn check_run(&self, run_id: &str) -> Result<(), ErrorCode> {
+        if let Some(call) = self.service_invocations.get(run_id) {
+            if matches!(
+                self.state(&call.root),
+                Some(JobState::Cancelling | JobState::Cancelled)
+            ) {
+                return Err(ErrorCode::Aborted);
+            }
+            self.check_run(&call.root)?;
+            return self.broker.check_session(&call.session, now());
+        }
         let job = self.jobs.get(run_id).ok_or(ErrorCode::JobNotFound)?;
         // A failed cancellation commit must not leave a live effect window.
         if self.stopping {
@@ -1073,6 +1401,496 @@ impl RuntimeCore {
         )
     }
 
+    pub fn prepare_service(
+        &mut self,
+        parent: &str,
+        target: ServiceTarget,
+        input: Value,
+    ) -> Result<ServiceRunSpec, ErrorCode> {
+        self.check_run(parent)?;
+        target.validate()?;
+        let (root, consumer, parent_session, parent_deadline) =
+            if let Some(call) = self.service_invocations.get(parent) {
+                (
+                    call.root.clone(),
+                    crate::dependencies::DependencyIdentity {
+                        publisher: self
+                            .catalog
+                            .service_operation(
+                                &call.spec.plugin_id,
+                                &call.target.service,
+                                &call.target.operation,
+                            )?
+                            .0["publisher"]
+                            .as_str()
+                            .unwrap()
+                            .into(),
+                        id: call.spec.plugin_id.clone(),
+                    },
+                    call.session.clone(),
+                    call.spec.deadline,
+                )
+            } else {
+                let job = &self.jobs[parent];
+                let manifest = self
+                    .catalog
+                    .command(&job.snapshot.plugin_id, &job.snapshot.command_id)?
+                    .0;
+                (
+                    parent.to_owned(),
+                    crate::dependencies::DependencyIdentity {
+                        publisher: manifest["publisher"].as_str().unwrap().into(),
+                        id: job.snapshot.plugin_id.clone(),
+                    },
+                    job.broker_session.as_ref().unwrap().clone(),
+                    job.snapshot.deadline,
+                )
+            };
+        let provider = self.services.provider(&root, &consumer, &target)?;
+        let (manifest, operation) =
+            self.catalog
+                .service_operation(&provider.id, &target.service, &target.operation)?;
+        if manifest["publisher"] != provider.publisher
+            || manifest["version"] != provider.version
+            || digest(manifest) != provider.digest
+        {
+            return Err(ErrorCode::DependencyArtifactMismatch);
+        }
+        if operation["headless"] != true || operation["interaction"] != "none" {
+            return Err(ErrorCode::InteractionRequired);
+        }
+        let input = BuiltinCatalog::prepare_operation_input(operation, input)?;
+        let mut identity = CommandIdentity::from_manifest(
+            &self.jobs[&root].snapshot.root_caller,
+            manifest,
+            operation,
+        );
+        identity.command_id = format!("svc:{}:{}", target.service, target.operation);
+        self.managed_authorization(&identity, self.jobs[&root].background)?;
+        let deadline = parent_deadline
+            .min(now() + operation["resources"]["timeoutMs"].as_f64().unwrap_or(0.0));
+        let session = self.broker.delegate(
+            &parent_session,
+            identity,
+            operation.clone(),
+            deadline,
+            now(),
+        )?;
+        let run_id = Uuid::new_v4().to_string();
+        let diagnostic = ServiceCallDiagnostic {
+            run_id: run_id.clone(),
+            parent_run_id: parent.into(),
+            root_run_id: root.clone(),
+            root_caller: self.jobs[&root].snapshot.root_caller.clone(),
+            consumer,
+            provider: provider.clone(),
+            service: target.service.clone(),
+            operation: target.operation.clone(),
+            dependency_lock: self.services.lock(&root)?.digest.clone(),
+            deadline,
+            state: "queued".into(),
+            failure_code: None,
+        };
+        if let Err(code) = self.services.add_call(diagnostic.clone()) {
+            self.broker.close(&session);
+            return Err(code);
+        }
+        self.jobs
+            .get_mut(&root)
+            .unwrap()
+            .service_calls
+            .push(diagnostic);
+        if let Err(code) = self.persist_job(&self.jobs[&root]) {
+            self.broker.close(&session);
+            let _ = self.services.finish_call(&run_id, Err(code.clone()));
+            self.stopping = true;
+            return Err(code);
+        }
+        let spec = RunSpec {
+            run_id: run_id.clone(),
+            plugin_id: provider.id,
+            command_id: format!("svc:{}:{}", target.service, target.operation),
+            input: input.clone(),
+            deadline,
+            package_digest: provider.digest,
+            data: None,
+        };
+        let result = ServiceRunSpec {
+            spec: RunSpec {
+                run_id: run_id.clone(),
+                plugin_id: spec.plugin_id.clone(),
+                command_id: spec.command_id.clone(),
+                input,
+                deadline,
+                package_digest: spec.package_digest.clone(),
+                data: None,
+            },
+            target: target.clone(),
+            root_run_id: root.clone(),
+            parent_run_id: parent.into(),
+        };
+        self.service_invocations.insert(
+            run_id,
+            ServiceInvocation {
+                root,
+                session,
+                spec,
+                target,
+                failure: None,
+            },
+        );
+        Ok(result)
+    }
+
+    pub fn start_service(&mut self, id: &str) -> Result<(), ErrorCode> {
+        self.check_run(id)?;
+        self.services.start_call(id)?;
+        let root = &self.service_invocations[id].root;
+        self.jobs.get_mut(root).unwrap().service_calls = self.services.diagnostics(root);
+        self.persist_job(&self.jobs[root])
+    }
+
+    pub fn runner_output_valid(&self, id: &str, output: &Value) -> bool {
+        if self.service_invocations.contains_key(id) {
+            self.service_output_valid(id, output)
+        } else {
+            self.jobs.get(id).is_some_and(|job| {
+                self.catalog
+                    .output_valid(&job.snapshot.plugin_id, &job.snapshot.command_id, output)
+            })
+        }
+    }
+
+    pub fn service_output_valid(&self, id: &str, output: &Value) -> bool {
+        let Some(call) = self.service_invocations.get(id) else {
+            return false;
+        };
+        self.catalog
+            .service_operation(
+                &call.spec.plugin_id,
+                &call.target.service,
+                &call.target.operation,
+            )
+            .is_ok_and(|(_, op)| {
+                serde_json::to_vec(output).is_ok_and(|bytes| {
+                    bytes.len() as u64 <= op["resources"]["maxOutputBytes"].as_u64().unwrap_or(0)
+                }) && jsonschema::is_valid(&op["outputSchema"], output)
+            })
+    }
+
+    pub fn finish_service(
+        &mut self,
+        id: &str,
+        mut result: Result<Value, ErrorCode>,
+    ) -> Result<Value, ErrorCode> {
+        if result.is_err() {
+            if let Some(code) = self
+                .service_invocations
+                .get(id)
+                .and_then(|call| call.failure.clone())
+            {
+                result = Err(code);
+            }
+        }
+        if result.is_ok() {
+            result = self.check_run(id).and(result);
+            if result
+                .as_ref()
+                .is_ok_and(|output| !self.service_output_valid(id, output))
+            {
+                result = Err(ErrorCode::OutputInvalid);
+            }
+        }
+        let budget = result
+            .as_ref()
+            .map(|output| serde_json::to_vec(output).map_or(usize::MAX, |b| b.len()))
+            .map_err(Clone::clone);
+        let finished = self.services.finish_call(id, budget);
+        if let Some(call) = self.service_invocations.remove(id) {
+            self.broker.close(&call.session);
+            self.jobs.get_mut(&call.root).unwrap().service_calls =
+                self.services.diagnostics(&call.root);
+            if self.persist_job(&self.jobs[&call.root]).is_err() {
+                self.stopping = true;
+                return Err(ErrorCode::StorageFailed);
+            }
+        }
+        finished.and(result)
+    }
+
+    /// Logical capability descriptors only. IO stays inside a T0 adapter callback.
+    pub fn invoke_service<T>(
+        &mut self,
+        id: &str,
+        operation: &CapabilityOperation,
+        adapter: impl FnOnce(&CommandIdentity) -> Result<T, ErrorCode>,
+    ) -> Result<T, ErrorCode> {
+        self.check_run(id)?;
+        let call = self
+            .service_invocations
+            .get(id)
+            .ok_or(ErrorCode::SessionInvalid)?;
+        let result = self.broker.invoke(&call.session, operation, now(), adapter);
+        if let Err(code) = &result {
+            self.service_invocations.get_mut(id).unwrap().failure = Some(code.clone());
+        }
+        result
+    }
+
+    pub fn service_diagnostics(&self, root: &str) -> Result<Vec<ServiceCallDiagnostic>, ErrorCode> {
+        if !self.jobs.contains_key(root) {
+            return Err(ErrorCode::JobNotFound);
+        }
+        Ok(self.jobs[root].service_calls.clone())
+    }
+
+    pub fn active_service_calls(&self) -> usize {
+        self.service_invocations.len()
+    }
+
+    pub fn validate_runner_spec(&self, spec: &RunSpec) -> Result<(), ErrorCode> {
+        self.check_run(&spec.run_id)?;
+        if !spec.deadline.is_finite() || spec.deadline <= now() {
+            return Err(ErrorCode::Timeout);
+        }
+        let valid = if let Some(call) = self.service_invocations.get(&spec.run_id) {
+            spec.plugin_id == call.spec.plugin_id
+                && spec.command_id == call.spec.command_id
+                && spec.package_digest == call.spec.package_digest
+                && spec.input == call.spec.input
+                && spec.data.is_none()
+                && spec.deadline <= call.spec.deadline
+        } else if let Some(job) = self.jobs.get(&spec.run_id) {
+            spec.plugin_id == job.snapshot.plugin_id
+                && spec.command_id == job.snapshot.command_id
+                && spec.package_digest == job.snapshot.package_digest
+                && spec.deadline <= job.snapshot.deadline
+                && digest(
+                    &json!({"package":spec.package_digest,"command":spec.command_id,"lock":job.snapshot.dependency_lock,"input":spec.input,"background":job.background,"deadline":job.snapshot.deadline}),
+                ) == job.action_digest
+        } else {
+            false
+        };
+        if valid {
+            Ok(())
+        } else {
+            Err(ErrorCode::ExecutionFailed)
+        }
+    }
+
+    pub fn provider_unload_plan(
+        &mut self,
+        id: &str,
+    ) -> Result<crate::services::ProviderChangePlan, ErrorCode> {
+        self.services.set_catalog(&self.catalog)?;
+        let manifest = self
+            .catalog
+            .list()
+            .find(|(key, _)| key.as_str() == id)
+            .ok_or(ErrorCode::DependencyMissing)?
+            .1;
+        self.services.change_plan(
+            &crate::dependencies::PackagePin {
+                publisher: manifest["publisher"].as_str().unwrap().into(),
+                id: id.into(),
+                version: manifest["version"].as_str().unwrap().into(),
+                digest: digest(manifest),
+            },
+            None,
+        )
+    }
+
+    /// T0 fixed-snapshot evaluation only. Real signed installation remains G5.
+    pub fn stage_provider_update(
+        &mut self,
+        id: &str,
+        candidate: BuiltinCatalog,
+    ) -> Result<crate::services::ProviderChangePlan, ErrorCode> {
+        if self.provider_candidates.len() >= 64 || self.retained_catalogs.len() >= 64 {
+            return Err(ErrorCode::BudgetExceeded);
+        }
+        let mut plan = self.provider_unload_plan(id)?;
+        if candidate.list().count() != self.catalog.list().count()
+            || self
+                .catalog
+                .list()
+                .any(|(key, m)| key != id && !candidate.list().any(|(k, n)| k == key && n == m))
+        {
+            return Err(ErrorCode::DependencyInvalid);
+        }
+        ServiceRegistry::plan(
+            &candidate,
+            &candidate
+                .list()
+                .map(|(key, _)| key.clone())
+                .collect::<Vec<_>>(),
+        )?;
+        let manifest = candidate
+            .list()
+            .find(|(key, _)| key.as_str() == id)
+            .ok_or(ErrorCode::DependencyMissing)?
+            .1;
+        let replacement = crate::dependencies::PackagePin {
+            publisher: manifest["publisher"].as_str().unwrap().into(),
+            id: id.into(),
+            version: manifest["version"].as_str().unwrap().into(),
+            digest: digest(manifest),
+        };
+        plan = self
+            .services
+            .change_plan(&plan.provider, Some(replacement))?;
+        self.provider_candidates
+            .insert(plan.digest.clone(), candidate);
+        Ok(plan)
+    }
+
+    pub fn begin_provider_change(
+        &mut self,
+        plan: crate::services::ProviderChangePlan,
+        confirmation: &str,
+        cascade: bool,
+    ) -> Result<(), ErrorCode> {
+        if self.stopping {
+            return Err(ErrorCode::RuntimeBusy);
+        }
+        if plan.replacement.is_some() && !self.provider_candidates.contains_key(&plan.digest) {
+            return Err(ErrorCode::ApprovalRequired);
+        }
+        self.services.begin_change(plan, confirmation, cascade)
+    }
+    pub fn abort_provider_change(&mut self, ticket: &str) {
+        self.services.abort_change(ticket);
+        self.provider_candidates.remove(ticket);
+    }
+
+    /// T0 backup/transaction/drain boundary. No user-supplied SQL or paths on IPC.
+    pub fn commit_provider_change(
+        &mut self,
+        ticket: &str,
+        migrate: impl FnOnce(&rusqlite::Transaction<'_>) -> Result<(), ErrorCode>,
+    ) -> Result<(), ErrorCode> {
+        if self.stopping {
+            return Err(ErrorCode::RuntimeBusy);
+        }
+        if !self.services.drained(ticket)? {
+            return Err(ErrorCode::RuntimeBusy);
+        }
+        let plan = self.services.presented_plan(ticket)?;
+        let backup = match self.data.backup() {
+            Ok(backup) => backup,
+            Err(code) => {
+                self.abort_provider_change(ticket);
+                return Err(code);
+            }
+        };
+        let backup_id = backup
+            .file_stem()
+            .and_then(|name| name.to_str())
+            .and_then(|name| name.strip_prefix("runtime-backup-"))
+            .ok_or(ErrorCode::StorageFailed)?
+            .to_owned();
+        let previous: Option<String> = self
+            .data
+            .connection
+            .query_row(
+                "SELECT value FROM core_metadata WHERE key='service-catalog-state-v1'",
+                [],
+                |row| row.get(0),
+            )
+            .optional()
+            .map_err(|_| ErrorCode::StorageFailed)?;
+        let pending = self
+            .provider_candidates
+            .get(ticket)
+            .map(BuiltinCatalog::snapshot_digest);
+        let mut journal = ProviderJournal {
+            format_version: 1,
+            phase: "prepared".into(),
+            active_catalog: self.catalog.snapshot_digest(),
+            pending_catalog: pending,
+            backup_id,
+            disabled: self.services.disabled(),
+        };
+        let write_journal = |connection: &rusqlite::Connection,
+                             journal: &ProviderJournal|
+         -> Result<(), ErrorCode> {
+            connection.execute("INSERT INTO core_metadata(key,value) VALUES('service-catalog-state-v1',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value",[serde_json::to_string(journal).map_err(|_|ErrorCode::StorageFailed)?]).map_err(|_|ErrorCode::StorageFailed)?;
+            Ok(())
+        };
+        let result = (|| {
+            write_journal(&self.data.connection, &journal).map_err(|code| (code, false))?;
+            let tx = self
+                .data
+                .connection
+                .transaction()
+                .map_err(|_| (ErrorCode::StorageFailed, true))?;
+            let result = migrate(&tx).and_then(|()| {
+                if plan.replacement.is_none() {
+                    journal.disabled.extend(plan.consumers.clone());
+                    journal.disabled.push(plan.provider.identity());
+                    journal.disabled.sort();
+                    journal.disabled.dedup();
+                }
+                if let Some(active) = journal.pending_catalog.take() {
+                    journal.active_catalog = active;
+                }
+                journal.phase = "committed".into();
+                write_journal(&tx, &journal)
+            });
+            match result {
+                Ok(()) => tx.commit().map_err(|_| (ErrorCode::StorageFailed, false)),
+                Err(code) => match tx.rollback() {
+                    Ok(()) => Err((code, true)),
+                    Err(_) => Err((ErrorCode::StorageFailed, false)),
+                },
+            }
+        })();
+        if let Err((code, rollback_confirmed)) = result {
+            // An uncertain commit/rollback cannot reopen old admission.
+            if !rollback_confirmed {
+                self.stopping = true;
+                self.shutdown();
+                return Err(code);
+            }
+            let restored = if let Some(previous) = previous {
+                self.data.connection.execute(
+                    "UPDATE core_metadata SET value=?1 WHERE key='service-catalog-state-v1'",
+                    [previous],
+                )
+            } else {
+                self.data.connection.execute(
+                    "DELETE FROM core_metadata WHERE key='service-catalog-state-v1'",
+                    [],
+                )
+            };
+            if restored.is_err() {
+                self.stopping = true;
+                self.shutdown();
+                return Err(ErrorCode::StorageFailed);
+            }
+            self.abort_provider_change(ticket);
+            return Err(code);
+        }
+        if let Err(code) = self.services.commit_change(ticket, || Ok(())) {
+            self.stopping = true;
+            self.shutdown();
+            return Err(code);
+        }
+        if let Some(candidate) = self.provider_candidates.remove(ticket) {
+            self.retained_catalogs.push(self.catalog.clone());
+            self.catalog = candidate;
+            if let Err(code) = self.services.set_catalog(&self.catalog) {
+                self.stopping = true;
+                self.shutdown();
+                return Err(code);
+            }
+            if let Some(policy) = self.policy.as_mut() {
+                policy.set_catalog(self.catalog.clone());
+            }
+        }
+        Ok(())
+    }
+
     pub fn finish(&mut self, run_id: &str, result: Result<Value, ErrorCode>) {
         self.finish_internal(run_id, result, None);
     }
@@ -1089,6 +1907,14 @@ impl RuntimeCore {
         let cancelled = self.state(run_id) == Some(JobState::Cancelling);
         if cancelled {
             result = Err(ErrorCode::Aborted);
+        }
+        if let Ok(ref data) = result {
+            if let Err(code) = self.services.charge_output(
+                run_id,
+                serde_json::to_vec(data).map_or(usize::MAX, |b| b.len()),
+            ) {
+                result = Err(code);
+            }
         }
         if let Ok(ref data) = result {
             let snapshot = &self.jobs[run_id].snapshot;
@@ -1126,6 +1952,7 @@ impl RuntimeCore {
             },
         };
         let job = self.jobs.get_mut(run_id).unwrap();
+        self.services.release_root(run_id);
         if let Some(session) = job.broker_session.take() {
             self.broker.close(&session);
         }
@@ -1223,6 +2050,11 @@ impl RuntimeCore {
         }
         self.sessions.clear();
     }
+    /// T0 fatal runner/storage boundary; no wire or plugin-owned stop switch.
+    pub fn fail_closed(&mut self) {
+        self.stopping = true;
+        self.shutdown();
+    }
 }
 
 fn valid_key(key: &str) -> bool {
@@ -1314,8 +2146,82 @@ pub(crate) fn interrupt_restored_jobs(connection: &rusqlite::Connection) -> Resu
 }
 
 #[cfg(test)]
+#[path = "runtime_service_tests.rs"]
+mod service_recovery_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn dependency_plans_bind_host_inventory_and_do_not_submit_or_grant() {
+        let mut core = RuntimeCore::validation("cli-token".into(), "desktop-token".into());
+        let session = open(&mut core, "cli", "cli-token");
+        let before_jobs = core.jobs.len();
+        let before_pending = core.pending.len();
+        let call = || {
+            Call::DependencyPlan(DependencyPlanRequest {
+                plugin_ids: vec!["plugin-base64-encoder".into()],
+            })
+        };
+        let Outcome::DependencyPlan(first) = core
+            .handle("cli", request(call(), Some(session.clone())))
+            .outcome
+        else {
+            panic!("Expected a Host-generated plan");
+        };
+        let Outcome::DependencyPlan(second) = core
+            .handle("cli", request(call(), Some(session.clone())))
+            .outcome
+        else {
+            panic!("Expected a deterministic plan");
+        };
+        assert_eq!(
+            serde_json::to_value(first).unwrap(),
+            serde_json::to_value(second).unwrap()
+        );
+        assert_eq!(core.jobs.len(), before_jobs);
+        assert_eq!(core.pending.len(), before_pending);
+        for ids in [
+            vec![],
+            vec!["other-publisher/service".into()],
+            vec!["missing-plugin".into()],
+            vec!["plugin-base64-encoder".into(); 2],
+            vec!["plugin-base64-encoder".into(); 65],
+        ] {
+            assert!(matches!(
+                core.handle(
+                    "cli",
+                    request(
+                        Call::DependencyPlan(DependencyPlanRequest { plugin_ids: ids }),
+                        Some(session.clone())
+                    )
+                )
+                .outcome,
+                Outcome::Error(RuntimeError {
+                    code: ErrorCode::DependencyMissing
+                        | ErrorCode::DependencyInvalid
+                        | ErrorCode::DependencyBudgetExceeded
+                })
+            ));
+        }
+        // No caller can provide the catalog, publisher, platform or artifact path.
+        for extra in ["catalog", "publisher", "target", "path"] {
+            let mut payload = json!({"pluginIds":["plugin-base64-encoder"]});
+            payload[extra] = json!("untrusted");
+            assert!(serde_json::from_value::<Call>(
+                json!({"method":"dependencies.plan","payload":payload})
+            )
+            .is_err());
+        }
+        assert!(matches!(
+            core.handle("other-connection", request(call(), Some(session)))
+                .outcome,
+            Outcome::Error(RuntimeError {
+                code: ErrorCode::SessionInvalid
+            })
+        ));
+    }
+
     #[test]
     fn authorized_stop_cancels_queued_and_running_work_before_receipt_delivery() {
         for persist_failure in [false, true] {

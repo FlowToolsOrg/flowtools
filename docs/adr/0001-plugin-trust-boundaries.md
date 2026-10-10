@@ -192,3 +192,61 @@ Missing post-backup keys return ACCEPTANCE_UNKNOWN and require explicit review.
 See [diagnostic/recovery evidence](../validation/g3-diagnostics-recovery.md). Scope remains prototype. Independent
 security review, actual native consent clicks, assistive technology and other
 platform acceptance are pending; these checks do not authorize production.
+
+### G4 P1.6a plan boundary
+
+`dependencies.plan` is a session-bound read-only query of the fixed Host catalog.
+Clients supply root plugin IDs, never catalog, publisher, target or executable
+paths. Its immutable lock records identity/integrity and does not convey grants,
+activate services or authorize installation. Execution delegation remains P1.6b;
+third-party installation/isolation remains G5. See
+[validation scope](../validation/g4-dependency-plans.md); SEC-014/015 remain open.
+
+### G4 P1.6b delegation boundary
+
+T0 binds root/parent/provider sessions to accepted locks. Every leaf effect
+rechecks all ancestor declarations, grants, scopes, expiry, budgets and epochs.
+Only fixed verified child pipes carry logical selectors/JSON. Actual A/B/C
+fixtures demonstrate refusal before test-only file IO and cancellation/revocation
+across hops. Ordinary T1 Bun is not an OS sandbox. Accepted and active references
+block version changes until owned process groups empty. See
+[evidence and residual risks](../validation/g4-service-calls.md); independent
+security approval remains pending and SEC-014/015 remain open.
+
+### E01a 数据贡献目录补充（2026-10-08）
+
+[E 宿主扩展设计](../host-extensions.md) 遵守本 ADR 的既有信任等级。
+E01a 的 `@flowtools/sdk/extensions` 仅在合作 T1 范围增加 Host 创建的内存
+数据目录；Host 从 PluginRegistry 绑定 ID/版本，owner epoch 由贡献目录
+发放。严格 envelope 拒绝额外身份字段；不透明 `value` 可包含同名普通 JSON
+业务键，但 Host 不据此派生身份、grant 或操作。epoch 与替换专属清理解决
+生命周期一致性，不替代
+认证会话、publisher/hash 校验、授权 epoch 或 OS 隔离。
+
+贡献 JSON 不执行代码、不授予能力、不注入 CSS 或修改 Host DOM。将来主题、
+语言和视图贡献只能通过各扩展点的受控解析与呈现；权限、身份和恢复界面的
+可信含义由 Host 保持。T2/T3/TL 不能因贡献声明或 enabled 状态进入主 realm。
+将来第三方资源准入仍须通过 G5 的包/隔离边界，服务与资源调用仍使用 Runtime。
+
+本子项不改变 Manifest v1、Runtime wire、原生/API/CSP/Tauri permission 或
+持久化 scope。解析预算、旧 owner、重装与停用清理的 SDK 工程回归见
+[E01a 验收](../validation/e01-contributions.md)，固定 T1 工程范围和 clean Windows
+CI 已通过。SEC-002/003/007/010 继续
+open；独立安全 Reviewer/日期/批准结论 pending，当前 maturity 为 prototype。
+
+### E02a 主题数据内核（2026-10-09）
+
+[E02a](../validation/e02-theme-contracts.md) 增加有限语义 tokens 的纯数据解析，
+身份来自 Host 贡献目录，选择由 Host 明确提供。任意 CSS、URL、远程字体、
+布局树和超预算数据拒绝；坏主题/撤下回退，非法个人覆盖整体忽略。
+本项不应用 CSS、不接触 DOM，不新增 IPC、存储、加载或授权能力。
+主题值不能改变权限/身份含义；后续可信恢复与 UI adapter 单独验收。
+T1 合作范围、prototype、open 风险和独立安全审阅 pending 均保持不变。
+
+### E02b 受控主题呈现（2026-10-09）
+
+Host-only UI adapter 重验结构化 tokens，生成固定作用域变量；静态 CSS 由
+FlowTools 提供，资源不能提供选择器、URL、字体路径或任意 style。独立验证页的
+恢复控制位于主题子树外。见 [E02b](../validation/e02-theme-adapter.md)。
+这不建立第三方 CSS/DOM 隔离，不改变包准入、原生能力、持久化或权限含义。
+外部 portal、真实 Host 恢复策略与第三方执行仍须分别验收；原 ADR 边界不变。

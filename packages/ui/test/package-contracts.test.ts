@@ -9,7 +9,8 @@ interface ExportTarget {
 
 interface PackageManifest {
   name: string
-  exports: Record<string, ExportTarget>
+  exports: Record<string, ExportTarget | string>
+  files: string[]
 }
 
 type PublicModule = Record<string, unknown>
@@ -18,6 +19,7 @@ const expectedSubpaths = ['.', './icons', './plugin'] as const
 type PublicSubpath = (typeof expectedSubpaths)[number]
 
 const rootExports = [
+  'AppearanceScope',
   'CommandPalette',
   'ExecutionPanel',
   'HeroSection',
@@ -254,11 +256,12 @@ describe('package exports', () => {
     const manifest = await readManifest()
 
     expect(Object.keys(manifest.exports).sort()).toEqual(
-      [...expectedSubpaths].sort()
+      [...expectedSubpaths, './appearance.css'].sort()
     )
 
     for (const subpath of expectedSubpaths) {
       const target = manifest.exports[subpath]
+      if (typeof target === 'string') throw new Error('Expected JS export')
       expect(target.import.startsWith('./dist/')).toBe(true)
       expect(target.types.startsWith('./dist/')).toBe(true)
 
@@ -273,6 +276,18 @@ describe('package exports', () => {
       const loaded = await loadSubpath(manifest, subpath)
       expectExactExports(loaded, runtimeExportsBySubpath[subpath])
     }
+  })
+
+  test('ships the explicit static appearance stylesheet', async () => {
+    const manifest = await readManifest()
+    expect(manifest.exports['./appearance.css']).toBe('./src/appearance.css')
+    expect(manifest.files).toContain('src/appearance.css')
+    const css = await Bun.file(
+      new URL('src/appearance.css', packageRoot)
+    ).text()
+    expect(css).toContain('.flowtools-appearance')
+    expect(css).not.toContain('@import')
+    expect(css).not.toContain('url(')
   })
 })
 
@@ -299,5 +314,6 @@ describe('plugin and icon contracts', () => {
     for (const exportName of hostOwnedPluginExports) {
       expect(loaded).not.toHaveProperty(exportName)
     }
+    expect(loaded).not.toHaveProperty('AppearanceScope')
   })
 })

@@ -1,0 +1,29 @@
+/* Import after Tailwind and HeroUI. Static Host CSS; no plugin stylesheet. */
+.flowtools-appearance {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: var(--ft-font-size);
+  line-height: var(--ft-line-height);
+}
+
+.flowtools-appearance .card:not(.card--transparent) {
+  border-width: var(--border-width);
+  border-style: solid;
+  border-color: var(--border);
+  border-radius: var(--radius);
+}
+
+.flowtools-appearance .button {
+  border-radius: var(--ft-control-radius);
+}
+
+.flowtools-appearance[data-reduced-motion='true'],
+.flowtools-appearance[data-reduced-motion='true'] *,
+.flowtools-appearance[data-reduced-motion='true'] *::before,
+.flowtools-appearance[data-reduced-motion='true'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0s !important;
+  scroll-behavior: auto !important;
+}

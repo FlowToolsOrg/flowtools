@@ -66,5 +66,22 @@ lint/types、core rustfmt 与 all-target clippy `-D warnings`、SDK 新增 91 �
 不会把更严格的 signed ZIP profile 错当成已有 T1 Manifest 限制。
 
 UI、IPC、现有 T1 runtime 行为未改变，本步没有新的人工 UI 流程；未启动
-用户 profile。全量 Windows gate 的最终结果在交付前记录；不以构建或共同
-样本通过代替任意外部包安全性、平台隔离或独立审阅。
+用户 profile。
+
+实现提交 `e99ef4f` 在干净工作区运行
+`pwsh -NoProfile -File scripts/check-ci.ps1`，完整退出码 0，无 tracked/untracked
+漂移。冻结依赖安装、任务/文档/catalog 契约、固定 Chromium、SDK/插件构建、
+Host routes/Rust bindings 生成及 read-only 校验、11/11 工作区 lint/types/
+test/build 均通过。root test 与 build 顺序执行，测试 uncached。
+
+实际回归包括 SDK 368 项、core 114 项 Rust、native Runtime 18 项 Rust
+（含实际服务回归）、Runtime 16 项 JS、Desktop 89 项 JS 与 21+3 项 Rust，
+Chromium 27 文件/72 项。GUI-free 独立 CLI 分发、共享任务/数据、撤销与崩溃
+恢复原有验收均通过；Desktop codegen 使用 mock，未启动用户数据库。
+Web 22 / Desktop 24 个生产产物在 opt-in/canary 重构建后 byte-identical，
+已知 unsafe code/认证开关/canary 缺席；Desktop locked check、rustfmt 和
+all-target codegen clippy `-D warnings` 通过。
+
+最后的证据提交只更新文档，另跑格式与 `docs:check`。远程最终 SHA 的 CI
+结果由 PR 当前 checks 独立记录。本地通过不替代任意外部包安全性、平台隔离
+或独立审阅。

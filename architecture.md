@@ -11,15 +11,25 @@ G4 依赖锁与服务调用已实施为固定 Windows/T1 prototype，综合验�
 P2.5b 的首步 `packages/archive.rs` 在验签后重新绑定原始字节，并在内存中
 核对 ZIP local/central headers、完整物理条目、CRC 和逐文件 hash；受限解压
 只返回 inert bytes。它没有新增磁盘安装、执行身份、IPC 或授权入口。
-事务 journal、持久 trust floors 与平台隔离仍 pending；见
+事务 journal 与平台隔离仍 pending；见
 [归档验证](./docs/validation/g5-archive-admission.md)。
 
 P2.5b 第二步 `packages/manifest.rs` 消费该 opaque archive，使用 SDK 生成的
 结构契约与显式 native semantics 验证完整 Plugin Manifest/Host/SDK/target。
 规范化 metadata 与原始签名 bytes 分离；共同拒绝样本验证两端语义，未知
 custom export 不得静默丢失。依赖声明通过不代表安装 lock 已生成或验收。
-真实安装锁绑定、持久 floors/journal/恢复仍待后续，见
+真实安装锁绑定、journal/安装恢复仍待后续，见
 [Manifest 验证](./docs/validation/g5-manifest-admission.md)。
+
+第三步 `packages/trust.rs` 借用 Runtime 现有 `DataStore` 单写者，在 schema v2
+的 `core_metadata` 保存 T0 pins 绑定、原始 DSSE 根链、观察时间与已验签描述
+的不可变版本/release floors。每次操作重新验证根链、加载当前撤销，不缓存
+可变信任；SQLite FULL 提交成功后才返回新 receipt。观察记录不等于已安装
+或 last-known-good；后续 ZIP/Manifest 拒绝也不降低观察 floor。受支持的
+备份恢复路径写入 trust-recovery-required 标记并拒绝包准入，不能从旧备份
+重新 bootstrap。受控信任恢复/回滚审批尚未实现；未新增 IPC、数据库或 grants。
+完整 OS/T0 控制者替换数据库不在该控制范围，见
+[持久信任验证](./docs/validation/g5-durable-trust.md)。
 
 Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平台。
 当前仓库代码处于“先验证插件运行时，再落地桌面宿主”的阶段。

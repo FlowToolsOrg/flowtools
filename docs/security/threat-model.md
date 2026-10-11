@@ -24,6 +24,20 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 
 ## 风险台账
 
+2026-10-11 P2.5b 第三步新增
+[持久 descriptor 信任](../../packages/runtime-core/src/packages/trust.rs)，
+借用 Runtime 同一 SQLite writer，无新 IPC/网络/目录/权限。T0 pins 绑定与
+每次原始根链验证、最高观察时间、不可变版本与 release floors、累计撤销
+在重启后保留。两条受支持的备份恢复路径写入 recovery-required 标记，含
+trust 初始化之前的备份；拒绝重新 bootstrap，不能靠恢复旧备份降 floor。
+签名拒绝可提交可信时间观察，不记录无效候选或 grants；receipt 只在身份
+事务提交成功后返回。真实提交前后退出、写失败、撤销、损坏/超限状态与旧
+备份回归见 [持久信任证据](../validation/g5-durable-trust.md)。
+观察记录不是 installed/last-known-good；受控恢复/回滚审批、生产 pins、
+安装事务与平台隔离仍 pending。OS/T0 完全控制者直接替换数据库未防护。
+SEC-001/008/014/015 保持 open；Codex 2026-10-11 工程自查，独立实际
+安全 Reviewer/date/conclusion pending。
+
 2026-10-11 P2.5b 第二步新增
 [完整 Manifest 准入](../../packages/runtime-core/src/packages/manifest.rs) 与
 [SDK 生成契约](../../packages/sdk/src/manifest/validation-contract.ts)，
@@ -32,7 +46,7 @@ native semantics 核对，未知 custom 生成拒绝；90 个共同样本与实�
 ZIP 链路覆盖错误声明、默认值、服务/依赖 selectors、预算、重复原始键和
 兼容性拒绝。见 [验证边界](../validation/g5-manifest-admission.md)。
 无新增 IPC/native command/网络/文件写入、grant、安装或可执行身份；真实
-依赖锁绑定、持久 floors/journal/recovery 和平台边界仍 pending。
+依赖锁绑定、journal/安装恢复和平台边界仍 pending。
 SEC-001/008/014/015 保持 open；Codex 2026-10-11 工程自查，独立实际
 安全 Reviewer/date/conclusion pending。
 

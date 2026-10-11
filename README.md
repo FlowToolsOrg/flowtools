@@ -17,8 +17,16 @@ The second P2.5b step validates complete Plugin Manifest v1 metadata and
 Host/SDK/target compatibility from those verified bytes. Rust uses an
 SDK-generated shape with explicit native semantics and 90 shared cases.
 See the [Manifest evidence](./docs/validation/g5-manifest-admission.md).
-Installed dependency locks, durable trust floors and transaction recovery
+Installed dependency locks and transaction recovery
 remain pending; the resulting archive is inert and grants no execution.
+
+The third P2.5b step persists descriptor trust in Runtime's existing SQLite
+writer: pinned root chains, observed time, immutable versions and release
+floors survive restarts. Supported backup restores block signed-package
+admission until a controlled trust recovery exists. See the
+[durable trust evidence](./docs/validation/g5-durable-trust.md). Observed
+descriptors are not installed or known-good artifacts; rollback approval,
+production pins, installation and platform isolation remain pending.
 
 > An extensible, cross-platform toolbox powered by a plugin runtime.
 > Plugin Runtime for AI Age

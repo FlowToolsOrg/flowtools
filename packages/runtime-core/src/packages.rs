@@ -13,6 +13,7 @@ use std::collections::{BTreeMap, HashSet};
 
 pub mod archive;
 pub mod manifest;
+pub mod trust;
 
 pub const PACKAGE_PAYLOAD_TYPE: &str = "application/vnd.flowtools.package.v1+json";
 pub const ROOT_PAYLOAD_TYPE: &str = "application/vnd.flowtools.trust-root.v1+json";
@@ -44,6 +45,11 @@ pub enum PackageError {
     ArchiveBudgetExceeded,
     ManifestInvalid,
     ManifestIncompatible,
+    TrustStateRequired,
+    TrustStateInvalid,
+    TrustStorageFailed,
+    TrustRecoveryRequired,
+    TrustBudgetExceeded,
 }
 
 impl PackageError {
@@ -68,6 +74,11 @@ impl PackageError {
             Self::ArchiveBudgetExceeded => "PACKAGE_ARCHIVE_BUDGET_EXCEEDED",
             Self::ManifestInvalid => "PACKAGE_MANIFEST_INVALID",
             Self::ManifestIncompatible => "PACKAGE_MANIFEST_INCOMPATIBLE",
+            Self::TrustStateRequired => "PACKAGE_TRUST_STATE_REQUIRED",
+            Self::TrustStateInvalid => "PACKAGE_TRUST_STATE_INVALID",
+            Self::TrustStorageFailed => "PACKAGE_TRUST_STORAGE_FAILED",
+            Self::TrustRecoveryRequired => "PACKAGE_TRUST_RECOVERY_REQUIRED",
+            Self::TrustBudgetExceeded => "PACKAGE_TRUST_BUDGET_EXCEEDED",
         }
     }
 }
@@ -213,7 +224,8 @@ pub struct BootstrapPins {
     pub threshold: usize,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct KnownVersionIdentity {
     pub kind: PackageKind,
     pub publisher: String,

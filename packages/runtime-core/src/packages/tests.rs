@@ -4,6 +4,7 @@ use serde_json::json;
 
 mod archive_tests;
 mod manifest_tests;
+mod trust_tests;
 
 struct Fixture {
     golden: Value,

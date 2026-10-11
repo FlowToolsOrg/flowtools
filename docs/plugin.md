@@ -24,6 +24,13 @@ SDK 导出构建用结构契约，自定义校验有显式 native semantics 与�
 真实 provider/tool 锁绑定及事务恢复尚待实施。见
 [Manifest 准入](./validation/g5-manifest-admission.md)。
 
+P2.5b 第三步将 descriptor 信任观察持久化到 Runtime 单写者数据库，T0
+提供 pins 与可信时间；作者 SDK、包内容和 run flag 不能设置 floors 或 grants。
+同一版本/sequence/ZIP digest 的新鲜签名描述可续期，观察过更高 release 后
+拒绝降级；记录 descriptor 不表示已安装或健康。备份恢复后的 profile 拒绝
+签名包准入，受控信任恢复与回滚审批尚未实现。没有第三方安装入口或 production
+pins，见 [持久信任验证](./validation/g5-durable-trust.md)。
+
 本文面向 Flow Tool 开发者，目标是帮助你在当前仓库里快速开发并调试自己的
 plugin。
 

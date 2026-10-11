@@ -11,7 +11,7 @@ core `src/packages.rs` 只读签名/trust verifier；公开 Node golden 与 SDK/
 
 P2.5b 首步已新增 `packages/runtime-core/src/packages/archive.rs`，以及
 `src/packages/tests/archive_tests.rs` 的已签名恶意归档回归。仅验证并返回
-内存字节清单；尚未新增 installer、磁盘 artifact store、持久 trust floors
+内存字节清单；尚未新增 installer、磁盘 artifact store
 或可执行第三方身份。见 [归档证据](./validation/g5-archive-admission.md)。
 
 第二步新增 `runtime-core/src/packages/manifest.rs`、`packages/tests/manifest_tests.rs`
@@ -20,6 +20,12 @@ P2.5b 首步已新增 `packages/runtime-core/src/packages/archive.rs`，以及
 SDK/Rust 使用同一 `sdk/test/fixtures/manifest-admission-v1.json`。未新增
 Manifest wire DTO、IPC、installer 或 executable loader。完整 metadata 与
 兼容性检查的范围见 [Manifest 证据](./validation/g5-manifest-admission.md)。
+
+第三步新增 `runtime-core/src/packages/trust.rs` 与 `packages/tests/trust_tests.rs`，
+T0 adapter 借用已有 `DataStore` 写入 `core_metadata`，不创建第二个连接或数据
+目录、不增加 schema 版本或 IPC。根链/时间/版本观察持久化与两条既有备份
+恢复路径的拒绝标记见 [持久信任证据](./validation/g5-durable-trust.md)。
+installed lock、installer/artifact store、受控 trust recovery 与 sandbox 仍未交付。
 
 [下一阶段实施设计](./next-milestones.md) 定义 G0–G8 的顺序与验收。
 G2 已新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`

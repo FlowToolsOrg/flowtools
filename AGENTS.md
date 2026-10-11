@@ -182,7 +182,7 @@ agreement, complete physical inventory, CRC/hash checks and hostile archive test
 The install profile rejects encryption, ZIP64, descriptors, extra fields/comments,
 special files and unused compressed bytes. `ValidatedArchive` contains inert bytes;
 it is not full Manifest compatibility, an installed identity, a grant or execution
-authorization. Disk staging/journal, durable trust floors and platform isolation
+authorization. Disk staging/journal and platform isolation
 remain pending. See [archive evidence](./docs/validation/g5-archive-admission.md).
 
 G5 P2.5a is a read-only signed-descriptor prototype. Follow
@@ -272,9 +272,22 @@ cases. New refinements require corresponding native semantics and fixtures;
 JSON Schema alone does not preserve custom logic. Never replace this artifact
 with handwritten Manifest DTOs, caller-supplied schemas or validation flags.
 Normalized maturity metadata must not rewrite signed bytes. Dependency
-declaration validation is not an installed lock or executable identity; durable
-trust floors, transaction recovery and platform gates remain pending. See
+declaration validation is not an installed lock or executable identity;
+transaction recovery and platform gates remain pending. See
 [Manifest evidence](./docs/validation/g5-manifest-admission.md).
+
+P2.5b durable descriptor trust lives in `runtime-core/src/packages/trust.rs`.
+Borrow the existing `DataStore` single writer; never add a separate trust DB,
+cached mutable roots/floors or client-selected pins/time/rollback approvals.
+Replay the persisted raw DSSE root chain against T0 pins on every operation;
+commit observed time and immutable version/release floors before returning a
+receipt. Descriptor observations are not installed or last-known-good records.
+Supported managed and low-level backup restores mark trust recovery required,
+including backups predating trust initialization. Refuse bootstrap/admission
+after recovery; do not clear markers or reinitialize floors automatically.
+Controlled trust recovery/rollback approval and production pins remain pending.
+Preserve corruption, quota, write-failure and real crash regressions in
+[durable trust evidence](./docs/validation/g5-durable-trust.md).
 
 ## Coding Style and Naming Conventions
 

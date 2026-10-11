@@ -99,8 +99,9 @@ releaseSequence 不得低于 Host 保存的高水位。受控回滚仅允许 T0 
 回滚不降低高水位，不继承旧 grant，不覆盖同版本不同 digest 的拒绝。
 批准与 floor 必须来自 Host，不能来自包或 run flag。
 
-P2.5a floor 仅在内存 policy fixtures 中验证；持久、防崩溃 floor 和审批
-在 P2.5b/后续 T0 管理接入前并未提供。此模块不是对外的安装准入接口。
+P2.5a floor 仅在内存 policy fixtures 中验证。P2.5b 第三步新增下述持久
+descriptor 观察 adapter；受控回滚审批仍未提供。纯字节模块不是对外的安装
+准入接口，调用方不能将自己的 policy 当成持久信任状态。
 
 ## 当前实现
 
@@ -120,9 +121,31 @@ P2.5a 验签语义。返回 opaque inert byte inventory，不访问磁盘或产�
 不能充当 plugin。规范化 metadata 不改签名 bytes。实际安装锁绑定仍 pending；
 无 installed identity/IPC/grant，见 [Manifest 证据](../validation/g5-manifest-admission.md)。
 
+同日第三步 `packages/trust.rs` 借用 Runtime 的现有 SQLite 单写者，schema v2
+不变。私有状态绑定 T0 bootstrap pins，保存原始 DSSE 根链及各根首次接受
+时间、最高观察时间、精确 kind/publisher/ID/target/version/ZIP digest 与
+releaseSequence。每次重新验证历史双签链与累计撤销，历史根按当时接受时间
+验证；当前描述按当前 T0 时间和最新根验证。过期历史只可认证新鲜 successor，
+不能准入包。错误/过期候选仍持久观察 T0 时间，错误签名不记录候选身份。
+新描述 receipt 只在 FULL SQLite 事务提交观察身份后返回，崩溃不返回未提交
+floor。这个保守观察不等于安装成功；后续归档/Manifest 拒绝不能降低 floor。
+
+根链最多 32 项、版本观察最多 1024 项、状态最多 16 MiB；耗尽拒绝，不能
+静默裁剪旧根/floor。没有生产 pins 或可由客户端选择的时钟、floor、回滚审批。
+受控回滚全部拒绝，未来 T0 审批与可恢复 checkpoint 必须独立验收。
+
+受支持的 managed/low-level 备份恢复均给替换数据库写入不可自动清除的
+trust recovery 标记，即使备份早于信任初始化；adapter 同时识别已有
+recovery-generation。恢复后的 T1 数据仍可按原策略使用，但 bootstrap、根轮换
+和 descriptor 准入均拒绝，直到未来受控信任恢复完成。重启保留正常数据库
+floors；完全控制 OS/T0 的对手直接替换/删除数据库不在此控制或威胁模型范围。
+原型没有独立防篡改单调硬件锚点，也不声明对任意磁盘回退的保护。见
+[持久信任证据](../validation/g5-durable-trust.md)。
+
 SDK 作者 helper、Rust 只读 verifier 与 Node/Rust 共用的签名 golden 已实现。
-没有下载、解包、安装 journal、artifact store、真实 pins、管理 IPC、
-持久 root/floor、UI 或第三方执行入口。G4 服务锁仍是 P2.5b 的前置依赖；
+已提供 inert ZIP 解码与完整 Manifest 校验；没有下载、安装 journal、artifact
+store、真实 pins、管理 IPC、信任恢复/回滚审批、UI 或第三方执行入口。
+G4 服务锁仍是 P2.5b 的前置依赖；
 签名不会升级为 T1，也不会为 T2/T3/TL 提供权限。全部 maturity 保持 prototype。
 SEC-001/002/008/014/015 保持 open，工程自查不替代独立安全批准。
 

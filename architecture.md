@@ -1,5 +1,13 @@
 # Flow Tool Architecture
 
+G5 P2.5a 的纯字节签名验证位于 `packages/runtime-core/src/packages.rs`；
+SDK `manifest/signed-package.ts` 只负责作者 schema/序列化/PAE。T0 提供可信
+根和 floor；包描述、验证 receipt 不创建安装记录、grant 或 runner session。
+G4 依赖锁与服务调用已实施为固定 Windows/T1 prototype，综合验收仍 pending；
+完整签名安装和第三方平台边界尚未实施，现有默认拒绝继续生效。
+协议与 scope 见 [ADR-0003](./docs/adr/0003-signed-package-protocol.md) 和
+[P2.5a 验证](./docs/validation/g5-package-protocol.md)。
+
 Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平台。
 当前仓库代码处于“先验证插件运行时，再落地桌面宿主”的阶段。
 

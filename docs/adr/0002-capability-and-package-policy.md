@@ -70,6 +70,12 @@ namespace 拥有，调用方不能指定其内部表或路径。
 
 ### 包与更新准入
 
+P2.5a 的实际签名/根/轮换/撤销/离线/回滚格式在
+[ADR-0003](./0003-signed-package-protocol.md) 冻结，并提供只读拒绝 fixtures。
+这没有实现事务安装或第三方执行；真实 pins、持久 trust floors、包解压、
+完整兼容性和 G4 locks 在签名安装路径中的接入，仍由 P2.5b 与后续 gate
+验收。G4 locks/RPC 已实施为固定 Windows/T1 prototype，综合验收仍 pending。
+
 在执行任何入口代码之前，验证 versioned manifest、文件清单/hash、发布者
 签名与受信 provenance、Host/SDK 版本范围和平台/架构。签名、hash 与 TLS
 分别解决不同问题，不能相互替代。

@@ -1,0 +1,81 @@
+{
+  "warning": "Public deterministic fixture keys; never install or execute this package.",
+  "now": 1800000000,
+  "pins": [
+    {
+      "keyid": "34750f98bd59fcfc946da45aaabe933be154a4b5094e1c4abf42866505f3c97e",
+      "publicKey": "iojj3XQJ8ZX9UtstPLpdcspnCb8dlBIb83SIAbQPb1w="
+    },
+    {
+      "keyid": "6a3803d5f059902a1c6dafbc9ba4729212f7caac08634cc3ae76b27529f03827",
+      "publicKey": "gTl3Dqh9F19Wo1Rmw0x+zMuNipG07jeiXfYPW4/Js5Q="
+    }
+  ],
+  "threshold": 2,
+  "rootEnvelope": {
+    "payloadType": "application/vnd.flowtools.trust-root.v1+json",
+    "payload": "eyJmb3JtYXRWZXJzaW9uIjoxLCJ2ZXJzaW9uIjoxLCJwcmV2aW91c1Jvb3RTaGEyNTYiOm51bGwsImlzc3VlZEF0IjoxNzk5OTk5OTkwLCJleHBpcmVzQXQiOjE4MDAwODY0MDAsInJvb3RLZXlzIjpbeyJrZXlpZCI6IjM0NzUwZjk4YmQ1OWZjZmM5NDZkYTQ1YWFhYmU5MzNiZTE1NGE0YjUwOTRlMWM0YWJmNDI4NjY1MDVmM2M5N2UiLCJwdWJsaWNLZXkiOiJpb2pqM1hRSjhaWDlVdHN0UExwZGNzcG5DYjhkbEJJYjgzU0lBYlFQYjF3PSJ9LHsia2V5aWQiOiI2YTM4MDNkNWYwNTk5MDJhMWM2ZGFmYmM5YmE0NzI5MjEyZjdjYWFjMDg2MzRjYzNhZTc2YjI3NTI5ZjAzODI3IiwicHVibGljS2V5IjoiZ1RsM0RxaDlGMTlXbzFSbXcweCt6TXVOaXBHMDdqZWlYZllQVzQvSnM1UT0ifV0sInJvb3RUaHJlc2hvbGQiOjIsInB1Ymxpc2hlcnMiOlt7InB1Ymxpc2hlciI6ImZpeHR1cmUtcHVibGlzaGVyIiwia2V5cyI6W3sia2V5aWQiOiJiNjJlODY3ZmEyZjMzYWZlNjJkNWQ2YjE2NDJlMTYyMWQ1NDMzMDc4NDZiMmE1N2I4OTdlNzEwOTE5Yjc2NzA5IiwicHVibGljS2V5IjoiN1Vrb3hpalJ3c2JxNlFNNGtGbVZZU2xaSnpwY1kvazJOc0ZHRkt5SE45RT0ifV0sInRocmVzaG9sZCI6MSwicGFja2FnZXMiOlt7ImtpbmQiOiJwbHVnaW4iLCJpZCI6ImZpeHR1cmUtcGx1Z2luIiwidGFyZ2V0cyI6W3sicGxhdGZvcm0iOiJ3aW5kb3dzIiwiYXJjaCI6Ing2NCJ9XX1dLCJwcm92ZW5hbmNlIjp7ImF1dGhvcml0eSI6ImZpeHR1cmUtbWFpbnRhaW5lciIsInN1YmplY3QiOiJmaXh0dXJlLWF1dGhvciJ9fV0sInJldm9rZWRLZXlJZHMiOltdLCJyZXZva2VkUGFja2FnZURpZ2VzdHMiOltdfQ==",
+    "signatures": [
+      {
+        "keyid": "34750f98bd59fcfc946da45aaabe933be154a4b5094e1c4abf42866505f3c97e",
+        "sig": "jPmptanGsEmiQynIFOGE8b2Q6yCjNCTO6RHSRQba4C95tYVb9xvR74/2DaYv/UA54HoXXO4rdZX7zOPfNh03Dg=="
+      },
+      {
+        "keyid": "6a3803d5f059902a1c6dafbc9ba4729212f7caac08634cc3ae76b27529f03827",
+        "sig": "WiYubafrLkGluuMYfik664Ma+PQZwBm5yp5E6TOJljntfMOa5Ni7McNCUPab8T0HVUC6olHTbtMZYnLiuPBKDQ=="
+      }
+    ]
+  },
+  "packageEnvelope": {
+    "payloadType": "application/vnd.flowtools.package.v1+json",
+    "payload": "eyJmb3JtYXRWZXJzaW9uIjoxLCJraW5kIjoicGx1Z2luIiwicHVibGlzaGVyIjoiZml4dHVyZS1wdWJsaXNoZXIiLCJpZCI6ImZpeHR1cmUtcGx1Z2luIiwidmVyc2lvbiI6IjEuMC4wIiwicmVsZWFzZVNlcXVlbmNlIjoxLCJ0YXJnZXQiOnsicGxhdGZvcm0iOiJ3aW5kb3dzIiwiYXJjaCI6Ing2NCJ9LCJpc3N1ZWRBdCI6MTc5OTk5OTk5MCwiZXhwaXJlc0F0IjoxODAwMDg2NDAwLCJtYW5pZmVzdCI6eyJzaGEyNTYiOiIzNjQ0ZDZkZmUwZDYzNWRiNWVmYTBiOTQzMDU2YjY0MzBlZTdmMjY5MjFmMWYzNTViMjMzOTFjYWQ0MWNiMWNjIiwic2l6ZSI6NTU3fSwiYXJjaGl2ZSI6eyJmb3JtYXQiOiJ6aXAiLCJzaGEyNTYiOiI4N2FjMzFlNTUwMjJkMjkyMGIwYzdmMzA3YTYzMWI3M2ZmNDVmN2FkMDMyZDI0YmJjYTNhNjViYTA3NjNmYzI4Iiwic2l6ZSI6ODMzfSwiZmlsZXMiOlt7InBhdGgiOiJkaXN0L2NvbW1hbmRzLmpzIiwic2l6ZSI6NDQsInNoYTI1NiI6IjczZjcxY2RhNWQxZDE2ZGY3MWQ2MWI3NTYwMDk5MDk0ZGFkMDkzZDhkZTM5ZmM2NGE1MDRlZGI3NTVmMjAyMjYifV0sInNvdXJjZSI6eyJyZWdpc3RyeSI6ImZpeHR1cmUtcmVnaXN0cnkiLCJhcnRpZmFjdCI6ImZpeHR1cmUtcGx1Z2luIn0sImxpY2Vuc2UiOiJNSVQiLCJidWlsZEZsYXZvciI6ImRlZmF1bHQifQ==",
+    "signatures": [
+      {
+        "keyid": "b62e867fa2f33afe62d5d6b1642e1621d543307846b2a57b897e710919b76709",
+        "sig": "AjFVdw4yz7HhQCEWtmPd0GFlZrP7nMOxFYj36jLxc+8ijJqwJA39mu1Nkvmg7O7y6NhCI+ET1bxUKGIy877nCA=="
+      }
+    ]
+  },
+  "rootDigest": "9a69dfca54cc9e24b2899efd81c2627d19f71958f05305f81f2dab14873a02b8",
+  "packageDigest": "87ac31e55022d2920b0c7f307a631b73ff45f7ad032d24bbca3a65ba0763fc28",
+  "descriptorDigest": "ab22e4016891e95620804e563dc93ee7d096964299c186a3b3b8f347caa34fd0",
+  "paeBase64": "RFNTRXYxIDQxIGFwcGxpY2F0aW9uL3ZuZC5mbG93dG9vbHMucGFja2FnZS52MStqc29uIDY2NCB7ImZvcm1hdFZlcnNpb24iOjEsImtpbmQiOiJwbHVnaW4iLCJwdWJsaXNoZXIiOiJmaXh0dXJlLXB1Ymxpc2hlciIsImlkIjoiZml4dHVyZS1wbHVnaW4iLCJ2ZXJzaW9uIjoiMS4wLjAiLCJyZWxlYXNlU2VxdWVuY2UiOjEsInRhcmdldCI6eyJwbGF0Zm9ybSI6IndpbmRvd3MiLCJhcmNoIjoieDY0In0sImlzc3VlZEF0IjoxNzk5OTk5OTkwLCJleHBpcmVzQXQiOjE4MDAwODY0MDAsIm1hbmlmZXN0Ijp7InNoYTI1NiI6IjM2NDRkNmRmZTBkNjM1ZGI1ZWZhMGI5NDMwNTZiNjQzMGVlN2YyNjkyMWYxZjM1NWIyMzM5MWNhZDQxY2IxY2MiLCJzaXplIjo1NTd9LCJhcmNoaXZlIjp7ImZvcm1hdCI6InppcCIsInNoYTI1NiI6Ijg3YWMzMWU1NTAyMmQyOTIwYjBjN2YzMDdhNjMxYjczZmY0NWY3YWQwMzJkMjRiYmNhM2E2NWJhMDc2M2ZjMjgiLCJzaXplIjo4MzN9LCJmaWxlcyI6W3sicGF0aCI6ImRpc3QvY29tbWFuZHMuanMiLCJzaXplIjo0NCwic2hhMjU2IjoiNzNmNzFjZGE1ZDFkMTZkZjcxZDYxYjc1NjAwOTkwOTRkYWQwOTNkOGRlMzlmYzY0YTUwNGVkYjc1NWYyMDIyNiJ9XSwic291cmNlIjp7InJlZ2lzdHJ5IjoiZml4dHVyZS1yZWdpc3RyeSIsImFydGlmYWN0IjoiZml4dHVyZS1wbHVnaW4ifSwibGljZW5zZSI6Ik1JVCIsImJ1aWxkRmxhdm9yIjoiZGVmYXVsdCJ9",
+  "descriptor": {
+    "formatVersion": 1,
+    "kind": "plugin",
+    "publisher": "fixture-publisher",
+    "id": "fixture-plugin",
+    "version": "1.0.0",
+    "releaseSequence": 1,
+    "target": {
+      "platform": "windows",
+      "arch": "x64"
+    },
+    "issuedAt": 1799999990,
+    "expiresAt": 1800086400,
+    "manifest": {
+      "sha256": "3644d6dfe0d635db5efa0b943056b6430ee7f26921f1f355b23391cad41cb1cc",
+      "size": 557
+    },
+    "archive": {
+      "format": "zip",
+      "sha256": "87ac31e55022d2920b0c7f307a631b73ff45f7ad032d24bbca3a65ba0763fc28",
+      "size": 833
+    },
+    "files": [
+      {
+        "path": "dist/commands.js",
+        "sha256": "73f71cda5d1d16df71d61b7560099094dad093d8de39fc64a504edb755f20226",
+        "size": 44
+      }
+    ],
+    "source": {
+      "registry": "fixture-registry",
+      "artifact": "fixture-plugin"
+    },
+    "license": "MIT",
+    "buildFlavor": "default"
+  },
+  "manifestBase64": "eyJmb3JtYXRWZXJzaW9uIjoxLCJwdWJsaXNoZXIiOiJmaXh0dXJlLXB1Ymxpc2hlciIsImlkIjoiZml4dHVyZS1wbHVnaW4iLCJuYW1lIjoiRml4dHVyZSIsImRlc2NyaXB0aW9uIjoiU2lnbmVkIGRlc2NyaXB0b3IgZml4dHVyZSwgbmV2ZXIgZXhlY3V0ZSIsInZlcnNpb24iOiIxLjAuMCIsInR5cGUiOiJ0b29sIiwibWF0dXJpdHkiOiJwcm90b3R5cGUiLCJlbmdpbmVzIjp7Imhvc3QiOiJeMC4xLjAiLCJzZGsiOiI+PTAuMC4wIDwxLjAuMCJ9LCJ0YXJnZXRzIjpbeyJwbGF0Zm9ybSI6IndpbmRvd3MiLCJhcmNoIjoieDY0In1dLCJlbnRyaWVzIjp7ImV4ZWN1dG9yIjoiZGlzdC9jb21tYW5kcy5qcyJ9LCJmaWxlcyI6W3sicGF0aCI6ImRpc3QvY29tbWFuZHMuanMiLCJzaXplIjo0NCwic2hhMjU2IjoiNzNmNzFjZGE1ZDFkMTZkZjcxZDYxYjc1NjAwOTkwOTRkYWQwOTNkOGRlMzlmYzY0YTUwNGVkYjc1NWYyMDIyNiJ9XSwiY29tbWFuZHMiOltdLCJkZXBlbmRlbmNpZXMiOnsic2VydmljZXMiOltdLCJ0b29scyI6W119LCJzaWduYXR1cmUiOnsic3RhdHVzIjoidW5zaWduZWQifX0=",
+  "archiveBase64": "UEsDBBQAAAAAAAAAIVxTBtFCLQIAAC0CAAANAAAAbWFuaWZlc3QuanNvbnsiZm9ybWF0VmVyc2lvbiI6MSwicHVibGlzaGVyIjoiZml4dHVyZS1wdWJsaXNoZXIiLCJpZCI6ImZpeHR1cmUtcGx1Z2luIiwibmFtZSI6IkZpeHR1cmUiLCJkZXNjcmlwdGlvbiI6IlNpZ25lZCBkZXNjcmlwdG9yIGZpeHR1cmUsIG5ldmVyIGV4ZWN1dGUiLCJ2ZXJzaW9uIjoiMS4wLjAiLCJ0eXBlIjoidG9vbCIsIm1hdHVyaXR5IjoicHJvdG90eXBlIiwiZW5naW5lcyI6eyJob3N0IjoiXjAuMS4wIiwic2RrIjoiPj0wLjAuMCA8MS4wLjAifSwidGFyZ2V0cyI6W3sicGxhdGZvcm0iOiJ3aW5kb3dzIiwiYXJjaCI6Ing2NCJ9XSwiZW50cmllcyI6eyJleGVjdXRvciI6ImRpc3QvY29tbWFuZHMuanMifSwiZmlsZXMiOlt7InBhdGgiOiJkaXN0L2NvbW1hbmRzLmpzIiwic2l6ZSI6NDQsInNoYTI1NiI6IjczZjcxY2RhNWQxZDE2ZGY3MWQ2MWI3NTYwMDk5MDk0ZGFkMDkzZDhkZTM5ZmM2NGE1MDRlZGI3NTVmMjAyMjYifV0sImNvbW1hbmRzIjpbXSwiZGVwZW5kZW5jaWVzIjp7InNlcnZpY2VzIjpbXSwidG9vbHMiOltdfSwic2lnbmF0dXJlIjp7InN0YXR1cyI6InVuc2lnbmVkIn19UEsDBBQAAAAAAAAAIVwQx5hPLAAAACwAAAAQAAAAZGlzdC9jb21tYW5kcy5qc3Rocm93IG5ldyBFcnJvcignRklYVFVSRV9NVVNUX05PVF9FWEVDVVRFJykKUEsBAhQAFAAAAAAAAAAhXFMG0UItAgAALQIAAA0AAAAAAAAAAAAAAKSBAAAAAG1hbmlmZXN0Lmpzb25QSwECFAAUAAAAAAAAACFcEMeYTywAAAAsAAAAEAAAAAAAAAAAAAAApIFYAgAAZGlzdC9jb21tYW5kcy5qc1BLBQYAAAAAAgACAHkAAACyAgAAAAA="
+}

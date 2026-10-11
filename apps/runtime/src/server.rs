@@ -194,7 +194,7 @@ pub async fn run() -> Result<(), &'static str> {
             _ = tick.tick() => {if stop_ready(&core, &stop_reply).await {break;}}
             _ = stdin.read(&mut byte), if stdin_lifetime => break,
             result = listener.connect(), if connections.len() < 15 => {
-                let Some(connected) = accept_connection(&mut listener, result, &pipe_name, &sid).map_err(|_| "IPC_ACCESS_FAILED")? else { continue; };
+                let Some(connected) = accept_connection(&mut listener, result, &pipe_name, &sid).await.map_err(|_| "IPC_ACCESS_FAILED")? else { continue; };
                 let core = core.clone();
                 let tasks = tasks.clone();
                 let stop_reply = stop_reply.clone();
@@ -237,7 +237,7 @@ pub async fn run() -> Result<(), &'static str> {
     Ok(())
 }
 
-fn accept_connection(
+async fn accept_connection(
     listener: &mut NamedPipeServer,
     result: std::io::Result<()>,
     name: &str,
@@ -250,9 +250,30 @@ fn accept_connection(
         Err(error) if matches!(error.raw_os_error(), Some(109 | 232 | 233)) => false,
         Err(error) => return Err(error),
     };
-    // Create before dropping the old handle, preserving exclusive pipe ownership.
-    let previous = std::mem::replace(listener, create_pipe(name, sid, false)?);
+    // Completed tasks can leave cancelled IOCP operations owning their pipe
+    // handles until the driver observes completion. Keep the existing listener
+    // while that bounded resource window clears; never drop exclusive ownership.
+    let next = replacement_pipe(name, sid, Duration::from_secs(5)).await?;
+    let previous = std::mem::replace(listener, next);
     Ok(accepted.then_some(previous))
+}
+
+async fn replacement_pipe(
+    name: &str,
+    sid: &str,
+    budget: Duration,
+) -> std::io::Result<NamedPipeServer> {
+    let deadline = tokio::time::Instant::now() + budget;
+    loop {
+        match create_pipe(name, sid, false) {
+            Err(error)
+                if error.raw_os_error() == Some(231) && tokio::time::Instant::now() < deadline =>
+            {
+                tokio::time::sleep(Duration::from_millis(1)).await;
+            }
+            result => return result,
+        }
+    }
 }
 
 async fn stop_ready(core: &Core, stop_reply: &Semaphore) -> bool {
@@ -447,6 +468,84 @@ mod tests {
     use super::*;
     use flowtools_runtime_core::protocol::{Call, OpenSession, SubmitJob, CLIENT_VERSION};
 
+    #[tokio::test(flavor = "current_thread")]
+    async fn deferred_pipe_close_waits_for_iocp_without_losing_owner_or_capacity() {
+        use std::{future::Future, pin::pin, task::Poll};
+        use tokio::net::windows::named_pipe::ClientOptions;
+
+        let name = format!(r"\\.\pipe\flowtools-deferred-test-{}", uuid::Uuid::new_v4());
+        let sid = current_user_sid().unwrap();
+        let mut pipes = Vec::new();
+        for index in 0..16 {
+            pipes.push(create_pipe(&name, &sid, index == 0).unwrap());
+        }
+        // Poll real ConnectNamedPipe operations without letting the current-thread
+        // driver reap completion. Their IOCP-owned handles make the race exact.
+        for pipe in &pipes {
+            std::future::poll_fn(|cx| {
+                let mut connect = pin!(pipe.connect());
+                assert!(matches!(connect.as_mut().poll(cx), Poll::Pending));
+                Poll::Ready(())
+            })
+            .await;
+        }
+        let mut listener = pipes.pop().unwrap();
+
+        // A permanently full pool remains bounded and cannot create a 17th pipe.
+        assert_eq!(
+            replacement_pipe(&name, &sid, Duration::from_millis(5))
+                .await
+                .unwrap_err()
+                .raw_os_error(),
+            Some(231)
+        );
+        assert!(create_pipe(&name, &sid, true).is_err());
+
+        // Cancelling a pending replacement leaves the original listener owned.
+        let mut waiting = Box::pin(accept_connection(
+            &mut listener,
+            Err(std::io::Error::from_raw_os_error(109)),
+            &name,
+            &sid,
+        ));
+        std::future::poll_fn(|cx| {
+            assert!(matches!(waiting.as_mut().poll(cx), Poll::Pending));
+            Poll::Ready(())
+        })
+        .await;
+        drop(waiting);
+        assert!(create_pipe(&name, &sid, true).is_err());
+
+        // Drop is insufficient until IOCP observes the cancelled operation.
+        drop(pipes.pop());
+        assert_eq!(
+            create_pipe(&name, &sid, false).unwrap_err().raw_os_error(),
+            Some(231)
+        );
+        assert!(accept_connection(
+            &mut listener,
+            Err(std::io::Error::from_raw_os_error(109)),
+            &name,
+            &sid,
+        )
+        .await
+        .unwrap()
+        .is_none());
+        assert!(create_pipe(&name, &sid, true).is_err());
+
+        drop(pipes);
+        tokio::time::sleep(Duration::from_millis(1)).await;
+        let mut peer = ClientOptions::new().open(&name).unwrap();
+        listener.connect().await.unwrap();
+        let mut connected = accept_connection(&mut listener, Ok(()), &name, &sid)
+            .await
+            .unwrap()
+            .unwrap();
+        peer.write_u8(7).await.unwrap();
+        assert_eq!(connected.read_u8().await.unwrap(), 7);
+        assert!(create_pipe(&name, &sid, true).is_err());
+    }
+
     #[tokio::test]
     async fn aborted_pipe_peers_preserve_owner_and_next_real_handshake() {
         use tokio::net::windows::named_pipe::ClientOptions;
@@ -455,7 +554,11 @@ mod tests {
         let mut listener = create_pipe(&name, &sid, true).unwrap();
         drop(ClientOptions::new().open(&name).unwrap());
         let early = listener.connect().await;
-        drop(accept_connection(&mut listener, early, &name, &sid).unwrap());
+        drop(
+            accept_connection(&mut listener, early, &name, &sid)
+                .await
+                .unwrap(),
+        );
         for code in [109, 232, 233] {
             assert!(accept_connection(
                 &mut listener,
@@ -463,6 +566,7 @@ mod tests {
                 &name,
                 &sid
             )
+            .await
             .unwrap()
             .is_none());
             assert!(create_pipe(&name, &sid, true).is_err());
@@ -473,10 +577,12 @@ mod tests {
             &name,
             &sid
         )
+        .await
         .is_err());
         let mut peer = ClientOptions::new().open(&name).unwrap();
         listener.connect().await.unwrap();
         let connected = accept_connection(&mut listener, Ok(()), &name, &sid)
+            .await
             .unwrap()
             .unwrap();
         let core = Arc::new(Mutex::new(RuntimeCore::validation(

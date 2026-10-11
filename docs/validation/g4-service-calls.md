@@ -188,3 +188,12 @@ Runtime manifest 的 Cargo metadata 定位有效 workspace，检查仅有该依�
 远端验收以 [PR #9 Checks](https://github.com/FlowToolsOrg/flowtools/pull/9/checks)
 为准。本次仅修复 CI 开销，G4 综合验收与独立人工安全审查仍 pending，
 不推进 G5、maturity 或第三方执行准入。
+
+## 2026-10-10 G5 分支集成说明
+
+本轮合入主线已提交的 P1.6a/P1.6b 与 E 线实现，保留其 npm 版本范围、
+依赖模块和服务契约，不以旧分支的重复 G4 原型替换主线实现。
+这一步没有补齐独立 fixture 级异常排空验收；P1.6a/P1.6b 记为
+implemented/prototype，G4 综合验收和独立安全批准仍 pending。
+本轮新增管道实例回收回归属于连接可用性证据，不代替服务进程异常排空证据。
+集成后的完整门禁结果须单独记录，不能沿用合并前的通过记录宣称本轮已通过。

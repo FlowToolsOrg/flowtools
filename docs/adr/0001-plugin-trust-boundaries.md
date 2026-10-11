@@ -86,6 +86,10 @@ broker 不接受调用方指定目标插件 namespace。会话销毁、停用、
 
 ## 当前实现
 
+G5 P2.5a 只读包描述验签遵循 [ADR-0003](./0003-signed-package-protocol.md)。
+其 receipt 不创建可信 T1 身份、安装或 T2/T3/TL session；未增加窗口、
+origin、CSP、capability 或进程隔离实现。第三方默认拒绝和平台 gate 仍适用。
+
 现状为 prototype，不符合上述目标：
 
 - T1 React panel 在主树运行；早期外部 SDK `PluginFileLoader` 曾在同 realm

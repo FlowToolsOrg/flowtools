@@ -1,5 +1,14 @@
 # Flow Tool Plugin 开发指南
 
+G5 P2.5a 作者可从 `@flowtools/sdk/manifest` 使用
+`packageDescriptorSchema`、`serializePackageDescriptor` 与
+`packagePreAuthenticationEncoding`，生成并签署独立 DSSE 描述的原始字节。
+内嵌 Manifest v1 的 unsigned 字段不授予信任；真实可信根、publisher 范围、
+撤销与过期由 Rust 核对。当前产品没有第三方安装/执行入口或 production
+pins；tool 描述也不授权执行 native binary。格式、限额与回滚约束见
+[ADR-0003](./adr/0003-signed-package-protocol.md)、
+[P2.5a 验证](./validation/g5-package-protocol.md)。
+
 本文面向 Flow Tool 开发者，目标是帮助你在当前仓库里快速开发并调试自己的
 plugin。
 

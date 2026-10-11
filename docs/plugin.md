@@ -39,6 +39,15 @@ pins，见 [持久信任验证](./validation/g5-durable-trust.md)。
 计划不会创建安装锁、grants 或执行身份，见
 [签名依赖规划](./validation/g5-signed-dependencies.md)。
 
+第五步 T0 Windows/x64 prototype 可将已验签 ZIP 原始字节与 Manifest 保存
+为 inert blobs，服务依赖只从实际库存解析，并持久化 G4 锁。提交前重新验证
+当前根/撤销/expiry/floors、实际 provider 字节和 Host/SDK，重新采样可信时间。
+不同版本 blob 保留，descriptor 续期复用相同 ZIP；显式重锁可更换本包的惰性
+依赖记录，但不能自动改绑 provider 已有传递锁。未提交进程中断必须显式
+abort 隔离；观察 floors 不随失败或旧备份下降。这不是产品安装/激活接口，
+不会执行安装脚本、包入口或授予能力，见
+[惰性安装](./validation/g5-inert-installation.md)。
+
 本文面向 Flow Tool 开发者，目标是帮助你在当前仓库里快速开发并调试自己的
 plugin。
 

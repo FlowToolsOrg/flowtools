@@ -314,8 +314,11 @@ ZIP32 内存准入与恶意归档回归已实现为 prototype；仅返回 inert 
 绑定 G4 service pins 的原始 ZIP identity/target，规划时重新检查当前信任、
 floors 和兼容性，见 [签名依赖证据](./validation/g5-signed-dependencies.md)。
 该新鲜候选池不是 installed inventory，结果只是 inert plan。P2.5b 整体保持
-pending；后续完成真实安装库存/持久锁绑定、受控信任恢复/回滚审批、
-staging/journal/artifact 提交与重启恢复，再推进平台边界。
+pending；第五步交付 Windows/x64 T0 惰性 ZIP 库存、持久锁、staging/journal/
+create-only artifact 发布与显式 abort 恢复，见
+[惰性安装证据](./validation/g5-inert-installation.md)。它没有产品安装/执行
+入口、健康/LKG 或跨资源生产验收；后续补齐生产路径竞争/断电、受控信任
+恢复/回滚审批、健康/激活与管理接入，再推进平台边界。
 
 2026-10-09：P2.5a 协议和只读验签基础已实施为 prototype，见
 [ADR-0003](./adr/0003-signed-package-protocol.md) 与

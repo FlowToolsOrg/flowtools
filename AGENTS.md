@@ -302,6 +302,22 @@ recheck trust and real inventory in the future transaction. Preserve the actual
 signed ZIP DAG, rejection and budget tests in
 [signed dependency evidence](./docs/validation/g5-signed-dependencies.md).
 
+P2.5b Windows/x64 inert installation is in `packages/install.rs` and
+`install/files.rs`, gated at compile time to Windows. Derive the fixed blob store
+from the existing DataStore profile; T0 must reserve/protect that profile first.
+Never add client paths, a second DB, extraction/activation, or automatic orphan
+adoption. Persist raw descriptor provenance and G4 ZIP pins in the same writer.
+Reverify current trust, the fresh T0 commit clock and disk providers before the
+atomic inventory/journal commit; keep existing provider transitive locks fixed
+unless explicitly relocked. Pending installs refuse inspection/new installs;
+explicit abort quarantines owned bytes without rolling forward or lowering floors.
+Preserve original blobs, seal IDs, create-only publication, reparse/hardlink
+rejections, budgets and real process exits at every barrier. File readonly flags
+are not ACL isolation; inner directory guards are released for Windows rename
+while profile/root handles remain held. Production handle-relative race hardening,
+power-loss acceptance, LKG/health, product wiring and sandbox remain pending.
+See [inert installation evidence](./docs/validation/g5-inert-installation.md).
+
 ## Coding Style and Naming Conventions
 
 - TypeScript strict mode is enabled; keep code type-safe and avoid `any`.

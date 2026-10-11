@@ -158,6 +158,32 @@ digest 与实际准入 target，禁止解析器替换根候选。G4 的内嵌 T1
 信任、真实 inventory 与原始 artifacts，见
 [签名依赖证据](../validation/g5-signed-dependencies.md)。
 
+第五步新增 Windows/x64 T0 惰性安装事务。原始 ZIP 与 Manifest 仅写入固定
+blob 名称，不按 Manifest 路径提取业务文件；seal 绑定 create-only artifact
+的事务身份和两份原始 digest。同一 DataStore 保存 signed descriptor provenance、
+不同版本库存与 G4 dependency locks，读记录须匹配持久 descriptor 观察。
+解析只遍历实际库存中的必要 service 闭包，选择已安装最高 release；旧版本
+保留但仍须满足当前 admission floors，不能作为降级批准。已安装 provider
+自身的传递 lock pins 必须一致，否则先显式重锁，不能静默更换其依赖。
+
+安装按 journal -> synced stage -> prepared journal -> create-only publication
+-> 再次当前准入 -> metadata commit 执行。提交时重新采样 T0 时钟，验签当前
+根/撤销/expiry/floors、Host/SDK 和实际 provider 字节，拒绝中途状态/锁变化。
+inventory 写入与 pending journal 删除同一 SQLite FULL 事务，成功才返回
+inert receipt。任何未提交进程中断均显式 abort 到 quarantine，幂等且不滚动
+恢复候选、不降低 floors、不清除 backup trust-recovery 标记。不同版本旧记录
+和 blob 保留；descriptor 续期/显式重锁可复用同一 ZIP。
+
+路径只来自 T0 已保留/保护的 DataStore profile、固定目录、验证 digest 和
+UUID；拒绝 reparse、硬链接、未知目录或字节/seal 不一致。文件 readonly 属性
+不等于 ACL。Windows rename 期间释放内部父目录 guards，profile/root 句柄
+保持；当前依赖 Native Host 的私有 profile 和单写者，不能声称完整 handle-
+relative 竞争防护或同 OS 用户攻陷隔离。sync/FULL/rename 及实际进程退出
+证据不认证突然断电的文件系统持久性；完整平台/断电验收仍 pending。
+库存最多 128 records / 16 MiB metadata，blob 总量含隔离区最多 256 MiB /
+384 groups；规划 aggregate Manifest 16 MiB、展开字节 128 MiB，超限拒绝。
+见 [惰性安装证据](../validation/g5-inert-installation.md)。
+
 SDK 作者 helper、Rust 只读 verifier 与 Node/Rust 共用的签名 golden 已实现。
 已提供 inert ZIP 解码与完整 Manifest 校验；没有下载、安装 journal、artifact
 store、真实 pins、管理 IPC、信任恢复/回滚审批、UI 或第三方执行入口。

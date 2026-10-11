@@ -34,6 +34,14 @@ receipt。公开 T0 参数和 opaque plan 无 Serde/IPC 入口，不产生新 st
 安装记录或 tool inventory。范围见
 [签名依赖规划证据](./validation/g5-signed-dependencies.md)。
 
+第五步新增 Windows-only `runtime-core/src/packages/install.rs`、
+`packages/install/files.rs` 与 `packages/tests/install_tests.rs`。同一 DataStore
+的 `core_metadata` 保存库存/journal，schema v2 不变；固定 profile 子目录
+`package-store-v1/{artifacts,staging,quarantine}` 仅持有 inert ZIP/Manifest/seal。
+原始 Manifest 相对条目不用于磁盘路径，没有 source/executable loader、产品
+command/IPC 或第二个数据库。过程与未完成平台门禁见
+[惰性安装证据](./validation/g5-inert-installation.md)。
+
 [下一阶段实施设计](./next-milestones.md) 定义 G0–G8 的顺序与验收。
 G2 已新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`
 （无界面运行服务）、`packages/runtime-client`（生成 DTO 的 TS 客户端）和

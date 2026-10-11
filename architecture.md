@@ -40,6 +40,16 @@ custom export 不得静默丢失。依赖声明通过不代表安装 lock 已生
 验证、artifact/journal 与 tool admission 仍 pending，见
 [签名依赖规划验证](./docs/validation/g5-signed-dependencies.md)。
 
+第五步 `packages/install.rs` / `install/files.rs` 在 Windows/x64 的 T0 私有
+profile 中保存惰性 ZIP、原始 Manifest 和 seal，不解包到可执行目录。复用同一
+SQLite writer 记录真实库存、签名描述和 G4 locks；staging/prepared/published
+之后再次验签、读取 provider 和采样可信时间，库存写入与 journal 删除同事务。
+未提交中断显式 abort 到 quarantine，保留旧版本、锁和观察 floors；不滚动
+执行包代码或恢复授权。实际 provider 库存的传递锁不能被新任务规划静默改绑。
+只提供 T0 Rust API，未接产品管理/执行入口；profile ACL、完整路径竞争、
+断电、健康/LKG 和第三方隔离仍需生产验收，见
+[惰性安装验证](./docs/validation/g5-inert-installation.md)。
+
 Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平台。
 当前仓库代码处于“先验证插件运行时，再落地桌面宿主”的阶段。
 

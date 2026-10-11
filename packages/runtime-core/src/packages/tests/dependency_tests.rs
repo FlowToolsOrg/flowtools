@@ -133,7 +133,7 @@ fn dependency(id: &str) -> Value {
     json!({"publisher":"fixture-publisher", "id":id, "version":"^1.0.0",
         "service":"text-transform", "interfaceVersion":"^1.0.0"})
 }
-fn manifest(id: &str, dependencies: Vec<Value>) -> Value {
+pub(super) fn manifest(id: &str, dependencies: Vec<Value>) -> Value {
     let mut value: Value = serde_json::from_str(include_str!(
         "../../../../sdk/test/fixtures/manifest-admission-v1.json"
     ))
@@ -150,7 +150,11 @@ fn manifest(id: &str, dependencies: Vec<Value>) -> Value {
 }
 // Real signed stored ZIPs with full SDK-compatible manifests. Entries are inert
 // canaries; planning must never import, stage or execute either file.
-fn bytes(fixture: &Fixture, mut value: Value, sequence: u64) -> (PackagePayload, Vec<u8>, Vec<u8>) {
+pub(super) fn bytes(
+    fixture: &Fixture,
+    mut value: Value,
+    sequence: u64,
+) -> (PackagePayload, Vec<u8>, Vec<u8>) {
     let mut payload = fixture.package.clone();
     payload.id = value["id"].as_str().unwrap().into();
     payload.version = value["version"].as_str().unwrap().into();

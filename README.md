@@ -35,6 +35,14 @@ floors and current Host/SDK compatibility. See the
 [signed dependency evidence](./docs/validation/g5-signed-dependencies.md).
 Installed inventory, committed locks and verified tool admission remain pending.
 
+The fifth P2.5b step adds a Windows/x64 T0 inert installation prototype:
+signed ZIP/Manifest blobs and dependency locks commit into Runtime's existing
+inventory through a durable journal. Interrupted installs require explicit
+abort into quarantine; committed older versions remain intact. See the
+[inert installation evidence](./docs/validation/g5-inert-installation.md).
+There is no product install/activation endpoint or executable package identity;
+health checks, production filesystem hardening and platform isolation remain pending.
+
 > An extensible, cross-platform toolbox powered by a plugin runtime.
 > Plugin Runtime for AI Age
 

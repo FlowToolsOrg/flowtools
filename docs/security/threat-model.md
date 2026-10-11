@@ -24,6 +24,24 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 
 ## 风险台账
 
+2026-10-11 P2.5b 第五步增加
+[T0 Windows/x64 惰性安装](../../packages/runtime-core/src/packages/install.rs)
+及 [固定 blob 文件层](../../packages/runtime-core/src/packages/install/files.rs)。
+同一单写者保存库存/journal，原始 ZIP/Manifest/seal 不解包或执行；真实库存
+锁不能静默改绑 provider 传递依赖。提交前重查当前签名/撤销/expiry/floors、
+实际 provider 字节和新采样的 T0 时间；SQLite 库存/journal 原子提交。
+实际进程在每个 barrier 退出，未提交候选显式 abort 到 quarantine；旧版本
+字节/锁保留，恢复不降低 floors 或清除旧备份 trust-recovery 标记。
+静态 junction/hardlink、文件/seal 篡改、journal/库存变化、故障注入、磁盘/
+metadata/aggregate decode 配额见
+[惰性安装拒绝证据](../validation/g5-inert-installation.md)。
+profile 由 Native Host 保留/保护；当前 root/profile guards 在移动时保留，
+内部父目录 guards 临时释放，不能宣称 handle-relative 全路径竞争/同用户
+隔离或断电保护。readonly 属性不是 ACL；没有产品安装/激活/执行入口或
+健康/LKG 结论。SEC-001/008/014/015 保持 open，production pins、受控恢复/
+回滚、平台隔离与独立 review pending。Codex 2026-10-11 工程自查，实际
+独立安全 Reviewer/date/conclusion 待完成。
+
 2026-10-11 P2.5b 第四步增加
 [签名依赖规划](../../packages/runtime-core/src/packages/dependencies.rs)，
 复用 G4 解析器，但 package/service pins 使用原始 ZIP identity 和已准入

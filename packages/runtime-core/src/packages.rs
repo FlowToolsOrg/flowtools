@@ -13,6 +13,8 @@ use std::collections::{BTreeMap, HashSet};
 
 pub mod archive;
 pub mod dependencies;
+#[cfg(windows)]
+pub mod install;
 pub mod manifest;
 pub mod trust;
 

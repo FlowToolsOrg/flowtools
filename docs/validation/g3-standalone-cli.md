@@ -76,3 +76,11 @@ uses a fresh sibling bundle, preserving all assertions, the pinned launcher and
 50 concurrent cold starts. This avoids renaming recently mapped executables;
 it does not retry a failed assertion, loosen timeouts or grant execution. The
 actual standalone fixture passed after correction; final remote status is pending.
+
+2026-10-11：PR #11 的 `afd0cde` 两次远程 Windows gate 一次成功、一次在
+50 个并发冷启动的非零退出断言失败。整批诊断被 Bun 截断，不能据此认定
+具体失败阶段。fixture 的逐项退出断言现使用同一经过 allowlist 的单项诊断，
+保留 index/code/errorCode/phase/stage/elapsedMs；数量、实例一致性与模式
+断言仍保留整批信息。没有原始 stdout/stderr 或凭据写入诊断，不减少调用数、
+重试失败断言或放宽超时。独立测试子进程限制为一个 CPU 的实际 bundle
+fixture 通过，但未复现原失败；间歇原因仍待远程完整诊断，不宣称已修复。

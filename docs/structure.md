@@ -27,6 +27,13 @@ T0 adapter 借用已有 `DataStore` 写入 `core_metadata`，不创建第二个�
 恢复路径的拒绝标记见 [持久信任证据](./validation/g5-durable-trust.md)。
 installed lock、installer/artifact store、受控 trust recovery 与 sandbox 仍未交付。
 
+第四步新增 `runtime-core/src/packages/dependencies.rs` 和
+`packages/tests/dependency_tests.rs`，复用 G4 resolver；crate 内 archive
+constructor 使用原始 ZIP identity/target，持久 trust adapter 重新检查缓存
+receipt。公开 T0 参数和 opaque plan 无 Serde/IPC 入口，不产生新 store、
+安装记录或 tool inventory。范围见
+[签名依赖规划证据](./validation/g5-signed-dependencies.md)。
+
 [下一阶段实施设计](./next-milestones.md) 定义 G0–G8 的顺序与验收。
 G2 已新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`
 （无界面运行服务）、`packages/runtime-client`（生成 DTO 的 TS 客户端）和

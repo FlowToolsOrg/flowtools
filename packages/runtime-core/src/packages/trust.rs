@@ -220,6 +220,77 @@ impl PackageTrustStore {
         Ok(receipt)
     }
 
+    /// Current admission checks for opaque cached receipts, never JSON pins.
+    /// Root changes require fresh descriptor verification, even without revocation.
+    pub(super) fn check_receipts(
+        &self,
+        store: &mut DataStore,
+        receipts: &[&VerifiedPackageDescriptor],
+        target: &PackageTarget,
+        now: u64,
+    ) -> Result<VerifiedRoot, PackageError> {
+        self.observe(store, now)?;
+        let tx = store
+            .connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)
+            .map_err(storage)?;
+        let (state, root) = self.load(&tx)?;
+        let policy = AdmissionPolicy {
+            target: target.clone(),
+            clock: VerificationClock {
+                now,
+                floor: state.observed_time,
+            },
+            known_versions: state.known_versions,
+            highest_release_sequence: 0,
+            approved_rollback_digest: None,
+        };
+        validate_time(
+            root.payload().issued_at,
+            root.payload().expires_at,
+            policy.clock,
+            MAX_ROOT_LIFETIME,
+        )?;
+        for receipt in receipts {
+            let payload = receipt.payload();
+            if payload.target != *target {
+                return Err(PackageError::TargetMismatch);
+            }
+            if root
+                .payload()
+                .revoked_package_digests
+                .iter()
+                .any(|digest| digest == receipt.package_digest())
+            {
+                return Err(PackageError::PackageRevoked);
+            }
+            if now < receipt.verified_at() {
+                return Err(PackageError::ClockRollback);
+            }
+            if receipt.root_digest() != root.payload_digest()
+                || !policy.known_versions.iter().any(|known| {
+                    known.kind == payload.kind
+                        && known.publisher == payload.publisher
+                        && known.id == payload.id
+                        && known.version == payload.version
+                        && known.target == payload.target
+                        && known.release_sequence == payload.release_sequence
+                        && known.package_digest == receipt.package_digest()
+                })
+            {
+                return Err(PackageError::TrustInvalid);
+            }
+            validate_time(
+                payload.issued_at,
+                payload.expires_at,
+                policy.clock,
+                MAX_PACKAGE_LIFETIME,
+            )?;
+            validate_floors(payload, receipt.package_digest(), &policy)?;
+        }
+        Ok(root)
+    }
+
     fn load(
         &self,
         connection: &rusqlite::Connection,

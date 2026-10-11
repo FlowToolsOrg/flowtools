@@ -24,6 +24,20 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 
 ## 风险台账
 
+2026-10-11 P2.5b 第四步增加
+[签名依赖规划](../../packages/runtime-core/src/packages/dependencies.rs)，
+复用 G4 解析器，但 package/service pins 使用原始 ZIP identity 和已准入
+target。每个 opaque receipt 必须匹配当前持久根与精确观察，重新检查撤销、
+expiry、release floors 及当前 Host/SDK；不能凭曾经验签的缓存或 metadata
+hash 生成当前计划。根轮换后须重新验签，所有候选须新鲜；已安装多版本库存
+与受控回滚不在本步。错 publisher/interface、重复/替换根候选、依赖环、未验证
+tool 声明、超量候选/Manifest 和恢复/写失败拒绝见
+[10 项真实签名 ZIP 回归](../validation/g5-signed-dependencies.md)。除可信时间
+观察外不写状态，无 grants/jobs/plugin data/安装锁或执行。提交时再次验证、
+真实安装库存/artifact/journal、tool admission、平台隔离仍 pending。
+SEC-001/008/014/015 保持 open；Codex 2026-10-11 工程自查，独立实际安全
+Reviewer/date/conclusion pending，无 production 风险豁免。
+
 2026-10-11 P2.5b 第三步新增
 [持久 descriptor 信任](../../packages/runtime-core/src/packages/trust.rs)，
 借用 Runtime 同一 SQLite writer，无新 IPC/网络/目录/权限。T0 pins 绑定与

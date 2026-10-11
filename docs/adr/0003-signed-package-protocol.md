@@ -142,6 +142,22 @@ floors；完全控制 OS/T0 的对手直接替换/删除数据库不在此控制
 原型没有独立防篡改单调硬件锚点，也不声明对任意磁盘回退的保护。见
 [持久信任证据](../validation/g5-durable-trust.md)。
 
+第四步 `packages/dependencies.rs` 接受 opaque compatible archives 与 T0
+当前兼容环境，先在同一 writer 重放持久根链并观察当前时间，再检查每个
+receipt 的当前 root digest、精确持久 ZIP 身份、target、expiry 与 release
+floor。根轮换使旧 receipt 失效，须重新验签；无效候选池也不回退可信时间。
+原始 Manifest 再按当前 Host/SDK 校验，G4 package/service pins 使用原始 ZIP
+digest 与实际准入 target，禁止解析器替换根候选。G4 的内嵌 T1 metadata
+规划仍使用其既有 metadata digest，两条身份来源不混用。
+
+此路径没有 ToolCandidate 参数；工具声明不能创建已验证工具库存。最多 512
+个 archive，合计原始 Manifest 上限 16 MiB，超限在 trust IO 前拒绝；G4
+原有 DAG/边/搜索预算继续执行。所有提供的候选均须满足当前 release floors，
+不容忍旧候选，也不是已安装多版本清单。opaque plan 只证明该时间的惰性规划，
+不是已安装 lock、执行 grant 或健康检查；未来安装事务须在提交时重检当前
+信任、真实 inventory 与原始 artifacts，见
+[签名依赖证据](../validation/g5-signed-dependencies.md)。
+
 SDK 作者 helper、Rust 只读 verifier 与 Node/Rust 共用的签名 golden 已实现。
 已提供 inert ZIP 解码与完整 Manifest 校验；没有下载、安装 journal、artifact
 store、真实 pins、管理 IPC、信任恢复/回滚审批、UI 或第三方执行入口。

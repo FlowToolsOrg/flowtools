@@ -31,6 +31,14 @@ P2.5b 第三步将 descriptor 信任观察持久化到 Runtime 单写者数据�
 签名包准入，受控信任恢复与回滚审批尚未实现。没有第三方安装入口或 production
 pins，见 [持久信任验证](./validation/g5-durable-trust.md)。
 
+第四步可从完整准入的签名 archive 生成 inert service dependency plan，pins
+使用原始 ZIP digest，不能用 Manifest hash 或其他 publisher 的同名 provider
+替代。所有候选须通过当前根、精确持久观察、target、expiry、release floors
+及当前 Host/SDK 检查；根轮换需重新验签。旧版本 provider 不能混入当前候选池，
+已安装多版本库存与回滚审批尚未实现。作者的 tool 声明仍不能创建工具库存，
+计划不会创建安装锁、grants 或执行身份，见
+[签名依赖规划](./validation/g5-signed-dependencies.md)。
+
 本文面向 Flow Tool 开发者，目标是帮助你在当前仓库里快速开发并调试自己的
 plugin。
 

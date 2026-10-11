@@ -3,6 +3,7 @@ use ed25519_dalek::{Signer, SigningKey};
 use serde_json::json;
 
 mod archive_tests;
+mod dependency_tests;
 mod manifest_tests;
 mod trust_tests;
 

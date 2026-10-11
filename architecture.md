@@ -31,6 +31,15 @@ custom export 不得静默丢失。依赖声明通过不代表安装 lock 已生
 完整 OS/T0 控制者替换数据库不在该控制范围，见
 [持久信任验证](./docs/validation/g5-durable-trust.md)。
 
+第四步 `packages/dependencies.rs` 将 opaque compatible archives 绑定到 G4
+解析器。包与 service pins 使用原始 ZIP digest 和实际准入 target，当前持久
+根/撤销/expiry/不可变观察与 release floors、当前 Host/SDK compatibility
+都重新检查；根轮换后须重新验签。所有提供的候选均须通过当前 floors，不能
+作为已安装多版本库存；解析器不能替换根候选，也不接受未验证 ToolCandidate。
+只返回 inert plan，不持久化安装锁或生成执行身份。实际安装库存、提交时再次
+验证、artifact/journal 与 tool admission 仍 pending，见
+[签名依赖规划验证](./docs/validation/g5-signed-dependencies.md)。
+
 Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平台。
 当前仓库代码处于“先验证插件运行时，再落地桌面宿主”的阶段。
 

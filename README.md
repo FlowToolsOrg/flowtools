@@ -28,6 +28,13 @@ admission until a controlled trust recovery exists. See the
 descriptors are not installed or known-good artifacts; rollback approval,
 production pins, installation and platform isolation remain pending.
 
+The fourth P2.5b step builds inert dependency plans from compatible signed
+archives, binding package and service pins to the original ZIP digest and the
+admitted target. Planning rechecks durable trust, expiry, revocation, release
+floors and current Host/SDK compatibility. See the
+[signed dependency evidence](./docs/validation/g5-signed-dependencies.md).
+Installed inventory, committed locks and verified tool admission remain pending.
+
 > An extensible, cross-platform toolbox powered by a plugin runtime.
 > Plugin Runtime for AI Age
 

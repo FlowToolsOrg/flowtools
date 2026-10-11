@@ -289,6 +289,19 @@ Controlled trust recovery/rollback approval and production pins remain pending.
 Preserve corruption, quota, write-failure and real crash regressions in
 [durable trust evidence](./docs/validation/g5-durable-trust.md).
 
+P2.5b signed dependency planning lives in `packages/dependencies.rs`. Consume
+only opaque compatible archives and recheck every receipt against the current
+durable root, exact observed ZIP identity, expiry, floors and T0 compatibility.
+Use the original ZIP digest and admitted target for G4 pins; never substitute
+metadata hashes or allow the solver to replace the root candidate. Root rotation
+requires fresh descriptor verification. Every supplied provider must pass current
+admission floors; this conservative candidate pool is not installed multiversion
+inventory. No unverified tool list enters this path. Plans are inert and not
+persisted installation locks or execution authorization; install commit must
+recheck trust and real inventory in the future transaction. Preserve the actual
+signed ZIP DAG, rejection and budget tests in
+[signed dependency evidence](./docs/validation/g5-signed-dependencies.md).
+
 ## Coding Style and Naming Conventions
 
 - TypeScript strict mode is enabled; keep code type-safe and avoid `any`.

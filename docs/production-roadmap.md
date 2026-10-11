@@ -1386,6 +1386,14 @@ trust 初始化之前的备份。真实崩溃、写失败、撤销和恢复回�
 [持久信任验证](./validation/g5-durable-trust.md)。这不是 installed/known-good
 记录；受控信任恢复、回滚审批、生产 pins、安装事务与平台边界仍 pending。
 
+同日第四步将 opaque compatible archives 接入 G4 service 依赖规划，包与
+service pins 绑定原始 ZIP digest 和实际准入 target。重新检查当前持久信任、
+每个候选的精确观察/expiry/release floors、当前 Host/SDK；根轮换须重新验签。
+真实签名 DAG 与拒绝回归见
+[签名依赖规划](./validation/g5-signed-dependencies.md)。结果仅 inert plan；
+当前候选池要求全部新鲜，未实现已安装多版本库存、持久安装锁、工具准入、
+安装提交/journal 或执行权限。P2.5b/G5/G6 与独立安全批准继续 pending。
+
 交付物：
 
 - 下载进入 staging，并设置总大小、单文件大小、文件数和超时上限。

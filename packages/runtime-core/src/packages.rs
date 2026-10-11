@@ -12,6 +12,7 @@ use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, HashSet};
 
 pub mod archive;
+pub mod dependencies;
 pub mod manifest;
 pub mod trust;
 

@@ -282,6 +282,22 @@ fn string(value: &Value, key: &str) -> Result<String, DependencyError> {
 }
 
 impl PackageCandidate {
+    /// Called only by the signed planner after current durable trust checks.
+    /// The original ZIP identity and admitted target override metadata claims.
+    pub(crate) fn from_verified_archive(
+        archive: &crate::packages::manifest::CompatiblePluginArchive,
+    ) -> Result<Self, DependencyError> {
+        let mut candidate = Self::from_manifest(archive.manifest())?;
+        let receipt = archive.archive().descriptor();
+        candidate.pin.digest = receipt.package_digest().into();
+        candidate.targets = vec![serde_json::from_value(
+            serde_json::to_value(&receipt.payload().target)
+                .map_err(|_| DependencyError::InvalidDeclaration)?,
+        )
+        .map_err(|_| DependencyError::InvalidDeclaration)?];
+        Ok(candidate)
+    }
+
     /// The complete manifest remains bound by its digest. Semantic declaration
     /// parsing is defensive; package admission still belongs to the Host build.
     pub fn from_manifest(manifest: &Value) -> Result<Self, DependencyError> {

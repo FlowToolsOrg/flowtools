@@ -310,9 +310,12 @@ ZIP32 内存准入与恶意归档回归已实现为 prototype；仅返回 inert 
 生成结构、显式 native semantics 和 90 个共同样本，见
 [Manifest 证据](./validation/g5-manifest-admission.md)。第三步持久 descriptor
 根链/时间/版本观察与受支持备份恢复拒绝已实施为 prototype，见
-[持久信任证据](./validation/g5-durable-trust.md)。P2.5b 整体保持 pending；
-后续完成真实安装依赖锁绑定、受控信任恢复/回滚审批、staging/journal/artifact
-提交与重启恢复，再推进平台边界。
+[持久信任证据](./validation/g5-durable-trust.md)。第四步将完整准入 archive
+绑定 G4 service pins 的原始 ZIP identity/target，规划时重新检查当前信任、
+floors 和兼容性，见 [签名依赖证据](./validation/g5-signed-dependencies.md)。
+该新鲜候选池不是 installed inventory，结果只是 inert plan。P2.5b 整体保持
+pending；后续完成真实安装库存/持久锁绑定、受控信任恢复/回滚审批、
+staging/journal/artifact 提交与重启恢复，再推进平台边界。
 
 2026-10-09：P2.5a 协议和只读验签基础已实施为 prototype，见
 [ADR-0003](./adr/0003-signed-package-protocol.md) 与

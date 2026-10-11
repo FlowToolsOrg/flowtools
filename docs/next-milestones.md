@@ -303,6 +303,12 @@ providers 空闲退出，后台服务租约由 Host 控制；插件不能自行 
 
 ### P2.5a / P2.5b 包协议与事务安装
 
+2026-10-11：按维护者选择，先补 G5 前置项再推进 G6。P2.5b 首步的签名
+ZIP32 内存准入与恶意归档回归已实现为 prototype；仅返回 inert bytes，
+不写磁盘、不安装或执行。见 [归档证据](./validation/g5-archive-admission.md)。
+P2.5b 整体保持 pending；后续依次完成完整 Manifest/Host/SDK/依赖校验、
+持久 trust floors、staging/journal/artifact 提交与重启恢复，再推进平台边界。
+
 2026-10-09：P2.5a 协议和只读验签基础已实施为 prototype，见
 [ADR-0003](./adr/0003-signed-package-protocol.md) 与
 [验证](./validation/g5-package-protocol.md)。签名不是可执行准入；本项不

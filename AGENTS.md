@@ -175,6 +175,16 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G5 P2.5b archive admission lives in `packages/runtime-core/src/packages/archive.rs`.
+It consumes opaque verified descriptors and rechecks the exact manifest/archive
+bytes before bounded ZIP32 stored/deflate decoding. Keep central/local header
+agreement, complete physical inventory, CRC/hash checks and hostile archive tests.
+The install profile rejects encryption, ZIP64, descriptors, extra fields/comments,
+special files and unused compressed bytes. `ValidatedArchive` contains inert bytes;
+it is not full Manifest compatibility, an installed identity, a grant or execution
+authorization. Disk staging/journal, durable trust floors and platform isolation
+remain pending. See [archive evidence](./docs/validation/g5-archive-admission.md).
+
 G5 P2.5a is a read-only signed-descriptor prototype. Follow
 [ADR-0003](./docs/adr/0003-signed-package-protocol.md) for exact DSSE payload bytes,
 Ed25519 strict verification, T0 trust pins, publisher scopes, root double-sign

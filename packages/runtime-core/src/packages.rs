@@ -1,5 +1,6 @@
 //! Read-only P2.5a DSSE descriptor verification, with caller-owned trust/floors.
-//! No production pins, filesystem/archive IO, installation, grants or execution.
+//! The archive submodule adds bounded, inert, in-memory ZIP admission.
+//! No production pins, filesystem IO, installation, grants or execution.
 //! A receipt proves descriptor/byte integrity, not full Manifest compatibility,
 //! archive safety, installed provenance, isolation or an executable identity.
 
@@ -9,6 +10,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, HashSet};
+
+pub mod archive;
 
 pub const PACKAGE_PAYLOAD_TYPE: &str = "application/vnd.flowtools.package.v1+json";
 pub const ROOT_PAYLOAD_TYPE: &str = "application/vnd.flowtools.trust-root.v1+json";
@@ -36,6 +39,8 @@ pub enum PackageError {
     VersionConflict,
     ReleaseRollback,
     ManifestMismatch,
+    ArchiveInvalid,
+    ArchiveBudgetExceeded,
 }
 
 impl PackageError {
@@ -56,6 +61,8 @@ impl PackageError {
             Self::VersionConflict => "PACKAGE_VERSION_CONFLICT",
             Self::ReleaseRollback => "PACKAGE_RELEASE_ROLLBACK",
             Self::ManifestMismatch => "PACKAGE_MANIFEST_MISMATCH",
+            Self::ArchiveInvalid => "PACKAGE_ARCHIVE_INVALID",
+            Self::ArchiveBudgetExceeded => "PACKAGE_ARCHIVE_BUDGET_EXCEEDED",
         }
     }
 }

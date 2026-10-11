@@ -378,6 +378,14 @@ loopback 均可用，但 public/wildcard/mixed listener、未监听的端点、�
 
 ## 复核与关闭规则
 
+2026-10-11 SEC-001/008/015 的 P2.5b 归档准入证据：
+[实现](../../packages/runtime-core/src/packages/archive.rs)、
+[已签名恶意 fixtures](../../packages/runtime-core/src/packages/tests/archive_tests.rs)、
+[验证范围](../validation/g5-archive-admission.md)。准入仅返回内存字节，拒绝
+Zip Slip、特殊文件、ZIP 歧义、压缩炸弹、文件替换与剩余压缩数据，没有磁盘
+或业务副作用。完整安装/持久 floors/隔离与独立安全审阅仍 pending；上述威胁
+保持 open，未扩大第三方 execution 或 G6 工具权限。
+
 新增入口/能力、包协议、平台、授权或恢复策略必须更新对应威胁 ID 与 ADR，
 提供拒绝路径自动化证据和人工验收记录。只有对应实现里程碑退出标准通过后
 才能将风险改为 mitigated；接受例外需明确审批人、原因、到期日与发布范围。

@@ -7,6 +7,12 @@ and [validation](./docs/validation/g5-package-protocol.md). Installation and
 third-party execution remain pending; G4 dependency locks must precede P2.5b.
 There are no production trust pins or persistent trust floors in this step.
 
+G5 P2.5b now has a first, independently testable archive-admission step:
+the Rust verifier checks signed ZIP32 inventories in memory, with bounded
+stored/deflate decoding and hostile archive regressions. See the
+[archive evidence](./docs/validation/g5-archive-admission.md). This produces
+inert bytes; transaction installation and G5/G6 execution remain pending.
+
 > An extensible, cross-platform toolbox powered by a plugin runtime.
 > Plugin Runtime for AI Age
 

@@ -8,6 +8,12 @@ G4 依赖锁与服务调用已实施为固定 Windows/T1 prototype，综合验�
 协议与 scope 见 [ADR-0003](./docs/adr/0003-signed-package-protocol.md) 和
 [P2.5a 验证](./docs/validation/g5-package-protocol.md)。
 
+P2.5b 的首步 `packages/archive.rs` 在验签后重新绑定原始字节，并在内存中
+核对 ZIP local/central headers、完整物理条目、CRC 和逐文件 hash；受限解压
+只返回 inert bytes。它没有新增磁盘安装、执行身份、IPC 或授权入口。
+事务 journal、持久 trust floors 与平台隔离仍 pending；见
+[归档验证](./docs/validation/g5-archive-admission.md)。
+
 Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平台。
 当前仓库代码处于“先验证插件运行时，再落地桌面宿主”的阶段。
 

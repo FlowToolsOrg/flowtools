@@ -6,6 +6,7 @@ mod tests;
 
 use crate::protocol::ErrorCode;
 pub(crate) use resolver::valid_dependency_id;
+pub(crate) use resolver::{range as manifest_range, version as manifest_version};
 pub use resolver::{DependencyCatalog, PackageCandidate, ToolCandidate};
 use serde::{Deserialize, Serialize};
 use specta::Type;

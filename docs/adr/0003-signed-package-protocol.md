@@ -111,8 +111,14 @@ ZIP64、特殊文件、重叠/隐藏条目和压缩流剩余字节。先检查 l
 上限 64 MiB，manifest 最多 1 MiB，大于 1 MiB 的条目压缩比不得超过 1000。
 这比只读 P2.5a descriptor 格式更严格，是当前受控安装 profile；不影响
 P2.5a 验签语义。返回 opaque inert byte inventory，不访问磁盘或产生可执行
-身份。完整 Manifest/兼容性、持久 trust floors 与事务安装仍 pending。
+身份。完整 Manifest/兼容性在下一独立步骤提供；持久 trust floors 与事务安装仍 pending。
 见 [归档证据](../validation/g5-archive-admission.md)。
+
+同日 P2.5b 第二步增加完整 Plugin Manifest v1、Host/SDK/target 和依赖声明
+检查：SDK 生成结构契约，Rust 使用版本化显式 semantics，未知 custom export
+拒绝；两端共享 90 个样本。opaque byte archive 必须经过本步，tool descriptor
+不能充当 plugin。规范化 metadata 不改签名 bytes。实际安装锁绑定仍 pending；
+无 installed identity/IPC/grant，见 [Manifest 证据](../validation/g5-manifest-admission.md)。
 
 SDK 作者 helper、Rust 只读 verifier 与 Node/Rust 共用的签名 golden 已实现。
 没有下载、解包、安装 journal、artifact store、真实 pins、管理 IPC、

@@ -14,6 +14,13 @@ P2.5b 的首步 `packages/archive.rs` 在验签后重新绑定原始字节，并
 事务 journal、持久 trust floors 与平台隔离仍 pending；见
 [归档验证](./docs/validation/g5-archive-admission.md)。
 
+P2.5b 第二步 `packages/manifest.rs` 消费该 opaque archive，使用 SDK 生成的
+结构契约与显式 native semantics 验证完整 Plugin Manifest/Host/SDK/target。
+规范化 metadata 与原始签名 bytes 分离；共同拒绝样本验证两端语义，未知
+custom export 不得静默丢失。依赖声明通过不代表安装 lock 已生成或验收。
+真实安装锁绑定、持久 floors/journal/恢复仍待后续，见
+[Manifest 验证](./docs/validation/g5-manifest-admission.md)。
+
 Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平台。
 当前仓库代码处于“先验证插件运行时，再落地桌面宿主”的阶段。
 

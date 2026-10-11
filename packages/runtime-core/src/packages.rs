@@ -12,6 +12,7 @@ use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, HashSet};
 
 pub mod archive;
+pub mod manifest;
 
 pub const PACKAGE_PAYLOAD_TYPE: &str = "application/vnd.flowtools.package.v1+json";
 pub const ROOT_PAYLOAD_TYPE: &str = "application/vnd.flowtools.trust-root.v1+json";
@@ -41,6 +42,8 @@ pub enum PackageError {
     ManifestMismatch,
     ArchiveInvalid,
     ArchiveBudgetExceeded,
+    ManifestInvalid,
+    ManifestIncompatible,
 }
 
 impl PackageError {
@@ -63,6 +66,8 @@ impl PackageError {
             Self::ManifestMismatch => "PACKAGE_MANIFEST_MISMATCH",
             Self::ArchiveInvalid => "PACKAGE_ARCHIVE_INVALID",
             Self::ArchiveBudgetExceeded => "PACKAGE_ARCHIVE_BUDGET_EXCEEDED",
+            Self::ManifestInvalid => "PACKAGE_MANIFEST_INVALID",
+            Self::ManifestIncompatible => "PACKAGE_MANIFEST_INCOMPATIBLE",
         }
     }
 }

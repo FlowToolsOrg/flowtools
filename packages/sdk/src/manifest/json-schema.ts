@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { exportCheckedSchema } from './validation-export'
+
 function hasOwn(value: object, key: PropertyKey): boolean {
   return Object.prototype.hasOwnProperty.call(value, key)
 }
@@ -275,6 +277,11 @@ export const operationSchema = z.custom<OperationSchema>(value => {
   const parsed = nodeSchema.safeParse(value)
   return parsed.success && wellFormed(parsed.data)
 }, 'Unsupported or invalid operation JSON Schema')
+
+/** Build export for the finite operation subset; custom JSON checks stay explicit. */
+export function exportOperationValidationSchema() {
+  return exportCheckedSchema(nodeSchema, new Map([[jsonValue, 'bounded-json']]))
+}
 
 function defaults(schema: OperationSchema, value: JsonValue): JsonValue {
   if (

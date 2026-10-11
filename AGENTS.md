@@ -265,6 +265,17 @@ hardcoded stable labels. Keep real metadata, default and evidence UI regressions
 `bun run scripts/generate-manifests.ts --check` is a read-only generated-content
 gate; the generator formats output before comparing or writing all three outputs.
 
+P2.5b Manifest admission now consumes only the opaque verified archive and an
+SDK-generated, build-owned structure artifact. Keep explicit native semantics,
+the unknown/stacked custom-check export refusal and all 90 shared SDK/Rust
+cases. New refinements require corresponding native semantics and fixtures;
+JSON Schema alone does not preserve custom logic. Never replace this artifact
+with handwritten Manifest DTOs, caller-supplied schemas or validation flags.
+Normalized maturity metadata must not rewrite signed bytes. Dependency
+declaration validation is not an installed lock or executable identity; durable
+trust floors, transaction recovery and platform gates remain pending. See
+[Manifest evidence](./docs/validation/g5-manifest-admission.md).
+
 ## Coding Style and Naming Conventions
 
 - TypeScript strict mode is enabled; keep code type-safe and avoid `any`.

@@ -24,6 +24,18 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 
 ## 风险台账
 
+2026-10-11 P2.5b 第二步新增
+[完整 Manifest 准入](../../packages/runtime-core/src/packages/manifest.rs) 与
+[SDK 生成契约](../../packages/sdk/src/manifest/validation-contract.ts)，
+消费已有 opaque signed byte archive。结构由 SDK 导出，自定义规则由版本化
+native semantics 核对，未知 custom 生成拒绝；90 个共同样本与实际签名
+ZIP 链路覆盖错误声明、默认值、服务/依赖 selectors、预算、重复原始键和
+兼容性拒绝。见 [验证边界](../validation/g5-manifest-admission.md)。
+无新增 IPC/native command/网络/文件写入、grant、安装或可执行身份；真实
+依赖锁绑定、持久 floors/journal/recovery 和平台边界仍 pending。
+SEC-001/008/014/015 保持 open；Codex 2026-10-11 工程自查，独立实际
+安全 Reviewer/date/conclusion pending。
+
 2026-10-09 G5 P2.5a 添加
 [只读签名验证](../../packages/runtime-core/src/packages.rs)、
 [SDK 作者格式](../../packages/sdk/src/manifest/signed-package.ts) 和

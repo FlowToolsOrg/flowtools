@@ -13,6 +13,13 @@ stored/deflate decoding and hostile archive regressions. See the
 [archive evidence](./docs/validation/g5-archive-admission.md). This produces
 inert bytes; transaction installation and G5/G6 execution remain pending.
 
+The second P2.5b step validates complete Plugin Manifest v1 metadata and
+Host/SDK/target compatibility from those verified bytes. Rust uses an
+SDK-generated shape with explicit native semantics and 90 shared cases.
+See the [Manifest evidence](./docs/validation/g5-manifest-admission.md).
+Installed dependency locks, durable trust floors and transaction recovery
+remain pending; the resulting archive is inert and grants no execution.
+
 > An extensible, cross-platform toolbox powered by a plugin runtime.
 > Plugin Runtime for AI Age
 

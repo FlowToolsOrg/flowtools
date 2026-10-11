@@ -14,6 +14,13 @@ P2.5b 首步已新增 `packages/runtime-core/src/packages/archive.rs`，以及
 内存字节清单；尚未新增 installer、磁盘 artifact store、持久 trust floors
 或可执行第三方身份。见 [归档证据](./validation/g5-archive-admission.md)。
 
+第二步新增 `runtime-core/src/packages/manifest.rs`、`packages/tests/manifest_tests.rs`
+与 SDK `manifest/validation-contract.ts` / `validation-export.ts`。现有
+`generate-catalog.ts` 经 SDK 公共出口生成 ignored Manifest validation artifact；
+SDK/Rust 使用同一 `sdk/test/fixtures/manifest-admission-v1.json`。未新增
+Manifest wire DTO、IPC、installer 或 executable loader。完整 metadata 与
+兼容性检查的范围见 [Manifest 证据](./validation/g5-manifest-admission.md)。
+
 [下一阶段实施设计](./next-milestones.md) 定义 G0–G8 的顺序与验收。
 G2 已新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`
 （无界面运行服务）、`packages/runtime-client`（生成 DTO 的 TS 客户端）和

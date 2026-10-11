@@ -136,7 +136,7 @@ fn range_source_supported(value: &str) -> bool {
             })
         })
 }
-fn version(value: &str) -> Result<Version, DependencyError> {
+pub(crate) fn version(value: &str) -> Result<Version, DependencyError> {
     // SDK canonical exact-version declarations use semver.valid(v) === v,
     // whose normalized value excludes build metadata. Ranges/matching still
     // use npm semantics, including ignoring build metadata in comparisons.
@@ -151,9 +151,9 @@ fn version(value: &str) -> Result<Version, DependencyError> {
     }
     Ok(parsed)
 }
-pub(super) struct NpmRange(Vec<Range>);
+pub(crate) struct NpmRange(Vec<Range>);
 impl NpmRange {
-    pub(super) fn satisfies(&self, version: &Version) -> bool {
+    pub(crate) fn satisfies(&self, version: &Version) -> bool {
         self.0.iter().any(|branch| branch.satisfies(version))
     }
 }
@@ -237,7 +237,7 @@ fn npm_atom(value: &str) -> Result<Option<Range>, DependencyError> {
         .map(Some)
         .map_err(|_| DependencyError::InvalidDeclaration)
 }
-pub(super) fn range(value: &str) -> Result<NpmRange, DependencyError> {
+pub(crate) fn range(value: &str) -> Result<NpmRange, DependencyError> {
     if value.is_empty()
         || value.len() > 256
         || !numeric_prereleases_supported(value)

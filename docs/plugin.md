@@ -16,6 +16,14 @@ profile 拒绝加密、ZIP64、data descriptors、extra fields、comments 与特
 完整 Manifest/依赖兼容或可安装、可执行。见
 [归档准入说明](./validation/g5-archive-admission.md)。
 
+P2.5b 第二步在 ZIP byte inventory 后增加完整 Plugin Manifest v1 与
+Host/SDK/target 校验；签名和文件完整仍不能跳过命令/服务/依赖语义。
+SDK 导出构建用结构契约，自定义校验有显式 native semantics 与共同回归。
+原始 Manifest bytes 不会因默认 prototype metadata 被重写。
+依赖声明、工具 selector 和 cold-start 支持不产生安装、锁或 grants；
+真实 provider/tool 锁绑定及事务恢复尚待实施。见
+[Manifest 准入](./validation/g5-manifest-admission.md)。
+
 本文面向 Flow Tool 开发者，目标是帮助你在当前仓库里快速开发并调试自己的
 plugin。
 

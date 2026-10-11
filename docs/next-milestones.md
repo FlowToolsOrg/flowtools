@@ -306,8 +306,11 @@ providers 空闲退出，后台服务租约由 Host 控制；插件不能自行 
 2026-10-11：按维护者选择，先补 G5 前置项再推进 G6。P2.5b 首步的签名
 ZIP32 内存准入与恶意归档回归已实现为 prototype；仅返回 inert bytes，
 不写磁盘、不安装或执行。见 [归档证据](./validation/g5-archive-admission.md)。
-P2.5b 整体保持 pending；后续依次完成完整 Manifest/Host/SDK/依赖校验、
-持久 trust floors、staging/journal/artifact 提交与重启恢复，再推进平台边界。
+第二步完整 Plugin Manifest/Host/SDK/target 与依赖声明校验已实施，使用 SDK
+生成结构、显式 native semantics 和 90 个共同样本，见
+[Manifest 证据](./validation/g5-manifest-admission.md)。P2.5b 整体保持 pending；
+后续完成真实安装依赖锁绑定、持久 trust floors、staging/journal/artifact
+提交与重启恢复，再推进平台边界。
 
 2026-10-09：P2.5a 协议和只读验签基础已实施为 prototype，见
 [ADR-0003](./adr/0003-signed-package-protocol.md) 与

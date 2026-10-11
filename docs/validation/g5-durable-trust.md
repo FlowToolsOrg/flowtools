@@ -72,7 +72,21 @@ provider/tool locks、生产 pins 和平台 sandbox 继续 pending。
 
 针对性 13 项与 core 全部 127 项 Rust 回归、docs:check、rustfmt、all-target
 clippy `-D warnings` 已通过。
-完整 Windows gate 在本步提交后执行，最终记录随证据提交更新。
+实现提交 `ca70101` 在干净工作区运行
+`pwsh -NoProfile -File scripts/check-ci.ps1`，完整退出码 0，无 tracked/untracked
+漂移。冻结依赖、workspace/docs/catalog 契约、固定 Chromium 安装、构建前置、
+Host routes/Rust bindings 生成及 read-only 校验均通过；11/11 工作区 lint、
+types、test 和 build 全部通过，root test/build 顺序执行，测试 uncached。
+
+本轮 SDK 368 项、core 127 项 Rust、Runtime 18 项 Rust + 16 项 JS、Desktop
+89 项 JS + 21/3 项 Rust、Chromium 27 文件/72 项均通过。独立 CLI 分发、
+真实服务、共享数据、ACK 丢失、撤销及旧有恢复回归没有失败。root test
+5m31.55s，build 56.365s。Web 22 / Desktop 24 个生产产物在 child opt-in /
+canary 重构建后 byte-identical，已知 unsafe/认证开关/canary 缺席；Desktop
+locked check、rustfmt 与 all-target codegen clippy `-D warnings` 通过。
+
+最后证据提交仅文档，另跑格式与 docs:check；最终 SHA 的远程 CI 由 PR
+checks 独立记录。本地通过不构成签名发布、平台隔离或独立安全认证。
 没有 UI/native command/Tauri capability/CSP 变更或新的人工 UI 流程。
 SEC-001/008/014/015 保持 open；Codex 工程自查不替代独立实际 Reviewer、
 日期和结论，独立安全批准 pending。T2/T3/TL、G5 整体和 G6 执行继续拒绝。

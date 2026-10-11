@@ -69,9 +69,28 @@ steps 等预算不变。没有 unverified ToolCandidate 参数，完整 tool sel
 ## 验证与未交付项
 
 针对性 10 项及 core 全部 137 项 Rust 回归、lint、all-target clippy
-`-D warnings`、types、rustfmt 与 docs:check 已通过。干净工作区完整 Windows
-gate 结果在最终验收后记录。该路径没有 UI/native 流程变更，人工 UI 验收
-不适用。
+`-D warnings`、types、rustfmt 与 docs:check 已通过。实现提交 `6e383c4` 在
+干净工作区运行 `pwsh -NoProfile -File scripts/check-ci.ps1`，完整退出码 0，
+无 tracked/untracked 漂移。冻结依赖、workspace/docs/catalog 契约、固定
+Chromium 安装、包构建前置、Host routes/Rust bindings 生成和 read-only
+contracts 校验均通过；11/11 工作区 lint、types、test、build 全部通过。
+root test/build 顺序执行，测试 uncached。
+
+本轮 SDK 368 项、core 137 项 Rust、Runtime 18 项 Rust + 16 项 JS、Desktop
+89 项 JS + 21/3 项 Rust、Chromium 27 文件/72 项通过。独立 CLI 分发真实
+50 路并发冷启动、实际服务链、共享数据、ACK 丢失、撤销和恢复回归通过。
+root test 6m25.949s，build 1m5.323s。Web 22 / Desktop 24 个生产产物在
+child opt-in / canary 重构建后 byte-identical，已知 unsafe/认证开关/canary
+缺席；Desktop locked check、rustfmt、all-target codegen clippy 通过。
+
+`a8280f1` 单独保留冷启动 fixture 安全单项失败诊断；此前同一 `afd0cde`
+远程 CI 一次成功、一次冷启动非零退出，具体阶段因批量诊断截断未确认。
+本地单 CPU fixture 与本次完整 gate 通过均未复现原失败，不能据此认定
+间歇原因已修复；见 [冷启动证据](./g3-standalone-cli.md)。没有重试断言、
+减少 50 路启动、暴露原始输出或放宽超时。
+
+最后证据提交仅文档，另跑 docs:check；最终 SHA 的远程 CI 由 PR checks
+独立记录。该路径没有 UI/native 流程变更，人工 UI 验收不适用。
 
 计划仅证明该验证时间的 byte/trust/compatibility/dependency 结论，不能作为
 安装 identity、grant、lease、session 或 last-known-good。真实 installer 必须

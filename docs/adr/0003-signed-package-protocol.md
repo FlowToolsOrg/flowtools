@@ -104,6 +104,16 @@ P2.5a floor 仅在内存 policy fixtures 中验证；持久、防崩溃 floor �
 
 ## 当前实现
 
+2026-10-11 P2.5b 首步新增签名归档内存准入。安装 profile 仅支持 ZIP32 的
+stored/deflate；拒绝 encryption、data descriptors、extra fields、comments、
+ZIP64、特殊文件、重叠/隐藏条目和压缩流剩余字节。先检查 local/central
+一致性、清单和声明展开量，再限额解码、核对 CRC 与逐文件 hash；业务展开
+上限 64 MiB，manifest 最多 1 MiB，大于 1 MiB 的条目压缩比不得超过 1000。
+这比只读 P2.5a descriptor 格式更严格，是当前受控安装 profile；不影响
+P2.5a 验签语义。返回 opaque inert byte inventory，不访问磁盘或产生可执行
+身份。完整 Manifest/兼容性、持久 trust floors 与事务安装仍 pending。
+见 [归档证据](../validation/g5-archive-admission.md)。
+
 SDK 作者 helper、Rust 只读 verifier 与 Node/Rust 共用的签名 golden 已实现。
 没有下载、解包、安装 journal、artifact store、真实 pins、管理 IPC、
 持久 root/floor、UI 或第三方执行入口。G4 服务锁仍是 P2.5b 的前置依赖；

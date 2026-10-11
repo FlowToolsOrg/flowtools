@@ -2,6 +2,8 @@ use super::*;
 use ed25519_dalek::{Signer, SigningKey};
 use serde_json::json;
 
+mod archive_tests;
+
 struct Fixture {
     golden: Value,
     root: VerifiedRoot,

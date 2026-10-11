@@ -9,6 +9,13 @@ pins；tool 描述也不授权执行 native binary。格式、限额与回滚约
 [ADR-0003](./adr/0003-signed-package-protocol.md)、
 [P2.5a 验证](./validation/g5-package-protocol.md)。
 
+P2.5b 已先实现归档准入。包作者应生成 ZIP32 stored/deflate 文件，包含原始
+`manifest.json` 与精确业务清单；目录只允许清单所需的父目录。当前安装
+profile 拒绝加密、ZIP64、data descriptors、extra fields、comments 与特殊
+文件，另限制压缩比与展开量。验签成功仍须通过归档检查，且该检查不表示
+完整 Manifest/依赖兼容或可安装、可执行。见
+[归档准入说明](./validation/g5-archive-admission.md)。
+
 本文面向 Flow Tool 开发者，目标是帮助你在当前仓库里快速开发并调试自己的
 plugin。
 

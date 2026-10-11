@@ -96,13 +96,27 @@ blob 总量包括 retained/quarantine，上限 256 MiB、384 groups、每组仅�
 - 超量 metadata、目录、物理保留总量拒绝；两个实际有效压缩 provider 各自
   准入，合并依赖池超过展开预算即拒绝，无 candidate staging。
 
-15 项针对性回归全部通过，严格 all-targets clippy 通过；完整已提交 Windows
-门禁结果将在最终验证后记录。
+15 项针对性回归全部通过，严格 all-targets clippy 通过。
 实现提交 `b196809` 的首次完整 gate 在既有多命令 CLI envelope 回归超时，
 退出码 1；本轮 core 全部 152 项和 50 路并发冷启动通过，不能因此把整体
 gate 记为成功。后续单独修订测试的 Node 子进程/stdio 所有权，保留所有
 实际断言与超时，Runtime 18 项原生/16 项 JS 通过；见
 [CLI 回归记录](./g3-standalone-cli.md)。完整 gate 必须在修订提交后重跑。
+
+最终在干净提交 `f664750`（包含实现 `b196809`）运行
+`pwsh -NoProfile -File scripts/check-ci.ps1`，退出码 0，无 tracked/untracked
+漂移。冻结依赖、workspace/docs/catalog、固定 Chromium、前置包构建、
+Host routes/Rust bindings 生成及 read-only contracts 全部通过；11/11
+工作区 lint/types/test/build 通过，root test/build 顺序执行、测试 uncached。
+SDK 368、core 152 Rust、Runtime 18 Rust + 16 JS、Desktop 89 JS + 21/3 Rust、
+Chromium 27 文件/72 项通过。完整运行中 CLI envelope fixture 2.484s，实际
+50 路冷启动通过；root test 5m52.01s，build 54.734s。Web 22 / Desktop 24
+生产产物在 child opt-in/canary 重构建后 byte-identical；生产入口拒绝、
+Desktop locked check、rustfmt、all-target codegen clippy 均通过。
+
+随后证据提交仅文档并另跑 docs:check。此前 `44927db` 两次远程 Windows
+gate SUCCESS；本次最终 SHA 的远程 CI 与独立安全 review 由 PR checks
+独立确认。本地通过不证明生产签名、平台隔离、物理断电或独立安全批准。
 没有 UI/路由/native command/Tauri capability/CSP 变更，人工 UI 验收不适用。
 不触碰用户 profile、不解包/执行包、不提供 production pins 或第三方执行。
 SEC-001/008/014/015 保持 open；ADR-0003 增加原型事务约束，签名格式不变。

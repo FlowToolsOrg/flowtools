@@ -325,8 +325,9 @@ create-only artifact 发布与显式 abort 恢复，见
 [验证](./validation/g5-package-protocol.md)。签名不是可执行准入；本项不
 包含解包、安装、持久 root/floor 或真实生产 pins。G4 P1.6a/P1.6b 已实施为
 固定 Windows/T1 prototype，综合验收仍 pending；P2.5b 须在该门禁通过后
-将依赖锁与服务语义接入真实签名安装事务，当前尚未实施。G5 其余子项/整体
-验收仍 pending。
+将依赖锁与服务语义接入真实签名安装事务。2026-10-11 上述第五步已实现
+T0 Windows/x64 惰性库存/持久锁/journal 原型，产品激活、服务切换/健康与
+跨资源生产验收未实施；G5 其余子项/整体验收仍 pending。
 
 先确定 plugin/tool 的签名格式、信任根、publisher provenance、撤销/轮换、
 离线与受控回滚协议，再实现 staging -> 验证 -> artifact store -> metadata commit。

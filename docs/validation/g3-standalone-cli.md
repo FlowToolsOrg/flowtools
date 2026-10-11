@@ -94,4 +94,7 @@ fixture 通过，但未复现原失败；间歇原因仍待远程完整诊断，
 保留 SDK envelope、生成 flags、calls 空列表、jobs 字节不变、退出码/stderr
 全部断言与原 30 秒超时，没有 retry、跳过或生产行为变更。Runtime 18 项原生
 与 16 项 JS 回归通过。首次挂起没有足够进程内部诊断，不能认定精确 Bun
-内部原因或此前 50 路 CI 间歇根因已经修复；最终完整 gate 另行记录。
+内部原因或此前 50 路 CI 间歇根因已经修复。修订后干净提交 `f664750` 的
+完整 Windows gate 退出码 0，无漂移；16 项 Runtime JS 和全部 50 路
+启动通过，CLI envelope fixture 2.484s。最终证据提交仅文档，远程最终
+SHA 和独立审阅仍由 PR 独立记录。

@@ -94,10 +94,12 @@ child opt-in / canary 重构建后 byte-identical，已知 unsafe/认证开关/c
 
 计划仅证明该验证时间的 byte/trust/compatibility/dependency 结论，不能作为
 安装 identity、grant、lease、session 或 last-known-good。真实 installer 必须
-在最终提交时重新核对信任、库存和原始 artifact。实际 installed inventory、
-持久安装锁、tool Manifest/admission、下载/artifact store、staging/journal/
-跨资源提交/取消/重启恢复、健康检查/LKG、生产 pins、受控 trust recovery/
-rollback approval、第三方平台隔离及 G6 工具执行仍 pending。
+在最终提交时重新核对信任、库存和原始 artifact。本第四步不保存安装库存；
+后续[第五步](./g5-inert-installation.md)已交付 Windows/x64 T0 惰性库存、
+持久锁、固定 blob store 和 journal/显式 abort 恢复。产品安装/激活、
+tool Manifest/admission、下载、生产文件竞争/断电验收、健康检查/LKG、
+生产 pins、受控 trust recovery/rollback approval、第三方平台隔离及 G6
+工具执行仍 pending。
 
 SEC-001/008/014/015 保持 open，ADR-0003 增加规划约束，签名协议格式不变。
 Reviewer：Codex，2026-10-11，工程自查与拒绝回归；独立实际安全 Reviewer、

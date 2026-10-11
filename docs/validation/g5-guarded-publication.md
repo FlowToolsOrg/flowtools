@@ -57,8 +57,23 @@ BeforeCommit 两阶段尝试移动 root 及全部三个内部父目录，全部�
 
 本轮最终 focused native 回归：5 passed / 0 failed；安装回归：15 passed /
 0 failed；`cargo clippy --locked --all-targets -- -D warnings` 通过。
-完整仓库 clean-checkout 门禁将在提交后运行，结果在通过后记录，不预先
-宣称远端 CI 或生产验收完成。
+完整仓库 gate 在干净提交 `546bcc67fdacd56fb90f3ca34c61242ab14febe8`
+运行 `pwsh -NoProfile -File scripts/check-ci.ps1`，退出码 0，无 tracked/
+untracked 漂移。冻结依赖、workspace/docs/catalog、固定 Chromium、前置包
+构建、Host routes/Rust bindings 与 read-only contracts 均通过；11/11
+工作区 lint/types/test/build 通过，root test/build 顺序执行且测试 uncached。
+SDK 368、core 157 Rust、Runtime 18 Rust + 16 JS、Desktop 89 JS + 21/3 Rust、
+Chromium 27 文件/72 项全部通过；50 路真实并发冷启动通过，多命令 CLI
+envelope fixture 2.914s。root test 6m26.128s，build 54.597s。Web 22 /
+Desktop 24 个生产产物在 child opt-in/canary 重构建后 byte-identical；
+生产入口拒绝、Desktop locked check/rustfmt/all-target codegen clippy 均通过。
+
+随后仅文档证据提交另跑 docs:check。上一 head `b31f363` 的远端 Windows
+CI [PR 触发](https://github.com/FlowToolsOrg/flowtools/actions/runs/38133178345/job/114451552933)
+与 [push 触发](https://github.com/FlowToolsOrg/flowtools/actions/runs/38133175373/job/114451544564)
+均 SUCCESS；本轮最终 SHA 的远端 CI 以新 checks 为准。以前出现的冷启动
+间歇失败原因仍未确认，所有断言/超时保留，本轮未重试。上述本地通过不
+认证独立安全批准或生产验收。
 
 ## 验证范围与未完成项
 

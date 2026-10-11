@@ -98,6 +98,11 @@ blob 总量包括 retained/quarantine，上限 256 MiB、384 groups、每组仅�
 
 15 项针对性回归全部通过，严格 all-targets clippy 通过；完整已提交 Windows
 门禁结果将在最终验证后记录。
+实现提交 `b196809` 的首次完整 gate 在既有多命令 CLI envelope 回归超时，
+退出码 1；本轮 core 全部 152 项和 50 路并发冷启动通过，不能因此把整体
+gate 记为成功。后续单独修订测试的 Node 子进程/stdio 所有权，保留所有
+实际断言与超时，Runtime 18 项原生/16 项 JS 通过；见
+[CLI 回归记录](./g3-standalone-cli.md)。完整 gate 必须在修订提交后重跑。
 没有 UI/路由/native command/Tauri capability/CSP 变更，人工 UI 验收不适用。
 不触碰用户 profile、不解包/执行包、不提供 production pins 或第三方执行。
 SEC-001/008/014/015 保持 open；ADR-0003 增加原型事务约束，签名格式不变。

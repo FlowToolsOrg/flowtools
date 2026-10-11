@@ -52,6 +52,24 @@ text、卸载计划和前后 grants/jobs 断言放入 Node fixture；Bun 仍负�
 入口。保留原 30 秒时限，未跳过断言或启用失败重试。9 项编译 CLI 专项
 回归通过；该测试执行器修复单独提交，完整门禁结果另行记录。
 
+最终本地验收：在实现及 Node fixture 提交 `55b03eb` 的干净工作树上运行
+`pwsh -NoProfile -File scripts/check-ci.ps1`，全部门禁通过：
+
+- frozen install、workspace tasks、文档/威胁契约、portable catalog 与生成
+  Runtime bindings 检查通过；生成后与最终工作树均无内容漂移。
+- lint / check-types / test / build 均 11 个 workspace 成功；测试无缓存。
+- Core 108 项 Rust、Native Runtime 18 项 Rust、Desktop 89 项 JS 和
+  21+3 项 Rust、Chromium 27 文件 72 项浏览器回归通过。
+- 编译 CLI 的 16 项原生/发行回归通过，含真实 dependency plan、管理、
+  durable jobs、恢复与 50 并发冷启动；任务断言及既有时限保留。
+- Web 22 / Desktop 24 个 production artifacts 在 opt-in/canary 重建后
+  byte-identical；已知 unsafe/certification 开关与 canary 未泄漏。
+- Desktop 原生 Rust fmt / locked check / all-targets codegen clippy
+  `-D warnings` 通过；未启动日常 Desktop 或使用用户数据库。
+
+这份验收记录是后续仅文档提交；另经格式与 `docs:check` 检查。远端 CI、
+独立人工安全批准和 G5/G6 其余子项仍 pending；本地门禁不等于生产认证。
+
 ## 后续与残余风险
 
 完整 Manifest/Host/SDK/依赖锁验证、持久 trust/root/release/time floors、

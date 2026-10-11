@@ -50,6 +50,15 @@ SQLite writer 记录真实库存、签名描述和 G4 locks；staging/prepared/p
 断电、健康/LKG 和第三方隔离仍需生产验收，见
 [惰性安装验证](./docs/validation/g5-inert-installation.md)。
 
+第六步 `install/files/rename.rs` 将发布与隔离改为 Windows native 句柄相对
+移动：源目录以已持有父句柄下的单个组件打开，固定候选期间重新核对字节；
+目标以另一个已持有父句柄和固定 digest/UUID 命名，拒绝覆盖且无路径 fallback。
+profile/root 与三个内部父目录保护全程保留；内部父目录允许 read/write
+sharing 以完成目录项移动，delete sharing 始终关闭。源/目标 reparse 属性
+重查与实际竞争拒绝测试见 [目录保护验证](./docs/validation/g5-guarded-publication.md)。
+这只修补目录保护释放窗口；私有 profile ACL、全部文件写入竞争及突然断电
+验收仍 pending，不构成第三方 sandbox 或可执行身份。
+
 Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平台。
 当前仓库代码处于“先验证插件运行时，再落地桌面宿主”的阶段。
 

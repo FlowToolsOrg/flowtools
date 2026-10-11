@@ -176,17 +176,22 @@ inert receipt。任何未提交进程中断均显式 abort 到 quarantine，幂�
 
 路径只来自 T0 已保留/保护的 DataStore profile、固定目录、验证 digest 和
 UUID；拒绝 reparse、硬链接、未知目录或字节/seal 不一致。文件 readonly 属性
-不等于 ACL。Windows rename 期间释放内部父目录 guards，profile/root 句柄
-保持；当前依赖 Native Host 的私有 profile 和单写者，不能声称完整 handle-
-relative 竞争防护或同 OS 用户攻陷隔离。sync/FULL/rename 及实际进程退出
+不等于 ACL。第六步以官方 Windows native ABI 完成句柄相对 create-only
+发布/隔离；所有父目录 guards 始终持有，固定源目录期间重新校验候选字节。
+内部父目录允许 read/write sharing，delete sharing 始终关闭；没有覆盖、
+复制、路径 fallback 或释放 guard 重试。实际注入和拒绝证据见
+[目录保护验证](../validation/g5-guarded-publication.md)。当前仍依赖 Native
+Host 的私有 profile 和单写者，不能声称完整文件写入竞争防护或同 OS 用户
+攻陷隔离。native rename 不提供 write-through 证明；文件 sync/FULL 及进程退出
 证据不认证突然断电的文件系统持久性；完整平台/断电验收仍 pending。
 库存最多 128 records / 16 MiB metadata，blob 总量含隔离区最多 256 MiB /
 384 groups；规划 aggregate Manifest 16 MiB、展开字节 128 MiB，超限拒绝。
 见 [惰性安装证据](../validation/g5-inert-installation.md)。
 
 SDK 作者 helper、Rust 只读 verifier 与 Node/Rust 共用的签名 golden 已实现。
-已提供 inert ZIP 解码与完整 Manifest 校验；没有下载、安装 journal、artifact
-store、真实 pins、管理 IPC、信任恢复/回滚审批、UI 或第三方执行入口。
+已提供 inert ZIP/Manifest 校验、持久信任观察、签名依赖规划及 Windows/x64
+惰性库存/blob store/安装 journal 原型。没有产品下载/安装/激活入口、真实
+production pins、安装管理 IPC、受控信任恢复/回滚审批或第三方执行入口。
 G4 服务锁仍是 P2.5b 的前置依赖；
 签名不会升级为 T1，也不会为 T2/T3/TL 提供权限。全部 maturity 保持 prototype。
 SEC-001/002/008/014/015 保持 open，工程自查不替代独立安全批准。

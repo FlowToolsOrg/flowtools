@@ -605,8 +605,15 @@ fn directory_handles_block_replacement_and_junctions_cannot_redirect_installatio
         &world.compatibility,
         || now,
         |phase, _| {
-            if phase == InstallPhase::BeforeCommit {
-                assert!(std::fs::rename(&root, &renamed).is_err());
+            if [InstallPhase::StagePrepared, InstallPhase::BeforeCommit].contains(&phase) {
+                for path in [
+                    &root,
+                    &root.join("staging"),
+                    &root.join("artifacts"),
+                    &root.join("quarantine"),
+                ] {
+                    assert!(std::fs::rename(path, &renamed).is_err());
+                }
             }
             Ok(())
         },

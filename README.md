@@ -33,7 +33,8 @@ archives, binding package and service pins to the original ZIP digest and the
 admitted target. Planning rechecks durable trust, expiry, revocation, release
 floors and current Host/SDK compatibility. See the
 [signed dependency evidence](./docs/validation/g5-signed-dependencies.md).
-Installed inventory, committed locks and verified tool admission remain pending.
+This plan alone is not installed inventory or a committed lock. Verified tool
+admission remains pending; the fifth step below supplies inert installation.
 
 The fifth P2.5b step adds a Windows/x64 T0 inert installation prototype:
 signed ZIP/Manifest blobs and dependency locks commit into Runtime's existing
@@ -42,6 +43,14 @@ abort into quarantine; committed older versions remain intact. See the
 [inert installation evidence](./docs/validation/g5-inert-installation.md).
 There is no product install/activation endpoint or executable package identity;
 health checks, production filesystem hardening and platform isolation remain pending.
+
+The sixth step retains every parent directory guard during create-only
+publication and quarantine. Windows native moves bind the source and destination
+to held handles and revalidate candidate bytes while the source is pinned. See
+[guarded publication evidence](./docs/validation/g5-guarded-publication.md).
+Internal parents permit write sharing but never delete sharing; private profile
+ACLs, complete filesystem race hardening and physical power-loss acceptance
+remain pending. This does not enable third-party execution.
 
 > An extensible, cross-platform toolbox powered by a plugin runtime.
 > Plugin Runtime for AI Age

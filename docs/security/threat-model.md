@@ -24,6 +24,19 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 
 ## 风险台账
 
+2026-10-11 P2.5b 第六步在
+[native 发布文件层](../../packages/runtime-core/src/packages/install/files/rename.rs)
+修补第五步临时释放内部父目录 guards 的窗口：所有父目录句柄持续持有且
+不共享 delete，以 held parent 下的单组件打开固定源目录，在源固定期间
+重新校验字节，再向 held target parent create-only 移动。五项真实 native
+回归覆盖父/源重命名分享冲突、目录/文件目标不可覆盖、源 junction、异常
+组件/校验失败及校验期间真实 FSCTL 父目录 reparse 注入，见
+[目录保护证据](../validation/g5-guarded-publication.md)。内部父目录必须允许
+write sharing；reparse 重查不证明全部写入竞争防护。私有 profile ACL、
+突然断电、健康/LKG、production pins、产品安装/执行和 sandbox 门禁仍
+pending，SEC-001/008/014/015 不关闭。Codex 2026-10-11 工程自查；独立
+安全 reviewer/date/conclusion 待完成。
+
 2026-10-11 P2.5b 第五步增加
 [T0 Windows/x64 惰性安装](../../packages/runtime-core/src/packages/install.rs)
 及 [固定 blob 文件层](../../packages/runtime-core/src/packages/install/files.rs)。
@@ -35,8 +48,8 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 静态 junction/hardlink、文件/seal 篡改、journal/库存变化、故障注入、磁盘/
 metadata/aggregate decode 配额见
 [惰性安装拒绝证据](../validation/g5-inert-installation.md)。
-profile 由 Native Host 保留/保护；当前 root/profile guards 在移动时保留，
-内部父目录 guards 临时释放，不能宣称 handle-relative 全路径竞争/同用户
+profile 由 Native Host 保留/保护；第五步首次实现曾临时释放内部父目录
+guards，第六步已按上述句柄相对移动修补。仍不能宣称完整文件竞争/同用户
 隔离或断电保护。readonly 属性不是 ACL；没有产品安装/激活/执行入口或
 健康/LKG 结论。SEC-001/008/014/015 保持 open，production pins、受控恢复/
 回滚、平台隔离与独立 review pending。Codex 2026-10-11 工程自查，实际

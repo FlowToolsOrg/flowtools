@@ -320,6 +320,12 @@ create-only artifact 发布与显式 abort 恢复，见
 入口、健康/LKG 或跨资源生产验收；后续补齐生产路径竞争/断电、受控信任
 恢复/回滚审批、健康/激活与管理接入，再推进平台边界。
 
+同日第六步交付持续持有父目录保护的句柄相对发布/隔离，在固定源候选期间
+重新核对字节，拒绝覆盖和路径 fallback。实际 Windows 竞争/重定向回归见
+[目录保护证据](./validation/g5-guarded-publication.md)。内部父目录仍需 write
+sharing；这不是完整 ACL/文件写入竞争、断电或 sandbox 门禁。下一步仍按
+上述未完成项逐步验收，P2.5b/G5/G6 保持 pending。
+
 2026-10-09：P2.5a 协议和只读验签基础已实施为 prototype，见
 [ADR-0003](./adr/0003-signed-package-protocol.md) 与
 [验证](./validation/g5-package-protocol.md)。签名不是可执行准入；本项不

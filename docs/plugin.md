@@ -48,6 +48,13 @@ abort 隔离；观察 floors 不随失败或旧备份下降。这不是产品安
 不会执行安装脚本、包入口或授予能力，见
 [惰性安装](./validation/g5-inert-installation.md)。
 
+第六步保持 staging/artifacts/quarantine 的父目录句柄保护，以 Windows
+native 句柄相对移动发布或隔离固定候选，并在固定源目录期间重新校验字节。
+已存在目标、junction、异常组件名或校验失败均拒绝；不能以重试或路径移动
+降级绕过。内部父目录需要 write sharing，delete sharing 始终关闭；此原型
+仍依赖 T0 私有 profile，完整 ACL/文件竞争/断电验收未完成。签名、库存和
+此文件保护均不授予执行/能力，见 [目录保护验证](./validation/g5-guarded-publication.md)。
+
 本文面向 Flow Tool 开发者，目标是帮助你在当前仓库里快速开发并调试自己的
 plugin。
 

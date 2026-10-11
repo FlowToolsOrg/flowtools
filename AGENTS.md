@@ -313,10 +313,17 @@ unless explicitly relocked. Pending installs refuse inspection/new installs;
 explicit abort quarantines owned bytes without rolling forward or lowering floors.
 Preserve original blobs, seal IDs, create-only publication, reparse/hardlink
 rejections, budgets and real process exits at every barrier. File readonly flags
-are not ACL isolation; inner directory guards are released for Windows rename
-while profile/root handles remain held. Production handle-relative race hardening,
-power-loss acceptance, LKG/health, product wiring and sandbox remain pending.
-See [inert installation evidence](./docs/validation/g5-inert-installation.md).
+are not ACL isolation. `install/files/rename.rs` uses official Windows native ABI
+bindings for one-component, handle-relative source opens and create-only moves.
+Keep all parent handles held throughout publication/quarantine; internal parents
+permit read/write sharing but never delete sharing. Pin and validate the source
+before moving it, recheck parent reparse attributes, and never add replacement,
+copy, pathname fallback or guard-release retries. Preserve actual collision,
+sharing-violation, junction and in-place reparse mutation tests. Private profile
+ACLs, complete filesystem race hardening, power-loss acceptance, LKG/health,
+product wiring and sandbox remain pending; native rename is not write-through
+durability evidence. See [inert installation](./docs/validation/g5-inert-installation.md)
+and [guarded publication evidence](./docs/validation/g5-guarded-publication.md).
 
 ## Coding Style and Naming Conventions
 

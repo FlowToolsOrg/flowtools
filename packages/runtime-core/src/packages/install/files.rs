@@ -1,16 +1,18 @@
 //! Fixed inert blob names, create-only writes and handle-held directory guards.
+mod rename;
 use super::{InstallError, Journal, Record};
 use crate::data::{safe_path, DataStore};
 use std::{
+    collections::BTreeMap,
     fs::{File, OpenOptions},
     io::{Read, Write},
     os::windows::{fs::OpenOptionsExt, io::AsRawHandle},
     path::{Path, PathBuf},
 };
 use windows_sys::Win32::Storage::FileSystem::{
-    GetFileInformationByHandle, MoveFileExW, BY_HANDLE_FILE_INFORMATION, FILE_ATTRIBUTE_DIRECTORY,
+    GetFileInformationByHandle, BY_HANDLE_FILE_INFORMATION, FILE_ATTRIBUTE_DIRECTORY,
     FILE_ATTRIBUTE_READONLY, FILE_ATTRIBUTE_REPARSE_POINT, FILE_FLAG_BACKUP_SEMANTICS,
-    FILE_FLAG_OPEN_REPARSE_POINT, FILE_SHARE_READ, MOVEFILE_WRITE_THROUGH,
+    FILE_FLAG_OPEN_REPARSE_POINT, FILE_SHARE_READ, FILE_SHARE_WRITE,
 };
 
 pub(super) const MAX_DISK_BYTES: u64 = 268_435_456;
@@ -22,6 +24,7 @@ fn seal(record: &Record) -> Vec<u8> {
 pub(super) struct Layout {
     pub root: PathBuf,
     _guards: Vec<File>,
+    parents: BTreeMap<&'static str, File>,
 }
 fn information(file: &File) -> Result<BY_HANDLE_FILE_INFORMATION, InstallError> {
     let mut info = BY_HANDLE_FILE_INFORMATION::default();
@@ -34,10 +37,18 @@ fn information(file: &File) -> Result<BY_HANDLE_FILE_INFORMATION, InstallError> 
     Ok(info)
 }
 fn directory(path: &Path) -> Result<File, InstallError> {
+    directory_shared(path, FILE_SHARE_READ)
+}
+fn parent_directory(path: &Path) -> Result<File, InstallError> {
+    // Native rename needs parent entry-write sharing. Keep delete sharing closed
+    // for the entire operation, including source validation and publication.
+    directory_shared(path, FILE_SHARE_READ | FILE_SHARE_WRITE)
+}
+fn directory_shared(path: &Path, sharing: u32) -> Result<File, InstallError> {
     safe_path(path).map_err(|_| InstallError::PathRejected)?;
     let file = OpenOptions::new()
         .read(true)
-        .share_mode(FILE_SHARE_READ)
+        .share_mode(sharing)
         .custom_flags(FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT)
         .open(path)
         .map_err(|_| InstallError::Storage)?;
@@ -73,7 +84,8 @@ fn exists(path: &Path) -> Result<bool, InstallError> {
 }
 impl Layout {
     // The native Host owns/reserves/protects this profile before entry. Directory
-    // handles exclude write/delete sharing during this operation. No client path.
+    // Root/profile handles exclude write/delete sharing; internal parent handles
+    // permit entry-write sharing but exclude delete throughout. No client path.
     pub fn open(store: &DataStore, create: bool) -> Result<Option<Self>, InstallError> {
         if std::env::consts::ARCH != "x86_64" {
             return Err(InstallError::Unsupported);
@@ -88,6 +100,7 @@ impl Layout {
             std::fs::create_dir(&root).map_err(|_| InstallError::Storage)?;
         }
         guards.push(directory(&root)?);
+        let mut parents = BTreeMap::new();
         for name in ["artifacts", "staging", "quarantine"] {
             let path = root.join(name);
             if !exists(&path)? {
@@ -96,11 +109,12 @@ impl Layout {
                 }
                 std::fs::create_dir(&path).map_err(|_| InstallError::Storage)?;
             }
-            guards.push(directory(&path)?);
+            parents.insert(name, parent_directory(&path)?);
         }
         Ok(Some(Self {
             root,
             _guards: guards,
+            parents,
         }))
     }
     pub fn artifact(&self, digest: &str) -> PathBuf {
@@ -160,6 +174,9 @@ impl Layout {
     }
     fn read_at(&self, path: &Path, record: &Record) -> Result<(Vec<u8>, Vec<u8>), InstallError> {
         let _guard = directory(path)?;
+        self.read_held(path, record)
+    }
+    fn read_held(&self, path: &Path, record: &Record) -> Result<(Vec<u8>, Vec<u8>), InstallError> {
         let mut result = Vec::new();
         for (name, expected) in [
             ("manifest.json", &record.payload.manifest),
@@ -181,7 +198,7 @@ impl Layout {
             }
             result.push(bytes);
         }
-        self.partial(path, record)?;
+        self.partial_held(path, record)?;
         let mut file = regular(&path.join("seal.json"), 512, true)?;
         let mut bytes = Vec::new();
         file.read_to_end(&mut bytes)
@@ -195,6 +212,9 @@ impl Layout {
     // abort validates names/types/limits without interpreting or executing it.
     fn partial(&self, path: &Path, record: &Record) -> Result<(), InstallError> {
         let _guard = directory(path)?;
+        self.partial_held(path, record)
+    }
+    fn partial_held(&self, path: &Path, record: &Record) -> Result<(), InstallError> {
         let mut count = 0;
         for entry in std::fs::read_dir(path).map_err(|_| InstallError::Storage)? {
             count += 1;
@@ -256,6 +276,8 @@ impl Layout {
         self.move_owned(
             &self.stage(&journal.id),
             &self.artifact(&journal.record.payload.archive.sha256),
+            &journal.record,
+            true,
         )
     }
     pub fn quarantine(&mut self, journal: &Journal) -> Result<(), InstallError> {
@@ -290,26 +312,45 @@ impl Layout {
                 }
             }
             if present {
-                self.move_owned(&source, &destination)?;
+                self.move_owned(&source, &destination, &journal.record, kind == "artifact")?;
             }
         }
         Ok(())
     }
-    fn move_owned(&mut self, source: &Path, destination: &Path) -> Result<(), InstallError> {
-        // Windows publication needs parent-directory access incompatible with
-        // the inner guards. Keep profile/root handles held, then reacquire the
-        // three internal guards. The native Host's private profile is required;
-        // this is not a handle-relative OS sandbox or a hostile same-user claim.
-        self._guards.truncate(2);
-        let moved = rename_new(source, destination);
-        let guarded = (|| {
-            for name in ["artifacts", "staging", "quarantine"] {
-                self._guards.push(directory(&self.root.join(name))?);
-            }
-            Ok(())
-        })();
-        moved?;
-        guarded
+    fn move_owned(
+        &self,
+        source: &Path,
+        destination: &Path,
+        record: &Record,
+        complete: bool,
+    ) -> Result<(), InstallError> {
+        let parent = |path: &Path| {
+            self.parents
+                .iter()
+                .find(|(name, _)| path.parent() == Some(self.root.join(name).as_path()))
+                .map(|(_, handle)| handle)
+                .ok_or(InstallError::PathRejected)
+        };
+        let name = |path: &Path| {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .map(str::to_owned)
+                .ok_or(InstallError::PathRejected)
+        };
+        rename::move_directory(
+            parent(source)?,
+            &name(source)?,
+            parent(destination)?,
+            &name(destination)?,
+            || {
+                if complete {
+                    self.read_held(source, record)?;
+                } else {
+                    self.partial_held(source, record)?;
+                }
+                Ok(())
+            },
+        )
     }
     pub fn disk_bytes(&self) -> Result<u64, InstallError> {
         self.disk_bytes_reserving(0)
@@ -366,28 +407,4 @@ impl Layout {
         }
         Ok(total)
     }
-}
-fn rename_new(source: &Path, destination: &Path) -> Result<(), InstallError> {
-    use std::os::windows::ffi::OsStrExt;
-    for path in [source, destination] {
-        safe_path(path).map_err(|_| InstallError::PathRejected)?;
-    }
-    let source: Vec<_> = source.as_os_str().encode_wide().chain(Some(0)).collect();
-    let destination: Vec<_> = destination
-        .as_os_str()
-        .encode_wide()
-        .chain(Some(0))
-        .collect();
-    // No REPLACE_EXISTING or COPY_ALLOWED: same-volume, create-only publication.
-    if unsafe {
-        MoveFileExW(
-            source.as_ptr(),
-            destination.as_ptr(),
-            MOVEFILE_WRITE_THROUGH,
-        )
-    } == 0
-    {
-        return Err(InstallError::Storage);
-    }
-    Ok(())
 }

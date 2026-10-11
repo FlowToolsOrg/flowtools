@@ -4,8 +4,8 @@
 
 G5 P2.5a 新增 SDK `src/manifest/signed-package.ts` 作者 contract，以及 Rust
 core `src/packages.rs` 只读签名/trust verifier；公开 Node golden 与 SDK/Rust
-拒绝测试共用原始字节。installer/artifact store/第三方隔离 runner
-仍为后续模块，验证 receipt 不能通过现有 loader 执行。
+拒绝测试共用原始字节。该步不提供 installer/artifact store/第三方隔离 runner，
+验证 receipt 不能通过现有 loader 执行；第五步新增的惰性库存也不提供执行身份。
 见 [协议](./adr/0003-signed-package-protocol.md)、
 [验证边界](./validation/g5-package-protocol.md)。
 
@@ -25,7 +25,8 @@ Manifest wire DTO、IPC、installer 或 executable loader。完整 metadata 与
 T0 adapter 借用已有 `DataStore` 写入 `core_metadata`，不创建第二个连接或数据
 目录、不增加 schema 版本或 IPC。根链/时间/版本观察持久化与两条既有备份
 恢复路径的拒绝标记见 [持久信任证据](./validation/g5-durable-trust.md)。
-installed lock、installer/artifact store、受控 trust recovery 与 sandbox 仍未交付。
+该步不提供 installed lock 或 installer/artifact store；受控 trust recovery
+与 sandbox 仍未交付，后续惰性库存的范围单独记录如下。
 
 第四步新增 `runtime-core/src/packages/dependencies.rs` 和
 `packages/tests/dependency_tests.rs`，复用 G4 resolver；crate 内 archive
@@ -41,6 +42,12 @@ receipt。公开 T0 参数和 opaque plan 无 Serde/IPC 入口，不产生新 st
 原始 Manifest 相对条目不用于磁盘路径，没有 source/executable loader、产品
 command/IPC 或第二个数据库。过程与未完成平台门禁见
 [惰性安装证据](./validation/g5-inert-installation.md)。
+
+第六步增加 `packages/runtime-core/src/packages/install/files/rename.rs`，只在
+Windows 编译。内部函数使用官方 `windows-sys` ABI，以固定组件名和已持有
+目录句柄完成 create-only 发布/隔离，不暴露 IPC、调用方路径或 raw native
+能力。该模块包含五项真实 native 文件操作拒绝回归；现有安装回归继续覆盖
+事务、恢复与进程退出，见 [目录保护证据](./validation/g5-guarded-publication.md)。
 
 [下一阶段实施设计](./next-milestones.md) 定义 G0–G8 的顺序与验收。
 G2 已新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`

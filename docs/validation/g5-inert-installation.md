@@ -47,12 +47,15 @@ stage/quarantine 使用严格 UUID；只写 `package.zip`、原始 `manifest.jso
 
 每次实际文件打开使用 OPEN_REPARSE_POINT 与 handle 信息，拒绝目录冒充、
 reparse 和硬链接；读时核对长度/hash/readonly。profile/root directory guards
-在操作期间保留，普通状态下内部目录也保留 guards。Windows rename 与内部
-父目录 guards 的 sharing 约束冲突已在实测定位：仅移动时释放内部 guards，
-根/profile 保持，然后重新获取。这依赖 T0 单写者及 Native Host 的私有
-profile，**不是完整 handle-relative 路径竞争防护或同 OS 用户攻陷隔离**。
+在操作期间保留。第五步 `b196809` 首次实现的 Windows rename 曾因 sharing
+冲突而仅移动时释放内部 guards，根/profile 保持，然后重新获取。第六步
+已改为始终持有所有父目录 guards 的 native 句柄相对移动，并固定源目录
+期间重新校验字节，见 [目录保护证据](./g5-guarded-publication.md)。内部
+父目录允许 write sharing，但 delete sharing 始终关闭。当前仍依赖 T0
+单写者及 Native Host 私有 profile，**不是全部文件写入竞争或同 OS 用户
+攻陷隔离**。
 readonly 属性不证明 ACL；生产文件竞争与 ACL 平台验收仍 pending。
-API 依据为 [Microsoft CreateFile](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea)
+第五步历史 API 依据为 [Microsoft CreateFile](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilea)
 与 [MoveFileEx](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-movefileexw)。
 
 ## 恢复与预算

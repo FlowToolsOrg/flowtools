@@ -45,6 +45,13 @@ extra fields、split volumes、重复/隐藏/重叠条目、截断/任意字节�
 all-targets clippy `-D warnings`、Rust fmt 与 `docs:check` 通过。
 本机 Bun 1.3.14 / Rust 1.96.0 与 Windows CI 固定版本一致。
 
+首轮全仓 lint/types 通过；测试发现既有 dependency CLI 聚合用例在 Bun
+重复创建/读取 CLI 子进程时超过原 30 秒时限。同一真实操作序列由 Node
+调度约 6.5 秒完成，现沿用项目原生验收方式，将全部原始 JSON 确定性、
+text、卸载计划和前后 grants/jobs 断言放入 Node fixture；Bun 仍负责测试
+入口。保留原 30 秒时限，未跳过断言或启用失败重试。9 项编译 CLI 专项
+回归通过；该测试执行器修复单独提交，完整门禁结果另行记录。
+
 ## 后续与残余风险
 
 完整 Manifest/Host/SDK/依赖锁验证、持久 trust/root/release/time floors、

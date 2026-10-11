@@ -1,11 +1,10 @@
-import type { DependencyPlan } from '@flowtools/runtime-client'
-
 import { beforeAll, afterAll, expect, test } from 'bun:test'
 import { createHash } from 'node:crypto'
 import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import {
   validateOperationValue,
@@ -94,87 +93,23 @@ async function invoke(args: string[]) {
 }
 
 test('compiled CLI reads deterministic dependency plans from the actual Host without jobs or grants', async () => {
-  expect((await invoke(['runtime', 'start', '--profile', profile])).code).toBe(
-    0
+  // Node owns the repeated compiled-CLI subprocesses and pipe draining, as in
+  // the other native acceptance fixtures. Bun remains the test orchestrator.
+  const fixture = Bun.spawn(
+    [
+      'node',
+      fileURLToPath(new URL('./dependency-plan-fixture.mjs', import.meta.url)),
+      profile,
+    ],
+    { stdout: 'pipe', stderr: 'pipe' }
   )
-  const permissions = await invoke([
-    'permissions',
-    'list',
-    '--profile',
-    profile,
+  const [stdout, stderr, code] = await Promise.all([
+    new Response(fixture.stdout).text(),
+    new Response(fixture.stderr).text(),
+    fixture.exited,
   ])
-  const jobs = await invoke(['jobs', 'list', '--profile', profile])
-  const args = [
-    'dependencies',
-    'plan',
-    'plugin-base64-encoder',
-    '--profile',
-    profile,
-    '--format',
-    'json',
-  ]
-  const first = await invoke(args)
-  const second = await invoke(args)
-  expect(first).toMatchObject({ code: 0, stderr: '' })
-  expect(second.stdout).toBe(first.stdout)
-  const plan = JSON.parse(first.stdout) as {
-    success: true
-    data: DependencyPlan
-  }
-  expect(plan).toMatchObject({
-    success: true,
-    data: {
-      formatVersion: 1,
-      mode: 'plan-only',
-      lock: {
-        roots: [{ publisher: 'flowtools', id: 'plugin-base64-encoder' }],
-      },
-    },
-  })
-  expect(plan.data.lock.digest).toMatch(/^[a-f0-9]{64}$/)
-  expect(plan.data.lock.packages).toHaveLength(1)
-  expect(
-    (await invoke(['permissions', 'list', '--profile', profile])).stdout
-  ).toBe(permissions.stdout)
-  expect((await invoke(['jobs', 'list', '--profile', profile])).stdout).toBe(
-    jobs.stdout
-  )
-  const text = await invoke([
-    'dependencies',
-    'plan',
-    'plugin-base64-encoder',
-    '--profile',
-    profile,
-  ])
-  expect(text).toMatchObject({ code: 0, stderr: '' })
-  expect(text.stdout).toContain(plan.data.lock.digest)
-  expect(text.stdout).toContain('plan-only')
-  expect(text.stdout).toContain('does not install, activate or grant')
-  const unload = await invoke([
-    'dependencies',
-    'unload-plan',
-    'plugin-base64-encoder',
-    '--profile',
-    profile,
-    '--format',
-    'json',
-  ])
-  expect(unload).toMatchObject({ code: 0, stderr: '' })
-  expect(JSON.parse(unload.stdout)).toMatchObject({
-    success: true,
-    data: {
-      mode: 'plan-only',
-      provider: { id: 'plugin-base64-encoder' },
-      replacement: null,
-      consumers: [],
-    },
-  })
-  expect((await invoke(['jobs', 'list', '--profile', profile])).stdout).toBe(
-    jobs.stdout
-  )
-  expect(
-    (await invoke(['permissions', 'list', '--profile', profile])).stdout
-  ).toBe(permissions.stdout)
+  expect({ code, stderr }).toEqual({ code: 0, stderr: '' })
+  expect(stdout.trim()).toBe('Dependency plan CLI fixture passed')
 }, 30_000)
 
 test('real built-in CLI run produces the SDK envelope from generated flags', async () => {

@@ -267,14 +267,24 @@ gate; the generator formats output before comparing or writing all three outputs
 
 P2.5b Manifest admission now consumes only the opaque verified archive and an
 SDK-generated, build-owned structure artifact. Keep explicit native semantics,
-the unknown/stacked custom-check export refusal and all 90 shared SDK/Rust
-cases. New refinements require corresponding native semantics and fixtures;
+the unknown/stacked custom-check export refusal, all 90 shared SDK/Rust
+cases and the 405 actual compiled-SDK parser corpus cases. New refinements require corresponding native semantics and fixtures;
 JSON Schema alone does not preserve custom logic. Never replace this artifact
 with handwritten Manifest DTOs, caller-supplied schemas or validation flags.
 Normalized maturity metadata must not rewrite signed bytes. Dependency
 declaration validation is not an installed lock or executable identity;
-transaction recovery and platform gates remain pending. See
+the separate inert transaction does not satisfy production recovery or platform
+gates. See
 [Manifest evidence](./docs/validation/g5-manifest-admission.md).
+
+Keep native operation validation in `packages/manifest/operation.rs`, including
+the separate one-million-step matching bound. Preserve precise JS Number
+parsing, UTF-16 range lengths, ECMAScript whitespace and own-property object
+matching. Compatibility fields are crate-private; public construction reads
+only embedded T0 build versions/target. Corpus generation defaults to read-only
+`--check`; intentional `--write` must use the actual freshly compiled SDK public
+export. Preserve the disposable drift/refusal regression and generated-content
+gate. See [contract hardening](./docs/validation/g5-contract-hardening.md).
 
 P2.5b durable descriptor trust lives in `runtime-core/src/packages/trust.rs`.
 Borrow the existing `DataStore` single writer; never add a separate trust DB,
@@ -292,8 +302,11 @@ Preserve corruption, quota, write-failure and real crash regressions in
 P2.5b signed dependency planning lives in `packages/dependencies.rs`. Consume
 only opaque compatible archives and recheck every receipt against the current
 durable root, exact observed ZIP identity, expiry, floors and T0 compatibility.
-Use the original ZIP digest and admitted target for G4 pins; never substitute
-metadata hashes or allow the solver to replace the root candidate. Root rotation
+Keep G4 semantic pins unchanged. Use separate `SignedArchivePin` /
+`SignedArchiveLock` with original ZIP `packageDigest`, admitted target and explicit
+profile `signed-plugin-archives-v1`; never alias the G4 v1 lock or substitute
+metadata hashes. Arbitrary metadata canonical digests still need a shared
+cross-language contract. Never allow the solver to replace the root candidate. Root rotation
 requires fresh descriptor verification. Every supplied provider must pass current
 admission floors; this conservative candidate pool is not installed multiversion
 inventory. No unverified tool list enters this path. Plans are inert and not
@@ -306,7 +319,10 @@ P2.5b Windows/x64 inert installation is in `packages/install.rs` and
 `install/files.rs`, gated at compile time to Windows. Derive the fixed blob store
 from the existing DataStore profile; T0 must reserve/protect that profile first.
 Never add client paths, a second DB, extraction/activation, or automatic orphan
-adoption. Persist raw descriptor provenance and G4 ZIP pins in the same writer.
+adoption. Persist raw descriptor provenance and independent signed archive pins
+in the same writer. Inventory/journal metadata keys remain v1; records use
+formatVersion 2. Refuse old prototype formats with StateInvalid, preserving
+their exact bytes and trust floors; never silently migrate or bootstrap them.
 Reverify current trust, the fresh T0 commit clock and disk providers before the
 atomic inventory/journal commit; keep existing provider transitive locks fixed
 unless explicitly relocked. Pending installs refuse inspection/new installs;
@@ -831,8 +847,9 @@ Uncertain storage/process drain stops admission; restart rejects prepared or
 mismatched catalog journals. Never turn these T1 checks into sandbox claims.
 The A/B/C bundle is build-only in plugin-runner's ignored `.generated/g4-services`,
 not production inventory. Run `test:dependencies` for real native regressions.
-G4 implementation remains prototype; comprehensive acceptance and independent
-security approval are pending, including a separate fixture for abnormal drain.
+G4 implementation remains prototype; six real abnormal-drain fixtures have
+independent baseline evidence. Current integration and independent security
+approval remain pending; future abort/panic still needs its own acceptance.
 See [scope and evidence](docs/validation/g4-service-calls.md). G5 P2.5a is the
 read-only signed-descriptor prototype above; P2.5b, remaining G5 gates and G6
 remain pending.

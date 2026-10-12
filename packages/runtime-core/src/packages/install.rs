@@ -2,14 +2,17 @@
 //! No production installer, activation, health result, grant or execution identity.
 use super::{
     archive::validate_archive,
-    dependencies::{plan_signed_plugin, SignedDependencyError, SignedDependencyRequest},
+    dependencies::{
+        plan_signed_plugin, SignedArchiveLock, SignedArchivePin, SignedDependencyError,
+        SignedDependencyRequest,
+    },
     manifest::{validate_plugin_manifest, CompatiblePluginArchive, ManifestCompatibility},
     trust::{DescriptorVerification, PackageTrustStore},
     *,
 };
 use crate::{
     data::DataStore,
-    dependencies::{DependencyError, DependencyIdentity, DependencyLock, PackagePin},
+    dependencies::{DependencyError, DependencyIdentity},
 };
 use rusqlite::{params, OptionalExtension, TransactionBehavior};
 use std::collections::{BTreeMap, BTreeSet, HashSet, VecDeque};
@@ -59,18 +62,19 @@ pub struct InertPackageBytes<'a> {
 struct Record {
     payload: PackagePayload,
     envelope: String,
-    lock: DependencyLock,
+    lock: SignedArchiveLock,
     root_digest: String,
     installed_at: u64,
     artifact_id: String,
 }
 impl Record {
-    fn pin(&self) -> PackagePin {
-        PackagePin {
+    fn pin(&self) -> SignedArchivePin {
+        SignedArchivePin {
             publisher: self.payload.publisher.clone(),
             id: self.payload.id.clone(),
             version: self.payload.version.clone(),
-            digest: self.payload.archive.sha256.clone(),
+            target: self.payload.target.clone(),
+            package_digest: self.payload.archive.sha256.clone(),
         }
     }
 }
@@ -95,10 +99,10 @@ pub struct InstalledInertPackage {
     record: Record,
 }
 impl InstalledInertPackage {
-    pub fn pin(&self) -> PackagePin {
+    pub fn pin(&self) -> SignedArchivePin {
         self.record.pin()
     }
-    pub fn dependency_lock(&self) -> &DependencyLock {
+    pub fn dependency_lock(&self) -> &SignedArchiveLock {
         &self.record.lock
     }
     pub fn installed_at(&self) -> u64 {
@@ -106,14 +110,14 @@ impl InstalledInertPackage {
     }
 }
 pub struct InertInventorySnapshot {
-    pins: Vec<PackagePin>,
-    locks: Vec<DependencyLock>,
+    pins: Vec<SignedArchivePin>,
+    locks: Vec<SignedArchiveLock>,
 }
 impl InertInventorySnapshot {
-    pub fn packages(&self) -> &[PackagePin] {
+    pub fn packages(&self) -> &[SignedArchivePin] {
         &self.pins
     }
-    pub fn locks(&self) -> &[DependencyLock] {
+    pub fn locks(&self) -> &[SignedArchiveLock] {
         &self.locks
     }
 }
@@ -217,10 +221,10 @@ fn validate_record(record: &Record) -> Result<(), InstallError> {
 }
 fn inventory(connection: &rusqlite::Connection) -> Result<Inventory, InstallError> {
     let state: Inventory = read(connection, KEY)?.unwrap_or(Inventory {
-        format_version: 1,
+        format_version: 2,
         records: vec![],
     });
-    if state.format_version != 1 || state.records.len() > MAX_RECORDS {
+    if state.format_version != 2 || state.records.len() > MAX_RECORDS {
         return Err(InstallError::StateInvalid);
     }
     let mut versions = HashSet::new();
@@ -276,7 +280,7 @@ fn journal(
         return Ok(None);
     };
     validate_record(&value.record)?;
-    if value.format_version != 1
+    if value.format_version != 2
         || (value.new_artifact && value.id != value.record.artifact_id)
         || !uuid::Uuid::parse_str(&value.id).is_ok_and(|id| id.to_string() == value.id)
         || value.before_digest != json_digest(state)?
@@ -348,11 +352,12 @@ fn resolve(
     now: u64,
 ) -> Result<super::dependencies::VerifiedPluginDependencyPlan, InstallError> {
     let root = &candidate.archive().descriptor().payload();
-    let root_identity = PackagePin {
+    let root_identity = SignedArchivePin {
         publisher: root.publisher.clone(),
         id: root.id.clone(),
         version: root.version.clone(),
-        digest: root.archive.sha256.clone(),
+        target: root.target.clone(),
+        package_digest: root.archive.sha256.clone(),
     }
     .identity();
     let mut latest: BTreeMap<DependencyIdentity, &Record> = BTreeMap::new();
@@ -559,7 +564,7 @@ pub(super) fn install_with_hook(
             .clone();
     }
     let mut pending = Journal {
-        format_version: 1,
+        format_version: 2,
         id: if new_artifact {
             record.artifact_id.clone()
         } else {

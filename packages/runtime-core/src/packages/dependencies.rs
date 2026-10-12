@@ -3,17 +3,94 @@
 use super::{
     manifest::{validate_bytes, CompatiblePluginArchive, ManifestCompatibility},
     trust::PackageTrustStore,
-    PackageError,
+    PackageError, PackageTarget,
 };
 use crate::{
     data::DataStore,
     dependencies::{
-        DependencyCatalog, DependencyError, DependencyLock, PackageCandidate, PackagePin,
+        DependencyCatalog, DependencyEdge, DependencyError, DependencyIdentity, DependencyTarget,
+        PackageCandidate, PackagePin, ReverseDependency, ToolPin,
     },
 };
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
 const MAX_CANDIDATES: usize = 512;
 const MAX_MANIFEST_BYTES: u64 = 16_777_216;
+pub const SIGNED_ARCHIVE_LOCK_PROFILE: &str = "signed-plugin-archives-v1";
+
+/// Exact signed ZIP bytes and admitted target. This is deliberately distinct
+/// from the G4 semantic Manifest PackagePin and is never an execution grant.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SignedArchivePin {
+    pub publisher: String,
+    pub id: String,
+    pub version: String,
+    pub target: PackageTarget,
+    pub package_digest: String,
+}
+impl SignedArchivePin {
+    pub fn identity(&self) -> DependencyIdentity {
+        DependencyIdentity {
+            publisher: self.publisher.clone(),
+            id: self.id.clone(),
+        }
+    }
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SignedServicePin {
+    pub consumer: DependencyIdentity,
+    pub provider: SignedArchivePin,
+    pub service: String,
+    pub version: String,
+}
+fn signed_profile<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<String, D::Error> {
+    let profile = String::deserialize(deserializer)?;
+    if profile != SIGNED_ARCHIVE_LOCK_PROFILE {
+        return Err(serde::de::Error::custom(
+            "Unsupported signed archive lock profile",
+        ));
+    }
+    Ok(profile)
+}
+/// The profile is part of the digest domain. G4 DependencyLock v1 cannot be
+/// deserialized or silently reinterpreted as this signed archive lock.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SignedArchiveLock {
+    pub format_version: u16,
+    #[serde(deserialize_with = "signed_profile")]
+    pub profile: String,
+    pub digest: String,
+    pub target: DependencyTarget,
+    pub roots: Vec<DependencyIdentity>,
+    pub packages: Vec<SignedArchivePin>,
+    pub services: Vec<SignedServicePin>,
+    /// Tool archive admission remains unavailable; this field must stay empty.
+    pub tools: Vec<ToolPin>,
+    pub edges: Vec<DependencyEdge>,
+    pub topology: Vec<DependencyIdentity>,
+    pub reverse_dependencies: Vec<ReverseDependency>,
+}
+impl SignedArchiveLock {
+    pub fn verified_digest(&self) -> Result<String, DependencyError> {
+        if self.format_version != 1
+            || self.profile != SIGNED_ARCHIVE_LOCK_PROFILE
+            || !self.tools.is_empty()
+        {
+            return Err(DependencyError::InvalidDeclaration);
+        }
+        let mut payload =
+            serde_json::to_value(self).map_err(|_| DependencyError::InvalidDeclaration)?;
+        payload
+            .as_object_mut()
+            .ok_or(DependencyError::InvalidDeclaration)?
+            .remove("digest");
+        Ok(crate::catalog::digest(&payload))
+    }
+}
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum SignedDependencyError {
@@ -43,16 +120,16 @@ pub struct SignedDependencyRequest<'a> {
 /// Only this module constructs the proof. Value pins are inspectable, but do
 /// not create an installation, health result, lease, grant or runner identity.
 pub struct VerifiedPluginDependencyPlan {
-    candidate: PackagePin,
-    lock: DependencyLock,
+    candidate: SignedArchivePin,
+    lock: SignedArchiveLock,
     root_digest: String,
     verified_at: u64,
 }
 impl VerifiedPluginDependencyPlan {
-    pub fn candidate(&self) -> &PackagePin {
+    pub fn candidate(&self) -> &SignedArchivePin {
         &self.candidate
     }
-    pub fn lock(&self) -> &DependencyLock {
+    pub fn lock(&self) -> &SignedArchiveLock {
         &self.lock
     }
     pub fn root_digest(&self) -> &str {
@@ -95,11 +172,16 @@ pub fn plan_signed_plugin(
     }
     let descriptor = request.candidate.archive().descriptor();
     let payload = descriptor.payload();
-    let candidate = PackagePin {
+    let target: DependencyTarget = serde_json::from_value(
+        serde_json::to_value(&payload.target).map_err(|_| DependencyError::InvalidDeclaration)?,
+    )
+    .map_err(|_| DependencyError::InvalidDeclaration)?;
+    let candidate = SignedArchivePin {
         publisher: payload.publisher.clone(),
         id: payload.id.clone(),
         version: payload.version.clone(),
-        digest: descriptor.package_digest().into(),
+        target: payload.target.clone(),
+        package_digest: descriptor.package_digest().into(),
     };
     // Do not allow the solver to choose another version of the install candidate.
     if request.providers.iter().any(|archive| {
@@ -115,15 +197,73 @@ pub fn plan_signed_plugin(
     // Tools await their own complete admission/compatibility and G6 inventory.
     // An unverified ToolCandidate can never be supplied through this path.
     let catalog = DependencyCatalog::new(packages, vec![])?;
-    let target = serde_json::from_value(
-        serde_json::to_value(&payload.target)
-            .map_err(|_| SignedDependencyError::Dependency(DependencyError::InvalidDeclaration))?,
-    )
-    .map_err(|_| DependencyError::InvalidDeclaration)?;
-    let lock = catalog.resolve(&[candidate.identity()], &target)?.lock;
-    if !lock.packages.contains(&candidate) || !lock.tools.is_empty() {
+    let semantic = catalog.resolve(&[candidate.identity()], &target)?.lock;
+    if !semantic.tools.is_empty() {
         return Err(DependencyError::ArtifactConflict.into());
     }
+    let mut exact = BTreeMap::new();
+    for archive in &archives {
+        let descriptor = archive.archive().descriptor();
+        let payload = descriptor.payload();
+        let key = PackagePin {
+            publisher: payload.publisher.clone(),
+            id: payload.id.clone(),
+            version: payload.version.clone(),
+            digest: crate::catalog::digest(archive.manifest()),
+        };
+        let pin = SignedArchivePin {
+            publisher: payload.publisher.clone(),
+            id: payload.id.clone(),
+            version: payload.version.clone(),
+            target: payload.target.clone(),
+            package_digest: descriptor.package_digest().into(),
+        };
+        if exact.insert(key, pin).is_some() {
+            return Err(DependencyError::DuplicateProvider.into());
+        }
+    }
+    let packages = semantic
+        .packages
+        .iter()
+        .map(|pin| {
+            exact
+                .get(pin)
+                .cloned()
+                .ok_or(DependencyError::ArtifactConflict)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let services = semantic
+        .services
+        .into_iter()
+        .map(|pin| {
+            Ok(SignedServicePin {
+                consumer: pin.consumer,
+                provider: exact
+                    .get(&pin.provider)
+                    .cloned()
+                    .ok_or(DependencyError::ArtifactConflict)?,
+                service: pin.service,
+                version: pin.version,
+            })
+        })
+        .collect::<Result<Vec<_>, DependencyError>>()?;
+    let mut lock = SignedArchiveLock {
+        format_version: 1,
+        profile: SIGNED_ARCHIVE_LOCK_PROFILE.into(),
+        digest: String::new(),
+        target: semantic.target,
+        roots: semantic.roots,
+        packages,
+        services,
+        tools: vec![],
+        edges: semantic.edges,
+        topology: semantic.topology,
+        reverse_dependencies: semantic.reverse_dependencies,
+    };
+    if !lock.packages.contains(&candidate) {
+        return Err(DependencyError::ArtifactConflict.into());
+    }
+    lock.digest = lock.verified_digest()?;
     Ok(VerifiedPluginDependencyPlan {
         candidate,
         lock,

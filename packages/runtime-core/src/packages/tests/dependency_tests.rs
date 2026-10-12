@@ -3,7 +3,10 @@ use crate::{
     data::DataStore,
     dependencies::{DependencyError, DependencyIdentity},
     packages::{
-        dependencies::{plan_signed_plugin, SignedDependencyError, SignedDependencyRequest},
+        dependencies::{
+            plan_signed_plugin, SignedArchiveLock, SignedDependencyError, SignedDependencyRequest,
+            SIGNED_ARCHIVE_LOCK_PROFILE,
+        },
         manifest::{validate_plugin_manifest, CompatiblePluginArchive, ManifestCompatibility},
         trust::{DescriptorVerification, PackageTrustStore},
     },
@@ -204,6 +207,7 @@ fn signed_dag_pins_zip_bytes_service_interfaces_and_deterministic_reverse_topolo
     let reordered = world.plan(&consumer, &[&provider, &middle]).unwrap();
     assert_eq!(plan.lock().digest, reordered.lock().digest);
     assert_eq!(plan.lock().digest, plan.lock().verified_digest().unwrap());
+    assert_eq!(plan.lock().profile, SIGNED_ARCHIVE_LOCK_PROFILE);
     assert_eq!(plan.lock().roots, vec![identity("consumer")]);
     assert_eq!(
         plan.lock().topology,
@@ -224,13 +228,17 @@ fn signed_dag_pins_zip_bytes_service_interfaces_and_deterministic_reverse_topolo
             .iter()
             .find(|pin| pin.id == descriptor.payload().id)
             .unwrap();
-        assert_eq!(pin.digest, descriptor.package_digest());
-        assert_ne!(pin.digest, crate::catalog::digest(archive.manifest()));
+        assert_eq!(pin.package_digest, descriptor.package_digest());
+        assert_ne!(
+            pin.package_digest,
+            crate::catalog::digest(archive.manifest())
+        );
         assert_eq!(pin.publisher, descriptor.payload().publisher);
         assert_eq!(pin.version, descriptor.payload().version);
+        assert_eq!(pin.target, descriptor.payload().target);
     }
     assert_eq!(
-        plan.candidate().digest,
+        plan.candidate().package_digest,
         consumer.archive().descriptor().package_digest()
     );
     assert_eq!(plan.lock().services.len(), 2);
@@ -241,7 +249,7 @@ fn signed_dag_pins_zip_bytes_service_interfaces_and_deterministic_reverse_topolo
         .find(|pin| pin.consumer.id == "middle")
         .unwrap();
     assert_eq!(
-        service.provider.digest,
+        service.provider.package_digest,
         provider.archive().descriptor().package_digest()
     );
     assert_eq!(service.version, "1.2.0");
@@ -268,6 +276,63 @@ fn signed_dag_pins_zip_bytes_service_interfaces_and_deterministic_reverse_topolo
     }
     let metadata: i64 = world.store.connection.query_row("SELECT count(*) FROM core_metadata WHERE key != 'package-trust-state-v1' AND key != 'schema-version'", [], |row| row.get(0)).unwrap();
     assert_eq!(metadata, 0);
+}
+
+#[test]
+fn signed_archive_profile_separates_g4_semantic_pins_and_rejects_missing_or_changed_profiles() {
+    use crate::dependencies::{DependencyCatalog, DependencyLock, PackageCandidate};
+    let mut world = World::new();
+    let consumer = world.admit(manifest("consumer", vec![]), 1);
+    let plan = world.plan(&consumer, &[]).unwrap();
+    let catalog = DependencyCatalog::new(
+        vec![PackageCandidate::from_verified_archive(&consumer).unwrap()],
+        vec![],
+    )
+    .unwrap();
+    let semantic = catalog
+        .resolve(&[identity("consumer")], &plan.lock().target)
+        .unwrap()
+        .lock;
+    assert_eq!(
+        semantic.packages[0].digest,
+        crate::catalog::digest(consumer.manifest())
+    );
+    assert_ne!(semantic.packages[0].digest, plan.candidate().package_digest);
+    assert!(
+        serde_json::from_value::<SignedArchiveLock>(serde_json::to_value(&semantic).unwrap())
+            .is_err()
+    );
+    let signed = serde_json::to_value(plan.lock()).unwrap();
+    assert!(serde_json::from_value::<DependencyLock>(signed.clone()).is_err());
+    assert_eq!(
+        serde_json::from_value::<SignedArchiveLock>(signed.clone()).unwrap(),
+        *plan.lock()
+    );
+    for profile in [None, Some("g4-semantic-manifests-v1"), Some("")] {
+        let mut changed = signed.clone();
+        if let Some(profile) = profile {
+            changed["profile"] = json!(profile);
+        } else {
+            changed.as_object_mut().unwrap().remove("profile");
+        }
+        assert!(serde_json::from_value::<SignedArchiveLock>(changed).is_err());
+    }
+    let mut domainless = signed.clone();
+    domainless.as_object_mut().unwrap().remove("profile");
+    domainless.as_object_mut().unwrap().remove("digest");
+    assert_ne!(crate::catalog::digest(&domainless), plan.lock().digest);
+    let mut changed = plan.lock().clone();
+    changed.profile = "g4-semantic-manifests-v1".into();
+    assert_eq!(
+        changed.verified_digest(),
+        Err(DependencyError::InvalidDeclaration)
+    );
+    let mut changed = plan.lock().clone();
+    changed.packages[0].package_digest = "f".repeat(64);
+    assert_ne!(changed.verified_digest().unwrap(), plan.lock().digest);
+    let mut changed = plan.lock().clone();
+    changed.packages[0].target = linux();
+    assert_ne!(changed.verified_digest().unwrap(), plan.lock().digest);
 }
 
 #[test]

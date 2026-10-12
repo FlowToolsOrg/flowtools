@@ -104,3 +104,18 @@ tool Manifest/admission、下载、生产文件竞争/断电验收、健康检�
 SEC-001/008/014/015 保持 open，ADR-0003 增加规划约束，签名协议格式不变。
 Reviewer：Codex，2026-10-11，工程自查与拒绝回归；独立实际安全 Reviewer、
 日期和结论 pending。工程测试不是签名发布或独立安全认证。
+
+## 2026-10-12 签名锁身份修正
+
+上述第四步实现与验证结果作为历史记录保留。当前实现不再将 G4 metadata
+semantic digest 原位替换为 ZIP digest；内部 G4 resolver 的 semantic pins
+保持原义，另用 `SignedArchivePin` / `SignedArchiveLock` 绑定所选原始 ZIP
+`packageDigest` 与已准入 target，显式 profile 为
+`signed-plugin-archives-v1`，不复用 G4 v1 lock。任意 metadata 的跨语言
+canonical digest 仍 pending；独立 signed ZIP artifact 绑定已有明确身份。
+
+当前兼容环境只从 T0 编译信息创建，旧 receipt 仍须按当前 trust/Host/SDK
+重新检查。后续惰性库存已持久化此独立签名锁；不产生 grant 或执行身份。
+本轮新增 corpus、拒绝回归和完整门禁状态另见
+[契约加固证据](./g5-contract-hardening.md)。历史完整 gate 不作为本轮通过，
+P2.5b/G5 与独立实际安全批准保持 pending。

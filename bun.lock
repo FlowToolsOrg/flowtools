@@ -206,6 +206,7 @@
       },
       "devDependencies": {
         "@types/node": "catalog:",
+        "oxfmt": "catalog:",
       },
     },
     "packages/sdk": {

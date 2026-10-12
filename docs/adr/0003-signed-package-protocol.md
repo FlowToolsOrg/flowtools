@@ -198,6 +198,29 @@ SEC-001/002/008/014/015 保持 open，工程自查不替代独立安全批准。
 
 ## 后续验证
 
+### 2026-10-12 契约修正
+
+SDK 生成结构契约继续保留。native operation 校验增加独立一百万步匹配
+预算，SDK parser 的 405 项共享 corpus 覆盖默认值/enum、JSON Number
+精确解析、UTF-16 长度、ECMAScript range 空白和自有属性匹配；这项额外预算
+是安装 profile 限制，不宣称 SDK 也拒绝所有超预算数据。公开兼容环境只能
+从 T0 编译信息构造，不能由包或 IPC 参数选择。
+
+签名安装不再以原始 ZIP digest 替换 G4 semantic pins。内部 G4 resolver
+保留 metadata 语义，另构造 `SignedArchivePin` / `SignedArchiveLock`，以
+`signed-plugin-archives-v1` profile 明确绑定每个已选 archive 的原始 ZIP
+`packageDigest` 与已准入 target。G4 v1 lock 不能被解释为此新签名锁。
+任意 metadata 的跨语言 canonical digest 仍 pending；原始 signed UTF-8
+bytes/ZIP 继续权威，不以规范化 metadata 重写或代替。
+
+现有库存/journal key v1 保留，外层 formatVersion 为 2；旧 prototype
+记录返回 StateInvalid，保持其原始字节和 trust floors，不自动转换、删除
+或重新 bootstrap。根链/可信时间、原始文件、事务重检、显式 abort、持续
+目录保护及平台限制仍按上文执行。见
+[契约加固证据](../validation/g5-contract-hardening.md)。本轮本地完整门禁
+通过，当前提交远端 CI 与独立安全批准 pending，P2.5b/G5、执行与成熟度
+不因此收口。
+
 P2.5b 验收归档恶意样本、staging/journal 重启恢复、取消、同版本不可变、
 last-known-good 健康检查与 metadata 跨资源提交；依赖、数据、grants 分开
 ownership。P2.1/P2.2 必须先用实际 Windows 恶意 fixtures 证明运行与 OS

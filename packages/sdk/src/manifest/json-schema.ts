@@ -198,8 +198,8 @@ function matches(schema: OperationSchema, value: JsonValue): boolean {
         !Array.isArray(value) &&
         (schema.required ?? []).every(key => hasOwn(value, key)) &&
         Object.entries(value).every(([key, item]) =>
-          schema.properties?.[key]
-            ? matches(schema.properties[key], item)
+          schema.properties && hasOwn(schema.properties, key)
+            ? matches(schema.properties[key]!, item)
             : schema.additionalProperties === true
         )
       )

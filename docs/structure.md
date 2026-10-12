@@ -17,7 +17,9 @@ P2.5b 首步已新增 `packages/runtime-core/src/packages/archive.rs`，以及
 第二步新增 `runtime-core/src/packages/manifest.rs`、`packages/tests/manifest_tests.rs`
 与 SDK `manifest/validation-contract.ts` / `validation-export.ts`。现有
 `generate-catalog.ts` 经 SDK 公共出口生成 ignored Manifest validation artifact；
-SDK/Rust 使用同一 `sdk/test/fixtures/manifest-admission-v1.json`。未新增
+SDK/Rust 使用同一 `sdk/test/fixtures/manifest-admission-v1.json`，另由实际编译
+SDK parser 生成 `runtime-core/manifest-conformance.json` 的 405 项 corpus；
+`manifest/operation.rs` 提供有限 schema/default/enum 的有预算 native 校验。未新增
 Manifest wire DTO、IPC、installer 或 executable loader。完整 metadata 与
 兼容性检查的范围见 [Manifest 证据](./validation/g5-manifest-admission.md)。
 
@@ -30,7 +32,7 @@ T0 adapter 借用已有 `DataStore` 写入 `core_metadata`，不创建第二个�
 
 第四步新增 `runtime-core/src/packages/dependencies.rs` 和
 `packages/tests/dependency_tests.rs`，复用 G4 resolver；crate 内 archive
-constructor 使用原始 ZIP identity/target，持久 trust adapter 重新检查缓存
+规划保留 G4 semantic pins，并生成独立 signed ZIP identity/target pins；持久 trust adapter 重新检查缓存
 receipt。公开 T0 参数和 opaque plan 无 Serde/IPC 入口，不产生新 store、
 安装记录或 tool inventory。范围见
 [签名依赖规划证据](./validation/g5-signed-dependencies.md)。
@@ -48,6 +50,13 @@ Windows 编译。内部函数使用官方 `windows-sys` ABI，以固定组件名
 目录句柄完成 create-only 发布/隔离，不暴露 IPC、调用方路径或 raw native
 能力。该模块包含五项真实 native 文件操作拒绝回归；现有安装回归继续覆盖
 事务、恢复与进程退出，见 [目录保护证据](./validation/g5-guarded-publication.md)。
+
+2026-10-12 的签名锁独立于 G4 v1 metadata lock，profile 为
+`signed-plugin-archives-v1`；库存/journal 原有 key v1 保留、记录改用
+formatVersion 2。旧原型记录返回 StateInvalid，保留原字节与 trust floors，
+无自动迁移。SDK JSON number/UTF-16/own-property 拒绝回归、T0 编译兼容
+来源和 read-only corpus gate 见 [契约加固证据](./validation/g5-contract-hardening.md)。
+任意 metadata 的跨语言 canonical digest、产品执行与独立安全批准仍 pending。
 
 [下一阶段实施设计](./next-milestones.md) 定义 G0–G8 的顺序与验收。
 G2 已新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`

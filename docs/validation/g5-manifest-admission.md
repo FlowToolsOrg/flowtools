@@ -85,3 +85,19 @@ all-target codegen clippy `-D warnings` 通过。
 最后的证据提交只更新文档，另跑格式与 `docs:check`。远程最终 SHA 的 CI
 结果由 PR 当前 checks 独立记录。本地通过不替代任意外部包安全性、平台隔离
 或独立审阅。
+
+## 2026-10-12 契约加固修正
+
+上述 2026-10-11 实现与通过记录作为历史证据保留。本轮继续使用 SDK 生成
+结构契约和显式 native semantics，另补 405 项实际编译 SDK parser corpus、
+native finite operation/default/enum 校验与独立一百万步匹配预算。新增
+float_roundtrip、UTF-16/npm 空白和 closed-object 自有属性拒绝回归；公开
+兼容环境仅从 T0 编译版本/target 创建。SDK 原有 90 项样本与 exporter guard
+继续保留，不能因新 corpus 替代或减少旧断言。
+
+后续已交付持久信任、签名依赖、Windows 惰性库存/journal 与目录保护；这些
+控制不能因本文件早期描述而被记为尚未实现。签名 ZIP 绑定现使用独立 archive
+pins/lock，不覆盖 G4 semantic pin。任意 metadata 的跨语言 canonical
+digest 仍 pending；Manifest receipt 不授予安装/执行权限。本轮本地完整门禁
+通过，当前提交远端 CI 与独立安全批准 pending，详见
+[本轮契约加固](./g5-contract-hardening.md)。

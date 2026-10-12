@@ -24,6 +24,19 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 
 ## 风险台账
 
+2026-10-12 契约加固保留 SDK 结构 exporter，并补齐有预算 native operation
+比对、实际编译 SDK 的 405 项 corpus、精确浮点解析、UTF-16/npm 空白语义
+及 closed-object 自有属性检查；T0 兼容环境只从编译来源构造。签名归档使用
+独立 `SignedArchivePin` / `SignedArchiveLock` 与
+`signed-plugin-archives-v1` profile 绑定原始 ZIP/target，G4 semantic pins
+保持原义。库存/journal 外层 format 2 拒绝旧原型记录，不改原字节或 floors。
+任意 metadata 的跨语言 canonical digest 仍 pending；独立 ZIP 绑定不会
+产生授权。新增拒绝样本和本轮验证状态见
+[契约加固证据](../validation/g5-contract-hardening.md)。此前完整 gate 失败
+保留，修改后本地完整集成门禁通过，当前提交远端 CI 与独立安全批准 pending，
+历史通过不作为本轮通过。SEC-001/002/008/014/015
+继续 open，Codex 工程自查不替代实际独立安全 reviewer/date/conclusion。
+
 2026-10-11 P2.5b 第六步在
 [native 发布文件层](../../packages/runtime-core/src/packages/install/files/rename.rs)
 修补第五步临时释放内部父目录 guards 的窗口：所有父目录句柄持续持有且

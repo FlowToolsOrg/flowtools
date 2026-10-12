@@ -1,15 +1,66 @@
 //! SDK-generated Manifest structure with explicit, versioned native semantics.
 //! Inert admission only: no installation, lock authority, grants or execution.
-use super::{archive::ValidatedArchive, strict_json, PackageError, PackageKind, PackageTarget};
+#[cfg(test)]
+mod conformance_tests;
+mod operation;
+
+use super::{
+    archive::ValidatedArchive, strict_json, PackageArch, PackageError, PackageKind,
+    PackagePlatform, PackageTarget,
+};
 use crate::dependencies::{manifest_range, manifest_version};
 use serde_json::{json, Value};
 use std::{collections::HashSet, sync::OnceLock};
 
 /// T0 build/runtime compatibility, never an operation payload or grant.
+/// External callers obtain this from the current build via [`Self::embedded`].
+///
+/// ```compile_fail
+/// use flowtools_runtime_core::packages::{PackageTarget, PackagePlatform, PackageArch};
+/// use flowtools_runtime_core::packages::manifest::ManifestCompatibility;
+/// let supplied = ManifestCompatibility {
+///     host_version: "999.0.0".into(),
+///     sdk_version: "999.0.0".into(),
+///     target: PackageTarget { platform: PackagePlatform::Windows, arch: PackageArch::X64 },
+/// };
+/// ```
 pub struct ManifestCompatibility {
-    pub host_version: String,
-    pub sdk_version: String,
-    pub target: PackageTarget,
+    pub(crate) host_version: String,
+    pub(crate) sdk_version: String,
+    pub(crate) target: PackageTarget,
+}
+
+impl ManifestCompatibility {
+    /// The compatibility authority is this T0 build, never package or IPC data.
+    pub fn embedded() -> Result<Self, PackageError> {
+        let host: Value =
+            serde_json::from_str(include_str!("../../../../apps/runtime/package.json"))
+                .map_err(|_| PackageError::ManifestIncompatible)?;
+        let sdk: Value = serde_json::from_str(include_str!("../../../sdk/package.json"))
+            .map_err(|_| PackageError::ManifestIncompatible)?;
+        let platform = match std::env::consts::OS {
+            "windows" => PackagePlatform::Windows,
+            "macos" => PackagePlatform::Macos,
+            "linux" => PackagePlatform::Linux,
+            _ => return Err(PackageError::ManifestIncompatible),
+        };
+        let arch = match std::env::consts::ARCH {
+            "x86_64" => PackageArch::X64,
+            "aarch64" => PackageArch::Arm64,
+            _ => return Err(PackageError::ManifestIncompatible),
+        };
+        Ok(Self {
+            host_version: host["version"]
+                .as_str()
+                .ok_or(PackageError::ManifestIncompatible)?
+                .into(),
+            sdk_version: sdk["version"]
+                .as_str()
+                .ok_or(PackageError::ManifestIncompatible)?
+                .into(),
+            target: PackageTarget { platform, arch },
+        })
+    }
 }
 
 /// Contains the original verified bytes and normalized metadata. Still inert.
@@ -81,49 +132,86 @@ fn contract() -> Result<&'static Contract, PackageError> {
 fn invalid<T>() -> Result<T, PackageError> {
     Err(PackageError::ManifestInvalid)
 }
-fn bounded(value: &Value, depth: usize, nodes: &mut usize) -> bool {
-    *nodes += 1;
-    if depth > 32 || *nodes > 100_000 {
-        return false;
-    }
+// JSON.parse produces IEEE754 Numbers. Preserve integral values in the safe
+// domain in normalized metadata, rounding larger JSON numbers as JS does.
+fn normalize_numbers(value: &mut Value) -> Result<(), PackageError> {
     match value {
-        Value::Array(items) => items.iter().all(|item| bounded(item, depth + 1, nodes)),
-        Value::Object(items) => items.iter().all(|(key, item)| {
-            !matches!(key.as_str(), "__proto__" | "constructor" | "prototype")
-                && bounded(item, depth + 1, nodes)
-        }),
-        Value::String(text) => text.encode_utf16().count() <= 1_048_576,
-        _ => true,
+        Value::Number(number) => {
+            let number = number
+                .as_f64()
+                .filter(|number| number.is_finite())
+                .ok_or(PackageError::ManifestInvalid)?;
+            *value = if number.fract() == 0.0 && number.abs() <= 9_007_199_254_740_991.0 {
+                Value::from(number as i64)
+            } else {
+                Value::Number(
+                    serde_json::Number::from_f64(number).ok_or(PackageError::ManifestInvalid)?,
+                )
+            };
+        }
+        Value::Array(values) => {
+            for value in values {
+                normalize_numbers(value)?;
+            }
+        }
+        Value::Object(values) => {
+            for value in values.values_mut() {
+                normalize_numbers(value)?;
+            }
+        }
+        _ => {}
     }
+    Ok(())
 }
+
 pub(super) fn validate_bytes(
     bytes: &[u8],
     target: &ManifestCompatibility,
 ) -> Result<Value, PackageError> {
+    // The signed installation profile bounds original UTF-8 bytes separately
+    // from the SDK's JSON.stringify UTF-16 data budget.
     if bytes.len() > 1_048_576 {
         return invalid();
     }
-    let mut value = strict_json(bytes).map_err(|_| PackageError::ManifestInvalid)?;
+    let value = strict_json(bytes).map_err(|_| PackageError::ManifestInvalid)?;
+    validate_value(&value, Some(target))
+}
+
+fn validate_value(
+    value: &Value,
+    target: Option<&ManifestCompatibility>,
+) -> Result<Value, PackageError> {
+    if !operation::bounded_json(value, 1_048_576) {
+        return invalid();
+    }
+    let mut value = value.clone();
+    normalize_numbers(&mut value)?;
     let contract = contract()?;
-    if !bounded(&value, 0, &mut 0) || !contract.manifest_validator.is_valid(&value) {
+    if !contract.manifest_validator.is_valid(&value) {
         return invalid();
     }
     check(&contract.manifest, &value, &contract.manifest)?;
-    let host =
-        manifest_version(&target.host_version).map_err(|_| PackageError::ManifestIncompatible)?;
-    let sdk =
-        manifest_version(&target.sdk_version).map_err(|_| PackageError::ManifestIncompatible)?;
-    let host_range = manifest_range(text(&value["engines"]["host"])?)
-        .map_err(|_| PackageError::ManifestInvalid)?;
-    let sdk_range = manifest_range(text(&value["engines"]["sdk"])?)
-        .map_err(|_| PackageError::ManifestInvalid)?;
-    let platform =
-        serde_json::to_value(&target.target).map_err(|_| PackageError::ManifestIncompatible)?;
-    if !host_range.satisfies(&host)
-        || !sdk_range.satisfies(&sdk)
-        || !array(&value["targets"])?.contains(&platform)
-    {
-        return Err(PackageError::ManifestIncompatible);
+    if let Some(target) = target {
+        let host = target
+            .host_version
+            .parse::<node_semver::Version>()
+            .map_err(|_| PackageError::ManifestIncompatible)?;
+        let sdk = target
+            .sdk_version
+            .parse::<node_semver::Version>()
+            .map_err(|_| PackageError::ManifestIncompatible)?;
+        let host_range = manifest_range(text(&value["engines"]["host"])?)
+            .map_err(|_| PackageError::ManifestInvalid)?;
+        let sdk_range = manifest_range(text(&value["engines"]["sdk"])?)
+            .map_err(|_| PackageError::ManifestInvalid)?;
+        let platform =
+            serde_json::to_value(&target.target).map_err(|_| PackageError::ManifestIncompatible)?;
+        if !host_range.satisfies(&host)
+            || !sdk_range.satisfies(&sdk)
+            || !array(&value["targets"])?.contains(&platform)
+        {
+            return Err(PackageError::ManifestIncompatible);
+        }
     }
     value
         .as_object_mut()
@@ -350,135 +438,10 @@ fn dependencies_semantics(value: &Value) -> Result<bool, PackageError> {
 
 fn operation(value: &Value) -> Result<bool, PackageError> {
     let contract = contract()?;
-    let encoded = serde_json::to_string(value).map_err(|_| PackageError::ManifestInvalid)?;
-    if encoded.encode_utf16().count() > 65_536 || !contract.operation_validator.is_valid(value) {
+    if !contract.operation_validator.is_valid(value) {
         return Ok(false);
     }
     check(&contract.operation, value, &contract.operation)?;
-    Ok(well_formed(value))
-}
-fn well_formed(value: &Value) -> bool {
-    let has = |key| value.get(key).is_some();
-    let kind = value["type"].as_str().unwrap_or("");
-    if kind.is_empty() && !has("anyOf") && !has("enum") && !has("const") {
-        return false;
-    }
-    if kind == "object" {
-        let required = value["required"].as_array().cloned().unwrap_or_default();
-        if !has("additionalProperties")
-            || !unique(required.iter().cloned())
-            || required
-                .iter()
-                .any(|key| value["properties"].get(key.as_str().unwrap()).is_none())
-        {
-            return false;
-        }
-    } else if ["properties", "required", "additionalProperties"]
-        .iter()
-        .any(|key| has(key))
-    {
-        return false;
-    }
-    if if kind == "array" {
-        !has("items")
-    } else {
-        ["items", "minItems", "maxItems"].iter().any(|key| has(key))
-    } {
-        return false;
-    }
-    if kind != "string" && ["minLength", "maxLength"].iter().any(|key| has(key)) {
-        return false;
-    }
-    if !matches!(kind, "number" | "integer")
-        && ["minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum"]
-            .iter()
-            .any(|key| has(key))
-    {
-        return false;
-    }
-    for (min, max) in [
-        ("minLength", "maxLength"),
-        ("minItems", "maxItems"),
-        ("minimum", "maximum"),
-    ] {
-        if value[min]
-            .as_f64()
-            .zip(value[max].as_f64())
-            .is_some_and(|(min, max)| min > max)
-        {
-            return false;
-        }
-    }
-    if value["enum"]
-        .as_array()
-        .is_some_and(|items| !unique(items.iter().cloned()))
-    {
-        return false;
-    }
-    if value["properties"]
-        .as_object()
-        .is_some_and(|items| !items.values().all(well_formed))
-        || value.get("items").is_some_and(|items| !well_formed(items))
-        || value["anyOf"]
-            .as_array()
-            .is_some_and(|items| !items.iter().all(well_formed))
-    {
-        return false;
-    }
-    !has("default") || operation_matches(value, &value["default"])
-}
-/// Mirrors the finite SDK value semantics, including annotations-only constraints.
-fn operation_matches(schema: &Value, value: &Value) -> bool {
-    if schema["anyOf"]
-        .as_array()
-        .is_some_and(|items| !items.iter().any(|branch| operation_matches(branch, value)))
-        || schema["enum"]
-            .as_array()
-            .is_some_and(|items| !items.iter().any(|item| same(item, value)))
-        || schema
-            .get("const")
-            .is_some_and(|expected| !same(expected, value))
-    {
-        return false;
-    }
-    let bounds = |size: f64, min: &str, max: &str| {
-        size >= schema[min].as_f64().unwrap_or(f64::NEG_INFINITY)
-            && size <= schema[max].as_f64().unwrap_or(f64::INFINITY)
-    };
-    match schema["type"].as_str().unwrap_or("") {
-        "null" => value.is_null(),
-        "boolean" => value.is_boolean(),
-        "string" => value
-            .as_str()
-            .is_some_and(|text| bounds(text.chars().count() as f64, "minLength", "maxLength")),
-        "number" | "integer" => value.as_f64().is_some_and(|number| {
-            (schema["type"] != "integer" || number.fract() == 0.0)
-                && bounds(number, "minimum", "maximum")
-                && number
-                    > schema["exclusiveMinimum"]
-                        .as_f64()
-                        .unwrap_or(f64::NEG_INFINITY)
-                && number < schema["exclusiveMaximum"].as_f64().unwrap_or(f64::INFINITY)
-        }),
-        "array" => value.as_array().is_some_and(|items| {
-            bounds(items.len() as f64, "minItems", "maxItems")
-                && items
-                    .iter()
-                    .all(|item| operation_matches(&schema["items"], item))
-        }),
-        "object" => value.as_object().is_some_and(|items| {
-            schema["required"].as_array().is_none_or(|required| {
-                required
-                    .iter()
-                    .all(|key| items.contains_key(key.as_str().unwrap()))
-            }) && items.iter().all(|(key, item)| {
-                schema["properties"]
-                    .get(key)
-                    .map_or(schema["additionalProperties"] == true, |child| {
-                        operation_matches(child, item)
-                    })
-            })
-        }),
-        _ => true,
-    }
+    operation::validate_operation_schema(value)?;
+    Ok(true)
 }

@@ -127,3 +127,23 @@ Reviewer：Codex，2026-10-11，工程自查；独立实际安全 Reviewer/date/
 pending。安装脚本、可执行 artifact layout、健康/LKG、产品管理、平台隔离、
 生产文件竞争/ACL/断电验收、受控 trust recovery/rollback、tool admission/GC
 及 G6 工具运行仍待后续。
+
+## 2026-10-12 惰性记录格式修正
+
+第五/六步已有事务、信任与持续目录保护证据完整保留。当前惰性库存使用独立
+`SignedArchivePin` / `SignedArchiveLock`，以原始 ZIP `packageDigest`、实际
+target 和 `signed-plugin-archives-v1` profile 绑定 artifact；内部 G4
+semantic pins 保留旧义，G4 v1 lock 不得直接当作 signed archive lock。
+任意 metadata 的跨语言 canonical digest 仍 pending，不影响原始签名 ZIP
+作为独立 artifact 身份，也不产生执行权限。
+
+`package-install-inventory-v1` 与 `package-install-pending-v1` key 保留，
+库存与 journal 外层 formatVersion 改为 2。旧 prototype 格式返回 StateInvalid，拒绝时
+保留数据库原字节与 trust floors；无自动迁移、清空、回退或重新 bootstrap。
+受控升级/恢复仍须单独实现与验收，不能把拒绝旧格式描述为自动迁移成功。
+
+本轮本地完整集成 gate 通过，原失败和历史通过分别保留；当前提交远端 CI
+与独立安全批准 pending，实际结果见
+[契约加固证据](./g5-contract-hardening.md)。惰性事务、显式 abort、当前信任
+重检及目录保护不等于产品安装/激活、健康/LKG、物理断电验收或第三方 sandbox。
+P2.5b/G5 与独立安全批准保持 pending。

@@ -3,22 +3,25 @@
 G5 P2.5a adds a prototype signed-package authoring contract and read-only Rust
 verification using DSSE/Ed25519, scoped publisher roots, rotation, revocation
 and offline/rollback refusal fixtures. See the [protocol](./docs/adr/0003-signed-package-protocol.md)
-and [validation](./docs/validation/g5-package-protocol.md). Installation and
-third-party execution remain pending; G4 dependency locks must precede P2.5b.
-There are no production trust pins or persistent trust floors in this step.
+and [validation](./docs/validation/g5-package-protocol.md). This step provides
+no installation, production trust pins or persistent trust floors; the later
+P2.5b steps below add durable trust and inert installation. Third-party execution
+remains pending.
 
 G5 P2.5b now has a first, independently testable archive-admission step:
 the Rust verifier checks signed ZIP32 inventories in memory, with bounded
 stored/deflate decoding and hostile archive regressions. See the
 [archive evidence](./docs/validation/g5-archive-admission.md). This produces
-inert bytes; transaction installation and G5/G6 execution remain pending.
+inert bytes; the fifth step supplies inert transactions. G5/G6 execution remains
+pending.
 
 The second P2.5b step validates complete Plugin Manifest v1 metadata and
 Host/SDK/target compatibility from those verified bytes. Rust uses an
-SDK-generated shape with explicit native semantics and 90 shared cases.
+SDK-generated shape with explicit native semantics, the original 90 shared
+cases and 405 cases generated from the actual compiled SDK parser.
 See the [Manifest evidence](./docs/validation/g5-manifest-admission.md).
-Installed dependency locks and transaction recovery
-remain pending; the resulting archive is inert and grants no execution.
+Build-owned compatibility and bounded operation validation grant no execution;
+the fifth step below supplies inert installation and recovery.
 
 The third P2.5b step persists descriptor trust in Runtime's existing SQLite
 writer: pinned root chains, observed time, immutable versions and release
@@ -26,7 +29,8 @@ floors survive restarts. Supported backup restores block signed-package
 admission until a controlled trust recovery exists. See the
 [durable trust evidence](./docs/validation/g5-durable-trust.md). Observed
 descriptors are not installed or known-good artifacts; rollback approval,
-production pins, installation and platform isolation remain pending.
+production pins and platform isolation remain pending. Inert installation is
+provided by the fifth step below.
 
 The fourth P2.5b step builds inert dependency plans from compatible signed
 archives, binding package and service pins to the original ZIP digest and the
@@ -51,6 +55,18 @@ to held handles and revalidate candidate bytes while the source is pinned. See
 Internal parents permit write sharing but never delete sharing; private profile
 ACLs, complete filesystem race hardening and physical power-loss acceptance
 remain pending. This does not enable third-party execution.
+
+The 2026-10-12 contract hardening keeps G4 semantic pins intact and introduces
+separate `SignedArchivePin` / `SignedArchiveLock` identities for original ZIP
+digests and admitted targets, using profile `signed-plugin-archives-v1`.
+Inert inventory and journal keys stay at v1 with outer format 2; old prototype
+records fail closed without automatic conversion or floor changes. Native
+validation now matches SDK JSON numbers, UTF-16 range bounds and own-property
+schema checks. Arbitrary metadata canonical digests still need a shared
+cross-language contract. See [contract hardening](./docs/validation/g5-contract-hardening.md).
+The current local integrated quality gates passed. Remote CI for the current
+commit and independent security approval remain pending; historical passing
+runs do not validate this revision.
 
 > An extensible, cross-platform toolbox powered by a plugin runtime.
 > Plugin Runtime for AI Age
@@ -927,8 +943,8 @@ Updates wait for accepted work and owned processes, then back up and migrate;
 uncertain commits refuse admission and require recovery. CLI
 `dependencies unload-plan` and `dependencies calls` inspect metadata only.
 The twelve production built-ins still declare no services. G4 implementation
-remains prototype; comprehensive acceptance and independent security approval
-are pending, including a separate fixture for abnormal drain. Signed installation,
+remains prototype; six real abnormal-drain fixtures have independent baseline
+evidence, while this integration and independent security approval remain pending. Signed installation,
 third-party isolation and real tool storage remain G5/G6.
 See [implementation and validation](docs/validation/g4-service-calls.md).
 

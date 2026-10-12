@@ -238,16 +238,35 @@ fn npm_atom(value: &str) -> Result<Option<Range>, DependencyError> {
         .map_err(|_| DependencyError::InvalidDeclaration)
 }
 pub(crate) fn range(value: &str) -> Result<NpmRange, DependencyError> {
-    if value.is_empty()
-        || value.len() > 256
-        || !numeric_prereleases_supported(value)
-        || !range_source_supported(value)
+    if value.is_empty() || value.encode_utf16().count() > 256 {
+        return Err(DependencyError::InvalidDeclaration);
+    }
+    // npm uses ECMAScript whitespace and JavaScript string lengths. Rust's
+    // Unicode whitespace includes NEL but omits BOM, and UTF-8 byte lengths
+    // would reject otherwise valid 256-unit declarations such as NBSP/BOM.
+    let normalized: String = value
+        .chars()
+        .map(|character| {
+            if matches!(character,
+                '\u{0009}'..='\u{000d}' | '\u{0020}' | '\u{00a0}' | '\u{1680}'
+                | '\u{2000}'..='\u{200a}' | '\u{2028}' | '\u{2029}'
+                | '\u{202f}' | '\u{205f}' | '\u{3000}' | '\u{feff}')
+            {
+                ' '
+            } else {
+                character
+            }
+        })
+        .collect();
+    if !normalized.is_ascii()
+        || !numeric_prereleases_supported(&normalized)
+        || !range_source_supported(&normalized)
     {
         return Err(DependencyError::InvalidDeclaration);
     }
     let mut branches = Vec::new();
-    for branch in value.split("||") {
-        let tokens: Vec<_> = branch.split_whitespace().collect();
+    for branch in normalized.split("||") {
+        let tokens: Vec<_> = branch.split_ascii_whitespace().collect();
         let mut intersection = Some(Range::any());
         let mut n = 0;
         while n < tokens.len() {
@@ -283,13 +302,14 @@ fn string(value: &Value, key: &str) -> Result<String, DependencyError> {
 
 impl PackageCandidate {
     /// Called only by the signed planner after current durable trust checks.
-    /// The original ZIP identity and admitted target override metadata claims.
+    /// Only the admitted target overrides metadata claims. The internal solver
+    /// retains G4 semantic pins; the signed planner maps its final selection to
+    /// separately typed exact ZIP pins.
     pub(crate) fn from_verified_archive(
         archive: &crate::packages::manifest::CompatiblePluginArchive,
     ) -> Result<Self, DependencyError> {
         let mut candidate = Self::from_manifest(archive.manifest())?;
         let receipt = archive.archive().descriptor();
-        candidate.pin.digest = receipt.package_digest().into();
         candidate.targets = vec![serde_json::from_value(
             serde_json::to_value(&receipt.payload().target)
                 .map_err(|_| DependencyError::InvalidDeclaration)?,

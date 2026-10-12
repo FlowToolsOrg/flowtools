@@ -8,6 +8,7 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
   unlinkSync,
 } from 'node:fs'
@@ -369,6 +370,88 @@ test('Runtime codegen stays clean after Windows CRLF checkout and rejects conten
     expect(dirty.status).toBe(1)
     expect(dirty.stdout).toContain(files[0]!)
   } finally {
+    rmSync(fixture, { recursive: true, force: true })
+  }
+}, 30_000)
+
+test('Manifest conformance gate refuses drift without writes and requires explicit regeneration', () => {
+  const root = fileURLToPath(new URL('../', import.meta.url))
+  const fixtureParent = resolve(root, 'packages/runtime-core/.generated')
+  const fixture = resolve(
+    fixtureParent,
+    `g5-manifest-conformance-${randomUUID()}`
+  )
+  if (dirname(fixture) !== fixtureParent) {
+    throw new Error('Fixture cleanup target escaped generated directory')
+  }
+  const runtime = join(fixture, 'packages', 'runtime-core')
+  const source = join(root, 'packages', 'runtime-core')
+  const generator = join(runtime, 'manifest-conformance.ts')
+  const corpus = join(runtime, 'manifest-conformance.json')
+  const dependencies = join(runtime, 'node_modules')
+  let linkedDependencies = false
+  const expected = readFileSync(join(source, 'manifest-conformance.json'))
+  const manifest = JSON.parse(
+    readFileSync(join(source, 'package.json'), 'utf8')
+  ) as { scripts: Record<string, string> }
+  for (const task of ['generate', 'verify:bindings', 'test']) {
+    expect(manifest.scripts[task]).toMatch(
+      /^bun run manifest-conformance\.ts --check && /
+    )
+  }
+  const run = (args: string[] = []) =>
+    spawnSync(process.execPath, [generator, ...args], {
+      cwd: runtime,
+      encoding: 'utf8',
+      env: {
+        PATH: process.env.PATH,
+        SystemRoot: process.env.SystemRoot,
+        TEMP: process.env.TEMP,
+        TMP: process.env.TMP,
+      },
+    })
+  try {
+    mkdirSync(runtime, { recursive: true })
+    symlinkSync(join(source, 'node_modules'), dependencies, 'junction')
+    linkedDependencies = true
+    writeFileSync(
+      generator,
+      readFileSync(join(source, 'manifest-conformance.ts'))
+    )
+    writeFileSync(corpus, expected)
+    writeFileSync(
+      join(fixture, '.oxfmtrc.json'),
+      readFileSync(join(root, '.oxfmtrc.json'))
+    )
+    for (const args of [[], ['--check']]) {
+      const clean = run(args)
+      expect(clean.error).toBeUndefined()
+      expect(clean.status, clean.stdout + clean.stderr).toBe(0)
+      expect(clean.stdout).toContain('unchanged')
+      expect(readFileSync(corpus).equals(expected)).toBe(true)
+    }
+    const changed = JSON.parse(expected.toString('utf8')) as {
+      cases: { normalized?: { name: string } }[]
+    }
+    const first = changed.cases[0]?.normalized
+    expect(first).toBeDefined()
+    first!.name = 'CI controlled conformance drift'
+    const drift = Buffer.from(JSON.stringify(changed))
+    writeFileSync(corpus, drift)
+    const denied = run(['--check'])
+    expect(denied.error).toBeUndefined()
+    expect(denied.status, denied.stdout + denied.stderr).not.toBe(0)
+    expect(denied.stderr).toContain('SDK Manifest conformance drift')
+    expect(readFileSync(corpus).equals(drift)).toBe(true)
+    const regenerated = run(['--write'])
+    expect(regenerated.error).toBeUndefined()
+    expect(regenerated.status, regenerated.stdout + regenerated.stderr).toBe(0)
+    expect(regenerated.stdout).toContain('written')
+    expect(readFileSync(corpus, 'utf8')).toBe(
+      expected.toString('utf8').replaceAll('\r\n', '\n')
+    )
+  } finally {
+    if (linkedDependencies) unlinkSync(dependencies)
     rmSync(fixture, { recursive: true, force: true })
   }
 }, 30_000)

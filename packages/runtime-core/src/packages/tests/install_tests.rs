@@ -207,7 +207,10 @@ fn real_signed_packages_install_inert_blobs_and_locks_in_the_existing_writer() {
     world.install(&provider).unwrap();
     world.install(&middle).unwrap();
     let receipt = world.install(&consumer).unwrap();
-    assert_eq!(receipt.pin().digest, consumer.payload.archive.sha256);
+    assert_eq!(
+        receipt.pin().package_digest,
+        consumer.payload.archive.sha256
+    );
     assert_eq!(receipt.dependency_lock().packages.len(), 3);
     assert_eq!(receipt.dependency_lock().services.len(), 2);
     assert_eq!(
@@ -551,18 +554,18 @@ fn provider_updates_retain_old_artifacts_and_do_not_silently_rebind_existing_tra
         .dependency_lock()
         .packages
         .iter()
-        .any(|pin| pin.digest == second.payload.archive.sha256));
+        .any(|pin| pin.package_digest == second.payload.archive.sha256));
     let receipt = world.install(&consumer).unwrap();
     assert!(receipt
         .dependency_lock()
         .packages
         .iter()
-        .any(|pin| pin.digest == second.payload.archive.sha256));
+        .any(|pin| pin.package_digest == second.payload.archive.sha256));
     assert!(!receipt
         .dependency_lock()
         .packages
         .iter()
-        .any(|pin| pin.digest == first.payload.archive.sha256));
+        .any(|pin| pin.package_digest == first.payload.archive.sha256));
 }
 
 #[test]
@@ -693,6 +696,156 @@ fn corrupt_or_changed_journals_and_inventory_refuse_to_commit_or_recover() {
         ));
         assert!(world.raw(PENDING).is_some());
         assert!(world.abort().is_err());
+    }
+}
+
+#[test]
+fn incompatible_lock_profiles_and_v1_state_refuse_without_rewriting_bytes_or_trust_floors() {
+    use crate::dependencies::{DependencyCatalog, DependencyIdentity, PackageCandidate};
+    fn legacy_lock(lock: &mut Value) {
+        fn legacy_pin(pin: &mut Value) {
+            let fields = pin.as_object_mut().unwrap();
+            let digest = fields.remove("packageDigest").unwrap();
+            fields.remove("target");
+            fields.insert("digest".into(), digest);
+        }
+        lock.as_object_mut().unwrap().remove("profile");
+        for pin in lock["packages"].as_array_mut().unwrap() {
+            legacy_pin(pin);
+        }
+        for service in lock["services"].as_array_mut().unwrap() {
+            legacy_pin(&mut service["provider"]);
+        }
+        lock.as_object_mut().unwrap().remove("digest");
+        lock["digest"] = json!(crate::catalog::digest(lock));
+    }
+    for mode in [
+        "g4-lock",
+        "missing-profile",
+        "changed-profile",
+        "inventory-version-one",
+        "inventory-legacy-v1",
+        "journal-version-one",
+        "journal-legacy-v1",
+    ] {
+        let mut world = World::new();
+        let input = world.input(manifest("consumer", vec![]), 1);
+        world.install(&input).unwrap();
+        let candidate = world.input(revision(), 2);
+        let key = if mode.starts_with("journal") {
+            let now = world.fixture.policy.clock.now;
+            assert_eq!(
+                install_with_hook(
+                    &world.trust,
+                    world.store.as_mut().unwrap(),
+                    candidate.borrow(),
+                    &world.compatibility,
+                    || now,
+                    |phase, _| {
+                        if phase == InstallPhase::JournalCommitted {
+                            Err(InstallError::Storage)
+                        } else {
+                            Ok(())
+                        }
+                    },
+                )
+                .err(),
+                Some(InstallError::Storage)
+            );
+            PENDING
+        } else {
+            INVENTORY
+        };
+        let mut state: Value = serde_json::from_str(&world.raw(key).unwrap()).unwrap();
+        let lock = if key == PENDING {
+            &mut state["record"]["lock"]
+        } else {
+            &mut state["records"][0]["lock"]
+        };
+        match mode {
+            "g4-lock" => {
+                let manifest: Value = serde_json::from_slice(&input.manifest).unwrap();
+                let catalog = DependencyCatalog::new(
+                    vec![PackageCandidate::from_manifest(&manifest).unwrap()],
+                    vec![],
+                )
+                .unwrap();
+                *lock = serde_json::to_value(
+                    catalog
+                        .resolve(
+                            &[DependencyIdentity {
+                                publisher: input.payload.publisher.clone(),
+                                id: input.payload.id.clone(),
+                            }],
+                            &serde_json::from_value(
+                                serde_json::to_value(&input.payload.target).unwrap(),
+                            )
+                            .unwrap(),
+                        )
+                        .unwrap()
+                        .lock,
+                )
+                .unwrap();
+            }
+            "missing-profile" => {
+                lock.as_object_mut().unwrap().remove("profile");
+            }
+            "changed-profile" => lock["profile"] = json!("g4-semantic-manifests-v1"),
+            "inventory-legacy-v1" | "journal-legacy-v1" => legacy_lock(lock),
+            _ => {}
+        }
+        if mode.contains("version-one") || mode.ends_with("legacy-v1") {
+            state["formatVersion"] = json!(1);
+        }
+        let corrupted = state.to_string();
+        world
+            .store
+            .as_ref()
+            .unwrap()
+            .connection
+            .execute(
+                "UPDATE core_metadata SET value=?1 WHERE key=?2",
+                [&corrupted, key],
+            )
+            .unwrap();
+        let inventory = world.raw(INVENTORY);
+        let pending = world.raw(PENDING);
+        let trust = world.raw("package-trust-state-v1");
+        let floor = world.raw("package-trust-recovery-required");
+        let blobs: Vec<_> = ["package.zip", "manifest.json", "seal.json"]
+            .iter()
+            .map(|name| {
+                let path = world.artifact(&input).join(name);
+                let bytes = std::fs::read(&path).unwrap();
+                (path, bytes)
+            })
+            .collect();
+        assert_eq!(
+            world.inspect().err(),
+            Some(InstallError::StateInvalid),
+            "{mode}"
+        );
+        assert_eq!(
+            world.abort().err(),
+            Some(InstallError::StateInvalid),
+            "{mode}"
+        );
+        assert_eq!(
+            world.install(&candidate).err(),
+            Some(InstallError::StateInvalid),
+            "{mode}"
+        );
+        assert_eq!(world.raw(INVENTORY), inventory, "{mode}");
+        assert_eq!(world.raw(PENDING), pending, "{mode}");
+        assert_eq!(world.raw("package-trust-state-v1"), trust, "{mode}");
+        assert_eq!(
+            world.raw("package-trust-recovery-required"),
+            floor,
+            "{mode}"
+        );
+        for (path, bytes) in blobs {
+            assert_eq!(std::fs::read(path).unwrap(), bytes, "{mode}");
+        }
     }
 }
 

@@ -474,6 +474,51 @@ test('browser gate bounds file concurrency without replacing or narrowing the ru
   expect(app.devDependencies.playwright).toBe('1.59.1')
 })
 
+test('browser API uses the actual OS-selected IPv4 loopback port with strict binding', () => {
+  const config = new URL(
+    '../apps/ui-test/vitest.browser.config.ts',
+    import.meta.url
+  )
+  const probe = spawnSync(
+    process.execPath,
+    [
+      '-e',
+      `import assert from 'node:assert/strict'
+import { Server, createServer } from 'node:net'
+const selected = []
+const original = Server.prototype.listen
+Server.prototype.listen = function (...args) {
+  if (args[0] === 0 && args[1] === '127.0.0.1') {
+    this.once('listening', () => selected.push(this.address().port))
+  }
+  return original.apply(this, args)
+}
+const exported = (await import(${JSON.stringify(config.href)})).default
+const config = await exported({ command: 'serve', mode: 'test' })
+const api = config.test.browser.api
+assert.equal(selected.length, 1)
+assert.equal(api.port, selected[0])
+assert.ok(api.port > 0)
+assert.equal(api.host, '127.0.0.1')
+assert.equal(api.strictPort, true)
+const rebound = createServer()
+await new Promise((resolve, reject) => {
+  rebound.once('error', reject)
+  rebound.listen({ port: api.port, host: api.host, exclusive: true }, resolve)
+})
+await new Promise((resolve, reject) => rebound.close(error => error ? reject(error) : resolve()))
+process.stdout.write('OS-selected browser API port verified\\n')`,
+    ],
+    {
+      cwd: fileURLToPath(new URL('../apps/ui-test', import.meta.url)),
+      encoding: 'utf8',
+    }
+  )
+  expect(probe.error).toBeUndefined()
+  expect(probe.status, probe.stdout + probe.stderr).toBe(0)
+  expect(probe.stdout.trim()).toBe('OS-selected browser API port verified')
+}, 30_000)
+
 test('PowerShell propagates native failure before subsequent gates run', () => {
   const success = runPowerShell(
     `. ${helperPath}; Invoke-QualityCommand 'fixture' bun @('-e', 'process.exit(0)')`

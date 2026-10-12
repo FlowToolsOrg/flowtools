@@ -106,3 +106,20 @@ rollback、健康/LKG、完整文件竞争/ACL/断电验收、tool admission/GC�
 平台隔离与 G6 工具执行仍 pending。SEC-001/002/008/014/015 保持 open。
 Reviewer：Codex，2026-10-12，工程自查；实际独立安全 reviewer/date/conclusion
 pending，工程检查不替代其批准。
+
+## 2026-10-12 远端浏览器监听修正
+
+提交 `b25e0f4` 的 PR Windows job `114622096409` 在浏览器服务监听
+`::1:63315` 时返回 EACCES，尚未收集 UI 测试；不能将其记为完整 CI 通过。
+日志没有端口保留表或系统策略证据，不进一步推断拒绝原因。
+
+固定 Vitest 4.1.5 会将 api.port=0 还原成默认端口。因此配置先让操作系统
+在 `127.0.0.1:0` 选择可监听端口，再关闭探针并用该非零端口启动实际 API。
+strictPort=true 保留端口竞争时的直接失败，没有重试、隐藏失败或浏览器替换。
+实际加载配置的回归记录真实 Server.listen 分配结果，并核对 IPv4、端口传递
+与探针释放；不假定操作系统永远不会选择某个具体端口。
+
+修正后独立验证：全部 CI contracts 14 项/125 条断言、pinned Chromium 27
+文件/72 项（15.98s）、相关 type-aware lint 和 UI types 通过；docs gate
+再次通过。浏览器测试仍逐文件串行，原测试和断言全部保留。修改后远端完整
+CI 以 PR 当前 Checks 为准；历史本地通过及失败记录均保留。

@@ -245,6 +245,12 @@ create-only moves、显式 resume/abort 与 completed/aborted receipt 见
 [核对验证](../validation/g5-inventory-reconciliation.md)。残留字节 fingerprint
 不能证明签名身份或授予运行；隔离副本仍计入预算，无自动 GC。
 
+最终安装重检前为 candidate 和所选 provider 的原始 Manifest/ZIP/seal
+同时取得无 write/delete sharing 的 ArtifactPins，目录及文件句柄保留至
+库存/journal 同事务 commit。既有 writer 导致直接失败，不释放 pin 重试。
+该控制不修改 native publication 协议，也不认证全部文件系统竞争、ACL 或
+物理断电。见 [提交保护证据](../validation/g5-commit-artifact-pins.md)。
+
 P2.5b 验收归档恶意样本、staging/journal 重启恢复、取消、同版本不可变、
 last-known-good 健康检查与 metadata 跨资源提交；依赖、数据、grants 分开
 ownership。P2.1/P2.2 必须先用实际 Windows 恶意 fixtures 证明运行与 OS

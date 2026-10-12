@@ -92,6 +92,12 @@ bytes, changing inventory/floors, or adopting orphan packages. See
 [inventory reconciliation evidence](./docs/validation/g5-inventory-reconciliation.md).
 This has no product install/activation or executable loading endpoint.
 
+The final inert-install verification now retains read handles for the candidate
+and selected providers' original blobs through metadata commit, excluding write
+and delete sharing. Existing writers refuse the transaction. See the
+[commit pin evidence](./docs/validation/g5-commit-artifact-pins.md); this does not
+complete filesystem, power-loss or third-party isolation acceptance.
+
 > An extensible, cross-platform toolbox powered by a plugin runtime.
 > Plugin Runtime for AI Age
 

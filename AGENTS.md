@@ -383,6 +383,14 @@ product wiring and sandbox remain pending; native rename is not write-through
 durability evidence. See [inert installation](./docs/validation/g5-inert-installation.md)
 and [guarded publication evidence](./docs/validation/g5-guarded-publication.md).
 
+Retain candidate and selected provider ArtifactPins from final validation through
+the SQLite inventory/journal commit. Open all original blob handles without
+write/delete sharing before hashing; an existing writer must refuse admission.
+Never release pins early or retry with weaker sharing. Preserve actual sharing,
+delete/rename, provider-writer and FilesPinned process-exit regressions. This
+does not certify memory-mapped writes, profile ACLs, publication races or power
+loss. See [commit pins](./docs/validation/g5-commit-artifact-pins.md).
+
 ## Coding Style and Naming Conventions
 
 - TypeScript strict mode is enabled; keep code type-safe and avoid `any`.

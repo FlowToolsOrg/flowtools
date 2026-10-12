@@ -90,6 +90,11 @@ T0 可以显式核对并以 journal 隔离无引用惰性内容，中断后继�
 [包文件核对](./validation/g5-inventory-reconciliation.md)。这不提供健康检查、
 版本 rollback、卸载/GC 或第三方运行入口。
 
+最终安装验证期间，Host 持有 candidate 和所选 provider 原始 blob 的只读
+句柄直至库存提交；既有写句柄导致拒绝，不能用重试或弱化 sharing 绕过。
+作者不提供文件路径或锁授权；这不产生执行身份，见
+[提交保护证据](./validation/g5-commit-artifact-pins.md)。
+
 本文面向 Flow Tool 开发者，目标是帮助你在当前仓库里快速开发并调试自己的
 plugin。
 

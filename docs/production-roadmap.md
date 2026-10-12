@@ -1456,6 +1456,12 @@ junction 与五个原生进程退出 barrier 见
 [核对验证](./validation/g5-inventory-reconciliation.md)。只补恢复工程，产品
 激活、健康/LKG、rollback、GC 和第三方边界仍 pending，不标记 G5/G6 done。
 
+2026-10-12 继续补最终 metadata commit 的原始 blob 保护：candidate 与精确
+锁定 provider 的目录/三份文件句柄保留至事务结束，排除 write/delete sharing；
+既有 writer 直接拒绝，保留旧库存和 journal。FilesPinned 纳入真实退出恢复，
+见 [提交保护证据](./validation/g5-commit-artifact-pins.md)。此子项不关闭完整
+ACL/文件竞争/断电、健康/LKG、第三方隔离或独立安全验收。
+
 交付物：
 
 - 下载进入 staging，并设置总大小、单文件大小、文件数和超时上限。

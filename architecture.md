@@ -98,6 +98,12 @@ stage。T0 opaque plan 绑定真实 DB/profile、恢复 scope、库存和字节 
 产品激活/健康/GC/可执行身份仍待实施，见
 [包文件核对验证](./docs/validation/g5-inventory-reconciliation.md)。
 
+最终惰性提交另持有 candidate 与已选择 provider 的三份原始 blob 和目录
+句柄，排除 write/delete sharing，覆盖重新验签、依赖重规划及 SQLite commit。
+既有写句柄导致直接拒绝并保留 journal；不弱化目录移动协议。范围与实际
+回归见 [提交保护](./docs/validation/g5-commit-artifact-pins.md)，完整 ACL、
+文件竞争和断电验收仍 pending。
+
 Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平台。
 当前仓库代码处于“先验证插件运行时，再落地桌面宿主”的阶段。
 

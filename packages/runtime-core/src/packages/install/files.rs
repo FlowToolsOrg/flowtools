@@ -26,6 +26,29 @@ pub(super) struct Layout {
     _guards: Vec<File>,
     parents: BTreeMap<&'static str, File>,
 }
+/// Denies ordinary write/delete handles to every blob and its directory through
+/// metadata commit. This is not a memory-mapped write or ACL isolation claim.
+pub(super) struct ArtifactPin {
+    directory: File,
+    files: Vec<File>,
+}
+impl ArtifactPin {
+    pub fn validate(&self) -> Result<(), InstallError> {
+        if information(&self.directory)?.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY == 0 {
+            return Err(InstallError::PathRejected);
+        }
+        for file in &self.files {
+            let info = information(file)?;
+            if info.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_READONLY)
+                != FILE_ATTRIBUTE_READONLY
+                || info.nNumberOfLinks != 1
+            {
+                return Err(InstallError::PathRejected);
+            }
+        }
+        Ok(())
+    }
+}
 fn information(file: &File) -> Result<BY_HANDLE_FILE_INFORMATION, InstallError> {
     let mut info = BY_HANDLE_FILE_INFORMATION::default();
     if unsafe { GetFileInformationByHandle(file.as_raw_handle(), &mut info) } == 0 {
@@ -188,6 +211,24 @@ impl Layout {
     }
     pub fn read(&self, record: &Record) -> Result<(Vec<u8>, Vec<u8>), InstallError> {
         self.read_at(&self.artifact(&record.payload.archive.sha256), record)
+    }
+    pub fn pin(&self, record: &Record) -> Result<ArtifactPin, InstallError> {
+        let path = self.artifact(&record.payload.archive.sha256);
+        let directory = directory(&path)?;
+        let mut files = Vec::with_capacity(NAMES.len());
+        // Open all three before checking any content. No write/delete sharing
+        // survives this point; the caller retains this pin through SQLite commit.
+        for (name, limit) in [
+            ("manifest.json", record.payload.manifest.size),
+            ("package.zip", record.payload.archive.size),
+            ("seal.json", 512),
+        ] {
+            files.push(regular(&path.join(name), limit, true)?);
+        }
+        self.read_held(&path, record)?;
+        let pin = ArtifactPin { directory, files };
+        pin.validate()?;
+        Ok(pin)
     }
     fn read_at(&self, path: &Path, record: &Record) -> Result<(Vec<u8>, Vec<u8>), InstallError> {
         let _guard = directory(path)?;

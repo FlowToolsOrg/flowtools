@@ -78,6 +78,11 @@ formatVersion 2。旧原型记录返回 StateInvalid，保留原字节与 trust 
 Rust opaque plan/apply/resume/abort，无产品 IPC、raw path、loader、第二 DB
 或 GC，见 [核对验证](./validation/g5-inventory-reconciliation.md)。
 
+`install/files.rs` 的内部 ArtifactPin 保留三份原始 blob 及目录句柄，
+`install.rs` 从锁中精确选择 provider，在最终验证至 metadata commit
+之间拒绝写入/删除/替换。没有新增 IPC 或文件路径输入，见
+[提交保护证据](./validation/g5-commit-artifact-pins.md)。
+
 [下一阶段实施设计](./next-milestones.md) 定义 G0–G8 的顺序与验收。
 G2 已新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`
 （无界面运行服务）、`packages/runtime-client`（生成 DTO 的 TS 客户端）和

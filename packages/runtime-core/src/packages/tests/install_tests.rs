@@ -454,6 +454,7 @@ fn real_process_exit_at_all_install_barriers_preserves_old_inventory_or_atomic_c
         InstallPhase::StagePrepared,
         InstallPhase::ArtifactPublished,
         InstallPhase::BeforeCommit,
+        InstallPhase::FilesPinned,
         InstallPhase::Committed,
     ] {
         let mut world = World::new();
@@ -674,6 +675,118 @@ fn provider_updates_retain_old_artifacts_and_do_not_silently_rebind_existing_tra
         .packages
         .iter()
         .any(|pin| pin.package_digest == first.payload.archive.sha256));
+}
+
+#[test]
+fn final_validation_holds_candidate_and_provider_blob_handles_through_commit() {
+    let mut world = World::new();
+    let provider = world.input(manifest("provider", vec![]), 1);
+    world.install(&provider).unwrap();
+    let consumer = world.input(manifest("consumer", vec![dependency("provider")]), 1);
+    let directories = [world.artifact(&consumer), world.artifact(&provider)];
+    let mut witnessed = Vec::new();
+    let now = world.fixture.policy.clock.now;
+    install_with_hook(
+        &world.trust,
+        world.store.as_mut().unwrap(),
+        consumer.borrow(),
+        &world.compatibility,
+        || now,
+        |phase, _| {
+            if ![InstallPhase::FilesPinned, InstallPhase::Committed].contains(&phase) {
+                return Ok(());
+            }
+            witnessed.push(phase);
+            for directory in &directories {
+                assert!(std::fs::rename(directory, directory.with_extension("moved")).is_err());
+                for name in ["manifest.json", "package.zip", "seal.json"] {
+                    let path = directory.join(name);
+                    let permissions = std::fs::metadata(&path).unwrap().permissions();
+                    writable_file(&path);
+                    let error = std::fs::OpenOptions::new()
+                        .write(true)
+                        .open(&path)
+                        .unwrap_err();
+                    assert_eq!(error.raw_os_error(), Some(32), "{}", path.display());
+                    assert!(std::fs::rename(&path, path.with_extension("replaced")).is_err());
+                    assert!(std::fs::remove_file(&path).is_err());
+                    std::fs::set_permissions(&path, permissions).unwrap();
+                }
+            }
+            Ok(())
+        },
+    )
+    .unwrap();
+    assert_eq!(
+        witnessed,
+        [InstallPhase::FilesPinned, InstallPhase::Committed]
+    );
+    assert!(world.raw(PENDING).is_none());
+    assert_eq!(world.inspect().unwrap().packages().len(), 2);
+    // The successful call releases its leases; this disposable fixture can
+    // subsequently open a writer, proving the refusals came from live handles.
+    for directory in &directories {
+        let path = directory.join("package.zip");
+        let permissions = std::fs::metadata(&path).unwrap().permissions();
+        writable_file(&path);
+        drop(std::fs::OpenOptions::new().write(true).open(&path).unwrap());
+        std::fs::set_permissions(&path, permissions).unwrap();
+    }
+}
+
+#[test]
+fn existing_blob_writer_refuses_final_validation_without_committing_inventory() {
+    use std::os::windows::fs::OpenOptionsExt;
+    use windows_sys::Win32::Storage::FileSystem::{
+        FILE_SHARE_DELETE, FILE_SHARE_READ, FILE_SHARE_WRITE,
+    };
+    for selected in ["candidate", "provider"] {
+        let mut world = World::new();
+        let provider = world.input(manifest("provider", vec![]), 1);
+        world.install(&provider).unwrap();
+        let consumer = world.input(manifest("consumer", vec![dependency("provider")]), 1);
+        let selected_input = if selected == "candidate" {
+            &consumer
+        } else {
+            &provider
+        };
+        let path = world.artifact(selected_input).join("package.zip");
+        let before = world.raw(INVENTORY);
+        let now = world.fixture.policy.clock.now;
+        let mut writer = None;
+        let error = install_with_hook(
+            &world.trust,
+            world.store.as_mut().unwrap(),
+            consumer.borrow(),
+            &world.compatibility,
+            || now,
+            |phase, _| {
+                if phase == InstallPhase::BeforeCommit {
+                    let permissions = std::fs::metadata(&path).unwrap().permissions();
+                    writable_file(&path);
+                    writer = Some(
+                        std::fs::OpenOptions::new()
+                            .write(true)
+                            .share_mode(FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE)
+                            .open(&path)
+                            .unwrap(),
+                    );
+                    std::fs::set_permissions(&path, permissions).unwrap();
+                }
+                Ok(())
+            },
+        )
+        .err();
+        assert_eq!(error, Some(InstallError::Storage));
+        assert!(writer.is_some());
+        assert_eq!(world.raw(INVENTORY), before);
+        assert!(world.raw(PENDING).is_some());
+        drop(writer);
+        assert_eq!(std::fs::read(&path).unwrap(), selected_input.archive);
+        assert!(world.abort().unwrap());
+        assert_eq!(world.raw(INVENTORY), before);
+        assert_eq!(world.inspect().unwrap().packages().len(), 1);
+    }
 }
 
 #[test]

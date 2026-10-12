@@ -134,6 +134,7 @@ pub(super) enum InstallPhase {
     StagePrepared,
     ArtifactPublished,
     BeforeCommit,
+    FilesPinned,
     Committed,
 }
 
@@ -611,6 +612,16 @@ pub(super) fn install_with_hook(
     }
     hook(InstallPhase::ArtifactPublished, store)?;
     hook(InstallPhase::BeforeCommit, store)?;
+    // Retain the verified candidate and selected providers through the metadata
+    // transaction, excluding ordinary write/delete handles during that interval.
+    let candidate_pin = layout.pin(&pending.record)?;
+    let provider_pins = state
+        .records
+        .iter()
+        .filter(|record| pending.record.lock.packages.contains(&record.pin()))
+        .map(|record| layout.pin(record))
+        .collect::<Result<Vec<_>, _>>()?;
+    hook(InstallPhase::FilesPinned, store)?;
     let commit_time = clock();
     let fresh = admit(
         trust,
@@ -640,6 +651,10 @@ pub(super) fn install_with_hook(
         .transaction_with_behavior(TransactionBehavior::Immediate)
         .map_err(|_| InstallError::Storage)?;
     guard_pending(&tx, &pending, &prepared_digest)?;
+    candidate_pin.validate()?;
+    for pin in &provider_pins {
+        pin.validate()?;
+    }
     if let Some(index) = position {
         state.records[index] = pending.record.clone();
     } else {

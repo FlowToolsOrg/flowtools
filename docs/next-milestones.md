@@ -341,6 +341,11 @@ lint/types/test/build、原生 24 项、Chromium 72 项与生产 Web 22/Desktop 
 当前提交远端 CI 与独立安全批准 pending，见
 [契约加固证据](./validation/g5-contract-hardening.md)。G5/P2.5b/G6 整体仍 pending。
 
+最终验证至库存事务提交期间另保留 candidate/所选 provider 的原始 blob
+及目录句柄，排除 write/delete sharing；既有写入者直接拒绝。FilesPinned
+纳入真实进程退出矩阵，见 [提交保护证据](./validation/g5-commit-artifact-pins.md)。
+该子项不代替健康/LKG、完整文件竞争/断电或第三方平台验收。
+
 2026-10-09：P2.5a 协议和只读验签基础已实施为 prototype，见
 [ADR-0003](./adr/0003-signed-package-protocol.md) 与
 [验证](./validation/g5-package-protocol.md)。P2.5a 交付时不包含解包、安装、

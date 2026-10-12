@@ -65,6 +65,12 @@ root 应急重建、平台隔离与独立 review 仍 pending。SEC-001/008/014/0
 formatVersion 2 和 orphan 拒绝由实际安装/备份/恢复集成回归覆盖；不采用
 未引用 blob，不改既有 signed lock，也不恢复 grants。
 
+最终安装验证至 metadata commit 期间，candidate 和精确所选 provider 的
+原始 blob/目录保留无 write/delete sharing 的句柄；既有 writer 直接拒绝。
+[提交保护回归](../validation/g5-commit-artifact-pins.md) 覆盖实际 sharing、
+替换/删除与新进程退出屏障。完整 ACL、publication/内存映射竞争、物理断电
+及第三方平台仍须分别验收；SEC-008/014/015 保持 open。
+
 2026-10-11 P2.5b 第六步在
 [native 发布文件层](../../packages/runtime-core/src/packages/install/files/rename.rs)
 修补第五步临时释放内部父目录 guards 的窗口：所有父目录句柄持续持有且

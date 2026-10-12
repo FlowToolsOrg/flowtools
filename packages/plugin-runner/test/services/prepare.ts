@@ -39,7 +39,17 @@ const manifests = ['fixture-a', 'fixture-b', 'fixture-c', 'fixture-c'].map(
         text: { type: 'string', maxLength: 256 },
         mode: {
           type: 'string',
-          enum: ['echo', 'wait', 'allowed', 'extra', 'fail', 'daemon'],
+          enum: [
+            'echo',
+            'wait',
+            'allowed',
+            'extra',
+            'fail',
+            'daemon',
+            'daemon-fail',
+            'daemon-oversized',
+            'daemon-malformed',
+          ],
           default: 'echo',
         },
       },

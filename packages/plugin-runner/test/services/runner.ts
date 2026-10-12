@@ -1,7 +1,7 @@
 import type { PluginManifestV1, JsonValue } from '@flowtools/sdk/manifest'
 import type { ToolContext } from '@flowtools/sdk/types'
 
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 import { executeManifestCommand, isJsonValue } from '@flowtools/sdk/manifest'
@@ -55,12 +55,31 @@ await serveRunner(async (value, frames) => {
     async run(ctx: ToolContext, input: JsonValue) {
       const data = input as { text: string; mode: string }
       if (manifest.id === 'fixture-c') {
-        if (data.mode === 'daemon') {
+        if (data.mode.startsWith('daemon')) {
           const descendant = Bun.spawn(
             [process.execPath, '--eval', 'await Bun.sleep(60000)'],
-            { stdin: 'ignore', stdout: 'ignore', stderr: 'ignore' }
+            {
+              stdin: 'ignore',
+              stdout: 'ignore',
+              stderr: 'ignore',
+              detached: true,
+            }
           )
           descendant.unref()
+          writeFileSync('fixture-descendant-ready', String(descendant.pid))
+          if (data.mode === 'daemon-fail')
+            throw new Error('PRIVATE_PROVIDER_SECRET_DONT_EXPORT')
+          if (data.mode === 'daemon-oversized') {
+            const header = Buffer.alloc(4)
+            header.writeUInt32LE(1_048_577)
+            process.stdout.write(header)
+          }
+          if (data.mode === 'daemon-malformed') {
+            const frame = Buffer.alloc(5)
+            frame.writeUInt32LE(1)
+            frame[4] = 123
+            process.stdout.write(frame)
+          }
           // Exercise timeout and whole-group cleanup even when spawn returns promptly.
           await new Promise<void>(() => {})
           return `daemon:${descendant.pid}`

@@ -197,3 +197,32 @@ Runtime manifest 的 Cargo metadata 定位有效 workspace，检查仅有该依�
 implemented/prototype，G4 综合验收和独立安全批准仍 pending。
 本轮新增管道实例回收回归属于连接可用性证据，不代替服务进程异常排空证据。
 集成后的完整门禁结果须单独记录，不能沿用合并前的通过记录宣称本轮已通过。
+
+## 2026-10-12 原生异常排空基线与移植
+
+独立本地基线 `6438051` 的六条可丢弃 Windows/T1 A → B → C fixtures 分别触发
+provider 返回错误、超长/错误输出帧、根取消、既有 deadline 和真实 Windows
+Job 终止权限不足。实际编译 C 入口派生后代进程，以同一 owned Job 和实际
+process handles 观察回收；屏障只观察清理边界，不扩大任务执行预算。
+
+排空前，provider call 与版本 lease 必须仍占用，迁移返回 RuntimeBusy 且
+回调不执行；成功排空后同一 Job 为空，才能迁移并通过新的实际 A → B → C
+调用验证 provider 1.1.0。QUERY-only handle 调用真实终止操作返回
+ERROR_ACCESS_DENIED 时，owner handle 仅清理测试进程，不能覆盖原错误；
+Host 继续拒绝准入且不得迁移。
+
+该独立基线专项 15/15、全仓 11/11 lint/types/test/build 曾通过，完整 test
+5m10.157s、顺序 build 41.046s；这是 `6438051` 的历史结果。现在移植到包含
+后续 G5 六步的分支，移植后原生专项与完整门禁必须重新验证，不能借用旧结果。
+2026-10-12 移植后重新验证：Runtime 24 项真实原生测试全部通过（64.62s），
+包含这六条异常排空路径；16 项 JS 集成测试（含实际 Todo 崩溃恢复与独立
+发行包 50 并发启动）通过。全仓 lint/types/test/build 均 11/11 通过，
+test 零缓存 6m30.632s，随后顺序强制 build 51.418s；Web 22 / Desktop 24
+生产产物 opt-in/canary 重建 byte-identical，Desktop Rust fmt/check/clippy
+通过。当前远端 CI 见 [PR #11 Checks](https://github.com/FlowToolsOrg/flowtools/pull/11/checks)，
+G5 范围见 [Manifest 验证](./g5-manifest-admission.md)。
+
+此证据补齐固定 Windows/T1 所缺的独立异常排空路径，future abort/panic
+仍无独立 fixture 验收。没有新增用户 UI 或用户 profile 访问；Windows Job
+与 Bun 不提供文件/网络/OS 权限 sandbox。SEC-014/SEC-015 保持 open，
+maturity 为 prototype，实际独立安全 reviewer/date/conclusion pending。

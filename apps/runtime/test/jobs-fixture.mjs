@@ -201,15 +201,22 @@ try {
     ).data.runId,
     run
   )
+  const crashDeadline = Date.now() + 25000
   const crashing = await cli.submit({
     pluginId: 'plugin-todo-list',
     commandId: 'run',
     input: { todo: 'CRASH_CANARY' },
     idempotencyKey: 'crash',
     background: true,
-    deadline: Date.now() + 25000,
+    deadline: crashDeadline,
   })
-  const running = await cli.job(crashing.runId)
+  let running = await cli.job(crashing.runId)
+  // A receipt proves queue acceptance; wait for the Host's actual running state.
+  while (running.state === 'accepted' || running.state === 'queued') {
+    assert.ok(Date.now() < crashDeadline, 'Crash fixture job did not start')
+    await new Promise(resolve => setTimeout(resolve, 1))
+    running = await cli.job(crashing.runId)
+  }
   assert.equal(running.state, 'running')
   host.child.kill()
   await host.exit

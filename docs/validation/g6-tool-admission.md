@@ -75,8 +75,30 @@ cargo clippy --locked -p flowtools-runtime-core --all-targets -- -D warnings
 扩展运行的全部 16 项工具回归通过，严格 all-targets Clippy 通过。
 该次受限沙箱 core 运行结果为 161 passed / 24 failed：旧有 native rename、
 reparse/junction 和备份/恢复 fixtures 报实际 NTSTATUS 0xc0000022 或 OS error 5
-访问拒绝。本次失败保留，不记作完整门禁通过；后续须在正常获准执行环境完成
-完整 root gate，当前提交远端 CI 另行核实，不能使用历史通过代替。
+访问拒绝。本次失败保留，不记作完整门禁通过。
+
+随后在干净实现提交 `e31ec3d`、正常获准执行环境运行完整
+`pwsh -NoProfile -File scripts/check-ci.ps1`：冻结依赖、workspace/docs/catalog、
+固定 Chromium、前置包构建、routes/Rust bindings 与 read-only contracts 通过；
+11/11 工作区 lint/types 通过。Core 185 Rust + 2 compile-fail doctests、
+SDK 786、CLI 100 与 Chromium 27 文件/72 项通过。Root test 失败，Runtime
+原生测试为 18 passed / 6 failed，退出码 101；后续 root build/production/final
+drift gate 未执行，Desktop tests 因依赖失败也未执行。不能记为完整 CI 通过。
+
+六项既有 G4 服务排空 fixture 缺少实际 descendant PID marker，继而等待超时。
+单项诊断先在原始实现返回 Timeout（预期 ExecutionFailed），带临时时间诊断时
+通过；全部服务诊断为 14/15，取消场景仍无法在原预算内观察后代 marker。
+诊断运行的 artifact 校验/进程 spawn 约 56–140 ms；不足以确认未产生 marker
+的根因。所有临时诊断已移除；未改生产 service runner、断言、超时、重试、
+fixture 或缓存策略，后续通过不能覆盖原失败。
+
+独立继续检查：全仓 build 完成 10/11，Desktop 子进程被终止（0x40010004），
+该失败保留；单独执行原 Desktop build 后通过，全部工作区产物已完成。
+Desktop 原生 rustfmt、locked check 与 all-target codegen Clippy 通过。
+生产入口检查单独通过：Web 22 / Desktop 24 个实际产物在 child-only opt-in/
+canary 重构建后 byte-identical，已知 unsafe/certification 指纹与 canary 未出现。
+这是独立通过，root gate 仍失败；当前提交远端 CI 与独立安全批准仍 pending。
+P2.8a1 验收收口需解决既有服务门禁和独立 review，不能据 focused pass 推进父项。
 本步没有 UI/路由/native command/Tauri permission/CSP 变更，人工 UI 验收不适用。
 
 ## 残余边界与下一步

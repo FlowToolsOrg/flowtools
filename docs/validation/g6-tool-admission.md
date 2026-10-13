@@ -103,6 +103,18 @@ P2.8a1 验收收口需解决既有服务门禁和独立 review，不能据 focus
 
 ## 残余边界与下一步
 
+2026-10-13 继续核验：实现/证据 head `1543841` 的远端 Windows 完整门禁
+[PR 触发](https://github.com/FlowToolsOrg/flowtools/actions/runs/38409850462/job/115338966904)
+与 [push 触发](https://github.com/FlowToolsOrg/flowtools/actions/runs/38409788704/job/115338764463)
+均 SUCCESS。日志确认 11/11 lint/types/test/build、Core 185 + 2 doctests、
+Runtime 24 Rust + 16 JS、Desktop 21/3 Rust 和生产产物检查实际通过。
+这两次远端通过保留为独立验收证据，不覆盖上述本地失败；无独立安全批准。
+本次临时 fixture 阶段诊断 15/15 通过但未复现缺 PID，所有诊断改动已移除，
+没有修复或降低既有服务门禁。本地间歇失败的根因仍未确认。
+
+下一步按已确定顺序补 G5 受控信任恢复，生产工具执行继续拒绝。旧本地实现
+须对当前信任/惰性库存格式独立复核与重新验证，不能使用历史回归作为新验收。
+
 生产审核清单为空；无下载安装、共享只读 artifact、多版本库存、并发安装锁、
 journal、accepted/排队/interrupted lease、用户 pins、LKG、GC 或产品管理
 入口。G5 平台隔离/私有 profile/完整文件竞争/断电等门禁仍是实际工具执行的

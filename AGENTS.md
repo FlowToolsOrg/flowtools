@@ -53,6 +53,7 @@ workflows:
 - [Ordered Implementation Plan](./docs/next-milestones.md)
 - [Trust Boundaries ADR](./docs/adr/0001-plugin-trust-boundaries.md)
 - [Capability and Package Policy ADR](./docs/adr/0002-capability-and-package-policy.md)
+- [Controlled Trust Recovery ADR](./docs/adr/0004-controlled-trust-recovery.md)
 - [Threat Model](./docs/security/threat-model.md)
 
 ## Build, Validation, and Development Commands
@@ -295,9 +296,26 @@ receipt. Descriptor observations are not installed or last-known-good records.
 Supported managed and low-level backup restores mark trust recovery required,
 including backups predating trust initialization. Refuse bootstrap/admission
 after recovery; do not clear markers or reinitialize floors automatically.
-Controlled trust recovery/rollback approval and production pins remain pending.
+Explicit supported-backup recovery is described below; root emergency recovery,
+version rollback approval and production pins remain pending.
 Preserve corruption, quota, write-failure and real crash regressions in
 [durable trust evidence](./docs/validation/g5-durable-trust.md).
+
+Explicit supported-backup trust recovery is in `packages/trust/recovery.rs`.
+Follow [ADR-0004](./docs/adr/0004-controlled-trust-recovery.md): authoritative
+checkpoint, held T0 pins, exact persisted restore challenge, current-root AND
+independent release-pinned recovery quorum DSSE approval and a fresh T0 commit clock.
+Bind requests/receipts to the actual canonical main DB path hash as well as the
+restore scope; copied databases cannot replay approval in another profile. Never
+persist raw paths in this metadata.
+Their keys cannot overlap with root/publisher roles; ordinary stores deny recovery.
+Preserve root history, immutable
+observations, signed receipt baseline and both restore markers; never reset,
+auto-approve, add client flags/pins/time, lower floors or restore grants. Every
+trust load reauthenticates the historical receipt; a new restore needs a new
+approval. Low-level restore must mint a new UUID marker, not reuse a boolean
+scope. Checkpoint completeness and real signers are external T0 responsibilities;
+public fixture keys are test-only. See [controlled recovery evidence](./docs/validation/g5-controlled-trust-recovery.md).
 
 P2.5b signed dependency planning lives in `packages/dependencies.rs`. Consume
 only opaque compatible archives and recheck every receipt against the current

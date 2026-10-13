@@ -11,6 +11,8 @@ use std::{
 };
 use zip::{write::SimpleFileOptions, CompressionMethod, ZipWriter};
 
+mod recovery_tests;
+
 fn manager(fixture: &Fixture) -> PackageTrustStore {
     PackageTrustStore::new(BootstrapPins {
         keys: serde_json::from_value(fixture.golden["pins"].clone()).unwrap(),

@@ -29,7 +29,7 @@ custom export 不得静默丢失。依赖声明通过不代表安装 lock 已生
 可变信任；SQLite FULL 提交成功后才返回新 receipt。观察记录不等于已安装
 或 last-known-good；后续 ZIP/Manifest 拒绝也不降低观察 floor。受支持的
 备份恢复路径写入 trust-recovery-required 标记并拒绝包准入，不能从旧备份
-重新 bootstrap。受控信任恢复/回滚审批尚未实现；未新增 IPC、数据库或 grants。
+重新 bootstrap。显式信任恢复见下文；版本回滚审批未实现，未新增 IPC、数据库或 grants。
 完整 OS/T0 控制者替换数据库不在该控制范围，见
 [持久信任验证](./docs/validation/g5-durable-trust.md)。
 
@@ -72,6 +72,16 @@ UTF-16、空白按 ECMAScript，关闭对象只匹配自有 properties。公开�
 任意 metadata 的跨语言 canonical digest 仍 pending；已有 ZIP 绑定不授予
 执行。本轮本地完整门禁已通过，当前提交远端 CI 与独立安全批准 pending，
 见 [契约加固证据](./docs/validation/g5-contract-hardening.md)。
+
+`packages/trust/recovery.rs` 为受支持备份补齐受控观察恢复：T0 持久 nonce
+绑定实际 SQLite main 路径 hash、恢复标记、当前 state 与旧 receipt，外部权威 checkpoint 的最终根 quorum
+与 T0 发布配置固定的独立 recovery quorum 共同签署短期 DSSE 批准，keys
+不与历史 root/publisher 复用；默认 trust store 拒绝恢复。
+checkpoint 保留当前/此前 receipt 的根链与已知 floors，
+FULL 单事务提交 state/receipt 并删除 challenge，提交前新采样可信时间。
+恢复标记不清除，后续每次 load 重验 receipt baseline；新 restore 需新批准。
+外部 T0 signers 必须核实丢失历史完整性，没有生产 pins、自动 reset 或
+运行 grant；见 [受控恢复验证](./docs/validation/g5-controlled-trust-recovery.md)。
 
 Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平台。
 当前仓库代码处于“先验证插件运行时，再落地桌面宿主”的阶段。

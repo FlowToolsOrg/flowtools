@@ -37,6 +37,22 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 历史通过不作为本轮通过。SEC-001/002/008/014/015
 继续 open，Codex 工程自查不替代实际独立安全 reviewer/date/conclusion。
 
+2026-10-13 移植受支持备份的 T0 受控包信任恢复，在
+[trust/recovery.rs](../../packages/runtime-core/src/packages/trust/recovery.rs)
+绑定持久恢复事件/nonce、raw checkpoint 与当前 root/独立 release recovery
+双 quorum 的共同短期批准；默认无 authority 时拒绝，历史 root/publisher
+不能复用 recovery keys。旧备份丢失根退役记录时，旧根不能单独签署批准。
+已知 observations/root chain 和签署 baseline 不下降，标记保留，FULL
+事务及 fresh commit clock 防止批准到期仍提交。新 restore 的 UUID/
+generation 拒绝旧批准；publisher/旧 keys/重复票数不能提升到 root quorum。
+实际签名、SQLite 写失败、跨 profile/事件重放与原生 crash 证据见
+[受控恢复验证](../validation/g5-controlled-trust-recovery.md)。丢失历史的
+完整性由外部权威 signers 核实，旧本地备份不能独立证明；真实 pins/signer、
+root 应急重建、平台隔离与独立 review 仍 pending。SEC-001/008/014/015
+保持 open；Codex 2026-10-13 工程自查，不表示独立安全批准。当前库存
+formatVersion 2 和 orphan 拒绝由实际安装/备份/恢复集成回归覆盖；不采用
+未引用 blob，不改既有 signed lock，也不恢复 grants。
+
 2026-10-11 P2.5b 第六步在
 [native 发布文件层](../../packages/runtime-core/src/packages/install/files/rename.rs)
 修补第五步临时释放内部父目录 guards 的窗口：所有父目录句柄持续持有且

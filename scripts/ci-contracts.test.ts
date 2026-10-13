@@ -8,6 +8,7 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
   unlinkSync,
 } from 'node:fs'
@@ -373,6 +374,88 @@ test('Runtime codegen stays clean after Windows CRLF checkout and rejects conten
   }
 }, 30_000)
 
+test('Manifest conformance gate refuses drift without writes and requires explicit regeneration', () => {
+  const root = fileURLToPath(new URL('../', import.meta.url))
+  const fixtureParent = resolve(root, 'packages/runtime-core/.generated')
+  const fixture = resolve(
+    fixtureParent,
+    `g5-manifest-conformance-${randomUUID()}`
+  )
+  if (dirname(fixture) !== fixtureParent) {
+    throw new Error('Fixture cleanup target escaped generated directory')
+  }
+  const runtime = join(fixture, 'packages', 'runtime-core')
+  const source = join(root, 'packages', 'runtime-core')
+  const generator = join(runtime, 'manifest-conformance.ts')
+  const corpus = join(runtime, 'manifest-conformance.json')
+  const dependencies = join(runtime, 'node_modules')
+  let linkedDependencies = false
+  const expected = readFileSync(join(source, 'manifest-conformance.json'))
+  const manifest = JSON.parse(
+    readFileSync(join(source, 'package.json'), 'utf8')
+  ) as { scripts: Record<string, string> }
+  for (const task of ['generate', 'verify:bindings', 'test']) {
+    expect(manifest.scripts[task]).toMatch(
+      /^bun run manifest-conformance\.ts --check && /
+    )
+  }
+  const run = (args: string[] = []) =>
+    spawnSync(process.execPath, [generator, ...args], {
+      cwd: runtime,
+      encoding: 'utf8',
+      env: {
+        PATH: process.env.PATH,
+        SystemRoot: process.env.SystemRoot,
+        TEMP: process.env.TEMP,
+        TMP: process.env.TMP,
+      },
+    })
+  try {
+    mkdirSync(runtime, { recursive: true })
+    symlinkSync(join(source, 'node_modules'), dependencies, 'junction')
+    linkedDependencies = true
+    writeFileSync(
+      generator,
+      readFileSync(join(source, 'manifest-conformance.ts'))
+    )
+    writeFileSync(corpus, expected)
+    writeFileSync(
+      join(fixture, '.oxfmtrc.json'),
+      readFileSync(join(root, '.oxfmtrc.json'))
+    )
+    for (const args of [[], ['--check']]) {
+      const clean = run(args)
+      expect(clean.error).toBeUndefined()
+      expect(clean.status, clean.stdout + clean.stderr).toBe(0)
+      expect(clean.stdout).toContain('unchanged')
+      expect(readFileSync(corpus).equals(expected)).toBe(true)
+    }
+    const changed = JSON.parse(expected.toString('utf8')) as {
+      cases: { normalized?: { name: string } }[]
+    }
+    const first = changed.cases[0]?.normalized
+    expect(first).toBeDefined()
+    first!.name = 'CI controlled conformance drift'
+    const drift = Buffer.from(JSON.stringify(changed))
+    writeFileSync(corpus, drift)
+    const denied = run(['--check'])
+    expect(denied.error).toBeUndefined()
+    expect(denied.status, denied.stdout + denied.stderr).not.toBe(0)
+    expect(denied.stderr).toContain('SDK Manifest conformance drift')
+    expect(readFileSync(corpus).equals(drift)).toBe(true)
+    const regenerated = run(['--write'])
+    expect(regenerated.error).toBeUndefined()
+    expect(regenerated.status, regenerated.stdout + regenerated.stderr).toBe(0)
+    expect(regenerated.stdout).toContain('written')
+    expect(readFileSync(corpus, 'utf8')).toBe(
+      expected.toString('utf8').replaceAll('\r\n', '\n')
+    )
+  } finally {
+    if (linkedDependencies) unlinkSync(dependencies)
+    rmSync(fixture, { recursive: true, force: true })
+  }
+}, 30_000)
+
 test('browser gate bounds file concurrency without replacing or narrowing the runner', async () => {
   const config = await Bun.file(
     new URL('../apps/ui-test/vitest.browser.config.ts', import.meta.url)
@@ -390,6 +473,51 @@ test('browser gate bounds file concurrency without replacing or narrowing the ru
   expect(app.scripts.test).toBe('vitest run --config vitest.browser.config.ts')
   expect(app.devDependencies.playwright).toBe('1.59.1')
 })
+
+test('browser API uses the actual OS-selected IPv4 loopback port with strict binding', () => {
+  const config = new URL(
+    '../apps/ui-test/vitest.browser.config.ts',
+    import.meta.url
+  )
+  const probe = spawnSync(
+    process.execPath,
+    [
+      '-e',
+      `import assert from 'node:assert/strict'
+import { Server, createServer } from 'node:net'
+const selected = []
+const original = Server.prototype.listen
+Server.prototype.listen = function (...args) {
+  if (args[0] === 0 && args[1] === '127.0.0.1') {
+    this.once('listening', () => selected.push(this.address().port))
+  }
+  return original.apply(this, args)
+}
+const exported = (await import(${JSON.stringify(config.href)})).default
+const config = await exported({ command: 'serve', mode: 'test' })
+const api = config.test.browser.api
+assert.equal(selected.length, 1)
+assert.equal(api.port, selected[0])
+assert.ok(api.port > 0)
+assert.equal(api.host, '127.0.0.1')
+assert.equal(api.strictPort, true)
+const rebound = createServer()
+await new Promise((resolve, reject) => {
+  rebound.once('error', reject)
+  rebound.listen({ port: api.port, host: api.host, exclusive: true }, resolve)
+})
+await new Promise((resolve, reject) => rebound.close(error => error ? reject(error) : resolve()))
+process.stdout.write('OS-selected browser API port verified\\n')`,
+    ],
+    {
+      cwd: fileURLToPath(new URL('../apps/ui-test', import.meta.url)),
+      encoding: 'utf8',
+    }
+  )
+  expect(probe.error).toBeUndefined()
+  expect(probe.status, probe.stdout + probe.stderr).toBe(0)
+  expect(probe.stdout.trim()).toBe('OS-selected browser API port verified')
+}, 30_000)
 
 test('PowerShell propagates native failure before subsequent gates run', () => {
   const success = runPowerShell(

@@ -226,6 +226,73 @@ test('operation subset rejects unsupported, inconsistent and recursive schemas',
   expect(reads).toBe(0)
 })
 
+for (const key of [
+  'toString',
+  'valueOf',
+  'hasOwnProperty',
+  '__defineGetter__',
+]) {
+  test(`closed operation schemas reject inherited property ${key} in values and defaults`, () => {
+    const schema = operationSchema.parse({
+      type: 'object',
+      properties: {},
+      additionalProperties: false,
+    })
+    const value = { [key]: 1 }
+    expect(validateOperationValue(schema, value)).toEqual({ success: false })
+    expect(validateOperationValue(schema, value, true)).toEqual({
+      success: false,
+    })
+    const withDefault = { ...schema, default: value }
+    expect(operationSchema.safeParse(withDefault).success).toBe(false)
+    const manifest = manifestFixture()
+    manifest.commands[0]!.inputSchema = withDefault
+    expect(() => parsePluginManifest(manifest)).toThrow()
+  })
+
+  test(`operation schemas accept explicitly declared own property ${key}`, () => {
+    const value = { [key]: 1 }
+    const schema = operationSchema.parse({
+      type: 'object',
+      properties: { [key]: { type: 'integer' } },
+      required: [key],
+      additionalProperties: false,
+      default: value,
+    })
+    expect(validateOperationValue(schema, value)).toEqual({
+      success: true,
+      data: value,
+    })
+    expect(validateOperationValue(schema, { [key]: 'wrong' })).toEqual({
+      success: false,
+    })
+    const manifest = manifestFixture()
+    manifest.commands[0]!.inputSchema = schema
+    expect(parsePluginManifest(manifest).commands[0]!.inputSchema).toEqual(
+      schema
+    )
+  })
+
+  test(`open operation schemas accept undeclared own property ${key}`, () => {
+    const value = { [key]: 1 }
+    const schema = operationSchema.parse({
+      type: 'object',
+      properties: {},
+      additionalProperties: true,
+      default: value,
+    })
+    expect(validateOperationValue(schema, value)).toEqual({
+      success: true,
+      data: value,
+    })
+    const manifest = manifestFixture()
+    manifest.commands[0]!.inputSchema = schema
+    expect(parsePluginManifest(manifest).commands[0]!.inputSchema).toEqual(
+      schema
+    )
+  })
+}
+
 test('operation validation preserves false/negative/array values, defaults and closed objects', () => {
   const schema = exportOperationSchema(
     z.object({

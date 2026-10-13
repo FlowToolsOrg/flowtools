@@ -346,6 +346,7 @@ dependencies = [
  "jsonschema",
  "node-semver",
  "rusqlite",
+ "ryu-js",
  "schemars",
  "serde",
  "serde_json",
@@ -1062,6 +1063,12 @@ name = "rustversion"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
+
+[[package]]
+name = "ryu-js"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd29631678d6fb0903b69223673e122c32e9ae559d0960a38d574695ebc0ea15"
 
 [[package]]
 name = "schemars"

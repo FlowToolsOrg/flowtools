@@ -1,7 +1,7 @@
 # FlowTools 下一阶段目标与实施设计
 
 - 决策日期：2026-10-04
-- 状态：accepted-design；G1、G2 固定 Windows/T1 验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4 P1.6a/P1.6b 已实施为固定 Windows/T1 prototype，综合验收仍 pending；G5 P2.5a 只读包协议已实施为 prototype；P2.5b、G5 其余子项与 G6–G8 尚待实施
+- 状态：accepted-design；G1、G2 固定 Windows/T1 验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4 P1.6a/P1.6b 与六条异常排空基线已实现为固定 Windows/T1 prototype，2026-10-12 本地完整集成已过，当前提交远端 CI 与独立安全批准 pending；G5 P2.5a 及 P2.5b 六个惰性准入/事务子步骤已实现为 prototype，2026-10-12 契约加固本地完整门禁已过，当前提交远端 CI 与独立安全批准 pending；P2.5b/G5 整体和 G6–G8 保持 pending
 - 决策来源：维护者已确认的产品讨论；实施责任由 Repository Maintainer 分配
 - 进度来源：[生产路线图](./production-roadmap.md)
 
@@ -127,8 +127,9 @@ false、数组、required/default 和 JSON 错误都有稳定结果及非零退�
 
 ### 模块与目标所有权
 
-四个新模块已交付 G2 验证基础；下表中的 broker、数据、安装服务与 T3 adapter
-仍是后续目标，分别等待 G3/G5，不能从目录存在推断已实现。
+四个新模块已交付 G2 验证基础；固定 Windows/T1 broker/数据和 T0 惰性安装
+已由后续 G3/G5 子步骤实现为 prototype。下表同时描述完整产品目标；产品
+安装管理、第三方 T3 adapter 与生产验收仍 pending，不能从目录存在推断通过。
 
 | 模块                                             | 职责                                         | 禁止承担                           |
 | ------------------------------------------------ | -------------------------------------------- | ---------------------------------- |
@@ -277,8 +278,9 @@ G4 只用固定 T1 清单和可丢弃 fixtures 验证；依赖变更为 plan-onl
 ### P1.6b RPC、调用链与卸载
 
 2026-10-09 固定 Windows/T1 实现已提交，并记录专项回归与全仓门禁通过；
-G4 综合验收仍 pending，缺少独立 fixture 级异常排空验收。maturity 为
-prototype，独立安全批准 pending。见
+六条独立 fixture 级异常排空已在本轮移植后重新验证，2026-10-12 原生
+24 项及本地完整集成门禁通过。maturity 为 prototype，当前提交远端 CI
+与独立安全批准 pending。见
 [服务调用验收记录](./validation/g4-service-calls.md)。公开 client/CLI 只有只读
 卸载计划与诊断；候选切换仅 T0 固定 fixtures，跨包安装仍在 G5。
 
@@ -306,16 +308,47 @@ providers 空闲退出，后台服务租约由 Host 控制；插件不能自行 
 2026-10-11：按维护者选择，先补 G5 前置项再推进 G6。P2.5b 首步的签名
 ZIP32 内存准入与恶意归档回归已实现为 prototype；仅返回 inert bytes，
 不写磁盘、不安装或执行。见 [归档证据](./validation/g5-archive-admission.md)。
-P2.5b 整体保持 pending；后续依次完成完整 Manifest/Host/SDK/依赖校验、
-持久 trust floors、staging/journal/artifact 提交与重启恢复，再推进平台边界。
+第二步交付时完成完整 Plugin Manifest/Host/SDK/target 与依赖声明校验，
+使用 SDK 生成结构、显式 native semantics 和 90 个共同样本，见
+[Manifest 证据](./validation/g5-manifest-admission.md)。第三步持久 descriptor
+根链/时间/版本观察与受支持备份恢复拒绝已实施为 prototype，见
+[持久信任证据](./validation/g5-durable-trust.md)。第四步将完整准入 archive
+绑定 G4 service pins 的原始 ZIP identity/target，规划时重新检查当前信任、
+floors 和兼容性，见 [签名依赖证据](./validation/g5-signed-dependencies.md)。
+第四步交付时该新鲜候选池不是 installed inventory，结果只是 inert plan；
+其当时的 G4 pin 绑定已由下方 2026-10-12 独立签名锁修正。P2.5b 整体保持
+pending；第五步交付 Windows/x64 T0 惰性 ZIP 库存、持久锁、staging/journal/
+create-only artifact 发布与显式 abort 恢复，见
+[惰性安装证据](./validation/g5-inert-installation.md)。它没有产品安装/执行
+入口、健康/LKG 或跨资源生产验收；后续补齐生产路径竞争/断电、受控信任
+恢复/回滚审批、健康/激活与管理接入，再推进平台边界。
+
+同日第六步交付持续持有父目录保护的句柄相对发布/隔离，在固定源候选期间
+重新核对字节，拒绝覆盖和路径 fallback。实际 Windows 竞争/重定向回归见
+[目录保护证据](./validation/g5-guarded-publication.md)。内部父目录仍需 write
+sharing；这不是完整 ACL/文件写入竞争、断电或 sandbox 门禁。下一步仍按
+上述未完成项逐步验收，P2.5b/G5/G6 保持 pending。
+
+2026-10-12：保留上述六步实现，补齐实际编译 SDK 的 405 项共享 corpus、
+有预算 native operation/default/enum 校验、精确 JSON Number、UTF-16/npm
+空白和自有属性匹配。Host/SDK/target 只从 T0 编译来源构造。独立 signed
+ZIP pins/lock 使用 `signed-plugin-archives-v1`，不再改写或复用 G4 semantic
+pins/v1 lock。库存/journal keys 保持 v1，record formatVersion 2 拒绝旧
+原型状态并保留字节/floors，无自动迁移；任意 metadata 的跨语言 canonical
+digest 仍 pending。2026-10-12 本轮本地完整集成门禁已通过：11/11 工作区
+lint/types/test/build、原生 24 项、Chromium 72 项与生产 Web 22/Desktop 24
+产物一致性均通过，root test/build 顺序运行。原失败与历史结果分别保留，
+当前提交远端 CI 与独立安全批准 pending，见
+[契约加固证据](./validation/g5-contract-hardening.md)。G5/P2.5b/G6 整体仍 pending。
 
 2026-10-09：P2.5a 协议和只读验签基础已实施为 prototype，见
 [ADR-0003](./adr/0003-signed-package-protocol.md) 与
-[验证](./validation/g5-package-protocol.md)。签名不是可执行准入；本项不
-包含解包、安装、持久 root/floor 或真实生产 pins。G4 P1.6a/P1.6b 已实施为
-固定 Windows/T1 prototype，综合验收仍 pending；P2.5b 须在该门禁通过后
-将依赖锁与服务语义接入真实签名安装事务，当前尚未实施。G5 其余子项/整体
-验收仍 pending。
+[验证](./validation/g5-package-protocol.md)。P2.5a 交付时不包含解包、安装、
+持久 root/floor 或真实生产 pins，G4 综合验收仍 pending；这是该步历史
+边界，签名不是可执行准入。当前惰性准入、持久信任与事务范围见上述六步及
+2026-10-12 记录：第五步已实现 T0 Windows/x64 惰性库存/持久锁/journal
+原型，production pins、产品激活、服务切换/健康与
+跨资源生产验收未实施；G5 其余子项/整体验收仍 pending。
 
 先确定 plugin/tool 的签名格式、信任根、publisher provenance、撤销/轮换、
 离线与受控回滚协议，再实现 staging -> 验证 -> artifact store -> metadata commit。

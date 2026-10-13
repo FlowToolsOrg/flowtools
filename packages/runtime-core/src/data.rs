@@ -418,6 +418,16 @@ impl DataStore {
         source
             .backup(rusqlite::MAIN_DB, &stage, None)
             .map_err(db_error)?;
+        {
+            let stage_store = DataStore::open(&stage)?;
+            stage_store
+                .connection
+                .execute(
+                    "INSERT OR REPLACE INTO core_metadata(key,value) VALUES(?1,'true')",
+                    [crate::packages::trust::RECOVERY_KEY],
+                )
+                .map_err(db_error)?;
+        }
         let quarantine = parent.join(format!("runtime-corrupt-{}.sqlite", uuid::Uuid::new_v4()));
         // Interrupted or failed replacement must never look like a fresh profile.
         let marker_file = std::fs::OpenOptions::new()

@@ -3,7 +3,9 @@
 G5 P2.5a 的纯字节签名验证位于 `packages/runtime-core/src/packages.rs`；
 SDK `manifest/signed-package.ts` 只负责作者 schema/序列化/PAE。T0 提供可信
 根和 floor；包描述、验证 receipt 不创建安装记录、grant 或 runner session。
-G4 依赖锁与服务调用已实施为固定 Windows/T1 prototype，综合验收仍 pending；
+G4 依赖锁与服务调用已实施为固定 Windows/T1 prototype，六条原生异常排空
+已有独立基线证据；2026-10-12 本地完整集成通过，当前提交远端 CI 与独立
+安全批准仍 pending。
 完整签名安装和第三方平台边界尚未实施，现有默认拒绝继续生效。
 协议与 scope 见 [ADR-0003](./docs/adr/0003-signed-package-protocol.md) 和
 [P2.5a 验证](./docs/validation/g5-package-protocol.md)。
@@ -11,8 +13,65 @@ G4 依赖锁与服务调用已实施为固定 Windows/T1 prototype，综合验�
 P2.5b 的首步 `packages/archive.rs` 在验签后重新绑定原始字节，并在内存中
 核对 ZIP local/central headers、完整物理条目、CRC 和逐文件 hash；受限解压
 只返回 inert bytes。它没有新增磁盘安装、执行身份、IPC 或授权入口。
-事务 journal、持久 trust floors 与平台隔离仍 pending；见
+该层只提供归档准入，事务 journal 由下方第五步提供；平台隔离仍 pending。见
 [归档验证](./docs/validation/g5-archive-admission.md)。
+
+P2.5b 第二步 `packages/manifest.rs` 消费该 opaque archive，使用 SDK 生成的
+结构契约与显式 native semantics 验证完整 Plugin Manifest/Host/SDK/target。
+规范化 metadata 与原始签名 bytes 分离；共同拒绝样本验证两端语义，未知
+custom export 不得静默丢失。依赖声明通过不代表安装 lock 已生成或验收。
+惰性安装锁与 journal 由后续第五步提供，见
+[Manifest 验证](./docs/validation/g5-manifest-admission.md)。
+
+第三步 `packages/trust.rs` 借用 Runtime 现有 `DataStore` 单写者，在 schema v2
+的 `core_metadata` 保存 T0 pins 绑定、原始 DSSE 根链、观察时间与已验签描述
+的不可变版本/release floors。每次操作重新验证根链、加载当前撤销，不缓存
+可变信任；SQLite FULL 提交成功后才返回新 receipt。观察记录不等于已安装
+或 last-known-good；后续 ZIP/Manifest 拒绝也不降低观察 floor。受支持的
+备份恢复路径写入 trust-recovery-required 标记并拒绝包准入，不能从旧备份
+重新 bootstrap。受控信任恢复/回滚审批尚未实现；未新增 IPC、数据库或 grants。
+完整 OS/T0 控制者替换数据库不在该控制范围，见
+[持久信任验证](./docs/validation/g5-durable-trust.md)。
+
+第四步 `packages/dependencies.rs` 将 opaque compatible archives 绑定到 G4
+解析器。内部 G4 semantic pins 保留原有含义，独立 signed archive pins 绑定
+原始 ZIP digest 和实际准入 target；当前持久
+根/撤销/expiry/不可变观察与 release floors、当前 Host/SDK compatibility
+都重新检查；根轮换后须重新验签。所有提供的候选均须通过当前 floors，不能
+作为已安装多版本库存；解析器不能替换根候选，也不接受未验证 ToolCandidate。
+只返回 inert plan，不持久化安装锁或生成执行身份。实际安装库存、提交时再次
+验证和 artifact/journal 由第五步提供；tool admission 仍 pending。见
+[签名依赖规划验证](./docs/validation/g5-signed-dependencies.md)。
+
+第五步 `packages/install.rs` / `install/files.rs` 在 Windows/x64 的 T0 私有
+profile 中保存惰性 ZIP、原始 Manifest 和 seal，不解包到可执行目录。复用同一
+SQLite writer 记录真实库存、签名描述和独立 signed archive locks；staging/prepared/published
+之后再次验签、读取 provider 和采样可信时间，库存写入与 journal 删除同事务。
+未提交中断显式 abort 到 quarantine，保留旧版本、锁和观察 floors；不滚动
+执行包代码或恢复授权。实际 provider 库存的传递锁不能被新任务规划静默改绑。
+只提供 T0 Rust API，未接产品管理/执行入口；profile ACL、完整路径竞争、
+断电、健康/LKG 和第三方隔离仍需生产验收，见
+[惰性安装验证](./docs/validation/g5-inert-installation.md)。
+
+第六步 `install/files/rename.rs` 将发布与隔离改为 Windows native 句柄相对
+移动：源目录以已持有父句柄下的单个组件打开，固定候选期间重新核对字节；
+目标以另一个已持有父句柄和固定 digest/UUID 命名，拒绝覆盖且无路径 fallback。
+profile/root 与三个内部父目录保护全程保留；内部父目录允许 read/write
+sharing 以完成目录项移动，delete sharing 始终关闭。源/目标 reparse 属性
+重查与实际竞争拒绝测试见 [目录保护验证](./docs/validation/g5-guarded-publication.md)。
+这只修补目录保护释放窗口；私有 profile ACL、全部文件写入竞争及突然断电
+验收仍 pending，不构成第三方 sandbox 或可执行身份。
+
+2026-10-12 契约加固保留 SDK 生成结构与显式 native semantics，另使用实际
+编译 SDK parser 生成的 405 项 corpus；operation 默认值/enum 比对有独立
+一百万步预算。JSON 浮点解析保留 JavaScript Number 语义，range 长度按
+UTF-16、空白按 ECMAScript，关闭对象只匹配自有 properties。公开兼容参数
+只从 T0 编译版本和 target 创建，客户端不能指定环境。签名 ZIP lock 使用
+独立 `signed-plugin-archives-v1` profile；库存/journal key 保持 v1，但记录
+外层 formatVersion 为 2，旧原型状态拒绝且保留字节/floors，不自动迁移。
+任意 metadata 的跨语言 canonical digest 仍 pending；已有 ZIP 绑定不授予
+执行。本轮本地完整门禁已通过，当前提交远端 CI 与独立安全批准 pending，
+见 [契约加固证据](./docs/validation/g5-contract-hardening.md)。
 
 Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平台。
 当前仓库代码处于“先验证插件运行时，再落地桌面宿主”的阶段。

@@ -202,45 +202,46 @@ try {
       }))
     })
   )
-  const diagnostics = JSON.stringify(
-    fifty.map(result => {
-      let errorCode = null,
-        phase = null,
-        stage = null
-      try {
-        const value =
-          /** @type {{error?:{code?:unknown,phase?:unknown,stage?:unknown}}} */ (
-            JSON.parse(result.stdout)
-          )
-        if (
-          typeof value?.error?.code === 'string' &&
-          /^[A-Z][A-Z_]{0,63}$/.test(value.error.code)
+  const rows = fifty.map(result => {
+    let errorCode = null,
+      phase = null,
+      stage = null
+    try {
+      const value =
+        /** @type {{error?:{code?:unknown,phase?:unknown,stage?:unknown}}} */ (
+          JSON.parse(result.stdout)
         )
-          errorCode = value.error.code
-        if (
-          typeof value?.error?.phase === 'string' &&
-          ['connect', 'query', 'reconnect'].includes(value.error.phase)
-        )
-          phase = value.error.phase
-        if (
-          typeof value?.error?.stage === 'string' &&
-          ['pipe', 'authenticate'].includes(value.error.stage)
-        )
-          stage = value.error.stage
-      } catch {
-        // Malformed output adds no untrusted text to the aggregate diagnostic.
-      }
-      return {
-        index: result.index,
-        code: result.code,
-        errorCode,
-        phase,
-        stage,
-        elapsedMs: result.elapsedMs,
-      }
-    })
+      if (
+        typeof value?.error?.code === 'string' &&
+        /^[A-Z][A-Z_]{0,63}$/.test(value.error.code)
+      )
+        errorCode = value.error.code
+      if (
+        typeof value?.error?.phase === 'string' &&
+        ['connect', 'query', 'reconnect'].includes(value.error.phase)
+      )
+        phase = value.error.phase
+      if (
+        typeof value?.error?.stage === 'string' &&
+        ['pipe', 'authenticate'].includes(value.error.stage)
+      )
+        stage = value.error.stage
+    } catch {
+      // Malformed output adds no untrusted text to the aggregate diagnostic.
+    }
+    return {
+      index: result.index,
+      code: result.code,
+      errorCode,
+      phase,
+      stage,
+      elapsedMs: result.elapsedMs,
+    }
+  })
+  const diagnostics = JSON.stringify(rows)
+  const statuses = fifty.map((result, index) =>
+    success(result, JSON.stringify(rows[index]))
   )
-  const statuses = fifty.map(result => success(result, diagnostics))
   assert.equal(statuses.length, 50, diagnostics)
   assert.equal(
     new Set(statuses.map(result => result.data.instanceId)).size,

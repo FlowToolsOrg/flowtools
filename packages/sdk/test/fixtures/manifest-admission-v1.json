@@ -1,0 +1,2014 @@
+{
+  "formatVersion": 1,
+  "base": {
+    "formatVersion": 1,
+    "publisher": "flowtools",
+    "id": "fixture-plugin",
+    "name": "测试工具",
+    "description": "有限测试操作",
+    "version": "0.1.0",
+    "type": "tool",
+    "maturity": "prototype",
+    "engines": {
+      "host": "^0.1.0",
+      "sdk": ">=0.0.0 <1.0.0"
+    },
+    "targets": [
+      {
+        "platform": "windows",
+        "arch": "x64"
+      }
+    ],
+    "entries": {
+      "executor": "dist/commands.js"
+    },
+    "files": [
+      {
+        "path": "dist/commands.js",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "size": 0
+      }
+    ],
+    "signature": {
+      "status": "unsigned"
+    },
+    "dependencies": {
+      "services": [],
+      "tools": []
+    },
+    "commands": [
+      {
+        "id": "convert",
+        "name": "转换",
+        "description": "转换测试文本",
+        "headless": true,
+        "supportsColdStart": false,
+        "interaction": "none",
+        "effects": [],
+        "permissions": [],
+        "resources": {
+          "timeoutMs": 30000,
+          "maxInputBytes": 4096,
+          "maxOutputBytes": 4096
+        },
+        "runtimeValidation": {
+          "input": "schema-only",
+          "output": "schema-only"
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "count": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 0
+            }
+          },
+          "required": ["text"],
+          "additionalProperties": false
+        },
+        "outputSchema": {
+          "type": "string"
+        }
+      }
+    ]
+  },
+  "target": {
+    "hostVersion": "0.1.0",
+    "sdkVersion": "0.0.0",
+    "platform": "windows",
+    "arch": "x64"
+  },
+  "cases": [
+    {
+      "name": "valid",
+      "accept": true,
+      "patches": [
+        {
+          "path": "/name",
+          "value": "Fixture"
+        }
+      ]
+    },
+    {
+      "name": "maturity-default",
+      "accept": true,
+      "patches": [
+        {
+          "path": "/maturity",
+          "remove": true
+        }
+      ]
+    },
+    {
+      "name": "reject-2-/formatVersion",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/formatVersion",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "name": "reject-3-/publisher",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/publisher",
+          "value": "../publisher"
+        }
+      ]
+    },
+    {
+      "name": "reject-4-/unknown",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/unknown",
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "reject-5-/version",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/version",
+          "value": "v1.0.0"
+        }
+      ]
+    },
+    {
+      "name": "reject-6-/version",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/version",
+          "value": "1.0.0+build"
+        }
+      ]
+    },
+    {
+      "name": "reject-7-/engines/host",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/engines/host",
+          "value": "bad"
+        }
+      ]
+    },
+    {
+      "name": "reject-8-/engines/sdk",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/engines/sdk",
+          "value": "900719925474100.0.0"
+        }
+      ]
+    },
+    {
+      "name": "reject-9-/targets",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/targets",
+          "value": [
+            {
+              "platform": "windows",
+              "arch": "x64"
+            },
+            {
+              "platform": "windows",
+              "arch": "x64"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "reject-10-/entries",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/entries",
+          "value": {}
+        }
+      ]
+    },
+    {
+      "name": "reject-11-/entries",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/entries",
+          "value": {
+            "ui": "dist/commands.js"
+          }
+        }
+      ]
+    },
+    {
+      "name": "reject-12-/entries",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/entries",
+          "value": {
+            "executor": "missing.js"
+          }
+        }
+      ]
+    },
+    {
+      "name": "reject-13-/entries",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/entries",
+          "value": {
+            "ui": "dist/commands.js",
+            "executor": "dist/commands.js"
+          }
+        }
+      ]
+    },
+    {
+      "name": "reject-14-/files",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/files",
+          "value": [
+            {
+              "path": "dist/commands.js",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "size": 0
+            },
+            {
+              "path": "dist/commands.js",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "size": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "reject-15-/files/0/size",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/files/0/size",
+          "value": 67108865
+        }
+      ]
+    },
+    {
+      "name": "reject-16-/files/0/sha256",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/files/0/sha256",
+          "value": "unsigned"
+        }
+      ]
+    },
+    {
+      "name": "reject-17-/signature",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/signature",
+          "value": {
+            "status": "signed"
+          }
+        }
+      ]
+    },
+    {
+      "name": "reject-18-/commands",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands",
+          "value": [
+            {
+              "id": "convert",
+              "name": "转换",
+              "description": "转换测试文本",
+              "headless": true,
+              "supportsColdStart": false,
+              "interaction": "none",
+              "effects": [],
+              "permissions": [],
+              "resources": {
+                "timeoutMs": 30000,
+                "maxInputBytes": 4096,
+                "maxOutputBytes": 4096
+              },
+              "runtimeValidation": {
+                "input": "schema-only",
+                "output": "schema-only"
+              },
+              "inputSchema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  },
+                  "count": {
+                    "type": "integer",
+                    "default": 1,
+                    "minimum": 0
+                  }
+                },
+                "required": ["text"],
+                "additionalProperties": false
+              },
+              "outputSchema": {
+                "type": "string"
+              }
+            },
+            {
+              "id": "convert",
+              "name": "转换",
+              "description": "转换测试文本",
+              "headless": true,
+              "supportsColdStart": false,
+              "interaction": "none",
+              "effects": [],
+              "permissions": [],
+              "resources": {
+                "timeoutMs": 30000,
+                "maxInputBytes": 4096,
+                "maxOutputBytes": 4096
+              },
+              "runtimeValidation": {
+                "input": "schema-only",
+                "output": "schema-only"
+              },
+              "inputSchema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  },
+                  "count": {
+                    "type": "integer",
+                    "default": 1,
+                    "minimum": 0
+                  }
+                },
+                "required": ["text"],
+                "additionalProperties": false
+              },
+              "outputSchema": {
+                "type": "string"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "reject-19-/commands/0/unknown",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/unknown",
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "reject-20-/commands/0/inputSchema",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/inputSchema",
+          "value": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    {
+      "name": "reject-21-/commands/0/effects",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/effects",
+          "value": ["data-read", "data-read"]
+        }
+      ]
+    },
+    {
+      "name": "reject-22-/commands/0/resources/timeoutMs",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/resources/timeoutMs",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "name": "reject-23-/commands/0/runtimeValidation/input",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/runtimeValidation/input",
+          "value": "ignored"
+        }
+      ]
+    },
+    {
+      "name": "reject-24-/commands/0",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0",
+          "value": {
+            "id": "convert",
+            "name": "转换",
+            "description": "转换测试文本",
+            "headless": false,
+            "supportsColdStart": true,
+            "interaction": "none",
+            "effects": [],
+            "permissions": [],
+            "resources": {
+              "timeoutMs": 30000,
+              "maxInputBytes": 4096,
+              "maxOutputBytes": 4096
+            },
+            "runtimeValidation": {
+              "input": "schema-only",
+              "output": "schema-only"
+            },
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer",
+                  "default": 1,
+                  "minimum": 0
+                }
+              },
+              "required": ["text"],
+              "additionalProperties": false
+            },
+            "outputSchema": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "reject-25-/commands/0",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0",
+          "value": {
+            "id": "convert",
+            "name": "转换",
+            "description": "转换测试文本",
+            "headless": true,
+            "supportsColdStart": true,
+            "interaction": "required",
+            "effects": [],
+            "permissions": [],
+            "resources": {
+              "timeoutMs": 30000,
+              "maxInputBytes": 4096,
+              "maxOutputBytes": 4096
+            },
+            "runtimeValidation": {
+              "input": "schema-only",
+              "output": "schema-only"
+            },
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer",
+                  "default": 1,
+                  "minimum": 0
+                }
+              },
+              "required": ["text"],
+              "additionalProperties": false
+            },
+            "outputSchema": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "reject-26-/commands/0/name",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/name",
+          "value": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"
+        }
+      ]
+    },
+    {
+      "name": "file-budget-total",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/files",
+          "value": [
+            {
+              "path": "dist/commands.js",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "size": 40000000
+            },
+            {
+              "path": "other.js",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "size": 40000000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "permissions-28",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/permissions",
+          "value": [
+            {
+              "capability": "db",
+              "operations": ["read", "read"],
+              "scopes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "permissions-29",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/permissions",
+          "value": [
+            {
+              "capability": "db",
+              "operations": ["read"],
+              "scopes": ["x", "x"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "permissions-30",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/permissions",
+          "value": [
+            {
+              "capability": "db",
+              "operations": ["read"],
+              "scopes": []
+            },
+            {
+              "capability": "db",
+              "operations": ["write"],
+              "scopes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "path-../main.js",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/entries/executor",
+          "value": "../main.js"
+        },
+        {
+          "path": "/files/0/path",
+          "value": "../main.js"
+        }
+      ]
+    },
+    {
+      "name": "path-/main.js",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/entries/executor",
+          "value": "/main.js"
+        },
+        {
+          "path": "/files/0/path",
+          "value": "/main.js"
+        }
+      ]
+    },
+    {
+      "name": "path-C:/main.js",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/entries/executor",
+          "value": "C:/main.js"
+        },
+        {
+          "path": "/files/0/path",
+          "value": "C:/main.js"
+        }
+      ]
+    },
+    {
+      "name": "path-dist\\main.js",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/entries/executor",
+          "value": "dist\\main.js"
+        },
+        {
+          "path": "/files/0/path",
+          "value": "dist\\main.js"
+        }
+      ]
+    },
+    {
+      "name": "path-dist/CON.js",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/entries/executor",
+          "value": "dist/CON.js"
+        },
+        {
+          "path": "/files/0/path",
+          "value": "dist/CON.js"
+        }
+      ]
+    },
+    {
+      "name": "path-dist/main.js:ads",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/entries/executor",
+          "value": "dist/main.js:ads"
+        },
+        {
+          "path": "/files/0/path",
+          "value": "dist/main.js:ads"
+        }
+      ]
+    },
+    {
+      "name": "path-dist//main.js",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/entries/executor",
+          "value": "dist//main.js"
+        },
+        {
+          "path": "/files/0/path",
+          "value": "dist//main.js"
+        }
+      ]
+    },
+    {
+      "name": "path-dist/main.js.",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/entries/executor",
+          "value": "dist/main.js."
+        },
+        {
+          "path": "/files/0/path",
+          "value": "dist/main.js."
+        }
+      ]
+    },
+    {
+      "name": "service-valid",
+      "accept": true,
+      "patches": [
+        {
+          "path": "/entries/services",
+          "value": "services.js"
+        },
+        {
+          "path": "/files",
+          "value": [
+            {
+              "path": "dist/commands.js",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "size": 0
+            },
+            {
+              "path": "services.js",
+              "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+              "size": 0
+            }
+          ]
+        },
+        {
+          "path": "/services",
+          "value": [
+            {
+              "id": "text-service",
+              "version": "1.0.0",
+              "operations": [
+                {
+                  "id": "convert",
+                  "name": "转换",
+                  "description": "转换测试文本",
+                  "headless": true,
+                  "supportsColdStart": false,
+                  "interaction": "none",
+                  "effects": [],
+                  "permissions": [],
+                  "resources": {
+                    "timeoutMs": 30000,
+                    "maxInputBytes": 4096,
+                    "maxOutputBytes": 4096
+                  },
+                  "runtimeValidation": {
+                    "input": "schema-only",
+                    "output": "schema-only"
+                  },
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "count": {
+                        "type": "integer",
+                        "default": 1,
+                        "minimum": 0
+                      }
+                    },
+                    "required": ["text"],
+                    "additionalProperties": false
+                  },
+                  "outputSchema": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "service-empty",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/entries/services",
+          "value": "services.js"
+        },
+        {
+          "path": "/files",
+          "value": [
+            {
+              "path": "dist/commands.js",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "size": 0
+            },
+            {
+              "path": "services.js",
+              "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+              "size": 0
+            }
+          ]
+        },
+        {
+          "path": "/services",
+          "value": []
+        }
+      ]
+    },
+    {
+      "name": "service-duplicate",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/entries/services",
+          "value": "services.js"
+        },
+        {
+          "path": "/files",
+          "value": [
+            {
+              "path": "dist/commands.js",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "size": 0
+            },
+            {
+              "path": "services.js",
+              "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+              "size": 0
+            }
+          ]
+        },
+        {
+          "path": "/services",
+          "value": [
+            {
+              "id": "text-service",
+              "version": "1.0.0",
+              "operations": [
+                {
+                  "id": "convert",
+                  "name": "转换",
+                  "description": "转换测试文本",
+                  "headless": true,
+                  "supportsColdStart": false,
+                  "interaction": "none",
+                  "effects": [],
+                  "permissions": [],
+                  "resources": {
+                    "timeoutMs": 30000,
+                    "maxInputBytes": 4096,
+                    "maxOutputBytes": 4096
+                  },
+                  "runtimeValidation": {
+                    "input": "schema-only",
+                    "output": "schema-only"
+                  },
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "count": {
+                        "type": "integer",
+                        "default": 1,
+                        "minimum": 0
+                      }
+                    },
+                    "required": ["text"],
+                    "additionalProperties": false
+                  },
+                  "outputSchema": {
+                    "type": "string"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "text-service",
+              "version": "1.0.0",
+              "operations": [
+                {
+                  "id": "convert",
+                  "name": "转换",
+                  "description": "转换测试文本",
+                  "headless": true,
+                  "supportsColdStart": false,
+                  "interaction": "none",
+                  "effects": [],
+                  "permissions": [],
+                  "resources": {
+                    "timeoutMs": 30000,
+                    "maxInputBytes": 4096,
+                    "maxOutputBytes": 4096
+                  },
+                  "runtimeValidation": {
+                    "input": "schema-only",
+                    "output": "schema-only"
+                  },
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "count": {
+                        "type": "integer",
+                        "default": 1,
+                        "minimum": 0
+                      }
+                    },
+                    "required": ["text"],
+                    "additionalProperties": false
+                  },
+                  "outputSchema": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "service-operation-duplicate",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/entries/services",
+          "value": "services.js"
+        },
+        {
+          "path": "/files",
+          "value": [
+            {
+              "path": "dist/commands.js",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "size": 0
+            },
+            {
+              "path": "services.js",
+              "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+              "size": 0
+            }
+          ]
+        },
+        {
+          "path": "/services",
+          "value": [
+            {
+              "id": "text-service",
+              "version": "1.0.0",
+              "operations": [
+                {
+                  "id": "convert",
+                  "name": "转换",
+                  "description": "转换测试文本",
+                  "headless": true,
+                  "supportsColdStart": false,
+                  "interaction": "none",
+                  "effects": [],
+                  "permissions": [],
+                  "resources": {
+                    "timeoutMs": 30000,
+                    "maxInputBytes": 4096,
+                    "maxOutputBytes": 4096
+                  },
+                  "runtimeValidation": {
+                    "input": "schema-only",
+                    "output": "schema-only"
+                  },
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "count": {
+                        "type": "integer",
+                        "default": 1,
+                        "minimum": 0
+                      }
+                    },
+                    "required": ["text"],
+                    "additionalProperties": false
+                  },
+                  "outputSchema": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "id": "convert",
+                  "name": "转换",
+                  "description": "转换测试文本",
+                  "headless": true,
+                  "supportsColdStart": false,
+                  "interaction": "none",
+                  "effects": [],
+                  "permissions": [],
+                  "resources": {
+                    "timeoutMs": 30000,
+                    "maxInputBytes": 4096,
+                    "maxOutputBytes": 4096
+                  },
+                  "runtimeValidation": {
+                    "input": "schema-only",
+                    "output": "schema-only"
+                  },
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "count": {
+                        "type": "integer",
+                        "default": 1,
+                        "minimum": 0
+                      }
+                    },
+                    "required": ["text"],
+                    "additionalProperties": false
+                  },
+                  "outputSchema": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "service-ui",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/entries/services",
+          "value": "services.js"
+        },
+        {
+          "path": "/files",
+          "value": [
+            {
+              "path": "dist/commands.js",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "size": 0
+            },
+            {
+              "path": "services.js",
+              "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+              "size": 0
+            }
+          ]
+        },
+        {
+          "path": "/services",
+          "value": [
+            {
+              "id": "text-service",
+              "version": "1.0.0",
+              "operations": [
+                {
+                  "id": "convert",
+                  "name": "转换",
+                  "description": "转换测试文本",
+                  "headless": false,
+                  "supportsColdStart": false,
+                  "interaction": "none",
+                  "effects": [],
+                  "permissions": [],
+                  "resources": {
+                    "timeoutMs": 30000,
+                    "maxInputBytes": 4096,
+                    "maxOutputBytes": 4096
+                  },
+                  "runtimeValidation": {
+                    "input": "schema-only",
+                    "output": "schema-only"
+                  },
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "count": {
+                        "type": "integer",
+                        "default": 1,
+                        "minimum": 0
+                      }
+                    },
+                    "required": ["text"],
+                    "additionalProperties": false
+                  },
+                  "outputSchema": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "service-interaction",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/entries/services",
+          "value": "services.js"
+        },
+        {
+          "path": "/files",
+          "value": [
+            {
+              "path": "dist/commands.js",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "size": 0
+            },
+            {
+              "path": "services.js",
+              "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+              "size": 0
+            }
+          ]
+        },
+        {
+          "path": "/services",
+          "value": [
+            {
+              "id": "text-service",
+              "version": "1.0.0",
+              "operations": [
+                {
+                  "id": "convert",
+                  "name": "转换",
+                  "description": "转换测试文本",
+                  "headless": true,
+                  "supportsColdStart": false,
+                  "interaction": "optional",
+                  "effects": [],
+                  "permissions": [],
+                  "resources": {
+                    "timeoutMs": 30000,
+                    "maxInputBytes": 4096,
+                    "maxOutputBytes": 4096
+                  },
+                  "runtimeValidation": {
+                    "input": "schema-only",
+                    "output": "schema-only"
+                  },
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "count": {
+                        "type": "integer",
+                        "default": 1,
+                        "minimum": 0
+                      }
+                    },
+                    "required": ["text"],
+                    "additionalProperties": false
+                  },
+                  "outputSchema": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "service-version",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/entries/services",
+          "value": "services.js"
+        },
+        {
+          "path": "/files",
+          "value": [
+            {
+              "path": "dist/commands.js",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "size": 0
+            },
+            {
+              "path": "services.js",
+              "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+              "size": 0
+            }
+          ]
+        },
+        {
+          "path": "/services",
+          "value": [
+            {
+              "id": "text-service",
+              "version": "01.0.0",
+              "operations": [
+                {
+                  "id": "convert",
+                  "name": "转换",
+                  "description": "转换测试文本",
+                  "headless": true,
+                  "supportsColdStart": false,
+                  "interaction": "none",
+                  "effects": [],
+                  "permissions": [],
+                  "resources": {
+                    "timeoutMs": 30000,
+                    "maxInputBytes": 4096,
+                    "maxOutputBytes": 4096
+                  },
+                  "runtimeValidation": {
+                    "input": "schema-only",
+                    "output": "schema-only"
+                  },
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "count": {
+                        "type": "integer",
+                        "default": 1,
+                        "minimum": 0
+                      }
+                    },
+                    "required": ["text"],
+                    "additionalProperties": false
+                  },
+                  "outputSchema": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "services-without-entry",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/services",
+          "value": [
+            {
+              "id": "text-service",
+              "version": "1.0.0",
+              "operations": [
+                {
+                  "id": "convert",
+                  "name": "转换",
+                  "description": "转换测试文本",
+                  "headless": true,
+                  "supportsColdStart": false,
+                  "interaction": "none",
+                  "effects": [],
+                  "permissions": [],
+                  "resources": {
+                    "timeoutMs": 30000,
+                    "maxInputBytes": 4096,
+                    "maxOutputBytes": 4096
+                  },
+                  "runtimeValidation": {
+                    "input": "schema-only",
+                    "output": "schema-only"
+                  },
+                  "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "count": {
+                        "type": "integer",
+                        "default": 1,
+                        "minimum": 0
+                      }
+                    },
+                    "required": ["text"],
+                    "additionalProperties": false
+                  },
+                  "outputSchema": {
+                    "type": "string"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "services-empty-without-entry",
+      "accept": true,
+      "patches": [
+        {
+          "path": "/services",
+          "value": []
+        }
+      ]
+    },
+    {
+      "name": "service-reference-48",
+      "accept": true,
+      "patches": [
+        {
+          "path": "/dependencies/services",
+          "value": [
+            {
+              "publisher": "flowtools",
+              "id": "provider",
+              "version": "^1.0.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "service-reference-49",
+      "accept": true,
+      "patches": [
+        {
+          "path": "/dependencies/services",
+          "value": [
+            {
+              "publisher": "flowtools",
+              "id": "provider",
+              "version": "^1.0.0",
+              "service": "text-service",
+              "interfaceVersion": "^1.0.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "service-reference-50",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/dependencies/services",
+          "value": [
+            {
+              "publisher": "flowtools",
+              "id": "provider",
+              "version": "^1.0.0",
+              "service": "text-service",
+              "interfaceVersion": "^1.0.0"
+            },
+            {
+              "publisher": "flowtools",
+              "id": "provider",
+              "version": "^1.0.0",
+              "service": "text-service",
+              "interfaceVersion": "^1.0.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "service-reference-51",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/dependencies/services",
+          "value": [
+            {
+              "publisher": "flowtools",
+              "id": "provider",
+              "version": "^1.0.0",
+              "service": "text-service"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "service-reference-52",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/dependencies/services",
+          "value": [
+            {
+              "publisher": "flowtools",
+              "id": "provider",
+              "version": "^1.0.0",
+              "interfaceVersion": "*"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "service-reference-53",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/dependencies/services",
+          "value": [
+            {
+              "publisher": "flowtools",
+              "id": "provider",
+              "version": "^1.0.0"
+            },
+            {
+              "publisher": "flowtools",
+              "id": "provider",
+              "version": "^1.0.0",
+              "service": "text-service",
+              "interfaceVersion": "^1.0.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "service-reference-54",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/dependencies/services",
+          "value": [
+            {
+              "publisher": "flowtools",
+              "id": "provider",
+              "version": "^1.0.0",
+              "service": "text-service",
+              "interfaceVersion": "bad"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "tool-reference-55",
+      "accept": true,
+      "patches": [
+        {
+          "path": "/dependencies/tools",
+          "value": [
+            {
+              "publisher": "flowtools",
+              "id": "provider",
+              "version": "^1.0.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "tool-reference-56",
+      "accept": true,
+      "patches": [
+        {
+          "path": "/dependencies/tools",
+          "value": [
+            {
+              "publisher": "flowtools",
+              "id": "provider",
+              "version": "^1.0.0",
+              "target": {
+                "platform": "windows",
+                "arch": "x64"
+              },
+              "buildFlavor": "standard",
+              "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "tool-reference-57",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/dependencies/tools",
+          "value": [
+            {
+              "publisher": "flowtools",
+              "id": "provider",
+              "version": "^1.0.0",
+              "target": {
+                "platform": "windows",
+                "arch": "x64"
+              },
+              "buildFlavor": "standard",
+              "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            {
+              "publisher": "flowtools",
+              "id": "provider",
+              "version": "^1.0.0",
+              "target": {
+                "platform": "windows",
+                "arch": "x64"
+              },
+              "buildFlavor": "standard",
+              "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "tool-reference-58",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/dependencies/tools",
+          "value": [
+            {
+              "publisher": "flowtools",
+              "id": "provider",
+              "version": "^1.0.0",
+              "target": {
+                "platform": "windows",
+                "arch": "x64"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "tool-reference-59",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/dependencies/tools",
+          "value": [
+            {
+              "publisher": "flowtools",
+              "id": "provider",
+              "version": "^1.0.0",
+              "buildFlavor": "standard",
+              "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "tool-reference-60",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/dependencies/tools",
+          "value": [
+            {
+              "publisher": "flowtools",
+              "id": "provider",
+              "version": "^1.0.0"
+            },
+            {
+              "publisher": "flowtools",
+              "id": "provider",
+              "version": "^1.0.0",
+              "target": {
+                "platform": "windows",
+                "arch": "x64"
+              },
+              "buildFlavor": "standard",
+              "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "tool-reference-61",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/dependencies/tools",
+          "value": [
+            {
+              "publisher": "flowtools",
+              "id": "provider",
+              "version": "^1.0.0",
+              "target": {
+                "platform": "windows",
+                "arch": "x64"
+              },
+              "buildFlavor": "standard",
+              "digest": "bad"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "operation-reject-62",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {}
+        }
+      ]
+    },
+    {
+      "name": "operation-reject-63",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "type": "string",
+            "pattern": ".*"
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-reject-64",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "$ref": "https://schema.invalid"
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-reject-65",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["missing"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-reject-66",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "string"
+              }
+            },
+            "required": ["x", "x"],
+            "additionalProperties": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-reject-67",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "type": "object"
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-reject-68",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "type": "array"
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-reject-69",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "type": "string",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-reject-70",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-reject-71",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "type": "boolean",
+            "minimum": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-reject-72",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "type": "integer",
+            "default": 1.5
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-reject-73",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "type": "boolean",
+            "enum": [true, true]
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-reject-74",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nested": {
+                "type": "array"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-reject-75",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [1]
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-reject-76",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "type": "string",
+            "enum": ["a"],
+            "default": "b"
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-reject-77",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "type": "string",
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 2
+              }
+            ],
+            "default": "a"
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-reject-78",
+      "accept": false,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "x": {
+                "type": "string"
+              }
+            },
+            "default": {
+              "x": 1
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-valid-79",
+      "accept": true,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "default": [-1, 2]
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-valid-80",
+      "accept": true,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "x": {
+                "type": "string"
+              }
+            },
+            "default": {
+              "x": "a"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-valid-81",
+      "accept": true,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-valid-82",
+      "accept": true,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "enum": [1, 2],
+            "default": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-valid-83",
+      "accept": true,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "const": {
+              "x": 1
+            },
+            "default": {
+              "x": 1
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "operation-valid-84",
+      "accept": true,
+      "patches": [
+        {
+          "path": "/commands/0/outputSchema",
+          "value": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1,
+            "default": "😀"
+          }
+        }
+      ]
+    },
+    {
+      "name": "target-85",
+      "accept": false,
+      "patches": [],
+      "target": {
+        "hostVersion": "1.0.0"
+      }
+    },
+    {
+      "name": "target-86",
+      "accept": false,
+      "patches": [],
+      "target": {
+        "sdkVersion": "1.0.0"
+      }
+    },
+    {
+      "name": "target-87",
+      "accept": false,
+      "patches": [],
+      "target": {
+        "hostVersion": "0.1.1-beta.1"
+      }
+    },
+    {
+      "name": "target-88",
+      "accept": false,
+      "patches": [],
+      "target": {
+        "platform": "macos"
+      }
+    },
+    {
+      "name": "target-89",
+      "accept": false,
+      "patches": [],
+      "target": {
+        "arch": "arm64"
+      }
+    }
+  ]
+}

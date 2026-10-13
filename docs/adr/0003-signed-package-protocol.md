@@ -99,8 +99,9 @@ releaseSequence 不得低于 Host 保存的高水位。受控回滚仅允许 T0 
 回滚不降低高水位，不继承旧 grant，不覆盖同版本不同 digest 的拒绝。
 批准与 floor 必须来自 Host，不能来自包或 run flag。
 
-P2.5a floor 仅在内存 policy fixtures 中验证；持久、防崩溃 floor 和审批
-在 P2.5b/后续 T0 管理接入前并未提供。此模块不是对外的安装准入接口。
+P2.5a floor 仅在内存 policy fixtures 中验证。P2.5b 第三步新增下述持久
+descriptor 观察 adapter；受控回滚审批仍未提供。纯字节模块不是对外的安装
+准入接口，调用方不能将自己的 policy 当成持久信任状态。
 
 ## 当前实现
 
@@ -111,16 +112,114 @@ ZIP64、特殊文件、重叠/隐藏条目和压缩流剩余字节。先检查 l
 上限 64 MiB，manifest 最多 1 MiB，大于 1 MiB 的条目压缩比不得超过 1000。
 这比只读 P2.5a descriptor 格式更严格，是当前受控安装 profile；不影响
 P2.5a 验签语义。返回 opaque inert byte inventory，不访问磁盘或产生可执行
-身份。完整 Manifest/兼容性、持久 trust floors 与事务安装仍 pending。
+身份。完整 Manifest/兼容性在下一独立步骤提供；持久 trust floors 与事务安装仍 pending。
 见 [归档证据](../validation/g5-archive-admission.md)。
 
+同日 P2.5b 第二步增加完整 Plugin Manifest v1、Host/SDK/target 和依赖声明
+检查：SDK 生成结构契约，Rust 使用版本化显式 semantics，未知 custom export
+拒绝；两端共享 90 个样本。opaque byte archive 必须经过本步，tool descriptor
+不能充当 plugin。规范化 metadata 不改签名 bytes。实际安装锁绑定仍 pending；
+无 installed identity/IPC/grant，见 [Manifest 证据](../validation/g5-manifest-admission.md)。
+
+同日第三步 `packages/trust.rs` 借用 Runtime 的现有 SQLite 单写者，schema v2
+不变。私有状态绑定 T0 bootstrap pins，保存原始 DSSE 根链及各根首次接受
+时间、最高观察时间、精确 kind/publisher/ID/target/version/ZIP digest 与
+releaseSequence。每次重新验证历史双签链与累计撤销，历史根按当时接受时间
+验证；当前描述按当前 T0 时间和最新根验证。过期历史只可认证新鲜 successor，
+不能准入包。错误/过期候选仍持久观察 T0 时间，错误签名不记录候选身份。
+新描述 receipt 只在 FULL SQLite 事务提交观察身份后返回，崩溃不返回未提交
+floor。这个保守观察不等于安装成功；后续归档/Manifest 拒绝不能降低 floor。
+
+根链最多 32 项、版本观察最多 1024 项、状态最多 16 MiB；耗尽拒绝，不能
+静默裁剪旧根/floor。没有生产 pins 或可由客户端选择的时钟、floor、回滚审批。
+受控回滚全部拒绝，未来 T0 审批与可恢复 checkpoint 必须独立验收。
+
+受支持的 managed/low-level 备份恢复均给替换数据库写入不可自动清除的
+trust recovery 标记，即使备份早于信任初始化；adapter 同时识别已有
+recovery-generation。恢复后的 T1 数据仍可按原策略使用，但 bootstrap、根轮换
+和 descriptor 准入均拒绝，直到未来受控信任恢复完成。重启保留正常数据库
+floors；完全控制 OS/T0 的对手直接替换/删除数据库不在此控制或威胁模型范围。
+原型没有独立防篡改单调硬件锚点，也不声明对任意磁盘回退的保护。见
+[持久信任证据](../validation/g5-durable-trust.md)。
+
+第四步 `packages/dependencies.rs` 接受 opaque compatible archives 与 T0
+当前兼容环境，先在同一 writer 重放持久根链并观察当前时间，再检查每个
+receipt 的当前 root digest、精确持久 ZIP 身份、target、expiry 与 release
+floor。根轮换使旧 receipt 失效，须重新验签；无效候选池也不回退可信时间。
+原始 Manifest 再按当前 Host/SDK 校验，G4 package/service pins 使用原始 ZIP
+digest 与实际准入 target，禁止解析器替换根候选。G4 的内嵌 T1 metadata
+规划仍使用其既有 metadata digest，两条身份来源不混用。
+
+此路径没有 ToolCandidate 参数；工具声明不能创建已验证工具库存。最多 512
+个 archive，合计原始 Manifest 上限 16 MiB，超限在 trust IO 前拒绝；G4
+原有 DAG/边/搜索预算继续执行。所有提供的候选均须满足当前 release floors，
+不容忍旧候选，也不是已安装多版本清单。opaque plan 只证明该时间的惰性规划，
+不是已安装 lock、执行 grant 或健康检查；未来安装事务须在提交时重检当前
+信任、真实 inventory 与原始 artifacts，见
+[签名依赖证据](../validation/g5-signed-dependencies.md)。
+
+第五步新增 Windows/x64 T0 惰性安装事务。原始 ZIP 与 Manifest 仅写入固定
+blob 名称，不按 Manifest 路径提取业务文件；seal 绑定 create-only artifact
+的事务身份和两份原始 digest。同一 DataStore 保存 signed descriptor provenance、
+不同版本库存与 G4 dependency locks，读记录须匹配持久 descriptor 观察。
+解析只遍历实际库存中的必要 service 闭包，选择已安装最高 release；旧版本
+保留但仍须满足当前 admission floors，不能作为降级批准。已安装 provider
+自身的传递 lock pins 必须一致，否则先显式重锁，不能静默更换其依赖。
+
+安装按 journal -> synced stage -> prepared journal -> create-only publication
+-> 再次当前准入 -> metadata commit 执行。提交时重新采样 T0 时钟，验签当前
+根/撤销/expiry/floors、Host/SDK 和实际 provider 字节，拒绝中途状态/锁变化。
+inventory 写入与 pending journal 删除同一 SQLite FULL 事务，成功才返回
+inert receipt。任何未提交进程中断均显式 abort 到 quarantine，幂等且不滚动
+恢复候选、不降低 floors、不清除 backup trust-recovery 标记。不同版本旧记录
+和 blob 保留；descriptor 续期/显式重锁可复用同一 ZIP。
+
+路径只来自 T0 已保留/保护的 DataStore profile、固定目录、验证 digest 和
+UUID；拒绝 reparse、硬链接、未知目录或字节/seal 不一致。文件 readonly 属性
+不等于 ACL。第六步以官方 Windows native ABI 完成句柄相对 create-only
+发布/隔离；所有父目录 guards 始终持有，固定源目录期间重新校验候选字节。
+内部父目录允许 read/write sharing，delete sharing 始终关闭；没有覆盖、
+复制、路径 fallback 或释放 guard 重试。实际注入和拒绝证据见
+[目录保护验证](../validation/g5-guarded-publication.md)。当前仍依赖 Native
+Host 的私有 profile 和单写者，不能声称完整文件写入竞争防护或同 OS 用户
+攻陷隔离。native rename 不提供 write-through 证明；文件 sync/FULL 及进程退出
+证据不认证突然断电的文件系统持久性；完整平台/断电验收仍 pending。
+库存最多 128 records / 16 MiB metadata，blob 总量含隔离区最多 256 MiB /
+384 groups；规划 aggregate Manifest 16 MiB、展开字节 128 MiB，超限拒绝。
+见 [惰性安装证据](../validation/g5-inert-installation.md)。
+
 SDK 作者 helper、Rust 只读 verifier 与 Node/Rust 共用的签名 golden 已实现。
-没有下载、解包、安装 journal、artifact store、真实 pins、管理 IPC、
-持久 root/floor、UI 或第三方执行入口。G4 服务锁仍是 P2.5b 的前置依赖；
+已提供 inert ZIP/Manifest 校验、持久信任观察、签名依赖规划及 Windows/x64
+惰性库存/blob store/安装 journal 原型。没有产品下载/安装/激活入口、真实
+production pins、安装管理 IPC、受控信任恢复/回滚审批或第三方执行入口。
+G4 服务锁仍是 P2.5b 的前置依赖；
 签名不会升级为 T1，也不会为 T2/T3/TL 提供权限。全部 maturity 保持 prototype。
 SEC-001/002/008/014/015 保持 open，工程自查不替代独立安全批准。
 
 ## 后续验证
+
+### 2026-10-12 契约修正
+
+SDK 生成结构契约继续保留。native operation 校验增加独立一百万步匹配
+预算，SDK parser 的 405 项共享 corpus 覆盖默认值/enum、JSON Number
+精确解析、UTF-16 长度、ECMAScript range 空白和自有属性匹配；这项额外预算
+是安装 profile 限制，不宣称 SDK 也拒绝所有超预算数据。公开兼容环境只能
+从 T0 编译信息构造，不能由包或 IPC 参数选择。
+
+签名安装不再以原始 ZIP digest 替换 G4 semantic pins。内部 G4 resolver
+保留 metadata 语义，另构造 `SignedArchivePin` / `SignedArchiveLock`，以
+`signed-plugin-archives-v1` profile 明确绑定每个已选 archive 的原始 ZIP
+`packageDigest` 与已准入 target。G4 v1 lock 不能被解释为此新签名锁。
+任意 metadata 的跨语言 canonical digest 仍 pending；原始 signed UTF-8
+bytes/ZIP 继续权威，不以规范化 metadata 重写或代替。
+
+现有库存/journal key v1 保留，外层 formatVersion 为 2；旧 prototype
+记录返回 StateInvalid，保持其原始字节和 trust floors，不自动转换、删除
+或重新 bootstrap。根链/可信时间、原始文件、事务重检、显式 abort、持续
+目录保护及平台限制仍按上文执行。见
+[契约加固证据](../validation/g5-contract-hardening.md)。本轮本地完整门禁
+通过，当前提交远端 CI 与独立安全批准 pending，P2.5b/G5、执行与成熟度
+不因此收口。
 
 P2.5b 验收归档恶意样本、staging/journal 重启恢复、取消、同版本不可变、
 last-known-good 健康检查与 metadata 跨资源提交；依赖、数据、grants 分开

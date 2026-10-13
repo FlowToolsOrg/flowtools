@@ -1,7 +1,10 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-import { parseManifestCatalog } from '@flowtools/sdk/manifest'
+import {
+  exportManifestValidationContract,
+  parseManifestCatalog,
+} from '@flowtools/sdk/manifest'
 
 import { builtInCLIManifests } from '../cli/src/builtin-manifests'
 
@@ -27,4 +30,8 @@ mkdirSync(directory, { recursive: true })
 writeFileSync(
   resolve(directory, 'catalog.json'),
   JSON.stringify({ formatVersion: 1, plugins: catalog }) + '\n'
+)
+writeFileSync(
+  resolve(directory, 'manifest-validation.json'),
+  JSON.stringify(exportManifestValidationContract()) + '\n'
 )

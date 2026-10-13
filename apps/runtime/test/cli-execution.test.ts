@@ -113,41 +113,23 @@ test('compiled CLI reads deterministic dependency plans from the actual Host wit
 }, 30_000)
 
 test('real built-in CLI run produces the SDK envelope from generated flags', async () => {
-  const output = await invoke([
-    'run',
-    'plugin-base64-encoder',
-    '--text',
-    'hello',
-    '--format',
-    'json',
-  ])
-  expect(output.code).toBe(0)
-  expect(output.stderr).toBe('')
-  expect(JSON.parse(output.stdout)).toMatchObject({
-    success: true,
-    pluginId: 'plugin-base64-encoder',
-    pluginVersion: '0.1.0',
-    data: { type: 'json', value: { result: 'aGVsbG8=' } },
-  })
-  const jobs = await invoke(['jobs', 'list', '--profile', profile])
-  const rows = (
-    JSON.parse(jobs.stdout) as { data: { runId: string; pluginId: string }[] }
-  ).data
-  const run = rows.find(job => job.pluginId === 'plugin-base64-encoder')!
-  const calls = await invoke([
-    'dependencies',
-    'calls',
-    run.runId,
-    '--profile',
-    profile,
-    '--format',
-    'json',
-  ])
-  expect(calls).toMatchObject({ code: 0, stderr: '' })
-  expect(JSON.parse(calls.stdout)).toMatchObject({ success: true, data: [] })
-  expect((await invoke(['jobs', 'list', '--profile', profile])).stdout).toBe(
-    jobs.stdout
+  // Keep repeated CLI execution and complete stdio draining in Node, matching
+  // the dependency-plan fixture; Bun owns only this bounded test invocation.
+  const fixture = Bun.spawn(
+    [
+      'node',
+      fileURLToPath(new URL('./run-envelope-fixture.mjs', import.meta.url)),
+      profile,
+    ],
+    { stdout: 'pipe', stderr: 'pipe' }
   )
+  const [stdout, stderr, code] = await Promise.all([
+    new Response(fixture.stdout).text(),
+    new Response(fixture.stderr).text(),
+    fixture.exited,
+  ])
+  expect({ code, stderr }).toEqual({ code: 0, stderr: '' })
+  expect(stdout.trim()).toBe('Run envelope CLI fixture passed')
 }, 30_000)
 
 test('real built-in CLI schema error is failed JSON with nonzero status', async () => {

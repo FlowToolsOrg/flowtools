@@ -31,6 +31,17 @@ const frame = (value: unknown) => {
   return Buffer.concat([header, body])
 }
 
+function removeServiceFixture(directory: string, parent: string) {
+  const canonical = realpathSync(directory)
+  if (
+    canonical !== directory ||
+    dirname(canonical) !== parent ||
+    !basename(canonical).startsWith('flowtools-service-pin-')
+  )
+    throw new Error('Unexpected disposable fixture directory')
+  rmSync(canonical, { recursive: true, force: true })
+}
+
 test('actual compiled runner refuses truncated, oversized and forged Host frames', async () => {
   const oversized = Buffer.alloc(4)
   oversized.writeUInt32LE(1048577)
@@ -146,13 +157,6 @@ test('actual compiled runner verifies the Host package pin before importing serv
       else expect(stderr).toContain(marker)
     }
   } finally {
-    const canonical = realpathSync(directory)
-    if (
-      canonical !== directory ||
-      dirname(canonical) !== parent ||
-      !basename(canonical).startsWith('flowtools-service-pin-')
-    )
-      throw new Error('Unexpected disposable fixture directory')
-    rmSync(canonical, { recursive: true, force: true })
+    removeServiceFixture(directory, parent)
   }
 }, 30_000)

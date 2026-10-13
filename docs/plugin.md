@@ -16,6 +16,57 @@ profile 拒绝加密、ZIP64、data descriptors、extra fields、comments 与特
 完整 Manifest/依赖兼容或可安装、可执行。见
 [归档准入说明](./validation/g5-archive-admission.md)。
 
+P2.5b 第二步在 ZIP byte inventory 后增加完整 Plugin Manifest v1 与
+Host/SDK/target 校验；签名和文件完整仍不能跳过命令/服务/依赖语义。
+SDK 导出构建用结构契约，自定义校验有显式 native semantics 与共同回归。
+原始 Manifest bytes 不会因默认 prototype metadata 被重写。
+依赖声明、工具 selector 和 cold-start 支持不产生安装、锁或 grants；
+实际 service 锁与惰性事务由下方第四/五步提供；tool 准入仍 pending。见
+[Manifest 准入](./validation/g5-manifest-admission.md)。
+
+P2.5b 第三步将 descriptor 信任观察持久化到 Runtime 单写者数据库，T0
+提供 pins 与可信时间；作者 SDK、包内容和 run flag 不能设置 floors 或 grants。
+同一版本/sequence/ZIP digest 的新鲜签名描述可续期，观察过更高 release 后
+拒绝降级；记录 descriptor 不表示已安装或健康。备份恢复后的 profile 拒绝
+签名包准入，受控信任恢复与回滚审批尚未实现。没有第三方安装入口或 production
+pins，见 [持久信任验证](./validation/g5-durable-trust.md)。
+
+第四步可从完整准入的签名 archive 生成 inert service dependency plan，pins
+使用原始 ZIP digest，不能用 Manifest hash 或其他 publisher 的同名 provider
+替代。所有候选须通过当前根、精确持久观察、target、expiry、release floors
+及当前 Host/SDK 检查；根轮换需重新验签。旧版本 provider 不能混入当前候选池，
+该层不提供已安装多版本库存，第五步另提供惰性库存；回滚审批尚未实现。
+作者的 tool 声明仍不能创建工具库存，
+计划不会创建安装锁、grants 或执行身份，见
+[签名依赖规划](./validation/g5-signed-dependencies.md)。
+
+第五步 T0 Windows/x64 prototype 可将已验签 ZIP 原始字节与 Manifest 保存
+为 inert blobs，服务依赖只从实际库存解析，并持久化独立 signed archive 锁。提交前重新验证
+当前根/撤销/expiry/floors、实际 provider 字节和 Host/SDK，重新采样可信时间。
+不同版本 blob 保留，descriptor 续期复用相同 ZIP；显式重锁可更换本包的惰性
+依赖记录，但不能自动改绑 provider 已有传递锁。未提交进程中断必须显式
+abort 隔离；观察 floors 不随失败或旧备份下降。这不是产品安装/激活接口，
+不会执行安装脚本、包入口或授予能力，见
+[惰性安装](./validation/g5-inert-installation.md)。
+
+第六步保持 staging/artifacts/quarantine 的父目录句柄保护，以 Windows
+native 句柄相对移动发布或隔离固定候选，并在固定源目录期间重新校验字节。
+已存在目标、junction、异常组件名或校验失败均拒绝；不能以重试或路径移动
+降级绕过。内部父目录需要 write sharing，delete sharing 始终关闭；此原型
+仍依赖 T0 私有 profile，完整 ACL/文件竞争/断电验收未完成。签名、库存和
+此文件保护均不授予执行/能力，见 [目录保护验证](./validation/g5-guarded-publication.md)。
+
+2026-10-12 契约加固将原始 ZIP 的 `packageDigest` 与实际 target 放入独立
+`SignedArchivePin` / `SignedArchiveLock`，profile 为
+`signed-plugin-archives-v1`，保留内部 G4 semantic pins 的旧含义。任意
+metadata 的跨语言 canonical digest 仍待独立契约，不能把 Manifest digest
+或 G4 v1 lock 当作 signed ZIP 身份。库存/journal 保持原 key v1，记录使用
+外层 formatVersion 2；旧原型数据拒绝且保留，不自动重写、降 floors 或初始化。
+Host/SDK/target 来自 T0 编译信息；作者不能选择兼容环境。SDK 与 Rust 的
+405 项实际 parser corpus 及有限 operation 匹配预算见
+[契约加固记录](./validation/g5-contract-hardening.md)。本轮本地完整门禁通过，
+当前提交远端 CI 与独立安全批准仍 pending，产品激活与第三方执行范围不改变。
+
 本文面向 Flow Tool 开发者，目标是帮助你在当前仓库里快速开发并调试自己的
 plugin。
 

@@ -24,6 +24,90 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 
 ## 风险台账
 
+2026-10-12 契约加固保留 SDK 结构 exporter，并补齐有预算 native operation
+比对、实际编译 SDK 的 405 项 corpus、精确浮点解析、UTF-16/npm 空白语义
+及 closed-object 自有属性检查；T0 兼容环境只从编译来源构造。签名归档使用
+独立 `SignedArchivePin` / `SignedArchiveLock` 与
+`signed-plugin-archives-v1` profile 绑定原始 ZIP/target，G4 semantic pins
+保持原义。库存/journal 外层 format 2 拒绝旧原型记录，不改原字节或 floors。
+任意 metadata 的跨语言 canonical digest 仍 pending；独立 ZIP 绑定不会
+产生授权。新增拒绝样本和本轮验证状态见
+[契约加固证据](../validation/g5-contract-hardening.md)。此前完整 gate 失败
+保留，修改后本地完整集成门禁通过，当前提交远端 CI 与独立安全批准 pending，
+历史通过不作为本轮通过。SEC-001/002/008/014/015
+继续 open，Codex 工程自查不替代实际独立安全 reviewer/date/conclusion。
+
+2026-10-11 P2.5b 第六步在
+[native 发布文件层](../../packages/runtime-core/src/packages/install/files/rename.rs)
+修补第五步临时释放内部父目录 guards 的窗口：所有父目录句柄持续持有且
+不共享 delete，以 held parent 下的单组件打开固定源目录，在源固定期间
+重新校验字节，再向 held target parent create-only 移动。五项真实 native
+回归覆盖父/源重命名分享冲突、目录/文件目标不可覆盖、源 junction、异常
+组件/校验失败及校验期间真实 FSCTL 父目录 reparse 注入，见
+[目录保护证据](../validation/g5-guarded-publication.md)。内部父目录必须允许
+write sharing；reparse 重查不证明全部写入竞争防护。私有 profile ACL、
+突然断电、健康/LKG、production pins、产品安装/执行和 sandbox 门禁仍
+pending，SEC-001/008/014/015 不关闭。Codex 2026-10-11 工程自查；独立
+安全 reviewer/date/conclusion 待完成。
+
+2026-10-11 P2.5b 第五步增加
+[T0 Windows/x64 惰性安装](../../packages/runtime-core/src/packages/install.rs)
+及 [固定 blob 文件层](../../packages/runtime-core/src/packages/install/files.rs)。
+同一单写者保存库存/journal，原始 ZIP/Manifest/seal 不解包或执行；真实库存
+锁不能静默改绑 provider 传递依赖。提交前重查当前签名/撤销/expiry/floors、
+实际 provider 字节和新采样的 T0 时间；SQLite 库存/journal 原子提交。
+实际进程在每个 barrier 退出，未提交候选显式 abort 到 quarantine；旧版本
+字节/锁保留，恢复不降低 floors 或清除旧备份 trust-recovery 标记。
+静态 junction/hardlink、文件/seal 篡改、journal/库存变化、故障注入、磁盘/
+metadata/aggregate decode 配额见
+[惰性安装拒绝证据](../validation/g5-inert-installation.md)。
+profile 由 Native Host 保留/保护；第五步首次实现曾临时释放内部父目录
+guards，第六步已按上述句柄相对移动修补。仍不能宣称完整文件竞争/同用户
+隔离或断电保护。readonly 属性不是 ACL；没有产品安装/激活/执行入口或
+健康/LKG 结论。SEC-001/008/014/015 保持 open，production pins、受控恢复/
+回滚、平台隔离与独立 review pending。Codex 2026-10-11 工程自查，实际
+独立安全 Reviewer/date/conclusion 待完成。
+
+2026-10-11 P2.5b 第四步增加
+[签名依赖规划](../../packages/runtime-core/src/packages/dependencies.rs)，
+复用 G4 解析器，但 package/service pins 使用原始 ZIP identity 和已准入
+target。每个 opaque receipt 必须匹配当前持久根与精确观察，重新检查撤销、
+expiry、release floors 及当前 Host/SDK；不能凭曾经验签的缓存或 metadata
+hash 生成当前计划。根轮换后须重新验签，所有候选须新鲜；已安装多版本库存
+与受控回滚不在本步。错 publisher/interface、重复/替换根候选、依赖环、未验证
+tool 声明、超量候选/Manifest 和恢复/写失败拒绝见
+[10 项真实签名 ZIP 回归](../validation/g5-signed-dependencies.md)。除可信时间
+观察外不写状态，无 grants/jobs/plugin data/安装锁或执行。提交时再次验证、
+真实安装库存/artifact/journal、tool admission、平台隔离仍 pending。
+SEC-001/008/014/015 保持 open；Codex 2026-10-11 工程自查，独立实际安全
+Reviewer/date/conclusion pending，无 production 风险豁免。
+
+2026-10-11 P2.5b 第三步新增
+[持久 descriptor 信任](../../packages/runtime-core/src/packages/trust.rs)，
+借用 Runtime 同一 SQLite writer，无新 IPC/网络/目录/权限。T0 pins 绑定与
+每次原始根链验证、最高观察时间、不可变版本与 release floors、累计撤销
+在重启后保留。两条受支持的备份恢复路径写入 recovery-required 标记，含
+trust 初始化之前的备份；拒绝重新 bootstrap，不能靠恢复旧备份降 floor。
+签名拒绝可提交可信时间观察，不记录无效候选或 grants；receipt 只在身份
+事务提交成功后返回。真实提交前后退出、写失败、撤销、损坏/超限状态与旧
+备份回归见 [持久信任证据](../validation/g5-durable-trust.md)。
+观察记录不是 installed/last-known-good；受控恢复/回滚审批、生产 pins、
+安装事务与平台隔离仍 pending。OS/T0 完全控制者直接替换数据库未防护。
+SEC-001/008/014/015 保持 open；Codex 2026-10-11 工程自查，独立实际
+安全 Reviewer/date/conclusion pending。
+
+2026-10-11 P2.5b 第二步新增
+[完整 Manifest 准入](../../packages/runtime-core/src/packages/manifest.rs) 与
+[SDK 生成契约](../../packages/sdk/src/manifest/validation-contract.ts)，
+消费已有 opaque signed byte archive。结构由 SDK 导出，自定义规则由版本化
+native semantics 核对，未知 custom 生成拒绝；90 个共同样本与实际签名
+ZIP 链路覆盖错误声明、默认值、服务/依赖 selectors、预算、重复原始键和
+兼容性拒绝。见 [验证边界](../validation/g5-manifest-admission.md)。
+无新增 IPC/native command/网络/文件写入、grant、安装或可执行身份；真实
+依赖锁绑定、journal/安装恢复和平台边界仍 pending。
+SEC-001/008/014/015 保持 open；Codex 2026-10-11 工程自查，独立实际
+安全 Reviewer/date/conclusion pending。
+
 2026-10-09 G5 P2.5a 添加
 [只读签名验证](../../packages/runtime-core/src/packages.rs)、
 [SDK 作者格式](../../packages/sdk/src/manifest/signed-package.ts) 和

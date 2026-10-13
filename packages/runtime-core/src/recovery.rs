@@ -219,7 +219,11 @@ fn sanitize(stage: &Path, recovery: &str) -> Result<(), ErrorCode> {
         .map_err(|_| ErrorCode::StorageFailed)?;
     }
     crate::runtime::interrupt_restored_jobs(&tx)?;
-    for (key, value) in [("cold-start", "false"), ("recovery-generation", recovery)] {
+    for (key, value) in [
+        ("cold-start", "false"),
+        ("recovery-generation", recovery),
+        (crate::packages::trust::RECOVERY_KEY, "true"),
+    ] {
         tx.execute(
             "INSERT OR REPLACE INTO core_metadata(key,value) VALUES(?1,?2)",
             [key, value],

@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 serde.workspace = true
-serde_json.workspace = true
+serde_json = { workspace = true, features = ["float_roundtrip"] }
 specta.workspace = true
 specta-serde.workspace = true
 specta-typescript.workspace = true
@@ -17,8 +17,9 @@ jsonschema = { version = "=0.33.0", default-features = false }
 schemars = { version = "=1.2.1", features = ["derive"] }
 rusqlite = { version = "=0.39.0", features = ["bundled", "backup"] }
 node-semver = "=2.2.0"
+ryu-js = "=1.0.2"
 zip = { version = "=9.0.1", default-features = false, features = ["deflate-flate2"] }
 flate2 = { version = "=1.1.10", default-features = false, features = ["rust_backend"] }
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "=0.61.2", features = ["Win32_Storage_FileSystem", "Win32_Foundation", "Win32_Security_Cryptography"] }
+windows-sys = { version = "=0.61.2", features = ["Win32_Storage_FileSystem", "Win32_Foundation", "Win32_Security_Cryptography", "Win32_System_IO", "Win32_System_Ioctl", "Win32_System_SystemServices", "Wdk_Foundation", "Wdk_Storage_FileSystem"] }

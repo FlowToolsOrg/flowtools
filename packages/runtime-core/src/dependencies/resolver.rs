@@ -136,7 +136,7 @@ fn range_source_supported(value: &str) -> bool {
             })
         })
 }
-fn version(value: &str) -> Result<Version, DependencyError> {
+pub(crate) fn version(value: &str) -> Result<Version, DependencyError> {
     // SDK canonical exact-version declarations use semver.valid(v) === v,
     // whose normalized value excludes build metadata. Ranges/matching still
     // use npm semantics, including ignoring build metadata in comparisons.
@@ -151,9 +151,9 @@ fn version(value: &str) -> Result<Version, DependencyError> {
     }
     Ok(parsed)
 }
-pub(super) struct NpmRange(Vec<Range>);
+pub(crate) struct NpmRange(Vec<Range>);
 impl NpmRange {
-    pub(super) fn satisfies(&self, version: &Version) -> bool {
+    pub(crate) fn satisfies(&self, version: &Version) -> bool {
         self.0.iter().any(|branch| branch.satisfies(version))
     }
 }
@@ -237,17 +237,36 @@ fn npm_atom(value: &str) -> Result<Option<Range>, DependencyError> {
         .map(Some)
         .map_err(|_| DependencyError::InvalidDeclaration)
 }
-pub(super) fn range(value: &str) -> Result<NpmRange, DependencyError> {
-    if value.is_empty()
-        || value.len() > 256
-        || !numeric_prereleases_supported(value)
-        || !range_source_supported(value)
+pub(crate) fn range(value: &str) -> Result<NpmRange, DependencyError> {
+    if value.is_empty() || value.encode_utf16().count() > 256 {
+        return Err(DependencyError::InvalidDeclaration);
+    }
+    // npm uses ECMAScript whitespace and JavaScript string lengths. Rust's
+    // Unicode whitespace includes NEL but omits BOM, and UTF-8 byte lengths
+    // would reject otherwise valid 256-unit declarations such as NBSP/BOM.
+    let normalized: String = value
+        .chars()
+        .map(|character| {
+            if matches!(character,
+                '\u{0009}'..='\u{000d}' | '\u{0020}' | '\u{00a0}' | '\u{1680}'
+                | '\u{2000}'..='\u{200a}' | '\u{2028}' | '\u{2029}'
+                | '\u{202f}' | '\u{205f}' | '\u{3000}' | '\u{feff}')
+            {
+                ' '
+            } else {
+                character
+            }
+        })
+        .collect();
+    if !normalized.is_ascii()
+        || !numeric_prereleases_supported(&normalized)
+        || !range_source_supported(&normalized)
     {
         return Err(DependencyError::InvalidDeclaration);
     }
     let mut branches = Vec::new();
-    for branch in value.split("||") {
-        let tokens: Vec<_> = branch.split_whitespace().collect();
+    for branch in normalized.split("||") {
+        let tokens: Vec<_> = branch.split_ascii_whitespace().collect();
         let mut intersection = Some(Range::any());
         let mut n = 0;
         while n < tokens.len() {
@@ -282,6 +301,23 @@ fn string(value: &Value, key: &str) -> Result<String, DependencyError> {
 }
 
 impl PackageCandidate {
+    /// Called only by the signed planner after current durable trust checks.
+    /// Only the admitted target overrides metadata claims. The internal solver
+    /// retains G4 semantic pins; the signed planner maps its final selection to
+    /// separately typed exact ZIP pins.
+    pub(crate) fn from_verified_archive(
+        archive: &crate::packages::manifest::CompatiblePluginArchive,
+    ) -> Result<Self, DependencyError> {
+        let mut candidate = Self::from_manifest(archive.manifest())?;
+        let receipt = archive.archive().descriptor();
+        candidate.targets = vec![serde_json::from_value(
+            serde_json::to_value(&receipt.payload().target)
+                .map_err(|_| DependencyError::InvalidDeclaration)?,
+        )
+        .map_err(|_| DependencyError::InvalidDeclaration)?];
+        Ok(candidate)
+    }
+
     /// The complete manifest remains bound by its digest. Semantic declaration
     /// parsing is defensive; package admission still belongs to the Host build.
     pub fn from_manifest(manifest: &Value) -> Result<Self, DependencyError> {

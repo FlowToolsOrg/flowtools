@@ -12,6 +12,11 @@ use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, HashSet};
 
 pub mod archive;
+pub mod dependencies;
+#[cfg(windows)]
+pub mod install;
+pub mod manifest;
+pub mod trust;
 
 pub const PACKAGE_PAYLOAD_TYPE: &str = "application/vnd.flowtools.package.v1+json";
 pub const ROOT_PAYLOAD_TYPE: &str = "application/vnd.flowtools.trust-root.v1+json";
@@ -41,6 +46,14 @@ pub enum PackageError {
     ManifestMismatch,
     ArchiveInvalid,
     ArchiveBudgetExceeded,
+    ManifestInvalid,
+    ManifestBudgetExceeded,
+    ManifestIncompatible,
+    TrustStateRequired,
+    TrustStateInvalid,
+    TrustStorageFailed,
+    TrustRecoveryRequired,
+    TrustBudgetExceeded,
 }
 
 impl PackageError {
@@ -63,6 +76,14 @@ impl PackageError {
             Self::ManifestMismatch => "PACKAGE_MANIFEST_MISMATCH",
             Self::ArchiveInvalid => "PACKAGE_ARCHIVE_INVALID",
             Self::ArchiveBudgetExceeded => "PACKAGE_ARCHIVE_BUDGET_EXCEEDED",
+            Self::ManifestInvalid => "PACKAGE_MANIFEST_INVALID",
+            Self::ManifestBudgetExceeded => "PACKAGE_MANIFEST_BUDGET_EXCEEDED",
+            Self::ManifestIncompatible => "PACKAGE_MANIFEST_INCOMPATIBLE",
+            Self::TrustStateRequired => "PACKAGE_TRUST_STATE_REQUIRED",
+            Self::TrustStateInvalid => "PACKAGE_TRUST_STATE_INVALID",
+            Self::TrustStorageFailed => "PACKAGE_TRUST_STORAGE_FAILED",
+            Self::TrustRecoveryRequired => "PACKAGE_TRUST_RECOVERY_REQUIRED",
+            Self::TrustBudgetExceeded => "PACKAGE_TRUST_BUDGET_EXCEEDED",
         }
     }
 }
@@ -208,7 +229,8 @@ pub struct BootstrapPins {
     pub threshold: usize,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct KnownVersionIdentity {
     pub kind: PackageKind,
     pub publisher: String,

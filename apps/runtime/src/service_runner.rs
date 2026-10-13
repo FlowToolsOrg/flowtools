@@ -13,6 +13,46 @@ pub(super) struct RunnerBackend {
     pub reads: std::sync::atomic::AtomicU32,
     #[cfg(test)]
     pub largest_group: std::sync::atomic::AtomicU32,
+    #[cfg(test)]
+    pub drain_probe: std::sync::Mutex<Option<Arc<DrainProbe>>>,
+}
+/// A per-fixture bounded barrier around the real OS group drain. No wire/env knob.
+#[cfg(test)]
+pub(super) struct DrainProbe {
+    pub before: std::sync::atomic::AtomicU32,
+    pub after: std::sync::atomic::AtomicU32,
+    pub error: std::sync::atomic::AtomicI32,
+    pub descendant_pid: std::sync::atomic::AtomicU32,
+    pub descendant_exited: std::sync::atomic::AtomicBool,
+    pub entered: Semaphore,
+    pub release: Semaphore,
+    pub deny_terminate: bool,
+}
+#[cfg(test)]
+impl DrainProbe {
+    pub fn new(deny_terminate: bool) -> Self {
+        Self {
+            before: std::sync::atomic::AtomicU32::new(u32::MAX),
+            after: std::sync::atomic::AtomicU32::new(u32::MAX),
+            error: std::sync::atomic::AtomicI32::new(0),
+            descendant_pid: std::sync::atomic::AtomicU32::new(0),
+            descendant_exited: std::sync::atomic::AtomicBool::new(false),
+            entered: Semaphore::new(0),
+            release: Semaphore::new(0),
+            deny_terminate,
+        }
+    }
+    fn record_drain(
+        &self,
+        job: &crate::process_job::ProcessJob,
+        descendant: &crate::process_job::ProcessWitness,
+    ) -> std::io::Result<()> {
+        self.after
+            .store(job.active_processes()?, std::sync::atomic::Ordering::SeqCst);
+        self.descendant_exited
+            .store(descendant.exited()?, std::sync::atomic::Ordering::SeqCst);
+        Ok(())
+    }
 }
 impl RunnerBackend {
     pub fn fixed() -> Result<Self, ErrorCode> {
@@ -30,6 +70,8 @@ impl RunnerBackend {
             reads: Default::default(),
             #[cfg(test)]
             largest_group: Default::default(),
+            #[cfg(test)]
+            drain_probe: Default::default(),
         }
     }
     async fn gate(&self, target: &ServiceTarget) -> Result<Arc<Semaphore>, ErrorCode> {
@@ -233,11 +275,74 @@ pub(super) fn execute(
                 .largest_group
                 .fetch_max(count, std::sync::atomic::Ordering::SeqCst);
         }
+        #[cfg(test)]
+        let probe = if spec.plugin_id == "fixture-c" {
+            backend.drain_probe.lock().unwrap().take()
+        } else {
+            None
+        };
+        #[cfg(test)]
+        let descendant = if let Some(probe) = &probe {
+            probe.before.store(
+                job.active_processes().expect("Read the real fixture Job"),
+                std::sync::atomic::Ordering::SeqCst,
+            );
+            let pid = std::fs::read_to_string(workspace.join("fixture-descendant-ready"))
+                .expect("The compiled C fixture writes its descendant PID")
+                .parse::<u32>()
+                .unwrap();
+            let descendant = job
+                .observe_owned_process(pid)
+                .expect("The actual descendant is alive in this exact Job");
+            probe
+                .descendant_pid
+                .store(pid, std::sync::atomic::Ordering::SeqCst);
+            probe.entered.add_permits(1);
+            // Do not hold Core, alter the run deadline or skip cleanup on failure.
+            let permit = tokio::time::timeout(Duration::from_secs(5), probe.release.acquire())
+                .await
+                .expect("Fixture must release its drain barrier")
+                .unwrap();
+            permit.forget();
+            Some(descendant)
+        } else {
+            None
+        };
         if result.is_err() {
             let _ = child.kill().await;
             let _ = child.wait().await;
         }
-        let reaped = tokio::task::spawn_blocking(move || job.drain()).await;
+        let reaped = tokio::task::spawn_blocking(move || {
+            #[cfg(test)]
+            if let Some(probe) = &probe {
+                if probe.deny_terminate {
+                    // Duplicate the real Job with QUERY only. The production drain
+                    // itself must observe the kernel's access-denied error.
+                    let denied = job.query_only()?;
+                    let result = denied.drain();
+                    probe.error.store(
+                        result
+                            .as_ref()
+                            .err()
+                            .and_then(std::io::Error::raw_os_error)
+                            .unwrap_or(0),
+                        std::sync::atomic::Ordering::SeqCst,
+                    );
+                    // Full ownership is retained solely to clean the fixture;
+                    // its successful cleanup cannot replace the failed result.
+                    job.drain()?;
+                    probe.record_drain(&job, descendant.as_ref().unwrap())?;
+                    return result;
+                }
+            }
+            let result = job.drain();
+            #[cfg(test)]
+            if let Some(probe) = &probe {
+                probe.record_drain(&job, descendant.as_ref().unwrap())?;
+            }
+            result
+        })
+        .await;
         if !matches!(reaped, Ok(Ok(()))) {
             core.lock().await.fail_closed();
             return Err(ErrorCode::ExecutionInterrupted);

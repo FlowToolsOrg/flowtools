@@ -178,6 +178,181 @@ async fn timed_out_provider_drains_its_actual_owned_descendant() {
 }
 
 #[tokio::test]
+async fn provider_error_retains_lease_until_its_real_descendant_drains() {
+    abnormal_owned_drain("daemon-fail", false, false).await;
+}
+
+#[tokio::test]
+async fn oversized_provider_frame_retains_lease_until_its_real_group_drains() {
+    abnormal_owned_drain("daemon-oversized", false, false).await;
+}
+
+#[tokio::test]
+async fn malformed_provider_frame_retains_lease_until_its_real_group_drains() {
+    abnormal_owned_drain("daemon-malformed", false, false).await;
+}
+
+#[tokio::test]
+async fn root_cancel_retains_lease_until_the_actual_provider_group_drains() {
+    abnormal_owned_drain("daemon", true, false).await;
+}
+
+#[tokio::test]
+async fn deadline_retains_lease_until_the_actual_provider_group_drains() {
+    abnormal_owned_drain("daemon", false, false).await;
+}
+
+#[tokio::test]
+async fn real_job_access_denial_stops_host_and_refuses_provider_migration() {
+    abnormal_owned_drain("daemon-malformed", false, true).await;
+}
+
+async fn abnormal_owned_drain(mode: &str, cancel: bool, deny_terminate: bool) {
+    use std::sync::atomic::Ordering::SeqCst;
+    let fixture = Fixture::new().await;
+    let probe = Arc::new(service_runner::DrainProbe::new(deny_terminate));
+    *fixture.backend.drain_probe.lock().unwrap() = Some(probe.clone());
+    let (root, task) = fixture.run(mode).await;
+    if cancel {
+        fixture.wait_spawned_descendant(&root).await;
+        Fixture::call_core(
+            &mut *fixture.core.lock().await,
+            "cli",
+            &fixture.cli,
+            Call::Cancel(JobKey {
+                run_id: root.clone(),
+            }),
+        );
+    }
+    // Includes the existing 9.5 second run deadline; no deadline is extended.
+    let entered = tokio::time::timeout(Duration::from_secs(10), probe.entered.acquire())
+        .await
+        .expect("The actual C process must reach the drain boundary")
+        .unwrap();
+    entered.forget();
+    fixture.wait_spawned_descendant(&root).await;
+    assert!(
+        probe.before.load(SeqCst) > 0,
+        "The same owned Job is still alive"
+    );
+    assert_ne!(probe.descendant_pid.load(SeqCst), 0);
+    assert!(!probe.descendant_exited.load(SeqCst));
+    assert_eq!(probe.after.load(SeqCst), u32::MAX);
+    let plan = fixture.update_plan().await;
+    let mut core = fixture.core.lock().await;
+    assert!(core.active_service_calls() > 0);
+    assert!(core
+        .service_diagnostics(&root)
+        .unwrap()
+        .iter()
+        .any(|call| { call.provider.id == "fixture-c" && call.state == "running" }));
+    core.begin_provider_change(plan.clone(), &plan.digest, false)
+        .unwrap();
+    let mut migrated = false;
+    assert_eq!(
+        core.commit_provider_change(&plan.digest, |_| {
+            migrated = true;
+            Ok(())
+        }),
+        Err(ErrorCode::RuntimeBusy)
+    );
+    assert!(
+        !migrated,
+        "Migration must not run while the real Job is alive"
+    );
+    drop(core);
+    probe.release.add_permits(1);
+    let result = task.await.unwrap();
+    let expected_root = if cancel || deny_terminate {
+        ErrorCode::Aborted
+    } else if mode == "daemon" {
+        ErrorCode::Timeout
+    } else {
+        ErrorCode::ExecutionFailed
+    };
+    assert_eq!(result, Err(expected_root));
+    fixture.drained().await;
+    assert_eq!(
+        probe.after.load(SeqCst),
+        0,
+        "Query the same Job after actual drain"
+    );
+    assert!(
+        probe.descendant_exited.load(SeqCst),
+        "The witnessed descendant actually exited"
+    );
+    let mut core = fixture.core.lock().await;
+    let calls = core.service_diagnostics(&root).unwrap();
+    let provider = calls
+        .iter()
+        .find(|call| call.provider.id == "fixture-c")
+        .unwrap();
+    assert_eq!(provider.state, "failed");
+    let expected_c = if deny_terminate {
+        ErrorCode::ExecutionInterrupted
+    } else if cancel {
+        ErrorCode::Aborted
+    } else if mode == "daemon" {
+        ErrorCode::Timeout
+    } else if mode == "daemon-fail" {
+        ErrorCode::ExecutionFailed
+    } else {
+        ErrorCode::OutputInvalid
+    };
+    assert_eq!(provider.failure_code, Some(expected_c));
+    if deny_terminate {
+        assert_eq!(probe.error.load(SeqCst), 5, "Kernel ERROR_ACCESS_DENIED");
+        assert!(
+            core.stopping(),
+            "A real drain error must fail the Host closed"
+        );
+        assert_eq!(
+            core.commit_provider_change(&plan.digest, |_| {
+                migrated = true;
+                Ok(())
+            }),
+            Err(ErrorCode::RuntimeBusy)
+        );
+        assert!(!migrated);
+        return;
+    }
+    assert_eq!(probe.error.load(SeqCst), 0);
+    assert!(!core.stopping());
+    core.commit_provider_change(&plan.digest, |tx| {
+        migrated = true;
+        tx.execute(
+            "INSERT INTO core_metadata(key,value) VALUES('abnormal-drain-migration','1.1.0')",
+            [],
+        )
+        .unwrap();
+        Ok(())
+    })
+    .unwrap();
+    assert!(migrated);
+    Fixture::call_core(
+        &mut core,
+        "manager",
+        &fixture.manager,
+        Call::Grant(Fixture::grant(&fixture.manifests[3])),
+    );
+    drop(core);
+    let (next, task) = fixture.run("echo").await;
+    assert_eq!(task.await.unwrap().unwrap(), json!("A:B:C:hello"));
+    assert!(fixture
+        .core
+        .lock()
+        .await
+        .service_diagnostics(&next)
+        .unwrap()
+        .iter()
+        .any(|call| {
+            call.provider.id == "fixture-c"
+                && call.provider.version == "1.1.0"
+                && call.state == "succeeded"
+        }));
+}
+
+#[tokio::test]
 async fn incompatible_or_cyclic_update_fails_before_draining_the_current_provider() {
     let fixture = Fixture::new().await;
     let mut incompatible = fixture.manifests[3].clone();
@@ -412,6 +587,28 @@ impl Fixture {
     }
     async fn wait_running_c(&self, root: &str) {
         self.wait_running_provider(root, "fixture-c").await;
+    }
+    async fn wait_spawned_descendant(&self, root: &str) {
+        // The marker is written only after the compiled fixture spawns the child.
+        // A separate OS Job observation proves that child remains owned/alive.
+        tokio::time::timeout(Duration::from_secs(5), async {
+            loop {
+                let diagnostics = self.core.lock().await.service_diagnostics(root).unwrap();
+                if diagnostics.iter().any(|call| {
+                    call.provider.id == "fixture-c"
+                        && self
+                            .profile
+                            .join(&call.run_id)
+                            .join("fixture-descendant-ready")
+                            .is_file()
+                }) {
+                    return;
+                }
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .expect("The compiled C fixture must spawn its real descendant");
     }
     async fn wait_running_provider(&self, root: &str, provider: &str) {
         // Readiness is bounded by the existing Host deadline, not a startup SLA.

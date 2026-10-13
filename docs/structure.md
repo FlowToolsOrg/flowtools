@@ -2,6 +2,12 @@
 
 ## 下一阶段结构与当前实现
 
+G6 P2.8a1 新增 `packages/runtime-core/src/packages/tools.rs` 与
+`packages/tests/tool_tests.rs`，负责独立的 Runtime-owned 工具 Manifest 惰性
+准入。生产审核清单为空，公开测试 keys/来源/许可证不能进入生产清单。
+`tools/registry.rs`、`installer.rs`、`leases.rs` 仍是拟新增运行模块；当前模块
+不持久安装、不解包或启动工具。见 [验证边界](./validation/g6-tool-admission.md)。
+
 G5 P2.5a 新增 SDK `src/manifest/signed-package.ts` 作者 contract，以及 Rust
 core `src/packages.rs` 只读签名/trust verifier；公开 Node golden 与 SDK/Rust
 拒绝测试共用原始字节。该步不提供 installer/artifact store/第三方隔离 runner，

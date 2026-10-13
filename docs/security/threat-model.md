@@ -442,9 +442,13 @@ loopback 均可用，但 public/wildcard/mixed listener、未监听的端点、�
 ### SEC-015 共享工具包、间接 IO 与进程恢复
 
 - 入口：规划中的工具侧载/下载、artifact/lease/GC、媒体进程；严重，open
-- 现状：当前只有 Tauri 官方能力 adapter，无集中工具包准入、共享版本仓库或
-  已验证的原生工具访问约束。FFmpeg 等工具仍属待实现目标，默认入口未开放。
+- 现状：G6 P2.8a1 已提供严格惰性工具 Manifest/签名 ZIP/持久 trust 准入，
+  source/license/flavor/资源角色须匹配 T0 构建审核策略，生产审核清单为空。
+  没有共享版本仓库或已验证的原生工具访问约束，FFmpeg 执行入口未开放。
 - 证据：[Desktop adapter](../../apps/desktop/src/runtime/desktop-capabilities.ts)、
+  [惰性工具准入](../../packages/runtime-core/src/packages/tools.rs)、
+  [签名工具拒绝回归](../../packages/runtime-core/src/packages/tests/tool_tests.rs)、
+  [G6 首步边界](../validation/g6-tool-admission.md)、
   [Rust 依赖](../../apps/desktop/src-tauri/Cargo.toml)、
   [当前 Host 初始化](../../apps/desktop/src-tauri/src/lib.rs)、
   [固定 T1 服务租约范围](../validation/g4-service-calls.md)；

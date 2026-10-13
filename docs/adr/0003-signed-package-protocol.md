@@ -105,6 +105,15 @@ descriptor 观察 adapter；受控回滚审批仍未提供。纯字节模块不�
 
 ## 当前实现
 
+2026-10-13 G6 P2.8a1 新增 Runtime-owned 工具 Manifest v1 惰性准入，不更改
+DSSE payload/签名格式。工具 kind 与 SDK 插件 type 无关；Manifest 的
+publisher/ID/version/target/source/license/buildFlavor/files 必须与已验签描述
+逐项一致，有限程序角色和完整资源布局另须符合 T0 构建内审核 profile。
+生产 profiles 为空，没有把签名者 provenance 或包自报许可证解释为法律/
+二进制审核。测试 fixture profile 仅在测试编译时存在；最终返回前重采 T0
+时间并检查当前持久 trust。无工具解包、安装、可执行身份或 grants，G5/G6
+父项和平台隔离仍 pending。格式/边界见 [G6 证据](../validation/g6-tool-admission.md)。
+
 2026-10-11 P2.5b 首步新增签名归档内存准入。安装 profile 仅支持 ZIP32 的
 stored/deflate；拒绝 encryption、data descriptors、extra fields、comments、
 ZIP64、特殊文件、重叠/隐藏条目和压缩流剩余字节。先检查 local/central

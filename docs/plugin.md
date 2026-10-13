@@ -1,5 +1,12 @@
 # Flow Tool Plugin 开发指南
 
+G6 P2.8a1 的工具 Manifest 独立于 SDK Plugin Manifest v1 与 G4 ToolPin。
+签名包的 source/license/buildFlavor 与完整文件清单须和工具 Manifest 一致，
+programs 只声明有限逻辑角色，resources 必须完全匹配 T0 构建审核布局。
+安装脚本、任意 argv/环境/工作目录、额外 DLL/helper 和自报 certification
+字段均拒绝。当前生产审核清单为空；工具包不能由插件声明自动获准安装或
+执行。格式和实际拒绝回归见 [G6 工具准入](./validation/g6-tool-admission.md)。
+
 G5 P2.5a 作者可从 `@flowtools/sdk/manifest` 使用
 `packageDescriptorSchema`、`serializePackageDescriptor` 与
 `packagePreAuthenticationEncoding`，生成并签署独立 DSSE 描述的原始字节。

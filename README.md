@@ -1,5 +1,12 @@
 # Flow Tool
 
+G6 P2.8a1 adds strict inert tool Manifest admission through the existing durable
+trust store and ZIP verifier. Source, license, build flavor and complete resource
+roles must match a private build-owned review profile; the production list is
+empty. Public fixture profiles compile only in tests. This does not install or
+run FFmpeg. G5 platform gates and P2.8a–c remain pending. See
+[tool admission evidence](./docs/validation/g6-tool-admission.md).
+
 G5 P2.5a adds a prototype signed-package authoring contract and read-only Rust
 verification using DSSE/Ed25519, scoped publisher roots, rotation, revocation
 and offline/rollback refusal fixtures. See the [protocol](./docs/adr/0003-signed-package-protocol.md)

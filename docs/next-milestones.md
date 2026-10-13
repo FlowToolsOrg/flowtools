@@ -375,6 +375,15 @@ Rust broker 的运行身份由会话/进程绑定；IPC、文件 handle、namesp
 
 ### P2.8a 集中工具仓库
 
+2026-10-13：P2.8a1 首个独立子步骤提供 Runtime-owned 工具 Manifest 的
+惰性准入，复用已有持久 descriptor trust 与严格 ZIP32 归档。source/license/
+buildFlavor/target、有限程序角色及每个资源必须匹配构建内审核策略；生产
+审核清单为空，测试 profiles 仅在测试编译中存在。返回前以新 T0 时间重检
+当前根/撤销/expiry/floors，没有工具安装、解包、执行或 grants。
+见 [工具准入证据](./validation/g6-tool-admission.md)。G5 平台门禁、P2.8a
+父项和 G6 保持 pending；下一步仍需完成 G5 前置，之后逐步接工具库存/
+journal、accepted 任务 leases 和平台受限执行，不能用 inert proof 绕过。
+
 Runtime `tools/registry.rs`、`installer.rs`、`leases.rs`（拟新增）管理已验证工具包。
 工具包可随插件侧载或按验证目录下载，都须来源/签名/hash/平台/许可证准入。
 允许审核后的新增工具及 typed adapter；首批 FFmpeg/ffprobe，任意 executable

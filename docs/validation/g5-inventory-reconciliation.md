@@ -67,6 +67,25 @@ publication/quarantine/collision/reparse 断言，复用同一个持有父句柄
 create-only rename，无释放 guard 重试或路径回退。完整根门禁及当前 SHA
 远端 CI 在后续证据提交单独记录；旧实现的历史通过不作为本次验收。
 
+实现提交 `7311446` 的 clean Windows 根门禁中，11/11 lint/types、
+405 项 SDK corpus/Rust bindings、全 Core 206 + 1 compile-fail、SDK 786、
+CLI 100、Chromium 27 文件/72 项通过。Runtime 原生 20 项通过、4 项失败：
+`malformed_provider_frame_retains_lease_until_its_real_group_drains`、
+`provider_error_retains_lease_until_its_real_descendant_drains`、
+`real_job_access_denial_stops_host_and_refuses_provider_migration`、
+`root_cancel_retains_lease_until_the_actual_provider_group_drains`。
+失败仍为既有 C fixture 后代 PID 缺失/等待超时；root test 退出 101，
+Desktop tests 被上游依赖阻断。没有修改这些测试、timeout 或原协议，
+也没有 retry/跳过用例。本地完整根门禁没有通过，后续独立构建/产物检查
+与当前提交的远端 CI 分别记录，不覆盖这次失败。相关启动阶段诊断见
+[受控恢复证据](./g5-controlled-trust-recovery.md)。
+
+独立后续补验：全工作区 `bun run build --force` 11/11 通过（1 分 18 秒）；
+实际 Web 22/Desktop 24 个 production 产物的 child-only opt-in/canary
+重构建 byte-identical，通过。Desktop rustfmt、locked check 与 all-target
+codegen Clippy `-D warnings` 通过，生成内容没有 tracked/untracked 漂移。
+没有启动 Desktop 或访问用户数据库；这些检查不覆盖 root test 的原失败。
+
 ## 未完成项与评审
 
 文件 readonly 和 native guards 不替代私有 profile ACL、全部文件写入竞争或

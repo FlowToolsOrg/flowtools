@@ -1,6 +1,7 @@
 # G5 P2.5b 受支持备份的受控信任恢复
 
-日期：2026-10-13。状态：T0 prototype；完整 G5/G6 交付与独立安全批准未完成。
+日期：2026-10-13；2026-10-14 继续集成验证。状态：T0 prototype；完整
+G5/G6 交付与独立安全批准未完成。
 移植并复核旧本地实现 `da7c6a3`；当前分支以主线 `a5f847e` 为基线，
 不包含尚未合入的 G6 工具准入 PR。本次验证独立于旧实现的历史测试结果。
 协议见 [ADR-0004](../adr/0004-controlled-trust-recovery.md)。
@@ -54,8 +55,31 @@ profile；覆盖：
 先备份再安装的包留下真实 orphan，恢复只补齐 trust observations，库存
 inspection/new install 继续 StateInvalid，不采用 orphan、建立 journal 或
 改变原库存/字节。两条路径都没有新增 grants/jobs/plugin_data/imports，
-保留 restore marker。全部当前回归、bindings 与完整 root gate 在最终提交
-单独记录，产品管理和独立安全批准仍 pending。
+保留 restore marker。
+
+实现提交 `3a0222a` 的 clean Windows 根门禁：所有 11 个工作区 lint/types、
+read-only 405 项实际 SDK corpus、Rust bindings、Chromium 27 文件/72 项通过；
+全 Core 187 项与 1 项 compile-fail 通过。Runtime 原生 21 项通过、3 项失败：
+`deadline_retains_lease_until_the_actual_provider_group_drains`、
+`real_job_access_denial_stops_host_and_refuses_provider_migration`、
+`root_cancel_retains_lease_until_the_actual_provider_group_drains`。
+失败仍是既有 C fixture 未生成后代 PID 后超时，root test 退出 101，
+后续 root build/产物/native gates 未由该脚本执行，Desktop tests 被依赖失败阻断。
+因此本地完整根门禁没有通过；当前提交的远端 CI 单独确认。
+
+2026-10-14 的临时阶段诊断确认失败 C fixture 已接收并验证请求、进入实际
+处理函数，停在 `Bun.spawn()` 返回之前。只读管道最小复现 16 项通过；
+真实 Windows Job 下的固定 detached 后代 spawn 最小复现出现阻塞。
+原生 Web stream、按需读取、Node 兼容 spawn 和控制台启动参数对照均未消除
+阻塞，尚未确定 Bun/Windows 内部根因，不能据此替换协议或声称已修复。
+临时诊断已撤除，原 Job 归属/终止/租约断言和全部 timeout 保持；没有跳过
+用例、自动 retry 或用独立成功覆盖原失败。产品管理和独立安全批准仍 pending。
+
+独立补验：`bun run build --force` 11/11 工作区通过（1 分 17 秒）；随后
+生产入口 Web 22/Desktop 24 个实际产物在 child-only opt-in/canary 重构建后
+byte-identical，通过。Desktop rustfmt、locked check 和 all-target codegen
+Clippy `-D warnings` 通过；没有启动 Desktop 或访问用户 profile。
+这些后续检查不改变上述本地 root test/完整门禁失败结论。
 
 ## 残余风险
 
@@ -65,7 +89,7 @@ checkpoint 的丢失历史完整性由外部权威 T0/root signers 核实，本�
 应急重建、受控版本 rollback、执行健康/LKG、OS/文件竞争/物理断电仍另行
 验收；此代码不授予能力或开放第三方执行。
 
-Reviewer：Codex，2026-10-13，工程自查与上述拒绝回归；独立实际安全
+Reviewer：Codex，2026-10-14，工程自查与上述拒绝回归；独立实际安全
 reviewer/date/conclusion pending。SEC-001/008/014/015 保持 open，
 ADR-0001/0002 执行边界不变；无新增 Tauri command/permission/CSP/remote
 URL/任意路径/第二 DB，UI 人工验收不适用。

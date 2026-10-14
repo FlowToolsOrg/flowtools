@@ -317,6 +317,19 @@ approval. Low-level restore must mint a new UUID marker, not reuse a boolean
 scope. Checkpoint completeness and real signers are external T0 responsibilities;
 public fixture keys are test-only. See [controlled recovery evidence](./docs/validation/g5-controlled-trust-recovery.md).
 
+`packages/install/reconciliation.rs` explicitly quarantines unreferenced inert
+blobs after metadata restore; never adopt them or lower floors. Only T0-created
+opaque plans enter apply; bind canonical main DB hash, restore scope/receipt,
+inventory digest and all file fingerprints. Preflight the whole batch before
+writing its journal or moving any group; recheck identities at every effect.
+Borrow the same writer for journal and atomic completed/aborted receipts. Pending
+batches block ordinary installation/inspection; explicit resume is idempotent,
+abort preserves all moved/unmoved bytes. New restore scope needs controlled trust
+recovery, explicit abort and a new plan, never an automatic journal reset.
+Keep held-parent create-only moves, fixed names, hardlink/reparse refusals and
+pool budgets including quarantine. No GC, grants, activation or executable identity.
+See [inventory reconciliation](./docs/validation/g5-inventory-reconciliation.md).
+
 P2.5b signed dependency planning lives in `packages/dependencies.rs`. Consume
 only opaque compatible archives and recheck every receipt against the current
 durable root, exact observed ZIP identity, expiry, floors and T0 compatibility.

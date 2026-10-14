@@ -191,7 +191,8 @@ Host 的私有 profile 和单写者，不能声称完整文件写入竞争防护
 SDK 作者 helper、Rust 只读 verifier 与 Node/Rust 共用的签名 golden 已实现。
 已提供 inert ZIP/Manifest 校验、持久信任观察、签名依赖规划及 Windows/x64
 惰性库存/blob store/安装 journal 原型。没有产品下载/安装/激活入口、真实
-production pins、安装管理 IPC、受控信任恢复/回滚审批或第三方执行入口。
+production pins、安装管理 IPC、版本回滚审批或第三方执行入口。受支持备份的
+显式信任恢复现由 ADR-0004 描述，未开放产品管理入口。
 G4 服务锁仍是 P2.5b 的前置依赖；
 签名不会升级为 T1，也不会为 T2/T3/TL 提供权限。全部 maturity 保持 prototype。
 SEC-001/002/008/014/015 保持 open，工程自查不替代独立安全批准。
@@ -228,6 +229,12 @@ bytes/ZIP 继续权威，不以规范化 metadata 重写或代替。
 权威 raw checkpoint，保留已知 floors/root history 和恢复标记。外部 T0
 需核实丢失历史完整性；不允许新 pins、自动 reset 或版本 rollback/grant。
 生产签名材料、root 泄漏应急重建及独立安全验收仍 pending。
+
+旧库存恢复后的无引用 ZIP/stage 只可由 T0 opaque 核对计划显式隔离，不收编。
+原库存与 trust/floors 保持；全批预检、同一 writer 的 journal、held-parent
+create-only moves、显式 resume/abort 与 completed/aborted receipt 见
+[核对验证](../validation/g5-inventory-reconciliation.md)。残留字节 fingerprint
+不能证明签名身份或授予运行；隔离副本仍计入预算，无自动 GC。
 
 P2.5b 验收归档恶意样本、staging/journal 重启恢复、取消、同版本不可变、
 last-known-good 健康检查与 metadata 跨资源提交；依赖、数据、grants 分开

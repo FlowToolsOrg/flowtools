@@ -76,6 +76,13 @@ floors 和恢复标记，正常准入持续检查签署 baseline。作者签名�
 第三方执行。外部 signers 与丢失历史完整性仍须验收，见
 [受控恢复](./validation/g5-controlled-trust-recovery.md)。
 
+旧 metadata 备份恢复后残留的新版 ZIP/stage 不能自动变成 installed identity。
+T0 可以显式核对并以 journal 隔离无引用惰性内容，中断后继续或取消，全部原
+字节保留；原库存、grants 与 trust floors 不修改。scope 或文件改变须重新
+验证和规划，包作者/插件不能提交任意路径或自行收编 orphan。见
+[包文件核对](./validation/g5-inventory-reconciliation.md)。这不提供健康检查、
+版本 rollback、卸载/GC 或第三方运行入口。
+
 本文面向 Flow Tool 开发者，目标是帮助你在当前仓库里快速开发并调试自己的
 plugin。
 

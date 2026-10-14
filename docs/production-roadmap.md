@@ -1448,6 +1448,14 @@ P2.5b/G5/G6 继续 pending。本项基于当前主线独立提交与 PR 验证�
 formatVersion 2、signed archive locks 与 orphan 所有权拒绝保持，恢复
 不会采用未引用字节。
 
+本批继续接入旧库存恢复后的 T0 包文件核对：无引用 ZIP/stage 通过 opaque
+只读计划、全批预检与持久 journal，以 held-parent create-only moves 隔离。
+完成/取消 receipt 与 journal 删除同事务；中断显式继续或取消，保留全部字节，
+库存和 trust 不下降，不收编 orphan。真实备份、pending restore、SQL 故障、
+junction 与五个原生进程退出 barrier 见
+[核对验证](./validation/g5-inventory-reconciliation.md)。只补恢复工程，产品
+激活、健康/LKG、rollback、GC 和第三方边界仍 pending，不标记 G5/G6 done。
+
 交付物：
 
 - 下载进入 staging，并设置总大小、单文件大小、文件数和超时上限。

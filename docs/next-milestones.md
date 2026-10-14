@@ -479,6 +479,11 @@ restore、独立双 quorum/退役根、跨事件重放与进程退出证据见
 不可变 floors 和恢复标记，不批准版本回滚、grants 或第三方运行；权威
 checkpoint 完整性、真实 signer/pins 与独立安全验收仍需外部证据。
 
+受控信任恢复后，旧 SQLite 库存以外的 ZIP/stage 可由 T0 显式核对和 journal
+隔离，保留全部字节、原库存及 floors；实际备份/写失败/junction/进程退出
+见 [包文件核对](./validation/g5-inventory-reconciliation.md)。这不是收编、
+激活、健康/LKG 或 GC；下一步继续私有 profile 与平台运行边界验收。
+
 新增目录先创建有限测试 fixture 和公开契约，再接真实入口；每项用一个聚焦
 Conventional Commit 记录，不提前把父里程碑标为 done。拟新增验证脚本属于
 里程碑交付物；当前仍运行已有 docs/生成内容/静态/测试/构建门禁。

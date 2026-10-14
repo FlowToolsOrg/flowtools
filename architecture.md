@@ -83,6 +83,14 @@ FULL 单事务提交 state/receipt 并删除 challenge，提交前新采样可�
 外部 T0 signers 必须核实丢失历史完整性，没有生产 pins、自动 reset 或
 运行 grant；见 [受控恢复验证](./docs/validation/g5-controlled-trust-recovery.md)。
 
+`packages/install/reconciliation.rs` 核对旧库存恢复后剩余的无引用惰性 ZIP/
+stage。T0 opaque plan 绑定真实 DB/profile、恢复 scope、库存和字节 fingerprints；
+先完整预检再 journal，每次 effect 重查，通过已有 held-parent native rename
+移入隔离区。完成/取消 receipt 与 journal 删除同事务，不改变库存或 trust。
+中断可显式 resume/abort，新的恢复 scope 拒绝旧批次；不自动收编包或删除内容，
+产品激活/健康/GC/可执行身份仍待实施，见
+[包文件核对验证](./docs/validation/g5-inventory-reconciliation.md)。
+
 Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平台。
 当前仓库代码处于“先验证插件运行时，再落地桌面宿主”的阶段。
 

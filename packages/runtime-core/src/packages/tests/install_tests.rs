@@ -9,7 +9,7 @@ use crate::{
             InertPackageBytes, InstallError, InstallPhase,
         },
         manifest::ManifestCompatibility,
-        trust::PackageTrustStore,
+        trust::{PackageTrustStore, TrustRecoveryApproval, RECOVERY_PAYLOAD_TYPE},
     },
 };
 use std::{
@@ -19,6 +19,7 @@ use std::{
 
 const INVENTORY: &str = "package-install-inventory-v1";
 const PENDING: &str = "package-install-pending-v1";
+mod reconciliation_tests;
 struct World {
     fixture: Fixture,
     trust: PackageTrustStore,
@@ -196,6 +197,113 @@ fn writable_file(path: &Path) {
     let attributes = std::fs::metadata(path).unwrap().file_attributes() & !FILE_ATTRIBUTE_READONLY;
     let name: Vec<_> = path.as_os_str().encode_wide().chain(Some(0)).collect();
     assert_ne!(unsafe { SetFileAttributesW(name.as_ptr(), attributes) }, 0);
+}
+
+#[test]
+fn controlled_trust_recovery_preserves_v2_inventory_and_never_adopts_orphan_blobs() {
+    for orphan in [false, true] {
+        let mut world = World::new();
+        world.trust = PackageTrustStore::with_recovery_authority(
+            BootstrapPins {
+                keys: serde_json::from_value(world.fixture.golden["pins"].clone()).unwrap(),
+                threshold: 2,
+            },
+            BootstrapPins {
+                keys: vec![public(6), public(7)],
+                threshold: 2,
+            },
+        )
+        .unwrap();
+        let provider = world.input(manifest("provider", vec![]), 1);
+        let consumer = world.input(manifest("consumer", vec![dependency("provider")]), 1);
+        world.install(&provider).unwrap();
+        if !orphan {
+            world.install(&consumer).unwrap();
+        }
+        let inventory = world.raw(INVENTORY).unwrap();
+        assert_eq!(
+            serde_json::from_str::<Value>(&inventory).unwrap()["formatVersion"],
+            2
+        );
+        let backup = world.store.as_mut().unwrap().backup().unwrap();
+        if orphan {
+            world.install(&consumer).unwrap();
+        }
+        let retained = std::fs::read(world.artifact(&consumer).join("package.zip")).unwrap();
+        let now = world.fixture.policy.clock.now + 1;
+        let checkpoint = world
+            .trust
+            .export_recovery_checkpoint(world.store.as_mut().unwrap(), now)
+            .unwrap();
+        world.store.take();
+        DataStore::restore_backup(&world.path.join("runtime.sqlite"), &backup).unwrap();
+        world.reopen();
+        assert_eq!(
+            world.inspect().err(),
+            Some(InstallError::Package(PackageError::TrustRecoveryRequired))
+        );
+        let request = world
+            .trust
+            .begin_trust_recovery(world.store.as_mut().unwrap(), now)
+            .unwrap();
+        let approval = signed(
+            RECOVERY_PAYLOAD_TYPE,
+            &TrustRecoveryApproval {
+                format_version: 1,
+                request_digest: request.request_digest().into(),
+                checkpoint_sha256: hash(&checkpoint),
+                root_sha256: world.fixture.root.payload_digest().into(),
+                authority_sha256: request.authority_digest().into(),
+                issued_at: now,
+                expires_at: now + 60,
+            },
+            &[1, 2, 6, 7],
+        );
+        let receipt = world
+            .trust
+            .recover_trust(
+                world.store.as_mut().unwrap(),
+                &checkpoint,
+                &approval,
+                || now,
+            )
+            .unwrap();
+        assert_eq!(receipt.known_versions.len(), 2);
+        assert_eq!(world.raw(INVENTORY).unwrap(), inventory);
+        world.fixture.policy.clock.now = now;
+        if orphan {
+            // Trust is recovered, but uncertain physical inventory still refuses.
+            assert_eq!(world.inspect().err(), Some(InstallError::StateInvalid));
+            assert_eq!(
+                world.install(&consumer).err(),
+                Some(InstallError::StateInvalid)
+            );
+        } else {
+            let snapshot = world.inspect().unwrap();
+            assert_eq!(snapshot.packages().len(), 2);
+            assert!(snapshot.packages().iter().any(|pin| pin.id == "provider"));
+        }
+        assert!(world.raw(PENDING).is_none());
+        assert!(world.raw(crate::packages::trust::RECOVERY_KEY).is_some());
+        assert_eq!(
+            std::fs::read(world.artifact(&consumer).join("package.zip")).unwrap(),
+            retained
+        );
+        // The checkpoint restores trust observations, never lost inventory records.
+        assert_eq!(world.raw(INVENTORY).unwrap(), inventory);
+        for table in ["grants", "jobs", "plugin_data", "imports"] {
+            let count: u32 = world
+                .store
+                .as_ref()
+                .unwrap()
+                .connection
+                .query_row(&format!("SELECT count(*) FROM {table}"), [], |row| {
+                    row.get(0)
+                })
+                .unwrap();
+            assert_eq!(count, 0, "{table}");
+        }
+    }
 }
 
 #[test]

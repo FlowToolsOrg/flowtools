@@ -37,6 +37,34 @@ T0/T1 属于 Host 发布信任域；T2/T3/TL 必须位于独立执行域。当�
 历史通过不作为本轮通过。SEC-001/002/008/014/015
 继续 open，Codex 工程自查不替代实际独立安全 reviewer/date/conclusion。
 
+2026-10-14 移植 T0 [惰性包文件核对](../../packages/runtime-core/src/packages/install/reconciliation.rs)
+在健康信任/签署恢复 baseline 之后处理旧库存之外的 ZIP/stage：真实 DB
+hash、恢复 scope、库存和固定文件 fingerprints 绑定 opaque plan/journal。
+全批预检先于移动，held-parent create-only quarantine 拒绝重定向/覆盖；
+每次 effect 重查 trust、库存与 journal。完成/取消 receipt 和 journal 删除
+同事务，原字节保留，禁止自动收编或降低 floors；旧 restore scope 拒绝重放。
+实际备份/SQL 故障/junction/跨 profile/进程退出证据见
+[核对验证](../validation/g5-inventory-reconciliation.md)。只增加 T0 内部 Rust
+文件管理，不开放 plugin paths、raw native、IPC 或 grant。profile ACL、
+完整文件竞争/断电、健康/激活和平台 sandbox 仍 pending，SEC-001/008/014/015
+保持 open；Codex 2026-10-14 工程自查，独立 reviewer/date/conclusion pending。
+
+2026-10-13 移植受支持备份的 T0 受控包信任恢复，在
+[trust/recovery.rs](../../packages/runtime-core/src/packages/trust/recovery.rs)
+绑定持久恢复事件/nonce、raw checkpoint 与当前 root/独立 release recovery
+双 quorum 的共同短期批准；默认无 authority 时拒绝，历史 root/publisher
+不能复用 recovery keys。旧备份丢失根退役记录时，旧根不能单独签署批准。
+已知 observations/root chain 和签署 baseline 不下降，标记保留，FULL
+事务及 fresh commit clock 防止批准到期仍提交。新 restore 的 UUID/
+generation 拒绝旧批准；publisher/旧 keys/重复票数不能提升到 root quorum。
+实际签名、SQLite 写失败、跨 profile/事件重放与原生 crash 证据见
+[受控恢复验证](../validation/g5-controlled-trust-recovery.md)。丢失历史的
+完整性由外部权威 signers 核实，旧本地备份不能独立证明；真实 pins/signer、
+root 应急重建、平台隔离与独立 review 仍 pending。SEC-001/008/014/015
+保持 open；Codex 2026-10-13 工程自查，不表示独立安全批准。当前库存
+formatVersion 2 和 orphan 拒绝由实际安装/备份/恢复集成回归覆盖；不采用
+未引用 blob，不改既有 signed lock，也不恢复 grants。
+
 2026-10-11 P2.5b 第六步在
 [native 发布文件层](../../packages/runtime-core/src/packages/install/files/rename.rs)
 修补第五步临时释放内部父目录 guards 的窗口：所有父目录句柄持续持有且

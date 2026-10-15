@@ -1436,6 +1436,26 @@ test uncached，root test 6m30.632s 后顺序 build 51.418s。SDK 786 项/2880
 Todo 崩溃恢复通过。生产 Web 22/Desktop 24 个产物在 opt-in/canary 重构建后
 byte-identical，Desktop fmt/locked check/all-target codegen clippy 通过。
 
+2026-10-13：受支持备份的 T0 受控信任恢复按 [ADR-0004](./adr/0004-controlled-trust-recovery.md)
+实现：持久 challenge 绑定本次恢复标记和原 state/receipt，权威 checkpoint
+当前 root 与固定发布侧独立 recovery quorum 的共同短期批准经 fresh commit
+clock 与 FULL 单事务提交；默认无 authority 时拒绝，角色 keys 不复用。
+根链/不可变观察不下降，恢复标记保留，后续 trust load 重验签署 baseline。
+实际签名/SQLite/crash 拒绝矩阵见
+[受控恢复验证](./validation/g5-controlled-trust-recovery.md)。外部 checkpoint
+完整性、真实 signers/pins、版本 rollback、安装激活/健康与隔离仍未验收；
+P2.5b/G5/G6 继续 pending。本项基于当前主线独立提交与 PR 验证；当前库存
+formatVersion 2、signed archive locks 与 orphan 所有权拒绝保持，恢复
+不会采用未引用字节。
+
+本批继续接入旧库存恢复后的 T0 包文件核对：无引用 ZIP/stage 通过 opaque
+只读计划、全批预检与持久 journal，以 held-parent create-only moves 隔离。
+完成/取消 receipt 与 journal 删除同事务；中断显式继续或取消，保留全部字节，
+库存和 trust 不下降，不收编 orphan。真实备份、pending restore、SQL 故障、
+junction 与五个原生进程退出 barrier 见
+[核对验证](./validation/g5-inventory-reconciliation.md)。只补恢复工程，产品
+激活、健康/LKG、rollback、GC 和第三方边界仍 pending，不标记 G5/G6 done。
+
 交付物：
 
 - 下载进入 staging，并设置总大小、单文件大小、文件数和超时上限。

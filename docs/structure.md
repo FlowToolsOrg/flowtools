@@ -64,6 +64,20 @@ formatVersion 2。旧原型记录返回 StateInvalid，保留原字节与 trust 
 来源和 read-only corpus gate 见 [契约加固证据](./validation/g5-contract-hardening.md)。
 任意 metadata 的跨语言 canonical digest、产品执行与独立安全批准仍 pending。
 
+`runtime-core/src/packages/trust/recovery.rs` 与
+`packages/tests/trust_tests/recovery_tests.rs` 提供受支持备份后的 T0 受控
+信任恢复和实际双 quorum/角色分离/SQLite/crash 回归。沿用同一 DataStore `core_metadata`
+保存 challenge/receipt，不改变 schema v2；只在 Rust 内导出签署契约与 T0
+方法，不新增 client bindings 或管理 IPC。协议与外部 signer 条件见
+[ADR-0004](./adr/0004-controlled-trust-recovery.md)。
+
+`runtime-core/src/packages/install/reconciliation.rs` 与
+`packages/tests/install_tests/reconciliation_tests.rs` 提供 T0 惰性库存文件核对。
+固定 profile 的 orphan ZIP/stage 经完整预检和持久 journal 进入 quarantine；
+沿用已有 native handle-relative moves 与同一 writer/schema v2。只增加内部
+Rust opaque plan/apply/resume/abort，无产品 IPC、raw path、loader、第二 DB
+或 GC，见 [核对验证](./validation/g5-inventory-reconciliation.md)。
+
 [下一阶段实施设计](./next-milestones.md) 定义 G0–G8 的顺序与验收。
 G2 已新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`
 （无界面运行服务）、`packages/runtime-client`（生成 DTO 的 TS 客户端）和

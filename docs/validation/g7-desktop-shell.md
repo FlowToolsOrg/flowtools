@@ -32,13 +32,40 @@ of webview autostart/shortcut permissions.
 
 2026-10-15 results so far: `bun run test:desktop-shell` passed (one Bun test,
 seven Rust policy tests and one real Tauri IPC test covering seven denied calls).
-Rust Clippy passed before the final ACL regression; the full root gate below
-rechecks all targets. Dedicated-identity Debug native build passed. Real Windows
+Dedicated-identity Debug native build passed. Real Windows
 acceptance confirmed initial launcher render, Alt+F4 hides while the same process
 survives, Ctrl+Shift+Space from a test-only GUI restores it, and a second instance
 with business-like arguments exits 0 and restores the same first instance.
 No Runtime/business command, system startup change or user profile was used.
 Native tray menu interaction, conflict fixture and OS restart remain unverified.
+The final fixture also verified the updated launcher/settings shortcut text and
+restoration from a minimized window. Fixture-only screenshots are retained in
+ignored `execution-validation/g7-shell/launcher-final.png` and `settings-final.png`.
+
+The authoritative `scripts/check-ci.ps1` run on `2e6cdf1` passed documentation,
+catalog, generated contracts, all 11 workspace lint/type gates and 72 browser
+tests, but failed in the Runtime native test
+`server::service_tests::root_cancel_retains_lease_until_the_actual_provider_group_drains`:
+`service_tests.rs:611`, C fixture descendant readiness timeout (5 seconds).
+The exact isolated test reproduced the same failure. Runtime, runner, SDK and
+core sources are unchanged from main; the cause has not been established.
+The full root gate did not reach build/production-artifact/final-clean stages.
+This failure is retained, not waived. Root/core tests included 222 passing unit
+tests and two passing doctests. Desktop tests are run separately below; neither
+focused success nor a Draft PR establishes a passing full gate.
+
+Separate follow-up checks passed: full Desktop tests (92 Bun, 28 Rust unit and
+four Rust integration tests), all 11 workspace builds (`bun run build --force`),
+and production external-entrypoint checks (22 Web/24 Desktop byte-identical
+artifacts under child-only unsafe opt-in/canaries). Final all-target codegen
+Clippy passed after replacing a linted error-extraction expression in the IPC
+test. The final focused shell regression was rerun after that test-only edit.
+The production refusal scan does not establish package signing or isolation.
+
+Next P3.1a substeps: resolve the full-gate failure, verify actual tray/menu and
+shortcut-conflict recovery, integrate persisted desktop preferences/diagnostics
+and authoritative Runtime status, then controlled restart/multi-screen/background
+job acceptance. P3.1b and file/media execution cannot bypass their dependencies.
 
 A real Tauri MockRuntime IPC regression (in the existing Common Controls v6
 integration-test target) uses the generated app context to reject
@@ -71,8 +98,9 @@ accepted-job continuity require separate controlled Windows acceptance.
 
 SEC-003/007/009/013 remain open; ADR-0001/0002 Host/Runtime boundaries remain.
 New native APIs: tray/menu and official single-instance/global-shortcut/autostart
-plugins inside Rust. No new webview command/permission, CSP, remote URL,
-file/network/data scope or plugin API. Single-instance IPC is a wakeup, never
+plugins inside Rust. Their invoke namespaces remain denied to webviews. No new
+application IPC command, webview grant, CSP, remote URL, file/network/data scope
+or plugin API. Single-instance IPC is a wakeup, never
 authenticated execution. Startup creates no grants/cold-start permission;
 disabling it affects future logins, not Runtime jobs. Exit never requests Host stop.
 

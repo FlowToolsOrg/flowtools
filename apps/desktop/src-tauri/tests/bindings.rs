@@ -107,7 +107,9 @@ mod ipc_tests {
                     invoke_key: tauri::test::INVOKE_KEY.into(),
                 },
             );
-            let error = response.err().expect("native shell IPC must be denied");
+            let Err(error) = response else {
+                panic!("native shell IPC must be denied");
+            };
             let text = error.to_string();
             assert!(text.contains("not allowed"), "{command}: {text}");
         }

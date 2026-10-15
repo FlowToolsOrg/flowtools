@@ -9,6 +9,8 @@ mod managed_approval;
 mod managed_runtime;
 mod models;
 mod repositories;
+#[cfg(windows)]
+mod shell;
 #[cfg(all(windows, any(debug_assertions, feature = "codegen")))]
 mod validation_runtime;
 
@@ -140,7 +142,14 @@ pub fn run() {
         log_plugin_builder = log_plugin_builder.skip_logger();
     }
 
-    let tauri_builder = tauri::Builder::default()
+    let tauri_builder = tauri::Builder::default();
+    #[cfg(windows)]
+    let tauri_builder = tauri_builder
+        .plugin(shell::single_instance())
+        .manage(shell::ShellState::default())
+        .on_window_event(shell::on_window_event);
+
+    let tauri_builder = tauri_builder
         .invoke_handler(commands_builder.invoke_handler())
         .setup(move |app| {
             commands_builder.mount_events(app);
@@ -151,6 +160,9 @@ pub fn run() {
                 .expect("failed to initialize database");
 
             app.manage(AppState { db: Mutex::new(db) });
+
+            #[cfg(windows)]
+            shell::setup(app);
 
             Ok(())
         })

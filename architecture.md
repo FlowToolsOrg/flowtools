@@ -1,5 +1,10 @@
 # Flow Tool Architecture
 
+G7 P3.1a1 的 Windows 原生 `shell.rs` 提供托盘、单实例/快捷键唤起和显式
+自启动。第二实例参数/cwd 不进入业务命令；无新 webview 权限/IPC 命令、
+Runtime store/grant 或 stop 调用。托盘仅报告 Desktop 驻留，Runtime 状态
+与调度另行接入，见 [桌面入口证据](./docs/validation/g7-desktop-shell.md)。
+
 G6 P2.8a1 的 `packages/tools.rs` 复用 `PackageTrustStore` 单写者与严格 ZIP
 准入，核对原始签名工具 Manifest、完整文件角色及构建内固定审核策略，返回
 opaque inert bytes。返回前重新采样 T0 时间并检查当前根、撤销和 floors。

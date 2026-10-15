@@ -1575,6 +1575,12 @@ Phase 2 总退出标准：P2.1–P2.8 全部 `done`；第三方代码默认拒�
 
 ### P3.1 完成 Desktop 宿主产品能力
 
+2026-10-15：P3.1a1 交付 Windows 原生托盘、单实例/快捷键恢复和显式
+可选自启动 prototype；debug/fixtures 拒绝写 OS 启动项。无新 webview
+权限、Runtime stop 或第三方执行入口。验证边界见
+[桌面入口证据](./validation/g7-desktop-shell.md)。P3.1a/P3.1/G7 保持 pending；
+设置/诊断、正式身份迁移、Runtime 状态及重启/平台验收另行完成。
+
 - 状态：`pending`
 - 负责人：`TBD (Desktop)`
 - 依赖：P0.1、P1.4、P2.3、P2.4

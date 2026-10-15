@@ -75,3 +75,41 @@ fn exports_current_bindings_without_launching_a_host() {
     assert!(desktop_lib::export_bindings(&directory).is_err());
     std::fs::remove_dir_all(&directory).unwrap();
 }
+
+#[cfg(windows)]
+mod ipc_tests {
+    #[test]
+    fn shell_webview_cannot_create_spoofed_shell_menus_or_change_native_startup_and_shortcuts() {
+        let app = tauri::test::mock_builder()
+            .build(tauri::generate_context!())
+            .unwrap();
+        let window = tauri::WebviewWindowBuilder::new(&app, "main", Default::default())
+            .build()
+            .unwrap();
+        for command in [
+            "plugin:menu|new",
+            "plugin:tray|new",
+            "plugin:tray|remove_by_id",
+            "plugin:tray|set_visible",
+            "plugin:autostart|enable",
+            "plugin:autostart|disable",
+            "plugin:global-shortcut|register",
+        ] {
+            let response = tauri::test::get_ipc_response(
+                &window,
+                tauri::webview::InvokeRequest {
+                    cmd: command.into(),
+                    callback: tauri::ipc::CallbackFn(0),
+                    error: tauri::ipc::CallbackFn(1),
+                    url: "http://tauri.localhost".parse().unwrap(),
+                    body: tauri::ipc::InvokeBody::Json(serde_json::json!({})),
+                    headers: Default::default(),
+                    invoke_key: tauri::test::INVOKE_KEY.into(),
+                },
+            );
+            let error = response.err().expect("native shell IPC must be denied");
+            let text = error.to_string();
+            assert!(text.contains("not allowed"), "{command}: {text}");
+        }
+    }
+}

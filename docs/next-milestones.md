@@ -437,6 +437,12 @@ Tauri [sidecar](https://v2.tauri.app/develop/sidecar/) 用于构建捆绑程序�
 
 ## 9. G7：统一 UI 与三个办公闭环
 
+2026-10-15：P3.1a1 先交付可独立验证的 Windows 桌面入口 prototype：
+托盘、单实例/快捷键恢复及原生显式可选自启动，见
+[验证边界](./validation/g7-desktop-shell.md)。不执行第二实例业务参数，
+不创建 grants 或停止 Runtime。P3.1a/G7 保持 pending；调度和文件/媒体
+副作用仍须等待相关 G5/G6 及授权/平台门禁通过。
+
 P3.1a 做托盘、单实例、全局快捷键、可选自启动与后台状态；内核不依赖托盘存活。
 P3.1b 做 Host 调度器与通知 adapter：one-shot/有限周期任务、时区/夏令时、
 missed-run 和重复触发策略；调度器只能调用已授权命令，插件不自行启动 timer daemon。

@@ -34,7 +34,7 @@ sha2 = "0.10"
 
 [dependencies]
 flowtools-runtime-core = { path = "../../../packages/runtime-core" }
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -53,3 +53,8 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "io-uti
 tauri-plugin-devtools = "2.0.0"
 toasty = { version = "0.7", features = ["sqlite", "jiff"] }
 jiff = { version = "0.2.29", features = ["serde"] }
+
+[target.'cfg(windows)'.dependencies]
+tauri-plugin-autostart = "2"
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-single-instance = "2"

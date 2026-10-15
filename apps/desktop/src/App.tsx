@@ -792,7 +792,10 @@ function LauncherView() {
             {inventory.enabledPluginIds.size}/{totalPluginCount} plugins enabled
             · {totalCommandCount} commands
           </span>
-          <span>{inventory.error ?? 'Alt+Z 唤起 · Enter 运行 · Esc 清空'}</span>
+          <span>
+            {inventory.error ??
+              'Ctrl+Shift+Space 唤起（状态见托盘）· Enter 运行 · Esc 清空'}
+          </span>
         </footer>
       </section>
     </DesktopSurface>
@@ -1099,7 +1102,10 @@ function SettingsView() {
             />
           }
         />
-        <SettingsRow label="启动快捷键" value="Alt+Z" />
+        <SettingsRow
+          label="启动快捷键"
+          value="Ctrl+Shift+Space（可用状态见托盘）"
+        />
         <SettingsRow label="命令路由" value="TanStack Router" />
         <SettingsRow label="插件 UI" value="React 声明式运行时" />
         <SettingsRow label="桌面内核" value="Tauri WebView + Rust 能力层" />

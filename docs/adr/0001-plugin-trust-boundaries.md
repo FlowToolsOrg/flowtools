@@ -250,3 +250,14 @@ FlowTools 提供，资源不能提供选择器、URL、字体路径或任意 sty
 恢复控制位于主题子树外。见 [E02b](../validation/e02-theme-adapter.md)。
 这不建立第三方 CSS/DOM 隔离，不改变包准入、原生能力、持久化或权限含义。
 外部 portal、真实 Host 恢复策略与第三方执行仍须分别验收；原 ADR 边界不变。
+
+### G7 P3.1a1 原生桌面入口（2026-10-15）
+
+托盘、唤起快捷键与可选自启动由 Rust Host 持有，不导出插件能力或 webview
+权限。第二实例的参数/cwd 仅触发主窗口恢复，不作为命令/文件/URL 输入。
+移除 broad `core:default` 中的 menu/tray Webview 权限，防止伪造动作与移除
+恢复托盘；其他七组 core 默认权限保持不变，实际 IPC 拒绝由集成测试验证。
+Debug/fixture 禁用 OS 自启动；release 仅明确原生用户动作写入并回读。
+Desktop 退出不停止 Runtime，不创建/撤销 grants。此原型不改变执行信任层级；
+SEC-003/007/009/013 与独立安全审阅仍 pending，见
+[桌面入口证据](../validation/g7-desktop-shell.md)。

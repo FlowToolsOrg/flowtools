@@ -1,5 +1,13 @@
 # FlowTools 插件威胁模型
 
+2026-10-15 G7 P3.1a1：Windows 原生托盘及官方 single-instance/
+global-shortcut/autostart 插件只负责桌面入口；第二实例参数/cwd 不分发
+业务命令。自启动仅 release 当前身份的原生明确动作写入并回读；debug/
+fixture 拒绝；移除 `core:default` 隐含 menu/tray 权限，保留其余七组 core
+权限，并验证实际 IPC 默认拒绝。Desktop 退出不发送 Runtime stop。
+SEC-003/007/009/013 保持 open，ADR-0001/0002 边界不变；拒绝回归、验证
+范围及独立审阅 pending 见 [桌面入口证据](../validation/g7-desktop-shell.md)。
+
 - 复核日期：2026-10-04；源码基线：`eed0e4d`（P0.4 开始前）
 - 范围：Desktop/Web/CLI 插件入口，以及后续包安装、授权与应用更新设计
 - 状态：prototype；高风险项全部 open，未接受 production 风险豁免

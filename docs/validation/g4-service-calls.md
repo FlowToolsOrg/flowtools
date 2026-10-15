@@ -226,3 +226,18 @@ G5 范围见 [Manifest 验证](./g5-manifest-admission.md)。
 仍无独立 fixture 验收。没有新增用户 UI 或用户 profile 访问；Windows Job
 与 Bun 不提供文件/网络/OS 权限 sandbox。SEC-014/SEC-015 保持 open，
 maturity 为 prototype，实际独立安全 reviewer/date/conclusion pending。
+
+## 2026-10-15 服务 fixture 派生就绪修复
+
+G7 继续验收时，本地 `root_cancel_retains_lease_until_the_actual_provider_group_drains`
+在既有 5 秒就绪预算内失败。临时阶段标记确认 A/B/C 首帧处理已完成，C 卡在
+同步 `Bun.spawn()` 返回前，未写实际后代 PID。脱离 Runtime/Job 的可丢弃
+进程对照也复现返回延迟；Bun 内部原因未确认，不归因于 SQLite 或恢复协议。
+
+仅修改固定测试入口 `packages/plugin-runner/test/services/runner.ts`，使用
+`node:child_process.spawn`、`windowsHide: true` 与实际 `spawn` 成功事件。
+保留 `detached: true` / `unref()`、实际后代、同一 Job/handle 观察、5 秒就绪
+和 9.5 秒根期限、所有六条异常排空断言；没有修改生产 runner 或执行边界。
+移除临时诊断后，四项 runner 测试与全部 15 项原生服务回归通过。
+完整门禁结果另见 [G7 验证记录](./g7-desktop-shell.md)，不沿用历史绿色结果，
+不提升 maturity 或关闭 SEC-014/015。

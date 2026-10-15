@@ -109,3 +109,24 @@ and CSP gaps remain; official plugins are not an OS sandbox. Settings/diagnostic
 production identity migration, Runtime status integration, full P3.1a acceptance,
 P3.1b scheduling, P3.2 search/UI and P3.4a office loops remain pending. Preserve
 G5/G6 package/platform gates and external-code denial.
+
+## 2026-10-15 continuation: descendant fixture startup
+
+Test-only phase markers showed that A/B/C verify and read the start frames in
+under a second on this machine. C entered its daemon implementation and then
+blocked inside its synchronous `Bun.spawn()` call before writing the descendant
+PID. A disposable process-only probe reproduced delayed spawn return without
+Runtime, SQLite or an OS Job; stdin closure and inherited environment did not
+eliminate it. The Bun internal cause has not been established.
+
+The fixed fixture uses `node:child_process.spawn` with a hidden console and waits
+for its successful `spawn` event before writing the PID. `detached: true` and
+`unref()` remain, so the actual descendant survives provider failure until the
+Host's Job drains. No production runner/protocol/Job code, grant, timeout or
+assertion changed. Temporary diagnostic code and phase markers were removed.
+
+Runner lint/types and all four protocol/actual-runner tests passed. Both exact
+previously failing paths and the final 15-test native service suite passed,
+including same-Job membership/aliveness, actual descendant exit, retained leases,
+update refusal and real QUERY-only termination denial. The earlier failure above
+is retained as historical evidence; the new full root gate is recorded separately.

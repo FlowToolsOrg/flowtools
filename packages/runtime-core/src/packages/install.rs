@@ -18,6 +18,13 @@ use rusqlite::{params, OptionalExtension, TransactionBehavior};
 use std::collections::{BTreeMap, BTreeSet, HashSet, VecDeque};
 
 mod files;
+mod reconciliation;
+pub use reconciliation::{
+    abort_inert_reconciliation, apply_inert_reconciliation, plan_inert_reconciliation,
+    resume_inert_reconciliation, InertReconciliationPlan, InertReconciliationSummary,
+};
+#[cfg(test)]
+pub(super) use reconciliation::{apply_with_hook as reconcile_with_hook, ReconciliationPhase};
 const KEY: &str = "package-install-inventory-v1";
 const PENDING: &str = "package-install-pending-v1";
 const MAX_RECORDS: usize = 128;
@@ -477,6 +484,7 @@ pub(super) fn install_with_hook(
     mut hook: impl FnMut(InstallPhase, &mut DataStore) -> Result<(), InstallError>,
 ) -> Result<InstalledInertPackage, InstallError> {
     native(&compatibility.target)?;
+    reconciliation::ensure_idle(&store.connection)?;
     let mut state = observed_inventory(trust, store)?;
     if journal(&store.connection, &state)?.is_some() {
         return Err(InstallError::RecoveryPending);
@@ -650,6 +658,7 @@ pub fn inspect_inert_inventory(
     trust: &PackageTrustStore,
     store: &mut DataStore,
 ) -> Result<InertInventorySnapshot, InstallError> {
+    reconciliation::ensure_idle(&store.connection)?;
     let state = observed_inventory(trust, store)?;
     if journal(&store.connection, &state)?.is_some() {
         return Err(InstallError::RecoveryPending);
@@ -674,6 +683,7 @@ pub fn abort_inert_install(
     trust: &PackageTrustStore,
     store: &mut DataStore,
 ) -> Result<bool, InstallError> {
+    reconciliation::ensure_idle(&store.connection)?;
     let state = observed_inventory(trust, store)?;
     let Some(pending) = journal(&store.connection, &state)? else {
         return Ok(false);

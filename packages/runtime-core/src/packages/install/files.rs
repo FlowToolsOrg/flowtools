@@ -16,7 +16,7 @@ use windows_sys::Win32::Storage::FileSystem::{
 };
 
 pub(super) const MAX_DISK_BYTES: u64 = 268_435_456;
-const MAX_GROUPS: usize = 384;
+pub(super) const MAX_GROUPS: usize = 384;
 const NAMES: [&str; 3] = ["manifest.json", "package.zip", "seal.json"];
 fn seal(record: &Record) -> Vec<u8> {
     serde_json::to_vec(&serde_json::json!({"formatVersion":1,"artifactId":record.artifact_id,"zipDigest":record.payload.archive.sha256,"manifestDigest":record.payload.manifest.sha256})).expect("bounded seal")
@@ -128,6 +128,14 @@ impl Layout {
         records: &[Record],
         journal: Option<&Journal>,
     ) -> Result<(), InstallError> {
+        self.assert_owned_with_orphans(records, journal, &[])
+    }
+    pub fn assert_owned_with_orphans(
+        &self,
+        records: &[Record],
+        journal: Option<&Journal>,
+        orphans: &[super::reconciliation::Orphan],
+    ) -> Result<(), InstallError> {
         let mut groups = 0;
         for kind in ["artifacts", "staging", "quarantine"] {
             let path = self.root.join(kind);
@@ -146,13 +154,22 @@ impl Layout {
                     "artifacts" => {
                         super::super::valid_digest(name)
                             && (records.iter().any(|r| r.payload.archive.sha256 == name)
+                                || orphans.iter().any(|o| {
+                                    o.kind == super::reconciliation::Kind::Artifact
+                                        && o.source == name
+                                })
                                 || journal.is_some_and(|j| {
                                     j.new_artifact
                                         && j.prepared
                                         && j.record.payload.archive.sha256 == name
                                 }))
                     }
-                    "staging" => journal.is_some_and(|j| j.new_artifact && j.id == name),
+                    "staging" => {
+                        journal.is_some_and(|j| j.new_artifact && j.id == name)
+                            || orphans.iter().any(|o| {
+                                o.kind == super::reconciliation::Kind::Stage && o.source == name
+                            })
+                    }
                     _ => ["-stage", "-artifact"].iter().any(|suffix| {
                         name.strip_suffix(suffix).is_some_and(|id| {
                             uuid::Uuid::parse_str(id).is_ok_and(|v| v.to_string() == id)
@@ -324,6 +341,21 @@ impl Layout {
         record: &Record,
         complete: bool,
     ) -> Result<(), InstallError> {
+        self.move_validated(source, destination, || {
+            if complete {
+                self.read_held(source, record)?;
+            } else {
+                self.partial_held(source, record)?;
+            }
+            Ok(())
+        })
+    }
+    fn move_validated(
+        &self,
+        source: &Path,
+        destination: &Path,
+        validate: impl FnOnce() -> Result<(), InstallError>,
+    ) -> Result<(), InstallError> {
         let parent = |path: &Path| {
             self.parents
                 .iter()
@@ -342,15 +374,133 @@ impl Layout {
             &name(source)?,
             parent(destination)?,
             &name(destination)?,
-            || {
-                if complete {
-                    self.read_held(source, record)?;
-                } else {
-                    self.partial_held(source, record)?;
-                }
-                Ok(())
-            },
+            validate,
         )
+    }
+    pub fn discover_orphans(
+        &self,
+        records: &[Record],
+    ) -> Result<Vec<super::reconciliation::Orphan>, InstallError> {
+        use super::reconciliation::{Kind, Orphan};
+        let mut orphans = Vec::new();
+        for kind in [Kind::Artifact, Kind::Stage] {
+            let parent = self.root.join(kind.parent());
+            if !exists(&parent)? {
+                continue;
+            }
+            for entry in std::fs::read_dir(&parent).map_err(|_| InstallError::Storage)? {
+                if orphans.len() >= MAX_GROUPS {
+                    return Err(InstallError::BudgetExceeded);
+                }
+                let entry = entry.map_err(|_| InstallError::Storage)?;
+                let name = entry
+                    .file_name()
+                    .into_string()
+                    .map_err(|_| InstallError::PathRejected)?;
+                kind.validate_source(&name)?;
+                if kind == Kind::Artifact
+                    && records.iter().any(|r| r.payload.archive.sha256 == name)
+                {
+                    continue;
+                }
+                orphans.push(Orphan {
+                    kind,
+                    source: name,
+                    destination_id: uuid::Uuid::new_v4().to_string(),
+                    files: self.fingerprint(&entry.path())?,
+                });
+            }
+        }
+        orphans.sort_by(|a, b| (a.kind, &a.source).cmp(&(b.kind, &b.source)));
+        self.assert_owned_with_orphans(records, None, &orphans)?;
+        if !orphans.is_empty() {
+            self.require_quarantine()?;
+        }
+        Ok(orphans)
+    }
+    pub fn require_quarantine(&self) -> Result<(), InstallError> {
+        if !self.parents.contains_key("quarantine") {
+            return Err(InstallError::ArtifactInvalid);
+        }
+        Ok(())
+    }
+    fn fingerprint(
+        &self,
+        path: &Path,
+    ) -> Result<BTreeMap<String, super::super::BlobDescriptor>, InstallError> {
+        let _guard = directory(path)?;
+        self.fingerprint_held(path)
+    }
+    fn fingerprint_held(
+        &self,
+        path: &Path,
+    ) -> Result<BTreeMap<String, super::super::BlobDescriptor>, InstallError> {
+        let mut result = BTreeMap::new();
+        for entry in std::fs::read_dir(path).map_err(|_| InstallError::Storage)? {
+            if result.len() >= NAMES.len() {
+                return Err(InstallError::BudgetExceeded);
+            }
+            let entry = entry.map_err(|_| InstallError::Storage)?;
+            let name = entry
+                .file_name()
+                .into_string()
+                .map_err(|_| InstallError::PathRejected)?;
+            let limit = match name.as_str() {
+                "manifest.json" => super::super::MAX_PAYLOAD_BYTES as u64,
+                "package.zip" => super::super::MAX_ARCHIVE_BYTES,
+                "seal.json" => 512,
+                _ => return Err(InstallError::PathRejected),
+            };
+            let mut file = regular(&entry.path(), limit, false)?;
+            let mut bytes = Vec::new();
+            file.read_to_end(&mut bytes)
+                .map_err(|_| InstallError::Storage)?;
+            result.insert(
+                name,
+                super::super::BlobDescriptor {
+                    sha256: super::super::hash(&bytes),
+                    size: bytes.len() as u64,
+                },
+            );
+        }
+        Ok(result)
+    }
+    pub fn check_orphan(
+        &self,
+        orphan: &super::reconciliation::Orphan,
+    ) -> Result<bool, InstallError> {
+        let source = self.root.join(orphan.kind.parent()).join(&orphan.source);
+        let destination = self.root.join("quarantine").join(orphan.destination());
+        let present = exists(&source)?;
+        let quarantined = exists(&destination)?;
+        if present == quarantined {
+            return Err(InstallError::StateInvalid);
+        }
+        let selected = if present { &source } else { &destination };
+        if self.fingerprint(selected)? != orphan.files {
+            return Err(InstallError::ArtifactInvalid);
+        }
+        Ok(present)
+    }
+    pub fn quarantine_orphan(
+        &self,
+        orphan: &super::reconciliation::Orphan,
+    ) -> Result<(), InstallError> {
+        if !self.check_orphan(orphan)? {
+            return Ok(());
+        }
+        let source = self.root.join(orphan.kind.parent()).join(&orphan.source);
+        let destination = self.root.join("quarantine").join(orphan.destination());
+        self.move_validated(&source, &destination, || {
+            if self.fingerprint_held(&source)? != orphan.files {
+                return Err(InstallError::ArtifactInvalid);
+            }
+            Ok(())
+        })?;
+        if self.check_orphan(orphan)? {
+            return Err(InstallError::StateInvalid);
+        }
+        Ok(())
     }
     pub fn disk_bytes(&self) -> Result<u64, InstallError> {
         self.disk_bytes_reserving(0)

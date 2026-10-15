@@ -1,5 +1,12 @@
 # Flow Tool Architecture
 
+G6 P2.8a1 的 `packages/tools.rs` 复用 `PackageTrustStore` 单写者与严格 ZIP
+准入，核对原始签名工具 Manifest、完整文件角色及构建内固定审核策略，返回
+opaque inert bytes。返回前重新采样 T0 时间并检查当前根、撤销和 floors。
+生产审核清单为空；没有新增生产 pins、数据库、客户端策略或可执行身份。
+工具仓库、安装 journal、任务 leases、媒体进程与 GC 仍属后续步骤；G5 平台
+门禁保持前置。见 [G6 准入证据](./docs/validation/g6-tool-admission.md)。
+
 G5 P2.5a 的纯字节签名验证位于 `packages/runtime-core/src/packages.rs`；
 SDK `manifest/signed-package.ts` 只负责作者 schema/序列化/PAE。T0 提供可信
 根和 floor；包描述、验证 receipt 不创建安装记录、grant 或 runner session。

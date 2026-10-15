@@ -16,6 +16,7 @@ pub mod dependencies;
 #[cfg(windows)]
 pub mod install;
 pub mod manifest;
+pub mod tools;
 pub mod trust;
 
 pub const PACKAGE_PAYLOAD_TYPE: &str = "application/vnd.flowtools.package.v1+json";

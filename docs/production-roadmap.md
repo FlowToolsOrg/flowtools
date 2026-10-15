@@ -1542,6 +1542,7 @@ bun run build
 - Owner：Runtime / Rust / Security；Repository Maintainer 指定实施责任人
 - 依赖：P1.6、P2.2、P2.3、P2.4、P2.5、P2.6
 - 子项：P2.8a、P2.8b、P2.8c；对应 G6
+
 - 交付：工具包的 publisher/version/target/build flavor/hash/来源/许可证准入；
   集中只读 artifact、多版本共享、leases、安装 journal、typed 媒体操作与平台
   进程树/文件/网络/预算约束；版本切换、撤销、回滚和根集合 GC。
@@ -1554,6 +1555,13 @@ bun run build
 
 P2.7 的新增运行范围包含 P1.6/P2.8：共享工具与服务委托拒绝矩阵通过后，才可
 关闭对应威胁项。
+
+P2.8a1（2026-10-13）新增严格惰性工具 Manifest 准入 prototype，依赖已有
+G5 durable trust/ZIP byte admission，独立于 Plugin Manifest/G4 ToolPin。
+生产审核 profiles 为空，不生成 installed identity、leases 或执行授权。
+16 项实际签名 ZIP/SQLite 回归与未完成验收见
+[首步证据](./validation/g6-tool-admission.md)。P2.8a–c/G6 与 G5 平台门禁
+保持 pending；共享仓库、安装/恢复、受限媒体执行、更新和 GC 尚待交付。
 
 Phase 2 总退出标准：P2.1–P2.8 全部 `done`；第三方代码默认拒绝且可强制
 终止；权限在 Rust 边界执行；包和数据可校验、迁移与回滚；包括授权/数据

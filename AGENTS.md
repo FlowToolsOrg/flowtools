@@ -214,6 +214,17 @@ See [P2.3a evidence](./docs/validation/g3-capability-broker.md).
 
 ### Accepted next-stage product and runtime design
 
+G6 P2.8a1 inert tool admission lives in `packages/runtime-core/src/packages/tools.rs`.
+Use the existing durable `PackageTrustStore`, exact signed bytes and strict ZIP
+inventory; recheck current trust with a fresh T0 clock before returning proof.
+Tool Manifest v1 is Runtime-owned, separate from SDK Plugin Manifest and G4
+ToolPin. Reviewed publisher/source/license/flavor/target/program/resource layouts
+are private build data, never package flags or caller policies. Production review
+profiles remain empty; deterministic fixture profiles compile only under tests.
+Do not turn admission into extraction, a tool registry, a lease or an executable
+identity. G5 platform prerequisites, P2.8a/b/c, legal build review and independent
+security acceptance remain pending. See [tool admission evidence](./docs/validation/g6-tool-admission.md).
+
 Follow `docs/next-milestones.md` in G0–G8 dependency order. The target audience is
 non-specialist knowledge/office users; external agents use the same command
 contracts as the GUI. Independently installable CLI, headless/background Host,

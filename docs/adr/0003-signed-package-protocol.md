@@ -221,6 +221,14 @@ bytes/ZIP 继续权威，不以规范化 metadata 重写或代替。
 通过，当前提交远端 CI 与独立安全批准 pending，P2.5b/G5、执行与成熟度
 不因此收口。
 
+### 2026-10-13 受控备份信任恢复
+
+受支持备份恢复后的观察恢复现按 [ADR-0004](./0004-controlled-trust-recovery.md)
+实施为 T0 prototype：当前 root 与独立 release recovery quorum 的共同短期批准绑定持久 challenge 与
+权威 raw checkpoint，保留已知 floors/root history 和恢复标记。外部 T0
+需核实丢失历史完整性；不允许新 pins、自动 reset 或版本 rollback/grant。
+生产签名材料、root 泄漏应急重建及独立安全验收仍 pending。
+
 P2.5b 验收归档恶意样本、staging/journal 重启恢复、取消、同版本不可变、
 last-known-good 健康检查与 metadata 跨资源提交；依赖、数据、grants 分开
 ownership。P2.1/P2.2 必须先用实际 Windows 恶意 fixtures 证明运行与 OS

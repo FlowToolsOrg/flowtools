@@ -28,7 +28,8 @@ P2.5b 第三步将 descriptor 信任观察持久化到 Runtime 单写者数据�
 提供 pins 与可信时间；作者 SDK、包内容和 run flag 不能设置 floors 或 grants。
 同一版本/sequence/ZIP digest 的新鲜签名描述可续期，观察过更高 release 后
 拒绝降级；记录 descriptor 不表示已安装或健康。备份恢复后的 profile 拒绝
-签名包准入，受控信任恢复与回滚审批尚未实现。没有第三方安装入口或 production
+签名包准入；受控备份恢复现按下述新协议实现，版本回滚审批尚未实现。
+没有第三方安装入口或 production
 pins，见 [持久信任验证](./validation/g5-durable-trust.md)。
 
 第四步可从完整准入的签名 archive 生成 inert service dependency plan，pins
@@ -66,6 +67,14 @@ Host/SDK/target 来自 T0 编译信息；作者不能选择兼容环境。SDK �
 405 项实际 parser corpus 及有限 operation 匹配预算见
 [契约加固记录](./validation/g5-contract-hardening.md)。本轮本地完整门禁通过，
 当前提交远端 CI 与独立安全批准仍 pending，产品激活与第三方执行范围不改变。
+
+受支持备份恢复后的包信任现在可由 T0 显式恢复：外部权威 checkpoint 的
+当前 root 与独立发布 recovery quorum 共同签署绑定该次恢复事件的短期
+DSSE 批准，角色 keys 不复用，默认未配置恢复 authority 时拒绝。保留已知根链/
+floors 和恢复标记，正常准入持续检查签署 baseline。作者签名、publisher key、
+包元数据或 run flags 不能批准该操作；没有自动恢复 grants、回滚许可或
+第三方执行。外部 signers 与丢失历史完整性仍须验收，见
+[受控恢复](./validation/g5-controlled-trust-recovery.md)。
 
 本文面向 Flow Tool 开发者，目标是帮助你在当前仓库里快速开发并调试自己的
 plugin。

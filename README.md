@@ -68,6 +68,16 @@ The current local integrated quality gates passed. Remote CI for the current
 commit and independent security approval remain pending; historical passing
 runs do not validate this revision.
 
+Controlled trust recovery now binds a durable challenge to the actual backup
+restore and an authoritative raw checkpoint. The current root quorum and separate,
+release-pinned recovery quorum must sign the same short-lived approval; their keys
+cannot overlap. An ordinary trust store denies recovery by default.
+Existing observations and restore markers remain
+intact. State and receipt commit together with a fresh T0 clock, and later loads
+reverify the signed baseline. See [recovery evidence](./docs/validation/g5-controlled-trust-recovery.md).
+Production signers and checkpoint completeness still require external acceptance;
+this creates no rollback grant, installed execution identity or third-party runner.
+
 > An extensible, cross-platform toolbox powered by a plugin runtime.
 > Plugin Runtime for AI Age
 

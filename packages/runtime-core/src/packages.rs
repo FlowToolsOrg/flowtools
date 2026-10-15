@@ -53,6 +53,7 @@ pub enum PackageError {
     TrustStateInvalid,
     TrustStorageFailed,
     TrustRecoveryRequired,
+    TrustRecoveryAuthorityRequired,
     TrustBudgetExceeded,
 }
 
@@ -83,6 +84,7 @@ impl PackageError {
             Self::TrustStateInvalid => "PACKAGE_TRUST_STATE_INVALID",
             Self::TrustStorageFailed => "PACKAGE_TRUST_STORAGE_FAILED",
             Self::TrustRecoveryRequired => "PACKAGE_TRUST_RECOVERY_REQUIRED",
+            Self::TrustRecoveryAuthorityRequired => "PACKAGE_TRUST_RECOVERY_AUTHORITY_REQUIRED",
             Self::TrustBudgetExceeded => "PACKAGE_TRUST_BUDGET_EXCEEDED",
         }
     }
@@ -229,7 +231,7 @@ pub struct BootstrapPins {
     pub threshold: usize,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct KnownVersionIdentity {
     pub kind: PackageKind,

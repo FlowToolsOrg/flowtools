@@ -350,6 +350,12 @@ lint/types/test/build、原生 24 项、Chromium 72 项与生产 Web 22/Desktop 
 原型，production pins、产品激活、服务切换/健康与
 跨资源生产验收未实施；G5 其余子项/整体验收仍 pending。
 
+2026-10-13：受支持备份的 T0 信任恢复提供独立 root/recovery 双 quorum、
+持久 challenge、checkpoint 与原子 receipt 原型；普通 store 默认无恢复
+authority，继续拒绝。恢复只补齐观察 floors，不恢复安装库存、grants 或
+采用孤立 blob；产品 signers/管理、回滚、隔离及 G5/G6 整体仍 pending。
+见 [受控恢复](./validation/g5-controlled-trust-recovery.md)。
+
 先确定 plugin/tool 的签名格式、信任根、publisher provenance、撤销/轮换、
 离线与受控回滚协议，再实现 staging -> 验证 -> artifact store -> metadata commit。
 插件、工具、依赖锁及业务数据分别 ownership。zip bomb、路径穿越、特殊文件、
@@ -464,6 +470,14 @@ missed-run 和重复触发策略；调度器只能调用已授权命令，插件
 AI 生成当安全豁免。远程调用、开放付费市场和云同步待单独产品与威胁评审。
 
 ## 11. 实施与验证记录
+
+2026-10-13：为 G6 补齐 G5 受支持备份的受控信任恢复，移植此前未合入的
+本地实现并对当前 formatVersion 2 惰性库存独立复核。协议见
+[ADR-0004](./adr/0004-controlled-trust-recovery.md)，实际原始签名、SQLite
+restore、独立双 quorum/退役根、跨事件重放与进程退出证据见
+[恢复验证](./validation/g5-controlled-trust-recovery.md)。它保留 root history、
+不可变 floors 和恢复标记，不批准版本回滚、grants 或第三方运行；权威
+checkpoint 完整性、真实 signer/pins 与独立安全验收仍需外部证据。
 
 新增目录先创建有限测试 fixture 和公开契约，再接真实入口；每项用一个聚焦
 Conventional Commit 记录，不提前把父里程碑标为 done。拟新增验证脚本属于

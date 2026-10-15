@@ -4,13 +4,16 @@ use super::*;
 use crate::data::DataStore;
 use rusqlite::{params, OptionalExtension, TransactionBehavior};
 
+mod recovery;
+pub use recovery::{TrustRecoveryApproval, TrustRecoveryChallenge, RECOVERY_PAYLOAD_TYPE};
+
 const KEY: &str = "package-trust-state-v1";
 pub(crate) const RECOVERY_KEY: &str = "package-trust-recovery-required";
 const MAX_ROOTS: usize = 32;
 const MAX_KNOWN: usize = 1024;
 const MAX_STATE_BYTES: usize = 16_777_216;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct RootRecord {
     envelope: String,
@@ -45,6 +48,7 @@ pub struct DescriptorVerification<'a> {
 pub struct PackageTrustStore {
     pins: BootstrapPins,
     pins_digest: String,
+    recovery: Option<recovery::RecoveryAuthority>,
 }
 impl PackageTrustStore {
     pub fn new(mut pins: BootstrapPins) -> Result<Self, PackageError> {
@@ -58,6 +62,7 @@ impl PackageTrustStore {
         Ok(Self {
             pins,
             pins_digest: digest,
+            recovery: None,
         })
     }
 
@@ -71,11 +76,13 @@ impl PackageTrustStore {
             .connection
             .transaction_with_behavior(TransactionBehavior::Immediate)
             .map_err(storage)?;
-        recovery_guard(&tx)?;
-        if raw_state(&tx)?.is_some() {
+        let current = raw_state(&tx)?;
+        recovery::guard(self, &tx, current.as_deref())?;
+        if current.is_some() {
             return Err(PackageError::RootRollback);
         }
         let root = bootstrap_root(envelope, &self.pins, VerificationClock { now, floor: 0 })?;
+        recovery::check_roles(self, &root)?;
         let state = State {
             format_version: 1,
             pins_digest: self.pins_digest.clone(),
@@ -147,6 +154,7 @@ impl PackageTrustStore {
                 floor: state.observed_time,
             },
         )?;
+        recovery::check_roles(self, &root)?;
         state.roots.push(RootRecord {
             envelope: general_purpose::STANDARD.encode(envelope),
             observed_at: now,
@@ -295,8 +303,12 @@ impl PackageTrustStore {
         &self,
         connection: &rusqlite::Connection,
     ) -> Result<(State, VerifiedRoot), PackageError> {
-        recovery_guard(connection)?;
-        let text = raw_state(connection)?.ok_or(PackageError::TrustStateRequired)?;
+        let text = raw_state(connection)?;
+        recovery::guard(self, connection, text.as_deref())?;
+        self.parse_state(&text.ok_or(PackageError::TrustStateRequired)?)
+    }
+
+    fn parse_state(&self, text: &str) -> Result<(State, VerifiedRoot), PackageError> {
         let state: State = serde_json::from_value(
             strict_json(text.as_bytes()).map_err(|_| PackageError::TrustStateInvalid)?,
         )
@@ -331,6 +343,7 @@ impl PackageTrustStore {
                 bootstrap_root(&bytes, &self.pins, clock)
             }
             .map_err(|_| PackageError::TrustStateInvalid)?;
+            recovery::check_roles(self, &verified).map_err(|_| PackageError::TrustStateInvalid)?;
             floor = record.observed_at;
             root = Some(verified);
         }
@@ -355,19 +368,6 @@ impl PackageTrustStore {
 
 fn storage(_: rusqlite::Error) -> PackageError {
     PackageError::TrustStorageFailed
-}
-fn recovery_guard(connection: &rusqlite::Connection) -> Result<(), PackageError> {
-    let count: u32 = connection
-        .query_row(
-            "SELECT count(*) FROM core_metadata WHERE key IN (?1,'recovery-generation')",
-            [RECOVERY_KEY],
-            |row| row.get(0),
-        )
-        .map_err(storage)?;
-    if count != 0 {
-        return Err(PackageError::TrustRecoveryRequired);
-    }
-    Ok(())
 }
 fn raw_state(connection: &rusqlite::Connection) -> Result<Option<String>, PackageError> {
     let size: Option<i64> = connection

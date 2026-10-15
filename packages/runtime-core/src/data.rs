@@ -423,8 +423,11 @@ impl DataStore {
             stage_store
                 .connection
                 .execute(
-                    "INSERT OR REPLACE INTO core_metadata(key,value) VALUES(?1,'true')",
-                    [crate::packages::trust::RECOVERY_KEY],
+                    "INSERT OR REPLACE INTO core_metadata(key,value) VALUES(?1,?2)",
+                    [
+                        crate::packages::trust::RECOVERY_KEY,
+                        &uuid::Uuid::new_v4().to_string(),
+                    ],
                 )
                 .map_err(db_error)?;
         }

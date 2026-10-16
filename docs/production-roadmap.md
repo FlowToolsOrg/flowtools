@@ -1581,6 +1581,11 @@ Phase 2 总退出标准：P2.1–P2.8 全部 `done`；第三方代码默认拒�
 [桌面入口证据](./validation/g7-desktop-shell.md)。P3.1a/P3.1/G7 保持 pending；
 设置/诊断、正式身份迁移、Runtime 状态及重启/平台验收另行完成。
 
+2026-10-16：P3.1a2 交付 system/light/dark 外观偏好的设备本地持久化、明确
+重置和失败反馈，根布局跨路由应用并响应系统变化。只完成这一项 UI 设置，
+不推进 P3.1a/P3.1/G7 父项；完整设置/诊断、OS 与 Runtime 验收仍 pending。
+见 [外观偏好证据](./validation/g7-desktop-preferences.md)。
+
 - 状态：`pending`
 - 负责人：`TBD (Desktop)`
 - 依赖：P0.1、P1.4、P2.3、P2.4

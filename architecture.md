@@ -5,6 +5,11 @@ G7 P3.1a1 的 Windows 原生 `shell.rs` 提供托盘、单实例/快捷键唤起
 Runtime store/grant 或 stop 调用。托盘仅报告 Desktop 驻留，Runtime 状态
 与调度另行接入，见 [桌面入口证据](./docs/validation/g7-desktop-shell.md)。
 
+P3.1a2 的 Desktop 根布局持有 system/light/dark 外观偏好，使用版本化、限长的
+本地 UI 记录；启动即应用，系统变化实时更新，明确浅/深色优先于系统媒体规则。
+损坏记录保留到用户选择或重置；失败反馈不影响恢复控件。该状态不进入 Runtime
+数据、权限或 E02 插件主题资源，见 [外观证据](./docs/validation/g7-desktop-preferences.md)。
+
 G6 P2.8a1 的 `packages/tools.rs` 复用 `PackageTrustStore` 单写者与严格 ZIP
 准入，核对原始签名工具 Manifest、完整文件角色及构建内固定审核策略，返回
 opaque inert bytes。返回前重新采样 T0 时间并检查当前根、撤销和 floors。

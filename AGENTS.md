@@ -189,6 +189,15 @@ Desktop status only.
 P3.1a/G7 and G5/G6 execution gates remain pending; see
 [shell evidence](./docs/validation/g7-desktop-shell.md).
 
+G7 P3.1a2 Host appearance preferences live in `src/settings/appearance.tsx`
+and `appearance-settings.tsx` under Desktop. Keep the root provider across routes,
+the bounded formatVersion-1 system/light/dark record, system media listener and
+explicit light/dark precedence for CSS variables and Tailwind utilities. Preserve
+unreadable records until user selection/reset; failed storage must retain usable
+controls and honest feedback. Reset removes only this preference. Never derive
+Runtime policy, grants or plugin resources from it. See
+[preference evidence](./docs/validation/g7-desktop-preferences.md).
+
 G5 P2.5b archive admission lives in `packages/runtime-core/src/packages/archive.rs`.
 It consumes opaque verified descriptors and rechecks the exact manifest/archive
 bytes before bounded ZIP32 stored/deflate decoding. Keep central/local header

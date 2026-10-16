@@ -255,3 +255,8 @@ Webview capabilities retain the seven non-menu/tray core defaults explicitly;
 they no longer inherit native menu/tray mutation from `core:default`. Real Tauri
 IPC rejection tests cover spoofed menus, recovery-tray removal and startup/
 shortcut operations. No new permission is granted.
+
+P3.1a2's bounded Desktop appearance record selects only system/light/dark UI.
+It cannot select plugin resources, native capabilities, Runtime policy or grants.
+No package/Manifest, IPC, CSP or permission change is introduced; see
+[preference scope](../validation/g7-desktop-preferences.md).

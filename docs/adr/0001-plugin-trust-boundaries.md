@@ -261,3 +261,7 @@ Debug/fixture 禁用 OS 自启动；release 仅明确原生用户动作写入并
 Desktop 退出不停止 Runtime，不创建/撤销 grants。此原型不改变执行信任层级；
 SEC-003/007/009/013 与独立安全审阅仍 pending，见
 [桌面入口证据](../validation/g7-desktop-shell.md)。
+
+P3.1a2 仅在 Desktop 同源 UI 存储固定外观枚举。读取限长、验证版本/字段，
+不解释 CSS/URL/插件标识或权限；同源记录不构成身份、隔离或授权边界。
+失败可恢复且重置仅影响该记录，见 [外观验证](../validation/g7-desktop-preferences.md)。

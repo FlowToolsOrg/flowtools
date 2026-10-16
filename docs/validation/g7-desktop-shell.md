@@ -62,7 +62,7 @@ Clippy passed after replacing a linted error-extraction expression in the IPC
 test. The final focused shell regression was rerun after that test-only edit.
 The production refusal scan does not establish package signing or isolation.
 
-Next P3.1a substeps: resolve the full-gate failure, verify actual tray/menu and
+Next P3.1a substeps: verify actual tray/menu and
 shortcut-conflict recovery, integrate persisted desktop preferences/diagnostics
 and authoritative Runtime status, then controlled restart/multi-screen/background
 job acceptance. P3.1b and file/media execution cannot bypass their dependencies.
@@ -130,3 +130,20 @@ previously failing paths and the final 15-test native service suite passed,
 including same-Job membership/aliveness, actual descendant exit, retained leases,
 update refusal and real QUERY-only termination denial. The earlier failure above
 is retained as historical evidence; the new full root gate is recorded separately.
+
+## 2026-10-16 full Windows gate
+
+Clean commit `8741845` passed `pwsh -NoProfile -File scripts/check-ci.ps1`
+with exit code 0 and a clean final worktree. All 11 workspaces passed lint,
+types, uncached tests (8m34.724s) and sequential forced builds (1m27.52s).
+This includes 72 Chromium tests, 222 Core unit tests plus two doctests,
+all 24 Runtime native tests and the 15 real service paths, and Desktop's
+92 Bun / 28 Rust unit / four integration tests.
+Web 22 / Desktop 24 production artifacts remained byte-identical under
+child-only opt-in/canaries; Rust fmt, locked check and all-target codegen
+Clippy passed. Logs and exit code are retained in ignored
+`execution-validation/g7-shell/root-ci-resume.log` and `.exit`.
+
+This resolves the previously recorded local full-gate failure. It does not
+replace the remaining native manual/OS acceptance or independent security
+review, advance G7 maturity, or open G5/G6 execution gates.

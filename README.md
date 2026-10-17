@@ -1,5 +1,16 @@
 # Flow Tool
 
+G7 P3.1a1 adds a Windows native tray, single-instance wakeup and
+Ctrl+Shift+Space window restore. Optional startup requires explicit native menu
+actions in the current release identity; debug/fixture builds deny it. Desktop
+exit does not stop Runtime. Full P3.1a/G7 and G5/G6 execution gates remain pending.
+See [desktop shell evidence](./docs/validation/g7-desktop-shell.md).
+
+G7 P3.1a2 persists Desktop's system/light/dark preference across navigation and
+restart, with explicit reset and storage failure feedback. This is a Host UI
+preference, separate from Runtime policy and plugin theme resources. See
+[appearance evidence](./docs/validation/g7-desktop-preferences.md).
+
 G6 P2.8a1 adds strict inert tool Manifest admission through the existing durable
 trust store and ZIP verifier. Source, license, build flavor and complete resource
 roles must match a private build-owned review profile; the production list is

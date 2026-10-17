@@ -226,3 +226,30 @@ G5 范围见 [Manifest 验证](./g5-manifest-admission.md)。
 仍无独立 fixture 验收。没有新增用户 UI 或用户 profile 访问；Windows Job
 与 Bun 不提供文件/网络/OS 权限 sandbox。SEC-014/SEC-015 保持 open，
 maturity 为 prototype，实际独立安全 reviewer/date/conclusion pending。
+
+## 2026-10-15 服务 fixture 派生就绪修复
+
+G7 继续验收时，本地 `root_cancel_retains_lease_until_the_actual_provider_group_drains`
+在既有 5 秒就绪预算内失败。临时阶段标记确认 A/B/C 首帧处理已完成，C 卡在
+同步 `Bun.spawn()` 返回前，未写实际后代 PID。脱离 Runtime/Job 的可丢弃
+进程对照也复现返回延迟；Bun 内部原因未确认，不归因于 SQLite 或恢复协议。
+
+仅修改固定测试入口 `packages/plugin-runner/test/services/runner.ts`，使用
+`node:child_process.spawn`、`windowsHide: true` 与实际 `spawn` 成功事件。
+保留 `detached: true` / `unref()`、实际后代、同一 Job/handle 观察、5 秒就绪
+和 9.5 秒根期限、所有六条异常排空断言；没有修改生产 runner 或执行边界。
+移除临时诊断后，四项 runner 测试与全部 15 项原生服务回归通过。
+完整门禁结果另见 [G7 验证记录](./g7-desktop-shell.md)，不沿用历史绿色结果，
+不提升 maturity 或关闭 SEC-014/015。
+
+2026-10-16：后续完整门禁再次复现根取消的 5 秒就绪失败，故异步派生改动
+不能视为已消除本机时序不稳定。原生子进程对照也有初始约 4 秒的创建延迟，
+内部原因未确认。根取消用例原先从提交 A 时就开始计算 C 后代的 5 秒预算；
+先等待 C running 再计算 5 秒仍在第三次精确样本失败；受原始 9.5 秒根期限
+约束的等待也在第二次样本真正 Timeout。固定原生睡眠后代也未消除失败。
+这些计时/原生 artifact 实验均已撤回，先前提交的异步 spawn 也恢复为 main
+原有夹具，未保留未经证实的修复。相同 Bun 父进程通过 Rust 原生库直接
+创建睡眠子进程，脱离 Runtime/SQLite/Job 的八次创建调用耗时为
+10039、10026、5015、6、8、7、9、12ms，全部实际回收；OS/内部原因未定位。
+保留原始 5 秒就绪、9.5 秒执行预算、所有 Job/lease/迁移/拒绝断言，完整门禁
+不跳过或重试失败。当前本机整仓集成仍未通过，详见 [G7 后续证据](./g7-desktop-shell.md)。

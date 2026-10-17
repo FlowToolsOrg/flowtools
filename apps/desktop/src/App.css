@@ -3,11 +3,15 @@
 @source '../../../packages/ui/src/**/*.{ts,tsx}';
 @import '@heroui/styles';
 
+/* The Host resolves system mode; explicit light must also win for utilities. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
 :root,
 .light,
 .default,
 [data-theme='light'],
 [data-theme='default'] {
+  color-scheme: light;
   --accent: oklch(62.04% 0.195 253.83);
   --accent-foreground: oklch(99.11% 0 0);
   --background: #dce4ea;
@@ -49,6 +53,18 @@
   --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --text-on-primary: #ffffff;
   --window-shadow: 0 18px 58px rgba(15, 23, 42, 0.18);
+  --desktop-backdrop:
+    radial-gradient(
+      circle at 24% 20%,
+      rgba(2, 132, 199, 0.12),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 76% 88%,
+      rgba(102, 126, 234, 0.1),
+      transparent 30%
+    ),
+    #dce4ea;
   font-family:
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
     Arial, sans-serif;
@@ -94,10 +110,26 @@
   --active-bg: color-mix(in srgb, var(--primary-color) 12%, #303133);
   --primary-color: #38bdf8;
   --window-shadow: 0 18px 58px rgba(0, 0, 0, 0.35);
+  --desktop-backdrop:
+    radial-gradient(
+      circle at 24% 20%,
+      rgba(56, 189, 248, 0.1),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 76% 88%,
+      rgba(167, 139, 250, 0.09),
+      transparent 30%
+    ),
+    #151719;
+}
+
+.desktop-surface {
+  background: var(--desktop-backdrop);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     color-scheme: dark;
     --accent: oklch(74.38% 0.151 238.66);
     --accent-foreground: #0b1720;
@@ -160,8 +192,6 @@ body,
   background: rgba(0, 0, 0, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-  ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.13);
-  }
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.13);
 }

@@ -1,8 +1,6 @@
 import type { PluginManifestV1, JsonValue } from '@flowtools/sdk/manifest'
 import type { ToolContext } from '@flowtools/sdk/types'
 
-import { spawn } from 'node:child_process'
-import { once } from 'node:events'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
@@ -58,18 +56,15 @@ await serveRunner(async (value, frames) => {
       const data = input as { text: string; mode: string }
       if (manifest.id === 'fixture-c') {
         if (data.mode.startsWith('daemon')) {
-          // Await real process creation with a hidden console. The descendant
-          // inherits the Host Job; unref only releases its JS event-loop hold.
-          const descendant = spawn(
-            process.execPath,
-            ['--eval', 'await Bun.sleep(60000)'],
+          const descendant = Bun.spawn(
+            [process.execPath, '--eval', 'await Bun.sleep(60000)'],
             {
-              stdio: 'ignore',
+              stdin: 'ignore',
+              stdout: 'ignore',
+              stderr: 'ignore',
               detached: true,
-              windowsHide: true,
             }
           )
-          await once(descendant, 'spawn')
           descendant.unref()
           writeFileSync('fixture-descendant-ready', String(descendant.pid))
           if (data.mode === 'daemon-fail')

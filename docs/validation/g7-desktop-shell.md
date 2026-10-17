@@ -3,6 +3,11 @@
 Date: 2026-10-15. First independently reviewable part of P3.1a.
 G7/P3.1/P3.1a remain pending; this is a `prototype`.
 
+Current integration status (2026-10-16): the later appearance-commit full gate
+failed at native descendant readiness despite an earlier green gate. Original
+Runtime/service fixture sources and deadlines are restored to main; local
+process-creation investigation is still open. See the final follow-up below.
+
 ## Behavior
 
 - Official single-instance plugin registers before other plugins and database
@@ -62,7 +67,7 @@ Clippy passed after replacing a linted error-extraction expression in the IPC
 test. The final focused shell regression was rerun after that test-only edit.
 The production refusal scan does not establish package signing or isolation.
 
-Next P3.1a substeps: verify actual tray/menu and
+Next P3.1a substeps: resolve local full-gate instability, verify actual tray/menu and
 shortcut-conflict recovery, integrate persisted desktop preferences/diagnostics
 and authoritative Runtime status, then controlled restart/multi-screen/background
 job acceptance. P3.1b and file/media execution cannot bypass their dependencies.
@@ -147,3 +152,48 @@ Clippy passed. Logs and exit code are retained in ignored
 This resolves the previously recorded local full-gate failure. It does not
 replace the remaining native manual/OS acceptance or independent security
 review, advance G7 maturity, or open G5/G6 execution gates.
+
+## 2026-10-16 follow-up: local process creation remains unstable
+
+The next full gate on appearance commit `f669162` passed all 80 browser tests,
+lint/types and Core tests but reproduced the root-cancel fixture's readiness
+timeout (Runtime 23/24). Therefore the previous single green gate does not
+establish that the asynchronous spawn change eliminated the local timing issue.
+An eight-spawn disposable native-child probe also observed two initial creation
+calls near four seconds followed by six below 12ms. This is not specific proof
+of a Bun child startup defect; the Windows/internal cause remains unestablished.
+
+Further temporary experiments did not establish a source fix: waiting for C's
+running state before starting the five-second readiness timer failed the third
+exact sample; using the original 9.5-second live-root deadline failed the second
+sample with a real Timeout. A minimal native child, with and without a console,
+also failed the original fixture budget. All those source experiments were
+reverted, including the additional native artifact and build changes. The
+previously committed asynchronous spawn change was also restored to main's
+original fixture; it had not established a fix. Runtime/runner/Core/SDK sources
+therefore remain unchanged from main.
+
+A disposable Rust DLL called from the same Bun parent measured eight actual
+`std::process::Command::spawn` calls for a fixed native sleep-only child, outside
+Runtime, SQLite, runner frames and Jobs. Observed creation-call durations were
+10039, 10026, 5015, 6, 8, 7, 9 and 12ms; every child was killed and reaped.
+This demonstrates local process-creation instability across both JS and Rust
+creation paths, but does not identify the OS/internal cause or certify remote CI.
+Evidence sources are ignored `execution-validation/g7-shell/spawn-native-library.rs`
+and `.mjs`; the observations are retained alongside them.
+
+The failed full gate remains in `execution-validation/g7-shell/root-ci-appearance.log`
+(exit 1). Original five-second readiness, 9.5-second execution deadline and all
+actual descendant/Job/drain/lease/migration assertions remain unchanged. No tests
+are skipped or retried by the gate. Latest local integration is not accepted as
+passing; independent clean Windows/OS investigation remains required. Appearance
+verification and follow-up build evidence are recorded separately in
+[P3.1a2](./g7-desktop-preferences.md).
+
+2026-10-17: a later Desktop-suite attempt also emitted Bun OOM and illegal-
+instruction crashes in unchanged CI helper subprocesses, including
+`bun -e 'process.exit(0)'`. System available memory subsequently rose from about
+2.6GB to 12.8GB; three minimal Bun probes then passed, but the unchanged original
+root-cancel test still failed readiness in 5.14s. These observations do not
+identify the underlying cause. The current integration remains unaccepted;
+there is no test-timeout increase, skip, failure retry or OS-setting change.

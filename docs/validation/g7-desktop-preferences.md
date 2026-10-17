@@ -45,8 +45,31 @@ the fixed Host background uses a theme variable with the valid background shorth
 Ignored local evidence: `execution-validation/g7-shell/appearance-browser.json`,
 `appearance-light-desktop.png`, `appearance-dark-desktop.png` and
 `appearance-narrow.png`. This browser context does not use a native user profile.
-Native OS startup/Runtime actions were not invoked. The full root gate is recorded
-after the independently committed change.
+Native OS startup/Runtime actions were not invoked.
+
+The full root gate on `f669162` passed documentation/generated contracts, all
+11 workspace lint/type gates, all 80 Chromium tests and 222 Core tests plus two
+doctests, then failed Runtime 23/24 at the existing real-descendant readiness
+check. This is not a passing full gate. The earlier green gate on `8741845`
+does not cover the new appearance commit. Native process-creation controls and
+reverted experiments are documented in [shell evidence](./g7-desktop-shell.md).
+Separate follow-up validation passed all 11 forced workspace builds (2m56.04s),
+Web 22 / Desktop 24 byte-identical production opt-in/canary artifact checks, and
+the restored main runner's four protocol/execution tests. Logs are retained in
+ignored `appearance-root-build.log`, `appearance-production-artifacts.log` and
+`runner-restored-tests.log` under the same evidence directory. These do not
+replace the failed full root gate.
+
+2026-10-17: the actual production preview also passed the route/reload, computed
+light/dark colors, keyboard reset and narrow-layout checks; final screenshots
+and JSON above were refreshed after transitions settled. CSS minification turns
+`#333333` into `#333`; the disposable browser check compares computed RGB colors.
+The later full Desktop test attempt emitted independent Bun OOM/illegal-instruction
+crashes, including the `bun -e 'process.exit(0)'` CI helper probe, before a complete
+result. No passing Desktop suite is claimed for that attempt. After available
+system memory recovered, three minimal Bun exit probes passed, but the original
+unchanged root-cancel test still failed its five-second readiness check (5.14s).
+No further full-gate retry was used to conceal that failure.
 
 ```powershell
 bun run --cwd apps/ui-test test -- src/test/appearance/desktop-appearance.test.tsx

@@ -85,7 +85,16 @@ Local evidence is under ignored `execution-validation/g7-shell/`:
 
 ## Current automated gate
 
-Clean commit `06e29cd` passed the full
+Latest local full gate: product commit `73a4a1d` failed three unchanged Runtime
+descendant paths (21/24) after lint/types, 80 Chromium and Core 222+2 passed.
+Full build and subsequent root gates were not reached; see the exact failures in
+[shell follow-up](./g7-desktop-shell.md). The previous passing run below does not
+supersede that latest failure. No retry or deadline/assertion change was applied.
+Separate Desktop tests (92 Bun / 28 Rust unit / four integration), all 11 forced
+builds and Web 22 / Desktop 24 production-entrypoint comparisons passed afterwards.
+Their success does not replace the failed root gate.
+
+Earlier clean commit `06e29cd` passed the full
 `pwsh -NoProfile -File scripts/check-ci.ps1` on this machine with exit 0 and a clean
 final worktree: 11 workspace lint/type/test/build gates, 80 Chromium tests, Core
 222 tests plus two doctests, Runtime 24 native plus 16 integration tests, Desktop

@@ -6,6 +6,10 @@ P3.1a/P3.1/G7 remain pending.
 Current follow-up (2026-10-19): `06e29cd` passed the complete local Windows gate
 and both remote runs. Dedicated native Webview process restart also retained the
 selected dark appearance; see [native acceptance](./g7-native-window-acceptance.md).
+The later full gate on `73a4a1d` failed three unchanged Runtime descendant paths
+(21/24); latest local integration remains unaccepted, see
+[the retained failure](./g7-desktop-shell.md). Appearance/browser success does not
+override that result.
 Historical failures below are retained, with their underlying cause still unknown.
 
 ## Behavior and ownership

@@ -452,6 +452,8 @@ Tauri [sidecar](https://v2.tauri.app/develop/sidecar/) 用于构建捆绑程序�
 前后外观选中态保留。新增可复用的人工热键 owner，见
 [原生验收](./validation/g7-native-window-acceptance.md)。托盘菜单点击、OS 重启/
 多屏与后台任务连续性、诊断及权威 Runtime 状态仍 pending，父项不推进。
+同日后续 `73a4a1d` 完整门禁再次失败于原样 Runtime 后代就绪/排空路径
+（21/24）；本地最新集成仍未通过，保留之前绿色与当前失败两次独立证据。
 
 P3.1a 做托盘、单实例、全局快捷键、可选自启动与后台状态；内核不依赖托盘存活。
 P3.1b 做 Host 调度器与通知 adapter：one-shot/有限周期任务、时区/夏令时、

@@ -257,5 +257,10 @@ G7 继续验收时，本地 `root_cancel_retains_lease_until_the_actual_provider
 2026-10-19 后续：原样的 `06e29cd` 在本机完整 Windows 门禁通过，Runtime
 24 项原生测试（含全部 15 项服务路径）及 16 项集成测试均通过，最终工作区
 干净；两轮远端 Windows CI 也通过。未更改夹具/超时/断言，也未增加重试。
+
+同日后续 `73a4a1d` 完整门禁再次失败：Runtime 21/24，provider-error、
+oversized-frame 和 root-cancel 的真实后代就绪/排空路径失败；失败继续致命。
+内核与夹具和 main 相同，原因仍未确定。此前绿色不覆盖本次失败，见
+[当前 G7 证据](./g7-desktop-shell.md)。
 此前延迟和 Bun 崩溃的内部原因仍未定位，历史失败不删除。当前证据见
 [原生验收与门禁](./g7-native-window-acceptance.md)；G4/G7 生产与独立安全门禁不因此关闭。

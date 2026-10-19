@@ -3,10 +3,12 @@
 Date: 2026-10-15. First independently reviewable part of P3.1a.
 G7/P3.1/P3.1a remain pending; this is a `prototype`.
 
-Current integration status (2026-10-19): clean product commit `06e29cd` passed the
-complete local Windows gate and both remote runs. Original Runtime/service
-fixtures and deadlines remain unchanged from main; earlier process-creation and
-Bun failure observations are retained below without claiming a root cause.
+Current integration status (2026-10-19): `06e29cd` passed the complete local
+Windows gate and both remote runs, but the later full gate on `73a4a1d` failed
+three unchanged Runtime descendant-readiness/drain paths (21/24). The latest
+local integration is not accepted. Original Runtime/service fixtures and deadlines
+remain unchanged from main; earlier process-creation and Bun failure observations
+are retained below without claiming a root cause.
 Controlled native conflict/restart acceptance is recorded in
 [native window acceptance](./g7-native-window-acceptance.md); OS/menu and other
 P3.1a gates remain pending.
@@ -218,3 +220,37 @@ Desktop restart. All test-owned processes were cleaned up. See
 The tool did not expose taskbar/tray windows, so actual tray menu/status/exit
 clicks remain unverified, along with OS restart/autostart, monitor hotplug,
 accepted-job continuity and independent security acceptance.
+
+## 2026-10-19 final follow-up: full gate failure retained
+
+The full Windows gate on clean product commit `73a4a1d` passed all 11 workspace
+lint/type gates, 80 Chromium tests and Core's 222 unit tests plus two doctests,
+then failed in Runtime (21/24 native tests):
+
+- `provider_error_retains_lease_until_its_real_descendant_drains`
+- `oversized_provider_frame_retains_lease_until_its_real_group_drains`
+- `root_cancel_retains_lease_until_the_actual_provider_group_drains`
+
+The first two observed no descendant-ready PID file at the actual drain boundary
+and then timed out waiting for that boundary; the third hit the existing five-second
+readiness deadline. Test command exit 101 terminated the root script with exit 1.
+It did not reach full build, production artifact, final Rust or clean-worktree gates.
+After failure, a read-only worktree check was clean. The OS reported about 12.9 GiB
+of available physical memory after failure; this does not identify a cause.
+
+No failure retry, fixture/source change, timeout increase or assertion relaxation
+was applied. The earlier passing `06e29cd` run remains valid evidence for that run
+and does not establish stable local process creation. Full log/exit are ignored
+`execution-validation/g7-shell/root-ci-final-20261019.log` and `.exit`.
+Native conflict/restart acceptance above remains independent of this failed gate.
+
+Separate follow-up checks on the unchanged product source passed: Desktop's
+92 Bun / 28 Rust unit / four integration tests; all 11 forced workspace builds
+(1m11.15s); and Web 22 / Desktop 24 byte-identical production-entrypoint artifacts
+under opt-in/canaries. These are focused results, not a rerun or replacement of the
+failed full gate. Logs are `desktop-final-20261019.log`, `build-final-20261019.log`
+and `production-final-20261019.log` (plus their `.exit` files) in the same ignored
+evidence directory.
+Separate Rust fmt, locked check and all-target codegen Clippy also passed without
+warnings; logs are `rust-{check,clippy}-final-20261019.log` and
+`rust-final-20261019.exit`. They do not change the full-gate result.

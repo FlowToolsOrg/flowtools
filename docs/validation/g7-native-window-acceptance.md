@@ -102,6 +102,23 @@ Earlier timeout/OOM observations remain in [shell history](./g7-desktop-shell.md
 this passing run does not identify their cause. No source fixture, deadline,
 assertion, failure propagation or retry policy was changed to obtain it.
 
+## Launcher declaration wording follow-up
+
+The native screenshots above exposed the legacy `安全沙箱` chip for commands
+without `requiresNative`. The follow-up changes that chip to `未声明原生需求`
+or `声明需原生支持`, with a tool icon, and describes the permission page as
+`查看能力声明与当前限制`. These labels report metadata only; they do not represent
+isolation, user grants or a capability approval. The earlier native screenshots
+retain the exact UI accepted at product commit `06e29cd`.
+
+The changed production preview passed pinned Chromium checks at 1280x900 and
+390x844: declaration text, keyboard navigation to permissions, the existing
+limitations notice and no horizontal document overflow. Screenshots and observed
+DOM state are in `20261019-{launcher,permissions}-declarations-*.png` and
+`launcher-declarations-20261019.json` under the ignored evidence directory.
+The browser preview lacks native inventory IPC and shows its connection error;
+these checks do not replace the separate native window acceptance above.
+
 ## Remaining acceptance
 
 The available UI control surface did not expose taskbar/tray windows, so tray

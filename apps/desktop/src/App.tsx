@@ -144,7 +144,7 @@ const builtInActions: IndexedCommand[] = [
   {
     id: 'flowtools:permissions',
     title: '权限中心',
-    description: '查看插件权限和安全隔离状态',
+    description: '查看能力声明与当前限制',
     type: 'route',
     pluginId: 'flowtools',
     pluginName: 'FlowTools',
@@ -952,8 +952,8 @@ function CommandInspector({ command, onRun }: CommandInspectorProps) {
         <CapabilityChip icon={PlayIcon}>
           {command.hasUi ? 'UI 插件' : '无界面'}
         </CapabilityChip>
-        <CapabilityChip icon={ShieldCheckIcon}>
-          {command.requiresNative ? '原生权限' : '安全沙箱'}
+        <CapabilityChip icon={WrenchIcon}>
+          {command.requiresNative ? '声明需原生支持' : '未声明原生需求'}
         </CapabilityChip>
         <CapabilityChip icon={LockIcon}>
           {command.hasPreload ? 'API Bridge' : '声明式插件'}

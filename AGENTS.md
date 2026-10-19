@@ -189,6 +189,14 @@ Desktop status only.
 P3.1a/G7 and G5/G6 execution gates remain pending; see
 [shell evidence](./docs/validation/g7-desktop-shell.md).
 
+For native manual acceptance, rebuild the dedicated shell fixture and verify its
+metadata-only `--runtime-validation-identity` output before launch. A cached
+`target/debug/desktop.exe` can have the default identity after ordinary builds.
+`apps/desktop/test/fixtures/shortcut-owner.cs` is an explicit manual positive
+control, never a production tool or CI substitute. Require actual registration
+and message counts, release/close it, and bind process cleanup to its recorded
+path/start time. See [native acceptance](./docs/validation/g7-native-window-acceptance.md).
+
 G7 P3.1a2 Host appearance preferences live in `src/settings/appearance.tsx`
 and `appearance-settings.tsx` under Desktop. Keep the root provider across routes,
 the bounded formatVersion-1 system/light/dark record, system media listener and

@@ -5,6 +5,9 @@ Ctrl+Shift+Space window restore. Optional startup requires explicit native menu
 actions in the current release identity; debug/fixture builds deny it. Desktop
 exit does not stop Runtime. Full P3.1a/G7 and G5/G6 execution gates remain pending.
 See [desktop shell evidence](./docs/validation/g7-desktop-shell.md).
+Controlled Windows acceptance now covers shortcut conflict recovery and native
+appearance restart; see [native window acceptance](./docs/validation/g7-native-window-acceptance.md)
+for the reusable test-only shortcut owner and remaining OS/menu gates.
 
 G7 P3.1a2 persists Desktop's system/light/dark preference across navigation and
 restart, with explicit reset and storage failure feedback. This is a Host UI

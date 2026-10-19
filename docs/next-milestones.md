@@ -447,6 +447,12 @@ Tauri [sidecar](https://v2.tauri.app/develop/sidecar/) 用于构建捆绑程序�
 不丢选择，系统深色不覆盖手动浅色。仅 Host UI preference；诊断、原生入口
 剩余验收与 Runtime 状态仍 pending，见 [外观证据](./validation/g7-desktop-preferences.md)。
 
+2026-10-19：`06e29cd` 本机完整 Windows 门禁及两轮远端 CI 通过；独立身份
+原生实窗验证热键冲突时第二实例恢复、释放并重启后热键恢复，以及进程重启
+前后外观选中态保留。新增可复用的人工热键 owner，见
+[原生验收](./validation/g7-native-window-acceptance.md)。托盘菜单点击、OS 重启/
+多屏与后台任务连续性、诊断及权威 Runtime 状态仍 pending，父项不推进。
+
 P3.1a 做托盘、单实例、全局快捷键、可选自启动与后台状态；内核不依赖托盘存活。
 P3.1b 做 Host 调度器与通知 adapter：one-shot/有限周期任务、时区/夏令时、
 missed-run 和重复触发策略；调度器只能调用已授权命令，插件不自行启动 timer daemon。

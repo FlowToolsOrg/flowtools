@@ -4,6 +4,8 @@ G7 P3.1a1 的托盘、快捷键和自启动属于 Desktop 原生宿主，插件�
 注册全局热键、启动 daemon 或修改开机启动的接口。第二实例传参不执行
 插件命令，退出 Desktop 不改变 grants 或主动停止 Runtime。后续调度与
 办公闭环仍待门禁，见 [桌面入口证据](./validation/g7-desktop-shell.md)。
+原生热键冲突与外观重启的 [受控验收](./validation/g7-native-window-acceptance.md)
+使用单独的可信测试进程，不增加插件 capability、工具身份或第三方执行授权。
 
 P3.1a2 的外观偏好仅保存固定 system/light/dark 枚举，不注册或选择插件主题，
 不创建 grants、原生能力或新的数据 API。E02 的资源和作用域契约保持独立；

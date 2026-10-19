@@ -4,6 +4,9 @@ G7 P3.1a1 的 Windows 原生 `shell.rs` 提供托盘、单实例/快捷键唤起
 自启动。第二实例参数/cwd 不进入业务命令；无新 webview 权限/IPC 命令、
 Runtime store/grant 或 stop 调用。托盘仅报告 Desktop 驻留，Runtime 状态
 与调度另行接入，见 [桌面入口证据](./docs/validation/g7-desktop-shell.md)。
+受控 Windows 实窗已验证热键冲突下的第二实例恢复及原生外观重启保留；
+独立热键 owner 仅是人工验收夹具，不进入 Host/Runtime 执行面，见
+[原生验收](./docs/validation/g7-native-window-acceptance.md)。
 
 P3.1a2 的 Desktop 根布局持有 system/light/dark 外观偏好，使用版本化、限长的
 本地 UI 记录；启动即应用，系统变化实时更新，明确浅/深色优先于系统媒体规则。

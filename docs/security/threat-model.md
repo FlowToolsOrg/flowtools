@@ -14,6 +14,12 @@ SEC-003/007/009/013 保持 open，ADR-0001/0002 边界不变；拒绝回归、�
 同源存储不是隔离边界，SEC-003/007/009/013 保持 open；源文件、回归与残余
 验收见 [外观偏好证据](../validation/g7-desktop-preferences.md)。
 
+2026-10-19 原生验收使用独立 fixture 身份及仅占用固定热键的人工正向对照，
+验证真实冲突、第二实例恢复和原生外观重启；未改变任何产品 IPC、权限、
+Runtime/grant 或执行路径。生成文件无漂移，原有门禁/期限/拒绝断言未改。
+证据与剩余 OS/menu 验收见 [原生验收](../validation/g7-native-window-acceptance.md)；
+SEC-003/007/009/013 和独立安全审阅保持 open/pending。
+
 - 复核日期：2026-10-04；源码基线：`eed0e4d`（P0.4 开始前）
 - 范围：Desktop/Web/CLI 插件入口，以及后续包安装、授权与应用更新设计
 - 状态：prototype；高风险项全部 open，未接受 production 风险豁免

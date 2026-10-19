@@ -3,6 +3,11 @@
 Date: 2026-10-16. Independently scoped Host UI `prototype`.
 P3.1a/P3.1/G7 remain pending.
 
+Current follow-up (2026-10-19): `06e29cd` passed the complete local Windows gate
+and both remote runs. Dedicated native Webview process restart also retained the
+selected dark appearance; see [native acceptance](./g7-native-window-acceptance.md).
+Historical failures below are retained, with their underlying cause still unknown.
+
 ## Behavior and ownership
 
 Desktop's root layout owns the system/light/dark preference across routes.
@@ -77,7 +82,11 @@ bun run --cwd apps/ui-test test -- src/test/appearance/desktop-appearance.test.t
 
 ## Remaining acceptance
 
-Dedicated native Webview restart/profile migration, diagnostic export, authoritative
-Runtime status, production identity, native tray/conflict and OS restart/multi-screen
-acceptance remain separate. No G5/G6 execution gate is opened. SEC-003/007/009/013
+Production profile/identity migration, diagnostic export, authoritative Runtime
+status, native tray menu/exit, OS restart, monitor hotplug and accepted-job
+continuity remain separate. No G5/G6 execution gate is opened. SEC-003/007/009/013
 remain open. Actual independent security reviewer/date/conclusion: pending.
+
+Controlled native Webview restart and shortcut-conflict recovery passed on
+2026-10-19 with an isolated Debug identity. This does not establish OS reboot,
+power-loss durability, tray-menu interaction or production profile compatibility.

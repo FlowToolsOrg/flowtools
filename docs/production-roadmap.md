@@ -1586,6 +1586,12 @@ Phase 2 总退出标准：P2.1–P2.8 全部 `done`；第三方代码默认拒�
 不推进 P3.1a/P3.1/G7 父项；完整设置/诊断、OS 与 Runtime 验收仍 pending。
 见 [外观偏好证据](./validation/g7-desktop-preferences.md)。
 
+2026-10-19：本机 `06e29cd` 完整门禁通过，原生 fixture 补齐热键冲突时的
+第二实例恢复、释放并重启后的快捷键恢复及外观跨进程重启验收。
+可复用人工夹具与实际边界见 [原生验收](./validation/g7-native-window-acceptance.md)。
+这不完成托盘菜单、OS 登录/重启、多屏热插拔、Runtime 状态或任务连续性；
+P3.1a/P3.1/G7 与独立安全批准保持 pending。
+
 - 状态：`pending`
 - 负责人：`TBD (Desktop)`
 - 依赖：P0.1、P1.4、P2.3、P2.4

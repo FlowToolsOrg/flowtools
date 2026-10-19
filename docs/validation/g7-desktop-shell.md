@@ -3,10 +3,13 @@
 Date: 2026-10-15. First independently reviewable part of P3.1a.
 G7/P3.1/P3.1a remain pending; this is a `prototype`.
 
-Current integration status (2026-10-16): the later appearance-commit full gate
-failed at native descendant readiness despite an earlier green gate. Original
-Runtime/service fixture sources and deadlines are restored to main; local
-process-creation investigation is still open. See the final follow-up below.
+Current integration status (2026-10-19): clean product commit `06e29cd` passed the
+complete local Windows gate and both remote runs. Original Runtime/service
+fixtures and deadlines remain unchanged from main; earlier process-creation and
+Bun failure observations are retained below without claiming a root cause.
+Controlled native conflict/restart acceptance is recorded in
+[native window acceptance](./g7-native-window-acceptance.md); OS/menu and other
+P3.1a gates remain pending.
 
 ## Behavior
 
@@ -67,10 +70,11 @@ Clippy passed after replacing a linted error-extraction expression in the IPC
 test. The final focused shell regression was rerun after that test-only edit.
 The production refusal scan does not establish package signing or isolation.
 
-Next P3.1a substeps: resolve local full-gate instability, verify actual tray/menu and
-shortcut-conflict recovery, integrate persisted desktop preferences/diagnostics
-and authoritative Runtime status, then controlled restart/multi-screen/background
-job acceptance. P3.1b and file/media execution cannot bypass their dependencies.
+Next P3.1a substeps: verify actual tray/menu interaction, integrate diagnostics
+and authoritative Runtime status, then controlled OS restart/multi-screen/background
+job acceptance. Native shortcut-conflict recovery and appearance restart now have
+controlled evidence; the earlier failures still lack an established cause.
+P3.1b and file/media execution cannot bypass their dependencies.
 
 A real Tauri MockRuntime IPC regression (in the existing Common Controls v6
 integration-test target) uses the generated app context to reject
@@ -197,3 +201,20 @@ instruction crashes in unchanged CI helper subprocesses, including
 root-cancel test still failed readiness in 5.14s. These observations do not
 identify the underlying cause. The current integration remains unaccepted;
 there is no test-timeout increase, skip, failure retry or OS-setting change.
+
+## 2026-10-19 current acceptance
+
+`06e29cd` passed the full local Windows gate with exit 0 and a clean final
+worktree, plus both remote Windows runs. Tests were uncached and builds sequential;
+all original real-descendant/drain/lease assertions remain. This supersedes the
+earlier _current status_, while preserving its failure evidence and unknown cause.
+Dedicated native build and identity preflight also passed without tracked drift.
+
+Real native UI acceptance confirmed a registered competing hotkey owner, recovery
+through a second instance while the hotkey remained occupied, preference retention
+after a forced Desktop-process restart, and shortcut recovery after release plus
+Desktop restart. All test-owned processes were cleaned up. See
+[the reproducible procedure and evidence](./g7-native-window-acceptance.md).
+The tool did not expose taskbar/tray windows, so actual tray menu/status/exit
+clicks remain unverified, along with OS restart/autostart, monitor hotplug,
+accepted-job continuity and independent security acceptance.

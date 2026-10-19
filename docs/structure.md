@@ -6,6 +6,9 @@ G7 P3.1a1 新增 `apps/desktop/src-tauri/src/shell.rs` 与 `shell/policy.rs`，
 负责 Windows 原生托盘、单实例/快捷键恢复和显式可选自启动；不进入 SDK
 能力或 Runtime 数据层。`tauri.shell-validation.conf.json` 使用独立测试
 身份，见 [桌面入口证据](./validation/g7-desktop-shell.md)。P3.1a/G7 仍 pending。
+`apps/desktop/test/fixtures/shortcut-owner.cs` 是显式启动的 Windows Forms
+人工验收夹具，仅临时占用固定热键并显示消息计数；不进入生产构建或工具目录。
+编译产物留在 ignored evidence，操作与清理见 [原生验收](./validation/g7-native-window-acceptance.md)。
 
 P3.1a2 的 `apps/desktop/src/settings/appearance.tsx` 持有桌面 UI 外观偏好与
 系统模式监听，`appearance-settings.tsx` 提供选择、重置和失败反馈；根布局

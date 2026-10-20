@@ -457,7 +457,8 @@ Tauri [sidecar](https://v2.tauri.app/develop/sidecar/) 用于构建捆绑程序�
 
 2026-10-20：P3.1a3 补齐设置页的显式只读 Runtime 状态快照，不借查询启动
 Host、初始化、改变 grants 或拉取任务载荷。既有 `1451c77` 两轮远端 CI 已
-通过，本轮需独立完整门禁；本机历史失败不撤销。见
+通过；本轮 `6432d76` 完整门禁 Runtime 21/24 失败（malformed-frame、
+provider-error、root-cancel 后代就绪/排空），之前/远端绿色不覆盖该失败。见
 [状态证据](./validation/g7-runtime-status.md)。托盘 Runtime 集成、诊断及平台/
 任务连续性验收仍 pending，P3.1a/G7 父项不推进。
 

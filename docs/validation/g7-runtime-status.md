@@ -65,8 +65,35 @@ Ignored files under `execution-validation/g7-shell/` include
 `20261020-status-{browser,controlled}-{desktop,narrow}.png`.
 
 Focused Desktop lint/types, UI types and the new native/browser tests passed.
-The full Windows gate for this implementation is pending until a clean commit
-is checked; earlier full-gate successes or failures do not substitute for it.
+The full Windows gate on clean product commit `6432d76` passed all 11 workspace
+lint/type gates, 87 Chromium tests and Core 222 unit tests plus two doctests, then
+failed in three unchanged Runtime native tests (21/24):
+
+- `malformed_provider_frame_retains_lease_until_its_real_group_drains`
+- `provider_error_retains_lease_until_its_real_descendant_drains`
+- `root_cancel_retains_lease_until_the_actual_provider_group_drains`
+
+The first two observed a missing descendant-ready PID file and timed out at the
+drain boundary; the third hit the existing readiness deadline. Root test exit 101
+terminated the script with exit 1 before Desktop tests/build/post-build stages.
+The worktree was clean afterwards. Source fixtures, deadlines, real-process/Job/
+drain/lease assertions and fatal failure propagation are unchanged; no retry was
+applied. Runtime/runner/Core/SDK sources remain the same as main. The cause is
+unestablished; this step does not accept the latest local full integration.
+Log/exit: ignored `root-ci-status-20261020.log` / `.exit` in the evidence directory.
+Earlier full-gate successes or failures do not substitute for this result.
+Separate full Desktop tests on the unchanged product source passed: 92 Bun,
+30 Rust unit and five Rust integration tests, including both actual status
+profile/Host regressions and the real IPC refusals. This is focused evidence,
+not a retry or replacement of the failed root gate. Log/exit:
+`status-desktop-20261020.log` / `.exit` in the same ignored directory.
+Subsequent forced builds passed all 11 workspaces (2m25.39s), followed by Web 22 /
+Desktop 24 byte-identical production-entrypoint comparisons under opt-in/canaries,
+Rust fmt, locked check and all-target codegen Clippy with warnings fatal.
+Only intended evidence documents changed; generated source files did not drift.
+Logs are `status-build-all-20261020.log`, `status-production-20261020.log`,
+`status-rust-check-20261020.log` and `status-clippy-20261020.log`; build, production
+and Rust exit files all record 0. These checks do not override the root failure.
 The previous head `1451c77` passed both remote Windows runs:
 [push](https://github.com/FlowToolsOrg/flowtools/actions/runs/39231722749) and
 [PR](https://github.com/FlowToolsOrg/flowtools/actions/runs/39231729010).

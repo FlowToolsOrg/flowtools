@@ -1598,6 +1598,8 @@ P3.1a/P3.1/G7 与独立安全批准保持 pending。
 任务计数，不借查询冷启动、初始化或改变授权。失败清空旧状态；保持原有
 Debug/main/origin 限制。见 [状态证据](./validation/g7-runtime-status.md)。
 托盘 Runtime 集成、诊断、正式身份及完整平台验收仍 pending。
+本轮 `6432d76` 本机完整门禁在 87 项浏览器及 Core 222+2 通过后，Runtime
+21/24 失败，原因仍未确定。完整结果见上述状态证据，不以单项通过覆盖失败。
 
 - 状态：`pending`
 - 负责人：`TBD (Desktop)`

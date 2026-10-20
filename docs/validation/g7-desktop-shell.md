@@ -3,12 +3,13 @@
 Date: 2026-10-15. First independently reviewable part of P3.1a.
 G7/P3.1/P3.1a remain pending; this is a `prototype`.
 
-Current integration status (2026-10-19): `06e29cd` passed the complete local
-Windows gate and both remote runs, but the later full gate on `73a4a1d` failed
-three unchanged Runtime descendant-readiness/drain paths (21/24). The latest
-local integration is not accepted. Original Runtime/service fixtures and deadlines
-remain unchanged from main; earlier process-creation and Bun failure observations
-are retained below without claiming a root cause.
+Current integration status (2026-10-20): `1451c77` passed both remote Windows
+runs. The later local full gate on status product commit `6432d76` failed three
+unchanged Runtime descendant-readiness/drain paths (21/24), after 87 Chromium and
+Core 222+2 passed. See [status evidence](./g7-runtime-status.md) for the exact
+results; latest local integration is not accepted. Original Runtime/service
+fixtures and deadlines remain unchanged from main; earlier process-creation and
+Bun failure observations are retained without claiming a root cause.
 Controlled native conflict/restart acceptance is recorded in
 [native window acceptance](./g7-native-window-acceptance.md); OS/menu and other
 P3.1a gates remain pending.

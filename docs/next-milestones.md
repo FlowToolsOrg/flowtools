@@ -437,6 +437,31 @@ Tauri [sidecar](https://v2.tauri.app/develop/sidecar/) 用于构建捆绑程序�
 
 ## 9. G7：统一 UI 与三个办公闭环
 
+2026-10-15：P3.1a1 先交付可独立验证的 Windows 桌面入口 prototype：
+托盘、单实例/快捷键恢复及原生显式可选自启动，见
+[验证边界](./validation/g7-desktop-shell.md)。不执行第二实例业务参数，
+不创建 grants 或停止 Runtime。P3.1a/G7 保持 pending；调度和文件/媒体
+副作用仍须等待相关 G5/G6 及授权/平台门禁通过。
+
+2026-10-16：P3.1a2 补齐固定外观偏好的持久化、重置与失败反馈，启动/换页
+不丢选择，系统深色不覆盖手动浅色。仅 Host UI preference；诊断、原生入口
+剩余验收与 Runtime 状态仍 pending，见 [外观证据](./validation/g7-desktop-preferences.md)。
+
+2026-10-19：`06e29cd` 本机完整 Windows 门禁及两轮远端 CI 通过；独立身份
+原生实窗验证热键冲突时第二实例恢复、释放并重启后热键恢复，以及进程重启
+前后外观选中态保留。新增可复用的人工热键 owner，见
+[原生验收](./validation/g7-native-window-acceptance.md)。托盘菜单点击、OS 重启/
+多屏与后台任务连续性、诊断及权威 Runtime 状态仍 pending，父项不推进。
+同日后续 `73a4a1d` 完整门禁再次失败于原样 Runtime 后代就绪/排空路径
+（21/24）；本地最新集成仍未通过，保留之前绿色与当前失败两次独立证据。
+
+2026-10-20：P3.1a3 补齐设置页的显式只读 Runtime 状态快照，不借查询启动
+Host、初始化、改变 grants 或拉取任务载荷。既有 `1451c77` 两轮远端 CI 已
+通过；本轮 `6432d76` 完整门禁 Runtime 21/24 失败（malformed-frame、
+provider-error、root-cancel 后代就绪/排空），之前/远端绿色不覆盖该失败。见
+[状态证据](./validation/g7-runtime-status.md)。托盘 Runtime 集成、诊断及平台/
+任务连续性验收仍 pending，P3.1a/G7 父项不推进。
+
 P3.1a 做托盘、单实例、全局快捷键、可选自启动与后台状态；内核不依赖托盘存活。
 P3.1b 做 Host 调度器与通知 adapter：one-shot/有限周期任务、时区/夏令时、
 missed-run 和重复触发策略；调度器只能调用已授权命令，插件不自行启动 timer daemon。

@@ -1575,6 +1575,32 @@ Phase 2 总退出标准：P2.1–P2.8 全部 `done`；第三方代码默认拒�
 
 ### P3.1 完成 Desktop 宿主产品能力
 
+2026-10-15：P3.1a1 交付 Windows 原生托盘、单实例/快捷键恢复和显式
+可选自启动 prototype；debug/fixtures 拒绝写 OS 启动项。无新 webview
+权限、Runtime stop 或第三方执行入口。验证边界见
+[桌面入口证据](./validation/g7-desktop-shell.md)。P3.1a/P3.1/G7 保持 pending；
+设置/诊断、正式身份迁移、Runtime 状态及重启/平台验收另行完成。
+
+2026-10-16：P3.1a2 交付 system/light/dark 外观偏好的设备本地持久化、明确
+重置和失败反馈，根布局跨路由应用并响应系统变化。只完成这一项 UI 设置，
+不推进 P3.1a/P3.1/G7 父项；完整设置/诊断、OS 与 Runtime 验收仍 pending。
+见 [外观偏好证据](./validation/g7-desktop-preferences.md)。
+
+2026-10-19：本机 `06e29cd` 完整门禁通过，原生 fixture 补齐热键冲突时的
+第二实例恢复、释放并重启后的快捷键恢复及外观跨进程重启验收。
+可复用人工夹具与实际边界见 [原生验收](./validation/g7-native-window-acceptance.md)。
+同日后续 `73a4a1d` 的完整门禁失败于三项原样 Runtime 后代就绪/排空测试
+（21/24）；之前绿色不覆盖当前失败，本地最新整仓集成仍未接受。
+这不完成托盘菜单、OS 登录/重启、多屏热插拔、Runtime 状态或任务连续性；
+P3.1a/P3.1/G7 与独立安全批准保持 pending。
+
+2026-10-20：P3.1a3 在设置页增加只读 Host 状态快照，显示实际实例/模式与
+任务计数，不借查询冷启动、初始化或改变授权。失败清空旧状态；保持原有
+Debug/main/origin 限制。见 [状态证据](./validation/g7-runtime-status.md)。
+托盘 Runtime 集成、诊断、正式身份及完整平台验收仍 pending。
+本轮 `6432d76` 本机完整门禁在 87 项浏览器及 Core 222+2 通过后，Runtime
+21/24 失败，原因仍未确定。完整结果见上述状态证据，不以单项通过覆盖失败。
+
 - 状态：`pending`
 - 负责人：`TBD (Desktop)`
 - 依赖：P0.1、P1.4、P2.3、P2.4

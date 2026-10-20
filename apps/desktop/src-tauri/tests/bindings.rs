@@ -75,3 +75,83 @@ fn exports_current_bindings_without_launching_a_host() {
     assert!(desktop_lib::export_bindings(&directory).is_err());
     std::fs::remove_dir_all(&directory).unwrap();
 }
+
+#[cfg(windows)]
+mod ipc_tests {
+    #[test]
+    fn status_control_refuses_untrusted_windows_origins_and_initialization() {
+        for (label, origin, initialize) in [
+            ("external", "http://localhost:1420", false),
+            ("main", "https://untrusted.invalid", false),
+            ("main", "http://localhost:1420", true),
+        ] {
+            let mut context = tauri::generate_context!();
+            context.config_mut().build.dev_url = Some("http://localhost:1420".parse().unwrap());
+            let app = desktop_lib::mock_command_builder().build(context).unwrap();
+            let window = tauri::WebviewWindowBuilder::new(
+                &app,
+                label,
+                tauri::WebviewUrl::External(origin.parse().unwrap()),
+            )
+            .build()
+            .unwrap();
+            let response = tauri::test::get_ipc_response(
+                &window,
+                tauri::webview::InvokeRequest {
+                    cmd: "managed_runtime_control".into(),
+                    callback: tauri::ipc::CallbackFn(0),
+                    error: tauri::ipc::CallbackFn(1),
+                    // Reach the native handler; its guard must inspect the real
+                    // window URL/label even with a trusted invoke URL.
+                    url: "http://tauri.localhost".parse().unwrap(),
+                    body: tauri::ipc::InvokeBody::Json(serde_json::json!({
+                        "call": {"method":"runtime.status"}, "initialize":initialize
+                    })),
+                    headers: Default::default(),
+                    invoke_key: tauri::test::INVOKE_KEY.into(),
+                },
+            );
+            assert_eq!(
+                response.unwrap_err(),
+                serde_json::json!({"code":"SESSION_INVALID"})
+            );
+        }
+    }
+
+    #[test]
+    fn shell_webview_cannot_create_spoofed_shell_menus_or_change_native_startup_and_shortcuts() {
+        let app = tauri::test::mock_builder()
+            .build(tauri::generate_context!())
+            .unwrap();
+        let window = tauri::WebviewWindowBuilder::new(&app, "main", Default::default())
+            .build()
+            .unwrap();
+        for command in [
+            "plugin:menu|new",
+            "plugin:tray|new",
+            "plugin:tray|remove_by_id",
+            "plugin:tray|set_visible",
+            "plugin:autostart|enable",
+            "plugin:autostart|disable",
+            "plugin:global-shortcut|register",
+        ] {
+            let response = tauri::test::get_ipc_response(
+                &window,
+                tauri::webview::InvokeRequest {
+                    cmd: command.into(),
+                    callback: tauri::ipc::CallbackFn(0),
+                    error: tauri::ipc::CallbackFn(1),
+                    url: "http://tauri.localhost".parse().unwrap(),
+                    body: tauri::ipc::InvokeBody::Json(serde_json::json!({})),
+                    headers: Default::default(),
+                    invoke_key: tauri::test::INVOKE_KEY.into(),
+                },
+            );
+            let Err(error) = response else {
+                panic!("native shell IPC must be denied");
+            };
+            let text = error.to_string();
+            assert!(text.contains("not allowed"), "{command}: {text}");
+        }
+    }
+}

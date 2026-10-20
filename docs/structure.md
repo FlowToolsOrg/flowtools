@@ -2,6 +2,24 @@
 
 ## 下一阶段结构与当前实现
 
+G7 P3.1a1 新增 `apps/desktop/src-tauri/src/shell.rs` 与 `shell/policy.rs`，
+负责 Windows 原生托盘、单实例/快捷键恢复和显式可选自启动；不进入 SDK
+能力或 Runtime 数据层。`tauri.shell-validation.conf.json` 使用独立测试
+身份，见 [桌面入口证据](./validation/g7-desktop-shell.md)。P3.1a/G7 仍 pending。
+`apps/desktop/test/fixtures/shortcut-owner.cs` 是显式启动的 Windows Forms
+人工验收夹具，仅临时占用固定热键并显示消息计数；不进入生产构建或工具目录。
+编译产物留在 ignored evidence，操作与清理见 [原生验收](./validation/g7-native-window-acceptance.md)。
+
+P3.1a2 的 `apps/desktop/src/settings/appearance.tsx` 持有桌面 UI 外观偏好与
+系统模式监听，`appearance-settings.tsx` 提供选择、重置和失败反馈；根布局
+跨路由持有 provider。浏览器回归在 `apps/ui-test/src/test/appearance/desktop-appearance.test.tsx`。
+没有新增 Runtime store 或插件主题加载器，见 [验证记录](./validation/g7-desktop-preferences.md)。
+
+P3.1a3 的 `apps/desktop/src/settings/runtime-status-settings.tsx` 通过既有
+`managed_runtime_control` 的只读分支显示 Host 状态快照；原生实现仍在
+`managed_runtime.rs`，没有新增 IPC command/DTO、Runtime store 或插件 API。
+见 [状态验证](./validation/g7-runtime-status.md)。
+
 G6 P2.8a1 新增 `packages/runtime-core/src/packages/tools.rs` 与
 `packages/tests/tool_tests.rs`，负责独立的 Runtime-owned 工具 Manifest 惰性
 准入。生产审核清单为空，公开测试 keys/来源/许可证不能进入生产清单。

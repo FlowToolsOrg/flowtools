@@ -68,6 +68,9 @@ import {
 } from './runtime/desktop-capabilities'
 import { unsafeHtmlPreviewEnabled } from './runtime/html-development-policy'
 import { ManagedRuntimePanel } from './runtime/managed-runtime-panel'
+import { DesktopAppearanceProvider } from './settings/appearance'
+import { DesktopAppearanceSettings } from './settings/appearance-settings'
+import { RuntimeStatusSettings } from './settings/runtime-status-settings'
 import { commands as desktopCommands } from './utils/bindings'
 import './App.css'
 
@@ -142,7 +145,7 @@ const builtInActions: IndexedCommand[] = [
   {
     id: 'flowtools:permissions',
     title: '权限中心',
-    description: '查看插件权限和安全隔离状态',
+    description: '查看能力声明与当前限制',
     type: 'route',
     pluginId: 'flowtools',
     pluginName: 'FlowTools',
@@ -533,7 +536,7 @@ function usePluginInventory() {
 function RootLayout() {
   const params = new URLSearchParams(window.location.search)
   return (
-    <>
+    <DesktopAppearanceProvider>
       <Outlet />
       {ValidationRuntimePanel &&
         params.get('execution-validation') === '20261003' &&
@@ -542,7 +545,7 @@ function RootLayout() {
             <ValidationRuntimePanel />
           </Suspense>
         )}
-    </>
+    </DesktopAppearanceProvider>
   )
 }
 
@@ -792,7 +795,10 @@ function LauncherView() {
             {inventory.enabledPluginIds.size}/{totalPluginCount} plugins enabled
             · {totalCommandCount} commands
           </span>
-          <span>{inventory.error ?? 'Alt+Z 唤起 · Enter 运行 · Esc 清空'}</span>
+          <span>
+            {inventory.error ??
+              'Ctrl+Shift+Space 唤起（状态见托盘）· Enter 运行 · Esc 清空'}
+          </span>
         </footer>
       </section>
     </DesktopSurface>
@@ -947,8 +953,8 @@ function CommandInspector({ command, onRun }: CommandInspectorProps) {
         <CapabilityChip icon={PlayIcon}>
           {command.hasUi ? 'UI 插件' : '无界面'}
         </CapabilityChip>
-        <CapabilityChip icon={ShieldCheckIcon}>
-          {command.requiresNative ? '原生权限' : '安全沙箱'}
+        <CapabilityChip icon={WrenchIcon}>
+          {command.requiresNative ? '声明需原生支持' : '未声明原生需求'}
         </CapabilityChip>
         <CapabilityChip icon={LockIcon}>
           {command.hasPreload ? 'API Bridge' : '声明式插件'}
@@ -1003,7 +1009,7 @@ interface DesktopSurfaceProps {
 
 function DesktopSurface({ children }: DesktopSurfaceProps) {
   return (
-    <main className="grid h-screen w-screen place-items-center overflow-hidden bg-[radial-gradient(circle_at_24%_20%,rgba(2,132,199,0.12),transparent_32%),radial-gradient(circle_at_76%_88%,rgba(102,126,234,0.1),transparent_30%),#dce4ea] p-4.5 text-(--text-color) dark:bg-[radial-gradient(circle_at_24%_20%,rgba(56,189,248,0.1),transparent_32%),radial-gradient(circle_at_76%_88%,rgba(167,139,250,0.09),transparent_30%),#151719]">
+    <main className="desktop-surface grid h-screen w-screen place-items-center overflow-hidden p-4.5 text-(--text-color)">
       {children}
     </main>
   )
@@ -1060,16 +1066,6 @@ function PageFrame({
 
 function SettingsView() {
   const navigate = useNavigate()
-  const [appearance, setAppearance] = useState('system')
-
-  useEffect(() => {
-    if (appearance === 'system') {
-      document.documentElement.removeAttribute('data-theme')
-      return
-    }
-
-    document.documentElement.dataset.theme = appearance
-  }, [appearance])
 
   return (
     <PageFrame
@@ -1087,19 +1083,13 @@ function SettingsView() {
       title="设置"
     >
       <div className="grid gap-4">
+        <RuntimeStatusSettings />
         <ManagedRuntimePanel />
+        <DesktopAppearanceSettings />
         <SettingsRow
-          label="外观"
-          value={
-            <SegmentedOptions
-              options={['system', 'light', 'dark']}
-              selected={appearance}
-              titleMap={{ dark: '深色', light: '浅色', system: '系统' }}
-              onSelect={setAppearance}
-            />
-          }
+          label="启动快捷键"
+          value="Ctrl+Shift+Space（可用状态见托盘）"
         />
-        <SettingsRow label="启动快捷键" value="Alt+Z" />
         <SettingsRow label="命令路由" value="TanStack Router" />
         <SettingsRow label="插件 UI" value="React 声明式运行时" />
         <SettingsRow label="桌面内核" value="Tauri WebView + Rust 能力层" />
@@ -1109,38 +1099,6 @@ function SettingsView() {
         />
       </div>
     </PageFrame>
-  )
-}
-
-interface SegmentedOptionsProps {
-  options: string[]
-  selected: string
-  titleMap: Record<string, string>
-  onSelect: (value: string) => void
-}
-
-function SegmentedOptions({
-  options,
-  selected,
-  titleMap,
-  onSelect,
-}: SegmentedOptionsProps) {
-  return (
-    <div className="flex rounded-lg border border-(--divider-color) p-0.5">
-      {options.map(option => (
-        <Button
-          className={`h-7 px-2.5 text-xs ${
-            selected === option ? 'bg-[var(--active-bg)]' : 'bg-transparent'
-          }`}
-          key={option}
-          onPress={() => onSelect(option)}
-          size="sm"
-          variant="ghost"
-        >
-          {titleMap[option]}
-        </Button>
-      ))}
-    </div>
   )
 }
 

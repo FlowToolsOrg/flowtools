@@ -1,5 +1,32 @@
 # FlowTools 插件威胁模型
 
+2026-10-15 G7 P3.1a1：Windows 原生托盘及官方 single-instance/
+global-shortcut/autostart 插件只负责桌面入口；第二实例参数/cwd 不分发
+业务命令。自启动仅 release 当前身份的原生明确动作写入并回读；debug/
+fixture 拒绝；移除 `core:default` 隐含 menu/tray 权限，保留其余七组 core
+权限，并验证实际 IPC 默认拒绝。Desktop 退出不发送 Runtime stop。
+SEC-003/007/009/013 保持 open，ADR-0001/0002 边界不变；拒绝回归、验证
+范围及独立审阅 pending 见 [桌面入口证据](../validation/g7-desktop-shell.md)。
+
+2026-10-16 P3.1a2 的新增持久化只接受 128 字符以内、formatVersion 1 且字段
+完整的固定外观枚举；未知版本/字段、错误类型、超量与存储失败有浏览器回归。
+重置仅删除外观记录；无输入/输出/路径/凭据、grant 或原生 IPC 写入。
+同源存储不是隔离边界，SEC-003/007/009/013 保持 open；源文件、回归与残余
+验收见 [外观偏好证据](../validation/g7-desktop-preferences.md)。
+
+2026-10-19 原生验收使用独立 fixture 身份及仅占用固定热键的人工正向对照，
+验证真实冲突、第二实例恢复和原生外观重启；未改变任何产品 IPC、权限、
+Runtime/grant 或执行路径。生成文件无漂移，原有门禁/期限/拒绝断言未改。
+证据与剩余 OS/menu 验收见 [原生验收](../validation/g7-native-window-acceptance.md)；
+SEC-003/007/009/013 和独立安全审阅保持 open/pending。
+
+2026-10-20 P3.1a3 复用原生管理命令查询既有 Host 状态。固定 Desktop
+bootstrap/session 绑定身份，拒绝初始化标志和不可信 window/origin；只读
+分支没有 cold-start/manager fallback、grant 或 stop。未知/失败状态不继续
+显示旧快照；真实私有 profile、IPC 拒绝与浏览器证据见
+[状态验证](../validation/g7-runtime-status.md)。SEC-003/007/009/013 保持 open，
+独立审阅 pending；T1 同 realm 与 CSP 缺口没有因只读 UI 被关闭。
+
 - 复核日期：2026-10-04；源码基线：`eed0e4d`（P0.4 开始前）
 - 范围：Desktop/Web/CLI 插件入口，以及后续包安装、授权与应用更新设计
 - 状态：prototype；高风险项全部 open，未接受 production 风险豁免

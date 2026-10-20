@@ -14,6 +14,10 @@ restart, with explicit reset and storage failure feedback. This is a Host UI
 preference, separate from Runtime policy and plugin theme resources. See
 [appearance evidence](./docs/validation/g7-desktop-preferences.md).
 
+G7 P3.1a3 adds an explicit read-only Runtime status snapshot in Desktop settings.
+It attaches only to an already running Host and never initializes, cold-starts
+or changes grants. See [status evidence](./docs/validation/g7-runtime-status.md).
+
 G6 P2.8a1 adds strict inert tool Manifest admission through the existing durable
 trust store and ZIP verifier. Source, license, build flavor and complete resource
 roles must match a private build-owned review profile; the production list is

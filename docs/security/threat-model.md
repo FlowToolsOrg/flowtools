@@ -20,6 +20,13 @@ Runtime/grant 或执行路径。生成文件无漂移，原有门禁/期限/拒�
 证据与剩余 OS/menu 验收见 [原生验收](../validation/g7-native-window-acceptance.md)；
 SEC-003/007/009/013 和独立安全审阅保持 open/pending。
 
+2026-10-20 P3.1a3 复用原生管理命令查询既有 Host 状态。固定 Desktop
+bootstrap/session 绑定身份，拒绝初始化标志和不可信 window/origin；只读
+分支没有 cold-start/manager fallback、grant 或 stop。未知/失败状态不继续
+显示旧快照；真实私有 profile、IPC 拒绝与浏览器证据见
+[状态验证](../validation/g7-runtime-status.md)。SEC-003/007/009/013 保持 open，
+独立审阅 pending；T1 同 realm 与 CSP 缺口没有因只读 UI 被关闭。
+
 - 复核日期：2026-10-04；源码基线：`eed0e4d`（P0.4 开始前）
 - 范围：Desktop/Web/CLI 插件入口，以及后续包安装、授权与应用更新设计
 - 状态：prototype；高风险项全部 open，未接受 production 风险豁免

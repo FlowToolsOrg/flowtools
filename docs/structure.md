@@ -15,6 +15,11 @@ P3.1a2 的 `apps/desktop/src/settings/appearance.tsx` 持有桌面 UI 外观偏�
 跨路由持有 provider。浏览器回归在 `apps/ui-test/src/test/appearance/desktop-appearance.test.tsx`。
 没有新增 Runtime store 或插件主题加载器，见 [验证记录](./validation/g7-desktop-preferences.md)。
 
+P3.1a3 的 `apps/desktop/src/settings/runtime-status-settings.tsx` 通过既有
+`managed_runtime_control` 的只读分支显示 Host 状态快照；原生实现仍在
+`managed_runtime.rs`，没有新增 IPC command/DTO、Runtime store 或插件 API。
+见 [状态验证](./validation/g7-runtime-status.md)。
+
 G6 P2.8a1 新增 `packages/runtime-core/src/packages/tools.rs` 与
 `packages/tests/tool_tests.rs`，负责独立的 Runtime-owned 工具 Manifest 惰性
 准入。生产审核清单为空，公开测试 keys/来源/许可证不能进入生产清单。

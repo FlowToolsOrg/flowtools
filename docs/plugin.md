@@ -11,6 +11,10 @@ P3.1a2 的外观偏好仅保存固定 system/light/dark 枚举，不注册或选
 不创建 grants、原生能力或新的数据 API。E02 的资源和作用域契约保持独立；
 同源 localStorage 不提供第三方隔离，见 [外观证据](./validation/g7-desktop-preferences.md)。
 
+P3.1a3 的设置页查询只显示既有 Host 的状态快照，不启动 Runtime、不读取
+插件输入/结果或创建 grants。插件身份仍由原生会话绑定，快照不是授权凭据，
+见 [状态证据](./validation/g7-runtime-status.md)。
+
 G6 P2.8a1 的工具 Manifest 独立于 SDK Plugin Manifest v1 与 G4 ToolPin。
 签名包的 source/license/buildFlavor 与完整文件清单须和工具 Manifest 一致，
 programs 只声明有限逻辑角色，resources 必须完全匹配 T0 构建审核布局。

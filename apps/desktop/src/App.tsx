@@ -70,6 +70,7 @@ import { unsafeHtmlPreviewEnabled } from './runtime/html-development-policy'
 import { ManagedRuntimePanel } from './runtime/managed-runtime-panel'
 import { DesktopAppearanceProvider } from './settings/appearance'
 import { DesktopAppearanceSettings } from './settings/appearance-settings'
+import { RuntimeStatusSettings } from './settings/runtime-status-settings'
 import { commands as desktopCommands } from './utils/bindings'
 import './App.css'
 
@@ -1082,6 +1083,7 @@ function SettingsView() {
       title="设置"
     >
       <div className="grid gap-4">
+        <RuntimeStatusSettings />
         <ManagedRuntimePanel />
         <DesktopAppearanceSettings />
         <SettingsRow

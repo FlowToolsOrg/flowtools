@@ -2,8 +2,8 @@
 
 G7 P3.1a1 的 Windows 原生 `shell.rs` 提供托盘、单实例/快捷键唤起和显式
 自启动。第二实例参数/cwd 不进入业务命令；无新 webview 权限/IPC 命令、
-Runtime store/grant 或 stop 调用。托盘仅报告 Desktop 驻留，Runtime 状态
-与调度另行接入，见 [桌面入口证据](./docs/validation/g7-desktop-shell.md)。
+Runtime store/grant 或 stop 调用。托盘仅报告 Desktop 驻留；托盘的 Runtime
+状态集成与调度另行接入，见 [桌面入口证据](./docs/validation/g7-desktop-shell.md)。
 受控 Windows 实窗已验证热键冲突下的第二实例恢复及原生外观重启保留；
 独立热键 owner 仅是人工验收夹具，不进入 Host/Runtime 执行面，见
 [原生验收](./docs/validation/g7-native-window-acceptance.md)。
@@ -12,6 +12,10 @@ P3.1a2 的 Desktop 根布局持有 system/light/dark 外观偏好，使用版本
 本地 UI 记录；启动即应用，系统变化实时更新，明确浅/深色优先于系统媒体规则。
 损坏记录保留到用户选择或重置；失败反馈不影响恢复控件。该状态不进入 Runtime
 数据、权限或 E02 插件主题资源，见 [外观证据](./docs/validation/g7-desktop-preferences.md)。
+
+P3.1a3 在设置页复用既有 Rust 管理命令的固定只读分支，连接当前已运行的
+Host 并回读状态快照。没有冷启动、管理进程 fallback、初始化或 grant 变更，
+失败清除旧快照，见 [状态证据](./docs/validation/g7-runtime-status.md)。
 
 G6 P2.8a1 的 `packages/tools.rs` 复用 `PackageTrustStore` 单写者与严格 ZIP
 准入，核对原始签名工具 Manifest、完整文件角色及构建内固定审核策略，返回

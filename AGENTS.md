@@ -206,6 +206,14 @@ controls and honest feedback. Reset removes only this preference. Never derive
 Runtime policy, grants or plugin resources from it. See
 [preference evidence](./docs/validation/g7-desktop-preferences.md).
 
+G7 P3.1a3 status settings use only the existing native control command's
+`runtime.status` / `initialize=false` branch. Keep Debug/main/origin checks,
+Desktop bootstrap with cold start disabled, exact handshake/status instance and
+an owned short-lived pipe. Never use ensure-runtime, manager fallback, profile
+initialization or grants for status queries. Clear old snapshots on query/failure;
+do not poll or present them as live. Browser preview stays disabled. See
+[status evidence](./docs/validation/g7-runtime-status.md).
+
 G5 P2.5b archive admission lives in `packages/runtime-core/src/packages/archive.rs`.
 It consumes opaque verified descriptors and rechecks the exact manifest/archive
 bytes before bounded ZIP32 stored/deflate decoding. Keep central/local header

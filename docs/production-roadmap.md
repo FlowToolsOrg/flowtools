@@ -1594,6 +1594,11 @@ Phase 2 总退出标准：P2.1–P2.8 全部 `done`；第三方代码默认拒�
 这不完成托盘菜单、OS 登录/重启、多屏热插拔、Runtime 状态或任务连续性；
 P3.1a/P3.1/G7 与独立安全批准保持 pending。
 
+2026-10-20：P3.1a3 在设置页增加只读 Host 状态快照，显示实际实例/模式与
+任务计数，不借查询冷启动、初始化或改变授权。失败清空旧状态；保持原有
+Debug/main/origin 限制。见 [状态证据](./validation/g7-runtime-status.md)。
+托盘 Runtime 集成、诊断、正式身份及完整平台验收仍 pending。
+
 - 状态：`pending`
 - 负责人：`TBD (Desktop)`
 - 依赖：P0.1、P1.4、P2.3、P2.4

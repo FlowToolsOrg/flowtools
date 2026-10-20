@@ -455,6 +455,12 @@ Tauri [sidecar](https://v2.tauri.app/develop/sidecar/) 用于构建捆绑程序�
 同日后续 `73a4a1d` 完整门禁再次失败于原样 Runtime 后代就绪/排空路径
 （21/24）；本地最新集成仍未通过，保留之前绿色与当前失败两次独立证据。
 
+2026-10-20：P3.1a3 补齐设置页的显式只读 Runtime 状态快照，不借查询启动
+Host、初始化、改变 grants 或拉取任务载荷。既有 `1451c77` 两轮远端 CI 已
+通过，本轮需独立完整门禁；本机历史失败不撤销。见
+[状态证据](./validation/g7-runtime-status.md)。托盘 Runtime 集成、诊断及平台/
+任务连续性验收仍 pending，P3.1a/G7 父项不推进。
+
 P3.1a 做托盘、单实例、全局快捷键、可选自启动与后台状态；内核不依赖托盘存活。
 P3.1b 做 Host 调度器与通知 adapter：one-shot/有限周期任务、时区/夏令时、
 missed-run 和重复触发策略；调度器只能调用已授权命令，插件不自行启动 timer daemon。

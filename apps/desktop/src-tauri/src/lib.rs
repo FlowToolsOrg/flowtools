@@ -77,6 +77,12 @@ fn command_builder<R: tauri::Runtime>() -> Builder<R> {
 }
 
 #[cfg(feature = "codegen")]
+pub fn mock_command_builder() -> tauri::Builder<tauri::test::MockRuntime> {
+    // The real command table without app setup, native plugins or user databases.
+    tauri::test::mock_builder().invoke_handler(command_builder().invoke_handler())
+}
+
+#[cfg(feature = "codegen")]
 pub fn export_bindings(
     path: impl AsRef<std::path::Path>,
 ) -> Result<(), Box<dyn std::error::Error>> {

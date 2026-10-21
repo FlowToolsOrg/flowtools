@@ -17,6 +17,10 @@ P3.1a3 在设置页复用既有 Rust 管理命令的固定只读分支，连接�
 Host 并回读状态快照。没有冷启动、管理进程 fallback、初始化或 grant 变更，
 失败清除旧快照，见 [状态证据](./docs/validation/g7-runtime-status.md)。
 
+P3.1a4 将本页临时状态与官方 app/Tauri 版本投影为限长诊断 JSON，先预览再
+明确下载；生成不连接 Runtime，新查询使旧预览失效。无日志、任务载荷、路径、
+凭据或新存储/权限，原生保存验收仍 pending，见 [诊断证据](./docs/validation/g7-runtime-diagnostic.md)。
+
 G6 P2.8a1 的 `packages/tools.rs` 复用 `PackageTrustStore` 单写者与严格 ZIP
 准入，核对原始签名工具 Manifest、完整文件角色及构建内固定审核策略，返回
 opaque inert bytes。返回前重新采样 T0 时间并检查当前根、撤销和 floors。

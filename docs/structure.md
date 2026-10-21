@@ -20,6 +20,11 @@ P3.1a3 的 `apps/desktop/src/settings/runtime-status-settings.tsx` 通过既有
 `managed_runtime.rs`，没有新增 IPC command/DTO、Runtime store 或插件 API。
 见 [状态验证](./validation/g7-runtime-status.md)。
 
+P3.1a4 的 `apps/desktop/src/settings/runtime-status-diagnostic.ts` 负责限长
+白名单报告投影，`runtime-diagnostic-download.ts` 读取官方版本并按明确操作
+下载 Blob；状态卡持有临时预览，不新增 Runtime DTO 或存储。见
+[诊断验证](./validation/g7-runtime-diagnostic.md)。
+
 G6 P2.8a1 新增 `packages/runtime-core/src/packages/tools.rs` 与
 `packages/tests/tool_tests.rs`，负责独立的 Runtime-owned 工具 Manifest 惰性
 准入。生产审核清单为空，公开测试 keys/来源/许可证不能进入生产清单。

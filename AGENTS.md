@@ -214,6 +214,14 @@ initialization or grants for status queries. Clear old snapshots on query/failur
 do not poll or present them as live. Browser preview stays disabled. See
 [status evidence](./docs/validation/g7-runtime-status.md).
 
+G7 P3.1a4 diagnostic preview projects only app/Tauri versions, timestamps and
+the existing ephemeral status observation. Keep the bounded allowlist, stable
+codes, query invalidation and explicit preview-then-download actions. Export
+never queries/starts Runtime or selects raw exceptions, logs, payloads, paths,
+credentials or grants. Use the fixed Blob filename and release object URLs;
+download dispatch is not OS save confirmation. Native WebView save and full
+diagnostics remain pending; see [diagnostic evidence](./docs/validation/g7-runtime-diagnostic.md).
+
 G5 P2.5b archive admission lives in `packages/runtime-core/src/packages/archive.rs`.
 It consumes opaque verified descriptors and rechecks the exact manifest/archive
 bytes before bounded ZIP32 stored/deflate decoding. Keep central/local header

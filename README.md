@@ -18,6 +18,11 @@ G7 P3.1a3 adds an explicit read-only Runtime status snapshot in Desktop settings
 It attaches only to an already running Host and never initializes, cold-starts
 or changes grants. See [status evidence](./docs/validation/g7-runtime-status.md).
 
+G7 P3.1a4 previews a bounded version/status diagnostic report before a separate
+JSON download request. It never queries Runtime or includes task payloads/logs.
+Native WebView save acceptance and full diagnostics remain pending; see
+[diagnostic evidence](./docs/validation/g7-runtime-diagnostic.md).
+
 G6 P2.8a1 adds strict inert tool Manifest admission through the existing durable
 trust store and ZIP verifier. Source, license, build flavor and complete resource
 roles must match a private build-owned review profile; the production list is

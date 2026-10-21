@@ -462,6 +462,12 @@ provider-error、root-cancel 后代就绪/排空），之前/远端绿色不覆�
 [状态证据](./validation/g7-runtime-status.md)。托盘 Runtime 集成、诊断及平台/
 任务连续性验收仍 pending，P3.1a/G7 父项不推进。
 
+2026-10-21：P3.1a4 交付固定版本/状态字段的诊断预览及独立 JSON 下载，生成
+不重查或启动 Runtime，新查询使旧报告失效。7 项投影及 14 项状态卡浏览器
+回归、桌面/窄屏实际 Chromium 下载通过，见 [诊断证据](./validation/g7-runtime-diagnostic.md)。
+原生 WebView 保存、完整日志/崩溃诊断、托盘状态及平台/任务连续性仍 pending；
+P3.1a/G7 父项不推进。
+
 P3.1a 做托盘、单实例、全局快捷键、可选自启动与后台状态；内核不依赖托盘存活。
 P3.1b 做 Host 调度器与通知 adapter：one-shot/有限周期任务、时区/夏令时、
 missed-run 和重复触发策略；调度器只能调用已授权命令，插件不自行启动 timer daemon。

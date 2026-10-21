@@ -15,6 +15,10 @@ P3.1a3 的设置页查询只显示既有 Host 的状态快照，不启动 Runtim
 插件输入/结果或创建 grants。插件身份仍由原生会话绑定，快照不是授权凭据，
 见 [状态证据](./validation/g7-runtime-status.md)。
 
+P3.1a4 的诊断预览/下载仅投影 Host 版本及本页状态，不读取插件载荷、日志或
+授权，不为插件增加文件接口；报告不是 grant 或执行凭据。原生保存仍待验收，
+见 [诊断证据](./validation/g7-runtime-diagnostic.md)。
+
 G6 P2.8a1 的工具 Manifest 独立于 SDK Plugin Manifest v1 与 G4 ToolPin。
 签名包的 source/license/buildFlavor 与完整文件清单须和工具 Manifest 一致，
 programs 只声明有限逻辑角色，resources 必须完全匹配 T0 构建审核布局。

@@ -1601,6 +1601,12 @@ Debug/main/origin 限制。见 [状态证据](./validation/g7-runtime-status.md)
 本轮 `6432d76` 本机完整门禁在 87 项浏览器及 Core 222+2 通过后，Runtime
 21/24 失败，原因仍未确定。完整结果见上述状态证据，不以单项通过覆盖失败。
 
+2026-10-21：P3.1a4 增加限长版本/状态 JSON 预览与独立下载，生成不连接
+Runtime；失败不回显原始异常，新查询清空旧预览。7 项投影和 14 项状态卡
+浏览器回归及双宽度实际下载通过，见 [诊断证据](./validation/g7-runtime-diagnostic.md)。
+原生 WebView 保存、完整诊断、托盘状态、正式身份与平台/任务连续性仍 pending，
+P3.1a/P3.1/G7 不推进。
+
 - 状态：`pending`
 - 负责人：`TBD (Desktop)`
 - 依赖：P0.1、P1.4、P2.3、P2.4

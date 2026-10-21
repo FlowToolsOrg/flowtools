@@ -27,6 +27,13 @@ bootstrap/session 绑定身份，拒绝初始化标志和不可信 window/origin
 [状态验证](../validation/g7-runtime-status.md)。SEC-003/007/009/013 保持 open，
 独立审阅 pending；T1 同 realm 与 CSP 缺口没有因只读 UI 被关闭。
 
+2026-10-21 P3.1a4 诊断只从官方 app 版本与临时状态投影固定字段，限制 4096
+UTF-8 字节；拒绝非法元数据，仅保留稳定错误码，不复制未知字段/异常/日志/
+任务载荷/路径/凭据。预览和下载分别明确触发，新查询清除旧报告；固定 Blob
+文件名及 URL 释放不增加原生文件权限。原生 WebView 保存和完整诊断仍待验收，
+见 [诊断证据](../validation/g7-runtime-diagnostic.md)。SEC-003/007/009/013
+及独立审阅仍 open/pending，同 realm 与 CSP 边界未推进。
+
 - 复核日期：2026-10-04；源码基线：`eed0e4d`（P0.4 开始前）
 - 范围：Desktop/Web/CLI 插件入口，以及后续包安装、授权与应用更新设计
 - 状态：prototype；高风险项全部 open，未接受 production 风险豁免

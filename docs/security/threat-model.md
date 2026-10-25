@@ -34,6 +34,13 @@ UTF-8 字节；拒绝非法元数据，仅保留稳定错误码，不复制未�
 见 [诊断证据](../validation/g7-runtime-diagnostic.md)。SEC-003/007/009/013
 及独立审阅仍 open/pending，同 realm 与 CSP 边界未推进。
 
+2026-10-25 P3.1a5 的原生托盘显式查询仅复用实际 main 窗口的 Debug/origin/
+profile 守卫及 Desktop 只读握手；构建/开菜单不查询，无初始化、冷启动、管理
+回退或 grants。查询占用随取消释放，旧快照先清除，仅输出固定模式/计数/时间
+和既有稳定错误码。无新 IPC/DTO、webview menu/tray 权限或存储；真实窗口
+拒绝回归、剩余原生交互和独立批准见 [托盘证据](../validation/g7-tray-runtime-status.md)。
+SEC-003/007/009/013 保持 open；本机 Runtime 进程就绪失败仍未解决。
+
 - 复核日期：2026-10-04；源码基线：`eed0e4d`（P0.4 开始前）
 - 范围：Desktop/Web/CLI 插件入口，以及后续包安装、授权与应用更新设计
 - 状态：prototype；高风险项全部 open，未接受 production 风险豁免

@@ -55,6 +55,22 @@ fn check<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>) -> Result<PathBuf,
         .map(|root| PathBuf::from(root).join("FlowToolsRuntimeV1"))
         .ok_or_else(|| error(ErrorCode::ApprovalRequired))
 }
+fn main_status_profile<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+) -> Result<PathBuf, RuntimeError> {
+    let window = app
+        .get_webview_window("main")
+        .ok_or_else(|| error(ErrorCode::SessionInvalid))?;
+    check(&window)
+}
+
+// Native tray entry only. Keep the same Debug/main/origin/profile guard and
+// exact read-only connection as settings, without any initialization parameter.
+pub(super) async fn status_for_main_window<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+) -> Result<RuntimeStatus, RuntimeError> {
+    status_snapshot(main_status_profile(app)?).await
+}
 fn executable() -> Result<PathBuf, RuntimeError> {
     let path = PathBuf::from(env!("FLOWTOOLS_DESKTOP_RUNTIME_PATH"));
     flowtools_runtime_core::data::safe_path(&path).map_err(error)?;

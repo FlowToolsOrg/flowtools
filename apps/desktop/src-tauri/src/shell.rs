@@ -1,4 +1,5 @@
 mod policy;
+mod runtime_status;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{
@@ -147,6 +148,7 @@ fn build_tray(app: &AppHandle, shortcut_ready: bool, autostart_ready: bool) -> t
         false,
         None::<&str>,
     )?;
+    let runtime_status = runtime_status::TrayStatus::new(app)?;
     let show = MenuItem::with_id(app, "shell-show", "打开 FlowTools", true, None::<&str>)?;
     let shortcut = MenuItem::with_id(
         app,
@@ -204,6 +206,9 @@ fn build_tray(app: &AppHandle, shortcut_ready: bool, autostart_ready: bool) -> t
         app,
         &[
             &status,
+            &runtime_status.status,
+            &runtime_status.checked_at,
+            &runtime_status.query,
             &show,
             &shortcut,
             &autostart,
@@ -224,6 +229,7 @@ fn build_tray(app: &AppHandle, shortcut_ready: bool, autostart_ready: bool) -> t
         .show_menu_on_left_click(false)
         .on_menu_event(move |app, event| match event.id.as_ref() {
             "shell-show" => restore(app),
+            "shell-runtime-status-refresh" => runtime_status.request(app),
             "shell-exit" => app.exit(0),
             "shell-autostart-enable" | "shell-autostart-disable" if autostart_ready => {
                 // Only a native, explicit action changes OS state. No automatic

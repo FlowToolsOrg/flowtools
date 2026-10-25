@@ -1617,6 +1617,12 @@ Runtime 后代就绪/排空路径 22/24 失败。独立 Desktop 99 Bun/30 Rust �
 记录的测试进程已不存活。其余平台/正式包、保存异常与完整诊断仍待验收；
 P3.1a/P3.1/G7 和独立安全批准仍 pending。
 
+2026-10-25：P3.1a5 补充原生托盘只读 Runtime 快照，带查询时间、并发占用
+和稳定失败反馈，沿用 Debug/main/origin/profile 检查，无初始化/冷启动或
+新权限。35 Rust 单元/6 集成通过，实际托盘交互仍待验收，见
+[托盘证据](./validation/g7-tray-runtime-status.md)。本机进程就绪失败未解决，
+P3.1a/P3.1/G7 不推进。
+
 - 状态：`pending`
 - 负责人：`TBD (Desktop)`
 - 依赖：P0.1、P1.4、P2.3、P2.4

@@ -82,6 +82,17 @@ pub fn mock_command_builder() -> tauri::Builder<tauri::test::MockRuntime> {
     tauri::test::mock_builder().invoke_handler(command_builder().invoke_handler())
 }
 
+#[cfg(all(windows, feature = "codegen"))]
+pub async fn mock_shell_status<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+) -> Result<
+    flowtools_runtime_core::protocol::RuntimeStatus,
+    flowtools_runtime_core::protocol::RuntimeError,
+> {
+    // Direct T0 test adapter only; never registered as a webview command.
+    managed_runtime::status_for_main_window(app).await
+}
+
 #[cfg(feature = "codegen")]
 pub fn export_bindings(
     path: impl AsRef<std::path::Path>,

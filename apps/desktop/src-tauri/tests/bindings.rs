@@ -79,6 +79,34 @@ fn exports_current_bindings_without_launching_a_host() {
 #[cfg(windows)]
 mod ipc_tests {
     #[test]
+    fn native_tray_status_refuses_missing_main_foreign_packaged_and_unconfigured_origins() {
+        for (label, origin, configured) in [
+            ("external", "http://localhost:1420", true),
+            ("main", "https://untrusted.invalid", true),
+            ("main", "http://tauri.localhost", true),
+            ("main", "http://localhost:1420", false),
+        ] {
+            let mut context = tauri::generate_context!();
+            context.config_mut().build.dev_url =
+                configured.then(|| "http://localhost:1420".parse().unwrap());
+            let app = tauri::test::mock_builder().build(context).unwrap();
+            let _window = tauri::WebviewWindowBuilder::new(
+                &app,
+                label,
+                tauri::WebviewUrl::External(origin.parse().unwrap()),
+            )
+            .build()
+            .unwrap();
+            let result =
+                tauri::async_runtime::block_on(desktop_lib::mock_shell_status(app.handle()));
+            assert_eq!(
+                result.unwrap_err().code,
+                flowtools_runtime_core::protocol::ErrorCode::SessionInvalid
+            );
+        }
+    }
+
+    #[test]
     fn status_control_refuses_untrusted_windows_origins_and_initialization() {
         for (label, origin, initialize) in [
             ("external", "http://localhost:1420", false),

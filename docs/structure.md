@@ -25,6 +25,11 @@ P3.1a4 的 `apps/desktop/src/settings/runtime-status-diagnostic.ts` 负责限长
 下载 Blob；状态卡持有临时预览，不新增 Runtime DTO 或存储。见
 [诊断验证](./validation/g7-runtime-diagnostic.md)。
 
+P3.1a5 的 `apps/desktop/src-tauri/src/shell/runtime_status.rs` 持有原生菜单与
+临时查询占用，`managed_runtime::status_for_main_window` 复用既有守卫/只读连接。
+没有新 IPC/DTO/存储；真实窗口拒绝测试在带所需 manifest 的 bindings 目标，
+见 [托盘验证](./validation/g7-tray-runtime-status.md)。
+
 G6 P2.8a1 新增 `packages/runtime-core/src/packages/tools.rs` 与
 `packages/tests/tool_tests.rs`，负责独立的 Runtime-owned 工具 Manifest 惰性
 准入。生产审核清单为空，公开测试 keys/来源/许可证不能进入生产清单。

@@ -19,6 +19,10 @@ P3.1a4 的诊断预览/下载仅投影 Host 版本及本页状态，不读取插
 授权，不为插件增加文件接口；报告不是 grant 或执行凭据。原生保存仍待验收，
 见 [诊断证据](./validation/g7-runtime-diagnostic.md)。
 
+P3.1a5 的托盘 Runtime 快照属于原生 Host，仅显示模式、任务计数与查询时间，
+不向插件开放菜单、托盘或状态绕过接口，不读取插件载荷/授权或执行命令。
+原生交互与独立安全批准仍 pending，见 [托盘证据](./validation/g7-tray-runtime-status.md)。
+
 G6 P2.8a1 的工具 Manifest 独立于 SDK Plugin Manifest v1 与 G4 ToolPin。
 签名包的 source/license/buildFlavor 与完整文件清单须和工具 Manifest 一致，
 programs 只声明有限逻辑角色，resources 必须完全匹配 T0 构建审核布局。

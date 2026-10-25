@@ -24,6 +24,11 @@ One controlled Windows Debug unqueried-report save is verified against the
 native preview. Broader native save behavior and full diagnostics remain pending;
 see [diagnostic evidence](./docs/validation/g7-runtime-diagnostic.md).
 
+G7 P3.1a5 adds an explicit native tray Runtime snapshot query with receipt time,
+overlap prevention and stable failure feedback. It reuses the settings guard and
+read-only connection; no startup, initialization or grant is implied. Actual
+tray interaction acceptance remains pending; see [tray status evidence](./docs/validation/g7-tray-runtime-status.md).
+
 G6 P2.8a1 adds strict inert tool Manifest admission through the existing durable
 trust store and ZIP verifier. Source, license, build flavor and complete resource
 roles must match a private build-owned review profile; the production list is

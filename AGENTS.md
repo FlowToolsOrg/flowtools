@@ -222,6 +222,16 @@ credentials or grants. Use the fixed Blob filename and release object URLs;
 download dispatch is not OS save confirmation. Native WebView save and full
 diagnostics remain pending; see [diagnostic evidence](./docs/validation/g7-runtime-diagnostic.md).
 
+G7 P3.1a5 native tray snapshots live in `src-tauri/src/shell/runtime_status.rs`.
+Use only `managed_runtime::status_for_main_window` and the existing
+Debug/main/origin/profile check plus read-only `status_snapshot`. No query at
+construction/menu open, polling, cold start, initialization, manager fallback or
+grant. Clear old labels before connecting; keep the owned overlap gate and
+cancellation release, known mode/count projection and receipt-time disclaimer.
+Core menu/tray permissions stay withheld from webviews; `mock_shell_status` is
+codegen-only Rust test access, never an IPC command. Put actual window tests in
+the existing manifest-bearing bindings target. See [tray evidence](./docs/validation/g7-tray-runtime-status.md).
+
 G5 P2.5b archive admission lives in `packages/runtime-core/src/packages/archive.rs`.
 It consumes opaque verified descriptors and rechecks the exact manifest/archive
 bytes before bounded ZIP32 stored/deflate decoding. Keep central/local header

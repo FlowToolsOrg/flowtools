@@ -2,8 +2,8 @@
 
 G7 P3.1a1 的 Windows 原生 `shell.rs` 提供托盘、单实例/快捷键唤起和显式
 自启动。第二实例参数/cwd 不进入业务命令；无新 webview 权限/IPC 命令、
-Runtime store/grant 或 stop 调用。托盘仅报告 Desktop 驻留；托盘的 Runtime
-状态集成与调度另行接入，见 [桌面入口证据](./docs/validation/g7-desktop-shell.md)。
+Runtime store/grant 或 stop 调用。驻留行仅报告 Desktop；Runtime 快照见下文
+P3.1a5，调度另行接入，见 [桌面入口证据](./docs/validation/g7-desktop-shell.md)。
 受控 Windows 实窗已验证热键冲突下的第二实例恢复及原生外观重启保留；
 独立热键 owner 仅是人工验收夹具，不进入 Host/Runtime 执行面，见
 [原生验收](./docs/validation/g7-native-window-acceptance.md)。
@@ -20,6 +20,10 @@ Host 并回读状态快照。没有冷启动、管理进程 fallback、初始化
 P3.1a4 将本页临时状态与官方 app/Tauri 版本投影为限长诊断 JSON，先预览再
 明确下载；生成不连接 Runtime，新查询使旧预览失效。无日志、任务载荷、路径、
 凭据或新存储/权限，原生保存验收仍 pending，见 [诊断证据](./docs/validation/g7-runtime-diagnostic.md)。
+
+P3.1a5 的原生托盘动作复用主窗口 Debug/origin/profile 守卫和既有只读连接，
+显示带查询时间的 Runtime 快照；构建/打开菜单不查询，重复点击不并发连接，
+无冷启动或授权变更。实际托盘交互仍待验收，见 [托盘证据](./docs/validation/g7-tray-runtime-status.md)。
 
 G6 P2.8a1 的 `packages/tools.rs` 复用 `PackageTrustStore` 单写者与严格 ZIP
 准入，核对原始签名工具 Manifest、完整文件角色及构建内固定审核策略，返回

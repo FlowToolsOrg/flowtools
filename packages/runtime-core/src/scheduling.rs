@@ -1,7 +1,6 @@
 //! P3.1b1: bounded, inert scheduling rules owned by Runtime.
 //!
-//! This cursor does not persist claims, dispatch jobs, check grants or send
-//! notifications. Its output is a planning observation, never authorization.
+//! The cursor is inert; `store` adds single-writer claims, never authorization.
 //! T0 supplies absolute UTC milliseconds; local calendar/DST resolution belongs
 //! to a future explicit adapter. A fixed interval means elapsed milliseconds.
 
@@ -10,7 +9,20 @@ pub const MAX_OCCURRENCES: u32 = 10_000;
 pub const MIN_INTERVAL_MS: u64 = 1_000;
 pub const MAX_GRACE_MS: u64 = 60_000;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub mod store;
+
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    serde::Serialize,
+    serde::Deserialize,
+    specta::Type,
+    schemars::JsonSchema,
+)]
+#[serde(rename_all = "kebab-case")]
 pub enum MissedRunPolicy {
     /// Discard overdue occurrences outside the explicit lateness grace.
     Skip,

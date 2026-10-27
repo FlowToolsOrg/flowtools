@@ -1,5 +1,9 @@
 # Flow Tool
 
+P3.1b2 persists finite schedule positions and claims through Runtime's existing
+single writer, with restart, cancellation and restore-scope refusal tests. See
+[durable scheduling](./docs/validation/g7-scheduling-store.md).
+
 The current G7 desktop-shell engineering work is closed; the maintainer waived
 remaining manual acceptance on 2026-10-27. See [closeout](./docs/validation/g7-shell-closeout.md).
 P3.1b1 now provides Runtime-owned one-shot/finite-interval planning with explicit

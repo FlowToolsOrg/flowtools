@@ -1,5 +1,9 @@
 # Flow Tool Architecture
 
+P3.1b2 的 `scheduling/store.rs` 在现有 `core_metadata` 单写者持久化有限调度
+位置和随机 claim，先提交再返回一次派发尝试；不存原始输入。未知尝试不重放，
+复制数据库/恢复代际改变拒绝自动触发，见 [证据](./docs/validation/g7-scheduling-store.md)。
+
 P3.1b1 的 `runtime-core/src/scheduling.rs` 先提供纯 Rust 有限调度游标：绝对 UTC
 时间、固定 elapsed interval、显式 grace/漏触发策略、取消与单游标重复抑制。
 只返回惰性 occurrence；持久 claims、恢复、时区日历解析与授权/通知 adapter

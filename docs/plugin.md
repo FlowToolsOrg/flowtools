@@ -1,5 +1,9 @@
 # Flow Tool Plugin 开发指南
 
+P3.1b2 的调度 claim 只绑定既有命令身份、grant epoch 和输入 digest，不能
+替代当前授权或供插件选择身份；恢复未知尝试不自动重放发送。原始输入仍须
+单独私有保存，见 [持久化边界](./validation/g7-scheduling-store.md)。
+
 P3.1b1 的调度规则只属于 Runtime 原生规划层，不增加 SDK 插件 API、timer、
 后台执行或通知权限。occurrence index 不是 job ID、授权或持久幂等凭据；实际
 调度仍须独立 unattended 授权及逐次 broker 校验。见

@@ -116,6 +116,9 @@ fn validate_key(key: &str) -> Result<(), ErrorCode> {
 }
 
 impl DataStore {
+    pub(crate) fn database_path(&self) -> Option<&Path> {
+        self.path.as_deref()
+    }
     pub(crate) fn profile(&self) -> Option<&Path> {
         self.path.as_deref().and_then(|p| p.parent())
     }

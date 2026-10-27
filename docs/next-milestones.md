@@ -437,6 +437,10 @@ Tauri [sidecar](https://v2.tauri.app/develop/sidecar/) 用于构建捆绑程序�
 
 ## 9. G7：统一 UI 与三个办公闭环
 
+P3.1b2（2026-10-27）已接现有单写者持久化有限调度位置和 claim，8 项实际
+SQLite 拒绝/恢复回归通过；接下来持续实现认证管理与 Host 派发，见
+[证据](./validation/g7-scheduling-store.md)。
+
 2026-10-27：维护者明确取消 G7 人工验收，当前 P3.1a1–a5 桌面壳工程范围
 收尾并转入 P3.1b 调度规则；未运行的人工项记录为豁免，不计为通过。远端
 `ea2bedb` PR 完整门禁通过，本机 Runtime 20/24 失败保留。尚未实现的调度、

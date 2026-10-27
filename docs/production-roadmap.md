@@ -1575,6 +1575,10 @@ Phase 2 总退出标准：P2.1–P2.8 全部 `done`；第三方代码默认拒�
 
 ### P3.1 完成 Desktop 宿主产品能力
 
+P3.1b2 已实现 DataStore 单写者中的调度位置和 exact-token claim，8 项 SQLite
+回归覆盖重启/恢复/取消/写失败；管理和派发继续接入，见
+[记录](./validation/g7-scheduling-store.md)。
+
 2026-10-27：按维护者明确要求豁免剩余 G7 人工验收，关闭当前 P3.1a1–a5
 工程工作项并推进 P3.1b；人工项不冒充通过，既有本机 Runtime 失败保留，
 `ea2bedb` 远端 PR 完整门禁通过。P3.1/G7 的未实现范围、执行前置与独立

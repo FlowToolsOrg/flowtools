@@ -176,6 +176,13 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+P3.1b2's `scheduling/store.rs` borrows DataStore's single writer for bounded
+schedule state and exact-token claims. Preserve revision cancellation, immutable
+identity/epoch/input digest, no raw inputs, profile hash and restore-generation
+binding. Unknown committed attempts never replay automatically; failed/corrupt
+state never resets cursors. Wire dispatch must still recheck current policy.
+See [store evidence](./docs/validation/g7-scheduling-store.md).
+
 The maintainer waived remaining G7 manual acceptance on 2026-10-27 and requested
 moving to the next implementation task. Do not repeat those manual gates or ask
 for confirmation. Record them as waived, never passed. P3.1a1–a5 engineering

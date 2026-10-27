@@ -2,6 +2,10 @@
 
 ## 下一阶段结构与当前实现
 
+`packages/runtime-core/src/scheduling/store.rs` 与 `store/tests.rs` 提供现有
+DataStore 的调度记录/claim 和 SQLite 拒绝回归；没有第二个数据库，见
+[持久化证据](./validation/g7-scheduling-store.md)。
+
 P3.1b1 的 `packages/runtime-core/src/scheduling.rs` 是纯 Rust 有限调度规则；
 `tests/scheduling.rs` 覆盖漏触发、重复/回拨/取消和算术边界。没有 wire DTO、
 timer 或存储；durable schedule/claims 和通知 adapter 仍属拟新增接入，见

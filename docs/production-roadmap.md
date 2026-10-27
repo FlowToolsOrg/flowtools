@@ -1623,6 +1623,11 @@ P3.1a/P3.1/G7 和独立安全批准仍 pending。
 [托盘证据](./validation/g7-tray-runtime-status.md)。本机进程就绪失败未解决，
 P3.1a/P3.1/G7 不推进。
 
+该托盘产品提交 `ca062a4` 的完整门禁保留 Runtime 20/24 后代就绪/排空失败；
+94 浏览器和 Core 222+2 通过。独立 Desktop 99 Bun/35 Rust 单元/6 集成、
+11 工作区构建、生产产物对照与 Clippy 通过，不覆盖该整仓失败；仍未更改
+Runtime、runner、Core、SDK 源码或任何测试期限/真实进程断言。
+
 - 状态：`pending`
 - 负责人：`TBD (Desktop)`
 - 依赖：P0.1、P1.4、P2.3、P2.4

@@ -80,6 +80,69 @@ drain/lease assertions remain untouched. No full-gate retry or OS setting change
 was used to reinterpret the old failure. Exact baseline log/exit:
 `runtime-baseline-20261025.log` / `.exit` in the same ignored directory.
 
+## Full gate on this product source
+
+The clean product commit `ca062a4` passed all eleven workspace lint/type gates,
+all 94 Chromium tests in 29 files and Core 222 unit tests plus two doctests.
+The unchanged Runtime native suite failed four of 24 tests:
+
+- `provider_error_retains_lease_until_its_real_descendant_drains`;
+- `oversized_provider_frame_retains_lease_until_its_real_group_drains`;
+- `real_job_access_denial_stops_host_and_refuses_provider_migration`;
+- `root_cancel_retains_lease_until_the_actual_provider_group_drains`.
+
+The first three could not find the real descendant PID marker before their
+drain boundary expired; root-cancel reached its original readiness deadline.
+Cause remains unestablished. Test exit 101 terminated the script with exit 1
+before Desktop/build/post-build stages. The worktree stayed clean; no failure
+retry, source-fixture change, deadline extension or assertion relaxation was
+applied. Latest local full integration is not accepted. Log/exit:
+`root-ci-tray-status-20261025.log` / `.exit` in the ignored evidence directory.
+
+Separate full Desktop tests on the same product source passed 99 Bun, 35 Rust
+unit and six binding integration tests. Subsequent sequential forced builds
+passed all eleven workspaces (1m11.367s); Web 22 / Desktop 24 production artifacts
+were byte-identical under opt-in/canaries. Rust formatting, locked check and
+all-target codegen Clippy with warnings fatal passed. These focused checks do
+not replace the root failure. Logs/exits:
+`tray-status-desktop-20261025`, `tray-status-build-all-20261025`,
+`tray-status-production-20261025`, `tray-status-fmt-20261025`,
+`tray-status-check-20261025` and `tray-status-clippy-20261025`.
+
+## Controlled native construction and recovery smoke
+
+The dedicated shell fixture was rebuilt after these checks. Its metadata-only
+`--runtime-validation-identity` output was verified before launch: marker
+`flowtools-runtime-validation-preflight-v1`, identifier
+`com.flowtools.shell-validation-20261015`, configured origin
+`http://127.0.0.1:1420/` and the test-data-only window title. The source commit and
+artifact hash were recorded. Computer Use controlled only the returned fixture
+window; it did not expose a taskbar/tray window for menu acceptance.
+
+Closing the main window retained the recorded process and made the old window
+unavailable for capture. A second launch restored the same window, PID and
+process start time. This exercises native tray/menu construction and the
+existing close, residency and second-instance recovery paths.
+
+Settings initially showed an unqueried status and an unconnected Runtime panel.
+One explicit read-only status query returned the expected `SESSION_INVALID`
+packaged-origin refusal, without stale counts; the separate Runtime panel
+remained unconnected. No Runtime start, initialization, grant, task or OS startup
+action was requested. The owned fixture process was then stopped only after its
+exact executable path and recorded start time matched; exit was confirmed.
+
+Ignored evidence: `tray-status-native-build-20261025.log` / `.exit`,
+`tray-status-native-artifact-20261025.json`,
+`tray-status-native-identity-20261025.txt`,
+`tray-status-native-process-20261025.json`,
+`tray-status-native-hidden-20261025.json`,
+`tray-status-native-restored-20261025.json`,
+`tray-status-native-ui-20261025.txt`,
+`20261025-tray-status-native-refusal.png` and
+`tray-status-native-result-20261025.json` under `execution-validation/g7-shell/`.
+This smoke does not validate actual tray clicks, native layout or successful
+Runtime snapshot display.
+
 ## Remaining acceptance
 
 Actual tray clicks, native menu layout and observed/error snapshot rendering

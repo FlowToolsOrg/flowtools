@@ -484,6 +484,11 @@ P3.1a/G7 父项不推进。
 原样 root-cancel 诊断用例仍在 5.14 秒就绪失败，未改期限或真实进程断言；
 G7 父项及后续授权调度/三个办公闭环保持 pending。
 
+该产品提交 `ca062a4` 完整门禁在 94 浏览器/Core 222+2 通过后，原样 Runtime
+20/24 失败（provider-error、oversized-frame、job-access-denial、root-cancel 的
+后代就绪/排空）。独立 Desktop 99 Bun/35 Rust 单元/6 集成、11 工作区构建
+及生产产物对照通过，均不替代完整门禁；原因未确定，父项不推进。
+
 P3.1a 做托盘、单实例、全局快捷键、可选自启动与后台状态；内核不依赖托盘存活。
 P3.1b 做 Host 调度器与通知 adapter：one-shot/有限周期任务、时区/夏令时、
 missed-run 和重复触发策略；调度器只能调用已授权命令，插件不自行启动 timer daemon。

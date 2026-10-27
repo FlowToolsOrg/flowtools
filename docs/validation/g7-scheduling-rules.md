@@ -43,6 +43,24 @@ Ignored logs/exit files under `execution-validation/g7-shell/`:
 `scheduling-red-20261027`, `scheduling-focused-20261027` and
 `scheduling-clippy-20261027`.
 
+The clean product commit `fcb83a4` also ran the full Windows script once. All
+eleven workspace lint/type gates, 94 Chromium tests in 29 files, Core 222 unit
+tests, these 11 scheduling integration tests and two doctests passed. Runtime
+failed four of 24 unchanged native tests: malformed-frame, oversized-frame,
+provider-error and root-cancel real descendant readiness/drain. The first three
+reached drain without their descendant PID marker; root-cancel hit its original
+readiness deadline. Cause remains unestablished. Runtime test exit 101 terminated
+the root script with exit 1 before Desktop/build/post-build stages. The worktree
+remained clean. No full-gate retry, deadline/fixture/assertion change or Runtime/
+runner/SDK source modification was made. Log/exit:
+`scheduling-root-ci-20261027.log` / `.exit` in the same ignored directory.
+
+The separate full Desktop suite then passed on this product source: 99 Bun tests,
+35 Rust unit tests and six binding integration tests. This validates the existing
+Desktop/Host tests against the new Core library without manual UI work; it does
+not replace the failed root integration. Log/exit:
+`scheduling-desktop-20261027.log` / `.exit`.
+
 ## Boundaries and next step
 
 This module has no timer, database, IPC DTO, plugin/SDK API, job, permission or

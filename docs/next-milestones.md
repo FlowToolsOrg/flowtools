@@ -505,6 +505,10 @@ grace、跳过/合并漏触发、重复检查/时钟回拨/取消与算术限额
 及 Clippy 通过。只完成纯规则子项，持久 claims、授权调度、日历时区与通知
 仍按后续步骤接入，见 [验证](./validation/g7-scheduling-rules.md)。
 
+该产品 `fcb83a4` 的完整门禁在静态检查、94 浏览器与 Core 222+11+2 通过后，
+保留原样 Runtime 20/24 后代就绪/排空失败；不重试或放宽，结果见上述记录。
+人工豁免继续有效，不因这次已记录的自动失败重新要求人工验收。
+
 `packages/ui` 提供 Form/List/Detail/Progress/Result 标准组合、tokens 和统一错误/
 取消/键盘/无障碍约定；T2 使用同版本 UI 包构建到自己的容器，不共享宿主 realm。
 首版不做自定义 React renderer。复杂插件允许受约束自定义区域，不能仿造授权 UI。

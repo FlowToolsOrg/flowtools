@@ -176,6 +176,13 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+The maintainer waived remaining G7 manual acceptance on 2026-10-27 and requested
+moving to the next implementation task. Do not repeat those manual gates or ask
+for confirmation. Record them as waived, never passed. P3.1a1–a5 engineering
+scope is closed for this sequence; unimplemented G7 features, automated failures,
+execution policy and maturity labels are unchanged. See
+[closeout](./docs/validation/g7-shell-closeout.md).
+
 G7 P3.1a1 lives in `apps/desktop/src-tauri/src/shell.rs` and `shell/policy.rs`.
 Register single-instance before plugins/DB setup; its args/cwd only restore the
 window, never dispatch commands. Close hides only the main window with a working

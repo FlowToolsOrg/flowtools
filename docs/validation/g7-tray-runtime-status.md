@@ -145,6 +145,12 @@ Runtime snapshot display.
 
 ## Remaining acceptance
 
+2026-10-27 maintainer decision: remaining manual G7 acceptance is waived;
+the desktop-shell engineering work can close and proceed to scheduling.
+The items below describe unverified coverage, not further manual blockers.
+Automated failures and unimplemented features are not waived. See
+[closeout](./g7-shell-closeout.md).
+
 Actual tray clicks, native menu layout and observed/error snapshot rendering
 remain manual gates. The available window-control surface previously did not
 expose taskbar/tray windows. Dedicated shell identity preflight remains required

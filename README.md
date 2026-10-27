@@ -1,5 +1,12 @@
 # Flow Tool
 
+The current G7 desktop-shell engineering work is closed; the maintainer waived
+remaining manual acceptance on 2026-10-27. See [closeout](./docs/validation/g7-shell-closeout.md).
+P3.1b1 now provides Runtime-owned one-shot/finite-interval planning with explicit
+missed-run policies, cancellation and per-cursor duplicate suppression. Durable
+scheduling, authorized dispatch and notifications are next; see
+[scheduling rules](./docs/validation/g7-scheduling-rules.md).
+
 G7 P3.1a1 adds a Windows native tray, single-instance wakeup and
 Ctrl+Shift+Space window restore. Optional startup requires explicit native menu
 actions in the current release identity; debug/fixture builds deny it. Desktop
@@ -27,7 +34,8 @@ see [diagnostic evidence](./docs/validation/g7-runtime-diagnostic.md).
 G7 P3.1a5 adds an explicit native tray Runtime snapshot query with receipt time,
 overlap prevention and stable failure feedback. It reuses the settings guard and
 read-only connection; no startup, initialization or grant is implied. Actual
-tray interaction acceptance remains pending; see [tray status evidence](./docs/validation/g7-tray-runtime-status.md).
+tray interaction remains unverified and manual acceptance is waived; see
+[tray status evidence](./docs/validation/g7-tray-runtime-status.md).
 
 G6 P2.8a1 adds strict inert tool Manifest admission through the existing durable
 trust store and ZIP verifier. Source, license, build flavor and complete resource

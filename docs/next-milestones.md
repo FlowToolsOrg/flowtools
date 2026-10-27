@@ -500,6 +500,11 @@ P3.1b 做 Host 调度器与通知 adapter：one-shot/有限周期任务、时区
 missed-run 和重复触发策略；调度器只能调用已授权命令，插件不自行启动 timer daemon。
 没有 GUI 时也能记录提醒结果；无法发送系统通知的平台返回明确支持状态。
 
+2026-10-27：P3.1b1 已实现 Runtime-owned 一次性/有限 interval 规划游标，显式
+grace、跳过/合并漏触发、重复检查/时钟回拨/取消与算术限额，11 项 Rust 集成
+及 Clippy 通过。只完成纯规则子项，持久 claims、授权调度、日历时区与通知
+仍按后续步骤接入，见 [验证](./validation/g7-scheduling-rules.md)。
+
 `packages/ui` 提供 Form/List/Detail/Progress/Result 标准组合、tokens 和统一错误/
 取消/键盘/无障碍约定；T2 使用同版本 UI 包构建到自己的容器，不共享宿主 realm。
 首版不做自定义 React renderer。复杂插件允许受约束自定义区域，不能仿造授权 UI。

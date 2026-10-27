@@ -9,4 +9,5 @@ pub mod private_jobs;
 pub mod protocol;
 pub mod recovery;
 pub mod runtime;
+pub mod scheduling;
 pub mod services;

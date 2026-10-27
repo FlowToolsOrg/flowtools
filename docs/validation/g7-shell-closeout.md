@@ -18,8 +18,8 @@ independent security acceptance. Those remain separate implementation tasks.
 
 Product `ca062a4`, evidence `ea2bedb`: full remote Windows quality gates and clean
 worktree check passed in the [PR run](https://github.com/FlowToolsOrg/flowtools/actions/runs/40454217791).
-The [push run](https://github.com/FlowToolsOrg/flowtools/actions/runs/40454213511)
-also completed its quality and clean-worktree steps successfully.
+The full [push run](https://github.com/FlowToolsOrg/flowtools/actions/runs/40454213511)
+also passed. Both runs tested exactly `ea2bedb`.
 
 Local Desktop 99 Bun / 35 Rust unit / six binding integration tests, all eleven
 workspace builds, production artifact comparisons and Rust checks passed.

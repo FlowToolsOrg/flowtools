@@ -1,5 +1,12 @@
 # Flow Tool Architecture
 
+P3.1b1 的 `runtime-core/src/scheduling.rs` 先提供纯 Rust 有限调度游标：绝对 UTC
+时间、固定 elapsed interval、显式 grace/漏触发策略、取消与单游标重复抑制。
+只返回惰性 occurrence；持久 claims、恢复、时区日历解析与授权/通知 adapter
+另行接入现有 Runtime 单写者和 broker。没有新增 IPC、数据库或插件 timer，见
+[调度规则](./docs/validation/g7-scheduling-rules.md)。当前桌面壳人工复验按维护者
+决定豁免，工程范围收尾见 [记录](./docs/validation/g7-shell-closeout.md)。
+
 G7 P3.1a1 的 Windows 原生 `shell.rs` 提供托盘、单实例/快捷键唤起和显式
 自启动。第二实例参数/cwd 不进入业务命令；无新 webview 权限/IPC 命令、
 Runtime store/grant 或 stop 调用。驻留行仅报告 Desktop；Runtime 快照见下文
@@ -23,7 +30,7 @@ P3.1a4 将本页临时状态与官方 app/Tauri 版本投影为限长诊断 JSON
 
 P3.1a5 的原生托盘动作复用主窗口 Debug/origin/profile 守卫和既有只读连接，
 显示带查询时间的 Runtime 快照；构建/打开菜单不查询，重复点击不并发连接，
-无冷启动或授权变更。实际托盘交互仍待验收，见 [托盘证据](./docs/validation/g7-tray-runtime-status.md)。
+无冷启动或授权变更。实际托盘交互未验证，人工复验已豁免，见 [托盘证据](./docs/validation/g7-tray-runtime-status.md)。
 
 G6 P2.8a1 的 `packages/tools.rs` 复用 `PackageTrustStore` 单写者与严格 ZIP
 准入，核对原始签名工具 Manifest、完整文件角色及构建内固定审核策略，返回

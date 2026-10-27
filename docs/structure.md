@@ -2,6 +2,12 @@
 
 ## 下一阶段结构与当前实现
 
+P3.1b1 的 `packages/runtime-core/src/scheduling.rs` 是纯 Rust 有限调度规则；
+`tests/scheduling.rs` 覆盖漏触发、重复/回拨/取消和算术边界。没有 wire DTO、
+timer 或存储；durable schedule/claims 和通知 adapter 仍属拟新增接入，见
+[调度规则](./validation/g7-scheduling-rules.md)。桌面壳当前工程范围已按维护者
+豁免剩余人工复验并收尾，见 [记录](./validation/g7-shell-closeout.md)。
+
 G7 P3.1a1 新增 `apps/desktop/src-tauri/src/shell.rs` 与 `shell/policy.rs`，
 负责 Windows 原生托盘、单实例/快捷键恢复和显式可选自启动；不进入 SDK
 能力或 Runtime 数据层。`tauri.shell-validation.conf.json` 使用独立测试

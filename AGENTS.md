@@ -183,6 +183,16 @@ scope is closed for this sequence; unimplemented G7 features, automated failures
 execution policy and maturity labels are unchanged. See
 [closeout](./docs/validation/g7-shell-closeout.md).
 
+G7 P3.1b1 scheduling rules live in `packages/runtime-core/src/scheduling.rs`.
+Keep absolute UTC/elapsed interval semantics, finite budgets, explicit grace and
+missed-run policies, constant-time catch-up, immutable anchor, clock rollback
+refusal and permanent cancellation. This is an in-memory planning cursor, not
+durable duplicate protection, a job ID, grant or dispatch API. No timer, IPC,
+client store or notification effect is wired. Future persistence/claims must
+borrow the existing DataStore single writer; dispatch must recheck current
+package/command/grant/epoch and unattended authorization. Calendar/timezone
+resolution remains separate. See [rules evidence](./docs/validation/g7-scheduling-rules.md).
+
 G7 P3.1a1 lives in `apps/desktop/src-tauri/src/shell.rs` and `shell/policy.rs`.
 Register single-instance before plugins/DB setup; its args/cwd only restore the
 window, never dispatch commands. Close hides only the main window with a working

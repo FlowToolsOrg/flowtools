@@ -1659,6 +1659,11 @@ cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 - Windows 重启、热键冲突、多屏切换和异常退出恢复清单通过。
 - 单实例不会损坏状态，第二实例请求能转发到已有窗口。
 
+P3.1b1（2026-10-27）已先交付纯 Runtime 一次性/有限 interval 规则与 11 项
+集成回归，含明确漏触发和单游标重复抑制；不接 timer、持久 claims、授权执行
+或通知，不完成 P3.1b/G7。后续先接现有单写者的调度状态与 claims，再接授权
+dispatch 和通知 adapter，见 [调度规则](./validation/g7-scheduling-rules.md)。
+
 ### P3.2 完成生产级启动器与搜索
 
 - 状态：`pending`

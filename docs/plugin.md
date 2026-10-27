@@ -1,5 +1,10 @@
 # Flow Tool Plugin 开发指南
 
+P3.1b1 的调度规则只属于 Runtime 原生规划层，不增加 SDK 插件 API、timer、
+后台执行或通知权限。occurrence index 不是 job ID、授权或持久幂等凭据；实际
+调度仍须独立 unattended 授权及逐次 broker 校验。见
+[规则与后续边界](./validation/g7-scheduling-rules.md)。
+
 G7 P3.1a1 的托盘、快捷键和自启动属于 Desktop 原生宿主，插件不获得
 注册全局热键、启动 daemon 或修改开机启动的接口。第二实例传参不执行
 插件命令，退出 Desktop 不改变 grants 或主动停止 Runtime。后续调度与
@@ -21,7 +26,7 @@ P3.1a4 的诊断预览/下载仅投影 Host 版本及本页状态，不读取插
 
 P3.1a5 的托盘 Runtime 快照属于原生 Host，仅显示模式、任务计数与查询时间，
 不向插件开放菜单、托盘或状态绕过接口，不读取插件载荷/授权或执行命令。
-原生交互与独立安全批准仍 pending，见 [托盘证据](./validation/g7-tray-runtime-status.md)。
+原生交互未验证且人工复验已豁免；独立安全批准仍 pending，见 [托盘证据](./validation/g7-tray-runtime-status.md)。
 
 G6 P2.8a1 的工具 Manifest 独立于 SDK Plugin Manifest v1 与 G4 ToolPin。
 签名包的 source/license/buildFlavor 与完整文件清单须和工具 Manifest 一致，

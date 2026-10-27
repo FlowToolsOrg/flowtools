@@ -459,6 +459,11 @@ loopback 均可用，但 public/wildcard/mixed listener、未监听的端点、�
 
 ### SEC-013 CLI 冷启动、后台任务与调用主体混淆
 
+P3.1b1 的 [有限调度规则](../validation/g7-scheduling-rules.md) 只返回惰性
+occurrence，不接持久 claims、timer、IPC、执行或通知。重复抑制仅对同一内存
+游标有效；不能据此声称恢复/外部副作用 exactly-once。后续调度需单写者原子
+claim、当前包/命令/grant/epoch 与独立 unattended 授权；本威胁保持 open。
+
 - 入口：规划中的本地 runtime IPC、CLI bootstrap、后台 job/调度；高危，open
 - 现状：CLI 仍在自身进程调用 T1 compiled inventory；尚无无界面服务、Host-bound
   client roles、冷启动 grants 或持久任务恢复。新增设计不会让 run flag 获得授权，

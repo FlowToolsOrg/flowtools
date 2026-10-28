@@ -1575,6 +1575,10 @@ Phase 2 总退出标准：P2.1–P2.8 全部 `done`；第三方代码默认拒�
 
 ### P3.1 完成 Desktop 宿主产品能力
 
+P3.1b3 实现认证管理、共享时区预览与 Host 后台派发，实际无客户端任务及
+撤销/取消回归通过，见 [证据](./validation/g7-scheduling-dispatch.md)。
+完整调度编辑、通知和其余 G7 功能继续实施，不提前推进父项成熟度。
+
 P3.1b2 已实现 DataStore 单写者中的调度位置和 exact-token claim，8 项 SQLite
 回归覆盖重启/恢复/取消/写失败；管理和派发继续接入，见
 [记录](./validation/g7-scheduling-store.md)。

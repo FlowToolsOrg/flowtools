@@ -2,6 +2,11 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime-core/src/runtime_scheduling.rs` 接认证管理和 Host 派发；`scheduling/time.rs`
+负责共享 IANA/DST 解析。`apps/desktop/src/settings/schedule-settings.tsx` 与
+`packages/cli/src/schedules.ts` 使用同一契约；真实原生 fixture 在
+`apps/runtime/test/scheduling-fixture.mjs`，见 [记录](./validation/g7-scheduling-dispatch.md)。
+
 `packages/runtime-core/src/scheduling/store.rs` 与 `store/tests.rs` 提供现有
 DataStore 的调度记录/claim 和 SQLite 拒绝回归；没有第二个数据库，见
 [持久化证据](./validation/g7-scheduling-store.md)。

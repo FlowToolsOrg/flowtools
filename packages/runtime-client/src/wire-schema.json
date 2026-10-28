@@ -346,6 +346,70 @@
             "additionalProperties": false,
             "properties": {
               "method": {
+                "const": "schedules.list",
+                "type": "string"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "schedules.resolve-time",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ResolveScheduleTime"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "schedules.create",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/CreateSchedule"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "schedules.cancel",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ScheduleKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
                 "const": "plugins.list",
                 "type": "string"
               }
@@ -685,6 +749,42 @@
           }
         ]
       },
+      "CreateSchedule": {
+        "additionalProperties": false,
+        "properties": {
+          "commandId": {
+            "type": "string"
+          },
+          "definition": {
+            "$ref": "#/$defs/ScheduleDefinition"
+          },
+          "input": true,
+          "pluginId": {
+            "type": "string"
+          },
+          "requestKey": {
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/$defs/GrantTarget"
+          },
+          "timeoutMs": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "requestKey",
+          "target",
+          "pluginId",
+          "commandId",
+          "input",
+          "definition",
+          "timeoutMs"
+        ],
+        "type": "object"
+      },
       "DataImport": {
         "additionalProperties": false,
         "properties": {
@@ -863,6 +963,28 @@
         ],
         "type": "string"
       },
+      "LocalTimeChoice": {
+        "enum": [
+          "reject",
+          "earlier",
+          "later"
+        ],
+        "type": "string"
+      },
+      "MissedRunPolicy": {
+        "oneOf": [
+          {
+            "const": "skip",
+            "description": "Discard overdue occurrences outside the explicit lateness grace.",
+            "type": "string"
+          },
+          {
+            "const": "coalesce-latest",
+            "description": "Return only the latest due occurrence, even outside the grace.\nOlder occurrences are discarded; no catch-up burst is produced.",
+            "type": "string"
+          }
+        ]
+      },
       "OpenSession": {
         "additionalProperties": false,
         "properties": {
@@ -1006,6 +1128,86 @@
           "HEAD"
         ],
         "type": "string"
+      },
+      "ResolveScheduleTime": {
+        "additionalProperties": false,
+        "properties": {
+          "choice": {
+            "$ref": "#/$defs/LocalTimeChoice"
+          },
+          "local": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "local",
+          "timeZone",
+          "choice"
+        ],
+        "type": "object"
+      },
+      "ScheduleDefinition": {
+        "additionalProperties": false,
+        "properties": {
+          "firstDueMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "graceMs": {
+            "format": "uint64",
+            "maximum": 60000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "intervalMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 1000,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "missed": {
+            "$ref": "#/$defs/MissedRunPolicy"
+          },
+          "occurrences": {
+            "format": "uint32",
+            "maximum": 10000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "firstDueMs",
+          "occurrences",
+          "graceMs",
+          "missed"
+        ],
+        "type": "object"
+      },
+      "ScheduleKey": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision"
+        ],
+        "type": "object"
       },
       "Scope": {
         "description": "Exact, Host-approved scopes; there are no wildcard grants.",
@@ -1262,6 +1464,70 @@
           "coldStart"
         ],
         "type": "object"
+      },
+      "ClaimResult": {
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "state": {
+                "const": "claimed",
+                "type": "string"
+              }
+            },
+            "required": [
+              "state"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "runId": {
+                "type": "string"
+              },
+              "state": {
+                "const": "submitted",
+                "type": "string"
+              }
+            },
+            "required": [
+              "state",
+              "runId"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "$ref": "#/$defs/ErrorCode"
+              },
+              "state": {
+                "const": "rejected",
+                "type": "string"
+              }
+            },
+            "required": [
+              "state",
+              "code"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "state": {
+                "const": "interrupted",
+                "type": "string"
+              }
+            },
+            "required": [
+              "state"
+            ],
+            "type": "object"
+          }
+        ]
       },
       "CommandIdentity": {
         "additionalProperties": false,
@@ -1763,6 +2029,20 @@
         ],
         "type": "string"
       },
+      "MissedRunPolicy": {
+        "oneOf": [
+          {
+            "const": "skip",
+            "description": "Discard overdue occurrences outside the explicit lateness grace.",
+            "type": "string"
+          },
+          {
+            "const": "coalesce-latest",
+            "description": "Return only the latest due occurrence, even outside the grace.\nOlder occurrences are discarded; no catch-up burst is produced.",
+            "type": "string"
+          }
+        ]
+      },
       "Outcome": {
         "oneOf": [
           {
@@ -1790,6 +2070,60 @@
               },
               "type": {
                 "const": "status",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/$defs/ScheduleRecord"
+                },
+                "type": "array"
+              },
+              "type": {
+                "const": "schedules",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/ResolvedScheduleTime"
+              },
+              "type": {
+                "const": "schedule-time",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/ScheduleRecord"
+              },
+              "type": {
+                "const": "schedule",
                 "type": "string"
               }
             },
@@ -2262,6 +2596,33 @@
         ],
         "type": "string"
       },
+      "ResolvedScheduleTime": {
+        "additionalProperties": false,
+        "properties": {
+          "dueMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "utc": {
+            "type": "string"
+          },
+          "zoned": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dueMs",
+          "utc",
+          "zoned",
+          "timeZone"
+        ],
+        "type": "object"
+      },
       "ReverseDependency": {
         "additionalProperties": false,
         "properties": {
@@ -2432,6 +2793,166 @@
           "mode",
           "jobs",
           "activeJobs"
+        ],
+        "type": "object"
+      },
+      "ScheduleBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "grantEpoch": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "identity": {
+            "$ref": "#/$defs/CommandIdentity"
+          },
+          "inputDigest": {
+            "type": "string"
+          },
+          "timeoutMs": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "identity",
+          "grantEpoch",
+          "inputDigest",
+          "timeoutMs"
+        ],
+        "type": "object"
+      },
+      "ScheduleClaim": {
+        "additionalProperties": false,
+        "properties": {
+          "dueMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "index": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "result": {
+            "$ref": "#/$defs/ClaimResult"
+          },
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "index",
+          "dueMs",
+          "result"
+        ],
+        "type": "object"
+      },
+      "ScheduleDefinition": {
+        "additionalProperties": false,
+        "properties": {
+          "firstDueMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "graceMs": {
+            "format": "uint64",
+            "maximum": 60000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "intervalMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 1000,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "missed": {
+            "$ref": "#/$defs/MissedRunPolicy"
+          },
+          "occurrences": {
+            "format": "uint32",
+            "maximum": 10000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "firstDueMs",
+          "occurrences",
+          "graceMs",
+          "missed"
+        ],
+        "type": "object"
+      },
+      "ScheduleRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "binding": {
+            "$ref": "#/$defs/ScheduleBinding"
+          },
+          "cancelled": {
+            "type": "boolean"
+          },
+          "definition": {
+            "$ref": "#/$defs/ScheduleDefinition"
+          },
+          "id": {
+            "type": "string"
+          },
+          "lastClaim": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ScheduleClaim"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastObservedMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "nextIndex": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "skipped": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "definition",
+          "binding",
+          "nextIndex",
+          "cancelled",
+          "skipped"
         ],
         "type": "object"
       },

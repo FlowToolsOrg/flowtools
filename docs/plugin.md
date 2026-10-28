@@ -1,5 +1,9 @@
 # Flow Tool Plugin 开发指南
 
+P3.1b3 的有限调度只调用当前已批准的 headless 命令，冻结输入 digest 和包身份，
+每次检查后台权限及 epoch，撤销/更新不自动复活。原生调度确认与已有命令 grant
+分开；插件不取得 timer 或管理会话。见 [派发边界](./validation/g7-scheduling-dispatch.md)。
+
 P3.1b2 的调度 claim 只绑定既有命令身份、grant epoch 和输入 digest，不能
 替代当前授权或供插件选择身份；恢复未知尝试不自动重放发送。原始输入仍须
 单独私有保存，见 [持久化边界](./validation/g7-scheduling-store.md)。

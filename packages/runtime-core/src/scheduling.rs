@@ -9,7 +9,9 @@ pub const MAX_OCCURRENCES: u32 = 10_000;
 pub const MIN_INTERVAL_MS: u64 = 1_000;
 pub const MAX_GRACE_MS: u64 = 60_000;
 
+pub mod commands;
 pub mod store;
+pub mod time;
 
 #[derive(
     Clone,

@@ -15,6 +15,8 @@ import type {
   RunDiagnostic,
   SessionProof,
   SubmitJob,
+  CreateSchedule,
+  ScheduleRecord,
 } from './bindings'
 
 import {
@@ -27,6 +29,7 @@ import {
 
 import { CLIENT_VERSION, PROTOCOL_MAJOR } from './bindings'
 import { decodeResponse, encodeRequest } from './codec'
+import { validScheduleDefinition, validScheduleRecord } from './scheduling'
 
 export interface RuntimeTransport {
   exchange(request: Request): Promise<Response>
@@ -45,6 +48,45 @@ export class RuntimeClientError extends Error {
 
 /** No independent plugin/task/grant stores; queries are Runtime-owned facts. */
 export class RuntimeClient {
+  async schedules(): Promise<ScheduleRecord[]> {
+    const result = await this.call({ method: 'schedules.list' })
+    if (
+      result.type !== 'schedules' ||
+      result.data.length > 128 ||
+      new Set(result.data.map(record => record.id)).size !==
+        result.data.length ||
+      result.data.some(record => !validScheduleRecord(record))
+    )
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    return result.data
+  }
+
+  async createSchedule(create: CreateSchedule): Promise<ScheduleRecord> {
+    if (!validScheduleDefinition(create.definition))
+      throw new RuntimeClientError('INPUT_INVALID')
+    const result = await this.call({
+      method: 'schedules.create',
+      payload: create,
+    })
+    if (result.type !== 'schedule' || !validScheduleRecord(result.data))
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    return result.data
+  }
+
+  async cancelSchedule(id: string, revision: number): Promise<ScheduleRecord> {
+    const result = await this.call({
+      method: 'schedules.cancel',
+      payload: { id, revision },
+    })
+    if (
+      result.type !== 'schedule' ||
+      !validScheduleRecord(result.data) ||
+      result.data.id !== id ||
+      !result.data.cancelled
+    )
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    return result.data
+  }
   private proof: SessionProof | null = null
   constructor(private transport: RuntimeTransport) {}
 
@@ -204,6 +246,10 @@ export class RuntimeClient {
     const expected = {
       'session.open': 'session',
       'runtime.status': 'status',
+      'schedules.list': 'schedules',
+      'schedules.resolve-time': 'schedule-time',
+      'schedules.create': 'schedule',
+      'schedules.cancel': 'schedule',
       'plugins.list': 'plugins',
       'dependencies.plan': 'dependency-plan',
       'dependencies.unload-plan': 'provider-change-plan',

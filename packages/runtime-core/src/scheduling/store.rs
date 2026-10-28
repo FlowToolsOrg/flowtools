@@ -12,9 +12,16 @@ const MAX_BYTES: usize = 262_144;
 #[derive(Clone, Debug, Serialize, Deserialize, specta::Type, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ScheduleDefinition {
+    #[specta(type = specta_typescript::Number)]
+    #[schemars(range(min = 0, max = 253402300799999u64))]
     pub first_due_ms: u64,
+    #[specta(type = Option<specta_typescript::Number>)]
+    #[schemars(range(min = 1000, max = 253402300799999u64))]
     pub interval_ms: Option<u64>,
+    #[schemars(range(min = 1, max = 10000))]
     pub occurrences: u32,
+    #[specta(type = specta_typescript::Number)]
+    #[schemars(range(min = 0, max = 60000))]
     pub grace_ms: u64,
     pub missed: MissedRunPolicy,
 }
@@ -49,7 +56,12 @@ pub struct ScheduleBinding {
 #[derive(
     Clone, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type, schemars::JsonSchema,
 )]
-#[serde(tag = "state", rename_all = "kebab-case", deny_unknown_fields)]
+#[serde(
+    tag = "state",
+    rename_all = "kebab-case",
+    rename_all_fields = "camelCase",
+    deny_unknown_fields
+)]
 pub enum ClaimResult {
     Claimed,
     Submitted { run_id: String },
@@ -62,6 +74,8 @@ pub enum ClaimResult {
 pub struct ScheduleClaim {
     pub token: String,
     pub index: u32,
+    #[specta(type = specta_typescript::Number)]
+    #[schemars(range(min = 0, max = 253402300799999u64))]
     pub due_ms: u64,
     pub result: ClaimResult,
 }
@@ -74,6 +88,8 @@ pub struct ScheduleRecord {
     pub definition: ScheduleDefinition,
     pub binding: ScheduleBinding,
     pub next_index: u32,
+    #[specta(type = Option<specta_typescript::Number>)]
+    #[schemars(range(min = 0, max = 253402300799999u64))]
     pub last_observed_ms: Option<u64>,
     pub cancelled: bool,
     pub skipped: u32,

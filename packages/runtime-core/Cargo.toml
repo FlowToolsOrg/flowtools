@@ -18,6 +18,7 @@ schemars = { version = "=1.2.1", features = ["derive"] }
 rusqlite = { version = "=0.39.0", features = ["bundled", "backup"] }
 node-semver = "=2.2.0"
 ryu-js = "=1.0.2"
+jiff = { version = "=0.2.37", features = ["tzdb-bundle-always"] }
 zip = { version = "=9.0.1", default-features = false, features = ["deflate-flate2"] }
 flate2 = { version = "=1.1.10", default-features = false, features = ["rust_backend"] }
 

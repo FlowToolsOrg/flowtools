@@ -1,5 +1,10 @@
 # Flow Tool
 
+P3.1b3 connects finite schedules to the existing authenticated Host queue, with
+private inputs, per-trigger background/epoch checks and GUI/CLI management.
+Explicit IANA/DST preview and a real no-client execution fixture are covered;
+see [dispatch evidence](./docs/validation/g7-scheduling-dispatch.md).
+
 P3.1b2 persists finite schedule positions and claims through Runtime's existing
 single writer, with restart, cancellation and restore-scope refusal tests. See
 [durable scheduling](./docs/validation/g7-scheduling-store.md).

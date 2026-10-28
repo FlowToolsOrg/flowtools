@@ -437,6 +437,11 @@ Tauri [sidecar](https://v2.tauri.app/develop/sidecar/) 用于构建捆绑程序�
 
 ## 9. G7：统一 UI 与三个办公闭环
 
+P3.1b3 已接真实 Host 队列与 GUI/CLI 创建、查询、取消，当前后台授权/epoch
+逐次验证，私有输入加密且时区/DST 明确解析。无客户端时的实际插件执行与
+撤销/取消拒绝 fixture 通过；继续编辑、恢复与通知，见
+[派发证据](./validation/g7-scheduling-dispatch.md)。
+
 P3.1b2（2026-10-27）已接现有单写者持久化有限调度位置和 claim，8 项实际
 SQLite 拒绝/恢复回归通过；接下来持续实现认证管理与 Host 派发，见
 [证据](./validation/g7-scheduling-store.md)。

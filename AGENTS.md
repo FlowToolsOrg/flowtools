@@ -176,6 +176,14 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+P3.1b3's `runtime_scheduling.rs` dispatches only through normal submit/runner
+checks, with exact identity/epoch/background policy, private inputs, durable claims
+and no overlap. Keep management-only hosts inert, creation consent separate from
+grants, and cancelled/revoked schedules inactive after regrant. Time resolution
+uses explicit IANA/DST choices and no Host start in Desktop preview. Preserve
+safe-integer Rust DTO/schema bounds and global Specta BigInt refusal. See
+[dispatch evidence](./docs/validation/g7-scheduling-dispatch.md).
+
 P3.1b2's `scheduling/store.rs` borrows DataStore's single writer for bounded
 schedule state and exact-token claims. Preserve revision cancellation, immutable
 identity/epoch/input digest, no raw inputs, profile hash and restore-generation

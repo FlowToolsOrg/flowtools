@@ -14,7 +14,7 @@ export type BootstrapPolicy = {
 	coldStart: boolean,
 };
 
-export type Call = { method: "session.open"; payload: OpenSession } | { method: "runtime.status" } | { method: "plugins.list" } | { method: "dependencies.plan"; payload: DependencyPlanRequest } | { method: "dependencies.unload-plan"; payload: ProviderKey } | { method: "services.calls"; payload: JobKey } | { method: "jobs.submit"; payload: SubmitJob } | { method: "jobs.lookup"; payload: IdempotencyKey } | { method: "jobs.status"; payload: JobKey } | { method: "jobs.diagnose"; payload: JobKey } | { method: "jobs.list" } | { method: "jobs.cancel"; payload: JobKey } | { method: "jobs.events"; payload: EventCursor } | { method: "data.read"; payload: DataRead } | { method: "data.write"; payload: DataWrite } | { method: "data.transaction"; payload: DataTransaction } | { method: "data.import-legacy"; payload: DataImport } | { method: "permissions.list" } | { method: "permissions.grant"; payload: PermissionGrant } | { method: "permissions.revoke"; payload: PermissionKey } | { method: "policy.set"; payload: BootstrapPolicy } | { method: "policy.import"; payload: PolicyImport } | { method: "runtime.stop" };
+export type Call = { method: "session.open"; payload: OpenSession } | { method: "runtime.status" } | { method: "schedules.list" } | { method: "schedules.resolve-time"; payload: ResolveScheduleTime } | { method: "schedules.create"; payload: CreateSchedule } | { method: "schedules.cancel"; payload: ScheduleKey } | { method: "plugins.list" } | { method: "dependencies.plan"; payload: DependencyPlanRequest } | { method: "dependencies.unload-plan"; payload: ProviderKey } | { method: "services.calls"; payload: JobKey } | { method: "jobs.submit"; payload: SubmitJob } | { method: "jobs.lookup"; payload: IdempotencyKey } | { method: "jobs.status"; payload: JobKey } | { method: "jobs.diagnose"; payload: JobKey } | { method: "jobs.list" } | { method: "jobs.cancel"; payload: JobKey } | { method: "jobs.events"; payload: EventCursor } | { method: "data.read"; payload: DataRead } | { method: "data.write"; payload: DataWrite } | { method: "data.transaction"; payload: DataTransaction } | { method: "data.import-legacy"; payload: DataImport } | { method: "permissions.list" } | { method: "permissions.grant"; payload: PermissionGrant } | { method: "permissions.revoke"; payload: PermissionKey } | { method: "policy.set"; payload: BootstrapPolicy } | { method: "policy.import"; payload: PolicyImport } | { method: "runtime.stop" };
 
 /**
  *  Narrow operations: no caller/plugin/namespace, raw paths, SQL, argv or env.
@@ -43,6 +43,8 @@ export type CapabilityOperation = { operation: "file-read"; parameters: {
 	action: string,
 } };
 
+export type ClaimResult = { state: "claimed" } | { state: "submitted"; runId: string } | { state: "rejected"; code: ErrorCode } | { state: "interrupted" };
+
 export type CommandIdentity = {
 	caller: string,
 	publisher: string,
@@ -50,6 +52,16 @@ export type CommandIdentity = {
 	version: string,
 	packageDigest: string,
 	commandId: string,
+};
+
+export type CreateSchedule = {
+	requestKey: string,
+	target: GrantTarget,
+	pluginId: string,
+	commandId: string,
+	input: unknown,
+	definition: ScheduleDefinition,
+	timeoutMs: number,
 };
 
 export type DataImport = {
@@ -212,13 +224,24 @@ export type LegacyImport = {
 
 export type LegacySource = "cli-v0" | "desktop-localstorage-v1" | "web-localstorage-v1";
 
+export type LocalTimeChoice = "reject" | "earlier" | "later";
+
+export type MissedRunPolicy =
+/**  Discard overdue occurrences outside the explicit lateness grace. */
+"skip" |
+/**
+ *  Return only the latest due occurrence, even outside the grace.
+ *  Older occurrences are discarded; no catch-up burst is produced.
+ */
+"coalesce-latest";
+
 export type OpenSession = {
 	token: string,
 	clientVersion: string,
 	expectedInstanceId: string | null,
 };
 
-export type Outcome = { type: "session"; data: SessionProof } | { type: "status"; data: RuntimeStatus } | { type: "plugins"; data: PluginStatus[] } | { type: "dependency-plan"; data: DependencyPlan } | { type: "provider-change-plan"; data: ProviderChangePlan } | { type: "service-calls"; data: ServiceCallDiagnostic[] } | { type: "receipt"; data: JobReceipt } | { type: "job"; data: JobSnapshot } | { type: "jobs"; data: JobSnapshot[] } | { type: "diagnostic"; data: RunDiagnostic } | { type: "events"; data: JobEvent[] } | { type: "data"; data: DataSnapshot } | { type: "data-batch"; data: DataSnapshot[] } | { type: "permissions"; data: PermissionRecord[] } | { type: "policy"; data: BootstrapPolicy } | { type: "stopping" } | { type: "error"; data: RuntimeError };
+export type Outcome = { type: "session"; data: SessionProof } | { type: "status"; data: RuntimeStatus } | { type: "schedules"; data: ScheduleRecord[] } | { type: "schedule-time"; data: ResolvedScheduleTime } | { type: "schedule"; data: ScheduleRecord } | { type: "plugins"; data: PluginStatus[] } | { type: "dependency-plan"; data: DependencyPlan } | { type: "provider-change-plan"; data: ProviderChangePlan } | { type: "service-calls"; data: ServiceCallDiagnostic[] } | { type: "receipt"; data: JobReceipt } | { type: "job"; data: JobSnapshot } | { type: "jobs"; data: JobSnapshot[] } | { type: "diagnostic"; data: RunDiagnostic } | { type: "events"; data: JobEvent[] } | { type: "data"; data: DataSnapshot } | { type: "data-batch"; data: DataSnapshot[] } | { type: "permissions"; data: PermissionRecord[] } | { type: "policy"; data: BootstrapPolicy } | { type: "stopping" } | { type: "error"; data: RuntimeError };
 
 export type PackagePin = {
 	publisher: string,
@@ -299,6 +322,19 @@ export type Request = {
 	call: Call,
 };
 
+export type ResolveScheduleTime = {
+	local: string,
+	timeZone: string,
+	choice: LocalTimeChoice,
+};
+
+export type ResolvedScheduleTime = {
+	dueMs: number,
+	utc: string,
+	zoned: string,
+	timeZone: string,
+};
+
 export type Response = {
 	version: number,
 	requestId: string,
@@ -343,6 +379,45 @@ export type RuntimeStatus = {
 	mode: string,
 	jobs: number,
 	activeJobs: number,
+};
+
+export type ScheduleBinding = {
+	identity: CommandIdentity,
+	grantEpoch: number,
+	inputDigest: string,
+	timeoutMs: number,
+};
+
+export type ScheduleClaim = {
+	token: string,
+	index: number,
+	dueMs: number,
+	result: ClaimResult,
+};
+
+export type ScheduleDefinition = {
+	firstDueMs: number,
+	intervalMs: number | null,
+	occurrences: number,
+	graceMs: number,
+	missed: MissedRunPolicy,
+};
+
+export type ScheduleKey = {
+	id: string,
+	revision: number,
+};
+
+export type ScheduleRecord = {
+	id: string,
+	revision: number,
+	definition: ScheduleDefinition,
+	binding: ScheduleBinding,
+	nextIndex: number,
+	lastObservedMs: number | null,
+	cancelled: boolean,
+	skipped: number,
+	lastClaim: ScheduleClaim | null,
 };
 
 /**  Exact, Host-approved scopes; there are no wildcard grants. */
@@ -417,3 +492,5 @@ export type ToolPin = {
 	buildFlavor: string,
 	digest: string,
 };
+
+export const SCHEDULE_LIMITS = {"maxGraceMs":60000,"maxOccurrences":10000,"maxSchedules":128,"maxTimestampMs":253402300799999,"minIntervalMs":1000} as const

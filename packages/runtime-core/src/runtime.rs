@@ -14,6 +14,9 @@ use serde_json::{json, Value};
 use std::collections::{BTreeMap, HashMap};
 use uuid::Uuid;
 
+#[path = "runtime_scheduling.rs"]
+mod scheduling;
+
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct ProviderJournal {
@@ -253,6 +256,13 @@ impl RuntimeCore {
         core.policy = Some(policy);
         core.private_jobs = core.data.profile().map(PrivateJobs::open).transpose()?;
         core.restore_jobs()?;
+        // Claimed-but-unreported attempts are never blindly replayed on restart.
+        // Restore/copy mismatch blocks scheduling while ordinary recovery remains usable.
+        if let Err(code) = crate::scheduling::store::ScheduleStore::recover(&mut core.data) {
+            if code != ErrorCode::RecoveryPending {
+                return Err(code);
+            }
+        }
         Ok(core)
     }
 
@@ -674,6 +684,8 @@ impl RuntimeCore {
                 | Call::Policy(_)
                 | Call::PolicyImport(_)
                 | Call::Stop
+                | Call::ScheduleCreate(_)
+                | Call::ScheduleCancel(_)
         ) && !management
         {
             return Err(ErrorCode::SessionInvalid);
@@ -691,6 +703,23 @@ impl RuntimeCore {
             return Err(ErrorCode::ApprovalRequired);
         }
         match request.call {
+            Call::ScheduleResolve(input) => {
+                crate::scheduling::time::resolve_time(input).map(Outcome::ScheduleTime)
+            }
+            Call::Schedules => {
+                if self.policy.is_none() {
+                    return Err(ErrorCode::ApprovalRequired);
+                }
+                Ok(Outcome::Schedules(
+                    crate::scheduling::store::ScheduleStore::list(&self.data)?,
+                ))
+            }
+            Call::ScheduleCreate(create) => self
+                .create_schedule(create)
+                .map(|record| Outcome::Schedule(Box::new(record))),
+            Call::ScheduleCancel(key) => self
+                .cancel_schedule(key)
+                .map(|record| Outcome::Schedule(Box::new(record))),
             Call::PolicyImport(import) => {
                 let policy = self.policy.as_mut().unwrap();
                 policy.import(&mut self.data, import)?;

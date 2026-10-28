@@ -1,5 +1,10 @@
 # Flow Tool Architecture
 
+P3.1b3 的 Host tick 将已提交 claim 接到既有任务队列，每次检查当前身份、
+background grant/epoch；输入复用私有加密存储，未知接受状态 fail closed。
+管理会话创建/取消，Native 明确确认；GUI/CLI 共用 Rust 派生 wire 与 Jiff 时区
+解析，见 [派发证据](./docs/validation/g7-scheduling-dispatch.md)。
+
 P3.1b2 的 `scheduling/store.rs` 在现有 `core_metadata` 单写者持久化有限调度
 位置和随机 claim，先提交再返回一次派发尝试；不存原始输入。未知尝试不重放，
 复制数据库/恢复代际改变拒绝自动触发，见 [证据](./docs/validation/g7-scheduling-store.md)。

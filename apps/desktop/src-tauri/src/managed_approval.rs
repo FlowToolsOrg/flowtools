@@ -111,6 +111,23 @@ pub fn runtime_prompts(call: &Call, initialize: bool) -> Result<Vec<String>, Err
         return Err(ErrorCode::SessionInvalid);
     }
     match call {
+        Call::ScheduleCreate(create) => {
+            create.validate()?;
+            // Never interpolate raw command input, paths or exception messages.
+            let mut lines = vec!["创建后台命令调度？".to_owned()];
+            field(&mut lines, "插件", quoted(&create.plugin_id));
+            field(&mut lines, "命令", quoted(&create.command_id));
+            field(&mut lines, "首次触发 UTC Unix 毫秒", create.definition.first_due_ms);
+            field(&mut lines, "有限次数", create.definition.occurrences);
+            field(&mut lines, "固定间隔毫秒", create.definition.interval_ms.unwrap_or(0));
+            field(&mut lines, "容许迟到毫秒", create.definition.grace_ms);
+            field(&mut lines, "漏触发策略", format!("{:?}", create.definition.missed));
+            field(&mut lines, "调用端", format!("{:?}", create.target));
+            field(&mut lines, "输入摘要", flowtools_runtime_core::catalog::digest(&create.input));
+            field(&mut lines, "每次最长毫秒", create.timeout_ms);
+            lines.push("只使用现有后台授权；授权撤销或包版本变化后拒绝触发。取消不会自动恢复调度。".into());
+            Ok(pages(lines, 1, 1))
+        }
         Call::Stop => Ok(vec!["停止 Runtime？\n此操作会取消所有活动任务并等待清理。\n收到停止回执后，仍需确认写入者已释放。".into()]),
         Call::Policy(policy) => Ok(vec![format!("修改 Runtime 按需启动设置？\ncoldStart：{}\n不授予插件权限，也不执行命令。", yes(policy.cold_start))]),
         Call::Grant(grant) => Ok(pages(grant_lines(grant, std::slice::from_ref(&grant.target), None)?, 1, 1)),
@@ -154,6 +171,34 @@ pub fn storage_prompt(action: &StorageAction) -> Result<Option<String>, ErrorCod
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn schedule_confirmation_binds_timing_and_digest_without_exposing_private_input() {
+        use flowtools_runtime_core::scheduling::{
+            commands::CreateSchedule, store::ScheduleDefinition, MissedRunPolicy,
+        };
+        let call = Call::ScheduleCreate(CreateSchedule {
+            request_key: "00000000-0000-4000-8000-000000000001".into(),
+            target: GrantTarget::Desktop,
+            plugin_id: "plugin-todo-list".into(),
+            command_id: "run".into(),
+            input: serde_json::json!({"todo":"PRIVATE_NATIVE_SCHEDULE_BODY"}),
+            timeout_ms: 1000,
+            definition: ScheduleDefinition {
+                first_due_ms: 100000,
+                interval_ms: Some(1000),
+                occurrences: 3,
+                grace_ms: 500,
+                missed: MissedRunPolicy::CoalesceLatest,
+            },
+        });
+        let text = runtime_prompts(&call, false).unwrap().join("\n");
+        assert!(text.contains("有限次数：3"));
+        assert!(text.contains("后台"));
+        assert!(text.contains("输入摘要"));
+        assert!(!text.contains("PRIVATE_NATIVE_SCHEDULE_BODY"));
+        assert_eq!(runtime_prompts(&call, true), Err(ErrorCode::SessionInvalid));
+    }
     use flowtools_runtime_core::broker::Scope;
 
     fn grant(target: GrantTarget) -> PermissionGrant {

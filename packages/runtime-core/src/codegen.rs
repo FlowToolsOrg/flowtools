@@ -37,7 +37,25 @@ pub fn artifacts() -> Result<Vec<(&'static str, String)>, Box<dyn std::error::Er
         .register::<StorageAction>()
         .register::<StorageReport>();
     let bindings = format!("// Generated from Rust. Do not edit.\nexport const PROTOCOL_MAJOR = {PROTOCOL_MAJOR} as const\nexport const CLIENT_VERSION = '{CLIENT_VERSION}' as const\n{}", specta_typescript::Typescript::default().export(&types, specta_serde::Format)?);
+    let bindings = format!(
+        "{bindings}\nexport const SCHEDULE_LIMITS = {} as const\n",
+        json!({
+            "maxTimestampMs": crate::scheduling::MAX_TIMESTAMP_MS,
+            "maxOccurrences": crate::scheduling::MAX_OCCURRENCES,
+            "minIntervalMs": crate::scheduling::MIN_INTERVAL_MS,
+            "maxGraceMs": crate::scheduling::MAX_GRACE_MS,
+            "maxSchedules": 128,
+        })
+    );
     let schemas = json!({ "request": schemars::schema_for!(Request), "response": schemars::schema_for!(Response), "capabilityOperation": schemars::schema_for!(CapabilityOperation), "storageAction": schemars::schema_for!(StorageAction), "storageReport": schemars::schema_for!(StorageReport) });
+    // Canonical LF source, including enum docs emitted with trailing spaces by
+    // the exporter. Compare exactly this output in the unchanged drift gate.
+    let bindings = bindings
+        .lines()
+        .map(str::trim_end)
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n";
     let request = Request {
         version: PROTOCOL_MAJOR,
         request_id: "fixture-request".into(),

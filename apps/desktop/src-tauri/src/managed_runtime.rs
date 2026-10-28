@@ -435,17 +435,28 @@ pub async fn managed_runtime_control<R: tauri::Runtime>(
     call: Call,
     initialize: bool,
 ) -> Result<Outcome, RuntimeError> {
-    if matches!(call, Call::Status) && initialize {
+    if matches!(call, Call::Status | Call::ScheduleResolve(_)) && initialize {
         return Err(error(ErrorCode::SessionInvalid));
     }
     let profile = check(&window)?;
     if matches!(call, Call::Status) {
         return status_snapshot(profile).await.map(Outcome::Status);
     }
+    if let Call::ScheduleResolve(input) = call {
+        // The same Runtime-owned pure conversion is usable before a Host exists.
+        // No bootstrap, manager helper, profile initialization or business start.
+        return flowtools_runtime_core::scheduling::time::resolve_time(input)
+            .map(Outcome::ScheduleTime)
+            .map_err(error);
+    }
     if !matches!(
         call,
         Call::Permissions
             | Call::Plugins
+            | Call::Schedules
+            | Call::ScheduleCreate(_)
+            | Call::ScheduleResolve(_)
+            | Call::ScheduleCancel(_)
             | Call::Grant(_)
             | Call::Revoke(_)
             | Call::Policy(_)
@@ -455,7 +466,15 @@ pub async fn managed_runtime_control<R: tauri::Runtime>(
     {
         return Err(error(ErrorCode::SessionInvalid));
     }
-    if !matches!(call, Call::Permissions | Call::Plugins | Call::Revoke(_)) {
+    if !matches!(
+        call,
+        Call::Permissions
+            | Call::Plugins
+            | Call::Schedules
+            | Call::Revoke(_)
+            | Call::ScheduleResolve(_)
+            | Call::ScheduleCancel(_)
+    ) {
         let encoded = serde_json::to_string(&call).map_err(|_| error(ErrorCode::InvalidRequest))?;
         if encoded.len() > 8192 {
             return Err(error(ErrorCode::FrameTooLarge));

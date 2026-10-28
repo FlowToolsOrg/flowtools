@@ -459,6 +459,11 @@ loopback 均可用，但 public/wildcard/mixed listener、未监听的端点、�
 
 ### SEC-013 CLI 冷启动、后台任务与调用主体混淆
 
+P3.1b3 的 [实际调度](../validation/g7-scheduling-dispatch.md) 需要管理会话明确
+创建且已有 background grant；每次重新检查包身份/epoch，不自动复活撤销的调度。
+claim 先提交、私有输入加密、真实无客户端执行/拒绝矩阵已有 fixture，通知、
+恢复/平台与独立安全验收继续实施，本威胁仍 open。
+
 P3.1b1 的 [有限调度规则](../validation/g7-scheduling-rules.md) 只返回惰性
 occurrence，不接持久 claims、timer、IPC、执行或通知。重复抑制仅对同一内存
 游标有效；不能据此声称恢复/外部副作用 exactly-once。后续调度需单写者原子

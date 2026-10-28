@@ -244,14 +244,14 @@ development-mode results and standalone packaged-app acceptance are recorded
 separately; a successful build or URL-resolution test is not visual sign-off.
 This helper does not isolate code or stop synchronous loops. Execution
 metadata records input shape only, never raw input values or field names.
-`bun run smoke:plugins` builds package prerequisites and exercises all twelve
+`bun run smoke:plugins` builds package prerequisites and exercises all thirteen
 real compiled entries through the CLI SDK runner with controlled in-memory
 storage and scoped fixture responses, not public network or user data. It also
 checks schema rejection, cancellation and actual plugin exceptions.
 Todo JSON runs share the host app store with its panel (CLI retains its existing
 validated `todos` key). Website latency uses SDK request with no raw fetch fallback.
 The SDK's maturity vocabulary is `prototype`, `experimental`, `beta`,
-`production`; missing metadata means `prototype`. All twelve built-ins and both
+`production`; missing metadata means `prototype`. All thirteen built-ins and both
 host manifests explicitly declare `prototype`, also shown by CLI list/info.
 Compatibility evidence (`indexed` through `production-certified`) is separate
 and never grants execution or proves maturity. Shared UI, Web and Desktop read
@@ -831,7 +831,7 @@ All maturity labels stay prototype; SEC-001–SEC-012 remain open.
 The React-free SDK manifest subpath validates serialized commands and package
 metadata. Node file verification is a separate read-only subpath; it does not
 grant external execution. See [Manifest v1](./docs/manifest-v1.md). P1.1a is
-implemented. P1.1b builds twelve separate UI/command entries and validates the
+implemented. P1.1b now builds thirteen separate UI/command entries and validates the
 fixed compiled CLI packages before import. P1.1c adds Manifest-driven
 `commands`, `describe`, help, flags and sequential JSON batch input. Web/Desktop
 validate the same contract before UI import and use it for execution. See the
@@ -1029,7 +1029,7 @@ A/B/C fixtures execute through real compiled handlers and bounded child pipes.
 Updates wait for accepted work and owned processes, then back up and migrate;
 uncertain commits refuse admission and require recovery. CLI
 `dependencies unload-plan` and `dependencies calls` inspect metadata only.
-The twelve production built-ins still declare no services. G4 implementation
+The thirteen bundled prototype built-ins still declare no services. G4 implementation
 remains prototype; six real abnormal-drain fixtures have independent baseline
 evidence, while this integration and independent security approval remain pending. Signed installation,
 third-party isolation and real tool storage remain G5/G6.

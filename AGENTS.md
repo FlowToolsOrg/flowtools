@@ -184,6 +184,10 @@ G5/G6 gates. See [matrix](./docs/validation/g7-completion-matrix.md).
 Before private-job orphan cleanup, retain strictly validated schedule input IDs
 even during restore/copy recovery. Retention never authorizes dispatch or clears
 scope markers; corrupt state must preserve bytes by refusing cleanup.
+CLI's compiled search cases run under the Node test Host against the actual Bun
+CLI, after its existing Bun suite. Preserve both 5s bounds, actual exit/JSON and
+source-canary assertions, exact case count, strict JS checking and fatal `&&`
+sequencing. Bun child-startup blocking is not a reason to relax product deadlines.
 
 G7 search uses `@flowtools/sdk/search`, not independent Host scoring. Keep
 registration/removal synchronized with lifecycle and explain stable rankings.

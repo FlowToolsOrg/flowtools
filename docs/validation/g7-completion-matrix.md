@@ -49,3 +49,23 @@
 完整 CLI 102 项、346 assertions 通过。嵌套 worktree 的首次 Cargo workspace
 定位失败单独保留，后续验证副本已移到仓库外。所有旧失败保留，不称为通过。
 最新提交仍需完整根门禁与远端验收，不合并、部署或改仓库设置。
+
+`29ec8a0` 的本机完整门禁再次在单独的 regex CLI 测试失败（9.39s，原限额
+5s；101 pass / 1 fail / 1 error）。因此拆分不足以解决启动阻塞。实际诊断：
+Bun 父进程启动 Node 子进程的 `spawn` 调用返回耗时 10,068ms；Node 父进程
+启动同一真实 Bun CLI 的 spawn 54.9ms、完整退出 580.2ms。底层 OS/引擎原因
+未确定，不能归因于搜索算法或擅自更改工具链。
+
+两个搜索子进程用例现迁到严格类型检查的 Node test Host，仍启动实际 Bun CLI，
+分别保留原 5s test deadline、真实 PID/退出码/JSON/source canary 断言，增加
+输出上限、取消时终止自有子进程及准确的两用例计数。标准 CLI `test` 在原 Bun
+suite 成功后以 `&&` 运行 Node suite，任何失败仍阻断根门禁；PowerShell 回归
+同时验证 Bun/Node 的非零退出均阻止后续步骤。没有改变生产代码/执行期限、
+Job/drain/lease 或任何 CI 缓存/权限设置。
+
+Node 宿主的首次整合检查发现测试注册阶段提前等待首个测试会使全局计数 hook
+在第二例注册前运行，已改为先注册完整两例再由 Node test runner 执行；两例
+与最终计数均通过。CLI 原有 Bun 100 项 / 336 assertions 通过，Node 两例
+最新分别约 517/531ms；types/lint、生成命令文档与实际 manifest，以及含
+Bun/Node 失败传播的 17 项仓库回归通过。Core 最新完整 252 + 11 + 2、
+all-target Clippy 通过。以上均为专项证据，修复树需再次执行完整根门禁。

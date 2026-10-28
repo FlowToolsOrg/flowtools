@@ -11,6 +11,6 @@ test('the serialized protocol fixture passes the same public manifest validator'
   ])
 })
 
-test('actual twelve built-in package manifests and bytes match the fixed inventory', () => {
+test('actual thirteen built-in package manifests and bytes match the fixed inventory', () => {
   expect(verifyBuiltinManifests()).toHaveLength(13)
 })

@@ -520,21 +520,23 @@ process.stdout.write('OS-selected browser API port verified\\n')`,
 }, 30_000)
 
 test('PowerShell propagates native failure before subsequent gates run', () => {
-  const success = runPowerShell(
-    `. ${helperPath}; Invoke-QualityCommand 'fixture' bun @('-e', 'process.exit(0)')`
-  )
-  expect(success.error).toBeUndefined()
-  if (success.status !== 0) {
-    throw new Error(`PowerShell success probe failed: ${success.stderr}`)
+  for (const host of ['bun', 'node']) {
+    const success = runPowerShell(
+      `. ${helperPath}; Invoke-QualityCommand 'fixture' ${host} @('-e', 'process.exit(0)')`
+    )
+    expect(success.error).toBeUndefined()
+    if (success.status !== 0) {
+      throw new Error(`PowerShell success probe failed: ${success.stderr}`)
+    }
+    expect(success.status).toBe(0)
+    const failure = runPowerShell(
+      `. ${helperPath}; Invoke-QualityCommand 'fixture' ${host} @('-e', 'process.exit(17)'); Write-Output 'UNEXPECTED_CONTINUATION'`
+    )
+    expect(failure.error).toBeUndefined()
+    expect(failure.status).toBe(1)
+    expect(failure.stderr).toContain('exit code 17')
+    expect(failure.stdout).not.toContain('UNEXPECTED_CONTINUATION')
   }
-  expect(success.status).toBe(0)
-  const failure = runPowerShell(
-    `. ${helperPath}; Invoke-QualityCommand 'fixture' bun @('-e', 'process.exit(17)'); Write-Output 'UNEXPECTED_CONTINUATION'`
-  )
-  expect(failure.error).toBeUndefined()
-  expect(failure.status).toBe(1)
-  expect(failure.stderr).toContain('exit code 17')
-  expect(failure.stdout).not.toContain('UNEXPECTED_CONTINUATION')
 }, 30_000)
 
 test('production artifact refusal is a fatal post-build gate before the clean-worktree check', async () => {

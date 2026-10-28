@@ -43,6 +43,12 @@ package, with extra app-ID/XML injection refusal cases. This failure is retained
 in `scheduling-root-ci-20261028.log`; the corrected tree needs a new full gate.
 Earlier Runtime descendant failures also remain recorded.
 
+The PR workflow for `945ec7b` reached the actual plugin workspace suite and
+identified its separate explicit UI-plugin contract inventory still containing
+twelve imports. The thirteenth real reminder import is now included in that
+unchanged exact-entry comparison. Remote failure:
+[Windows quality 40669833347](https://github.com/FlowToolsOrg/flowtools/actions/runs/40669833347).
+
 Primary API reference: [Toast API 0.7.2](https://docs.rs/tauri-winrt-notification/0.7.2/tauri_winrt_notification/struct.Toast.html).
 Search, file/media workflows and external G5/G6 execution prerequisites remain
 separate work. No fixture trust pins or arbitrary local executables are enabled.

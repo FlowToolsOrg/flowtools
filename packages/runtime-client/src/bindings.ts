@@ -14,7 +14,7 @@ export type BootstrapPolicy = {
 	coldStart: boolean,
 };
 
-export type Call = { method: "session.open"; payload: OpenSession } | { method: "runtime.status" } | { method: "schedules.list" } | { method: "schedules.resolve-time"; payload: ResolveScheduleTime } | { method: "schedules.create"; payload: CreateSchedule } | { method: "schedules.cancel"; payload: ScheduleKey } | { method: "plugins.list" } | { method: "dependencies.plan"; payload: DependencyPlanRequest } | { method: "dependencies.unload-plan"; payload: ProviderKey } | { method: "services.calls"; payload: JobKey } | { method: "jobs.submit"; payload: SubmitJob } | { method: "jobs.lookup"; payload: IdempotencyKey } | { method: "jobs.status"; payload: JobKey } | { method: "jobs.diagnose"; payload: JobKey } | { method: "jobs.list" } | { method: "jobs.cancel"; payload: JobKey } | { method: "jobs.events"; payload: EventCursor } | { method: "data.read"; payload: DataRead } | { method: "data.write"; payload: DataWrite } | { method: "data.transaction"; payload: DataTransaction } | { method: "data.import-legacy"; payload: DataImport } | { method: "permissions.list" } | { method: "permissions.grant"; payload: PermissionGrant } | { method: "permissions.revoke"; payload: PermissionKey } | { method: "policy.set"; payload: BootstrapPolicy } | { method: "policy.import"; payload: PolicyImport } | { method: "runtime.stop" };
+export type Call = { method: "session.open"; payload: OpenSession } | { method: "runtime.status" } | { method: "schedules.list" } | { method: "schedules.resolve-time"; payload: ResolveScheduleTime } | { method: "schedules.create"; payload: CreateSchedule } | { method: "schedules.cancel"; payload: ScheduleKey } | { method: "schedules.replace"; payload: ReplaceSchedule } | { method: "schedules.recovery" } | { method: "schedules.discard-restored"; payload: ScheduleRecoveryKey } | { method: "plugins.list" } | { method: "dependencies.plan"; payload: DependencyPlanRequest } | { method: "dependencies.unload-plan"; payload: ProviderKey } | { method: "services.calls"; payload: JobKey } | { method: "jobs.submit"; payload: SubmitJob } | { method: "jobs.lookup"; payload: IdempotencyKey } | { method: "jobs.status"; payload: JobKey } | { method: "jobs.diagnose"; payload: JobKey } | { method: "jobs.list" } | { method: "jobs.cancel"; payload: JobKey } | { method: "jobs.events"; payload: EventCursor } | { method: "data.read"; payload: DataRead } | { method: "data.write"; payload: DataWrite } | { method: "data.transaction"; payload: DataTransaction } | { method: "data.import-legacy"; payload: DataImport } | { method: "permissions.list" } | { method: "permissions.grant"; payload: PermissionGrant } | { method: "permissions.revoke"; payload: PermissionKey } | { method: "policy.set"; payload: BootstrapPolicy } | { method: "policy.import"; payload: PolicyImport } | { method: "runtime.stop" };
 
 /**
  *  Narrow operations: no caller/plugin/namespace, raw paths, SQL, argv or env.
@@ -241,7 +241,7 @@ export type OpenSession = {
 	expectedInstanceId: string | null,
 };
 
-export type Outcome = { type: "session"; data: SessionProof } | { type: "status"; data: RuntimeStatus } | { type: "schedules"; data: ScheduleRecord[] } | { type: "schedule-time"; data: ResolvedScheduleTime } | { type: "schedule"; data: ScheduleRecord } | { type: "plugins"; data: PluginStatus[] } | { type: "dependency-plan"; data: DependencyPlan } | { type: "provider-change-plan"; data: ProviderChangePlan } | { type: "service-calls"; data: ServiceCallDiagnostic[] } | { type: "receipt"; data: JobReceipt } | { type: "job"; data: JobSnapshot } | { type: "jobs"; data: JobSnapshot[] } | { type: "diagnostic"; data: RunDiagnostic } | { type: "events"; data: JobEvent[] } | { type: "data"; data: DataSnapshot } | { type: "data-batch"; data: DataSnapshot[] } | { type: "permissions"; data: PermissionRecord[] } | { type: "policy"; data: BootstrapPolicy } | { type: "stopping" } | { type: "error"; data: RuntimeError };
+export type Outcome = { type: "session"; data: SessionProof } | { type: "status"; data: RuntimeStatus } | { type: "schedules"; data: ScheduleRecord[] } | { type: "schedule-recovery"; data: ScheduleRecovery | null } | { type: "schedule-time"; data: ResolvedScheduleTime } | { type: "schedule"; data: ScheduleRecord } | { type: "plugins"; data: PluginStatus[] } | { type: "dependency-plan"; data: DependencyPlan } | { type: "provider-change-plan"; data: ProviderChangePlan } | { type: "service-calls"; data: ServiceCallDiagnostic[] } | { type: "receipt"; data: JobReceipt } | { type: "job"; data: JobSnapshot } | { type: "jobs"; data: JobSnapshot[] } | { type: "diagnostic"; data: RunDiagnostic } | { type: "events"; data: JobEvent[] } | { type: "data"; data: DataSnapshot } | { type: "data-batch"; data: DataSnapshot[] } | { type: "permissions"; data: PermissionRecord[] } | { type: "policy"; data: BootstrapPolicy } | { type: "stopping" } | { type: "error"; data: RuntimeError };
 
 export type PackagePin = {
 	publisher: string,
@@ -313,6 +313,11 @@ export type RecoveryReceipt = {
 	phase: RecoveryPhase,
 	grantsRevoked: boolean,
 	payloadsQuarantined: boolean,
+};
+
+export type ReplaceSchedule = {
+	previous: ScheduleKey,
+	create: CreateSchedule,
 };
 
 export type Request = {
@@ -418,6 +423,15 @@ export type ScheduleRecord = {
 	cancelled: boolean,
 	skipped: number,
 	lastClaim: ScheduleClaim | null,
+};
+
+export type ScheduleRecovery = {
+	challenge: string,
+	count: number,
+};
+
+export type ScheduleRecoveryKey = {
+	challenge: string,
 };
 
 /**  Exact, Host-approved scopes; there are no wildcard grants. */

@@ -7,6 +7,9 @@
 `packages/cli/src/schedules.ts` 使用同一契约；真实原生 fixture 在
 `apps/runtime/test/scheduling-fixture.mjs`，见 [记录](./validation/g7-scheduling-dispatch.md)。
 
+调度编辑/恢复复用 `scheduling/commands.rs`、`store.rs`、`runtime_scheduling.rs`
+及现有 GUI/CLI 入口；无第二份客户端调度库。见 [验证](./validation/g7-scheduling-edit-recovery.md)。
+
 `packages/runtime-core/src/scheduling/store.rs` 与 `store/tests.rs` 提供现有
 DataStore 的调度记录/claim 和 SQLite 拒绝回归；没有第二个数据库，见
 [持久化证据](./validation/g7-scheduling-store.md)。

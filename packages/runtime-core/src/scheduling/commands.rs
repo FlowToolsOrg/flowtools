@@ -21,6 +21,34 @@ pub struct ScheduleKey {
     pub id: String,
     pub revision: u32,
 }
+impl ScheduleKey {
+    pub fn validate(&self) -> Result<(), crate::protocol::ErrorCode> {
+        if uuid::Uuid::parse_str(&self.id).is_err() || self.revision == 0 {
+            return Err(crate::protocol::ErrorCode::InvalidRequest);
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, specta::Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ReplaceSchedule {
+    pub previous: ScheduleKey,
+    pub create: CreateSchedule,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, specta::Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ScheduleRecoveryKey {
+    pub challenge: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, specta::Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ScheduleRecovery {
+    pub challenge: String,
+    pub count: u32,
+}
 
 impl CreateSchedule {
     pub fn validate(&self) -> Result<(), crate::protocol::ErrorCode> {

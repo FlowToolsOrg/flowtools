@@ -1,6 +1,6 @@
 use super::*;
 use crate::scheduling::{
-    commands::{CreateSchedule, ScheduleKey},
+    commands::{CreateSchedule, ReplaceSchedule, ScheduleKey},
     store::{ClaimResult, ScheduleBinding, ScheduleRecord, ScheduleStore},
 };
 
@@ -9,10 +9,23 @@ impl RuntimeCore {
         &mut self,
         create: CreateSchedule,
     ) -> Result<ScheduleRecord, ErrorCode> {
-        if uuid::Uuid::parse_str(&create.request_key).is_err() || create.timeout_ms == 0 {
-            return Err(ErrorCode::InvalidRequest);
-        }
-        create.definition.cursor()?;
+        self.persist_schedule(create, None)
+    }
+
+    pub(super) fn replace_schedule(
+        &mut self,
+        replace: ReplaceSchedule,
+    ) -> Result<ScheduleRecord, ErrorCode> {
+        replace.previous.validate()?;
+        self.persist_schedule(replace.create, Some(replace.previous))
+    }
+
+    fn persist_schedule(
+        &mut self,
+        create: CreateSchedule,
+        previous: Option<ScheduleKey>,
+    ) -> Result<ScheduleRecord, ErrorCode> {
+        create.validate()?;
         let caller = create.target.caller();
         let (manifest, command) = self
             .catalog
@@ -30,7 +43,16 @@ impl RuntimeCore {
             create.input,
             true,
         )?;
-        let hash = digest(&json!(["schedule-request-v1", caller, create.request_key]));
+        let hash = if let Some(key) = &previous {
+            digest(&json!([
+                "schedule-replacement-v1",
+                caller,
+                create.request_key,
+                key
+            ]))
+        } else {
+            digest(&json!(["schedule-request-v1", caller, create.request_key]))
+        };
         let id = format!(
             "{}-{}-{}-{}-{}",
             &hash[..8],
@@ -65,11 +87,34 @@ impl RuntimeCore {
             }
             return Ok(existing);
         }
+        if let Some(key) = &previous {
+            let old = ScheduleStore::list(&self.data)?
+                .into_iter()
+                .find(|record| record.id == key.id)
+                .ok_or(ErrorCode::JobNotFound)?;
+            if old.revision != key.revision || old.cancelled {
+                return Err(ErrorCode::RevisionConflict);
+            }
+            if old.last_claim.as_ref().is_some_and(|claim| matches!(&claim.result, ClaimResult::Submitted { run_id } if self.jobs.get(run_id).is_some_and(|job| !job.snapshot.state.terminal()))) {
+                return Err(ErrorCode::RuntimeBusy);
+            }
+        }
         self.private_jobs
             .as_ref()
             .ok_or(ErrorCode::ApprovalRequired)?
             .write_or_verify(&id, &input)?;
-        ScheduleStore::create(&mut self.data, id, create.definition, binding, now() as u64)
+        if let Some(key) = &previous {
+            ScheduleStore::replace(
+                &mut self.data,
+                key,
+                id,
+                create.definition,
+                binding,
+                now() as u64,
+            )
+        } else {
+            ScheduleStore::create(&mut self.data, id, create.definition, binding, now() as u64)
+        }
     }
 
     pub(super) fn cancel_schedule(

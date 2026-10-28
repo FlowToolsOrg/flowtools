@@ -1,5 +1,9 @@
 # Flow Tool Architecture
 
+P3.1b4 将调度替换的旧版本取消与新锚点创建放在同一提交；恢复处置只按当前
+profile/generation 与原状态 challenge 作废旧计划，保留位置和时钟下限。
+见 [编辑与恢复](./docs/validation/g7-scheduling-edit-recovery.md)。
+
 P3.1b3 的 Host tick 将已提交 claim 接到既有任务队列，每次检查当前身份、
 background grant/epoch；输入复用私有加密存储，未知接受状态 fail closed。
 管理会话创建/取消，Native 明确确认；GUI/CLI 共用 Rust 派生 wire 与 Jiff 时区

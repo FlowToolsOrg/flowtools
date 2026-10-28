@@ -1575,6 +1575,9 @@ Phase 2 总退出标准：P2.1–P2.8 全部 `done`；第三方代码默认拒�
 
 ### P3.1 完成 Desktop 宿主产品能力
 
+P3.1b4 增加 GUI/CLI 原子调度替换与显式恢复处置，保留旧位置、输入和时钟下限，
+不自动恢复执行；见 [编辑/恢复证据](./validation/g7-scheduling-edit-recovery.md)。
+
 P3.1b3 实现认证管理、共享时区预览与 Host 后台派发，实际无客户端任务及
 撤销/取消回归通过，见 [证据](./validation/g7-scheduling-dispatch.md)。
 完整调度编辑、通知和其余 G7 功能继续实施，不提前推进父项成熟度。

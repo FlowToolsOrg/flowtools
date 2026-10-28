@@ -1,5 +1,9 @@
 # Flow Tool
 
+Schedule editing and explicit restore disposal now share the GUI/CLI contract;
+atomic replacement and challenge replay checks are covered in
+[edit/recovery evidence](./docs/validation/g7-scheduling-edit-recovery.md).
+
 P3.1b3 connects finite schedules to the existing authenticated Host queue, with
 private inputs, per-trigger background/epoch checks and GUI/CLI management.
 Explicit IANA/DST preview and a real no-client execution fixture are covered;

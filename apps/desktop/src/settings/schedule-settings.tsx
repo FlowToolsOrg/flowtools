@@ -3,6 +3,7 @@ import type {
   LocalTimeChoice,
   ResolvedScheduleTime,
   ScheduleRecord,
+  ScheduleRecovery,
 } from '@flowtools/runtime-client'
 
 import { useEffect, useRef, useState } from 'react'
@@ -89,6 +90,8 @@ export function ScheduleSettings() {
   const [missed, setMissed] = useState<'skip' | 'coalesce-latest'>('skip')
   const [resolved, setResolved] = useState<ResolvedScheduleTime>()
   const [records, setRecords] = useState<ScheduleRecord[]>([])
+  const [editing, setEditing] = useState<ScheduleRecord>()
+  const [recovery, setRecovery] = useState<ScheduleRecovery>()
   const [message, setMessage] = useState(
     '尚未查询调度。创建前请在共享 Runtime 中批准该命令的后台权限。'
   )
@@ -166,22 +169,34 @@ export function ScheduleSettings() {
     if (!validScheduleDefinition(definition))
       throw new RuntimeClientError('INPUT_INVALID')
     requestKey.current ??= crypto.randomUUID()
-    const outcome = await controlManagedRuntime({
-      method: 'schedules.create',
-      payload: {
-        requestKey: requestKey.current,
-        target: 'desktop',
-        pluginId: selected.plugin.id,
-        commandId: selected.command.id,
-        input,
-        definition,
-        timeoutMs: Math.min(30_000, selected.command.resources.timeoutMs),
-      },
-    })
+    const payload: CreateSchedule = {
+      requestKey: requestKey.current,
+      target:
+        editing?.binding.identity.caller === 'local-cli' ? 'cli' : 'desktop',
+      pluginId: selected.plugin.id,
+      commandId: selected.command.id,
+      input,
+      definition,
+      timeoutMs: Math.min(30_000, selected.command.resources.timeoutMs),
+    }
+    const outcome = await controlManagedRuntime(
+      editing
+        ? {
+            method: 'schedules.replace',
+            payload: {
+              previous: { id: editing.id, revision: editing.revision },
+              create: payload,
+            },
+          }
+        : { method: 'schedules.create', payload }
+    )
     if (outcome.type !== 'schedule' || !validScheduleRecord(outcome.data))
       throw new RuntimeClientError('INVALID_RESPONSE')
     if (!mounted.current) return
     await refresh()
+    setEditing(undefined)
+    setResolved(undefined)
+    requestKey.current = undefined
     setMessage(
       '调度已创建。Host 运行且授权有效时，关闭桌面后仍可触发；不会自行启动 Host。'
     )
@@ -394,7 +409,7 @@ export function ScheduleSettings() {
             isDisabled={!native || busy || !resolved || !fieldsSupported}
             onPress={() => void run(create)}
           >
-            创建调度并确认
+            {editing ? '保存修改并确认' : '创建调度并确认'}
           </Button>
           <Button
             variant="secondary"
@@ -403,7 +418,82 @@ export function ScheduleSettings() {
           >
             查询调度
           </Button>
+          <Button
+            variant="secondary"
+            isDisabled={!native || busy}
+            onPress={() =>
+              void run(async () => {
+                setRecovery(undefined)
+                const result = await controlManagedRuntime({
+                  method: 'schedules.recovery',
+                })
+                if (
+                  result.type !== 'schedule-recovery' ||
+                  (result.data &&
+                    (!/^[a-f0-9]{64}$/.test(result.data.challenge) ||
+                      result.data.count > 128))
+                )
+                  throw new RuntimeClientError('INVALID_RESPONSE')
+                if (!mounted.current) return
+                setRecovery(result.data ?? undefined)
+                setMessage(
+                  result.data
+                    ? `备份恢复后有 ${result.data.count} 条旧调度等待作废；不会自动执行。`
+                    : '当前没有待处理的调度恢复。'
+                )
+              })
+            }
+          >
+            检查恢复状态
+          </Button>
         </div>
+        {editing && (
+          <div className="text-sm">
+            <p>
+              正在修改 {editing.id}
+              。请重新填写命令内容并核对新时间、次数；保存前旧计划保持不变。旧任务正在执行时拒绝修改。
+            </p>
+            <Button
+              variant="secondary"
+              onPress={() => {
+                setEditing(undefined)
+                timeEdit()
+              }}
+            >
+              放弃编辑
+            </Button>
+          </div>
+        )}
+        {recovery && (
+          <div className="text-sm">
+            <p>
+              作废这次备份恢复中的全部 {recovery.count}{' '}
+              条旧调度，保留尝试位置与记录。新的提醒须重新创建。
+            </p>
+            <Button
+              variant="danger"
+              isDisabled={busy}
+              onPress={() =>
+                void run(async () => {
+                  const result = await controlManagedRuntime({
+                    method: 'schedules.discard-restored',
+                    payload: { challenge: recovery.challenge },
+                  })
+                  if (
+                    result.type !== 'schedules' ||
+                    result.data.some(item => !validScheduleRecord(item))
+                  )
+                    throw new RuntimeClientError('INVALID_RESPONSE')
+                  if (!mounted.current) return
+                  setRecovery(undefined)
+                  await refresh()
+                })
+              }
+            >
+              作废旧调度并确认
+            </Button>
+          </div>
+        )}
         <p role="status">{message}</p>
         <ul className="space-y-3 p-0">
           {records.map(record => (
@@ -433,6 +523,40 @@ export function ScheduleSettings() {
                     : ''}
                 </p>
               )}
+              <Button
+                size="sm"
+                variant="secondary"
+                isDisabled={busy || record.cancelled}
+                onPress={() => {
+                  const key = `${record.binding.identity.pluginId}:${record.binding.identity.commandId}`
+                  const item = available.find(item => item.key === key)
+                  if (!item) {
+                    setMessage('该命令已不可用，不能修改。')
+                    return
+                  }
+                  setEditing(record)
+                  setSelection(key)
+                  setInput(defaults(item.command.inputSchema))
+                  setLocal(
+                    new Date(record.definition.firstDueMs)
+                      .toISOString()
+                      .slice(0, 19)
+                  )
+                  setZone('UTC')
+                  setChoice('reject')
+                  setCount(String(record.definition.occurrences))
+                  setPeriod(
+                    String((record.definition.intervalMs ?? 3_600_000) / 1000)
+                  )
+                  setMissed(record.definition.missed)
+                  timeEdit()
+                  setMessage(
+                    '请重新填写修改后的命令内容并预览时间。保存前不会改变旧计划。'
+                  )
+                }}
+              >
+                编辑此调度
+              </Button>
               <Button
                 size="sm"
                 variant="secondary"

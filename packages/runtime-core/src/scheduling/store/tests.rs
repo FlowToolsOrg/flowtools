@@ -42,6 +42,128 @@ fn value(store: &DataStore) -> String {
 }
 
 #[test]
+fn replacement_is_one_commit_and_stale_edits_leave_both_positions_unchanged() {
+    let mut store = DataStore::memory().unwrap();
+    let old = create(&mut store);
+    let key = super::super::commands::ScheduleKey {
+        id: old.id.clone(),
+        revision: old.revision,
+    };
+    let replacement = uuid::Uuid::new_v4().to_string();
+    store
+        .connection
+        .execute_batch("PRAGMA query_only=ON")
+        .unwrap();
+    assert!(ScheduleStore::replace(
+        &mut store,
+        &key,
+        replacement.clone(),
+        definition(),
+        binding(),
+        99_000
+    )
+    .is_err());
+    store
+        .connection
+        .execute_batch("PRAGMA query_only=OFF")
+        .unwrap();
+    assert!(!ScheduleStore::list(&store).unwrap()[0].cancelled);
+    let new = ScheduleStore::replace(
+        &mut store,
+        &key,
+        replacement,
+        definition(),
+        binding(),
+        99_000,
+    )
+    .unwrap();
+    let records = ScheduleStore::list(&store).unwrap();
+    assert_eq!(records.len(), 2);
+    assert!(records[0].cancelled);
+    assert_eq!(records[0].revision, 2);
+    assert_eq!(new.next_index, 0);
+    assert_eq!(
+        ScheduleStore::replace(
+            &mut store,
+            &key,
+            uuid::Uuid::new_v4().to_string(),
+            definition(),
+            binding(),
+            99_000
+        )
+        .unwrap_err(),
+        ErrorCode::RevisionConflict
+    );
+    assert_eq!(
+        ScheduleStore::claim_due(&mut store, 100_000, |_| true).unwrap()[0].id,
+        new.id
+    );
+}
+
+#[test]
+fn explicit_restore_disposal_keeps_claims_positions_and_floors_and_is_not_rearming() {
+    let mut store = DataStore::memory().unwrap();
+    create(&mut store);
+    ScheduleStore::claim_due(&mut store, 102_000, |_| true).unwrap();
+    let before = value(&store);
+    store
+        .connection
+        .execute(
+            "INSERT INTO core_metadata(key,value) VALUES('recovery-generation',?1)",
+            [uuid::Uuid::new_v4().to_string()],
+        )
+        .unwrap();
+    assert_eq!(
+        ScheduleStore::list(&store).unwrap_err(),
+        ErrorCode::RecoveryPending
+    );
+    let recovery = ScheduleStore::recovery(&store).unwrap().unwrap();
+    assert_eq!(recovery.count, 1);
+    assert_eq!(
+        ScheduleStore::discard_restored(&mut store, "wrong").unwrap_err(),
+        ErrorCode::RevisionConflict
+    );
+    assert_eq!(value(&store), before);
+    let records = ScheduleStore::discard_restored(&mut store, &recovery.challenge).unwrap();
+    assert!(records[0].cancelled);
+    assert_eq!(records[0].next_index, 3);
+    assert_eq!(
+        records[0].last_claim.as_ref().unwrap().result,
+        ClaimResult::Interrupted
+    );
+    assert!(ScheduleStore::recovery(&store).unwrap().is_none());
+    assert!(ScheduleStore::claim_due(&mut store, 109_000, |_| true)
+        .unwrap()
+        .is_empty());
+    assert_eq!(
+        ScheduleStore::create(
+            &mut store,
+            uuid::Uuid::new_v4().to_string(),
+            definition(),
+            binding(),
+            101_999
+        )
+        .unwrap_err(),
+        ErrorCode::InvalidRequest
+    );
+    let fresh = create(&mut DataStore::memory().unwrap());
+    ScheduleStore::create(&mut store, fresh.id, definition(), binding(), 102_000).unwrap();
+    let retry = ScheduleStore::discard_restored(&mut store, &recovery.challenge).unwrap();
+    assert!(!retry[1].cancelled);
+    store
+        .connection
+        .execute(
+            "UPDATE core_metadata SET value=?1 WHERE key='recovery-generation'",
+            [uuid::Uuid::new_v4().to_string()],
+        )
+        .unwrap();
+    assert_eq!(
+        ScheduleStore::discard_restored(&mut store, &recovery.challenge).unwrap_err(),
+        ErrorCode::RevisionConflict
+    );
+}
+
+#[test]
 fn claimed_position_survives_reopen_and_unknown_attempt_is_not_replayed() {
     let root = std::env::temp_dir().join(format!("flowtools-schedule-{}", uuid::Uuid::new_v4()));
     std::fs::create_dir(&root).unwrap();

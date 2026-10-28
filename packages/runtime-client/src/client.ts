@@ -17,6 +17,7 @@ import type {
   SubmitJob,
   CreateSchedule,
   ScheduleRecord,
+  ReplaceSchedule,
 } from './bindings'
 
 import {
@@ -83,6 +84,21 @@ export class RuntimeClient {
       !validScheduleRecord(result.data) ||
       result.data.id !== id ||
       !result.data.cancelled
+    )
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    return result.data
+  }
+  async replaceSchedule(replace: ReplaceSchedule): Promise<ScheduleRecord> {
+    if (!validScheduleDefinition(replace.create.definition))
+      throw new RuntimeClientError('INPUT_INVALID')
+    const result = await this.call({
+      method: 'schedules.replace',
+      payload: replace,
+    })
+    if (
+      result.type !== 'schedule' ||
+      !validScheduleRecord(result.data) ||
+      result.data.id === replace.previous.id
     )
       throw new RuntimeClientError('INVALID_RESPONSE')
     return result.data
@@ -250,6 +266,9 @@ export class RuntimeClient {
       'schedules.resolve-time': 'schedule-time',
       'schedules.create': 'schedule',
       'schedules.cancel': 'schedule',
+      'schedules.replace': 'schedule',
+      'schedules.recovery': 'schedule-recovery',
+      'schedules.discard-restored': 'schedules',
       'plugins.list': 'plugins',
       'dependencies.plan': 'dependency-plan',
       'dependencies.unload-plan': 'provider-change-plan',

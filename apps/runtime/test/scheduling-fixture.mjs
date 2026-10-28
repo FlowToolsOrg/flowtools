@@ -221,7 +221,31 @@ try {
     ...operation(),
     definition: { ...create.definition, firstDueMs: Date.now() + 1500 },
   })
-  await manager.cancelSchedule(cancelled.id, cancelled.revision)
+  const replacement = {
+    previous: { id: cancelled.id, revision: cancelled.revision },
+    create: {
+      ...operation(),
+      definition: { ...create.definition, firstDueMs: Date.now() + 60_000 },
+    },
+  }
+  await assert.rejects(cli.replaceSchedule(replacement), {
+    code: 'SESSION_INVALID',
+  })
+  const edited = await manager.replaceSchedule(replacement)
+  assert.equal((await manager.replaceSchedule(replacement)).id, edited.id)
+  assert.equal(
+    (await manager.schedules()).find(item => item.id === cancelled.id)
+      ?.cancelled,
+    true
+  )
+  await assert.rejects(
+    manager.replaceSchedule({
+      ...replacement,
+      create: { ...replacement.create, requestKey: crypto.randomUUID() },
+    }),
+    { code: 'REVISION_CONFLICT' }
+  )
+  await manager.cancelSchedule(edited.id, edited.revision)
   await pause(2600)
   assert.equal((await cli.jobs()).length, 1)
   await manager.call({ method: 'runtime.stop' })

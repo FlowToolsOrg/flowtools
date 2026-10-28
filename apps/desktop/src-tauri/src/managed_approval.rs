@@ -111,6 +111,18 @@ pub fn runtime_prompts(call: &Call, initialize: bool) -> Result<Vec<String>, Err
         return Err(ErrorCode::SessionInvalid);
     }
     match call {
+        Call::ScheduleReplace(replace) => {
+            replace.previous.validate()?;
+            let mut prompts = runtime_prompts(&Call::ScheduleCreate(replace.create.clone()), false)?;
+            prompts.insert(0, format!("修改后台调度？\n原调度：{}\n原版本：{}\n确认后原计划与新计划在同一提交中替换。旧运行未结束时拒绝修改；不自动重试或恢复旧计划。", replace.previous.id, replace.previous.revision));
+            Ok(prompts)
+        }
+        Call::ScheduleDiscard(key) => {
+            if key.challenge.len() != 64 || !key.challenge.bytes().all(|b| b.is_ascii_hexdigit()) {
+                return Err(ErrorCode::InvalidRequest);
+            }
+            Ok(vec![format!("作废恢复备份中的全部旧调度？\n核对码：{}\n保留原位置、历史尝试及私有正文，全部旧计划永久取消。此操作不恢复授权或重新执行；新提醒需要重新创建。", key.challenge)])
+        }
         Call::ScheduleCreate(create) => {
             create.validate()?;
             // Never interpolate raw command input, paths or exception messages.

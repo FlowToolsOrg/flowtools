@@ -147,3 +147,60 @@ it('DST refusal prevents creation and editing a resolved time invalidates its pr
     .element(view.getByRole('button', { name: '创建调度并确认' }))
     .toBeDisabled()
 })
+
+it('editing requires a new preview and sends the old revision with freshly entered input', async () => {
+  const view = await render(<ScheduleSettings />)
+  await user.fill(
+    view.getByRole('textbox', { name: '首次触发当地时间' }),
+    '2026-10-28T09:00'
+  )
+  await user.click(view.getByRole('button', { name: '预览触发时间' }))
+  await user.click(view.getByRole('button', { name: '创建调度并确认' }))
+  const old = records[0]!
+  await user.click(view.getByRole('button', { name: '编辑此调度' }))
+  await expect
+    .element(view.getByRole('button', { name: '保存修改并确认' }))
+    .toBeDisabled()
+  await user.fill(
+    view.getByRole('textbox', { name: '文本', exact: true }),
+    'changed content'
+  )
+  await user.click(view.getByRole('button', { name: '预览触发时间' }))
+  vi.mocked(controlManagedRuntime).mockImplementationOnce(async call => {
+    expect(call).toMatchObject({
+      method: 'schedules.replace',
+      payload: {
+        previous: { id: old.id, revision: 1 },
+        create: { input: { text: 'changed content', mode: 'encode' } },
+      },
+    })
+    return {
+      type: 'schedule',
+      data: { ...old, id: '00000000-0000-4000-8000-000000000002' },
+    }
+  })
+  await user.click(view.getByRole('button', { name: '保存修改并确认' }))
+  await expect
+    .element(view.getByRole('button', { name: '创建调度并确认' }))
+    .toBeDisabled()
+})
+
+it('restore disposal is explicit and binds the reviewed challenge', async () => {
+  const view = await render(<ScheduleSettings />)
+  vi.mocked(controlManagedRuntime).mockResolvedValueOnce({
+    type: 'schedule-recovery',
+    data: { challenge: 'c'.repeat(64), count: 2 },
+  })
+  await user.click(view.getByRole('button', { name: '检查恢复状态' }))
+  expect(controlManagedRuntime).toHaveBeenCalledTimes(1)
+  await expect.element(view.getByText(/全部 2 条旧调度/)).toBeVisible()
+  vi.mocked(controlManagedRuntime).mockResolvedValueOnce({
+    type: 'schedules',
+    data: [],
+  })
+  await user.click(view.getByRole('button', { name: '作废旧调度并确认' }))
+  expect(controlManagedRuntime).toHaveBeenCalledWith({
+    method: 'schedules.discard-restored',
+    payload: { challenge: 'c'.repeat(64) },
+  })
+})

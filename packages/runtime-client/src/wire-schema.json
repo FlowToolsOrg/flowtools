@@ -410,6 +410,53 @@
             "additionalProperties": false,
             "properties": {
               "method": {
+                "const": "schedules.replace",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ReplaceSchedule"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "schedules.recovery",
+                "type": "string"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "schedules.discard-restored",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ScheduleRecoveryKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
                 "const": "plugins.list",
                 "type": "string"
               }
@@ -1129,6 +1176,22 @@
         ],
         "type": "string"
       },
+      "ReplaceSchedule": {
+        "additionalProperties": false,
+        "properties": {
+          "create": {
+            "$ref": "#/$defs/CreateSchedule"
+          },
+          "previous": {
+            "$ref": "#/$defs/ScheduleKey"
+          }
+        },
+        "required": [
+          "previous",
+          "create"
+        ],
+        "type": "object"
+      },
       "ResolveScheduleTime": {
         "additionalProperties": false,
         "properties": {
@@ -1206,6 +1269,18 @@
         "required": [
           "id",
           "revision"
+        ],
+        "type": "object"
+      },
+      "ScheduleRecoveryKey": {
+        "additionalProperties": false,
+        "properties": {
+          "challenge": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "challenge"
         ],
         "type": "object"
       },
@@ -2103,6 +2178,30 @@
             "additionalProperties": false,
             "properties": {
               "data": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ScheduleRecovery"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": {
+                "const": "schedule-recovery",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
                 "$ref": "#/$defs/ResolvedScheduleTime"
               },
               "type": {
@@ -2953,6 +3052,24 @@
           "nextIndex",
           "cancelled",
           "skipped"
+        ],
+        "type": "object"
+      },
+      "ScheduleRecovery": {
+        "additionalProperties": false,
+        "properties": {
+          "challenge": {
+            "type": "string"
+          },
+          "count": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "challenge",
+          "count"
         ],
         "type": "object"
       },

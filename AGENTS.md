@@ -176,6 +176,12 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+P3.1b4 schedule replacement atomically cancels the exact old revision and creates
+a new immutable anchor; refuse active old runs and recheck grants. Restore disposal
+requires a state/profile/generation-bound challenge and explicit management consent.
+Keep old positions, attempts, clock floors and private inputs; never rearm or
+grant during recovery. See [edit/recovery evidence](./docs/validation/g7-scheduling-edit-recovery.md).
+
 P3.1b3's `runtime_scheduling.rs` dispatches only through normal submit/runner
 checks, with exact identity/epoch/background policy, private inputs, durable claims
 and no overlap. Keep management-only hosts inert, creation consent separate from

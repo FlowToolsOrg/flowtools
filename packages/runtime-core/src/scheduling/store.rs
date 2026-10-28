@@ -182,6 +182,10 @@ fn scope(store: &DataStore) -> Result<(String, Option<String>), ErrorCode> {
 }
 
 fn load(store: &DataStore) -> Result<State, ErrorCode> {
+    load_scoped(store, false)
+}
+
+fn load_scoped(store: &DataStore, allow_restore: bool) -> Result<State, ErrorCode> {
     let (profile_digest, recovery_generation) = scope(store)?;
     let text: Option<String> = store
         .connection
@@ -211,7 +215,10 @@ fn load(store: &DataStore) -> Result<State, ErrorCode> {
     {
         return Err(ErrorCode::StoreCorrupt);
     }
-    if state.profile_digest != profile_digest || state.recovery_generation != recovery_generation {
+    if !allow_restore
+        && (state.profile_digest != profile_digest
+            || state.recovery_generation != recovery_generation)
+    {
         return Err(ErrorCode::RecoveryPending);
     }
     let mut ids = std::collections::HashSet::new();
@@ -244,6 +251,113 @@ fn save(store: &mut DataStore, state: &State) -> Result<(), ErrorCode> {
 
 pub struct ScheduleStore;
 impl ScheduleStore {
+    /// Read-only challenge binds explicit disposal to these exact stored bytes
+    /// and the current T0-derived profile/restore generation.
+    pub fn recovery(
+        store: &DataStore,
+    ) -> Result<Option<super::commands::ScheduleRecovery>, ErrorCode> {
+        let state = load_scoped(store, true)?;
+        let current = scope(store)?;
+        if (
+            state.profile_digest.clone(),
+            state.recovery_generation.clone(),
+        ) == current
+        {
+            return Ok(None);
+        }
+        Ok(Some(super::commands::ScheduleRecovery {
+            challenge: digest(&serde_json::json!([
+                "discard-restored-schedules-v1",
+                current,
+                state
+            ])),
+            count: state.records.len() as u32,
+        }))
+    }
+
+    /// This only disables restored schedules. It never grants, rewinds cursors,
+    /// deletes private input, lowers the clock floor or starts a job.
+    pub fn discard_restored(
+        store: &mut DataStore,
+        challenge: &str,
+    ) -> Result<Vec<ScheduleRecord>, ErrorCode> {
+        let Some(recovery) = Self::recovery(store)? else {
+            return Self::list(store);
+        };
+        if challenge != recovery.challenge {
+            return Err(ErrorCode::RevisionConflict);
+        }
+        let mut state = load_scoped(store, true)?;
+        for record in &mut state.records {
+            if !record.cancelled {
+                record.revision = record
+                    .revision
+                    .checked_add(1)
+                    .ok_or(ErrorCode::BudgetExceeded)?;
+                record.cancelled = true;
+            }
+            if let Some(claim) = &mut record.last_claim {
+                if claim.result == ClaimResult::Claimed {
+                    claim.result = ClaimResult::Interrupted;
+                }
+            }
+        }
+        (state.profile_digest, state.recovery_generation) = scope(store)?;
+        save(store, &state)?;
+        Ok(state.records)
+    }
+
+    /// Old revision cancellation and new immutable anchor share one commit.
+    /// T0 must refuse replacement while its submitted job is still active.
+    pub fn replace(
+        store: &mut DataStore,
+        previous: &super::commands::ScheduleKey,
+        id: String,
+        definition: ScheduleDefinition,
+        binding: ScheduleBinding,
+        now_ms: u64,
+    ) -> Result<ScheduleRecord, ErrorCode> {
+        definition.cursor()?;
+        let mut state = load(store)?;
+        if now_ms > MAX_TIMESTAMP_MS || now_ms < state.clock_floor_ms {
+            return Err(ErrorCode::InvalidRequest);
+        }
+        if state.records.len() >= MAX_SCHEDULES {
+            return Err(ErrorCode::BudgetExceeded);
+        }
+        if state.records.iter().any(|record| record.id == id) {
+            return Err(ErrorCode::IdempotencyConflict);
+        }
+        let old = state
+            .records
+            .iter_mut()
+            .find(|record| record.id == previous.id)
+            .ok_or(ErrorCode::JobNotFound)?;
+        if old.revision != previous.revision || old.cancelled {
+            return Err(ErrorCode::RevisionConflict);
+        }
+        old.revision = old
+            .revision
+            .checked_add(1)
+            .ok_or(ErrorCode::BudgetExceeded)?;
+        old.cancelled = true;
+        let record = ScheduleRecord {
+            id,
+            revision: 1,
+            definition,
+            binding,
+            next_index: 0,
+            last_observed_ms: None,
+            cancelled: false,
+            skipped: 0,
+            last_claim: None,
+        };
+        record.validate().map_err(|_| ErrorCode::InputInvalid)?;
+        state.records.push(record.clone());
+        state.clock_floor_ms = now_ms;
+        save(store, &state)?;
+        Ok(record)
+    }
     pub fn list(store: &DataStore) -> Result<Vec<ScheduleRecord>, ErrorCode> {
         Ok(load(store)?.records)
     }

@@ -17,6 +17,105 @@ export function addScheduleCommands(program: Command) {
     .command('schedules')
     .description('Manage explicitly authorized finite background schedules')
   schedules
+    .command('recovery')
+    .option('--profile <directory>')
+    .action(async (options: { profile?: string }) => {
+      const host = await startManagement(userProfile(options.profile), false)
+      try {
+        const result = await host.client.call({ method: 'schedules.recovery' })
+        if (result.type !== 'schedule-recovery')
+          throw new Error('INVALID_RESPONSE')
+        process.stdout.write(
+          JSON.stringify({
+            formatVersion: 1,
+            success: true,
+            data: result.data,
+          }) + '\n'
+        )
+      } finally {
+        await host.close()
+      }
+    })
+  schedules
+    .command('discard-restored')
+    .requiredOption('--challenge <digest>')
+    .option('--approve-discard')
+    .option('--profile <directory>')
+    .action(
+      async (options: {
+        challenge: string
+        approveDiscard?: boolean
+        profile?: string
+      }) => {
+        if (!options.approveDiscard) throw new Error('APPROVAL_REQUIRED')
+        if (!/^[a-f0-9]{64}$/.test(options.challenge))
+          throw new Error('INVALID_REQUEST')
+        const host = await startManagement(userProfile(options.profile), false)
+        try {
+          const result = await host.client.call({
+            method: 'schedules.discard-restored',
+            payload: { challenge: options.challenge },
+          })
+          if (result.type !== 'schedules') throw new Error('INVALID_RESPONSE')
+          process.stdout.write(
+            JSON.stringify({
+              formatVersion: 1,
+              success: true,
+              data: result.data,
+            }) + '\n'
+          )
+        } finally {
+          await host.close()
+        }
+      }
+    )
+  schedules
+    .command('replace <id>')
+    .requiredOption('--revision <number>')
+    .requiredOption('--definition <file>')
+    .option('--approve-schedule')
+    .option('--profile <directory>')
+    .action(
+      async (
+        id: string,
+        options: {
+          revision: string
+          definition: string
+          approveSchedule?: boolean
+          profile?: string
+        }
+      ) => {
+        if (!options.approveSchedule) throw new Error('APPROVAL_REQUIRED')
+        const input: unknown = JSON.parse(
+          await readFile(await regularFile(options.definition, 8192), 'utf8')
+        )
+        const payload = {
+          previous: { id, revision: Number(options.revision) },
+          create: input,
+        }
+        encodeRequest({
+          version: 1,
+          requestId: crypto.randomUUID(),
+          session: null,
+          call: { method: 'schedules.replace', payload },
+        })
+        const host = await startManagement(userProfile(options.profile), false)
+        try {
+          process.stdout.write(
+            JSON.stringify({
+              formatVersion: 1,
+              success: true,
+              data: await host.client.replaceSchedule(
+                payload as import('@flowtools/runtime-client').ReplaceSchedule
+              ),
+            }) + '\n'
+          )
+        } finally {
+          await host.close()
+        }
+      }
+    )
+  schedules
     .command('resolve-time')
     .requiredOption('--local <datetime>')
     .requiredOption('--zone <iana-name>')

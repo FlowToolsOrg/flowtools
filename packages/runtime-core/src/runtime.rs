@@ -686,6 +686,9 @@ impl RuntimeCore {
                 | Call::Stop
                 | Call::ScheduleCreate(_)
                 | Call::ScheduleCancel(_)
+                | Call::ScheduleReplace(_)
+                | Call::ScheduleRecovery
+                | Call::ScheduleDiscard(_)
         ) && !management
         {
             return Err(ErrorCode::SessionInvalid);
@@ -720,6 +723,18 @@ impl RuntimeCore {
             Call::ScheduleCancel(key) => self
                 .cancel_schedule(key)
                 .map(|record| Outcome::Schedule(Box::new(record))),
+            Call::ScheduleReplace(replace) => self
+                .replace_schedule(replace)
+                .map(|record| Outcome::Schedule(Box::new(record))),
+            Call::ScheduleRecovery => crate::scheduling::store::ScheduleStore::recovery(&self.data)
+                .map(Outcome::ScheduleRecovery),
+            Call::ScheduleDiscard(key) => {
+                crate::scheduling::store::ScheduleStore::discard_restored(
+                    &mut self.data,
+                    &key.challenge,
+                )
+                .map(Outcome::Schedules)
+            }
             Call::PolicyImport(import) => {
                 let policy = self.policy.as_mut().unwrap();
                 policy.import(&mut self.data, import)?;

@@ -457,6 +457,9 @@ pub async fn managed_runtime_control<R: tauri::Runtime>(
             | Call::ScheduleCreate(_)
             | Call::ScheduleResolve(_)
             | Call::ScheduleCancel(_)
+            | Call::ScheduleReplace(_)
+            | Call::ScheduleRecovery
+            | Call::ScheduleDiscard(_)
             | Call::Grant(_)
             | Call::Revoke(_)
             | Call::Policy(_)
@@ -472,6 +475,7 @@ pub async fn managed_runtime_control<R: tauri::Runtime>(
             | Call::Plugins
             | Call::Schedules
             | Call::Revoke(_)
+            | Call::ScheduleRecovery
             | Call::ScheduleResolve(_)
             | Call::ScheduleCancel(_)
     ) {

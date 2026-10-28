@@ -1,5 +1,8 @@
 # Flow Tool Plugin 开发指南
 
+调度编辑需要重新确认输入/时间并通过当前后台授权；恢复处置只永久作废旧计划，
+不会恢复插件 grant 或重放已消费位置。见 [编辑/恢复契约](./validation/g7-scheduling-edit-recovery.md)。
+
 P3.1b3 的有限调度只调用当前已批准的 headless 命令，冻结输入 digest 和包身份，
 每次检查后台权限及 epoch，撤销/更新不自动复活。原生调度确认与已有命令 grant
 分开；插件不取得 timer 或管理会话。见 [派发边界](./validation/g7-scheduling-dispatch.md)。

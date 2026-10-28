@@ -1,5 +1,10 @@
 # Flow Tool Architecture
 
+G7 文件规划在 T0 以不可构造的 `RenameDraft` 持有目录/文件身份，生产仅能预览
+和整批复核；无文件写 IPC、插件路径或第二份存储。日程输入在重启孤儿清理前
+按经校验的日程 ID 保留，恢复 scope 仍拒绝派发。见
+[完整矩阵与依赖](./docs/validation/g7-completion-matrix.md)。
+
 G7 搜索复用 SDK 元数据索引及生命周期移除；偏好只保存有界 ID/次数/别名。
 显式上下文只在内存中带入已知命令预览，不授予文件或后台执行能力。
 见 [搜索/上下文](./docs/validation/g7-launcher-search.md)。

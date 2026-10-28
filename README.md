@@ -1,5 +1,10 @@
 # Flow Tool
 
+G7's delivered shell, scheduling/reminders and search are tracked in the
+[completion matrix](./docs/validation/g7-completion-matrix.md). File rename
+planning is read-only; actual file/media workflows still require the recorded
+G5/G6 execution prerequisites. G7 remains in progress, with manual checks waived.
+
 Launcher search now shares pinyin, fuzzy, alias and bounded-regex matching across
 SDK/UI/CLI, with explainable rankings, private history controls and explicit
 input-context previews. See [search and 10k benchmark](./docs/validation/g7-launcher-search.md).

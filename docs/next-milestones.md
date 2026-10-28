@@ -437,6 +437,11 @@ Tauri [sidecar](https://v2.tauri.app/develop/sidecar/) 用于构建捆绑程序�
 
 ## 9. G7：统一 UI 与三个办公闭环
 
+2026-10-28 收口矩阵见 [G7 当前状态](./validation/g7-completion-matrix.md)。
+文件整理新增 [只读 NTFS 规划准入](./validation/g7-file-plan-admission.md)，
+尚无持久 plan ID 或可执行/撤销入口；不跳过 G5/G6 文件/工具执行门槛。
+重启时保留日程加密输入的回归已补齐，备份恢复仍拒绝派发而只允许显式作废。
+
 2026-10-28：P3.2 接入 SDK/UI/Desktop/CLI 同源搜索、排序解释、历史隐私与
 显式上下文；10k 文字/正则 p95 分别 4.76/21.08ms，专项验证见
 [搜索记录](./validation/g7-launcher-search.md)。继续完整根门禁和文件/媒体闭环。

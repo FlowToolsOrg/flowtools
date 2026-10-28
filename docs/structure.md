@@ -2,6 +2,11 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime-core/src/file_workflows.rs` 与 `file_workflows/windows.rs` 是 T0 只读
+NTFS 改名规划层，`file_workflows/tests.rs` 使用实际临时目录。尚无持久计划库、
+GUI/CLI 文件提交或媒体执行入口；见 [范围](./validation/g7-file-plan-admission.md)
+及 [G7 矩阵](./validation/g7-completion-matrix.md)。
+
 `packages/sdk/src/search.ts` 提供纯索引，`sdk/benchmark/search.ts` 测 10k 命令。
 Desktop 的 `settings/launcher-preferences.ts` 与 `runtime/launcher-input.tsx`
 管理 Host 偏好及临时输入；CLI 入口为 `packages/cli/src/search.ts`。见

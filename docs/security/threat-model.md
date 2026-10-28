@@ -1,5 +1,12 @@
 # FlowTools 插件威胁模型
 
+2026-10-28 G7 文件只读规划用 held directory/source handles、严格名称/库存/
+大小/内容身份和目标不存在复核拒绝链接、重定向及冲突。无生产写入/原始路径
+IPC，测试 rename 不等于平台隔离或恢复证明。日程孤儿清理保留经校验的日程
+加密输入；恢复 scope 仍拒绝执行。SEC-003/008/013/015 与独立安全批准保持
+open/pending，见 [文件范围](../validation/g7-file-plan-admission.md) 和
+[完成矩阵](../validation/g7-completion-matrix.md)。
+
 2026-10-15 G7 P3.1a1：Windows 原生托盘及官方 single-instance/
 global-shortcut/autostart 插件只负责桌面入口；第二实例参数/cwd 不分发
 业务命令。自启动仅 release 当前身份的原生明确动作写入并回读；debug/

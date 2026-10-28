@@ -176,6 +176,15 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G7 file planning is read-only T0 admission in `runtime-core/src/file_workflows.rs`.
+Keep opaque drafts, held ancestor/source handles, exact content/identity checks,
+create-only targets and inventory/hash budgets. Native rename is test-only;
+do not wire writes, client paths or arbitrary media executables around pending
+G5/G6 gates. See [matrix](./docs/validation/g7-completion-matrix.md).
+Before private-job orphan cleanup, retain strictly validated schedule input IDs
+even during restore/copy recovery. Retention never authorizes dispatch or clears
+scope markers; corrupt state must preserve bytes by refusing cleanup.
+
 G7 search uses `@flowtools/sdk/search`, not independent Host scoring. Keep
 registration/removal synchronized with lifecycle and explain stable rankings.
 User regex must use bounded RE2JS; never restore arbitrary native JS RegExp.

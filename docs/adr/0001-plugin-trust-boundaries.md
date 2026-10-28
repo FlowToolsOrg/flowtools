@@ -8,6 +8,12 @@
 
 ## 背景
 
+2026-10-28 G7 文件整理只提供 T0 惰性 `RenameDraft` 预览/复核，没有新 IPC、
+SDK 文件权限或生产文件写入 adapter；测试中的 create-only rename 不开放给
+插件。文件/媒体执行继续等待 G5/G6 门槛，见
+[完成矩阵](../validation/g7-completion-matrix.md)。日程恢复仅保留私有输入，
+不改变恢复 scope 或授权判断。
+
 2026-10-05 P2.3a 为验证 Runtime 新增 T1 内存策略 broker 与不可序列化的
 Host runner session；敏感操作在无 grant 时继续拒绝，没有新增第三方执行域。
 见 [基础验收](../validation/g3-capability-broker.md)。持久授权、实际能力 adapter

@@ -68,4 +68,7 @@ and 100 measured samples per mode. Build 54.02ms; text p95 4.76ms, regex p95
 78,053,376 before / 120,094,720 indexed / 157,573,120 after queries. The standalone
 JSON is `execution-validation/g7-search/benchmark-20261028.json` (exit 0).
 These are this fixture/process's observations, not whole-Desktop memory, cold
-launch or hotkey-wake SLA evidence. Full Windows root validation is next.
+launch or hotkey-wake SLA evidence. The first integrated gate on `6016f26` failed
+the runner frame fixture's unchanged 30-second bound; its actual Node Host repair
+and retained assertions are recorded [separately](./g7-runner-protocol-host.md).
+Complete root validation of the repaired tree is next.

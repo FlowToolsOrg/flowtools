@@ -18,7 +18,12 @@ test('native scheduler executes real T1 commands with no connected client and re
     fixture.exited,
   ])
   expect({ code, stderr }).toEqual({ code: 0, stderr: '' })
-  expect(stdout.trim()).toBe(
+  const lines = stdout.trim().split(/\r?\n/)
+  expect(lines).toHaveLength(2)
+  expect(lines[0]).toMatch(
+    /^Reminder OS request status: (requested|failed|unsupported|unknown)$/
+  )
+  expect(lines[1]).toBe(
     'Native scheduling executes the actual plugin without clients and refuses revoke/cancel replay'
   )
 }, 90_000)

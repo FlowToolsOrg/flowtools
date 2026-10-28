@@ -43,3 +43,13 @@ loop or refusal condition is removed. This is recorded in
 The corrected complete Core library suite then passed all 243 tests in 47.94s;
 see `reminder-core-inventory-20261028.log` (exit 0). Other workspace/full gates
 are still separate evidence.
+
+The scheduling fixture now locates its actual executable through
+`CARGO_TARGET_DIR` (falling back to this checkout's target directory), matching
+the established Windows CI cache contract. It does not load a stale/default
+target when an isolated checkout uses the configured native artifact directory.
+The actual scheduling/reminder wrapper also validates its two known output lines
+and requires the native notification-attempt record, so a missing-capability
+fallback cannot masquerade as native adapter coverage. Rebuilding and running
+that test with the alternate Desktop Cargo target passed (1 test / 4 assertions,
+21.14s); see `scheduling-alt-target-20261028.log`, exit 0.

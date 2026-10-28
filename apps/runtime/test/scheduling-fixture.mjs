@@ -14,7 +14,10 @@ const scratch = await mkdtemp(
   join(tmpdir(), 'flowtools-validation-scheduling-')
 )
 const profile = join(scratch, 'profile')
-const executable = join(root, 'target/debug/flowtools-runtime.exe')
+const executable = join(
+  process.env.CARGO_TARGET_DIR ?? join(root, 'target'),
+  'debug/flowtools-runtime.exe'
+)
 const pause = (/** @type {number} */ milliseconds) =>
   new Promise(resolve => setTimeout(resolve, milliseconds))
 /** @type {import('node:child_process').ChildProcessWithoutNullStreams | undefined} */
@@ -287,6 +290,12 @@ try {
     reminderRecord.lastClaim.result.runId
   )
   assert.equal(notification.state, 'succeeded')
+  assert.ok(
+    (await readFile(join(profile, 'runtime.sqlite'))).includes(
+      Buffer.from('notification-attempts-v1')
+    ),
+    'The actual broker/native adapter must persist its attempt; no missing-capability fallback'
+  )
   assert.match(
     JSON.stringify(notification.result),
     /"status":"(?:requested|failed|unsupported|unknown)"/

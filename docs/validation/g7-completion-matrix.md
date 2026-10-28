@@ -69,3 +69,11 @@ Node 宿主的首次整合检查发现测试注册阶段提前等待首个测试
 最新分别约 517/531ms；types/lint、生成命令文档与实际 manifest，以及含
 Bun/Node 失败传播的 17 项仓库回归通过。Core 最新完整 252 + 11 + 2、
 all-target Clippy 通过。以上均为专项证据，修复树需再次执行完整根门禁。
+
+`bf5f20a` 的完整本机门禁通过新 CLI 两例和 Core 252+11+2 后，在 Runtime
+19/24 失败：deadline、malformed、oversized、provider-error、root-cancel
+仍缺少真实后代 marker/排空边界。没有改旧期限或断言。七个异常注入 fixture
+改用测试专用 Node 宿主驱动同一编译处理器，C 仍创建 hash 固定的真实 Bun
+后代；正常服务与产品仍用 Bun。原样 15 项 native service 回归全部通过，
+Job 内 PID 存活/退出、lease 与迁移拒绝断言保留。详见
+[测试宿主与证据](./g7-runner-protocol-host.md)；底层 Bun 阻塞未宣称修复。

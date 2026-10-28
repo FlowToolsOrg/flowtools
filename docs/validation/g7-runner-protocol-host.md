@@ -53,3 +53,32 @@ and requires the native notification-attempt record, so a missing-capability
 fallback cannot masquerade as native adapter coverage. Rebuilding and running
 that test with the alternate Desktop Cargo target passed (1 test / 4 assertions,
 21.14s); see `scheduling-alt-target-20261028.log`, exit 0.
+
+2026-10-28 native drain fixture Host: `bf5f20a` passed the new CLI Node Host
+cases and Core 252 + 11 + 2, then retained the original Runtime failure (19/24;
+deadline, malformed, oversized, provider-error and root-cancel readiness/drain).
+The C provider had not produced its actual descendant marker before the old
+deadline. Independent observations of Bun's parent spawn call taking ~10s and
+Node starting the same Bun binary in <1s isolate a test-Host startup obstruction;
+the underlying OS/engine cause is still unknown.
+
+Only the seven abnormal-drain fixtures now use a test-only Node Host for the
+same compiled A/B/C handlers and unchanged Runtime service runner. The normal
+eight service tests and production config still use Bun. The C handler checks
+the build-pinned Bun binary's SHA-256, starts that actual Bun descendant, waits
+for its OS spawn event and writes its PID. The test never creates/assigns a
+replacement descendant itself. The Runtime still observes that living PID in
+the exact owned OS Job before the barrier, proves it exits after drain and
+retains leases/migration refusal until then. All existing 5s readiness/barrier,
+9.5s run and 10s drain-entry budgets, failure modes, expected error codes and
+real-process assertions remain unchanged; there is no skip/retry or product
+Node runtime option. The fixture is a neutral process-containment test, not
+evidence that Bun's own child-startup problem has been repaired.
+
+All fifteen actual native service tests passed in 47.89s, including the normal
+Bun chains, six abnormal failure/lease cases and timeout descendant cleanup.
+Log: `execution-validation/g7-shell/native-drain-node-host-20261028.log`, exit 0.
+The freshly built fixture manifest pins the actual universal compiled artifact;
+Node is selected/hash-verified only by Rust unit-test setup. No production
+inventory, loader, Tauri permission, Job implementation or policy code changed.
+The repaired tree still requires the complete root gate.

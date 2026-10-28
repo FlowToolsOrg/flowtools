@@ -164,7 +164,7 @@ struct Fixture {
 
 #[tokio::test]
 async fn timed_out_provider_drains_its_actual_owned_descendant() {
-    let fixture = Fixture::new().await;
+    let fixture = Fixture::with_drain_host().await;
     let (_, task) = fixture.run("daemon").await;
     assert!(task.await.unwrap().is_err());
     fixture.drained().await;
@@ -209,7 +209,7 @@ async fn real_job_access_denial_stops_host_and_refuses_provider_migration() {
 
 async fn abnormal_owned_drain(mode: &str, cancel: bool, deny_terminate: bool) {
     use std::sync::atomic::Ordering::SeqCst;
-    let fixture = Fixture::new().await;
+    let fixture = Fixture::with_drain_host().await;
     let probe = Arc::new(service_runner::DrainProbe::new(deny_terminate));
     *fixture.backend.drain_probe.lock().unwrap() = Some(probe.clone());
     let (root, task) = fixture.run(mode).await;
@@ -426,6 +426,12 @@ async fn root_service_call_budget_cannot_be_reset_at_the_next_provider() {
 }
 impl Fixture {
     async fn new() -> Self {
+        Self::with_process_host(false).await
+    }
+    async fn with_drain_host() -> Self {
+        Self::with_process_host(true).await
+    }
+    async fn with_process_host(node_host: bool) -> Self {
         // Each fixture still tests concurrent roots internally; all assertions run.
         static TEST_PROFILES: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
         let guard = TEST_PROFILES.lock().await;
@@ -486,6 +492,26 @@ impl Fixture {
             }),
         );
         let mut config: Value = serde_json::from_str(runner_config()).unwrap();
+        if node_host {
+            // Test-only neutral Host for the same compiled A/B/C handlers.
+            // Bun's own child-startup blocking is not a Job/drain readiness SLA.
+            // The descendant is still the freshly hash-pinned actual Bun binary,
+            // spawned by C and inherited by its real owned OS Job (not assigned
+            // by the test). All production/default fixtures still start Bun.
+            let output = std::process::Command::new("node")
+                .args(["--eval", "process.stdout.write(process.execPath)"])
+                .output()
+                .expect("The existing Node fixture Host must be installed");
+            assert!(output.status.success());
+            let path = String::from_utf8(output.stdout).unwrap();
+            let node = std::fs::canonicalize(path).unwrap();
+            let path = node
+                .to_string_lossy()
+                .trim_start_matches(r"\\?\")
+                .to_owned();
+            assert_ne!(config["bun"]["path"], path);
+            config["bun"] = json!({"path":path,"sha256":format!("{:x}",Sha256::digest(std::fs::read(node).unwrap()))});
+        }
         let runner = directory.join("fixture-runner.js");
         let path = runner
             .to_string_lossy()

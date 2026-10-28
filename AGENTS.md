@@ -188,6 +188,11 @@ CLI's compiled search cases run under the Node test Host against the actual Bun
 CLI, after its existing Bun suite. Preserve both 5s bounds, actual exit/JSON and
 source-canary assertions, exact case count, strict JS checking and fatal `&&`
 sequencing. Bun child-startup blocking is not a reason to relax product deadlines.
+The seven abnormal native drain fixtures use a test-only Node Host for the same
+compiled handlers; C still spawns the hash-pinned actual Bun descendant. Keep
+the existing real Job/PID ownership/alive/exit, lease/migration and all deadline
+assertions. Ordinary service tests and the production config still use Bun.
+Never expose the fixture Host choice as a runtime/client execution option.
 
 G7 search uses `@flowtools/sdk/search`, not independent Host scoring. Keep
 registration/removal synchronized with lifecycle and explain stable rankings.

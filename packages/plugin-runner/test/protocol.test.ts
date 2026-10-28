@@ -31,7 +31,11 @@ const frame = (value: unknown) => {
   return Buffer.concat([header, body])
 }
 
-function runFrames(runner: string, frames: Buffer[]) {
+function runFrames(
+  runner: string,
+  frames: Buffer[],
+  submissionDeadline = false
+) {
   const host = Bun.spawnSync(
     ['node', resolve(import.meta.dirname, 'protocol-fixture.mjs')],
     {
@@ -40,6 +44,7 @@ function runFrames(runner: string, frames: Buffer[]) {
           bun: process.execPath,
           runner,
           frames: frames.map(bytes => bytes.toString('base64')),
+          submissionDeadline,
         })
       ),
       stdout: 'pipe',
@@ -56,6 +61,9 @@ function runFrames(runner: string, frames: Buffer[]) {
       stderr: string
       oversized: boolean
       pid: number
+      submittedAt: number
+      finishedAt: number
+      deadlineAt?: number
     }[]
   }
   expect(report.timedOut).toBe(false)
@@ -63,6 +71,10 @@ function runFrames(runner: string, frames: Buffer[]) {
   for (const result of report.results) {
     expect(result.oversized).toBe(false)
     expect(result.pid).toBeGreaterThan(0)
+    if (submissionDeadline) {
+      expect(result.deadlineAt).toBe(result.submittedAt + 10_000)
+      expect(result.finishedAt).toBeLessThanOrEqual(result.deadlineAt!)
+    }
   }
   return report.results
 }
@@ -159,7 +171,7 @@ test('actual compiled runner verifies the Host package pin before importing serv
             data: null,
             input: { text: 'hello' },
             packageDigest,
-            deadline: Date.now() + 10_000,
+            deadline: 0, // The actual Node Host sets the unchanged 10s run window.
             serviceTarget: {
               publisher: 'flowtools',
               id,
@@ -168,7 +180,8 @@ test('actual compiled runner verifies the Host package pin before importing serv
             },
           },
         })
-      )
+      ),
+      true
     )
     for (const [index, { code, stdout, stderr }] of results.entries()) {
       // The matching control imports the marker, then refuses missing handlers.

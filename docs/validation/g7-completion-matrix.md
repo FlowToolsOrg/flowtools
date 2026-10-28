@@ -77,3 +77,9 @@ all-target Clippy 通过。以上均为专项证据，修复树需再次执行�
 后代；正常服务与产品仍用 Bun。原样 15 项 native service 回归全部通过，
 Job 内 PID 存活/退出、lease 与迁移拒绝断言保留。详见
 [测试宿主与证据](./g7-runner-protocol-host.md)；底层 Bun 阻塞未宣称修复。
+
+后续 `c329d2c` 的门禁发现 package-pin 正向对照在 Node 宿主启动前生成
+绝对 deadline，宿主启动可能耗尽窗口。该无已接受 job 的测试请求现由实际
+Node 宿主在提交时创建同样的 10s 窗口，并断言准确窗口及完成时间；保留
+旧 pin 拒绝和新 pin import marker、30s test/25s watchdog、全部产品期限。
+修复后 runner 4 项 / 58 assertions、types/lint 通过，详见上面的宿主记录。

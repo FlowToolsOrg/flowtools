@@ -82,3 +82,17 @@ The freshly built fixture manifest pins the actual universal compiled artifact;
 Node is selected/hash-verified only by Rust unit-test setup. No production
 inventory, loader, Tauri permission, Job implementation or policy code changed.
 The repaired tree still requires the complete root gate.
+
+The next integrated gate on `c329d2c` caught a separate positive-control problem:
+its package-pin packet's absolute deadline was built before the Node Host had
+started. A blocked Bun parent could consume that whole 10s window, causing even
+the matching pin to refuse before the required import marker. No Runtime job
+had been accepted at that point. The Node test Host now constructs that packet's
+same 10s window when it actually submits each controlled request. Malformed
+rejection bytes remain byte-for-byte unchanged. The tests additionally require
+`deadlineAt == submittedAt + 10000` and completion within that window; both
+old-pin refusal and matching-pin import-marker assertions remain. The 30s test
+and 25s aggregate watchdog are unchanged, as are all product deadlines. This is
+not permission to refresh an accepted Runtime job's deadline.
+All four runner tests / 58 assertions passed in 22.45s, with strict JS/TS types
+and lint passing; `runner-submission-deadline-20261028.log`, exit 0.

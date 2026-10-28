@@ -1,6 +1,6 @@
-// The real Node Host sends every original byte sequence to the actual compiled
-// Bun runner. Batch in one Host: repeated Bun->child process startup can block
-// the Windows test event loop. No retries, substituted handlers or relaxed gate.
+// The real Node Host sends the original rejection bytes to the actual compiled
+// Bun runner. It creates fresh accepted-pin deadlines at actual submission.
+// Batch in one Host: Bun->child startup can block the Windows test event loop.
 import { spawn } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 
@@ -11,6 +11,7 @@ const config = /** @type {Record<string, unknown>} */ (input)
 if (
   typeof config.bun !== 'string' ||
   typeof config.runner !== 'string' ||
+  typeof config.submissionDeadline !== 'boolean' ||
   !Array.isArray(config.frames) ||
   config.frames.length > 8 ||
   config.frames.some(frame => typeof frame !== 'string' || frame.length > 8192)
@@ -54,9 +55,46 @@ try {
       child.once('error', reject)
       child.once('close', resolve)
     })
-    child.stdin.end(Buffer.from(encoded, 'base64'))
+    const submittedAt = Date.now()
+    let bytes = Buffer.from(encoded, 'base64')
+    /** @type {number | undefined} */
+    let deadlineAt
+    if (config.submissionDeadline) {
+      if (bytes.length < 5 || bytes.readUInt32LE(0) !== bytes.length - 4)
+        throw new Error('FIXTURE_INVALID')
+      /** @type {unknown} */
+      const packet = JSON.parse(bytes.subarray(4).toString('utf8'))
+      if (
+        !packet ||
+        typeof packet !== 'object' ||
+        !('kind' in packet) ||
+        packet.kind !== 'start' ||
+        !('payload' in packet) ||
+        !packet.payload ||
+        typeof packet.payload !== 'object' ||
+        !('deadline' in packet.payload) ||
+        packet.payload.deadline !== 0
+      )
+        throw new Error('FIXTURE_INVALID')
+      deadlineAt = submittedAt + 10_000
+      packet.payload.deadline = deadlineAt
+      const body = Buffer.from(JSON.stringify(packet))
+      const header = Buffer.alloc(4)
+      header.writeUInt32LE(body.length)
+      bytes = Buffer.concat([header, body])
+    }
+    child.stdin.end(bytes)
     const code = await closed
-    results.push({ code, stdout, stderr, oversized, pid: child.pid })
+    results.push({
+      code,
+      stdout,
+      stderr,
+      oversized,
+      pid: child.pid,
+      submittedAt,
+      finishedAt: Date.now(),
+      deadlineAt,
+    })
     active = undefined
   }
   process.stdout.write(JSON.stringify({ timedOut, results }))

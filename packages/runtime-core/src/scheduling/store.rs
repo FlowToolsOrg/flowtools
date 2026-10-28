@@ -251,6 +251,18 @@ fn save(store: &mut DataStore, state: &State) -> Result<(), ErrorCode> {
 
 pub struct ScheduleStore;
 impl ScheduleStore {
+    /// Preserve private inputs before generic orphan cleanup, including restored
+    /// or copied profiles awaiting explicit disposal. This does not authorize
+    /// dispatch or accept the old profile/restore scope.
+    pub(crate) fn retained_input_ids(
+        store: &DataStore,
+    ) -> Result<std::collections::HashSet<String>, ErrorCode> {
+        Ok(load_scoped(store, true)?
+            .records
+            .into_iter()
+            .map(|record| record.id)
+            .collect())
+    }
     /// Read-only challenge binds explicit disposal to these exact stored bytes
     /// and the current T0-derived profile/restore generation.
     pub fn recovery(

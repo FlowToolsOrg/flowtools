@@ -516,10 +516,14 @@ impl RuntimeCore {
                 }
             }
         }
+        let mut retained: std::collections::HashSet<String> = self.jobs.keys().cloned().collect();
+        retained.extend(crate::scheduling::store::ScheduleStore::retained_input_ids(
+            &self.data,
+        )?);
         self.private_jobs
             .as_ref()
             .unwrap()
-            .remove_orphans(&self.jobs.keys().cloned().collect())?;
+            .remove_orphans(&retained)?;
         Ok(())
     }
     pub fn pending_runs(&self) -> Vec<String> {

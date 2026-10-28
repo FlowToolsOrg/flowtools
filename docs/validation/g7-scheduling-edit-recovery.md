@@ -36,3 +36,13 @@ These focused checks do not replace the required clean root gate.
 
 Notification delivery, search and file/media workflows remain separate G7 work.
 Earlier full-gate failures remain recorded in the shell/dispatch evidence.
+
+2026-10-28 restart regression: generic private-job orphan cleanup previously
+kept only job IDs, so it could delete a schedule's encrypted input before its
+first dispatch after Host restart. Cleanup now also keeps all IDs from the
+strictly validated schedule store. Retention accepts old scope only to preserve
+bytes; dispatch still refuses copied/restored scope with `RECOVERY_PENDING`.
+Corrupt state aborts cleanup. No grants, cursor or recovery markers are reset.
+Two actual private-profile Core regressions passed: restart before first
+dispatch executes the original input once; restore-generation mismatch retains
+the input while refusing dispatch, and explicit disposal still preserves it.

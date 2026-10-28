@@ -485,6 +485,89 @@ mod tests {
     }
 
     #[test]
+    fn restored_schedule_inputs_are_preserved_without_replaying_them() {
+        let (mut core, profile, manager, _) = fixture();
+        approve(&mut core, &manager, true);
+        let scheduled = record(&mut core, &manager, create());
+        core.data.connection.execute("INSERT INTO core_metadata(key,value) VALUES('recovery-generation','restored-file-test')",[]).unwrap();
+        drop(core);
+        let mut restored = RuntimeCore::managed(
+            HashMap::new(),
+            DataStore::open(&profile.join("runtime.sqlite")).unwrap(),
+            false,
+            false,
+        )
+        .unwrap();
+        assert_eq!(
+            restored
+                .private_jobs
+                .as_ref()
+                .unwrap()
+                .read(&scheduled.id, "input")
+                .unwrap()["text"],
+            "PRIVATE_SCHEDULE_TEXT"
+        );
+        assert_eq!(
+            restored.tick_schedules().unwrap_err(),
+            ErrorCode::RecoveryPending
+        );
+        assert!(restored.jobs.is_empty());
+        assert_eq!(
+            ScheduleStore::list(&restored.data).unwrap_err(),
+            ErrorCode::RecoveryPending
+        );
+        let recovery = ScheduleStore::recovery(&restored.data).unwrap().unwrap();
+        assert_eq!(recovery.count, 1);
+        ScheduleStore::discard_restored(&mut restored.data, &recovery.challenge).unwrap();
+        assert!(ScheduleStore::list(&restored.data).unwrap()[0].cancelled);
+        assert_eq!(
+            restored
+                .private_jobs
+                .as_ref()
+                .unwrap()
+                .read(&scheduled.id, "input")
+                .unwrap()["text"],
+            "PRIVATE_SCHEDULE_TEXT"
+        );
+        drop(restored);
+        std::fs::remove_dir_all(profile).unwrap();
+    }
+
+    #[test]
+    fn host_restart_retains_schedule_input_before_first_dispatch() {
+        let (mut core, profile, manager, _) = fixture();
+        approve(&mut core, &manager, true);
+        let mut definition = create();
+        definition.definition.grace_ms = 60_000;
+        let scheduled = record(&mut core, &manager, definition);
+        drop(core);
+        let mut restored = RuntimeCore::managed(
+            HashMap::new(),
+            DataStore::open(&profile.join("runtime.sqlite")).unwrap(),
+            false,
+            false,
+        )
+        .unwrap();
+        assert_eq!(
+            restored
+                .private_jobs
+                .as_ref()
+                .unwrap()
+                .read(&scheduled.id, "input")
+                .unwrap()["text"],
+            "PRIVATE_SCHEDULE_TEXT"
+        );
+        let runs = restored.tick_schedules().unwrap();
+        assert_eq!(runs.len(), 1);
+        let spec = restored.take_run(&runs[0]).unwrap();
+        assert_eq!(spec.input["text"], "PRIVATE_SCHEDULE_TEXT");
+        assert!(restored.tick_schedules().unwrap().is_empty());
+        restored.finish(&runs[0], Err(ErrorCode::Aborted));
+        drop(restored);
+        std::fs::remove_dir_all(profile).unwrap();
+    }
+
+    #[test]
     fn scheduled_acceptance_uses_private_inputs_and_survives_client_disconnect_without_replay() {
         let (mut core, profile, manager, _) = fixture();
         approve(&mut core, &manager, true);

@@ -78,8 +78,8 @@ fn fixed_embedded_inventory_plans_only_metadata_without_execution() {
     assert_eq!(plan.mode, "plan-only");
     assert_eq!(plan.format_version, 1);
     assert_eq!(plan.lock.format_version, 1);
-    assert_eq!(plan.lock.packages.len(), 12);
-    assert_eq!(plan.lock.roots.len(), 12);
+    assert_eq!(plan.lock.packages.len(), 13);
+    assert_eq!(plan.lock.roots.len(), 13);
     assert!(
         plan.lock.services.is_empty() && plan.lock.tools.is_empty() && plan.lock.edges.is_empty()
     );

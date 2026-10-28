@@ -31,3 +31,15 @@ All four runner tests passed (54 assertions), followed by clean types/lint.
 Log: `execution-validation/g7-shell/runner-protocol-host-20261028.log`, exit 0.
 A new complete root gate is required. Older Runtime descendant readiness/drain
 failures remain unmodified and cannot be replaced by this fixture result.
+
+The integrated gate on `08e0f34` subsequently passed all four protocol tests and
+stopped on three Core inventory tests (240 passed / 3 failed): operation count
+11 vs 12, dependency package/root counts 12 vs 13, and native Manifest count 12
+vs 13. A complete source search found the additional Manifest count assertion
+behind the operation assertion as well. All fixed inventories now explicitly
+include the notification operation and thirteenth real package; no validation
+loop or refusal condition is removed. This is recorded in
+`runner-host-root-ci-20261028.log`; the corrected tree needs the full gate.
+The corrected complete Core library suite then passed all 243 tests in 47.94s;
+see `reminder-core-inventory-20261028.log` (exit 0). Other workspace/full gates
+are still separate evidence.

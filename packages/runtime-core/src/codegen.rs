@@ -206,13 +206,13 @@ mod tests {
             assert!(jsonschema::is_valid(&schemas["response"], value));
         }
         let catalog = BuiltinCatalog::embedded();
-        assert_eq!(fixtures["operations"].as_array().unwrap().len(), 11);
+        assert_eq!(fixtures["operations"].as_array().unwrap().len(), 12);
         for value in fixtures["operations"].as_array().unwrap() {
             let operation: CapabilityOperation = serde_json::from_value(value.clone()).unwrap();
             assert_eq!(&serde_json::to_value(operation).unwrap(), value);
             assert!(jsonschema::is_valid(&schemas["capabilityOperation"], value));
         }
-        assert_eq!(fixtures["manifests"].as_array().unwrap().len(), 12);
+        assert_eq!(fixtures["manifests"].as_array().unwrap().len(), 13);
         for fixture in fixtures["manifests"].as_array().unwrap() {
             let (built, _) = catalog
                 .command(fixture["manifest"]["id"].as_str().unwrap(), "run")

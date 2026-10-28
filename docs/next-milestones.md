@@ -437,6 +437,10 @@ Tauri [sidecar](https://v2.tauri.app/develop/sidecar/) 用于构建捆绑程序�
 
 ## 9. G7：统一 UI 与三个办公闭环
 
+2026-10-28：P3.1b5 的本地提醒经普通调度/授权 runner 在无 GUI 时执行，固定
+身份的 Windows API 返回 requested；发送前持久记录且未知不重发。
+见 [证据](./validation/g7-local-reminders.md)。继续整仓门禁、搜索与文件/媒体闭环。
+
 2026-10-28：P3.1b4 补齐显式编辑与备份恢复后作废旧日程，GUI/CLI 共用管理
 契约，原子替换、版本冲突和恢复 challenge 回放验证通过。保留位置/时钟下限，
 不恢复 grants 或重放；通知与搜索/办公闭环继续实施，见

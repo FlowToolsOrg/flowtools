@@ -459,6 +459,10 @@ loopback 均可用，但 public/wildcard/mixed listener、未监听的端点、�
 
 ### SEC-013 CLI 冷启动、后台任务与调用主体混淆
 
+P3.1b5 [提醒](../validation/g7-local-reminders.md) 在当前 broker 会话和通知
+scope/epoch 检查内先提交一次尝试再访问 OS；不保存明文内容，未知不重发。
+固定应用身份和纯文本输入不能替换为 caller XML/路径或 PowerShell 冒名。
+
 P3.1b4 的 [编辑/恢复](../validation/g7-scheduling-edit-recovery.md) 需要管理
 会话及明确确认；替换按旧 revision 原子提交，恢复 challenge 绑定确切状态和
 当前 profile/generation。处置不复位游标、降低 clock floor 或恢复授权。

@@ -19,7 +19,10 @@ import { Button, Card, Input, Label, TextField } from '@heroui/react'
 
 import { builtInManifestData } from '../plugin/manifests'
 import { isTauriRuntime } from '../runtime/desktop-capabilities'
-import { controlManagedRuntime } from '../runtime/managed-client'
+import {
+  controlManagedRuntime,
+  connectManagedRuntime,
+} from '../runtime/managed-client'
 
 const available = builtInManifestData.flatMap(plugin =>
   plugin.commands
@@ -28,6 +31,8 @@ const available = builtInManifestData.flatMap(plugin =>
 )
 const labels: Record<string, string> = {
   text: '文本',
+  title: '提醒标题',
+  message: '提醒内容',
   mode: '操作',
   todo: '待办事项',
   deadline: '截止日期',
@@ -523,6 +528,52 @@ export function ScheduleSettings() {
                     : ''}
                 </p>
               )}
+              {record.binding.identity.pluginId === 'plugin-local-reminder' &&
+                record.lastClaim?.result.state === 'submitted' && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    isDisabled={busy}
+                    onPress={() =>
+                      void run(async () => {
+                        if (record.lastClaim?.result.state !== 'submitted')
+                          return
+                        const client = await connectManagedRuntime()
+                        try {
+                          const job = await client.job(
+                            record.lastClaim.result.runId
+                          )
+                          const data = job.result?.success
+                            ? job.result.data
+                            : undefined
+                          const value =
+                            object(data) &&
+                            object(data.value) &&
+                            object(data.value.result)
+                              ? data.value.result
+                              : undefined
+                          const labels: Record<string, string> = {
+                            requested: '系统已接受通知请求，尚不代表已显示',
+                            unsupported: '此平台不支持系统通知',
+                            failed:
+                              '系统拒绝通知请求，请检查应用安装和通知设置',
+                            unknown: '发送结果未知，不会自动重发',
+                          }
+                          if (mounted.current)
+                            setMessage(
+                              typeof value?.status === 'string'
+                                ? (labels[value.status] ?? '通知结果无效')
+                                : `提醒任务状态：${job.state}`
+                            )
+                        } finally {
+                          client.close()
+                        }
+                      })
+                    }
+                  >
+                    查看提醒结果
+                  </Button>
+                )}
               <Button
                 size="sm"
                 variant="secondary"

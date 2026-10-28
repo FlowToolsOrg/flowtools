@@ -7,6 +7,11 @@ export interface PluginSmokeFixture {
 /** Complete inventory: only real compiled plugins, never a replacement run(). */
 export const pluginSmokeFixtures: PluginSmokeFixture[] = [
   {
+    id: 'plugin-local-reminder',
+    input: { title: 'Fixture reminder' },
+    expected: { type: 'json', value: { result: { status: 'unsupported' } } },
+  },
+  {
     id: 'plugin-base64-encoder',
     input: { text: 'hello' },
     expected: { type: 'json', value: { result: 'aGVsbG8=', mode: 'encode' } },

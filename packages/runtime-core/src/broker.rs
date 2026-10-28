@@ -58,6 +58,7 @@ pub enum CapabilityOperation {
     DataWrite { key: String },
     ClipboardRead,
     ClipboardWrite,
+    Notification { title: String, message: String },
     ToolExecute { lock: String, action: String },
 }
 
@@ -88,6 +89,7 @@ pub enum Scope {
     NetworkSend { origin: String, method: SendMethod },
     PluginData { key_prefix: String },
     Clipboard,
+    Notification,
     ToolLock { lock: String, action: String },
 }
 
@@ -148,6 +150,7 @@ impl CapabilityBroker {
                         | "clipboard-read"
                         | "clipboard-write"
                         | "tool-execute"
+                        | "notification"
                 )
             })
             || grant
@@ -488,6 +491,7 @@ impl CapabilityOperation {
             Self::NetworkRead { origin, .. } | Self::NetworkSend { origin, .. } => scope == origin,
             Self::DataRead { .. } | Self::DataWrite { .. } => scope == "plugin-data",
             Self::ClipboardRead | Self::ClipboardWrite => scope == "text",
+            Self::Notification { .. } => scope == "local",
             Self::ToolExecute { lock, action } => scope == format!("lock:{lock}:{action}"),
         }
     }
@@ -503,6 +507,7 @@ impl CapabilityOperation {
             Self::DataWrite { .. } => ("data-write", "storage", "set"),
             Self::ClipboardRead => ("clipboard-read", "clipboard", "read"),
             Self::ClipboardWrite => ("clipboard-write", "clipboard", "write"),
+            Self::Notification { .. } => ("notification", "notification", "notify"),
             Self::ToolExecute { .. } => ("tool-execute", "tool", "execute"),
         }
     }
@@ -525,6 +530,7 @@ impl Scope {
             }
             Self::PluginData { key_prefix } => valid_key(key_prefix),
             Self::Clipboard => true,
+            Self::Notification => true,
             Self::ToolLock { lock, action } => valid_key(lock) && valid_key(action),
         }
     }
@@ -565,6 +571,15 @@ impl Scope {
                 Self::Clipboard,
                 CapabilityOperation::ClipboardRead | CapabilityOperation::ClipboardWrite,
             ) => true,
+            (Self::Notification, CapabilityOperation::Notification { title, message }) => {
+                !title.trim().is_empty()
+                    && title.len() <= 256
+                    && message.len() <= 4096
+                    && !title
+                        .chars()
+                        .chain(message.chars())
+                        .any(|c| c == '\0' || (c.is_control() && c != '\n' && c != '\t'))
+            }
             (
                 Self::ToolLock {
                     lock: approved,

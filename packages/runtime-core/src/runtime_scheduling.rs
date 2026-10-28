@@ -5,6 +5,38 @@ use crate::scheduling::{
 };
 
 impl RuntimeCore {
+    /// T0 holds the broker and writer through the notification commit point.
+    pub fn deliver_notification(
+        &mut self,
+        run_id: &str,
+        title: &str,
+        message: &str,
+        adapter: impl FnOnce() -> crate::notifications::NotificationStatus,
+    ) -> Result<crate::notifications::NotificationStatus, ErrorCode> {
+        self.check_run(run_id)?;
+        let session = if let Some(call) = self.service_invocations.get(run_id) {
+            call.session.clone()
+        } else {
+            self.jobs
+                .get(run_id)
+                .and_then(|job| job.broker_session.clone())
+                .ok_or(ErrorCode::SessionInvalid)?
+        };
+        let operation = CapabilityOperation::Notification {
+            title: title.into(),
+            message: message.into(),
+        };
+        let result = self.broker.invoke(&session, &operation, now(), |_| {
+            crate::notifications::attempt(&mut self.data, run_id, title, message, adapter)
+        });
+        if matches!(
+            result,
+            Err(ErrorCode::StorageFailed | ErrorCode::StoreCorrupt)
+        ) {
+            self.fail_closed();
+        }
+        result
+    }
     pub(super) fn create_schedule(
         &mut self,
         create: CreateSchedule,
@@ -345,6 +377,75 @@ mod tests {
         } else {
             panic!("schedule: {outcome:?}");
         }
+    }
+
+    #[test]
+    fn notification_needs_current_policy_and_durable_claim_before_os_effect() {
+        use crate::notifications::NotificationStatus;
+        let (mut core, profile, manager, _) = fixture();
+        let (manifest, command) = core
+            .catalog
+            .command("plugin-local-reminder", "run")
+            .unwrap();
+        let identity = CommandIdentity::from_manifest("local-cli", manifest, command);
+        let grant = PermissionGrant {
+            plugin_id: identity.plugin_id.clone(),
+            command_id: "run".into(),
+            target: GrantTarget::Cli,
+            package_digest: identity.package_digest,
+            effects: vec!["notification".into()],
+            scopes: vec![Scope::Notification],
+            expires_at: now() + 60_000.0,
+            max_calls: 8,
+            cold_start: false,
+            background: true,
+        };
+        assert!(matches!(
+            core.handle(
+                "manager",
+                request(Call::Grant(grant), Some(manager.clone()))
+            )
+            .outcome,
+            Outcome::Permissions(_)
+        ));
+        let mut create = create();
+        create.plugin_id = "plugin-local-reminder".into();
+        create.input = json!({"title":"Private reminder", "message":"Private body"});
+        record(&mut core, &manager, create);
+        let id = core.tick_schedules().unwrap().remove(0);
+        core.take_run(&id).unwrap();
+        assert_eq!(
+            core.deliver_notification(&id, "Private reminder", "Private body", || {
+                NotificationStatus::Requested
+            })
+            .unwrap(),
+            NotificationStatus::Requested
+        );
+        assert_eq!(
+            core.deliver_notification(&id, "Private reminder", "Private body", || panic!(
+                "no duplicate OS call"
+            ))
+            .unwrap(),
+            NotificationStatus::Requested
+        );
+        core.handle(
+            "manager",
+            request(
+                Call::Revoke(PermissionKey {
+                    plugin_id: identity.plugin_id,
+                    command_id: "run".into(),
+                    target: GrantTarget::Cli,
+                }),
+                Some(manager),
+            ),
+        );
+        assert!(core
+            .deliver_notification(&id, "Private reminder", "Private body", || panic!(
+                "revoked callback"
+            ))
+            .is_err());
+        drop(core);
+        std::fs::remove_dir_all(profile).unwrap();
     }
 
     #[test]

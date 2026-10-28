@@ -1,5 +1,9 @@
 # Flow Tool Plugin 开发指南
 
+第 13 个内置命令为本地提醒，通知能力仍需独立 scope/background 授权。
+`notification.deliver` 返回尝试状态，未知不重发；不代表 OS 已显示。
+见 [提醒证据](./validation/g7-local-reminders.md)。
+
 调度编辑需要重新确认输入/时间并通过当前后台授权；恢复处置只永久作废旧计划，
 不会恢复插件 grant 或重放已消费位置。见 [编辑/恢复契约](./validation/g7-scheduling-edit-recovery.md)。
 

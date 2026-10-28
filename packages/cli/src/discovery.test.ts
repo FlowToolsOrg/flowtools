@@ -162,7 +162,7 @@ test('compiled discovery/info/help use serialized data without importing an exec
         authorization: 'declarations-only',
       })
     if (args[0] === 'commands')
-      expect(JSON.parse(output.stdout).commands).toHaveLength(12)
+      expect(JSON.parse(output.stdout).commands).toHaveLength(13)
   }
 }, 30_000)
 
@@ -329,7 +329,7 @@ test('extra source and compiled entries cannot change the compiled inventory', a
   const output = await invoke(sample.cli, ['list', '--format', 'json'])
   expect(output.code).toBe(0)
   const plugins = JSON.parse(output.stdout) as { id: string }[]
-  expect(plugins).toHaveLength(12)
+  expect(plugins).toHaveLength(13)
   expect(plugins.map(plugin => plugin.id)).not.toContain(
     'plugin-untrusted-extra'
   )

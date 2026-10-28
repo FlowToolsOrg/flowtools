@@ -113,6 +113,10 @@ pub fn artifacts() -> Result<Vec<(&'static str, String)>, Box<dyn std::error::Er
         },
         CapabilityOperation::ClipboardRead,
         CapabilityOperation::ClipboardWrite,
+        CapabilityOperation::Notification {
+            title: "Fixture reminder".into(),
+            message: "Fixture only".into(),
+        },
         CapabilityOperation::ToolExecute {
             lock: "host-lock".into(),
             action: "probe".into(),

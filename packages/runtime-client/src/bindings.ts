@@ -38,7 +38,10 @@ export type CapabilityOperation = { operation: "file-read"; parameters: {
 	key: string,
 } } | { operation: "data-write"; parameters: {
 	key: string,
-} } | { operation: "clipboard-read" } | { operation: "clipboard-write" } | { operation: "tool-execute"; parameters: {
+} } | { operation: "clipboard-read" } | { operation: "clipboard-write" } | { operation: "notification"; parameters: {
+	title: string,
+	message: string,
+} } | { operation: "tool-execute"; parameters: {
 	lock: string,
 	action: string,
 } };
@@ -443,7 +446,7 @@ export type Scope = { kind: "file-handle"; scope: string } | { kind: "network-re
 	method: SendMethod,
 } } | { kind: "plugin-data"; scope: {
 	key_prefix: string,
-} } | { kind: "clipboard" } | { kind: "tool-lock"; scope: {
+} } | { kind: "clipboard" } | { kind: "notification" } | { kind: "tool-lock"; scope: {
 	lock: string,
 	action: string,
 } };

@@ -241,7 +241,10 @@ pub(super) fn execute(
                         }
                         RunnerMessage::Capability{id,operation}=> {
                             if id<=last_id { return Err(ErrorCode::InvalidRequest); } last_id=id;
-                            let response=core.lock().await.invoke_service(&run_id,&operation,|_| {
+                            let response=if let CapabilityOperation::Notification {title,message} = &operation {
+                                core.lock().await.deliver_notification(&run_id,title,message,|| crate::notification::send(title,message))
+                                    .and_then(|status| serde_json::to_value(status).map_err(|_| ErrorCode::OutputInvalid))
+                            } else { core.lock().await.invoke_service(&run_id,&operation,|_| {
                                 #[cfg(test)] if let CapabilityOperation::FileRead{handle}=&operation {
                                     let path=backend.handles.get(handle).ok_or(ErrorCode::ScopeDenied)?;
                                     backend.reads.fetch_add(1,std::sync::atomic::Ordering::SeqCst);
@@ -250,7 +253,7 @@ pub(super) fn execute(
                                     return String::from_utf8(bytes).map(Value::String).map_err(|_|ErrorCode::OutputInvalid);
                                 }
                                 Err(ErrorCode::CapabilityUndeclared)
-                            });
+                            }) };
                             frame_write(&mut stdin,&reply(id,response)).await?;
                         }
                         RunnerMessage::Result{execution,mutations}=> {

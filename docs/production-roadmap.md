@@ -1575,6 +1575,10 @@ Phase 2 总退出标准：P2.1–P2.8 全部 `done`；第三方代码默认拒�
 
 ### P3.1 完成 Desktop 宿主产品能力
 
+P3.1b5 接入本地提醒、持久发送尝试及固定身份的 Windows 通知 API。真实无客户端
+执行返回 requested，GUI/CLI 管理和拒绝矩阵通过，见
+[提醒证据](./validation/g7-local-reminders.md)。整仓门禁与其余 G7 工作继续推进。
+
 P3.1b4 增加 GUI/CLI 原子调度替换与显式恢复处置，保留旧位置、输入和时钟下限，
 不自动恢复执行；见 [编辑/恢复证据](./validation/g7-scheduling-edit-recovery.md)。
 

@@ -1,5 +1,9 @@
 # Flow Tool
 
+Local reminders run through the authorized background Host with durable
+notification attempts and GUI/CLI management. See
+[Windows API evidence](./docs/validation/g7-local-reminders.md).
+
 Schedule editing and explicit restore disposal now share the GUI/CLI contract;
 atomic replacement and challenge replay checks are covered in
 [edit/recovery evidence](./docs/validation/g7-scheduling-edit-recovery.md).
@@ -322,7 +326,7 @@ verification is recorded in [the artifact gate](./docs/validation/p0-production-
     API globals expected by those plugins. Bridge calls are handled by the
     desktop SDK runtime context and then mapped to Tauri plugins where native
     access is required.
-- Local plugin workspace with 12 built-in plugins (all app type, all CLI-compatible via `run()` + `inputSchema`):
+- Local plugin workspace with 13 built-in plugins (all app type, all CLI-compatible via `run()` + `inputSchema`):
   - `plugins/plugin-todo-list` — 待办清单（host-managed store）
   - `plugins/plugin-uuid-generator` — UUID 生成器
   - `plugins/plugin-hash-generator` — 哈希生成器

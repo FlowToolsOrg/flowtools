@@ -1,5 +1,8 @@
 # Flow Tool Architecture
 
+本地提醒经普通授权 runner 发送，通知前用现有单写者记录一次尝试。未知状态
+不重发，requested 不代表显示成功，见 [验证](./docs/validation/g7-local-reminders.md)。
+
 P3.1b4 将调度替换的旧版本取消与新锚点创建放在同一提交；恢复处置只按当前
 profile/generation 与原状态 challenge 作废旧计划，保留位置和时钟下限。
 见 [编辑与恢复](./docs/validation/g7-scheduling-edit-recovery.md)。
@@ -177,7 +180,7 @@ RPC 路由，二进制工具由共享 artifact store 与受管任务进程执行
   - `apps/web-vite/src/stores`：pluginRegistryStore、commandStore、runHistoryStore、settingsStore
   - `packages/sdk/src/compat/html-plugin.ts`：HTML `plugin.json` 类型、命令解析和兼容分级
   - `scripts/inspect-html-plugins.ts`：扫描本地 HTML 插件 checkout 并生成 `apps/desktop/src/data/html-plugin-catalog.json` 与 `docs/html-plugin-catalog.json`
-  - 12 个内置插件（全部为 app 类型，均提供 `setup()` + `run()` + `inputSchema`）
+  - 13 个内置插件（全部为 app 类型，均提供 `setup()` + `run()` + `inputSchema`）
 - 目录已创建，尚未实现：
   - `apps/docs`
   - `apps/web`
@@ -189,7 +192,7 @@ CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用内�
 
 P0.3a1 在 SDK types 定义 maturity schema/type（prototype/experimental/beta/
 production），缺失 metadata 仅默认 prototype；compatibility evidence 独立。
-12 个内置 meta、Web/Desktop manifest、CLI list/info JSON/text 同步声明 prototype。
+13 个内置 meta、Web/Desktop manifest、CLI list/info JSON/text 同步声明 prototype。
 生成器按排序 inventory 同时更新两端与 CLI 固定清单；Desktop 补显式 plugins workspace 依赖，
 根 Turbo 的依赖 tests/build 顺序随真实 dependency graph 推导。该标签不是签名、
 API 认证或 grant，不能据此宣称 P0 done。

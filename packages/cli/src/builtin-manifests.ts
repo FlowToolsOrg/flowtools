@@ -54,6 +54,16 @@ export const builtInCLIManifests = [
     hasSchema: true,
   },
   {
+    id: 'plugin-local-reminder',
+    name: '本地提醒',
+    version: '0.0.1',
+    maturity: 'prototype',
+    description: '在共享 Runtime 中创建有限周期提醒，并查看发送尝试结果',
+    type: 'app',
+    hasRun: true,
+    hasSchema: true,
+  },
+  {
     id: 'plugin-random-picker',
     name: '随机点名',
     version: '0.1.0',

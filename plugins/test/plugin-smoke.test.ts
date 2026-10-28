@@ -51,7 +51,7 @@ function controlledContext(pluginId: string) {
 
 test('smoke fixtures exactly cover the runnable CLI inventory', () => {
   const discovered = scanPlugins()
-  expect(discovered).toHaveLength(12)
+  expect(discovered).toHaveLength(13)
   expect(discovered.every(plugin => plugin.hasRun && plugin.hasSchema)).toBe(
     true
   )

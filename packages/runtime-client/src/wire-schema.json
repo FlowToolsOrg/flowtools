@@ -267,6 +267,36 @@
         "additionalProperties": false,
         "properties": {
           "operation": {
+            "const": "notification",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title",
+              "message"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "parameters"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
             "const": "tool-execute",
             "type": "string"
           },
@@ -1395,6 +1425,19 @@
             "properties": {
               "kind": {
                 "const": "clipboard",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "notification",
                 "type": "string"
               }
             },
@@ -3184,6 +3227,19 @@
             "properties": {
               "kind": {
                 "const": "clipboard",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "notification",
                 "type": "string"
               }
             },

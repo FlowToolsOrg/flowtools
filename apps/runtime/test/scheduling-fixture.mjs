@@ -248,6 +248,64 @@ try {
   await manager.cancelSchedule(edited.id, edited.revision)
   await pause(2600)
   assert.equal((await cli.jobs()).length, 1)
+  const reminderDigest = plugins.data.find(
+    item => item.pluginId === 'plugin-local-reminder'
+  )?.packageDigest
+  assert.ok(reminderDigest)
+  await manager.call({
+    method: 'permissions.grant',
+    payload: {
+      ...grant,
+      pluginId: 'plugin-local-reminder',
+      packageDigest: reminderDigest,
+      effects: ['notification'],
+      scopes: [{ kind: 'notification' }],
+    },
+  })
+  const reminder = await manager.createSchedule({
+    ...operation(),
+    pluginId: 'plugin-local-reminder',
+    input: {
+      title: 'FlowTools 自动验证',
+      message: '无界面 Runtime 提醒发送测试。',
+    },
+    definition: { ...create.definition, firstDueMs: Date.now() + 1500 },
+  })
+  manager.close()
+  manager = undefined
+  cli.close()
+  cli = undefined
+  await pause(2500)
+  cli = await connect(pipe, false)
+  const reminderRecord = (await cli.schedules()).find(
+    item => item.id === reminder.id
+  )
+  assert.equal(reminderRecord?.lastClaim?.result.state, 'submitted')
+  if (reminderRecord?.lastClaim?.result.state !== 'submitted')
+    throw new Error('REMINDER_NOT_SUBMITTED')
+  const notification = await cli.waitForResult(
+    reminderRecord.lastClaim.result.runId
+  )
+  assert.equal(notification.state, 'succeeded')
+  assert.match(
+    JSON.stringify(notification.result),
+    /"status":"(?:requested|failed|unsupported|unknown)"/
+  )
+  process.stdout.write(
+    'Reminder OS request status: ' +
+      JSON.stringify(notification.result).match(
+        /"status":"(requested|failed|unsupported|unknown)"/
+      )?.[1] +
+      '\n'
+  )
+  assert.ok(
+    !(await readFile(join(profile, 'runtime.sqlite'))).includes(
+      Buffer.from('无界面 Runtime 提醒发送测试。')
+    )
+  )
+  await pause(1100)
+  assert.equal((await cli.jobs()).length, 2)
+  manager = await connect(pipe, true)
   await manager.call({ method: 'runtime.stop' })
   manager.close()
   manager = undefined

@@ -3,6 +3,7 @@ pub mod catalog;
 pub mod codegen;
 pub mod data;
 pub mod dependencies;
+pub mod notifications;
 pub mod packages;
 pub mod policy;
 pub mod private_jobs;

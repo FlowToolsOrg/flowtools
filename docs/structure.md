@@ -10,6 +10,10 @@
 调度编辑/恢复复用 `scheduling/commands.rs`、`store.rs`、`runtime_scheduling.rs`
 及现有 GUI/CLI 入口；无第二份客户端调度库。见 [验证](./validation/g7-scheduling-edit-recovery.md)。
 
+`notifications.rs` 在既有 DataStore 记录通知尝试；Runtime 原生 adapter 位于
+`apps/runtime/src/notification.rs`，内置命令为 `plugins/plugin-local-reminder`。
+见 [提醒验证](./validation/g7-local-reminders.md)。
+
 `packages/runtime-core/src/scheduling/store.rs` 与 `store/tests.rs` 提供现有
 DataStore 的调度记录/claim 和 SQLite 拒绝回归；没有第二个数据库，见
 [持久化证据](./validation/g7-scheduling-store.md)。

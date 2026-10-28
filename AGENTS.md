@@ -25,7 +25,7 @@ This repository is a Bun + Turbo monorepo.
 - `apps/ui-test`: consumer app for manual validation of `@flowtools/ui`.
   Manual UI validation remains required and complements automated coverage; it
   does not replace it.
-- `plugins/`: local plugin workspace with 12 built-in plugins (all app type,
+- `plugins/`: local plugin workspace with 13 built-in plugins (all app type,
   all CLI-compatible via `run()` + `inputSchema`).
 - `configs/tsdown`: shared package build config.
 - `docs/` and root docs such as `README.md` and `architecture.md`: product and
@@ -81,7 +81,7 @@ Run from repository root:
 - `bun run lint`: runs workspace lint tasks.
 - `bun run check-types`: runs workspace type checks.
 - `bun run test`: runs required workspace automated tests via Turbo.
-- `bun run smoke:plugins`: builds prerequisites and validates all twelve actual
+- `bun run smoke:plugins`: builds prerequisites and validates all thirteen actual
   compiled entries with controlled request/storage, schema rejection and abort.
 - `bun run docs:check`: read-only core/ADR/threat/PR-template contracts and inline
   local link path checks; no remote URL, anchor or security certification.
@@ -175,6 +175,13 @@ clean-worktree check. Preserve standard test/build order, strict Turbo env and
 all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
+
+P3.1b5 reminders use the ordinary approved finite schedule/runner path. Keep
+notification scope/epoch checks at the effect point and one durable metadata-only
+attempt per run before OS IO. Unknown attempts never resend. The fixed native
+AppUserModelID must match Desktop; no caller XML/actions/paths or PowerShell
+impersonation. Requested is API acceptance, not display evidence. See
+[reminder evidence](./docs/validation/g7-local-reminders.md).
 
 P3.1b4 schedule replacement atomically cancels the exact old revision and creates
 a new immutable anchor; refuse active old runs and recheck grants. Restore disposal
@@ -770,7 +777,7 @@ validation, and @flowtools/sdk/manifest/package for Node-only file verification.
 Use parsePluginManifest with an explicit Host target before loading artifacts.
 Keep custom Zod runtime validation explicit; never export an empty substitute.
 Run bun run verify:manifests after build:packages; it covers protocol fixtures
-and all twelve actual compiled T1 packages. Keep commands.ts independent of
+and all thirteen actual compiled T1 packages. Keep commands.ts independent of
 React/UI/Tauri and build fixed <known-id>.commands.js entries. Generated JSON
 lives outside dist to avoid self-referential hashes. CLI validates the bounded
 catalog and exact file list/hash before importing a command; no source fallback.

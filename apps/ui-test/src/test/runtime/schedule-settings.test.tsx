@@ -14,6 +14,7 @@ vi.mock('../../../../desktop/src/runtime/desktop-capabilities', () => ({
 }))
 vi.mock('../../../../desktop/src/runtime/managed-client', () => ({
   controlManagedRuntime: vi.fn(),
+  connectManagedRuntime: vi.fn(),
 }))
 const user = userEvent.setup()
 let records: ScheduleRecord[]
@@ -203,4 +204,29 @@ it('restore disposal is explicit and binds the reviewed challenge', async () => 
     method: 'schedules.discard-restored',
     payload: { challenge: 'c'.repeat(64) },
   })
+})
+
+it('reminders use title and content fields without terminal input', async () => {
+  const view = await render(<ScheduleSettings />)
+  await user.selectOptions(
+    view.getByRole('combobox', { name: '调度命令' }),
+    'plugin-local-reminder:run'
+  )
+  await user.fill(view.getByRole('textbox', { name: '提醒标题' }), '每日整理')
+  await user.fill(view.getByRole('textbox', { name: '提醒内容' }), '核对待办')
+  await user.fill(
+    view.getByRole('textbox', { name: '首次触发当地时间' }),
+    '2026-10-28T09:00'
+  )
+  await user.click(view.getByRole('button', { name: '预览触发时间' }))
+  await user.click(view.getByRole('button', { name: '创建调度并确认' }))
+  expect(controlManagedRuntime).toHaveBeenCalledWith(
+    expect.objectContaining({
+      method: 'schedules.create',
+      payload: expect.objectContaining({
+        pluginId: 'plugin-local-reminder',
+        input: { title: '每日整理', message: '核对待办' },
+      }),
+    })
+  )
 })

@@ -32,6 +32,7 @@ import { parseRunArguments, requestedRunFormat } from './run-arguments'
 import { printExecutionResult, runPlugin } from './runner'
 import { addScheduleCommands } from './schedules'
 import { CLIInputError, isCLIInputError, parseJsonInput } from './schema'
+import { addSearchCommand } from './search'
 
 const program = new Command()
   .name('flowtools')
@@ -44,6 +45,7 @@ addManagementCommands(program)
 addRuntimeCommands(program)
 addJobCommands(program)
 addScheduleCommands(program)
+addSearchCommand(program)
 addDependencyCommands(program)
 
 function writeJson(value: unknown) {
@@ -388,6 +390,8 @@ main().catch(error => {
         String(error.code).startsWith('commander.'))
       ? 'INPUT_INVALID'
       : 'LOAD_FAILED',
-    requestedRunFormat(process.argv.slice(2))
+    process.argv[2] === 'search'
+      ? 'json'
+      : requestedRunFormat(process.argv.slice(2))
   )
 })

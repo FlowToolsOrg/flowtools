@@ -1,5 +1,9 @@
 # Flow Tool Architecture
 
+G7 搜索复用 SDK 元数据索引及生命周期移除；偏好只保存有界 ID/次数/别名。
+显式上下文只在内存中带入已知命令预览，不授予文件或后台执行能力。
+见 [搜索/上下文](./docs/validation/g7-launcher-search.md)。
+
 本地提醒经普通授权 runner 发送，通知前用现有单写者记录一次尝试。未知状态
 不重发，requested 不代表显示成功，见 [验证](./docs/validation/g7-local-reminders.md)。
 

@@ -220,13 +220,14 @@ it('reminders use title and content fields without terminal input', async () => 
   )
   await user.click(view.getByRole('button', { name: '预览触发时间' }))
   await user.click(view.getByRole('button', { name: '创建调度并确认' }))
-  expect(controlManagedRuntime).toHaveBeenCalledWith(
-    expect.objectContaining({
-      method: 'schedules.create',
-      payload: expect.objectContaining({
-        pluginId: 'plugin-local-reminder',
-        input: { title: '每日整理', message: '核对待办' },
-      }),
-    })
-  )
+  const create = vi
+    .mocked(controlManagedRuntime)
+    .mock.calls.find(([call]) => call.method === 'schedules.create')?.[0]
+  expect(create).toMatchObject({
+    method: 'schedules.create',
+    payload: {
+      pluginId: 'plugin-local-reminder',
+      input: { title: '每日整理', message: '核对待办' },
+    },
+  })
 })

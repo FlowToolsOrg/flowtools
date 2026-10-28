@@ -1,5 +1,9 @@
 # Flow Tool Plugin 开发指南
 
+搜索索引是元数据而非执行入口；注册/更新/禁用均同步索引。别名是 Host 偏好，
+不改变 Manifest 或命令 ID。触发上下文先预览，再走正常 SDK/Runtime 执行与
+授权检查，不新增隐式能力。见 [搜索证据](./validation/g7-launcher-search.md)。
+
 第 13 个内置命令为本地提醒，通知能力仍需独立 scope/background 授权。
 `notification.deliver` 返回尝试状态，未知不重发；不代表 OS 已显示。
 见 [提醒证据](./validation/g7-local-reminders.md)。

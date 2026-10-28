@@ -1685,6 +1685,11 @@ dispatch 和通知 adapter，见 [调度规则](./validation/g7-scheduling-rules
 
 ### P3.2 完成生产级启动器与搜索
 
+2026-10-28 已实现共享拼音/模糊/别名/有界正则索引、排序解释、隐私/清空与
+显式上下文预览。实际 10k 查询 p95：文字 4.76ms、正则 21.08ms；见
+[实现与验证](./validation/g7-launcher-search.md)。完整 G7/根门禁与文件/媒体仍继续，
+不因该基准或构建通过提前提升生产成熟度。
+
 - 状态：`pending`
 - 负责人：`TBD (Search / UI)`
 - 依赖：P1.2、P3.1

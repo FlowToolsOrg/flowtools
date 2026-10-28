@@ -17,6 +17,8 @@ export interface ExecutionPanelProps {
   ) => Promise<PluginExecutionResult>
   inputSchema?: unknown
   history?: ExecutionHistory
+  /** User-approved preview input; never executes automatically. */
+  initialInput?: unknown
 }
 
 const emptyHistory = { entries: [], persistenceError: null }
@@ -60,8 +62,11 @@ export function ExecutionPanel({
   execute,
   inputSchema,
   history,
+  initialInput,
 }: ExecutionPanelProps) {
-  const [input, setInput] = useState('{}')
+  const [input, setInput] = useState(() =>
+    initialInput === undefined ? '{}' : formatJson(initialInput)
+  )
   const [running, setRunning] = useState(false)
   const [result, setResult] = useState<PluginExecutionResult | null>(null)
   const active = useRef<AbortController | null>(null)

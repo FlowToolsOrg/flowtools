@@ -176,6 +176,15 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G7 search uses `@flowtools/sdk/search`, not independent Host scoring. Keep
+registration/removal synchronized with lifecycle and explain stable rankings.
+User regex must use bounded RE2JS; never restore arbitrary native JS RegExp.
+Launcher preferences contain bounded IDs/counts/aliases, with privacy/clear and
+honest failed storage. Explicit text/clipboard/file/image contexts stay in memory,
+use fixed input bindings and preview before ordinary authorized execution; never
+turn them into OS paths, grants, shortcut dispatch or an HTML execution bypass.
+See [search evidence](./docs/validation/g7-launcher-search.md).
+
 P3.1b5 reminders use the ordinary approved finite schedule/runner path. Keep
 notification scope/epoch checks at the effect point and one durable metadata-only
 attempt per run before OS IO. Unknown attempts never resend. The fixed native

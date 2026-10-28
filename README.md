@@ -1,5 +1,9 @@
 # Flow Tool
 
+Launcher search now shares pinyin, fuzzy, alias and bounded-regex matching across
+SDK/UI/CLI, with explainable rankings, private history controls and explicit
+input-context previews. See [search and 10k benchmark](./docs/validation/g7-launcher-search.md).
+
 Local reminders run through the authorized background Host with durable
 notification attempts and GUI/CLI management. See
 [Windows API evidence](./docs/validation/g7-local-reminders.md).

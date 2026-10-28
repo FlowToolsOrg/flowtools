@@ -459,6 +459,10 @@ loopback 均可用，但 public/wildcard/mixed listener、未监听的端点、�
 
 ### SEC-013 CLI 冷启动、后台任务与调用主体混淆
 
+G7 [搜索/上下文](../validation/g7-launcher-search.md) 不启动 Runtime 或赋予
+grant；用户正则仅走有界 RE2JS。剪贴板/文件/本窗口选择仅显式读取、内存预览，
+限制字节/输入绑定，不进入原生命令、HTML bridge 或持久历史；执行另行验证。
+
 P3.1b5 [提醒](../validation/g7-local-reminders.md) 在当前 broker 会话和通知
 scope/epoch 检查内先提交一次尝试再访问 OS；不保存明文内容，未知不重发。
 固定应用身份和纯文本输入不能替换为 caller XML/路径或 PowerShell 冒名。

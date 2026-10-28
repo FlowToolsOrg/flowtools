@@ -141,6 +141,31 @@ test('compiled CLI never falls back to source after a compiled import fails', as
   })
 }, 30_000)
 
+test('compiled search handles pinyin and bounded regex without importing plugin executors', async () => {
+  const sample = fixture(true)
+  addSource(sample.plugins)
+  const found = await invoke(sample.cli, ['search', 'bdtx'])
+  expect(found.code).toBe(0)
+  expect(JSON.parse(found.stdout)).toMatchObject({
+    success: true,
+    data: [{ id: 'plugin-local-reminder:run', reasons: ['initials'] }],
+  })
+  const rejected = await invoke(sample.cli, [
+    'search',
+    'a{999999999}',
+    '--mode',
+    'regex',
+  ])
+  expect(rejected.code).toBe(1)
+  expect(JSON.parse(rejected.stdout)).toMatchObject({
+    success: false,
+    error: { code: 'INPUT_INVALID' },
+  })
+  expect(
+    found.stdout + rejected.stdout + found.stderr + rejected.stderr
+  ).not.toContain(sourceCanary)
+})
+
 test('compiled discovery/info/help use serialized data without importing an executor', async () => {
   const sample = fixture(true)
   for (const args of [

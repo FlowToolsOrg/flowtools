@@ -2,6 +2,11 @@
 
 ## 下一阶段结构与当前实现
 
+`packages/sdk/src/search.ts` 提供纯索引，`sdk/benchmark/search.ts` 测 10k 命令。
+Desktop 的 `settings/launcher-preferences.ts` 与 `runtime/launcher-input.tsx`
+管理 Host 偏好及临时输入；CLI 入口为 `packages/cli/src/search.ts`。见
+[验证](./validation/g7-launcher-search.md)。
+
 `runtime-core/src/runtime_scheduling.rs` 接认证管理和 Host 派发；`scheduling/time.rs`
 负责共享 IANA/DST 解析。`apps/desktop/src/settings/schedule-settings.tsx` 与
 `packages/cli/src/schedules.ts` 使用同一契约；真实原生 fixture 在

@@ -33,6 +33,11 @@ import {
   htmlPluginCatalogSchema,
   type HtmlCatalogPlugin,
 } from '@flowtools/sdk/compat/catalog'
+import {
+  CommandSearchIndex,
+  SearchError,
+  type SearchReason,
+} from '@flowtools/sdk/search'
 import { resolvePluginMaturity } from '@flowtools/sdk/types'
 import { PluginMaturityBadge, PluginCompatibilityBadge } from '@flowtools/ui'
 import {
@@ -67,9 +72,17 @@ import {
   disposeDesktopRuntimeContext,
 } from './runtime/desktop-capabilities'
 import { unsafeHtmlPreviewEnabled } from './runtime/html-development-policy'
+import {
+  LauncherInputProvider,
+  LauncherInputPanel,
+} from './runtime/launcher-input'
 import { ManagedRuntimePanel } from './runtime/managed-runtime-panel'
 import { DesktopAppearanceProvider } from './settings/appearance'
 import { DesktopAppearanceSettings } from './settings/appearance-settings'
+import {
+  useLauncherPreferences,
+  recordLauncherOpen,
+} from './settings/launcher-preferences'
 import { RuntimeStatusSettings } from './settings/runtime-status-settings'
 import { ScheduleSettings } from './settings/schedule-settings'
 import { commands as desktopCommands } from './utils/bindings'
@@ -93,10 +106,25 @@ const DevelopmentHtmlPluginSurface =
   import.meta.env.DEV && unsafeHtmlPreviewEnabled
     ? lazy(() => import('./runtime/development-html-plugin-surface'))
     : null
-const recentStorageKey = 'flowtools.desktop.recentCommandIds'
 const ValidationRuntimePanel = import.meta.env.DEV
   ? lazy(() => import('./runtime/validation-runtime-panel'))
   : null
+
+const searchReasonLabels: Record<SearchReason, string> = {
+  exact: '标题完全匹配',
+  prefix: '标题前缀',
+  title: '标题包含',
+  alias: '自定义别名',
+  keyword: '关键词',
+  description: '说明',
+  pinyin: '拼音',
+  initials: '拼音首字母',
+  fuzzy: '模糊子序列',
+  regex: '正则匹配',
+  pinned: '已置顶',
+  frequency: '打开频率',
+  recent: '最近打开',
+}
 
 const builtInActions: IndexedCommand[] = [
   {
@@ -250,31 +278,6 @@ const totalPluginCount =
   builtInManifests.length + htmlPluginIndex.totals.plugins
 const totalCommandCount = marketplaceCommands.length
 
-const pinnedIds = new Set([
-  'flowtools:settings',
-  'flowtools:plugin-market',
-  'json-editor:json:text:json:0',
-  '2048:2048:text:2048:0',
-])
-
-function scoreCommand(command: IndexedCommand, query: string): number {
-  const title = command.title.toLowerCase()
-  const pluginName = command.pluginName.toLowerCase()
-  const category = command.category?.toLowerCase() ?? ''
-  const description = command.description?.toLowerCase() ?? ''
-
-  let score = 0
-
-  if (title === query) score += 100
-  if (title.startsWith(query)) score += 48
-  if (title.includes(query)) score += 28
-  if (pluginName.includes(query)) score += 14
-  if (category.includes(query)) score += 8
-  if (description.includes(query)) score += 4
-
-  return score
-}
-
 function getInitials(value: string): string {
   return (Array.from(value.trim())[0] ?? 'F').toUpperCase()
 }
@@ -289,24 +292,6 @@ function getCommandIcon(command: IndexedCommand): IconComponent {
 
 function getCommand(commandId: string): IndexedCommand | undefined {
   return commandById.get(commandId)
-}
-
-function readRecentCommandIds(): string[] {
-  try {
-    const raw = window.localStorage.getItem(recentStorageKey)
-    if (!raw) return []
-
-    const value = JSON.parse(raw) as unknown
-    if (!Array.isArray(value)) return []
-
-    return value.filter(item => typeof item === 'string')
-  } catch {
-    return []
-  }
-}
-
-function writeRecentCommandIds(commandIds: string[]): void {
-  window.localStorage.setItem(recentStorageKey, JSON.stringify(commandIds))
 }
 
 function getRunLabel(command: IndexedCommand): string {
@@ -538,7 +523,9 @@ function RootLayout() {
   const params = new URLSearchParams(window.location.search)
   return (
     <DesktopAppearanceProvider>
-      <Outlet />
+      <LauncherInputProvider>
+        <Outlet />
+      </LauncherInputProvider>
       {ValidationRuntimePanel &&
         params.get('execution-validation') === '20261003' &&
         params.get('runtime-validation') === '1' && (
@@ -555,7 +542,15 @@ function LauncherView() {
   const inventory = usePluginInventory()
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const [recentCommandIds, setRecentCommandIds] = useState(readRecentCommandIds)
+  const { preferences, preferencesError, save, clear } =
+    useLauncherPreferences()
+  const [searchMode, setSearchMode] = useState<'text' | 'regex'>('text')
+  const [searchNotice, setSearchNotice] = useState('')
+  const recentCommandIds = preferences.recentIds
+  const pinnedIds = useMemo(
+    () => new Set(preferences.pinnedIds),
+    [preferences.pinnedIds]
+  )
   const normalizedQuery = query.trim().toLowerCase()
   const launcherCommands = useMemo(
     () =>
@@ -571,38 +566,85 @@ function LauncherView() {
     [launcherCommands]
   )
 
-  const searchedCommands = useMemo(() => {
-    if (!normalizedQuery) return []
-
-    return launcherCommands
-      .map(command => ({
-        command,
-        score: scoreCommand(command, normalizedQuery),
-      }))
-      .filter(item => item.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 36)
-      .map(item => item.command)
-  }, [launcherCommands, normalizedQuery])
+  const searchIndex = useMemo(() => {
+    try {
+      const index = new CommandSearchIndex()
+      for (const command of launcherCommands)
+        index.upsert({
+          id: command.id,
+          pluginId: command.pluginId,
+          title: command.title.slice(0, 256),
+          description: command.description?.slice(0, 1024),
+          keywords: [command.pluginName, command.category ?? ''].map(value =>
+            value.slice(0, 128)
+          ),
+          aliases: Object.prototype.hasOwnProperty.call(
+            preferences.aliases,
+            command.id
+          )
+            ? preferences.aliases[command.id]
+            : [],
+        })
+      return index
+    } catch {
+      return undefined
+    }
+  }, [launcherCommands, preferences.aliases])
+  const search = useMemo(() => {
+    try {
+      if (!searchIndex) throw new SearchError('SEARCH_LIMIT')
+      return {
+        matches: normalizedQuery
+          ? searchIndex.search(query, {
+              mode: searchMode,
+              limit: 36,
+              pinned: pinnedIds,
+              recent: preferences.historyEnabled ? recentCommandIds : [],
+              frequency: preferences.historyEnabled
+                ? new Map(Object.entries(preferences.frequencies))
+                : undefined,
+            })
+          : [],
+        error: '',
+      }
+    } catch (error) {
+      return {
+        matches: [],
+        error:
+          error instanceof SearchError && error.code === 'SEARCH_BUDGET'
+            ? '搜索工作量超出限制，请缩短表达式。'
+            : '搜索表达式无效或过长，请检查后重试。',
+      }
+    }
+  }, [
+    searchIndex,
+    query,
+    normalizedQuery,
+    searchMode,
+    pinnedIds,
+    recentCommandIds,
+    preferences.historyEnabled,
+    preferences.frequencies,
+  ])
+  const searchedCommands = search.matches.flatMap(result => {
+    const command = launcherCommandById.get(result.id)
+    return command ? [command] : []
+  })
 
   const pinnedCommands = useMemo(
     () =>
       launcherCommands.filter(command => pinnedIds.has(command.id)).slice(0, 8),
-    [launcherCommands]
+    [launcherCommands, pinnedIds]
   )
 
   const recentCommands = useMemo(() => {
     const storedCommands = recentCommandIds
       .map(commandId => launcherCommandById.get(commandId))
       .filter((command): command is IndexedCommand => Boolean(command))
-    const storedIds = new Set(storedCommands.map(command => command.id))
-    const fallbackCommands = launcherCommands
+    return storedCommands
       .filter(command => !pinnedIds.has(command.id))
-      .filter(command => !storedIds.has(command.id))
-      .slice(0, 48)
-
-    return [...storedCommands, ...fallbackCommands].slice(0, 56)
-  }, [launcherCommandById, launcherCommands, recentCommandIds])
+      .slice(0, 40)
+  }, [launcherCommandById, pinnedIds, recentCommandIds])
 
   const recommendedCommands = useMemo(() => {
     const visibleIds = new Set(
@@ -630,13 +672,7 @@ function LauncherView() {
   }, [activeCommands.length])
 
   const markRecent = (command: IndexedCommand) => {
-    const nextIds = [
-      command.id,
-      ...recentCommandIds.filter(commandId => commandId !== command.id),
-    ].slice(0, 40)
-
-    setRecentCommandIds(nextIds)
-    writeRecentCommandIds(nextIds)
+    save(recordLauncherOpen(preferences, command.id))
   }
 
   const openCommand = (command: IndexedCommand) => {
@@ -669,6 +705,8 @@ function LauncherView() {
   }
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229)
+      return
     if (event.key === 'ArrowDown') {
       event.preventDefault()
       setSelectedIndex(index => {
@@ -740,6 +778,140 @@ function LauncherView() {
 
         <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_268px] overflow-hidden max-[780px]:grid-cols-1">
           <div className="min-h-0 min-w-0 overflow-y-auto px-3 pt-2.5 pb-3">
+            <LauncherInputPanel
+              pluginId={
+                selectedCommand?.source === 'react'
+                  ? selectedCommand.pluginId
+                  : undefined
+              }
+              onOpen={() => {
+                if (selectedCommand) openCommand(selectedCommand)
+              }}
+            />
+            <details className="mb-3 rounded-lg border border-(--divider-color) p-2 text-sm">
+              <summary>搜索方式与隐私</summary>
+              <div className="grid gap-2 py-2">
+                <label>
+                  搜索方式{' '}
+                  <select
+                    aria-label="启动器搜索方式"
+                    value={searchMode}
+                    onChange={event => {
+                      setSearchMode(event.target.value as 'text' | 'regex')
+                      setSelectedIndex(0)
+                    }}
+                  >
+                    <option value="text">文字 / 拼音 / 模糊</option>
+                    <option value="regex">正则表达式</option>
+                  </select>
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={preferences.historyEnabled}
+                    onChange={event =>
+                      save(
+                        {
+                          ...preferences,
+                          historyEnabled: event.target.checked,
+                          recentIds: [],
+                          frequencies: {},
+                        },
+                        true
+                      )
+                    }
+                  />
+                  记录最近打开和打开频率（仅命令名称索引，不保存搜索词或内容）
+                </label>
+                <Button variant="secondary" size="sm" onPress={clear}>
+                  清空打开记录与频率
+                </Button>
+                {preferencesError && (
+                  <p role="status">
+                    搜索偏好无法读取或保存。原记录已保留；选择设置或清空后可重试。
+                  </p>
+                )}
+                {selectedCommand && (
+                  <>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onPress={() =>
+                        save(
+                          {
+                            ...preferences,
+                            pinnedIds: pinnedIds.has(selectedCommand.id)
+                              ? preferences.pinnedIds.filter(
+                                  id => id !== selectedCommand.id
+                                )
+                              : [
+                                  ...preferences.pinnedIds,
+                                  selectedCommand.id,
+                                ].slice(-40),
+                          },
+                          true
+                        )
+                      }
+                    >
+                      {pinnedIds.has(selectedCommand.id) ? '取消置顶' : '置顶'}
+                      ：{selectedCommand.title}
+                    </Button>
+                    <label>
+                      此命令别名（逗号分隔，最多八个）
+                      <input
+                        aria-label="此命令别名"
+                        className="w-full rounded border border-(--border-color) bg-(--control-bg) p-2"
+                        key={selectedCommand.id}
+                        defaultValue={(Object.prototype.hasOwnProperty.call(
+                          preferences.aliases,
+                          selectedCommand.id
+                        )
+                          ? (preferences.aliases[selectedCommand.id] ?? [])
+                          : []
+                        ).join(', ')}
+                        onBlur={event => {
+                          const aliases = event.target.value
+                            .split(/[,，]/)
+                            .map(value => value.trim())
+                            .filter(Boolean)
+                          if (
+                            aliases.length > 8 ||
+                            aliases.some(value => value.length > 128)
+                          ) {
+                            setSearchNotice(
+                              '最多八个别名，每个不超过 128 个字符。'
+                            )
+                            return
+                          }
+                          setSearchNotice('')
+                          save(
+                            {
+                              ...preferences,
+                              aliases: {
+                                ...preferences.aliases,
+                                [selectedCommand.id]: aliases,
+                              },
+                            },
+                            true
+                          )
+                        }}
+                      />
+                    </label>
+                  </>
+                )}
+              </div>
+            </details>
+            {search.error && <p role="status">{search.error}</p>}
+            {searchNotice && <p role="status">{searchNotice}</p>}
+            {selectedCommand && normalizedQuery && (
+              <p className="mb-2 text-xs text-(--text-secondary)">
+                匹配原因：
+                {search.matches
+                  .find(result => result.id === selectedCommand.id)
+                  ?.reasons.map(reason => searchReasonLabels[reason])
+                  .join('、')}
+              </p>
+            )}
             {normalizedQuery ? (
               <CommandSection
                 commands={searchedCommands}
@@ -763,7 +935,7 @@ function LauncherView() {
                   offset={pinnedCommands.length}
                   scrollable
                   selectedCommandId={selectedCommand?.id}
-                  title="最近使用"
+                  title="最近打开"
                   onFocusCommand={setSelectedIndex}
                   onRunCommand={openCommand}
                 />

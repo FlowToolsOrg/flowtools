@@ -63,6 +63,44 @@ fn last() -> io::Error {
 fn stage(name: &str) -> io::Error {
     io::Error::other(format!("{name}: {}", last()))
 }
+fn local_app_data() -> io::Result<String> {
+    // Turbo deliberately strips LOCALAPPDATA. Resolve the current native token's
+    // known folder without inheriting more Host environment into child processes.
+    unsafe {
+        let mut path = ptr::null_mut();
+        let status = windows_sys::Win32::UI::Shell::SHGetKnownFolderPath(
+            &windows_sys::Win32::UI::Shell::FOLDERID_LocalAppData,
+            0,
+            ptr::null_mut(),
+            &mut path,
+        );
+        if status < 0 || path.is_null() {
+            windows_sys::Win32::System::Com::CoTaskMemFree(path.cast());
+            return Err(io::Error::other(format!(
+                "LocalAppData known folder: {status:#x}"
+            )));
+        }
+        let mut length = 0;
+        while length < 32768 && *path.add(length) != 0 {
+            length += 1;
+        }
+        let result = if length == 32768 {
+            Err(io::Error::other("known folder path budget"))
+        } else {
+            String::from_utf16(std::slice::from_raw_parts(path, length))
+                .map_err(|_| io::Error::other("known folder UTF16"))
+                .and_then(|text| {
+                    if Path::new(&text).is_absolute() {
+                        Ok(text)
+                    } else {
+                        Err(io::Error::other("known folder must be absolute"))
+                    }
+                })
+        };
+        windows_sys::Win32::System::Com::CoTaskMemFree(path.cast());
+        result
+    }
+}
 pub struct Handle(pub HANDLE);
 impl Drop for Handle {
     fn drop(&mut self) {
@@ -635,11 +673,7 @@ impl Fixture {
                 ),
                 format!("TEMP={}", self.work.display()),
                 format!("TMP={}", self.work.display()),
-                format!(
-                    "LOCALAPPDATA={}",
-                    std::env::var("LOCALAPPDATA")
-                        .map_err(|_| io::Error::other("missing LOCALAPPDATA bootstrap"))?
-                ),
+                format!("LOCALAPPDATA={}", local_app_data()?),
                 format!("FLOWTOOLS_ISOLATION_ROOT={}", self.root.display()),
                 format!("FLOWTOOLS_ISOLATION_CASE={case}"),
                 format!("FLOWTOOLS_ISOLATION_SID={}", self.container.text),

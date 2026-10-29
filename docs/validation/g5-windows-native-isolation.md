@@ -60,6 +60,16 @@ Winsock 10107 不是网络隔离成功，改为固定 registryRead 后验证真�
 junction 的初始 NT substitute name 含斜杠导致 123，已规范为反斜杠并先做
 实际目标读取正向对照，再验证 LPAC 拒绝。
 
+`ec66201` 首次完整根门禁失败：lint/types、Core 262+11+2、Chromium 109 和
+Runtime 既有 24 项原生测试均通过；新增六项因 Turbo 严格环境缺
+LOCALAPPDATA 拒绝启动。没有放宽环境 passthrough，改由 T0 通过 Windows
+SHGetKnownFolderPath(FOLDERID_LocalAppData) 获取固定 bootstrap 路径；不
+依赖父环境变量。原失败日志保留在
+`execution-validation/g5/root-ci-ec66201-20261029.log`，最终修复树须再跑整仓。
+清除 LOCALAPPDATA 的专项六项通过；随后严格 Turbo 单工作区复验完整 Runtime
+标准 test：inventory 30、既有原生 24、新增 LPAC 6、Bun 17（含真实 50 路冷
+启动）全部通过，约 4m46s。此复验没有替代最终根门禁的依赖图与全仓检查。
+
 这没有验证受限 JS 引擎、第三方 React/Tauri 容器、COM 全面拒绝、远程映像
 实际共享盘正向对照、真实工具 DLL/协议布局或重启/物理断电。CPU 配额只证明
 内核接受并回读限额，不声称精确调度性能。当前签名工具审核清单仍空；真实

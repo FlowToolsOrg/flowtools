@@ -41,3 +41,6 @@ AppContainer 与 Job 不能替代 supply-chain、授权和独立安全审核。
 [process attributes](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute)、
 [mandatory integrity](https://learn.microsoft.com/en-us/windows/win32/secauthz/mandatory-integrity-control)。
 原生 token attribute ABI 对照 [phnt 原始声明](https://github.com/winsiderss/phnt/blob/master/ntseapi.h)。
+T0 使用 [SHGetKnownFolderPath](https://learn.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-shgetknownfolderpath)
+取得当前用户的 LocalAppData，不要求 Turbo 传递该环境变量；返回内存在成功/
+失败时均以 CoTaskMemFree 释放。

@@ -437,6 +437,10 @@ Tauri [sidecar](https://v2.tauri.app/develop/sidecar/) 用于构建捆绑程序�
 
 ## 9. G7：统一 UI 与三个办公闭环
 
+2026-10-29：T0 文件计划可在现有单写者/DPAPI 中持久化，保持稳定 ID、取消状态、
+复制/恢复 scope 和严格孤立清理保留；仅为惰性规划层，GUI/CLI 提交、文件效果
+journal/撤销与媒体执行尚未接入。见 [存储证据](./validation/g7-file-plan-store.md)。
+
 2026-10-28 收口矩阵见 [G7 当前状态](./validation/g7-completion-matrix.md)。
 文件整理新增 [只读 NTFS 规划准入](./validation/g7-file-plan-admission.md)，
 尚无持久 plan ID 或可执行/撤销入口；不跳过 G5/G6 文件/工具执行门槛。

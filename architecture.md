@@ -5,6 +5,11 @@ G7 文件规划在 T0 以不可构造的 `RenameDraft` 持有目录/文件身份
 按经校验的日程 ID 保留，恢复 scope 仍拒绝派发。见
 [完整矩阵与依赖](./docs/validation/g7-completion-matrix.md)。
 
+文件计划可由 T0 存入同一 DataStore：SQLite 只含 plan ID/digest 等有界元数据，
+原目录与文件定义复用 DPAPI 私密存储。重启清理保留严格校验的计划 input ID，
+复制/恢复 scope 仍拒绝使用；精确 challenge 仅用于取消旧计划，不执行文件效果。
+见 [计划持久化](./docs/validation/g7-file-plan-store.md)。
+
 G7 搜索复用 SDK 元数据索引及生命周期移除；偏好只保存有界 ID/次数/别名。
 显式上下文只在内存中带入已知命令预览，不授予文件或后台执行能力。
 见 [搜索/上下文](./docs/validation/g7-launcher-search.md)。

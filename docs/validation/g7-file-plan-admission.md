@@ -1,12 +1,14 @@
 # G7 文件整理：只读规划准入
 
 日期：2026-10-28。范围：Windows/x64 NTFS、T0 显式选择的普通目录，prototype。
-这一步是文件闭环的前置规划层，尚无 GUI/CLI 共享持久 plan ID、提交或撤销入口。
+这一步是文件闭环的前置规划层，尚无 GUI/CLI 提交或撤销入口。
 不将只读预览或测试中的原生改名算作实际办公闭环。
 
 `packages/runtime-core/src/file_workflows.rs` 的 `prepare_rename` 生成不可反序列化、
 不可由客户端构造的 `RenameDraft`；`preview` 只投影源/目标名称、大小和 SHA-256。
-原始目录和文件身份留在 T0 对象内，不写数据库或日志。`recheck` 重新验证整个
+原始目录和文件身份留在 T0 对象内，不写数据库或日志。后续的可选
+[持久存储](./g7-file-plan-store.md) 仅将定义放入现有 DPAPI 私密存储，SQLite
+保留 plan ID/digest 等有界元数据；它不提供执行权限。`recheck` 重新验证整个
 批次的原目录身份、原文件身份/大小/时间/内容与目标不存在条件，无文件写入。
 前缀为 1–32 个 UTF-16 单元；已带此前缀的文件跳过，子目录不递归。
 

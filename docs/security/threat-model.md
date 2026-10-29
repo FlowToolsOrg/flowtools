@@ -1,5 +1,12 @@
 # FlowTools 插件威胁模型
 
+2026-10-29 文件计划持久化继续只读：同一 DataStore 保存有界元数据，原路径与
+文件名复用 DPAPI 私密存储。严格校验后才保留计划 input IDs；损坏元数据拒绝
+孤立清理，恢复/copy scope 拒绝普通计划操作。精确 challenge 只能取消旧计划，
+不恢复授权或产生文件效果；没有新的插件/IPC 接口。DPAPI 不是同用户恶意程序
+隔离或受保护 profile ACL 的替代，SEC-003/008/013/015 与独立安全批准仍 pending。
+见 [计划存储验证](../validation/g7-file-plan-store.md)。
+
 2026-10-28 G7 文件只读规划用 held directory/source handles、严格名称/库存/
 大小/内容身份和目标不存在复核拒绝链接、重定向及冲突。无生产写入/原始路径
 IPC，测试 rename 不等于平台隔离或恢复证明。日程孤儿清理保留经校验的日程

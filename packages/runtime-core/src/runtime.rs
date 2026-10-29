@@ -520,6 +520,8 @@ impl RuntimeCore {
         retained.extend(crate::scheduling::store::ScheduleStore::retained_input_ids(
             &self.data,
         )?);
+        retained
+            .extend(crate::file_workflows::store::FilePlanStore::retained_input_ids(&self.data)?);
         self.private_jobs
             .as_ref()
             .unwrap()

@@ -3,8 +3,10 @@
 ## 下一阶段结构与当前实现
 
 `runtime-core/src/file_workflows.rs` 与 `file_workflows/windows.rs` 是 T0 只读
-NTFS 改名规划层，`file_workflows/tests.rs` 使用实际临时目录。尚无持久计划库、
-GUI/CLI 文件提交或媒体执行入口；见 [范围](./validation/g7-file-plan-admission.md)
+NTFS 改名规划层，`file_workflows/tests.rs` 使用实际临时目录。
+`file_workflows/store.rs` 复用现有 DataStore/DPAPI 保存惰性计划，测试在
+`file_workflows/store/tests.rs`。尚无 GUI/CLI 文件提交或媒体执行入口；
+见 [持久化](./validation/g7-file-plan-store.md)、[范围](./validation/g7-file-plan-admission.md)
 及 [G7 矩阵](./validation/g7-completion-matrix.md)。
 
 `packages/sdk/src/search.ts` 提供纯索引，`sdk/benchmark/search.ts` 测 10k 命令。

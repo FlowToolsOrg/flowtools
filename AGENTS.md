@@ -177,6 +177,11 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 ## Production Maturity Labels
 
 G7 file planning is read-only T0 admission in `runtime-core/src/file_workflows.rs`.
+Its `file_workflows/store.rs` persists only inert plan metadata in the existing
+DataStore and private definitions in DPAPI. Retain validated input IDs before
+orphan cleanup, including stale restore/copy scopes; corrupt state blocks cleanup.
+Exact challenge disposal cancels old plans without file effects or private deletion.
+See [plan-store evidence](./docs/validation/g7-file-plan-store.md).
 Keep opaque drafts, held ancestor/source handles, exact content/identity checks,
 create-only targets and inventory/hash budgets. Native rename is test-only;
 do not wire writes, client paths or arbitrary media executables around pending

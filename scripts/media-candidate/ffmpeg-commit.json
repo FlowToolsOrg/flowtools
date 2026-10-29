@@ -1,0 +1,35 @@
+{
+  "sha": "38b88335f99e76ed89ff3c93f877fdefce736c13",
+  "node_id": "C_kwDOABiiStoAKDM4Yjg4MzM1Zjk5ZTc2ZWQ4OWZmM2M5M2Y4NzdmZGVmY2U3MzZjMTM",
+  "url": "https://api.github.com/repos/FFmpeg/FFmpeg/git/commits/38b88335f99e76ed89ff3c93f877fdefce736c13",
+  "html_url": "https://github.com/FFmpeg/FFmpeg/commit/38b88335f99e76ed89ff3c93f877fdefce736c13",
+  "author": {
+    "name": "Michael Niedermayer",
+    "email": "michael@niedermayer.cc",
+    "date": "2026-06-17T02:33:35Z"
+  },
+  "committer": {
+    "name": "Michael Niedermayer",
+    "email": "michael@niedermayer.cc",
+    "date": "2026-06-17T02:33:35Z"
+  },
+  "tree": {
+    "sha": "1a0883de7a83dc0b87d0fd89c145a7b4553f1563",
+    "url": "https://api.github.com/repos/FFmpeg/FFmpeg/git/trees/1a0883de7a83dc0b87d0fd89c145a7b4553f1563"
+  },
+  "message": "Bump for 8.1.2\n\nSigned-off-by: Michael Niedermayer <michael@niedermayer.cc>",
+  "parents": [
+    {
+      "sha": "241723a2acc56c8b6812da114c24d1ec5ae5a347",
+      "url": "https://api.github.com/repos/FFmpeg/FFmpeg/git/commits/241723a2acc56c8b6812da114c24d1ec5ae5a347",
+      "html_url": "https://github.com/FFmpeg/FFmpeg/commit/241723a2acc56c8b6812da114c24d1ec5ae5a347"
+    }
+  ],
+  "verification": {
+    "verified": true,
+    "reason": "valid",
+    "signature": "-----BEGIN PGP SIGNATURE-----\n\niHUEABYKAB0WIQTdHsno3ghcYps+GEaxjokos5SNZAUCajIHiQAKCRCxjokos5SN\nZP3gAPwMBVrFuaUjG3wbPgxbHxSFjbW6IGuykprB7BNmKeOJHAD/RwU4+hxMMAsm\nMt/ywvsaiN6WyzvObCaKDanrn2LCXAw=\n=c4fU\n-----END PGP SIGNATURE-----",
+    "payload": "tree 1a0883de7a83dc0b87d0fd89c145a7b4553f1563\nparent 241723a2acc56c8b6812da114c24d1ec5ae5a347\nauthor Michael Niedermayer <michael@niedermayer.cc> 1781663615 +0200\ncommitter Michael Niedermayer <michael@niedermayer.cc> 1781663615 +0200\n\nBump for 8.1.2\n\nSigned-off-by: Michael Niedermayer <michael@niedermayer.cc>\n",
+    "verified_at": "2026-06-17T02:46:28Z"
+  }
+}

@@ -2,7 +2,7 @@
 
 import { expect, test } from 'bun:test'
 import { spawnSync } from 'node:child_process'
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import {
   mkdirSync,
   mkdtempSync,
@@ -159,6 +159,94 @@ test('Core isolates full native cases without filtering tests or changing job de
   expect(scheduling).toContain(
     'fn scheduled_acceptance_uses_private_inputs_and_survives_client_disconnect_without_replay()'
   )
+})
+
+test('real media candidate stays an explicit pinned developer-only acceptance workspace', () => {
+  const root = fileURLToPath(new URL('../', import.meta.url))
+  const candidate = join(root, 'apps/runtime/test/fixtures/media-candidate')
+  const manifest = Bun.TOML.parse(
+    readFileSync(join(candidate, 'Cargo.toml'), 'utf8')
+  ) as {
+    package: { publish: boolean; autobins: boolean }
+    workspace: object
+  }
+  expect(manifest.package.publish).toBe(false)
+  expect(manifest.package.autobins).toBe(false)
+  expect(manifest.workspace).toEqual({})
+  const runtime = JSON.parse(
+    readFileSync(join(root, 'apps/runtime/package.json'), 'utf8')
+  ) as {
+    scripts: Record<string, string>
+  }
+  expect(runtime.scripts['validate:media-candidate']).toBe(
+    'pwsh -NoProfile -File ../../scripts/test-media-candidate.ps1'
+  )
+  for (const name of ['build', 'test'])
+    expect(runtime.scripts[name]).not.toContain('media-candidate')
+  const source = readFileSync(join(candidate, 'acceptance.rs'), 'utf8')
+  expect(source.match(/#\[test\]/g)).toHaveLength(6)
+  expect(source).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(source).toContain('include_bytes!(".generated/bin/ffmpeg.exe")')
+  expect(source).toContain('checked_image(FFMPEG')
+  const sourceLock = readFileSync(
+    join(root, 'scripts/media-candidate/source-lock.json')
+  )
+  const lock = JSON.parse(
+    readFileSync(join(candidate, 'candidate-lock.json'), 'utf8')
+  ) as {
+    maturity: string
+    sourceLockSha256: string
+    programs: Record<string, string>
+  }
+  expect(lock.maturity).toBe('prototype')
+  expect(lock.sourceLockSha256).toBe(
+    createHash('sha256').update(sourceLock).digest('hex')
+  )
+  expect(Object.keys(lock.programs).sort()).toEqual(['ffmpeg', 'ffprobe'])
+  for (const hash of Object.values(lock.programs))
+    expect(hash).toMatch(/^[0-9a-f]{64}$/)
+  const build = readFileSync(
+    join(root, 'scripts/media-candidate/build.sh'),
+    'utf8'
+  )
+  expect(build).toContain('--disable-autodetect --disable-network')
+  expect(build).toContain('--enable-bsf=vp9_superframe')
+  expect(build).not.toMatch(
+    /--enable-(?:gpl|nonfree|network)|curl[^\n]*\|\s*(?:sh|bash)/
+  )
+  const parseLock = (path: string) =>
+    Bun.TOML.parse(readFileSync(path, 'utf8')) as {
+      package: Array<{
+        name: string
+        version: string
+        source?: string
+        checksum?: string
+      }>
+    }
+  const known = new Set(
+    parseLock(join(root, 'Cargo.lock'))
+      .package.filter(p => p.source)
+      .map(p => `${p.name}@${p.version}:${p.source}:${p.checksum}`)
+  )
+  for (const pkg of parseLock(join(candidate, 'Cargo.lock')).package.filter(
+    p => p.source
+  )) {
+    expect(
+      known.has(`${pkg.name}@${pkg.version}:${pkg.source}:${pkg.checksum}`)
+    ).toBe(true)
+  }
+  const driver = readFileSync(
+    join(root, 'scripts/test-media-candidate.ps1'),
+    'utf8'
+  )
+  expect(driver).toContain(
+    "Invoke-QualityCommand 'Media candidate test inventory'"
+  )
+  expect(driver).toContain("$mediaManifest, '6'")
+  expect(driver).toContain(
+    "Invoke-QualityCommand 'Media candidate all-target Clippy'"
+  )
+  expect(driver).toContain("Invoke-QualityCommand 'Six real-media LPAC checks'")
 })
 
 test('native isolation probe is mandatory for tests and excluded from normal builds', () => {

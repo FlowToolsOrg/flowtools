@@ -1,5 +1,8 @@
 # Flow Tool
 
+G6 now has an explicit [real-media build candidate and LPAC acceptance workspace](./docs/validation/g6-media-candidate.md).
+It is developer-only; production tool review, identity, leases and G7 workflows remain pending.
+
 G6 signed tool archives now have an explicit inert install/journal/abort path
 through the existing writer and held-parent blob layer. This does not extract or
 run tools; see [scope and evidence](./docs/validation/g6-inert-tool-installation.md).

@@ -7,6 +7,11 @@
 `packages/install/files.rs` 的 crate-private blob 投影和固定 namespace；原插件
 格式不变，见 [归档事务](./validation/g6-inert-tool-installation.md)。
 
+`scripts/media-candidate/` 保存 build-only 源码锁、签名/Git 树验证和构建配方；
+`apps/runtime/test/fixtures/media-candidate/` 是独立非发布的真实媒体专项 workspace。
+仅显式 developer acceptance 使用，不进入普通 Runtime build/test 或客户端配置。
+见 [候选验证](./validation/g6-media-candidate.md)。
+
 `runtime-core/src/packages/tools/media.rs` 新增固定媒体 recipes 和有界
 inspection/progress 解析，测试与模块同文件；不包含工具安装、运行或插件入口。
 见 [媒体契约](./validation/g6-media-contracts.md)。

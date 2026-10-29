@@ -22,6 +22,11 @@ G5/G6 执行验收。人工 G7 项为 waived，整体不更新为 done。
 
 ## 1. 使用规则
 
+G6 P2.8b2 补充 [真实媒体构建候选与 LPAC 专项](./validation/g6-media-candidate.md)，
+固定源码/签名/Git 树与 candidate bytes，实际处理确定性 WAV/H.264 输入。
+它是独立 developer acceptance；产品工具身份、leases、更新/恢复和 GUI/CLI
+媒体闭环仍待实现，来源/许可证与独立安全审核不由该测试代签。
+
 G6 P2.8a2 新增 [惰性工具归档事务](./validation/g6-inert-tool-installation.md)，
 涵盖共享单写者/预算、持久 journal、显式 abort 和实际退出拒绝回归；不含
 工具解包、执行身份、accepted leases、更新/GC 或 G7 媒体闭环。

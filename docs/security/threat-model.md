@@ -1,5 +1,12 @@
 # FlowTools 插件威胁模型
 
+2026-10-29 [真实媒体候选专项](../validation/g6-media-candidate.md) 以固定的
+source/tag/commit/tree/hash 和真实 LPAC/Job 运行验证媒体行为。ffprobe 的空
+program/group 容器只允许零项，拒绝任意 nested metadata；实际发现 FFmpeg
+-n 拒绝时可退出 0，进程退出、完整进度和新输出内容/身份须分别验证。
+专项未接产品安装/lease/grants/发布，源码/许可证、T3 与独立安全仍 pending；
+SEC-003/004/005/010/015 保持 open，不用媒体测试代替平台和效果点授权。
+
 2026-10-29 G6 惰性工具归档事务采用同一 writer 与 held-parent create-only
 发布，保留原始 envelope，提交前重验 trust/time/bytes 和 SQL journal。插件/
 工具 pending 互相阻止操作，共用原 physical byte/group 预算。真实退出、SQL

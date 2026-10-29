@@ -36,7 +36,7 @@ fn real_lpac_file_network_and_loader_denials_have_an_uncontained_positive_contro
         b"HOST_PRIVATE_CANARY"
     );
     let child = fixture
-        .launch(false, "probe", port, 512 * 1024 * 1024)
+        .launch(false, "probe", port, 512 * 1024 * 1024, &[])
         .unwrap();
     let control = report(&fixture, &child);
     assert_eq!(control["hostRead"], true);
@@ -57,7 +57,7 @@ fn real_lpac_file_network_and_loader_denials_have_an_uncontained_positive_contro
     fs::remove_file(fixture.host.join("redirected.txt")).unwrap();
     fs::remove_file(fixture.root.join("other-task/escape.txt")).unwrap();
     let child = fixture
-        .launch(true, "probe", port, 128 * 1024 * 1024)
+        .launch(true, "probe", port, 128 * 1024 * 1024, &[])
         .unwrap();
     let confined = report(&fixture, &child);
     assert_eq!(confined["container"], 1);
@@ -106,7 +106,7 @@ fn admission_refusal_reaps_the_suspended_process_without_running_it() {
 fn child_creation_is_blocked_before_the_descendant_runs() {
     let fixture = Fixture::new().unwrap();
     let child = fixture
-        .launch(false, "child", 1, 128 * 1024 * 1024)
+        .launch(false, "child", 1, 128 * 1024 * 1024, &[])
         .unwrap();
     let control = report(&fixture, &child);
     assert_eq!(control["childCreated"], true);
@@ -116,7 +116,9 @@ fn child_creation_is_blocked_before_the_descendant_runs() {
     drop(child);
     fs::remove_file(fixture.work.join("grandchild-ran")).unwrap();
     fs::remove_file(fixture.work.join("report.json")).unwrap();
-    let child = fixture.launch(true, "child", 1, 128 * 1024 * 1024).unwrap();
+    let child = fixture
+        .launch(true, "child", 1, 128 * 1024 * 1024, &[])
+        .unwrap();
     let confined = report(&fixture, &child);
     assert_eq!(confined["childCreated"], false);
     assert_eq!(child.active_limit, 2);
@@ -131,7 +133,9 @@ fn child_creation_is_blocked_before_the_descendant_runs() {
 #[test]
 fn output_flood_is_bounded_and_the_actual_job_is_reaped() {
     let fixture = Fixture::new().unwrap();
-    let child = fixture.launch(true, "flood", 1, 128 * 1024 * 1024).unwrap();
+    let child = fixture
+        .launch(true, "flood", 1, 128 * 1024 * 1024, &[])
+        .unwrap();
     let error = child.output(Duration::from_secs(5), 65536).unwrap_err();
     assert_eq!(error.to_string(), "output budget exceeded");
     assert!(fixture.work.join("ready").is_file());
@@ -143,7 +147,9 @@ fn output_flood_is_bounded_and_the_actual_job_is_reaped() {
 #[test]
 fn an_ignoring_native_loop_is_killed_by_its_owned_job_within_the_deadline_budget() {
     let fixture = Fixture::new().unwrap();
-    let child = fixture.launch(true, "spin", 1, 128 * 1024 * 1024).unwrap();
+    let child = fixture
+        .launch(true, "spin", 1, 128 * 1024 * 1024, &[])
+        .unwrap();
     let deadline = child.started + Duration::from_millis(500);
     while Instant::now() < deadline {
         assert!(!child.exited().unwrap());
@@ -161,7 +167,9 @@ fn an_ignoring_native_loop_is_killed_by_its_owned_job_within_the_deadline_budget
 #[test]
 fn closing_the_owned_job_terminates_the_actual_lpac_process() {
     let fixture = Fixture::new().unwrap();
-    let mut child = fixture.launch(true, "spin", 1, 128 * 1024 * 1024).unwrap();
+    let mut child = fixture
+        .launch(true, "spin", 1, 128 * 1024 * 1024, &[])
+        .unwrap();
     let deadline = Instant::now() + Duration::from_secs(5);
     while !fixture.work.join("ready").exists() {
         assert!(!child.exited().unwrap());

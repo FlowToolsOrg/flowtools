@@ -113,6 +113,13 @@ pub enum StreamKind {
 struct RawProbe {
     format: RawFormat,
     streams: Vec<RawStream>,
+    // Current ffprobe emits these containers when selecting stream entries.
+    // Only empty arrays are supported; nested program/group data is not selected,
+    // retained or silently discarded by the privacy projection.
+    #[serde(default, rename = "programs")]
+    _programs: [(); 0],
+    #[serde(default, rename = "stream_groups")]
+    _stream_groups: [(); 0],
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -465,6 +472,26 @@ mod tests {
         assert_eq!(parsed.streams[0].dimensions, Some([1920, 1080]));
         assert_eq!(parsed.streams[1].sample_rate, Some(48000));
         assert_eq!(parsed.streams[1].channels, Some(2));
+    }
+    #[test]
+    fn actual_ffprobe_empty_containers_are_supported_but_cannot_carry_nested_metadata() {
+        let mut actual = sample();
+        actual["programs"] = json!([]);
+        actual["stream_groups"] = json!([]);
+        assert_eq!(parse(actual.clone()).unwrap(), parse(sample()).unwrap());
+        for field in ["programs", "stream_groups"] {
+            for hostile in [
+                json!(null),
+                json!({}),
+                json!([null]),
+                json!([{}]),
+                json!([{"tags":{"private":"PRIVATE_CANARY"}}]),
+            ] {
+                let mut changed = actual.clone();
+                changed[field] = hostile;
+                assert_eq!(parse(changed).unwrap_err(), MediaError::MetadataInvalid);
+            }
+        }
     }
     #[test]
     fn duplicate_keys_private_paths_tags_and_control_characters_are_refused() {

@@ -1,0 +1,11 @@
+{
+  "formatVersion": 1,
+  "maturity": "prototype",
+  "buildFlavor": "validation-lgpl-static-v1",
+  "target": "windows-x64",
+  "sourceLockSha256": "89b2e2753a45b142019b98de85fdce29119a773e2940be4a7b4b44a6f42363a5",
+  "programs": {
+    "ffmpeg": "d0cb485dc6f482f8da08192a78f841f81385cad96be57014e46ca41d2b0d1717",
+    "ffprobe": "53b5589e9153dcfdc6f3fea9031256ef72b09f2e87d03f0acdbec1ae03cd68e2"
+  }
+}

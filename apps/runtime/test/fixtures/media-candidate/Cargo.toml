@@ -1,0 +1,25 @@
+[package]
+name = "flowtools-media-candidate-validation"
+version = "0.0.0"
+edition = "2021"
+publish = false
+autobins = false
+description = "Explicit build-only real-media acceptance; never bundled or a Runtime option"
+
+[workspace]
+
+[[test]]
+name = "media-candidate"
+path = "acceptance.rs"
+
+[dependencies]
+flowtools-runtime-core = { path = "../../../../../packages/runtime-core" }
+serde_json = "1"
+sha2 = "=0.10.9"
+uuid = { version = "=1.23.3", features = ["v4"] }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_Security", "Win32_Security_Authorization", "Win32_Security_Isolation", "Win32_Storage_FileSystem", "Win32_System_Com", "Win32_System_IO", "Win32_System_Ioctl", "Win32_System_JobObjects", "Win32_System_Memory", "Win32_System_Pipes", "Win32_System_Registry", "Win32_System_SystemServices", "Win32_System_Threading", "Win32_System_WindowsProgramming", "Win32_UI_Shell", "Wdk_Storage_FileSystem"] }
+
+[profile.dev.package.sha2]
+opt-level = 3

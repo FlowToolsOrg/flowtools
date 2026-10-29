@@ -176,6 +176,17 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G6 real-media candidate validation is a separate, non-published Cargo workspace
+under `apps/runtime/test/fixtures/media-candidate`, never a Runtime option or
+normal build/test dependency. Preserve source/tag/commit/tree/hash checks, fixed
+candidate hashes, fatal missing-image/inventory checks, actual LPAC/Job assertions
+and unchanged production review profiles. Only exact empty ffprobe programs and
+stream_groups arrays may be ignored; nonempty nested metadata remains refused.
+The pinned FFmpeg maps -n refusal to exit 0: require complete progress and fresh
+output validation, never interpret exit 0 alone as conversion success. Raw stderr
+stays out of product history. This fixture grants no tool identity/lease or user
+file publication. See [candidate evidence](./docs/validation/g6-media-candidate.md).
+
 G6 P2.8a2 stores only inert tool ZIP groups in `packages/tools/install.rs`.
 Re-admit original signed bytes before IO and with a fresh final T0 clock; retain
 the single DataStore writer, exact inventory/journal comparisons and shared

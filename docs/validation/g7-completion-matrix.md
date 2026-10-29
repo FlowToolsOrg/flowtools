@@ -1,6 +1,12 @@
 # G7 完成矩阵与剩余依赖
 
 日期：2026-10-29。G7 整体为 **in-progress / prototype**。
+前置归档事务提交 `ab73889` 的完整本机根门禁 exit 0，
+[PR 40868819104](https://github.com/FlowToolsOrg/flowtools/actions/runs/40868819104)
+和 [push 40868809341](https://github.com/FlowToolsOrg/flowtools/actions/runs/40868809341)
+均 SUCCESS。后续新增 [真实媒体候选专项](./g6-media-candidate.md)，已具备
+具体源码锁/构建/测试材料，仍不是产品受管工具身份、accepted leases 或办公闭环。
+
 G6 后续新增 [惰性工具归档库存/journal](./g6-inert-tool-installation.md)，仍未
 解包为可执行工具或建立 accepted leases；不把归档收据计为媒体闭环。
 原生 feasibility 修复 `8d62d87` 的
@@ -52,14 +58,14 @@ Desktop 原 Bun suite 后以 `&&` 必跑 Node，再执行原 Rust inventory/全�
 8 项及新增 Node JS types/lint 均通过。Node 只负责实际 workspace 检查，
 Bun 继续解析 TOML 的完整 profile；不以文本匹配替换原语义校验。
 
-| 范围             | 当前实际交付                                                                                                          | 未完成条件                                                                                                                     |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| P3.1a 桌面壳     | 托盘、单实例/快捷键恢复、显式自启动、外观、状态/诊断/托盘快照；工程范围已收尾                                         | 人工项 waived，成熟度不提升                                                                                                    |
-| P3.1b 日程/提醒  | GUI/CLI 创建、查看、修改、取消，UTC/IANA/DST/漏触发策略、有限周期、私有输入、durable claim、后台授权和无 GUI 实际提醒 | 安装后 OS 展示不以 requested 冒充；跨平台支持按实际状态返回                                                                    |
-| P3.2 搜索/上下文 | SDK/UI/Desktop/CLI 同源拼音/模糊/别名/有界正则、解释/置顶/历史隐私、显式上下文预览后普通执行                          | 不作为文件/媒体工作流证据                                                                                                      |
-| P3.4a 文件整理   | NTFS 只读规划/整批复核；单写者持久 plan ID、DPAPI 私密定义、取消与恢复作废                                            | G5/G6 执行门槛；GUI/CLI 同计划提交、逐效果授权/journal、重试和未修改文件撤销                                                   |
-| P3.4a 媒体处理   | 现有 G6 惰性 signed tool admission                                                                                    | 真实受管工具发行/库存/lease/平台边界；两个插件共享工具、inspect/extract/transcode、实际可播放结果、进度/取消/空间不足/更新回归 |
-| 自动验收         | 专项与完整门禁逐次记录                                                                                                | 当前 HEAD 的整仓/远端检查必须完成；专项成功不覆盖历史失败                                                                      |
+| 范围             | 当前实际交付                                                                                                          | 未完成条件                                                                                                           |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| P3.1a 桌面壳     | 托盘、单实例/快捷键恢复、显式自启动、外观、状态/诊断/托盘快照；工程范围已收尾                                         | 人工项 waived，成熟度不提升                                                                                          |
+| P3.1b 日程/提醒  | GUI/CLI 创建、查看、修改、取消，UTC/IANA/DST/漏触发策略、有限周期、私有输入、durable claim、后台授权和无 GUI 实际提醒 | 安装后 OS 展示不以 requested 冒充；跨平台支持按实际状态返回                                                          |
+| P3.2 搜索/上下文 | SDK/UI/Desktop/CLI 同源拼音/模糊/别名/有界正则、解释/置顶/历史隐私、显式上下文预览后普通执行                          | 不作为文件/媒体工作流证据                                                                                            |
+| P3.4a 文件整理   | NTFS 只读规划/整批复核；单写者持久 plan ID、DPAPI 私密定义、取消与恢复作废                                            | G5/G6 执行门槛；GUI/CLI 同计划提交、逐效果授权/journal、重试和未修改文件撤销                                         |
+| P3.4a 媒体处理   | 惰性 signed tool ZIP 库存；固定 recipes/projections；独立真实媒体构建候选专项                                         | 产品签名发行/可执行库存/lease/平台边界；两个插件共享工具与 GUI/CLI、用户输出发布、可播放结果、空间不足/更新/恢复回归 |
+| 自动验收         | 专项与完整门禁逐次记录                                                                                                | 当前 HEAD 的整仓/远端检查必须完成；专项成功不覆盖历史失败                                                            |
 
 具体证据：[桌面收尾](./g7-shell-closeout.md)、
 [调度派发](./g7-scheduling-dispatch.md)、
@@ -71,8 +77,9 @@ Bun 继续解析 TOML 的完整 profile；不以文本匹配替换原语义校�
 
 `packages/runtime-core/src/packages/tools.rs` 的 `REVIEWED_TOOLS` 仍为空，
 只有测试条件下存在 fixture profile。G6 现状是惰性准入，不是可执行工具库存。
-真实 FFmpeg 构建的 publisher/source/license/flavor/target/program/resource
-审核、实际签名发行和独立安全验收尚无输入或通过证据。工具共享 registry/lease、
+真实 FFmpeg 构建候选已提供 source/hash/recipe/test 材料；其
+publisher/source/license/flavor/target/program/resource 审核、实际签名发行和独立
+安全验收仍无通过证据。工具共享 registry/lease、
 更新/LKG/GC 及 G5 平台执行/文件竞争/恢复门槛仍待实施和验收，详见
 [工具准入](./g6-tool-admission.md)、[G5 受保护发布](./g5-guarded-publication.md)
 及 [实施依赖顺序](../next-milestones.md)。

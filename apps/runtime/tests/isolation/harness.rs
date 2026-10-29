@@ -362,6 +362,17 @@ pub struct Fixture {
 }
 impl Fixture {
     pub fn new() -> io::Result<Self> {
+        let current = std::env::current_exe()?;
+        let compiled = current
+            .parent()
+            .and_then(Path::parent)
+            .ok_or_else(|| io::Error::other("test binary directory"))?
+            .join("flowtools-isolation-probe.exe");
+        Self::from_program_bytes(&fs::read(compiled)?)
+    }
+    // Only this test module and the separate build-only media acceptance crate
+    // use these bytes. No production Runtime/IPC option imports this harness.
+    pub fn from_program_bytes(bytes: &[u8]) -> io::Result<Self> {
         let parent = Path::new(env!("CARGO_MANIFEST_DIR")).join("node_modules/.tmp");
         fs::create_dir_all(&parent)?;
         let root = parent.join(format!("native-isolation-{}", uuid::Uuid::new_v4()));
@@ -395,13 +406,7 @@ impl Fixture {
             true,
         )?;
         let program = program_dir.join("probe.exe");
-        let current = std::env::current_exe()?;
-        let compiled = current
-            .parent()
-            .and_then(Path::parent)
-            .ok_or_else(|| io::Error::other("test binary directory"))?
-            .join("flowtools-isolation-probe.exe");
-        fs::copy(compiled, &program)?;
+        fs::write(&program, bytes)?;
         protect(
             &program,
             &format!("D:P(A;;FA;;;{user})(A;;FRFX;;;{})", container.text),
@@ -472,12 +477,13 @@ impl Fixture {
         case: &str,
         port: u16,
         memory: usize,
+        args: &[&'static str],
     ) -> io::Result<Child> {
-        self.launch_checked(isolated, case, port, memory, false)
+        self.launch_checked(isolated, case, port, memory, false, args)
     }
     /// A suspended, owned process whose policy check refuses before ResumeThread.
     pub fn refused_launch(&self) -> io::Result<Child> {
-        self.launch_checked(true, "spin", 1, 128 * 1024 * 1024, true)
+        self.launch_checked(true, "spin", 1, 128 * 1024 * 1024, true, &[])
     }
     fn launch_checked(
         &self,
@@ -486,6 +492,7 @@ impl Fixture {
         port: u16,
         memory: usize,
         refuse_before_resume: bool,
+        args: &[&'static str],
     ) -> io::Result<Child> {
         unsafe {
             let job = Handle(CreateJobObjectW(ptr::null(), ptr::null()));
@@ -705,6 +712,17 @@ impl Fixture {
             let mut environment: Vec<u16> = env.into_iter().flat_map(|v| wide(&v)).collect();
             environment.push(0);
             let mut command = wide(format!("\"{}\"", self.program.display()));
+            // All arguments come from static Rust recipes in test code. Keep the
+            // basic test quoting deliberately closed rather than accept paths or
+            // arbitrary command lines from a runtime caller.
+            command.pop();
+            for arg in args {
+                if arg.contains(['"', '\0', '\r', '\n']) || arg.ends_with('\\') {
+                    return Err(io::Error::other("unsupported fixed test argument"));
+                }
+                command.extend(format!(" \"{arg}\"").encode_utf16());
+            }
+            command.push(0);
             let mut info = PROCESS_INFORMATION::default();
             if CreateProcessW(
                 wide(&self.program).as_ptr(),

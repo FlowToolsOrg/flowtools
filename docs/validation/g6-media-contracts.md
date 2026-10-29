@@ -3,6 +3,11 @@
 日期：2026-10-29。范围：T0 Rust 纯契约 / prototype，G6 与 G7 整体仍 in-progress。
 此模块没有进程、磁盘、网络、安装/lease 或 broker grant API，不产生可执行身份。
 
+后续 [真实媒体候选专项](./g6-media-candidate.md) 发现 ffprobe 会额外输出空的
+programs/stream_groups 容器；本模块现精确接受零长度数组，拒绝非空/null/
+object/nested metadata，增加第十一项回归。实际 -n 拒绝仍可退出 0，所以
+未来 adapter 必须检查完整进度、进程和新输出；本纯模块仍无 IO/执行权限。
+
 `packages/runtime-core/src/packages/tools/media.rs` 提供三种版本化有限动作：
 inspect 使用 ffprobe；extract-audio-wav 使用固定 PCM WAV；transcode-webm
 使用固定 VP9/Opus 参数。输入绑定只叫 input，输出名称固定；不接受调用方

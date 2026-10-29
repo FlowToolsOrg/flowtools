@@ -425,6 +425,12 @@ plugin lock 和 task lease 防止卸载/更新误删已接受任务需要的版�
 
 ### P2.8b 受管执行与媒体适配
 
+2026-10-29：P2.8b2 新增独立 build-only FFmpeg/ffprobe 候选及实际 LPAC
+专项，包含固定源码/签名/完整 Git 树与 program hashes。实测发现并修正
+ffprobe 空容器拒绝，补齐 WebM 必需 bsf；确认 -n 拒绝仍可能退出 0，后续
+必须联合完整进度与新输出验证。该专项不是普通 Runtime 工具身份/lease 或
+用户文件执行路径；见 [构建/实际测试证据](./validation/g6-media-candidate.md)。
+
 2026-10-29：P2.8b1 新增固定媒体 recipes 与有界 ffprobe/progress 投影。
 只接受 inspect、WAV 提取、WebM 转码三种版本化动作；程序角色与 workspace
 名称由 Rust 固定，不接 executable/path/argv/filter/URL。此纯契约不启动工具、

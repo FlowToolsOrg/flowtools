@@ -135,6 +135,91 @@ test(
     )
     assert.equal(rootSelection.workspace_default_members.length, 2)
     assert.ok(!rootSelection.workspace_default_members.includes(probe.id))
+    /** @type {unknown} */
+    const mediaMetadata = spawnSync(
+      'cargo',
+      [
+        'metadata',
+        '--locked',
+        '--offline',
+        '--no-deps',
+        '--format-version',
+        '1',
+        '--manifest-path',
+        fileURLToPath(
+          new URL(
+            '../apps/runtime/test/fixtures/media-candidate/Cargo.toml',
+            import.meta.url
+          )
+        ),
+      ],
+      options
+    )
+    assert.ok(mediaMetadata && typeof mediaMetadata === 'object')
+    assert.ok(
+      'pid' in mediaMetadata &&
+        typeof mediaMetadata.pid === 'number' &&
+        mediaMetadata.pid > 0
+    )
+    assert.ok(!('error' in mediaMetadata) || mediaMetadata.error === undefined)
+    assert.ok('status' in mediaMetadata && mediaMetadata.status === 0)
+    assert.ok(
+      'stdout' in mediaMetadata && typeof mediaMetadata.stdout === 'string'
+    )
+    /** @type {unknown} */
+    const mediaWorkspace = JSON.parse(mediaMetadata.stdout)
+    assert.ok(mediaWorkspace && typeof mediaWorkspace === 'object')
+    assert.ok(
+      'workspace_root' in mediaWorkspace &&
+        typeof mediaWorkspace.workspace_root === 'string'
+    )
+    assert.equal(
+      realpathSync(mediaWorkspace.workspace_root),
+      realpathSync(
+        fileURLToPath(
+          new URL(
+            '../apps/runtime/test/fixtures/media-candidate/',
+            import.meta.url
+          )
+        )
+      )
+    )
+    assert.ok(
+      'packages' in mediaWorkspace && Array.isArray(mediaWorkspace.packages)
+    )
+    assert.equal(mediaWorkspace.packages.length, 1)
+    /** @type {unknown} */
+    const mediaPackage = mediaWorkspace.packages[0]
+    assert.ok(mediaPackage && typeof mediaPackage === 'object')
+    assert.ok(
+      'id' in mediaPackage &&
+        'name' in mediaPackage &&
+        mediaPackage.name === 'flowtools-media-candidate-validation'
+    )
+    assert.ok('publish' in mediaPackage && Array.isArray(mediaPackage.publish))
+    assert.deepEqual(mediaPackage.publish, [])
+    assert.ok('targets' in mediaPackage && Array.isArray(mediaPackage.targets))
+    assert.ok(
+      !mediaPackage.targets.some(
+        /** @param {unknown} target */
+        target =>
+          target &&
+          typeof target === 'object' &&
+          'kind' in target &&
+          Array.isArray(target.kind) &&
+          target.kind.includes('bin')
+      )
+    )
+    assert.ok(
+      'workspace_default_members' in mediaWorkspace &&
+        Array.isArray(mediaWorkspace.workspace_default_members)
+    )
+    assert.deepEqual(mediaWorkspace.workspace_default_members, [
+      mediaPackage.id,
+    ])
+    assert.ok(
+      !rootSelection.workspace_default_members.includes(mediaPackage.id)
+    )
     assert.ok(
       performance.now() - started < 5000,
       'original complete test bound'

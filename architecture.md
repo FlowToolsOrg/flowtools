@@ -1,5 +1,9 @@
 # Flow Tool Architecture
 
+G6 的 [真实媒体候选专项](./docs/validation/g6-media-candidate.md) 位于独立非发布
+Cargo workspace，只验证固定构建 bytes/recipes 的实际 LPAC 处理。不成为 Runtime
+Host selector、工具身份/lease、grants 或用户输出提交入口；生产审核列表保持空。
+
 G6 惰性工具归档的显式事务复用既有 DataStore writer 和 held-parent blob
 层，固定 namespace 与插件库存分离，pending/256MiB/384 组预算相互约束。
 原始签名字节及最终时钟重查后才提交，不解包或返回执行/lease 身份，见

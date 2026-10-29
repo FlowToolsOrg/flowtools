@@ -2,6 +2,10 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime-core/src/packages/tools/media.rs` 新增固定媒体 recipes 和有界
+inspection/progress 解析，测试与模块同文件；不包含工具安装、运行或插件入口。
+见 [媒体契约](./validation/g6-media-contracts.md)。
+
 `apps/runtime/tests/windows-isolation.rs` 及 `tests/isolation/` 承载 Windows
 LPAC 实际拒绝回归。`apps/runtime/test/fixtures/isolation-probe` 是单独编译、
 publish=false 的测试子进程，不是发布工具；不属于 Cargo default-members，

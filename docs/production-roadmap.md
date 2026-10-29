@@ -22,6 +22,10 @@ G5/G6 执行验收。人工 G7 项为 waived，整体不更新为 done。
 
 ## 1. 使用规则
 
+G6 P2.8b1 同时提供纯 Rust 固定媒体 recipes 与有界结果投影，详见
+[契约证据](./validation/g6-media-contracts.md)。它没有建立工具库存、accepted
+leases、启动进程或发布文件，不能作为 G7 已完成媒体闭环的证据。
+
 2026-10-29：G5 P2.2a 的 Windows 原生 LPAC 可行性已新增六项实际进程回归，
 范围和失败历史见 [平台证据](./validation/g5-windows-native-isolation.md)。
 它是 G6 执行前置子步骤，不代表 T3/真实工具发行、工具库存/leases 或 G7

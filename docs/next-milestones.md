@@ -417,6 +417,13 @@ plugin lock 和 task lease 防止卸载/更新误删已接受任务需要的版�
 
 ### P2.8b 受管执行与媒体适配
 
+2026-10-29：P2.8b1 新增固定媒体 recipes 与有界 ffprobe/progress 投影。
+只接受 inspect、WAV 提取、WebM 转码三种版本化动作；程序角色与 workspace
+名称由 Rust 固定，不接 executable/path/argv/filter/URL。此纯契约不启动工具、
+创建 lease 或写文件；真实发行/安装/授权/LPAC adapter 和 G7 实际媒体闭环
+仍是后续验收条件，范围与十项纯契约回归见
+[媒体契约](./validation/g6-media-contracts.md)。
+
 提供 `media.inspect`、`media.extract-audio`、`media.transcode` 等版本化操作。
 插件传 input/output handle 与有限 preset，Rust 构造参数数组并直接创建进程，
 不使用 shell，也不接受不受约束 argv。对 FFmpeg 输入/字幕/filter/播放列表间接

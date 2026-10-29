@@ -11,6 +11,8 @@
 维护者随后要求继续实现 G5/G6；新增
 [Windows 原生隔离可行性](./g5-windows-native-isolation.md) 正在补齐平台前置，
 不能把测试专用进程边界称为真实工具库存或 G7 媒体闭环。
+另新增 [固定媒体 recipes/投影](./g6-media-contracts.md)，只涵盖参数与解析；
+未启动真实媒体工具，不把十项纯契约回归计为媒体办公闭环。
 
 本轮 `9e7c13d` 完整本机根门禁通过：11/11 工作区 lint/types/test/build，
 SDK 791、Core 262+11+2、Runtime 24、Desktop 36+6、Chromium 108，

@@ -176,6 +176,16 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G6 fixed media recipes/projections live in `packages/tools/media.rs`. Keep the
+finite versioned actions, fixed input/output names, no shell/caller argv/filters,
+create-only output option and file-only input protocol. Projections must reject
+duplicate JSON keys, raw filenames/tags/unknown fields and bound streams, numbers,
+dimensions, progress lines and aggregate bytes. Progress is advisory: unknown
+timestamps stay unknown, malformed streams remain poisoned and high watermarks
+survive unknown records. `progress=end` is not process exit or validated output.
+This module grants no installed identity, lease, filesystem IO or execution.
+See [media contract evidence](./docs/validation/g6-media-contracts.md).
+
 G5 Windows native isolation feasibility uses `apps/runtime/tests/windows-isolation.rs`
 and the build-only `test/fixtures/isolation-probe`. Keep LPAC actual SID/security-
 attribute/capability readback before ResumeThread, the fixed registryRead bootstrap,

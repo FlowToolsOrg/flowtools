@@ -9,6 +9,10 @@ The Windows native-tool isolation feasibility gate now uses real LPAC processes,
 positive controls and bounded Job cleanup. It remains test-only; see
 [scope and evidence](./docs/validation/g5-windows-native-isolation.md).
 
+G6 now also has fixed Rust media recipes and bounded inspection/progress parsers;
+these remain inert until managed installation, leases and execution are wired.
+See [media contract scope](./docs/validation/g6-media-contracts.md).
+
 Launcher search now shares pinyin, fuzzy, alias and bounded-regex matching across
 SDK/UI/CLI, with explainable rankings, private history controls and explicit
 input-context previews. See [search and 10k benchmark](./docs/validation/g7-launcher-search.md).

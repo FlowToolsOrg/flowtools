@@ -1,5 +1,9 @@
 # Flow Tool Plugin 开发指南
 
+G6 的固定媒体 recipes/解析器是 T0 Rust 纯契约，不是可用 SDK media capability
+或任意 ToolExecute 授权。插件不能由 recipe 创建 path、argv、lease 或执行
+身份；实际受管工具与文件发布仍待连接，见 [媒体契约](./validation/g6-media-contracts.md)。
+
 G7 文件规划对象不是 SDK filesystem capability、grant 或可提交 plan ID。
 文件写入与共享媒体工具入口等待 G5/G6 执行门槛，插件不能以任意目录、shell
 或系统 FFmpeg 路径替代。见 [当前完成矩阵](./validation/g7-completion-matrix.md)。

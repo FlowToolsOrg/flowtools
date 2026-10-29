@@ -1,5 +1,10 @@
 # Flow Tool Architecture
 
+G6 的 `packages/tools/media.rs` 只构造固定程序角色/参数 recipes，投影有界
+ffprobe/progress 元数据，不接 OS 路径或任意 argv，不创建 lease/进程/文件。
+进度不是退出或输出验证，未知记录不能重置高水位，见
+[媒体契约](./docs/validation/g6-media-contracts.md)。
+
 G5 原生工具平台可行性使用每任务 LPAC、恢复前实际 token/句柄身份检查和限额
 Job；六项真实拒绝回归只存在于独立测试探针。它未给产品增加执行入口、grant
 或工具身份，见 [ADR-0005](./docs/adr/0005-windows-native-tool-isolation.md) 与

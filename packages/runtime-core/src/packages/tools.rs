@@ -1,4 +1,4 @@
-//! G6 P2.8a1: strict, inert tool-package admission through durable T0 trust.
+//! G6: strict inert tool-package admission and pure fixed media recipes.
 //! No installed registry, extraction, executable identity, lease or execution.
 use super::{
     archive::{validate_archive, ValidatedArchive},
@@ -10,6 +10,8 @@ use super::{
 use crate::data::DataStore;
 use serde::Deserialize;
 use std::collections::BTreeSet;
+
+pub mod media;
 
 const MAX_TOOL_MANIFEST_BYTES: usize = 65_536;
 const MAX_TOOL_FILES: usize = 32;

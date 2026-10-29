@@ -1,5 +1,11 @@
 # FlowTools 插件威胁模型
 
+2026-10-29 G6 媒体纯契约只提供固定程序角色/参数及 bounded JSON/progress
+投影；重复 key、raw filename/tags、未知字段、数值/流/像素预算和进度洪泛
+有拒绝回归。未知进度不重置高水位；progress=end 不作为进程退出/文件验证。
+没有新增实际工具/路径/argv、IPC、grant 或文件效果，SEC-003/004/005/010/015
+保持 open，见 [媒体契约](../validation/g6-media-contracts.md)。
+
 2026-10-29 G5 Windows 原生工具可行性以每任务 LPAC 和真实进程正向对照验证
 私有文件/注册表/IPC/网络/另一任务目录及 junction 越界拒绝；恢复线程前读取
 实际 token/句柄身份，Job 覆盖内存、CPU 配置、子进程、输出、500ms 取消和

@@ -47,29 +47,50 @@ const workflow = Bun.YAML.parse(
   ).text()
 ) as Workflow
 
-test('native integrity hashing is optimized in the effective workspace without weakening debug checks', () => {
-  const metadata = spawnSync(
-    'cargo',
-    [
-      'metadata',
-      '--locked',
-      '--offline',
-      '--no-deps',
-      '--format-version',
-      '1',
-      '--manifest-path',
-      fileURLToPath(new URL('../apps/runtime/Cargo.toml', import.meta.url)),
-    ],
-    { encoding: 'utf8' }
-  )
-  expect(metadata.status, metadata.stdout + metadata.stderr).toBe(0)
-  const workspace = JSON.parse(metadata.stdout) as { workspace_root: string }
+test('native integrity hashing is optimized without weakening debug checks', () => {
+  // The mandatory Node companion verifies that Cargo actually resolves this
+  // workspace. Keep full TOML semantics and the exact profile assertion here.
   const manifest = Bun.TOML.parse(
-    readFileSync(join(workspace.workspace_root, 'Cargo.toml'), 'utf8')
+    readFileSync(new URL('../Cargo.toml', import.meta.url), 'utf8')
   ) as { profile: Record<string, unknown> }
   expect(manifest.profile).toEqual({
     dev: { package: { sha2: { 'opt-level': 3 } } },
   })
+})
+
+test('Desktop requires the native Node companion and strictly checks its JavaScript', () => {
+  const desktop = JSON.parse(
+    readFileSync(
+      new URL('../apps/desktop/package.json', import.meta.url),
+      'utf8'
+    )
+  ) as { scripts: Record<string, string> }
+  expect(desktop.scripts.test).toBe(
+    'bun test test ../../scripts && node --test ../../scripts/ci-native-contracts.node.mjs && bun run test/rust-test-inventory.ts && cargo test --locked --features codegen --lib --test bindings --manifest-path src-tauri/Cargo.toml'
+  )
+  expect(desktop.scripts['check-types']).toBe(
+    'tsc --noEmit && tsc --noEmit -p tsconfig.test.json && tsc --noEmit -p ../../scripts/tsconfig.node.json'
+  )
+  expect(desktop.scripts.lint).toContain(
+    '&& bun run --cwd ../.. lint:ci-native'
+  )
+  const root = JSON.parse(
+    readFileSync(new URL('../package.json', import.meta.url), 'utf8')
+  ) as { scripts: Record<string, string> }
+  expect(root.scripts['lint:ci-native']).toBe(
+    'oxlint --type-aware --type-check --tsconfig scripts/tsconfig.node.json scripts/ci-native-contracts.node.mjs'
+  )
+  const config = JSON.parse(
+    readFileSync(new URL('./tsconfig.node.json', import.meta.url), 'utf8')
+  ) as { compilerOptions: Record<string, unknown>; include: string[] }
+  expect(config.compilerOptions).toMatchObject({
+    strict: true,
+    allowJs: true,
+    checkJs: true,
+    noEmit: true,
+    types: ['node'],
+  })
+  expect(config.include).toEqual(['ci-native-contracts.node.mjs'])
 })
 
 test('root and workspace lint accept defined CSS classes and reject unknown ones', () => {
@@ -110,6 +131,35 @@ function psLiteral(value: string): string {
 const helperPath = psLiteral(
   fileURLToPath(new URL('./ci-gates.ps1', import.meta.url))
 )
+
+test('Core isolates full native cases without filtering tests or changing job deadlines', () => {
+  const core = JSON.parse(
+    readFileSync(
+      new URL('../packages/runtime-core/package.json', import.meta.url),
+      'utf8'
+    )
+  ) as { scripts: { test: string } }
+  expect(core.scripts.test.split(' && ')).toEqual([
+    'bun run manifest-conformance.ts --check',
+    'bun run generate-catalog.ts',
+    'bun run ../../scripts/check-rust-tests.ts Cargo.toml',
+    'cargo test --locked --manifest-path Cargo.toml -- --test-threads=1',
+  ])
+  const scheduling = readFileSync(
+    new URL(
+      '../packages/runtime-core/src/runtime_scheduling.rs',
+      import.meta.url
+    ),
+    'utf8'
+  )
+  expect(scheduling).toContain('timeout_ms: 1_000,')
+  expect(scheduling).toContain(
+    'fn notification_needs_current_policy_and_durable_claim_before_os_effect()'
+  )
+  expect(scheduling).toContain(
+    'fn scheduled_acceptance_uses_private_inputs_and_survives_client_disconnect_without_replay()'
+  )
+})
 
 function runPowerShell(command: string, cwd?: string) {
   return spawnSync(

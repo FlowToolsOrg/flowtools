@@ -176,6 +176,16 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G6 P2.8a4 signed tool binding plans live in `packages/dependencies/tools.rs`.
+Only opaque compatible plugin archives and admitted InertToolArchive leaves
+enter the shared bounded solver. Keep the separate signed-plugin-tool-archives-v1
+profile and exact original ZIP packageDigest, consumer/target/flavor binding,
+root-candidate refusal and fresh final T0 trust/clock checks over every supplied
+candidate, even unused tools. G4 and the older tool-free signed lock retain their
+formats and refusal semantics. This is an inert plan, not installed multiversion
+inventory, an accepted lease, grant or executable identity. Production review
+profiles stay empty. See [signed binding evidence](./docs/validation/g6-signed-tool-bindings.md).
+
 G6 P2.8a3 explicitly materializes only re-admitted opaque installed tool bytes in
 `packages/tools/install/images.rs`. Keep the fixed private namespace, exact held
 file/dir identities, source provenance, protected owner/DACL/Medium label readback,

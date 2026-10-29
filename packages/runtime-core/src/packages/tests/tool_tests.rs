@@ -15,6 +15,7 @@ use std::{
 };
 use zip::{write::SimpleFileOptions, CompressionMethod, ZipWriter};
 
+mod dependency_tests;
 #[cfg(windows)]
 mod install_tests;
 

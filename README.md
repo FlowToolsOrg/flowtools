@@ -1,5 +1,9 @@
 # Flow Tool
 
+G6 has a separate [signed tool binding planner](./docs/validation/g6-signed-tool-bindings.md)
+for verified plugin/service graphs and admitted tool ZIPs. Its locks remain inert;
+accepted leases, installed execution identities and G7 media delivery are pending.
+
 G6 also provides explicit [private tool-file materialization](./docs/validation/g6-tool-materialization.md)
 with sealed identities, native ACL checks and abort-only quarantine. It remains
 inert; production review, accepted leases and product execution are pending.

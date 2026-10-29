@@ -92,3 +92,18 @@ refusal、不同 canary 原字节保留和 progress.finish 拒绝；未假定非
 [PR 40868819104](https://github.com/FlowToolsOrg/flowtools/actions/runs/40868819104)
 和 [push 40868809341](https://github.com/FlowToolsOrg/flowtools/actions/runs/40868809341)
 均 SUCCESS。这些是上一个提交的整仓证据。
+
+后续候选提交 `c24b274` 完整本机根门禁 exit 0：11/11 workspaces 的 lint/types/
+test/build、Core 288+11+3、Runtime 原生 24+6/Bun 17（含原 50 路冷启动）、
+Chromium 109/34 文件、Desktop 原生 36+6、Web 23/Desktop 25 产物一致及最终
+clean-worktree 通过。日志 `execution-validation/g6/root-ci-c24b274-dcache-20261029.log`。
+[PR 40879978485](https://github.com/FlowToolsOrg/flowtools/actions/runs/40879978485)
+和 [push 40879967308](https://github.com/FlowToolsOrg/flowtools/actions/runs/40879967308)
+均 SUCCESS；普通根 CI 仍不执行独立六项真实媒体专项。
+
+首次同 SHA 的完整检查在 standalone bundle 的 Node fs.cp/copyfile 阶段出现
+UNKNOWN -4094，未进入该例 50 路启动断言。原失败保留在
+`execution-validation/g6/root-ci-c24b274-20261029.log`，随后同一源文件的独立
+复制成功，OS 根因未确定。未修改的原专项复验通过（112.74s，含实际 50 路），
+日志 `execution-validation/g6/standalone-c24b274-20261029.log`；之后使用已支持
+的 D 盘 Cargo cache 完整重跑通过。没有更改 TEMP/TMP、时限、断言或门禁。

@@ -389,6 +389,12 @@ Rust broker 的运行身份由会话/进程绑定；IPC、文件 handle、namesp
 
 ### P2.8a 集中工具仓库
 
+2026-10-29：P2.8a4 提供独立签名插件/工具归档绑定计划。只接受完整准入的
+opaque 插件与工具候选，将 service 图中的各 consumer 固定到原始工具 ZIP；
+独立 profile/digest 与 G4/旧 signed lock 区分，求解后以新 T0 时钟检查当前
+根、撤销、expiry 和 floors，未使用候选也不能绕过。该计划仍未持久安装或
+建立 accepted leases，见 [签名绑定](./validation/g6-signed-tool-bindings.md)。
+
 2026-10-29：P2.8a3 新增显式私有工具文件落盘。当前签名归档重准入后，以同一
 writer 记录独立 journal，密封全部文件/目录身份、字节和 ACL；原生 create-only
 发布后再次检查当前 trust、源库存、时间与实际文件，才原子提交。显式 abort

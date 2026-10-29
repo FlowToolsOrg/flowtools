@@ -1,5 +1,11 @@
 # Flow Tool Plugin 开发指南
 
+G6 的签名工具绑定使用独立 `signed-plugin-tool-archives-v1` profile；该路径
+把已有工具依赖 digest 与已准入的原始 signed ZIP 匹配，输出单独 typed
+packageDigest pin。它不改变 G4 元数据规划与旧 tool-free signed lock，也不
+使插件获得 executable path、grants 或 accepted lease，见
+[绑定证据](./validation/g6-signed-tool-bindings.md)。
+
 G6 P2.8a3 的 MaterializedInertTool 只由 T0 显式事务生成，内部持有经过密封/
 ACL 回读的原生文件句柄；没有公开 path、capability selector、argv 或启动 API。
 插件不能把诊断 pin 或归档收据转为授权，accepted leases 和 SDK 媒体入口仍待实现。

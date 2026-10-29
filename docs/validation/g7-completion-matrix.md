@@ -2,6 +2,12 @@
 
 日期：2026-10-29。G7 整体为 **in-progress / prototype**。
 
+前置 `554bde6` 密封落盘已通过完整本机根门禁，Core 306+11+4、Runtime
+原生 24+6/Bun 17、Chromium 109、11/11 工作区与生产产物/最终干净检查通过。
+远端仍运行中；详见 [密封落盘记录](./g6-tool-materialization.md)。
+下一步新增 [签名插件/工具绑定](./g6-signed-tool-bindings.md) 的独立 ZIP 锁域，
+旧 profile 与 G4 不变；它仍不建立 accepted leases 或可执行身份。
+
 最新已交付提交 `c24b274` 的完整本机根门禁 exit 0，
 [PR 40879978485](https://github.com/FlowToolsOrg/flowtools/actions/runs/40879978485)
 和 [push 40879967308](https://github.com/FlowToolsOrg/flowtools/actions/runs/40879967308)

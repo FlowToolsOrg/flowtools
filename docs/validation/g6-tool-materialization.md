@@ -76,6 +76,17 @@ sequence 后再检查原总预算，保留拒绝/无 journal 断言。
 工作树直接运行 Runtime native test 曾因未执行 prepare 缺少 runner.json 而在
 编译前拒绝，尚未执行 native 用例；完整根门禁保留正常 bootstrap 后再验证。
 本修改最终整仓与远端结果另行记录，不以已有提交的检查代替。
+
+提交 `554bde6` 的完整本机根门禁 exit 0，最终工作区无漂移。11/11 workspace
+lint/types/test/build、Core 306+11+4、Runtime 原生 24+6/Bun 17（含原 50 路
+冷启动）、Chromium 109/34 文件、Desktop 106 Bun+Node 1+原生 36+6，
+Web 23/Desktop 25 生产产物逐字节对照通过。日志
+`execution-validation/g6/root-ci-554bde6-20261029.log`。
+当前远端 [PR 40896796753](https://github.com/FlowToolsOrg/flowtools/actions/runs/40896796753)
+与 [push 40896785005](https://github.com/FlowToolsOrg/flowtools/actions/runs/40896785005)
+PR 已 SUCCESS，push 仍运行中；最终状态单独核对。独立真实媒体完整 driver
+复验通过，实际 inventory 6、all-target Clippy 和六项 LPAC 测试通过（3.96s），
+日志 `execution-validation/g6/media-native-554bde6-20261029.log` / exit 0。
 原生电源断电、完整文件系统竞争、orphan reconciliation、accepted leases、
 LKG/更新/GC、真实产品发行签名与许可证/来源批准、产品 native adapter、
 用户文件授权发布及独立安全验收仍待完成。G7 人工项 waived 不替代这些条件。

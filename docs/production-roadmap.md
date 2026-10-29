@@ -22,6 +22,10 @@ G5/G6 执行验收。人工 G7 项为 waived，整体不更新为 done。
 
 ## 1. 使用规则
 
+G6 P2.8a4 的 [签名工具绑定规划](./validation/g6-signed-tool-bindings.md) 使用
+独立 ZIP 锁域、已准入工具和求解后的新鲜 trust/clock；旧 G4/无工具 signed
+契约保持不变。它不创建 installed execution identity、accepted leases 或 grants。
+
 G6 P2.8a3 提供 [私有工具文件密封落盘](./validation/g6-tool-materialization.md)，
 涵盖同 writer/journal、当前信任重查、原生身份/ACL 复核、整批 abort 预检与
 隔离撤销。真实 LPAC 能力回读及共享文件拒绝路径仍为测试证据；不提供 accepted

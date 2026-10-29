@@ -167,6 +167,15 @@ digest 与实际准入 target，禁止解析器替换根候选。G4 的内嵌 T1
 信任、真实 inventory 与原始 artifacts，见
 [签名依赖证据](../validation/g5-signed-dependencies.md)。
 
+G6 P2.8a4 另增 `signed-plugin-tool-archives-v1`，只接受已通过工具准入的
+opaque 原始工具归档；旧路径/旧 profile 继续没有 ToolCandidate 参数且拒绝
+工具依赖。共享求解器内部的临时工具投影不作为 G4 锁返回；新 typed tool pin
+使用原始 ZIP packageDigest，连同 consumer/target/flavor 进入新 profile 的
+digest 域。求解后采样新 T0 clock，对全部 plugin/tool receipts 重查当前根/
+撤销/expiry/floors，不容忍旧的候选池，不产生 installed lock 或执行身份。
+后续 accepted leases 与安装提交仍须重查当前信任和实际文件，见
+[绑定证据](../validation/g6-signed-tool-bindings.md)。
+
 第五步新增 Windows/x64 T0 惰性安装事务。原始 ZIP 与 Manifest 仅写入固定
 blob 名称，不按 Manifest 路径提取业务文件；seal 绑定 create-only artifact
 的事务身份和两份原始 digest。同一 DataStore 保存 signed descriptor provenance、

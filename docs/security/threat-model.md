@@ -1,5 +1,11 @@
 # FlowTools 插件威胁模型
 
+2026-10-29 [签名工具绑定](../validation/g6-signed-tool-bindings.md) 只把 opaque
+准入后的工具传给有界 solver，不接受 caller ToolCandidate、签名声明或
+验证 flags；独立锁域固定 consumer/target/flavor/原始 ZIP。当前根、撤销、
+expiry 与 floors 在求解后以新 T0 clock 再检查，所有候选均须通过。旧 lock
+不静默转换；该计划不证明库存/租约/执行，SEC-001/003/004/010/014/015 继续 open。
+
 2026-10-29 [工具文件密封落盘](../validation/g6-tool-materialization.md) 显式
 重准入原始签名归档，在固定私有目录 create-only 写入；绑定全部 native IDs、
 内容与当前用户/SYSTEM/唯一 artifact capability 的 protected ACL、Medium label。

@@ -2,6 +2,11 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime-core/src/packages/dependencies/tools.rs` 定义独立签名插件/工具 ZIP 锁，
+复用父模块的有界选择与原始 ZIP pin 投影；专项位于
+`packages/tests/tool_tests/dependency_tests.rs`。不接 ToolCandidate、安装/租约或
+新 wire 命令，见 [签名绑定](./validation/g6-signed-tool-bindings.md)。
+
 `runtime-core/src/packages/tools/install/images.rs` 与 `images/{native,security,tree}.rs`
 提供显式惰性文件落盘、密封读取和显式隔离撤销。实际进程/NTFS 回归位于
 `packages/tests/tool_tests/install_tests/image_tests.rs`，复用现有非发布原生探针；

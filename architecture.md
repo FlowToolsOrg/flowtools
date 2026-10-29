@@ -1,5 +1,11 @@
 # Flow Tool Architecture
 
+G6 P2.8a4 的 `packages/dependencies/tools.rs` 在独立 profile 下把已准入工具 ZIP
+与签名插件/service 图绑定；消费方、版本、target、flavor 和原始 packageDigest
+进入锁，求解前后检查当前 trust/时间。G4 与旧 tool-free signed lock 不变；
+尚非已安装锁、accepted lease 或执行身份，见
+[签名工具绑定](./docs/validation/g6-signed-tool-bindings.md)。
+
 G6 P2.8a3 在同一 writer 中显式落盘已重新准入的工具文件，使用固定私有目录、
 文件/目录身份与完整字节密封、原生 ACL/Medium label 回读和独立 journal。
 隔离区在清除 journal 前撤销 artifact read capability；三个池共用原预算。

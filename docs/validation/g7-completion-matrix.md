@@ -1,6 +1,12 @@
 # G7 完成矩阵与剩余依赖
 
 日期：2026-10-29。G7 整体为 **in-progress / prototype**。
+G6 后续新增 [惰性工具归档库存/journal](./g6-inert-tool-installation.md)，仍未
+解包为可执行工具或建立 accepted leases；不把归档收据计为媒体闭环。
+原生 feasibility 修复 `8d62d87` 的
+[PR 40846856086](https://github.com/FlowToolsOrg/flowtools/actions/runs/40846856086)
+和 [push 40846845674](https://github.com/FlowToolsOrg/flowtools/actions/runs/40846845674)
+均已成功；下方 `955d88d` 的远端失败记录保留，不再作为最新状态。
 维护者已豁免剩余 G7 人工验收，不再重复请求；豁免不改变自动门禁和 G5/G6
 执行边界，也不能替代实际办公闭环。
 

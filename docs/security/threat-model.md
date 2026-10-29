@@ -1,5 +1,12 @@
 # FlowTools 插件威胁模型
 
+2026-10-29 G6 惰性工具归档事务采用同一 writer 与 held-parent create-only
+发布，保留原始 envelope，提交前重验 trust/time/bytes 和 SQL journal。插件/
+工具 pending 互相阻止操作，共用原 physical byte/group 预算。真实退出、SQL
+失败、最终撤销/时钟/journal 替换、篡改及 copy/restore 拒绝有回归；不解包、
+运行或生成 leases/grants，SEC-001/003/004/008/010/014/015 继续 open，见
+[归档事务](../validation/g6-inert-tool-installation.md)。
+
 2026-10-29 G6 媒体纯契约只提供固定程序角色/参数及 bounded JSON/progress
 投影；重复 key、raw filename/tags、未知字段、数值/流/像素预算和进度洪泛
 有拒绝回归。未知进度不重置高水位；progress=end 不作为进程退出/文件验证。

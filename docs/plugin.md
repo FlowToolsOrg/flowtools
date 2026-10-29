@@ -1,5 +1,9 @@
 # Flow Tool Plugin 开发指南
 
+G6 的 InstalledInertTool 只记录已持久存放的签名 ZIP，不代表插件可使用工具。
+诊断 ToolArchivePin 与 G4 ToolPin/已接受任务的 execution lock 不互换；插件
+不能据其构造 path、argv、lease 或 grants，见 [归档事务](./validation/g6-inert-tool-installation.md)。
+
 G6 的固定媒体 recipes/解析器是 T0 Rust 纯契约，不是可用 SDK media capability
 或任意 ToolExecute 授权。插件不能由 recipe 创建 path、argv、lease 或执行
 身份；实际受管工具与文件发布仍待连接，见 [媒体契约](./validation/g6-media-contracts.md)。

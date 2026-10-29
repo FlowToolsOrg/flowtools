@@ -15,6 +15,9 @@ use std::{
 };
 use zip::{write::SimpleFileOptions, CompressionMethod, ZipWriter};
 
+#[cfg(windows)]
+mod install_tests;
+
 struct ToolFixture {
     base: Fixture,
     manifest: Value,

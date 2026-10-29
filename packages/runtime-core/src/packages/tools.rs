@@ -1,5 +1,6 @@
 //! G6: strict inert tool-package admission and pure fixed media recipes.
-//! No installed registry, extraction, executable identity, lease or execution.
+//! Separate inert ZIP storage is not extraction, an executable identity, a lease
+//! or permission to execute a program.
 use super::{
     archive::{validate_archive, ValidatedArchive},
     manifest::ManifestCompatibility,
@@ -11,6 +12,8 @@ use crate::data::DataStore;
 use serde::Deserialize;
 use std::collections::BTreeSet;
 
+#[cfg(windows)]
+pub mod install;
 pub mod media;
 
 const MAX_TOOL_MANIFEST_BYTES: usize = 65_536;

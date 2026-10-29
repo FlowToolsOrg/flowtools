@@ -22,6 +22,10 @@ G5/G6 执行验收。人工 G7 项为 waived，整体不更新为 done。
 
 ## 1. 使用规则
 
+G6 P2.8a2 新增 [惰性工具归档事务](./validation/g6-inert-tool-installation.md)，
+涵盖共享单写者/预算、持久 journal、显式 abort 和实际退出拒绝回归；不含
+工具解包、执行身份、accepted leases、更新/GC 或 G7 媒体闭环。
+
 G6 P2.8b1 同时提供纯 Rust 固定媒体 recipes 与有界结果投影，详见
 [契约证据](./validation/g6-media-contracts.md)。它没有建立工具库存、accepted
 leases、启动进程或发布文件，不能作为 G7 已完成媒体闭环的证据。

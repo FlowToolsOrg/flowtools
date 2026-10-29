@@ -1,6 +1,41 @@
 //! Fixed inert blob names, create-only writes and handle-held directory guards.
 mod rename;
 use super::{InstallError, Journal, Record};
+use crate::packages::PackagePayload;
+
+pub(crate) trait BlobRecord {
+    fn payload(&self) -> &PackagePayload;
+    fn artifact_id(&self) -> &str;
+}
+pub(crate) trait BlobJournal {
+    fn record(&self) -> &dyn BlobRecord;
+    fn id(&self) -> &str;
+    fn new_artifact(&self) -> bool;
+    fn prepared(&self) -> bool;
+}
+impl BlobRecord for Record {
+    fn payload(&self) -> &PackagePayload {
+        &self.payload
+    }
+    fn artifact_id(&self) -> &str {
+        &self.artifact_id
+    }
+}
+impl BlobJournal for Journal {
+    fn record(&self) -> &dyn BlobRecord {
+        &self.record
+    }
+    fn id(&self) -> &str {
+        &self.id
+    }
+    fn new_artifact(&self) -> bool {
+        self.new_artifact
+    }
+    fn prepared(&self) -> bool {
+        self.prepared
+    }
+}
+
 use crate::data::{safe_path, DataStore};
 use std::{
     collections::BTreeMap,
@@ -15,13 +50,18 @@ use windows_sys::Win32::Storage::FileSystem::{
     FILE_FLAG_OPEN_REPARSE_POINT, FILE_SHARE_READ, FILE_SHARE_WRITE,
 };
 
-pub(super) const MAX_DISK_BYTES: u64 = 268_435_456;
-pub(super) const MAX_GROUPS: usize = 384;
-const NAMES: [&str; 3] = ["manifest.json", "package.zip", "seal.json"];
-fn seal(record: &Record) -> Vec<u8> {
-    serde_json::to_vec(&serde_json::json!({"formatVersion":1,"artifactId":record.artifact_id,"zipDigest":record.payload.archive.sha256,"manifestDigest":record.payload.manifest.sha256})).expect("bounded seal")
+pub(crate) const MAX_DISK_BYTES: u64 = 268_435_456;
+pub(crate) const MAX_GROUPS: usize = 384;
+#[derive(Default)]
+pub(crate) struct DiskUsage {
+    pub bytes: u64,
+    pub groups: usize,
 }
-pub(super) struct Layout {
+const NAMES: [&str; 3] = ["manifest.json", "package.zip", "seal.json"];
+fn seal(record: &dyn BlobRecord) -> Vec<u8> {
+    serde_json::to_vec(&serde_json::json!({"formatVersion":1,"artifactId":record.artifact_id(),"zipDigest":record.payload().archive.sha256,"manifestDigest":record.payload().manifest.sha256})).expect("bounded seal")
+}
+pub(crate) struct Layout {
     pub root: PathBuf,
     _guards: Vec<File>,
     parents: BTreeMap<&'static str, File>,
@@ -87,12 +127,25 @@ impl Layout {
     // Root/profile handles exclude write/delete sharing; internal parent handles
     // permit entry-write sharing but exclude delete throughout. No client path.
     pub fn open(store: &DataStore, create: bool) -> Result<Option<Self>, InstallError> {
+        Self::open_named(store, create, "package-store-v1")
+    }
+    pub(crate) fn open_for_tools(
+        store: &DataStore,
+        create: bool,
+    ) -> Result<Option<Self>, InstallError> {
+        Self::open_named(store, create, "tool-package-store-v1")
+    }
+    fn open_named(
+        store: &DataStore,
+        create: bool,
+        name: &str,
+    ) -> Result<Option<Self>, InstallError> {
         if std::env::consts::ARCH != "x86_64" {
             return Err(InstallError::Unsupported);
         }
         let profile = store.profile().ok_or(InstallError::ProfileRequired)?;
         let mut guards = vec![directory(profile)?];
-        let root = profile.join("package-store-v1");
+        let root = profile.join(name);
         if !exists(&root)? {
             if !create {
                 return Ok(None);
@@ -125,15 +178,15 @@ impl Layout {
     }
     pub fn assert_owned(
         &self,
-        records: &[Record],
-        journal: Option<&Journal>,
+        records: &[impl BlobRecord],
+        journal: Option<&dyn BlobJournal>,
     ) -> Result<(), InstallError> {
         self.assert_owned_with_orphans(records, journal, &[])
     }
-    pub fn assert_owned_with_orphans(
+    pub(super) fn assert_owned_with_orphans(
         &self,
-        records: &[Record],
-        journal: Option<&Journal>,
+        records: &[impl BlobRecord],
+        journal: Option<&dyn BlobJournal>,
         orphans: &[super::reconciliation::Orphan],
     ) -> Result<(), InstallError> {
         let mut groups = 0;
@@ -153,19 +206,19 @@ impl Layout {
                 let owned = match kind {
                     "artifacts" => {
                         super::super::valid_digest(name)
-                            && (records.iter().any(|r| r.payload.archive.sha256 == name)
+                            && (records.iter().any(|r| r.payload().archive.sha256 == name)
                                 || orphans.iter().any(|o| {
                                     o.kind == super::reconciliation::Kind::Artifact
                                         && o.source == name
                                 })
                                 || journal.is_some_and(|j| {
-                                    j.new_artifact
-                                        && j.prepared
-                                        && j.record.payload.archive.sha256 == name
+                                    j.new_artifact()
+                                        && j.prepared()
+                                        && j.record().payload().archive.sha256 == name
                                 }))
                     }
                     "staging" => {
-                        journal.is_some_and(|j| j.new_artifact && j.id == name)
+                        journal.is_some_and(|j| j.new_artifact() && j.id() == name)
                             || orphans.iter().any(|o| {
                                 o.kind == super::reconciliation::Kind::Stage && o.source == name
                             })
@@ -183,25 +236,33 @@ impl Layout {
         }
         Ok(())
     }
-    pub fn has_artifact(&self, record: &Record) -> Result<bool, InstallError> {
-        exists(&self.artifact(&record.payload.archive.sha256))
+    pub fn has_artifact(&self, record: &dyn BlobRecord) -> Result<bool, InstallError> {
+        exists(&self.artifact(&record.payload().archive.sha256))
     }
-    pub fn read(&self, record: &Record) -> Result<(Vec<u8>, Vec<u8>), InstallError> {
-        self.read_at(&self.artifact(&record.payload.archive.sha256), record)
+    pub fn read(&self, record: &dyn BlobRecord) -> Result<(Vec<u8>, Vec<u8>), InstallError> {
+        self.read_at(&self.artifact(&record.payload().archive.sha256), record)
     }
-    fn read_at(&self, path: &Path, record: &Record) -> Result<(Vec<u8>, Vec<u8>), InstallError> {
+    fn read_at(
+        &self,
+        path: &Path,
+        record: &dyn BlobRecord,
+    ) -> Result<(Vec<u8>, Vec<u8>), InstallError> {
         let _guard = directory(path)?;
         self.read_held(path, record)
     }
-    fn read_held(&self, path: &Path, record: &Record) -> Result<(Vec<u8>, Vec<u8>), InstallError> {
+    fn read_held(
+        &self,
+        path: &Path,
+        record: &dyn BlobRecord,
+    ) -> Result<(Vec<u8>, Vec<u8>), InstallError> {
         let mut result = Vec::new();
         for (name, expected) in [
-            ("manifest.json", &record.payload.manifest),
+            ("manifest.json", &record.payload().manifest),
             (
                 "package.zip",
                 &super::super::BlobDescriptor {
-                    size: record.payload.archive.size,
-                    sha256: record.payload.archive.sha256.clone(),
+                    size: record.payload().archive.size,
+                    sha256: record.payload().archive.sha256.clone(),
                 },
             ),
         ] {
@@ -227,11 +288,11 @@ impl Layout {
     }
     // A crash can leave an empty or partially written stage. It stays inert;
     // abort validates names/types/limits without interpreting or executing it.
-    fn partial(&self, path: &Path, record: &Record) -> Result<(), InstallError> {
+    fn partial(&self, path: &Path, record: &dyn BlobRecord) -> Result<(), InstallError> {
         let _guard = directory(path)?;
         self.partial_held(path, record)
     }
-    fn partial_held(&self, path: &Path, record: &Record) -> Result<(), InstallError> {
+    fn partial_held(&self, path: &Path, record: &dyn BlobRecord) -> Result<(), InstallError> {
         let mut count = 0;
         for entry in std::fs::read_dir(path).map_err(|_| InstallError::Storage)? {
             count += 1;
@@ -242,8 +303,8 @@ impl Layout {
             let name = entry.file_name();
             let name = name.to_str().ok_or(InstallError::PathRejected)?;
             let limit = match name {
-                "manifest.json" => record.payload.manifest.size,
-                "package.zip" => record.payload.archive.size,
+                "manifest.json" => record.payload().manifest.size,
+                "package.zip" => record.payload().archive.size,
                 "seal.json" => 512,
                 _ => return Err(InstallError::PathRejected),
             };
@@ -253,14 +314,14 @@ impl Layout {
     }
     pub fn stage_bytes(
         &self,
-        journal: &Journal,
+        journal: &dyn BlobJournal,
         manifest: &[u8],
         archive: &[u8],
     ) -> Result<(), InstallError> {
-        let path = self.stage(&journal.id);
+        let path = self.stage(journal.id());
         std::fs::create_dir(&path).map_err(|_| InstallError::Storage)?;
         let _guard = directory(&path)?;
-        let seal = seal(&journal.record);
+        let seal = seal(journal.record());
         for (name, bytes) in [
             ("manifest.json", manifest),
             ("package.zip", archive),
@@ -286,32 +347,32 @@ impl Layout {
                 .map_err(|_| InstallError::Storage)?;
             file.sync_all().map_err(|_| InstallError::Storage)?;
         }
-        self.read_at(&path, &journal.record)?;
+        self.read_at(&path, journal.record())?;
         Ok(())
     }
-    pub fn publish(&mut self, journal: &Journal) -> Result<(), InstallError> {
+    pub fn publish(&mut self, journal: &dyn BlobJournal) -> Result<(), InstallError> {
         self.move_owned(
-            &self.stage(&journal.id),
-            &self.artifact(&journal.record.payload.archive.sha256),
-            &journal.record,
+            &self.stage(journal.id()),
+            &self.artifact(&journal.record().payload().archive.sha256),
+            journal.record(),
             true,
         )
     }
-    pub fn quarantine(&mut self, journal: &Journal) -> Result<(), InstallError> {
+    pub fn quarantine(&mut self, journal: &dyn BlobJournal) -> Result<(), InstallError> {
         for (kind, source) in [
-            ("stage", self.stage(&journal.id)),
+            ("stage", self.stage(journal.id())),
             (
                 "artifact",
-                self.artifact(&journal.record.payload.archive.sha256),
+                self.artifact(&journal.record().payload().archive.sha256),
             ),
         ] {
-            if kind == "artifact" && !journal.new_artifact {
+            if kind == "artifact" && !journal.new_artifact() {
                 continue;
             }
             let destination = self
                 .root
                 .join("quarantine")
-                .join(format!("{}-{kind}", journal.id));
+                .join(format!("{}-{kind}", journal.id()));
             let present = exists(&source)?;
             let quarantined = exists(&destination)?;
             if present && quarantined {
@@ -320,16 +381,16 @@ impl Layout {
             let selected = if present { &source } else { &destination };
             if present || quarantined {
                 if kind == "artifact" {
-                    if !journal.prepared {
+                    if !journal.prepared() {
                         return Err(InstallError::StateInvalid);
                     }
-                    self.read_at(selected, &journal.record)?;
+                    self.read_at(selected, journal.record())?;
                 } else {
-                    self.partial(selected, &journal.record)?;
+                    self.partial(selected, journal.record())?;
                 }
             }
             if present {
-                self.move_owned(&source, &destination, &journal.record, kind == "artifact")?;
+                self.move_owned(&source, &destination, journal.record(), kind == "artifact")?;
             }
         }
         Ok(())
@@ -338,7 +399,7 @@ impl Layout {
         &self,
         source: &Path,
         destination: &Path,
-        record: &Record,
+        record: &dyn BlobRecord,
         complete: bool,
     ) -> Result<(), InstallError> {
         self.move_validated(source, destination, || {
@@ -377,9 +438,9 @@ impl Layout {
             validate,
         )
     }
-    pub fn discover_orphans(
+    pub(super) fn discover_orphans(
         &self,
-        records: &[Record],
+        records: &[impl BlobRecord],
     ) -> Result<Vec<super::reconciliation::Orphan>, InstallError> {
         use super::reconciliation::{Kind, Orphan};
         let mut orphans = Vec::new();
@@ -399,7 +460,7 @@ impl Layout {
                     .map_err(|_| InstallError::PathRejected)?;
                 kind.validate_source(&name)?;
                 if kind == Kind::Artifact
-                    && records.iter().any(|r| r.payload.archive.sha256 == name)
+                    && records.iter().any(|r| r.payload().archive.sha256 == name)
                 {
                     continue;
                 }
@@ -465,7 +526,7 @@ impl Layout {
         }
         Ok(result)
     }
-    pub fn check_orphan(
+    pub(super) fn check_orphan(
         &self,
         orphan: &super::reconciliation::Orphan,
     ) -> Result<bool, InstallError> {
@@ -482,7 +543,7 @@ impl Layout {
         }
         Ok(present)
     }
-    pub fn quarantine_orphan(
+    pub(super) fn quarantine_orphan(
         &self,
         orphan: &super::reconciliation::Orphan,
     ) -> Result<(), InstallError> {
@@ -506,6 +567,12 @@ impl Layout {
         self.disk_bytes_reserving(0)
     }
     pub fn disk_bytes_reserving(&self, additional_groups: usize) -> Result<u64, InstallError> {
+        Ok(self.disk_usage_reserving(additional_groups)?.bytes)
+    }
+    pub(crate) fn disk_usage_reserving(
+        &self,
+        additional_groups: usize,
+    ) -> Result<DiskUsage, InstallError> {
         let mut total = 0u64;
         let mut groups = additional_groups;
         let names = std::fs::read_dir(&self.root).map_err(|_| InstallError::Storage)?;
@@ -555,6 +622,9 @@ impl Layout {
                 }
             }
         }
-        Ok(total)
+        Ok(DiskUsage {
+            bytes: total,
+            groups,
+        })
     }
 }

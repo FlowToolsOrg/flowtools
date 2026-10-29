@@ -2,6 +2,11 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime-core/src/packages/tools/install.rs` 提供惰性工具 ZIP 安装/库存/abort；
+`packages/tests/tool_tests/install_tests.rs` 覆盖真实磁盘/进程退出。它复用
+`packages/install/files.rs` 的 crate-private blob 投影和固定 namespace；原插件
+格式不变，见 [归档事务](./validation/g6-inert-tool-installation.md)。
+
 `runtime-core/src/packages/tools/media.rs` 新增固定媒体 recipes 和有界
 inspection/progress 解析，测试与模块同文件；不包含工具安装、运行或插件入口。
 见 [媒体契约](./validation/g6-media-contracts.md)。

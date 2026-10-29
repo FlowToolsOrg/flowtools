@@ -85,6 +85,11 @@ Web 23/Desktop 25 的生产重构建 byte-identical；Rust、codegen 与最终�
 367 不同。修复不只接受两个已观察的拒绝码，同时回读实际 child policy/Job
 限额，并让专项两组 Job 都容许第二进程；本机六项与 Clippy 再次通过。
 当前修复 SHA 的远端结果仍须单独核验，不以该本机通过替代。
+修复 `8d62d87` 的远端完整
+[PR 40846856086](https://github.com/FlowToolsOrg/flowtools/actions/runs/40846856086)
+与 [push 40846845674](https://github.com/FlowToolsOrg/flowtools/actions/runs/40846845674)
+均 SUCCESS；Windows Server 2022 实际 policy/Job readback 与六项 LPAC 均通过。
+这完成本 native feasibility 子步骤的自动门禁，不是 G5/G6 整体或独立安全批准。
 
 这没有验证受限 JS 引擎、第三方 React/Tauri 容器、COM 全面拒绝、远程映像
 实际共享盘正向对照、真实工具 DLL/协议布局或重启/物理断电。CPU 配额只证明

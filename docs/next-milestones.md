@@ -389,6 +389,14 @@ Rust broker 的运行身份由会话/进程绑定；IPC、文件 handle、namesp
 
 ### P2.8a 集中工具仓库
 
+2026-10-29：P2.8a2 新增显式惰性工具归档安装事务，复用 DataStore 单写者
+和现有 held-parent blob 层；工具归档库存与 G4 ToolPin/插件锁分离。目标是原始
+签名字节重准入、journal、create-only 发布和显式 quarantine abort，跨插件/
+工具 pending 互斥与合计磁盘预算。该子步仍不解包、创建 lease 或执行身份，
+生产审核清单保持空；十五项原生专项与范围见
+[归档事务证据](./validation/g6-inert-tool-installation.md)。实际执行/更新/恢复
+与 G7 闭环继续等待后续实现。
+
 2026-10-13：P2.8a1 首个独立子步骤提供 Runtime-owned 工具 Manifest 的
 惰性准入，复用已有持久 descriptor trust 与严格 ZIP32 归档。source/license/
 buildFlavor/target、有限程序角色及每个资源必须匹配构建内审核策略；生产

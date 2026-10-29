@@ -176,6 +176,18 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G6 P2.8a2 stores only inert tool ZIP groups in `packages/tools/install.rs`.
+Re-admit original signed bytes before IO and with a fresh final T0 clock; retain
+the single DataStore writer, exact inventory/journal comparisons and shared
+plugin/tool pending refusal. Both fixed pools share the original 256MiB/384-group
+physical budget including quarantine. The generic blob layer must preserve the
+plugin namespace and v2 record/lock bytes; no caller namespace or paths enter it.
+ToolArchivePin is diagnostic metadata, never G4 ToolPin or an execution lock.
+No extraction, lease, executable identity or automatic orphan adoption follows
+from InstalledInertTool. Preserve copy/restore refusal and explicit abort-only
+quarantine. Production review profiles stay empty; see
+[tool storage evidence](./docs/validation/g6-inert-tool-installation.md).
+
 G6 fixed media recipes/projections live in `packages/tools/media.rs`. Keep the
 finite versioned actions, fixed input/output names, no shell/caller argv/filters,
 create-only output option and file-only input protocol. Projections must reject

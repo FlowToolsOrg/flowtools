@@ -1,5 +1,9 @@
 # Flow Tool
 
+G6 signed tool archives now have an explicit inert install/journal/abort path
+through the existing writer and held-parent blob layer. This does not extract or
+run tools; see [scope and evidence](./docs/validation/g6-inert-tool-installation.md).
+
 G7's delivered shell, scheduling/reminders and search are tracked in the
 [completion matrix](./docs/validation/g7-completion-matrix.md). File rename
 planning is read-only; actual file/media workflows still require the recorded

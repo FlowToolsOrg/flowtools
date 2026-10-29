@@ -17,7 +17,7 @@ use crate::{
 use rusqlite::{params, OptionalExtension, TransactionBehavior};
 use std::collections::{BTreeMap, BTreeSet, HashSet, VecDeque};
 
-mod files;
+pub(crate) mod files;
 mod reconciliation;
 pub use reconciliation::{
     abort_inert_reconciliation, apply_inert_reconciliation, plan_inert_reconciliation,
@@ -418,7 +418,7 @@ fn resolve(
             if manifest_bytes > 16_777_216 || expanded_bytes > 134_217_728 {
                 return Err(InstallError::BudgetExceeded);
             }
-            let (manifest, archive) = layout.ok_or(InstallError::ArtifactInvalid)?.read(record)?;
+            let (manifest, archive) = layout.ok_or(InstallError::ArtifactInvalid)?.read(*record)?;
             let envelope =
                 decode_base64(&record.envelope).map_err(|_| InstallError::StateInvalid)?;
             let provider = admit(
@@ -554,9 +554,19 @@ pub(super) fn install_with_hook(
     } else {
         0
     };
-    if layout
-        .disk_bytes_reserving(usize::from(new_artifact))?
-        .checked_add(extra)
+    let tool_usage = super::tools::install::retained_tool_usage(store)?;
+    let package_usage = layout.disk_usage_reserving(usize::from(new_artifact))?;
+    if package_usage
+        .groups
+        .checked_add(tool_usage.groups)
+        .is_none_or(|n| n > files::MAX_GROUPS)
+    {
+        return Err(InstallError::BudgetExceeded);
+    }
+    if package_usage
+        .bytes
+        .checked_add(tool_usage.bytes)
+        .and_then(|bytes| bytes.checked_add(extra))
         .is_none_or(|n| n > files::MAX_DISK_BYTES)
     {
         return Err(InstallError::BudgetExceeded);

@@ -201,6 +201,7 @@ fn validate(pending: &Pending, state: &Inventory) -> Result<(), InstallError> {
     Ok(())
 }
 pub(super) fn ensure_idle(connection: &rusqlite::Connection) -> Result<(), InstallError> {
+    super::super::tools::install::require_no_pending_tool_transaction(connection)?;
     if read::<Pending>(connection, PENDING_RECONCILIATION)?.is_some() {
         return Err(InstallError::RecoveryPending);
     }

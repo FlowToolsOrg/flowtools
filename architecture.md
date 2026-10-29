@@ -1,5 +1,10 @@
 # Flow Tool Architecture
 
+G6 惰性工具归档的显式事务复用既有 DataStore writer 和 held-parent blob
+层，固定 namespace 与插件库存分离，pending/256MiB/384 组预算相互约束。
+原始签名字节及最终时钟重查后才提交，不解包或返回执行/lease 身份，见
+[归档事务](./docs/validation/g6-inert-tool-installation.md)。
+
 G6 的 `packages/tools/media.rs` 只构造固定程序角色/参数 recipes，投影有界
 ffprobe/progress 元数据，不接 OS 路径或任意 argv，不创建 lease/进程/文件。
 进度不是退出或输出验证，未知记录不能重置高水位，见

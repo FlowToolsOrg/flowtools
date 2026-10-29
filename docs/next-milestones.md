@@ -389,6 +389,14 @@ Rust broker 的运行身份由会话/进程绑定；IPC、文件 handle、namesp
 
 ### P2.8a 集中工具仓库
 
+2026-10-29：P2.8a3 新增显式私有工具文件落盘。当前签名归档重准入后，以同一
+writer 记录独立 journal，密封全部文件/目录身份、字节和 ACL；原生 create-only
+发布后再次检查当前 trust、源库存、时间与实际文件，才原子提交。显式 abort
+保留字节并撤销隔离文件的 artifact capability。真实 LPAC 多任务共享读取、
+写入/降级/跨 profile 拒绝及五个进程退出 barrier 有专项回归；仍无 accepted
+lease、执行身份或产品启动入口。生产审核清单为空；见
+[密封落盘证据](./validation/g6-tool-materialization.md)。
+
 2026-10-29：P2.8a2 新增显式惰性工具归档安装事务，复用 DataStore 单写者
 和现有 held-parent blob 层；工具归档库存与 G4 ToolPin/插件锁分离。目标是原始
 签名字节重准入、journal、create-only 发布和显式 quarantine abort，跨插件/

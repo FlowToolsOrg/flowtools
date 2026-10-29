@@ -142,6 +142,7 @@ test('Core isolates full native cases without filtering tests or changing job de
   expect(core.scripts.test.split(' && ')).toEqual([
     'bun run manifest-conformance.ts --check',
     'bun run generate-catalog.ts',
+    'cargo build --locked --manifest-path ../../apps/runtime/test/fixtures/isolation-probe/Cargo.toml',
     'bun run ../../scripts/check-rust-tests.ts Cargo.toml',
     'cargo test --locked --manifest-path Cargo.toml -- --test-threads=1',
   ])
@@ -286,6 +287,20 @@ test('native isolation probe is mandatory for tests and excluded from normal bui
   expect(runtime.scripts['check-types']).toContain(
     '&& cargo check --locked --manifest-path test/fixtures/isolation-probe/Cargo.toml --all-targets'
   )
+  const core = JSON.parse(
+    readFileSync(
+      new URL('../packages/runtime-core/package.json', import.meta.url),
+      'utf8'
+    )
+  ) as { scripts: Record<string, string> }
+  expect(core.scripts.test?.split(' && ')).toEqual([
+    'bun run manifest-conformance.ts --check',
+    'bun run generate-catalog.ts',
+    'cargo build --locked --manifest-path ../../apps/runtime/test/fixtures/isolation-probe/Cargo.toml',
+    'bun run ../../scripts/check-rust-tests.ts Cargo.toml',
+    'cargo test --locked --manifest-path Cargo.toml -- --test-threads=1',
+  ])
+  expect(core.scripts.build).not.toContain('isolation-probe')
 })
 
 function runPowerShell(command: string, cwd?: string) {

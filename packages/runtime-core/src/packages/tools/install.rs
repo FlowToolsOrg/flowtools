@@ -1,5 +1,6 @@
 //! Windows T0 inert signed-tool ZIP storage. No extraction, registry of runnable
 //! programs, accepted-job lease, activation or executable identity.
+pub mod images;
 use super::super::{
     self as packages, manifest::ManifestCompatibility, trust::PackageTrustStore, PackageArch,
     PackageKind, PackagePayload, PackagePlatform, PackageTarget,
@@ -365,6 +366,7 @@ fn install_with_hook(
     mut hook: impl FnMut(ToolInstallPhase, &mut DataStore) -> Result<()>,
 ) -> Result<InstalledInertTool> {
     native()?;
+    images::require_no_pending(&store.connection)?;
     let state = inventory(trust, store)?;
     if journal(store, &state)?.is_some() {
         return Err(InstallError::RecoveryPending.into());
@@ -442,7 +444,8 @@ fn install_with_hook(
     let other_usage = files::Layout::open(store, false)?
         .map(|l| l.disk_usage_reserving(0))
         .transpose()?
-        .unwrap_or_default();
+        .unwrap_or_default()
+        .combine(images::retained_usage(store)?)?;
     let usage = layout.disk_usage_reserving(usize::from(new_artifact))?;
     if usage
         .groups
@@ -564,6 +567,7 @@ fn install_with_hook(
 /// activates, lowers trust floors or resumes an uncertain installation.
 pub fn abort_inert_tool_install(trust: &PackageTrustStore, store: &mut DataStore) -> Result<bool> {
     native()?;
+    images::require_no_pending(&store.connection)?;
     let state = inventory(trust, store)?;
     let Some(pending) = journal(store, &state)? else {
         return Ok(false);
@@ -592,6 +596,7 @@ pub fn inspect_inert_tools(
     store: &mut DataStore,
 ) -> Result<Vec<ToolArchivePin>> {
     native()?;
+    images::require_no_pending(&store.connection)?;
     let state = inventory(trust, store)?;
     if journal(store, &state)?.is_some() {
         return Err(InstallError::RecoveryPending.into());
@@ -631,6 +636,7 @@ pub(crate) fn install_fixture_with_hook(
 pub(crate) fn require_no_pending_tool_transaction(
     connection: &rusqlite::Connection,
 ) -> std::result::Result<(), InstallError> {
+    images::require_no_pending(connection)?;
     let present: bool = connection
         .query_row(
             "SELECT EXISTS(SELECT 1 FROM core_metadata WHERE key=?1)",
@@ -647,8 +653,9 @@ pub(crate) fn require_no_pending_tool_transaction(
 pub(crate) fn retained_tool_usage(
     store: &DataStore,
 ) -> std::result::Result<files::DiskUsage, InstallError> {
-    Ok(files::Layout::open_for_tools(store, false)?
+    files::Layout::open_for_tools(store, false)?
         .map(|l| l.disk_usage_reserving(0))
         .transpose()?
-        .unwrap_or_default())
+        .unwrap_or_default()
+        .combine(images::retained_usage(store)?)
 }

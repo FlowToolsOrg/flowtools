@@ -18,6 +18,14 @@ token security attribute 和唯一启用的 capability SID 后加入限额 Job�
 不依赖本机尚未实现的 TokenIsLessPrivilegedAppContainer 查询。
 任一步失败终止该已持有句柄的进程，不启动普通进程作为 fallback。
 
+P2.8a3 的密封落盘测试另外授予一个由 canonical profile hash 与原始 signed ZIP
+hash 派生的 artifact read/execute capability。恢复线程前仍精确回读所有实际
+capability SID、数量和 enabled/deny-only 属性；原六项隔离测试与真实媒体候选
+继续只有 registryRead。该扩展只在 build-only fixture 中，产品进程策略没有改变。
+实际两组唯一 AppSID 可共享读取同一物理文件，不能读取另一 profile、修改或
+降低完整性级别；隔离后撤销该 capability。它不代替 accepted leases 或产品授权，
+见 [落盘证据](../validation/g6-tool-materialization.md)。
+
 每任务 workspace 使用本任务 SID 与当前用户的专用 DACL/Low mandatory label；
 程序目录只授予本任务 SID read/execute，保持 Medium label。阻止加载 Low/remote
 image，并优先 System32。实际输入由 broker 核准后复制到 workspace；工具不能

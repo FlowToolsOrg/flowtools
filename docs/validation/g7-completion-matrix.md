@@ -1,6 +1,15 @@
 # G7 完成矩阵与剩余依赖
 
 日期：2026-10-29。G7 整体为 **in-progress / prototype**。
+
+最新已交付提交 `c24b274` 的完整本机根门禁 exit 0，
+[PR 40879978485](https://github.com/FlowToolsOrg/flowtools/actions/runs/40879978485)
+和 [push 40879967308](https://github.com/FlowToolsOrg/flowtools/actions/runs/40879967308)
+均 SUCCESS。首次本机 standalone copyfile 失败及未修改原测试的复验保留在
+[真实媒体候选记录](./g6-media-candidate.md)。
+后续 P2.8a3 新增 [私有密封工具文件](./g6-tool-materialization.md)，专项具备
+原生 ACL/身份、真实 LPAC 共享读取与隔离撤销；仍不提供 accepted leases 或
+产品可执行身份，不把这一步计为 G7 媒体闭环。
 前置归档事务提交 `ab73889` 的完整本机根门禁 exit 0，
 [PR 40868819104](https://github.com/FlowToolsOrg/flowtools/actions/runs/40868819104)
 和 [push 40868809341](https://github.com/FlowToolsOrg/flowtools/actions/runs/40868809341)

@@ -1,5 +1,13 @@
 # FlowTools 插件威胁模型
 
+2026-10-29 [工具文件密封落盘](../validation/g6-tool-materialization.md) 显式
+重准入原始签名归档，在固定私有目录 create-only 写入；绑定全部 native IDs、
+内容与当前用户/SYSTEM/唯一 artifact capability 的 protected ACL、Medium label。
+隔离撤销先整批预检，再移动并删除 capability ACE，最后清除 journal；SQL 失败
+保留可重试状态及原字节。真实 LPAC 测试验证共享读取、缺少能力/跨 profile/
+写入/降级和隔离后拒绝。尚无产品 native adapter、accepted leases、更新/GC 或
+第三方执行，SEC-001/003/004/008/010/014/015 与独立安全审批继续 open。
+
 2026-10-29 [真实媒体候选专项](../validation/g6-media-candidate.md) 以固定的
 source/tag/commit/tree/hash 和真实 LPAC/Job 运行验证媒体行为。ffprobe 的空
 program/group 容器只允许零项，拒绝任意 nested metadata；实际发现 FFmpeg

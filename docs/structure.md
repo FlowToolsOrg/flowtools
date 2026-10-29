@@ -2,6 +2,12 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime-core/src/packages/tools/install/images.rs` 与 `images/{native,security,tree}.rs`
+提供显式惰性文件落盘、密封读取和显式隔离撤销。实际进程/NTFS 回归位于
+`packages/tests/tool_tests/install_tests/image_tests.rs`，复用现有非发布原生探针；
+标准 Core test 在 inventory 前构建该探针，普通 build 不构建它。
+见 [密封落盘](./validation/g6-tool-materialization.md)。
+
 `runtime-core/src/packages/tools/install.rs` 提供惰性工具 ZIP 安装/库存/abort；
 `packages/tests/tool_tests/install_tests.rs` 覆盖真实磁盘/进程退出。它复用
 `packages/install/files.rs` 的 crate-private blob 投影和固定 namespace；原插件

@@ -1,5 +1,10 @@
 # Flow Tool Plugin 开发指南
 
+G6 P2.8a3 的 MaterializedInertTool 只由 T0 显式事务生成，内部持有经过密封/
+ACL 回读的原生文件句柄；没有公开 path、capability selector、argv 或启动 API。
+插件不能把诊断 pin 或归档收据转为授权，accepted leases 和 SDK 媒体入口仍待实现。
+见 [密封落盘边界](./validation/g6-tool-materialization.md)。
+
 G6 的 InstalledInertTool 只记录已持久存放的签名 ZIP，不代表插件可使用工具。
 诊断 ToolArchivePin 与 G4 ToolPin/已接受任务的 execution lock 不互换；插件
 不能据其构造 path、argv、lease 或 grants，见 [归档事务](./validation/g6-inert-tool-installation.md)。

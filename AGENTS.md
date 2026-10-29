@@ -176,6 +176,21 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G6 P2.8a3 explicitly materializes only re-admitted opaque installed tool bytes in
+`packages/tools/install/images.rs`. Keep the fixed private namespace, exact held
+file/dir identities, source provenance, protected owner/DACL/Medium label readback,
+artifact-specific read capability and create-only native publication. All three
+physical pools share the existing 256MiB/384-group budget, including quarantine.
+The same writer commits image inventory/journal; pending images block unrelated
+install/inspect/reconciliation. Explicit abort preflights the whole batch, preserves
+bytes and removes artifact capabilities before clearing its journal. Interrupted
+abort accepts only the two exact active/private policies for its quarantined group.
+Core tests must build the same non-published isolation probe before test inventory;
+the additional capability is test-only and actual token readback remains mandatory.
+MaterializedInertTool is still inert, never a lease, grant, executable identity or
+product dispatch option. Production review profiles remain empty. See
+[materialization evidence](./docs/validation/g6-tool-materialization.md).
+
 G6 real-media candidate validation is a separate, non-published Cargo workspace
 under `apps/runtime/test/fixtures/media-candidate`, never a Runtime option or
 normal build/test dependency. Preserve source/tag/commit/tree/hash checks, fixed
@@ -194,7 +209,7 @@ plugin/tool pending refusal. Both fixed pools share the original 256MiB/384-grou
 physical budget including quarantine. The generic blob layer must preserve the
 plugin namespace and v2 record/lock bytes; no caller namespace or paths enter it.
 ToolArchivePin is diagnostic metadata, never G4 ToolPin or an execution lock.
-No extraction, lease, executable identity or automatic orphan adoption follows
+No implicit extraction, lease, executable identity or automatic orphan adoption follows
 from InstalledInertTool. Preserve copy/restore refusal and explicit abort-only
 quarantine. Production review profiles stay empty; see
 [tool storage evidence](./docs/validation/g6-inert-tool-installation.md).

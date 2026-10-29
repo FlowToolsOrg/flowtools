@@ -68,6 +68,10 @@ fn main() {
         .unwrap();
         return;
     }
+    if case == "tool-files" {
+        tool_files(&work);
+        return;
+    }
     let process = unsafe { GetCurrentProcess() };
     let is_container = token_u32(process, TokenIsAppContainer).unwrap();
     let is_lpac = token_lpac(process).unwrap();
@@ -169,6 +173,82 @@ fn main() {
         "memoryAllowed":memory_allowed,"lowDllAllowed":low_dll_allowed,"systemDll":system_dll,
         "hostEnvironment":std::env::var_os("USERPROFILE").is_some()||std::env::var_os("PATH").is_some()
     });
+    fs::write(
+        work.join("report.json"),
+        serde_json::to_vec(&report).unwrap(),
+    )
+    .unwrap();
+}
+
+#[cfg(windows)]
+fn tool_files(work: &std::path::Path) {
+    use std::{mem::size_of, os::windows::io::AsRawHandle, ptr};
+    use windows_sys::Win32::{
+        Foundation::LocalFree,
+        Security::{
+            Authorization::{
+                ConvertStringSecurityDescriptorToSecurityDescriptorW, SetNamedSecurityInfoW,
+                SDDL_REVISION_1, SE_FILE_OBJECT,
+            },
+            GetSecurityDescriptorSacl, LABEL_SECURITY_INFORMATION,
+        },
+        Storage::FileSystem::{GetFileInformationByHandle, BY_HANDLE_FILE_INFORMATION},
+    };
+    let root = std::path::PathBuf::from(std::env::var_os("FLOWTOOLS_TOOL_FIXTURE_ROOT").unwrap());
+    let other = std::path::PathBuf::from(std::env::var_os("FLOWTOOLS_TOOL_FIXTURE_OTHER").unwrap());
+    let path = root.join("bin/ffmpeg.exe");
+    let opened = fs::File::open(&path);
+    let mut information = BY_HANDLE_FILE_INFORMATION::default();
+    let identity = opened.as_ref().ok().and_then(|file| {
+        (unsafe { GetFileInformationByHandle(file.as_raw_handle(), &mut information) } != 0).then(
+            || {
+                format!(
+                    "{:08x}:{:08x}{:08x}",
+                    information.dwVolumeSerialNumber,
+                    information.nFileIndexHigh,
+                    information.nFileIndexLow
+                )
+            },
+        )
+    });
+    let read = fs::read(&path).ok();
+    let write = fs::OpenOptions::new().write(true).open(&path).is_ok();
+    let mut descriptor = ptr::null_mut();
+    let mut relabel = false;
+    unsafe {
+        if ConvertStringSecurityDescriptorToSecurityDescriptorW(
+            wide("S:(ML;;NW;;;LW)").as_ptr(),
+            SDDL_REVISION_1,
+            &mut descriptor,
+            ptr::null_mut(),
+        ) != 0
+        {
+            let (mut present, mut defaulted) = (0, 0);
+            let mut label = ptr::null_mut();
+            assert_ne!(
+                GetSecurityDescriptorSacl(descriptor, &mut present, &mut label, &mut defaulted),
+                0
+            );
+            relabel = SetNamedSecurityInfoW(
+                wide(&path).as_ptr(),
+                SE_FILE_OBJECT,
+                LABEL_SECURITY_INFORMATION,
+                ptr::null_mut(),
+                ptr::null_mut(),
+                ptr::null_mut(),
+                label,
+            ) == 0;
+            LocalFree(descriptor);
+        }
+    }
+    let process = unsafe { GetCurrentProcess() };
+    let buffer = token(process, TokenAppContainerSid).unwrap();
+    assert!(buffer.len() * size_of::<usize>() >= size_of::<TOKEN_APPCONTAINER_INFORMATION>());
+    let sid = sid_text(unsafe {
+        (*buffer.as_ptr().cast::<TOKEN_APPCONTAINER_INFORMATION>()).TokenAppContainer
+    })
+    .unwrap();
+    let report = serde_json::json!({"pid":unsafe {GetCurrentProcessId()},"sid":sid,"lpac":token_lpac(process).unwrap(),"capabilities":token_u32(process,TokenCapabilities).unwrap(),"identity":identity,"bytes":read,"write":write,"relabel":relabel,"otherRead":fs::read(other.join("bin/ffmpeg.exe")).is_ok()});
     fs::write(
         work.join("report.json"),
         serde_json::to_vec(&report).unwrap(),

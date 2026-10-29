@@ -22,6 +22,11 @@ G5/G6 执行验收。人工 G7 项为 waived，整体不更新为 done。
 
 ## 1. 使用规则
 
+G6 P2.8a3 提供 [私有工具文件密封落盘](./validation/g6-tool-materialization.md)，
+涵盖同 writer/journal、当前信任重查、原生身份/ACL 复核、整批 abort 预检与
+隔离撤销。真实 LPAC 能力回读及共享文件拒绝路径仍为测试证据；不提供 accepted
+leases 或产品执行身份，不据此关闭 G5/G6/G7 或提升 prototype 标签。
+
 G6 P2.8b2 补充 [真实媒体构建候选与 LPAC 专项](./validation/g6-media-candidate.md)，
 固定源码/签名/Git 树与 candidate bytes，实际处理确定性 WAV/H.264 输入。
 它是独立 developer acceptance；产品工具身份、leases、更新/恢复和 GUI/CLI

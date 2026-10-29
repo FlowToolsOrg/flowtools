@@ -57,6 +57,42 @@ pub(crate) struct DiskUsage {
     pub bytes: u64,
     pub groups: usize,
 }
+impl DiskUsage {
+    pub(crate) fn combine(self, other: Self) -> Result<Self, InstallError> {
+        Ok(Self {
+            bytes: self
+                .bytes
+                .checked_add(other.bytes)
+                .ok_or(InstallError::BudgetExceeded)?,
+            groups: self
+                .groups
+                .checked_add(other.groups)
+                .ok_or(InstallError::BudgetExceeded)?,
+        })
+    }
+}
+// A materialization transaction keeps the source directory and all exact blob
+// files open until its final commit checks; ordinary inert reads stay unchanged.
+pub(crate) struct HeldBlob {
+    pub manifest: Vec<u8>,
+    pub archive: Vec<u8>,
+    pub guards: Vec<File>,
+}
+pub(crate) fn move_group_held(
+    source_parent: &File,
+    source_name: &str,
+    target_parent: &File,
+    target_name: &str,
+    validate: impl FnOnce() -> Result<(), InstallError>,
+) -> Result<(), InstallError> {
+    rename::move_directory(
+        source_parent,
+        source_name,
+        target_parent,
+        target_name,
+        validate,
+    )
+}
 const NAMES: [&str; 3] = ["manifest.json", "package.zip", "seal.json"];
 fn seal(record: &dyn BlobRecord) -> Vec<u8> {
     serde_json::to_vec(&serde_json::json!({"formatVersion":1,"artifactId":record.artifact_id(),"zipDigest":record.payload().archive.sha256,"manifestDigest":record.payload().manifest.sha256})).expect("bounded seal")
@@ -241,6 +277,23 @@ impl Layout {
     }
     pub fn read(&self, record: &dyn BlobRecord) -> Result<(Vec<u8>, Vec<u8>), InstallError> {
         self.read_at(&self.artifact(&record.payload().archive.sha256), record)
+    }
+    pub(crate) fn hold(&self, record: &dyn BlobRecord) -> Result<HeldBlob, InstallError> {
+        let path = self.artifact(&record.payload().archive.sha256);
+        let mut guards = vec![directory(&path)?];
+        for (name, limit) in [
+            ("manifest.json", record.payload().manifest.size),
+            ("package.zip", record.payload().archive.size),
+            ("seal.json", 512),
+        ] {
+            guards.push(regular(&path.join(name), limit, true)?);
+        }
+        let (manifest, archive) = self.read_held(&path, record)?;
+        Ok(HeldBlob {
+            manifest,
+            archive,
+            guards,
+        })
     }
     fn read_at(
         &self,

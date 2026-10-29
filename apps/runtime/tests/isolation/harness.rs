@@ -123,11 +123,14 @@ pub struct Container {
 struct RegistryReadCapability(*mut c_void);
 impl RegistryReadCapability {
     fn new() -> io::Result<Self> {
+        Self::derive("registryRead")
+    }
+    fn derive(name: &str) -> io::Result<Self> {
         unsafe {
             let (mut groups, mut caps) = (ptr::null_mut(), ptr::null_mut());
             let (mut ng, mut nc) = (0, 0);
             if windows_sys::Win32::Security::DeriveCapabilitySidsFromName(
-                wide("registryRead").as_ptr(),
+                wide(name).as_ptr(),
                 &mut groups,
                 &mut ng,
                 &mut caps,
@@ -360,6 +363,11 @@ pub struct Fixture {
     _program_file: fs::File,
     _cleanup: Tree,
 }
+struct ToolFiles<'a> {
+    capability: Option<String>,
+    root: &'a Path,
+    other: &'a Path,
+}
 impl Fixture {
     pub fn new() -> io::Result<Self> {
         let current = std::env::current_exe()?;
@@ -479,21 +487,55 @@ impl Fixture {
         memory: usize,
         args: &[&'static str],
     ) -> io::Result<Child> {
-        self.launch_checked(isolated, case, port, memory, false, args)
+        self.launch_checked((isolated, false), case, port, memory, args, None)
     }
     /// A suspended, owned process whose policy check refuses before ResumeThread.
     pub fn refused_launch(&self) -> io::Result<Child> {
-        self.launch_checked(true, "spin", 1, 128 * 1024 * 1024, true, &[])
+        self.launch_checked((true, true), "spin", 1, 128 * 1024 * 1024, &[], None)
+    }
+    // Only Core's materialization tests use this fixed additional artifact
+    // capability. The original native/media cases still receive registryRead
+    // alone. No production module imports this test launcher.
+    #[allow(dead_code)]
+    pub fn launch_tool_files(
+        &self,
+        profile: &str,
+        archive: &str,
+        root: &Path,
+        other: &Path,
+        grant: bool,
+    ) -> io::Result<Child> {
+        let valid = |s: &str| {
+            s.len() == 64
+                && s.bytes()
+                    .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+        };
+        if !valid(profile) || !valid(archive) || !root.is_absolute() || !other.is_absolute() {
+            return Err(io::Error::other("invalid fixed tool fixture identity"));
+        }
+        self.launch_checked(
+            (true, false),
+            "tool-files",
+            1,
+            128 * 1024 * 1024,
+            &[],
+            Some(ToolFiles {
+                capability: grant.then(|| format!("FlowTools.ToolImages.v1.{profile}.{archive}")),
+                root,
+                other,
+            }),
+        )
     }
     fn launch_checked(
         &self,
-        isolated: bool,
+        policy: (bool, bool),
         case: &str,
         port: u16,
         memory: usize,
-        refuse_before_resume: bool,
         args: &[&'static str],
+        tools: Option<ToolFiles<'_>>,
     ) -> io::Result<Child> {
+        let (isolated, refuse_before_resume) = policy;
         unsafe {
             let job = Handle(CreateJobObjectW(ptr::null(), ptr::null()));
             if job.0.is_null() {
@@ -603,14 +645,25 @@ impl Fixture {
                 handles.push(self.private_file.as_raw_handle());
             }
             let registry = RegistryReadCapability::new()?;
-            let mut capability = windows_sys::Win32::Security::SID_AND_ATTRIBUTES {
+            let artifact = tools
+                .as_ref()
+                .and_then(|t| t.capability.as_ref())
+                .map(|name| RegistryReadCapability::derive(name))
+                .transpose()?;
+            let mut capability = vec![windows_sys::Win32::Security::SID_AND_ATTRIBUTES {
                 Sid: registry.0,
                 Attributes: 4,
-            };
+            }];
+            if let Some(artifact) = &artifact {
+                capability.push(windows_sys::Win32::Security::SID_AND_ATTRIBUTES {
+                    Sid: artifact.0,
+                    Attributes: 4,
+                });
+            }
             let capabilities = SECURITY_CAPABILITIES {
                 AppContainerSid: self.container.sid,
-                Capabilities: &mut capability,
-                CapabilityCount: 1,
+                Capabilities: capability.as_mut_ptr(),
+                CapabilityCount: capability.len() as u32,
                 Reserved: 0,
             };
             let opt_out = PROCESS_CREATION_ALL_APPLICATION_PACKAGES_OPT_OUT;
@@ -708,6 +761,16 @@ impl Fixture {
                 format!("FLOWTOOLS_ISOLATION_REGISTRY={}", self.registry.read_path),
                 format!("FLOWTOOLS_ISOLATION_PIPE={}", self.pipe_name),
             ];
+            if let Some(tools) = &tools {
+                env.push(format!(
+                    "FLOWTOOLS_TOOL_FIXTURE_ROOT={}",
+                    tools.root.display()
+                ));
+                env.push(format!(
+                    "FLOWTOOLS_TOOL_FIXTURE_OTHER={}",
+                    tools.other.display()
+                ));
+            }
             env.sort_by_key(|v| v.to_ascii_uppercase());
             let mut environment: Vec<u16> = env.into_iter().flat_map(|v| wide(&v)).collect();
             environment.push(0);
@@ -789,7 +852,7 @@ impl Fixture {
             if isolated {
                 if token_u32(child.process.0, TokenIsAppContainer)? != 1
                     || !token_lpac(child.process.0)?
-                    || token_u32(child.process.0, TokenCapabilities)? != 1
+                    || token_u32(child.process.0, TokenCapabilities)? != capability.len() as u32
                 {
                     return Err(io::Error::other("unexpected isolation token"));
                 }
@@ -809,10 +872,32 @@ impl Fixture {
                 let groups = &*caps
                     .as_ptr()
                     .cast::<windows_sys::Win32::Security::TOKEN_GROUPS>();
-                if groups.GroupCount != 1
-                    || groups.Groups[0].Attributes & 4 == 0
-                    || groups.Groups[0].Attributes & 16 != 0
-                    || sid_text(groups.Groups[0].Sid)? != sid_text(registry.0)?
+                if groups.GroupCount != capability.len() as u32 {
+                    return Err(io::Error::other("unexpected capability count"));
+                }
+                if size_of_val(caps.as_slice())
+                    < std::mem::offset_of!(windows_sys::Win32::Security::TOKEN_GROUPS, Groups)
+                        + capability.len()
+                            * size_of::<windows_sys::Win32::Security::SID_AND_ATTRIBUTES>()
+                {
+                    return Err(io::Error::other("truncated capability identities"));
+                }
+                let actual =
+                    std::slice::from_raw_parts(groups.Groups.as_ptr(), groups.GroupCount as usize);
+                let mut expected = capability
+                    .iter()
+                    .map(|g| sid_text(g.Sid))
+                    .collect::<io::Result<Vec<_>>>()?;
+                let mut identities = actual
+                    .iter()
+                    .map(|g| sid_text(g.Sid))
+                    .collect::<io::Result<Vec<_>>>()?;
+                expected.sort();
+                identities.sort();
+                if expected != identities
+                    || actual
+                        .iter()
+                        .any(|g| g.Attributes & 4 == 0 || g.Attributes & 16 != 0)
                 {
                     return Err(io::Error::other("unexpected enabled capability identity"));
                 }

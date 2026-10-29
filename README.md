@@ -1,5 +1,9 @@
 # Flow Tool
 
+G6 also provides explicit [private tool-file materialization](./docs/validation/g6-tool-materialization.md)
+with sealed identities, native ACL checks and abort-only quarantine. It remains
+inert; production review, accepted leases and product execution are pending.
+
 G6 now has an explicit [real-media build candidate and LPAC acceptance workspace](./docs/validation/g6-media-candidate.md).
 It is developer-only; production tool review, identity, leases and G7 workflows remain pending.
 

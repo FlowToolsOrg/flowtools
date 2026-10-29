@@ -1,5 +1,11 @@
 # Flow Tool Architecture
 
+G6 P2.8a3 在同一 writer 中显式落盘已重新准入的工具文件，使用固定私有目录、
+文件/目录身份与完整字节密封、原生 ACL/Medium label 回读和独立 journal。
+隔离区在清除 journal 前撤销 artifact read capability；三个池共用原预算。
+它仍不产生执行身份、accepted lease 或产品启动入口，见
+[密封落盘证据](./docs/validation/g6-tool-materialization.md)。
+
 G6 的 [真实媒体候选专项](./docs/validation/g6-media-candidate.md) 位于独立非发布
 Cargo workspace，只验证固定构建 bytes/recipes 的实际 LPAC 处理。不成为 Runtime
 Host selector、工具身份/lease、grants 或用户输出提交入口；生产审核列表保持空。

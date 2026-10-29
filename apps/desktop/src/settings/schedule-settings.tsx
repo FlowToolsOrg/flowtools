@@ -78,6 +78,16 @@ function defaults(schema: unknown): Record<string, unknown> {
   )
 }
 
+function milliseconds(value: string): number {
+  if (!/^\d{1,15}(?:\.\d{1,3})?$/.test(value))
+    throw new RuntimeClientError('INPUT_INVALID')
+  const [whole, fraction = ''] = value.split('.')
+  const result = Number(whole) * 1000 + Number(fraction.padEnd(3, '0'))
+  if (!Number.isSafeInteger(result))
+    throw new RuntimeClientError('INPUT_INVALID')
+  return result
+}
+
 export function ScheduleSettings() {
   const native = isTauriRuntime()
   const [selection, setSelection] = useState(available[0]?.key ?? '')
@@ -167,9 +177,9 @@ export function ScheduleSettings() {
     if (!selected || !resolved) throw new RuntimeClientError('INPUT_INVALID')
     const definition: CreateSchedule['definition'] = {
       firstDueMs: resolved.dueMs,
-      intervalMs: Number(count) === 1 ? null : Number(period) * 1000,
+      intervalMs: Number(count) === 1 ? null : milliseconds(period),
       occurrences: Number(count),
-      graceMs: Number(grace) * 1000,
+      graceMs: milliseconds(grace),
       missed,
     }
     if (!validScheduleDefinition(definition))
@@ -312,7 +322,7 @@ export function ScheduleSettings() {
             }}
           >
             <Label>固定间隔（秒）</Label>
-            <Input type="number" min={1} />
+            <Input type="number" min={1} step={0.001} />
           </TextField>
           <label className="grid gap-1">
             休眠后漏触发

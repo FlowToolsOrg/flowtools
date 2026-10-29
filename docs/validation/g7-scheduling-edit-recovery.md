@@ -54,3 +54,9 @@ not rewrite the displayed persisted policy. Grace is editable within the existin
 millisecond precision, rather than silently resetting CLI-created records to
 30 seconds. All seven pinned Chromium schedule tests and UI-test lint/types
 passed, including two records with different policies and exact edit payload.
+
+Millisecond follow-up: multiplying `1.001` by 1000 produces a fractional JS
+number. The form now parses at most three decimal places using integer parts,
+so both a stored 1001 ms interval and grace survive editing exactly. Blank,
+sub-millisecond and scientific underflow input is rejected before management
+IO. All eight pinned Chromium schedule tests and both app type checks passed.

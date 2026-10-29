@@ -92,6 +92,7 @@ export function ScheduleSettings() {
   const [choice, setChoice] = useState<LocalTimeChoice>('reject')
   const [count, setCount] = useState('1')
   const [period, setPeriod] = useState('3600')
+  const [grace, setGrace] = useState('30')
   const [missed, setMissed] = useState<'skip' | 'coalesce-latest'>('skip')
   const [resolved, setResolved] = useState<ResolvedScheduleTime>()
   const [records, setRecords] = useState<ScheduleRecord[]>([])
@@ -168,7 +169,7 @@ export function ScheduleSettings() {
       firstDueMs: resolved.dueMs,
       intervalMs: Number(count) === 1 ? null : Number(period) * 1000,
       occurrences: Number(count),
-      graceMs: 30_000,
+      graceMs: Number(grace) * 1000,
       missed,
     }
     if (!validScheduleDefinition(definition))
@@ -324,10 +325,20 @@ export function ScheduleSettings() {
                 setMissed(event.target.value as typeof missed)
               }}
             >
-              <option value="skip">超过 30 秒则跳过</option>
+              <option value="skip">超过宽限期则跳过</option>
               <option value="coalesce-latest">只补最近一次，不批量补跑</option>
             </select>
           </label>
+          <TextField
+            value={grace}
+            onChange={value => {
+              edit()
+              setGrace(value)
+            }}
+          >
+            <Label>触发宽限秒数</Label>
+            <Input type="number" min={0} max={60} step={0.001} />
+          </TextField>
           {properties.map(([name, field]) =>
             object(field) &&
             Array.isArray(field.enum) &&
@@ -520,6 +531,16 @@ export function ScheduleSettings() {
                 {record.nextIndex}/{record.definition.occurrences} · 跳过{' '}
                 {record.skipped}
               </p>
+              <p aria-label="已保存的调度策略">
+                {record.definition.intervalMs === null
+                  ? '一次性触发'
+                  : `每 ${record.definition.intervalMs / 1000} 秒触发，共 ${record.definition.occurrences} 次（按实际经过时间）`}
+                {' · '}
+                {record.definition.missed === 'skip'
+                  ? `休眠或暂停后，迟于 ${record.definition.graceMs / 1000} 秒则跳过；不会批量补跑`
+                  : '休眠或暂停后，只补最近一次，其余跳过；不会批量补跑'}
+                {' · '}宽限 {record.definition.graceMs / 1000} 秒
+              </p>
               {record.lastClaim && (
                 <p>
                   最近尝试：{record.lastClaim.result.state}
@@ -600,6 +621,7 @@ export function ScheduleSettings() {
                     String((record.definition.intervalMs ?? 3_600_000) / 1000)
                   )
                   setMissed(record.definition.missed)
+                  setGrace(String(record.definition.graceMs / 1000))
                   timeEdit()
                   setMessage(
                     '请重新填写修改后的命令内容并预览时间。保存前不会改变旧计划。'

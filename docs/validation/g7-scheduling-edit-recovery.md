@@ -46,3 +46,11 @@ Corrupt state aborts cleanup. No grants, cursor or recovery markers are reset.
 Two actual private-profile Core regressions passed: restart before first
 dispatch executes the original input once; restore-generation mismatch retains
 the input while refusing dispatch, and explicit disposal still preserves it.
+
+2026-10-29: each stored Desktop row now displays its own once/elapsed interval,
+occurrence count, grace and skip/coalesce policy. Editing the creation form does
+not rewrite the displayed persisted policy. Grace is editable within the existing
+0–60 second contract and is restored from the selected record, including
+millisecond precision, rather than silently resetting CLI-created records to
+30 seconds. All seven pinned Chromium schedule tests and UI-test lint/types
+passed, including two records with different policies and exact edit payload.

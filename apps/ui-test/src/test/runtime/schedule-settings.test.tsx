@@ -149,6 +149,58 @@ it('DST refusal prevents creation and editing a resolved time invalidates its pr
     .toBeDisabled()
 })
 
+it('saved policies stay specific to each record and editing preserves its grace', async () => {
+  const view = await render(<ScheduleSettings />)
+  await user.fill(
+    view.getByRole('textbox', { name: '首次触发当地时间' }),
+    '2026-10-28T09:00'
+  )
+  await user.click(view.getByRole('button', { name: '预览触发时间' }))
+  await user.click(view.getByRole('button', { name: '创建调度并确认' }))
+  const first = records[0]!
+  records = [
+    { ...first, definition: { ...first.definition, graceMs: 1250 } },
+    {
+      ...first,
+      id: '00000000-0000-4000-8000-000000000002',
+      definition: {
+        ...first.definition,
+        intervalMs: 90_000,
+        occurrences: 3,
+        graceMs: 60_000,
+        missed: 'coalesce-latest',
+      },
+    },
+  ]
+  await user.click(view.getByRole('button', { name: '查询调度' }))
+  await expect
+    .element(view.getByText(/一次性触发 · 休眠或暂停后，迟于 1.25 秒/))
+    .toBeVisible()
+  await expect.element(view.getByText(/每 90 秒触发，共 3 次/)).toBeVisible()
+  await expect.element(view.getByText(/只补最近一次，其余跳过/)).toBeVisible()
+  await user.selectOptions(
+    view.getByRole('combobox', { name: '漏触发策略' }),
+    'coalesce-latest'
+  )
+  await user.fill(view.getByRole('spinbutton', { name: '触发宽限秒数' }), '0')
+  await expect
+    .element(view.getByText(/一次性触发 · 休眠或暂停后，迟于 1.25 秒/))
+    .toBeVisible()
+  await user.click(view.getByRole('button', { name: '编辑此调度' }).first())
+  await expect
+    .element(view.getByRole('spinbutton', { name: '触发宽限秒数' }))
+    .toHaveValue(1.25)
+  await user.click(view.getByRole('button', { name: '预览触发时间' }))
+  vi.mocked(controlManagedRuntime).mockImplementationOnce(async call => {
+    expect(call).toMatchObject({
+      method: 'schedules.replace',
+      payload: { create: { definition: { graceMs: 1250, missed: 'skip' } } },
+    })
+    return { type: 'schedule', data: first }
+  })
+  await user.click(view.getByRole('button', { name: '保存修改并确认' }))
+})
+
 it('editing requires a new preview and sends the old revision with freshly entered input', async () => {
   const view = await render(<ScheduleSettings />)
   await user.fill(

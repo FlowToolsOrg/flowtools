@@ -361,6 +361,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "flowtools-isolation-probe"
+version = "0.0.0"
+dependencies = [
+ "serde_json",
+ "windows-sys",
+]
+
+[[package]]
 name = "flowtools-runtime"
 version = "0.1.0"
 dependencies = [

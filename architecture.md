@@ -1,5 +1,10 @@
 # Flow Tool Architecture
 
+G5 原生工具平台可行性使用每任务 LPAC、恢复前实际 token/句柄身份检查和限额
+Job；六项真实拒绝回归只存在于独立测试探针。它未给产品增加执行入口、grant
+或工具身份，见 [ADR-0005](./docs/adr/0005-windows-native-tool-isolation.md) 与
+[平台证据](./docs/validation/g5-windows-native-isolation.md)。
+
 G7 文件规划在 T0 以不可构造的 `RenameDraft` 持有目录/文件身份，生产仅能预览
 和整批复核；无文件写 IPC、插件路径或第二份存储。日程输入在重启孤儿清理前
 按经校验的日程 ID 保留，恢复 scope 仍拒绝派发。见

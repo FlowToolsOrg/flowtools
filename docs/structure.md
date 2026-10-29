@@ -2,6 +2,11 @@
 
 ## 下一阶段结构与当前实现
 
+`apps/runtime/tests/windows-isolation.rs` 及 `tests/isolation/` 承载 Windows
+LPAC 实际拒绝回归。`apps/runtime/test/fixtures/isolation-probe` 是单独编译、
+publish=false 的测试子进程，不是发布工具；不属于 Cargo default-members，
+标准 Runtime test 必须先构建。见 [平台证据](./validation/g5-windows-native-isolation.md)。
+
 `runtime-core/src/file_workflows.rs` 与 `file_workflows/windows.rs` 是 T0 只读
 NTFS 改名规划层，`file_workflows/tests.rs` 使用实际临时目录。
 `file_workflows/store.rs` 复用现有 DataStore/DPAPI 保存惰性计划，测试在

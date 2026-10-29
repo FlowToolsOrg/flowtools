@@ -161,6 +161,45 @@ test('Core isolates full native cases without filtering tests or changing job de
   )
 })
 
+test('native isolation probe is mandatory for tests and excluded from normal builds', () => {
+  const root = Bun.TOML.parse(
+    readFileSync(new URL('../Cargo.toml', import.meta.url), 'utf8')
+  ) as { workspace: { members: string[]; 'default-members': string[] } }
+  const fixture = 'apps/runtime/test/fixtures/isolation-probe'
+  expect(root.workspace.members).toContain(fixture)
+  expect(root.workspace['default-members']).toEqual([
+    'packages/runtime-core',
+    'apps/runtime',
+  ])
+  const manifest = Bun.TOML.parse(
+    readFileSync(new URL(`../${fixture}/Cargo.toml`, import.meta.url), 'utf8')
+  ) as { package: { publish: boolean } }
+  expect(manifest.package.publish).toBe(false)
+  const runtime = JSON.parse(
+    readFileSync(
+      new URL('../apps/runtime/package.json', import.meta.url),
+      'utf8'
+    )
+  ) as { scripts: Record<string, string> }
+  expect(runtime.scripts.build).toBe(
+    'bun run prepare.ts && cargo build --locked --manifest-path Cargo.toml'
+  )
+  expect(runtime.scripts.test?.split(' && ')).toEqual([
+    'bun run prepare.ts',
+    'cargo build --locked --manifest-path Cargo.toml',
+    'cargo build --locked --manifest-path test/fixtures/isolation-probe/Cargo.toml',
+    'bun run ../../scripts/check-rust-tests.ts Cargo.toml',
+    'cargo test --locked --manifest-path Cargo.toml',
+    'bun test test',
+  ])
+  expect(runtime.scripts.lint).toContain(
+    '&& cargo clippy --locked --manifest-path test/fixtures/isolation-probe/Cargo.toml --all-targets -- -D warnings'
+  )
+  expect(runtime.scripts['check-types']).toContain(
+    '&& cargo check --locked --manifest-path test/fixtures/isolation-probe/Cargo.toml --all-targets'
+  )
+})
+
 function runPowerShell(command: string, cwd?: string) {
   return spawnSync(
     'pwsh',

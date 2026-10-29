@@ -176,6 +176,17 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G5 Windows native isolation feasibility uses `apps/runtime/tests/windows-isolation.rs`
+and the build-only `test/fixtures/isolation-probe`. Keep LPAC actual SID/security-
+attribute/capability readback before ResumeThread, the fixed registryRead bootstrap,
+explicit handle allowlist, CPU/memory/child/loader limits and real PID/Job drain
+assertions. The uncontained positive control and admission-failure selector are
+test-only; never expose them through Runtime/client configuration. Build the probe
+before the standard native test inventory; keep it outside Cargo default-members,
+ordinary builds and bundles. No signed executable identity or grant is produced.
+See [platform evidence](./docs/validation/g5-windows-native-isolation.md) and
+[ADR-0005](./docs/adr/0005-windows-native-tool-isolation.md).
+
 G7 file planning is read-only T0 admission in `runtime-core/src/file_workflows.rs`.
 Its `file_workflows/store.rs` persists only inert plan metadata in the existing
 DataStore and private definitions in DPAPI. Retain validated input IDs before

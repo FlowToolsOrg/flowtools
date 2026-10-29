@@ -4,6 +4,14 @@
 维护者已豁免剩余 G7 人工验收，不再重复请求；豁免不改变自动门禁和 G5/G6
 执行边界，也不能替代实际办公闭环。
 
+后续 `da495e1` 的完整本机根门禁通过，最终工作区无漂移；对应远端
+[PR 检查 40825126648](https://github.com/FlowToolsOrg/flowtools/actions/runs/40825126648)
+与 [push 检查 40825119894](https://github.com/FlowToolsOrg/flowtools/actions/runs/40825119894)
+均成功，Chromium 增至 109 项。它们取代下方当时的待验证状态，历史失败不删除。
+维护者随后要求继续实现 G5/G6；新增
+[Windows 原生隔离可行性](./g5-windows-native-isolation.md) 正在补齐平台前置，
+不能把测试专用进程边界称为真实工具库存或 G7 媒体闭环。
+
 本轮 `9e7c13d` 完整本机根门禁通过：11/11 工作区 lint/types/test/build，
 SDK 791、Core 262+11+2、Runtime 24、Desktop 36+6、Chromium 108，
 生产产物对照及最终干净工作区通过。日志

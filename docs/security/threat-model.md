@@ -1,5 +1,14 @@
 # FlowTools 插件威胁模型
 
+2026-10-29 G5 Windows 原生工具可行性以每任务 LPAC 和真实进程正向对照验证
+私有文件/注册表/IPC/网络/另一任务目录及 junction 越界拒绝；恢复线程前读取
+实际 token/句柄身份，Job 覆盖内存、CPU 配置、子进程、输出、500ms 取消和
+kill-on-close。全部为独立测试 fixture，不新增产品入口或 grants；固定
+registryRead 用于 OS bootstrap，不允许包/客户端选择 capabilities。T3 引擎、
+真实 signed tool 身份/库存/lease/输出发布和独立 review 仍 pending，
+SEC-003/004/005/010/015 保持 open，见
+[平台证据](../validation/g5-windows-native-isolation.md)。
+
 2026-10-29 文件计划持久化继续只读：同一 DataStore 保存有界元数据，原路径与
 文件名复用 DPAPI 私密存储。严格校验后才保留计划 input IDs；损坏元数据拒绝
 孤立清理，恢复/copy scope 拒绝普通计划操作。精确 challenge 只能取消旧计划，

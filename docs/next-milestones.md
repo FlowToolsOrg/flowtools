@@ -363,6 +363,14 @@ symlink/junction 和同版本不同 hash 均拒绝。失败保持 last-known-goo
 
 ### P2.1 / P2.2 / P2.3b / P2.4b / P2.6b
 
+2026-10-29：P2.2a 原生工具平台可行性新增每任务 LPAC、实际 token/capability
+回读、固定环境/句柄 allowlist 和限额 Job。六项真实原生测试含普通正向对照、
+私有注册表/文件/IPC/网络/跨任务/junction 拒绝、DLL/内存、子进程、输出洪泛、
+500ms 取消、Job 关闭及恢复线程前拒绝。专用探针只在标准测试中构建；普通
+产品入口不变。见 [ADR-0005](./adr/0005-windows-native-tool-isolation.md) 与
+[专项证据](./validation/g5-windows-native-isolation.md)。T3 引擎、正式工具
+adapter、签名发行/库存/leases/恢复及独立安全批准仍待完成，不据此关闭 G5/G6。
+
 第三方 React 使用独立 origin/session 的容器，通过 broker 操作；Windows 实测
 存储分区、导航、CSP 与 Tauri capability 合并，不能把另一个窗口自动当成隔离。
 T3 runner 不暴露任意 Node/Bun OS API，不继承环境密钥或 Host 句柄。

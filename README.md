@@ -5,6 +5,10 @@ G7's delivered shell, scheduling/reminders and search are tracked in the
 planning is read-only; actual file/media workflows still require the recorded
 G5/G6 execution prerequisites. G7 remains in progress, with manual checks waived.
 
+The Windows native-tool isolation feasibility gate now uses real LPAC processes,
+positive controls and bounded Job cleanup. It remains test-only; see
+[scope and evidence](./docs/validation/g5-windows-native-isolation.md).
+
 Launcher search now shares pinyin, fuzzy, alias and bounded-regex matching across
 SDK/UI/CLI, with explainable rankings, private history controls and explicit
 input-context previews. See [search and 10k benchmark](./docs/validation/g7-launcher-search.md).

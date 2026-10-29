@@ -4,6 +4,10 @@ G7 文件规划对象不是 SDK filesystem capability、grant 或可提交 plan 
 文件写入与共享媒体工具入口等待 G5/G6 执行门槛，插件不能以任意目录、shell
 或系统 FFmpeg 路径替代。见 [当前完成矩阵](./validation/g7-completion-matrix.md)。
 
+Windows LPAC 原生可行性探针不属于插件/工具目录，也不提供 SDK capability、
+argv、Host selector 或 grants。真实工具仍须通过签名发行、库存、lease 与
+正式 adapter，见 [平台证据](./validation/g5-windows-native-isolation.md)。
+
 搜索索引是元数据而非执行入口；注册/更新/禁用均同步索引。别名是 Host 偏好，
 不改变 Manifest 或命令 ID。触发上下文先预览，再走正常 SDK/Runtime 执行与
 授权检查，不新增隐式能力。见 [搜索证据](./validation/g7-launcher-search.md)。

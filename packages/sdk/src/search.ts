@@ -61,7 +61,7 @@ function subsequence(text: string, query: string): boolean {
   if (query.length < 2 || query.length > 64) return false
   let cursor = 0
   for (const c of text) {
-    if (c === query[cursor]) cursor++
+    if (c.codePointAt(0) === query.codePointAt(cursor)) cursor += c.length
     if (cursor === query.length) return true
   }
   return false

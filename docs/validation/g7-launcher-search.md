@@ -72,3 +72,10 @@ launch or hotkey-wake SLA evidence. The first integrated gate on `6016f26` faile
 the runner frame fixture's unchanged 30-second bound; its actual Node Host repair
 and retained assertions are recorded [separately](./g7-runner-protocol-host.md).
 Complete root validation of the repaired tree is next.
+
+2026-10-29: supplementary Unicode characters now stay whole during fuzzy
+matching. The former loop compared title code points with query UTF-16 units,
+so a noncontiguous emoji query could never match. Both sides now compare code
+points while retaining the existing UTF-16 query budgets. Five focused search
+tests passed, including ordered emoji, reversed order, a different emoji sharing
+a high surrogate and a lone surrogate refusal. SDK lint/types also passed.

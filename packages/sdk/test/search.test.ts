@@ -39,6 +39,17 @@ test('regex is explicit, bounded and refuses unsupported or huge compilation', (
     expect(() => search.search(pattern, { mode: 'regex' })).toThrow(SearchError)
   expect(search.search('(a+)+$', { mode: 'regex' })).toEqual([])
 })
+
+test('fuzzy matching keeps supplementary characters whole and in order', () => {
+  const search = new CommandSearchIndex()
+  search.upsert({ id: 'astral', pluginId: 'p', title: '😀 notes 🚀 launch' })
+  expect(search.search('😀🚀')).toEqual([
+    { id: 'astral', score: 200, reasons: ['fuzzy'] },
+  ])
+  expect(search.search('🚀😀')).toEqual([])
+  expect(search.search('😁🚀')).toEqual([])
+  expect(search.search('\ud83d🚀')).toEqual([])
+})
 test('metadata updates and disable/removal remove stale hits immediately', () => {
   const registry = new CommandRegistry()
   registry.register({

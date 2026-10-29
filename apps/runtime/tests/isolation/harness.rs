@@ -39,10 +39,11 @@ use windows_sys::Win32::{
         },
         Threading::{
             CreateProcessW, DeleteProcThreadAttributeList, GetCurrentProcess, GetExitCodeProcess,
-            InitializeProcThreadAttributeList, ResumeThread, TerminateProcess,
-            UpdateProcThreadAttribute, WaitForSingleObject, CREATE_SUSPENDED,
-            CREATE_UNICODE_ENVIRONMENT, DETACHED_PROCESS, EXTENDED_STARTUPINFO_PRESENT,
-            PROCESS_INFORMATION, PROC_THREAD_ATTRIBUTE_ALL_APPLICATION_PACKAGES_POLICY,
+            GetProcessMitigationPolicy, InitializeProcThreadAttributeList,
+            ProcessChildProcessPolicy, ResumeThread, TerminateProcess, UpdateProcThreadAttribute,
+            WaitForSingleObject, CREATE_SUSPENDED, CREATE_UNICODE_ENVIRONMENT, DETACHED_PROCESS,
+            EXTENDED_STARTUPINFO_PRESENT, PROCESS_INFORMATION,
+            PROC_THREAD_ATTRIBUTE_ALL_APPLICATION_PACKAGES_POLICY,
             PROC_THREAD_ATTRIBUTE_CHILD_PROCESS_POLICY, PROC_THREAD_ATTRIBUTE_HANDLE_LIST,
             PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY, PROC_THREAD_ATTRIBUTE_SECURITY_CAPABILITIES,
             STARTF_USESTDHANDLES, STARTUPINFOEXW,
@@ -495,8 +496,8 @@ impl Fixture {
             limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
                 | JOB_OBJECT_LIMIT_PROCESS_MEMORY
                 | JOB_OBJECT_LIMIT_ACTIVE_PROCESS;
-            limits.BasicLimitInformation.ActiveProcessLimit =
-                if !isolated && case == "child" { 2 } else { 1 };
+            // Child-policy controls both allow a second process in the Job.
+            limits.BasicLimitInformation.ActiveProcessLimit = if case == "child" { 2 } else { 1 };
             limits.ProcessMemoryLimit = memory;
             if SetInformationJobObject(
                 job.0,
@@ -506,6 +507,25 @@ impl Fixture {
             ) == 0
             {
                 return Err(last());
+            }
+            let mut actual_limits = JOBOBJECT_EXTENDED_LIMIT_INFORMATION::default();
+            if QueryInformationJobObject(
+                job.0,
+                JobObjectExtendedLimitInformation,
+                (&mut actual_limits as *mut JOBOBJECT_EXTENDED_LIMIT_INFORMATION).cast(),
+                size_of_val(&actual_limits) as u32,
+                ptr::null_mut(),
+            ) == 0
+            {
+                return Err(stage("Job limit readback"));
+            }
+            if actual_limits.BasicLimitInformation.LimitFlags
+                != limits.BasicLimitInformation.LimitFlags
+                || actual_limits.BasicLimitInformation.ActiveProcessLimit
+                    != limits.BasicLimitInformation.ActiveProcessLimit
+                || actual_limits.ProcessMemoryLimit != limits.ProcessMemoryLimit
+            {
+                return Err(io::Error::other("unexpected actual Job limits"));
             }
             let cpu = JOBOBJECT_CPU_RATE_CONTROL_INFORMATION {
                 ControlFlags: JOB_OBJECT_CPU_RATE_CONTROL_ENABLE
@@ -713,7 +733,19 @@ impl Fixture {
                 stdout: out_read,
                 stderr: err_read,
                 private_inherited: false,
+                child_policy: 0,
+                active_limit: actual_limits.BasicLimitInformation.ActiveProcessLimit,
             };
+            let mut child_policy = windows_sys::Win32::System::SystemServices::PROCESS_MITIGATION_CHILD_PROCESS_POLICY::default();
+            if GetProcessMitigationPolicy(child.process.0, ProcessChildProcessPolicy,
+                (&mut child_policy as *mut windows_sys::Win32::System::SystemServices::PROCESS_MITIGATION_CHILD_PROCESS_POLICY).cast(),
+                size_of_val(&child_policy)) == 0 {
+                return Err(stage("child policy readback"));
+            }
+            child.child_policy = child_policy.Anonymous.Flags;
+            if child.child_policy != u32::from(isolated) {
+                return Err(io::Error::other("unexpected actual child creation policy"));
+            }
             let mut duplicated = ptr::null_mut();
             if windows_sys::Win32::Foundation::DuplicateHandle(
                 child.process.0,
@@ -808,6 +840,8 @@ pub struct Child {
     pub pub_pid: u32,
     pub started: Instant,
     pub private_inherited: bool,
+    pub child_policy: u32,
+    pub active_limit: u32,
     stdout: Handle,
     stderr: Handle,
 }

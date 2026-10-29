@@ -42,3 +42,6 @@ codec 可用、真实可播放产物、平台隔离、tool sharing 或 G7 办公
 本机 `cargo test --locked -p flowtools-runtime-core packages::tools::media`：
 10 passed / 0 failed。Core all-target Clippy warnings-as-errors 与 docs:check
 通过；最终整仓及远端验收须针对包含本模块的实际提交单独完成。
+包含本模块的 `955d88d` 完整本机根门禁 exit 0，Core 为 272+11+2，11/11
+工作区各门禁与最终工作区检查均通过；同 SHA 的远端在原生隔离 child-error
+数值断言失败，详见 [平台证据](./g5-windows-native-isolation.md)，不记为远端成功。

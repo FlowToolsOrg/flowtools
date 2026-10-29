@@ -110,6 +110,8 @@ fn child_creation_is_blocked_before_the_descendant_runs() {
         .unwrap();
     let control = report(&fixture, &child);
     assert_eq!(control["childCreated"], true);
+    assert_eq!(child.active_limit, 2);
+    assert_eq!(child.child_policy, 0);
     assert!(fixture.work.join("grandchild-ran").is_file());
     drop(child);
     fs::remove_file(fixture.work.join("grandchild-ran")).unwrap();
@@ -117,7 +119,12 @@ fn child_creation_is_blocked_before_the_descendant_runs() {
     let child = fixture.launch(true, "child", 1, 128 * 1024 * 1024).unwrap();
     let confined = report(&fixture, &child);
     assert_eq!(confined["childCreated"], false);
-    assert_eq!(confined["childError"], 367); // ERROR_CHILD_PROCESS_BLOCKED
+    assert_eq!(child.active_limit, 2);
+    assert_eq!(child.child_policy, 1); // NoChildProcessCreation, no audit/override.
+    assert!(
+        matches!(confined["childError"].as_u64(), Some(5 | 367)),
+        "only observed child-creation denials are accepted: {confined}"
+    );
     assert!(!fixture.work.join("grandchild-ran").exists());
 }
 

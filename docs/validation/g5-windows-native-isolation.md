@@ -15,7 +15,11 @@
 以 suspended + detached 创建进程；恢复线程前读取实际 token 的 AppContainer
 SID、LPAC attribute 及唯一启用的固定 registryRead capability，并检查未继承
 私有文件内核对象。Job 配置 CPU hard cap 25%、128MiB process memory、单进程、
-kill-on-close；CPU flags/rate 实际回读。明确 stdio handle allowlist、子进程拒绝、
+kill-on-close；CPU/内存/active-process limits 实际回读。普通 fixture 单进程，
+child-policy 专项的普通/LPAC 对照都允许两个 Job 进程，避免 Job 自身数量
+上限替代 child policy 的证据。恢复前额外回读真实 child policy，普通值 0、
+LPAC 精确为 NoChildProcessCreation=1，无 audit/secure override。
+明确 stdio handle allowlist、子进程拒绝、
 Low/remote image-load mitigation 和 System32 优先，不继承 PATH/USERPROFILE。
 实际工具 profile、签名、broker grants 和文件发布不由此测试产生。
 
@@ -37,7 +41,9 @@ CI 契约同时检查实际 Cargo metadata 的默认成员与非发布目标。
 3. 实际无限循环进程存活且 Job count=1 后关闭唯一 Job handle，500ms 内退出。
    Windows kill-on-close 可报告 exit 0；存活前提与不会自行退出的程序证明回收。
 4. 同一程序创建固定自身子进程，普通对照真实写 descendant marker；LPAC 返回
-   ERROR_CHILD_PROCESS_BLOCKED (367)，marker 不存在。
+   Windows 11 返回 ERROR_CHILD_PROCESS_BLOCKED (367)，Server 2022 返回
+   ERROR_ACCESS_DENIED (5)，仅接受这两个已观察到的拒绝码；两组 Job 实际
+   容量均为 2，child policy 实际回读为 0/1，拒绝后 marker 不存在。
 5. 实际无限 stdout 超过聚合 64KiB 后终止 Job；原 5s 限期内实际进程退出、
    accounting=0。两个管道都在同一预算内，未知管道错误拒绝。
 6. 同样创建的 suspended LPAC 进程在 policy-refusal 点被回收；PID 确实退出、
@@ -69,6 +75,16 @@ SHGetKnownFolderPath(FOLDERID_LocalAppData) 获取固定 bootstrap 路径；不
 清除 LOCALAPPDATA 的专项六项通过；随后严格 Turbo 单工作区复验完整 Runtime
 标准 test：inventory 30、既有原生 24、新增 LPAC 6、Bun 17（含真实 50 路冷
 启动）全部通过，约 4m46s。此复验没有替代最终根门禁的依赖图与全仓检查。
+
+`955d88d` 完整本机根门禁 exit 0：11/11 lint/types/test/build，Core 272+11+2、
+Runtime 24+6 原生及 17 Bun、Desktop 105 Bun+Node 1+Rust 36+6、Chromium 109。
+Web 23/Desktop 25 的生产重构建 byte-identical；Rust、codegen 与最终干净工作区
+通过。日志 `execution-validation/g5/root-ci-955d88d-20261029.log`。
+同 SHA [PR Windows 40842642460](https://github.com/FlowToolsOrg/flowtools/actions/runs/40842642460)
+失败：Runtime 24 项通过，新增 LPAC 为 5 pass/1 fail，仅错误码 5 与原断言
+367 不同。修复不只接受两个已观察的拒绝码，同时回读实际 child policy/Job
+限额，并让专项两组 Job 都容许第二进程；本机六项与 Clippy 再次通过。
+当前修复 SHA 的远端结果仍须单独核验，不以该本机通过替代。
 
 这没有验证受限 JS 引擎、第三方 React/Tauri 容器、COM 全面拒绝、远程映像
 实际共享盘正向对照、真实工具 DLL/协议布局或重启/物理断电。CPU 配额只证明

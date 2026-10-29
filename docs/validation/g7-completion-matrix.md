@@ -14,6 +14,13 @@
 另新增 [固定媒体 recipes/投影](./g6-media-contracts.md)，只涵盖参数与解析；
 未启动真实媒体工具，不把十项纯契约回归计为媒体办公闭环。
 
+`955d88d` 本机完整门禁 exit 0：11/11 lint/types/test/build；Core 272+11+2、
+Runtime 24+6 原生、Desktop 105 Bun+Node 1+Rust 36+6、Chromium 109、产物与
+最终干净工作区通过。远端 [40842642460](https://github.com/FlowToolsOrg/flowtools/actions/runs/40842642460)
+失败于新增 child-policy 错误码断言（Server 2022=5，本机 Windows 11=367）。
+后续修复补充实际策略/Job 容量回读与两进程正向条件，保持真实拒绝与 marker
+不存在断言；该修复的最终远端仍须完成。见 [平台记录](./g5-windows-native-isolation.md)。
+
 本轮 `9e7c13d` 完整本机根门禁通过：11/11 工作区 lint/types/test/build，
 SDK 791、Core 262+11+2、Runtime 24、Desktop 36+6、Chromium 108，
 生产产物对照及最终干净工作区通过。日志

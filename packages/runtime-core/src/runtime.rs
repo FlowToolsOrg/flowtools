@@ -430,13 +430,23 @@ impl RuntimeCore {
             let authorization = contract.and_then(|(manifest, command)| {
                 let identity =
                     CommandIdentity::from_manifest(&snapshot.root_caller, manifest, command);
-                self.managed_authorization(&identity, job.background)?;
-                if digest(manifest) != snapshot.package_digest
-                    || self.broker.authorize_command(&identity, command, now())?
-                        != snapshot.grant_epoch
-                {
+                if digest(manifest) != snapshot.package_digest {
                     return Err(ErrorCode::GrantRevoked);
                 }
+                self.broker.reauthorize_accepted(
+                    &identity,
+                    command,
+                    snapshot.grant_epoch,
+                    now(),
+                )?;
+                self.managed_authorization(&identity, job.background)
+                    .map_err(|code| {
+                        if code == ErrorCode::ApprovalRequired && snapshot.grant_epoch != 0 {
+                            ErrorCode::GrantRevoked
+                        } else {
+                            code
+                        }
+                    })?;
                 if snapshot.deadline <= now() {
                     return Err(ErrorCode::Timeout);
                 }
@@ -1340,15 +1350,13 @@ impl RuntimeCore {
             .command(&snapshot.plugin_id, &snapshot.command_id)
             .ok()?;
         let identity = CommandIdentity::from_manifest(&snapshot.root_caller, manifest, command);
+        let dispatched_at = now();
         let session = self
             .broker
-            .authorize_command(&identity, command, now())
-            .and_then(|epoch| {
-                if epoch != snapshot.grant_epoch {
-                    return Err(ErrorCode::GrantRevoked);
-                }
+            .reauthorize_accepted(&identity, command, snapshot.grant_epoch, dispatched_at)
+            .and_then(|()| {
                 self.broker
-                    .bind(identity, command.clone(), snapshot.deadline, now())
+                    .bind(identity, command.clone(), snapshot.deadline, dispatched_at)
             });
         match session {
             Ok(session) => self.jobs.get_mut(run_id)?.broker_session = Some(session),
@@ -2828,6 +2836,243 @@ mod tests {
                 code: ErrorCode::ProtocolMismatch
             })
         ));
+    }
+
+    #[test]
+    fn queued_todo_revocation_never_starts_a_runner_or_becomes_a_new_approval_request() {
+        for mode in ["revoke", "regrant", "expire", "missing-policy"] {
+            let mut core = RuntimeCore::managed(
+                HashMap::from([
+                    ("cli".into(), "local-cli".into()),
+                    ("admin".into(), "local-manager".into()),
+                ]),
+                DataStore::memory().unwrap(),
+                false,
+                false,
+            )
+            .unwrap();
+            let admin = open(&mut core, "admin", "admin");
+            let (manifest, _) = core.catalog.command("plugin-todo-list", "run").unwrap();
+            let grant = PermissionGrant {
+                plugin_id: "plugin-todo-list".into(),
+                command_id: "run".into(),
+                target: GrantTarget::Cli,
+                package_digest: digest(manifest),
+                effects: vec!["data-read".into(), "data-write".into()],
+                scopes: vec![Scope::PluginData {
+                    key_prefix: "todos".into(),
+                }],
+                expires_at: now() + 60_000.0,
+                max_calls: 16,
+                cold_start: false,
+                background: true,
+            };
+            assert!(matches!(
+                core.handle("admin", request(Call::Grant(grant), Some(admin)))
+                    .outcome,
+                Outcome::Permissions(_)
+            ));
+            let proof = open(&mut core, "conn", "cli");
+            let mut operation = submit();
+            operation.plugin_id = "plugin-todo-list".into();
+            operation.input = json!({"todo":"QUEUED_REVOCATION_PRIVATE_CANARY"});
+            let outcome = core
+                .handle("conn", request(Call::Submit(operation), Some(proof)))
+                .outcome;
+            let Outcome::Receipt(receipt) = outcome else {
+                panic!("Receipt: {}", serde_json::to_string(&outcome).unwrap());
+            };
+            let job = &core.jobs[&receipt.run_id];
+            assert_eq!(job.snapshot.state, JobState::Queued);
+            let epoch = job.snapshot.grant_epoch;
+            let original_started_at = job.started_at;
+            assert_ne!(epoch, 0);
+            let (manifest, command) = core.catalog.command("plugin-todo-list", "run").unwrap();
+            let identity = CommandIdentity::from_manifest("local-cli", manifest, command);
+            if mode == "missing-policy" {
+                core.broker = CapabilityBroker::default();
+            } else if mode == "expire" {
+                core.broker
+                    .restore_policy(
+                        identity,
+                        epoch,
+                        Some(Grant {
+                            effects: vec!["data-read".into(), "data-write".into()],
+                            scopes: vec![Scope::PluginData {
+                                key_prefix: "todos".into(),
+                            }],
+                            expires_at: now() - 1.0,
+                            max_calls: 16,
+                        }),
+                    )
+                    .unwrap();
+            } else {
+                core.broker.revoke(&identity).unwrap();
+                if mode == "regrant" {
+                    core.broker
+                        .approve(
+                            identity,
+                            Grant {
+                                effects: vec!["data-read".into(), "data-write".into()],
+                                scopes: vec![Scope::PluginData {
+                                    key_prefix: "todos".into(),
+                                }],
+                                expires_at: now() + 60_000.0,
+                                max_calls: 16,
+                            },
+                        )
+                        .unwrap();
+                }
+            }
+            assert!(core.take_run(&receipt.run_id).is_none(), "{mode}");
+            let job = &core.jobs[&receipt.run_id];
+            assert_eq!(job.snapshot.state, JobState::Failed, "{mode}");
+            assert!(
+                matches!(
+                    job.snapshot.result.as_ref().unwrap().outcome,
+                    ExecutionOutcome::Failure {
+                        error: RuntimeError {
+                            code: ErrorCode::GrantRevoked
+                        },
+                        ..
+                    }
+                ),
+                "{mode}"
+            );
+            assert_eq!(job.started_at, original_started_at);
+            assert!(job.broker_session.is_none());
+            assert!(!job
+                .events
+                .iter()
+                .any(|event| event.state == JobState::Running));
+            assert!(!core.pending.contains_key(&receipt.run_id));
+            assert_eq!(
+                core.data
+                    .read("flowtools:plugin-todo-list", "todos")
+                    .unwrap()
+                    .revision,
+                0
+            );
+            assert!(!serde_json::to_string(&job.snapshot)
+                .unwrap()
+                .contains("QUEUED_REVOCATION_PRIVATE_CANARY"));
+        }
+    }
+
+    #[test]
+    fn queued_revocation_survives_restart_without_inheriting_regrant() {
+        for regrant in [false, true] {
+            let profile = std::env::temp_dir().join(format!(
+                "flowtools-validation-queued-revoke-{}",
+                Uuid::new_v4()
+            ));
+            std::fs::create_dir(&profile).unwrap();
+            let database = profile.join("runtime.sqlite");
+            let reopen = || {
+                RuntimeCore::managed(
+                    HashMap::from([
+                        ("cli".into(), "local-cli".into()),
+                        ("admin".into(), "local-manager".into()),
+                    ]),
+                    DataStore::open(&database).unwrap(),
+                    false,
+                    false,
+                )
+                .unwrap()
+            };
+            let mut core = reopen();
+            let admin = open(&mut core, "admin", "admin");
+            let (manifest, _) = core.catalog.command("plugin-todo-list", "run").unwrap();
+            let grant = PermissionGrant {
+                plugin_id: "plugin-todo-list".into(),
+                command_id: "run".into(),
+                target: GrantTarget::Cli,
+                package_digest: digest(manifest),
+                effects: vec!["data-read".into(), "data-write".into()],
+                scopes: vec![Scope::PluginData {
+                    key_prefix: "todos".into(),
+                }],
+                expires_at: now() + 60_000.0,
+                max_calls: 16,
+                cold_start: false,
+                background: true,
+            };
+            assert!(matches!(
+                core.handle(
+                    "admin",
+                    request(Call::Grant(grant.clone()), Some(admin.clone()))
+                )
+                .outcome,
+                Outcome::Permissions(_)
+            ));
+            let cli = open(&mut core, "cli", "cli");
+            let operation = SubmitJob {
+                plugin_id: "plugin-todo-list".into(),
+                command_id: "run".into(),
+                input: json!({"todo":"RESTART_REVOCATION_PRIVATE_CANARY"}),
+                idempotency_key: "queued-before-revoke".into(),
+                background: true,
+                deadline: now() + 30_000.0,
+            };
+            let Outcome::Receipt(receipt) = core
+                .handle("cli", request(Call::Submit(operation), Some(cli)))
+                .outcome
+            else {
+                panic!("Receipt");
+            };
+            assert!(matches!(
+                core.handle(
+                    "admin",
+                    request(
+                        Call::Revoke(PermissionKey {
+                            plugin_id: "plugin-todo-list".into(),
+                            command_id: "run".into(),
+                            target: GrantTarget::Cli,
+                        }),
+                        Some(admin.clone())
+                    )
+                )
+                .outcome,
+                Outcome::Permissions(_)
+            ));
+            if regrant {
+                assert!(matches!(
+                    core.handle("admin", request(Call::Grant(grant), Some(admin)))
+                        .outcome,
+                    Outcome::Permissions(_)
+                ));
+            }
+            drop(core);
+            let core = reopen();
+            assert!(core.pending_runs().is_empty());
+            let snapshot = core.job_snapshot(&receipt.run_id).unwrap();
+            assert_eq!(snapshot.state, JobState::Interrupted);
+            assert!(matches!(
+                snapshot.result.as_ref().unwrap().outcome,
+                ExecutionOutcome::Failure {
+                    error: RuntimeError {
+                        code: ErrorCode::GrantRevoked
+                    },
+                    ..
+                }
+            ));
+            assert!(!serde_json::to_string(&snapshot)
+                .unwrap()
+                .contains("RESTART_REVOCATION_PRIVATE_CANARY"));
+            assert_eq!(
+                core.data
+                    .read("flowtools:plugin-todo-list", "todos")
+                    .unwrap()
+                    .revision,
+                0
+            );
+            assert!(core
+                .private_jobs
+                .as_ref()
+                .unwrap()
+                .read(&receipt.run_id, "input")
+                .is_err());
+        }
     }
 
     #[test]

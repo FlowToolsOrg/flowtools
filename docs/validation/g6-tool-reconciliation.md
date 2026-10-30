@@ -46,8 +46,13 @@ profile/字节仍一致时可显式 abort。已隔离文件仍计入原有三个
 Core all-target Clippy `-D warnings` 通过（12.07s），六项 compile-fail 通过。
 首次专项编译发现收据
 固定 outcome 的 Rust 生命周期签名错误，已将内部参数收紧为静态固定状态；
-原始编译拒绝日志保留，没有放宽用例或断言。完整根门禁与该提交远端结果
-另行记录，不把专项当作整仓通过。
+原始编译拒绝日志保留，没有放宽用例或断言。
+
+`ba10b39` 远端 PR 40993115934 / push 40993109694 均 SUCCESS；本机完整
+门禁失败于原样 Todo fixture：接受后、出队前撤销返回 `APPROVAL_REQUIRED`，
+而断言要求 `GRANT_REVOKED`。不是工具 ZIP 事务断言失败；仍保留整仓失败，
+不以远端绿色覆盖。本机未执行后续 Desktop/build/产物最终门禁。已新增稳定
+复现并修复同一撤销边界，详见 [durable jobs](./g3-durable-jobs.md)。
 
 accepted leases、安装锁与工具锁的产品绑定、工具文件孤儿恢复、LKG/GC、
 真实签名发行/许可证与独立安全批准、受管媒体执行和 G7 用户输出闭环仍待完成。

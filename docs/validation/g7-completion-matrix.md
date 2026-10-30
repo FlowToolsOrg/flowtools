@@ -5,7 +5,9 @@
 G6 新增 [工具 ZIP 显式恢复核对](./g6-tool-reconciliation.md)，只隔离经完整
 计划绑定的惰性孤儿；密封文件孤儿、accepted leases、产品执行和 G7 文件/
 媒体闭环继续等待。该修改十八项专项、既有 G5 恢复十九项、Clippy 和六项
-compile-fail 已通过；本提交完整门禁与远端检查另行记录。
+compile-fail 已通过。`ba10b39` PR/push 均 SUCCESS；本机完整门禁在 Todo
+出队撤销的错误码竞争处失败，后续 Desktop/build/产物检查未运行。该问题已
+稳定复现并修复，见 [durable jobs](./g3-durable-jobs.md)，新提交整套验收另记。
 
 前置签名绑定 `b3db65c` 的完整本机根门禁 exit 0，Core 313+11+5、11/11
 工作区与生产产物/最终干净检查通过；该 SHA 的 PR/push 均 SUCCESS。

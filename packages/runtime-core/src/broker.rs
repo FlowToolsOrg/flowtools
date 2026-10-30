@@ -261,6 +261,36 @@ impl CapabilityBroker {
         Ok(policy.epoch)
     }
 
+    // Accepted work is pinned to its original policy epoch. A missing, revoked,
+    // expired or replaced grant cannot become a fresh approval request or inherit
+    // a later regrant. New submissions keep authorize_command's existing errors.
+    pub(crate) fn reauthorize_accepted(
+        &self,
+        identity: &CommandIdentity,
+        command: &Value,
+        accepted_epoch: u32,
+        at: f64,
+    ) -> Result<(), ErrorCode> {
+        if !at.is_finite() {
+            return Err(ErrorCode::Timeout);
+        }
+        if accepted_epoch != 0 {
+            let policy = self.policies.get(identity).ok_or(ErrorCode::GrantRevoked)?;
+            if policy.epoch != accepted_epoch
+                || policy
+                    .grant
+                    .as_ref()
+                    .is_none_or(|grant| grant.expires_at <= at)
+            {
+                return Err(ErrorCode::GrantRevoked);
+            }
+        }
+        if self.authorize_command(identity, command, at)? != accepted_epoch {
+            return Err(ErrorCode::GrantRevoked);
+        }
+        Ok(())
+    }
+
     pub fn bind(
         &mut self,
         identity: CommandIdentity,
@@ -642,6 +672,73 @@ mod tests {
                 max_calls: 2,
             },
         )
+    }
+
+    #[test]
+    fn accepted_authorization_pins_epochs_without_changing_new_request_errors() {
+        let (mut broker, identity, command, grant) = fixture();
+        let epoch = broker.approve(identity.clone(), grant.clone()).unwrap();
+        assert_eq!(
+            broker.reauthorize_accepted(&identity, &command, epoch, 10.0),
+            Ok(())
+        );
+        assert_eq!(
+            broker.reauthorize_accepted(&identity, &command, epoch, 200.0),
+            Err(ErrorCode::GrantRevoked)
+        );
+        assert_eq!(
+            broker.authorize_command(&identity, &command, 200.0),
+            Err(ErrorCode::ApprovalRequired)
+        );
+        assert_eq!(
+            broker.reauthorize_accepted(&identity, &command, epoch, f64::NAN),
+            Err(ErrorCode::Timeout)
+        );
+        broker.revoke(&identity).unwrap();
+        assert_eq!(
+            broker.reauthorize_accepted(&identity, &command, epoch, 10.0),
+            Err(ErrorCode::GrantRevoked)
+        );
+        assert_eq!(
+            broker.authorize_command(&identity, &command, 10.0),
+            Err(ErrorCode::ApprovalRequired)
+        );
+        let replacement = broker.approve(identity.clone(), grant).unwrap();
+        assert_eq!(
+            broker.reauthorize_accepted(&identity, &command, epoch, 10.0),
+            Err(ErrorCode::GrantRevoked)
+        );
+        assert_eq!(
+            broker.reauthorize_accepted(&identity, &command, replacement, 10.0),
+            Ok(())
+        );
+        assert_eq!(
+            CapabilityBroker::default().reauthorize_accepted(&identity, &command, epoch, 10.0),
+            Err(ErrorCode::GrantRevoked)
+        );
+
+        let catalog = BuiltinCatalog::embedded();
+        let (manifest, pure) = catalog.command("plugin-base64-encoder", "run").unwrap();
+        let pure_identity = CommandIdentity::from_manifest("host-cli", manifest, pure);
+        assert_eq!(
+            broker.reauthorize_accepted(&pure_identity, pure, 0, 10.0),
+            Ok(())
+        );
+        broker
+            .approve(
+                pure_identity.clone(),
+                Grant {
+                    effects: vec![],
+                    scopes: vec![],
+                    expires_at: 200.0,
+                    max_calls: 2,
+                },
+            )
+            .unwrap();
+        assert_eq!(
+            broker.reauthorize_accepted(&pure_identity, pure, 0, 10.0),
+            Err(ErrorCode::GrantRevoked)
+        );
     }
 
     #[test]

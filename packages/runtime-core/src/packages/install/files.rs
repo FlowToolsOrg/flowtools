@@ -219,7 +219,7 @@ impl Layout {
     ) -> Result<(), InstallError> {
         self.assert_owned_with_orphans(records, journal, &[])
     }
-    pub(super) fn assert_owned_with_orphans(
+    pub(crate) fn assert_owned_with_orphans(
         &self,
         records: &[impl BlobRecord],
         journal: Option<&dyn BlobJournal>,
@@ -491,7 +491,7 @@ impl Layout {
             validate,
         )
     }
-    pub(super) fn discover_orphans(
+    pub(crate) fn discover_orphans(
         &self,
         records: &[impl BlobRecord],
     ) -> Result<Vec<super::reconciliation::Orphan>, InstallError> {
@@ -579,7 +579,7 @@ impl Layout {
         }
         Ok(result)
     }
-    pub(super) fn check_orphan(
+    pub(crate) fn check_orphan(
         &self,
         orphan: &super::reconciliation::Orphan,
     ) -> Result<bool, InstallError> {
@@ -596,7 +596,7 @@ impl Layout {
         }
         Ok(present)
     }
-    pub(super) fn quarantine_orphan(
+    pub(crate) fn quarantine_orphan(
         &self,
         orphan: &super::reconciliation::Orphan,
     ) -> Result<(), InstallError> {

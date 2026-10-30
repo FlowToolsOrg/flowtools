@@ -1,5 +1,10 @@
 # FlowTools 插件威胁模型
 
+2026-10-30 [工具 ZIP 恢复核对](../validation/g6-tool-reconciliation.md) 绑定
+profile、库存与 trust/recovery scope，整批检查后以 create-only 原生移动隔离；
+SQL 触发器替换拒绝，异常保留 exact journal 与字节。它不收编未知工具或恢复
+密封文件孤儿，也不签发身份/leases/grants；原有 SEC 项和独立审批继续 open。
+
 2026-10-29 [签名工具绑定](../validation/g6-signed-tool-bindings.md) 只把 opaque
 准入后的工具传给有界 solver，不接受 caller ToolCandidate、签名声明或
 验证 flags；独立锁域固定 consumer/target/flavor/原始 ZIP。当前根、撤销、

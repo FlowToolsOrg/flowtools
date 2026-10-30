@@ -176,6 +176,15 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G6 P2.8a5 raw tool ZIP reconciliation is explicit T0 plan/apply/resume/abort in
+`packages/tools/install/reconciliation.rs`. Preserve opaque plans, exact profile/
+inventory/trust scope binding, whole-batch preflight, create-only held-parent
+quarantine, before/after SQL guards and byte-preserving cancellation. Any pending
+blocks unrelated plugin/tool/image work. Three pools including quarantine retain
+the original budget; plugin v2 bytes and fixed namespaces are unchanged. Image
+orphans refuse this path. No adoption, floor reset, lease, executable identity or
+production review follows. See [recovery evidence](./docs/validation/g6-tool-reconciliation.md).
+
 G6 P2.8a4 signed tool binding plans live in `packages/dependencies/tools.rs`.
 Only opaque compatible plugin archives and admitted InertToolArchive leaves
 enter the shared bounded solver. Keep the separate signed-plugin-tool-archives-v1

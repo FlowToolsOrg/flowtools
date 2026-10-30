@@ -1,6 +1,7 @@
 //! Windows T0 inert signed-tool ZIP storage. No extraction, registry of runnable
 //! programs, accepted-job lease, activation or executable identity.
 pub mod images;
+pub mod reconciliation;
 use super::super::{
     self as packages, manifest::ManifestCompatibility, trust::PackageTrustStore, PackageArch,
     PackageKind, PackagePayload, PackagePlatform, PackageTarget,
@@ -366,6 +367,7 @@ fn install_with_hook(
     mut hook: impl FnMut(ToolInstallPhase, &mut DataStore) -> Result<()>,
 ) -> Result<InstalledInertTool> {
     native()?;
+    reconciliation::ensure_idle(&store.connection)?;
     images::require_no_pending(&store.connection)?;
     let state = inventory(trust, store)?;
     if journal(store, &state)?.is_some() {
@@ -567,6 +569,7 @@ fn install_with_hook(
 /// activates, lowers trust floors or resumes an uncertain installation.
 pub fn abort_inert_tool_install(trust: &PackageTrustStore, store: &mut DataStore) -> Result<bool> {
     native()?;
+    reconciliation::ensure_idle(&store.connection)?;
     images::require_no_pending(&store.connection)?;
     let state = inventory(trust, store)?;
     let Some(pending) = journal(store, &state)? else {
@@ -596,6 +599,7 @@ pub fn inspect_inert_tools(
     store: &mut DataStore,
 ) -> Result<Vec<ToolArchivePin>> {
     native()?;
+    reconciliation::ensure_idle(&store.connection)?;
     images::require_no_pending(&store.connection)?;
     let state = inventory(trust, store)?;
     if journal(store, &state)?.is_some() {
@@ -636,6 +640,7 @@ pub(crate) fn install_fixture_with_hook(
 pub(crate) fn require_no_pending_tool_transaction(
     connection: &rusqlite::Connection,
 ) -> std::result::Result<(), InstallError> {
+    reconciliation::ensure_idle(connection)?;
     images::require_no_pending(connection)?;
     let present: bool = connection
         .query_row(

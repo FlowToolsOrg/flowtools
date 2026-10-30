@@ -1,5 +1,9 @@
 # Flow Tool
 
+G6 adds explicit [inert tool ZIP recovery reconciliation](./docs/validation/g6-tool-reconciliation.md)
+with read-only plans, durable quarantine/resume and byte-preserving cancellation.
+It does not adopt tools, recover materialized image orphans or enable execution.
+
 G6 has a separate [signed tool binding planner](./docs/validation/g6-signed-tool-bindings.md)
 for verified plugin/service graphs and admitted tool ZIPs. Its locks remain inert;
 accepted leases, installed execution identities and G7 media delivery are pending.

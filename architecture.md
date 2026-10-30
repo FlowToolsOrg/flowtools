@@ -1,5 +1,10 @@
 # Flow Tool Architecture
 
+G6 P2.8a5 显式核对恢复后的惰性工具 ZIP 孤儿，复用固定 blob namespace 与
+同一个 DataStore writer；整批预检、scope/库存绑定、逐效果复核及 SQL 前后
+核对保证中断后只继续 exact journal。隔离不收编、不删除或降低 trust floors，
+密封文件孤儿继续拒绝，见 [恢复边界](./docs/validation/g6-tool-reconciliation.md)。
+
 G6 P2.8a4 的 `packages/dependencies/tools.rs` 在独立 profile 下把已准入工具 ZIP
 与签名插件/service 图绑定；消费方、版本、target、flavor 和原始 packageDigest
 进入锁，求解前后检查当前 trust/时间。G4 与旧 tool-free signed lock 不变；

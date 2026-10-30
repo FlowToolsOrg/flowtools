@@ -18,7 +18,7 @@ use rusqlite::{params, OptionalExtension, TransactionBehavior};
 use std::collections::{BTreeMap, BTreeSet, HashSet, VecDeque};
 
 pub(crate) mod files;
-mod reconciliation;
+pub(crate) mod reconciliation;
 pub use reconciliation::{
     abort_inert_reconciliation, apply_inert_reconciliation, plan_inert_reconciliation,
     resume_inert_reconciliation, InertReconciliationPlan, InertReconciliationSummary,
@@ -261,6 +261,7 @@ fn observed_inventory(
     trust: &PackageTrustStore,
     store: &mut DataStore,
 ) -> Result<Inventory, InstallError> {
+    super::tools::install::require_no_pending_tool_transaction(&store.connection)?;
     let snapshot = trust.snapshot(store)?;
     let state = inventory(&store.connection)?;
     for record in &state.records {

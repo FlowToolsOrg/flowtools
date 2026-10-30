@@ -48,6 +48,21 @@ floor。已安装多版本共存与旧 accepted references 是后续生命周期
 重复候选与根替换、三个锁域拒绝互换、求解后的时钟拒绝、未使用工具的根/
 撤销/floor 拒绝、合并候选预算与空工具控制。原 signed dependency 回归、
 七项新专项全部通过（9.04s），原有签名依赖十一项通过（9.77s），Core all-target
-Clippy `-D warnings`、五项 compile-fail 和 docs:check 通过。SDK/native corpus、整仓
-与远端结果均待本修改实际运行后记录。
-不把前一提交的完整门禁当作本修改通过。
+Clippy `-D warnings`、五项 compile-fail 和 docs:check 通过。完整整仓结果另行
+记录，不把前一提交的完整门禁当作本修改通过。
+
+提交 `b3db65c` 的远端
+[PR 40901818252](https://github.com/FlowToolsOrg/flowtools/actions/runs/40901818252)
+与 [push 40901811255](https://github.com/FlowToolsOrg/flowtools/actions/runs/40901811255)
+均 SUCCESS。本机首次完整门禁在 Runtime lint 的 Clippy 阶段退出 4，没有具体
+编译诊断；原始失败日志保留为 `execution-validation/g6/root-ci-b3db65c-20261029.log`。
+未修改源码、门禁或断言，单独运行同一 Core/Runtime all-target Clippy 通过
+（15.20s），随后重新运行完整 `check-ci.ps1`；重跑结果另行记录，不把单项
+Clippy 或远端成功写成本机完整通过。未证实首次退出的 OS 根因。
+
+完整重跑 `execution-validation/g6/root-ci-b3db65c-retry-20261030.log` exit 0，
+最终工作区无漂移。11/11 工作区 lint/types/test/build、Core 313+11+5、
+Runtime 原生 24+6/Bun 17（原 50 路冷启动）、Chromium 109/34 文件、
+Desktop 106 Bun+Node 1+原生 36+6 通过。Web 23/Desktop 25 产物逐字节一致，
+生产入口拒绝 gate、Rust fmt/locked check/all-target Clippy 均通过。该 SHA
+的本机与远端整套已核对，不代表 G6 执行身份/leases 或 G7 闭环完成。

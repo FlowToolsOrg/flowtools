@@ -1,5 +1,9 @@
 # Flow Tool Plugin 开发指南
 
+G6 的 [工具 ZIP 恢复核对](./validation/g6-tool-reconciliation.md) 是 T0 显式
+惰性隔离操作；插件不能提供计划、路径或批准标志。恢复/隔离收据不生成
+签名信任、安装记录、accepted lease、grant 或可执行身份。
+
 G6 的签名工具绑定使用独立 `signed-plugin-tool-archives-v1` profile；该路径
 把已有工具依赖 digest 与已准入的原始 signed ZIP 匹配，输出单独 typed
 packageDigest pin。它不改变 G4 元数据规划与旧 tool-free signed lock，也不

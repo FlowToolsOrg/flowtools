@@ -84,7 +84,7 @@ Web 23/Desktop 25 生产产物逐字节对照通过。日志
 `execution-validation/g6/root-ci-554bde6-20261029.log`。
 当前远端 [PR 40896796753](https://github.com/FlowToolsOrg/flowtools/actions/runs/40896796753)
 与 [push 40896785005](https://github.com/FlowToolsOrg/flowtools/actions/runs/40896785005)
-PR 已 SUCCESS，push 仍运行中；最终状态单独核对。独立真实媒体完整 driver
+PR 与 push 均 SUCCESS，已经单独核对。独立真实媒体完整 driver
 复验通过，实际 inventory 6、all-target Clippy 和六项 LPAC 测试通过（3.96s），
 日志 `execution-validation/g6/media-native-554bde6-20261029.log` / exit 0。
 原生电源断电、完整文件系统竞争、orphan reconciliation、accepted leases、

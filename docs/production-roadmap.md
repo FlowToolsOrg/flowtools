@@ -22,6 +22,10 @@ G5/G6 执行验收。人工 G7 项为 waived，整体不更新为 done。
 
 ## 1. 使用规则
 
+G6 P2.8a5 的 [原始工具 ZIP 恢复核对](./validation/g6-tool-reconciliation.md)
+补齐显式孤儿隔离与 exact journal 续接；保留库存、trust floors、所有字节及
+原有三个物理池预算。密封文件恢复、accepted leases、产品执行与 G7 仍 pending。
+
 G6 P2.8a4 的 [签名工具绑定规划](./validation/g6-signed-tool-bindings.md) 使用
 独立 ZIP 锁域、已准入工具和求解后的新鲜 trust/clock；旧 G4/无工具 signed
 契约保持不变。它不创建 installed execution identity、accepted leases 或 grants。

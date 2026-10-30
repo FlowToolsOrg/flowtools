@@ -1,14 +1,24 @@
 # G7 完成矩阵与剩余依赖
 
-日期：2026-10-29。G7 整体为 **in-progress / prototype**。
+日期：2026-10-30。G7 整体为 **in-progress / prototype**。
+
+G6 新增 [工具 ZIP 显式恢复核对](./g6-tool-reconciliation.md)，只隔离经完整
+计划绑定的惰性孤儿；密封文件孤儿、accepted leases、产品执行和 G7 文件/
+媒体闭环继续等待。该修改十八项专项、既有 G5 恢复十九项、Clippy 和六项
+compile-fail 已通过；本提交完整门禁与远端检查另行记录。
+
+前置签名绑定 `b3db65c` 的完整本机根门禁 exit 0，Core 313+11+5、11/11
+工作区与生产产物/最终干净检查通过；该 SHA 的 PR/push 均 SUCCESS。
+首次本机 Clippy 退出 4、无修改重跑通过的记录保留于
+[签名工具绑定](./g6-signed-tool-bindings.md)。
 
 前置 `554bde6` 密封落盘已通过完整本机根门禁，Core 306+11+4、Runtime
 原生 24+6/Bun 17、Chromium 109、11/11 工作区与生产产物/最终干净检查通过。
-远端仍运行中；详见 [密封落盘记录](./g6-tool-materialization.md)。
-下一步新增 [签名插件/工具绑定](./g6-signed-tool-bindings.md) 的独立 ZIP 锁域，
+远端 PR/push 均 SUCCESS；详见 [密封落盘记录](./g6-tool-materialization.md)。
+后续 [签名插件/工具绑定](./g6-signed-tool-bindings.md) 提供独立 ZIP 锁域，
 旧 profile 与 G4 不变；它仍不建立 accepted leases 或可执行身份。
 
-最新已交付提交 `c24b274` 的完整本机根门禁 exit 0，
+更早的真实媒体候选提交 `c24b274` 的完整本机根门禁 exit 0，
 [PR 40879978485](https://github.com/FlowToolsOrg/flowtools/actions/runs/40879978485)
 和 [push 40879967308](https://github.com/FlowToolsOrg/flowtools/actions/runs/40879967308)
 均 SUCCESS。首次本机 standalone copyfile 失败及未修改原测试的复验保留在

@@ -341,7 +341,7 @@ fn guard_on(
 // This is a short-lived compare guard, not a cached mutable root/floor or trust
 // receipt. Current trust is fully re-admitted first. Freeze the exact trust and
 // restore metadata across the final SQL writes too, including trigger failures.
-fn trust_stamp(connection: &rusqlite::Connection) -> Result<String> {
+pub(super) fn trust_stamp(connection: &rusqlite::Connection) -> Result<String> {
     let mut statement=connection.prepare("SELECT key, CASE WHEN typeof(value)='text' AND length(CAST(value AS BLOB))<=16777216 THEN value ELSE NULL END FROM core_metadata WHERE key GLOB 'package-trust-*' OR key='recovery-generation' ORDER BY key").map_err(storage)?;
     let mut rows = statement.query([]).map_err(storage)?;
     let mut values = Vec::<(String, String)>::new();
@@ -362,6 +362,7 @@ fn trust_stamp(connection: &rusqlite::Connection) -> Result<String> {
 }
 fn source_state(trust: &PackageTrustStore, store: &mut DataStore) -> Result<super::Inventory> {
     super::native()?;
+    super::reconciliation::ensure_idle(&store.connection)?;
     let source = super::inventory(trust, store)?;
     if super::journal(store, &source)?.is_some() {
         return Err(InstallError::RecoveryPending.into());
@@ -675,6 +676,23 @@ pub fn inspect_inert_tool_images(
         return Err(InstallError::ArtifactInvalid.into());
     }
     Ok(state.records.iter().map(|r| r.pin.clone()).collect())
+}
+// A raw ZIP quarantine must never strand a committed image reference or proceed
+// through unrecognized image bytes. This validates existing images only; it
+// neither adopts nor quarantines an image orphan.
+pub(super) fn reconciliation_preflight(store: &DataStore, source: &super::Inventory) -> Result<()> {
+    require_no_pending(&store.connection)?;
+    let state = inventory(store, source)?;
+    if let Some(layout) = tree::Layout::open(store, false)? {
+        layout.assert_owned(&state.records, None)?;
+        check_usage(store, &layout, 0, 0)?;
+        for record in &state.records {
+            layout.read(record, &state.profile_digest)?;
+        }
+    } else if !state.records.is_empty() {
+        return Err(InstallError::ArtifactInvalid.into());
+    }
+    Ok(())
 }
 pub(crate) fn retained_usage(
     store: &DataStore,

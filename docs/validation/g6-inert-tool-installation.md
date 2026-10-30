@@ -3,6 +3,10 @@
 日期：2026-10-29。Windows/x64 T0 prototype；本子步骤不产生可执行身份，
 G6/G7 整体及独立安全审核保持 pending。
 
+后续 P2.8a5 补充 [原始 ZIP 孤儿的显式恢复核对](./g6-tool-reconciliation.md)，
+支持受控恢复后 plan/quarantine/resume/abort，仍保留字节和 trust floors。
+这不恢复密封文件孤儿或生成 accepted leases/可执行身份。
+
 `packages/runtime-core/src/packages/tools/install.rs` 提供独立的显式安装、
 只读归档库存和显式 abort。调用方为已保留/保护 profile 的 T0 Rust Host，
 仍只有同一个 DataStore writer，没有客户端路径、pins、target、policy flag、

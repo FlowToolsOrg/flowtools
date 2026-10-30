@@ -1,5 +1,6 @@
 //! Actual Windows inert ZIP transactions using the existing signed ToolFixture.
 mod image_tests;
+mod reconciliation_tests;
 use super::*;
 use crate::packages::{
     install::{inspect_inert_inventory, InstallError},

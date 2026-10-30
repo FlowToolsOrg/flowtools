@@ -2,6 +2,12 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime-core/src/packages/tools/install/reconciliation.rs` 提供原始工具 ZIP
+孤儿的显式 plan/apply/resume/abort；复用 crate-private G5 orphan 投影与原生
+移动，不新增调用方 namespace、客户端 DTO 或独立 writer。实际磁盘/备份/
+进程退出回归在 `packages/tests/tool_tests/install_tests/reconciliation_tests.rs`，
+见 [恢复核对](./validation/g6-tool-reconciliation.md)。
+
 `runtime-core/src/packages/dependencies/tools.rs` 定义独立签名插件/工具 ZIP 锁，
 复用父模块的有界选择与原始 ZIP pin 投影；专项位于
 `packages/tests/tool_tests/dependency_tests.rs`。不接 ToolCandidate、安装/租约或

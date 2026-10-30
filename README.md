@@ -1,8 +1,13 @@
 # Flow Tool
 
+G6 adds explicit [orphaned tool-file reconciliation](./docs/validation/g6-tool-image-reconciliation.md)
+before raw ZIP recovery. It freezes T0-owned observations, quarantines without
+adoption and removes artifact read capabilities before clearing its journal.
+These files remain inert; accepted leases and product execution are pending.
+
 G6 adds explicit [inert tool ZIP recovery reconciliation](./docs/validation/g6-tool-reconciliation.md)
 with read-only plans, durable quarantine/resume and byte-preserving cancellation.
-It does not adopt tools, recover materialized image orphans or enable execution.
+It does not adopt tools or enable execution; image orphans use the separate path above.
 
 G6 has a separate [signed tool binding planner](./docs/validation/g6-signed-tool-bindings.md)
 for verified plugin/service graphs and admitted tool ZIPs. Its locks remain inert;

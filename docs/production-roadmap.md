@@ -22,6 +22,10 @@ G5/G6 执行验收。人工 G7 项为 waived，整体不更新为 done。
 
 ## 1. 使用规则
 
+G6 P2.8a6 的 [工具文件孤儿恢复](./validation/g6-tool-image-reconciliation.md)
+是独立惰性子步：观察当前 T0-owned 树，显式隔离后逐节点撤销读取能力，
+中断只继续 exact journal；保留所有字节、原总预算与后续执行门槛。
+
 G6 P2.8a5 的 [原始工具 ZIP 恢复核对](./validation/g6-tool-reconciliation.md)
 补齐显式孤儿隔离与 exact journal 续接；保留库存、trust floors、所有字节及
 原有三个物理池预算。密封文件恢复、accepted leases、产品执行与 G7 仍 pending。

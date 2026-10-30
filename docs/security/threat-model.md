@@ -1,5 +1,10 @@
 # FlowTools 插件威胁模型
 
+2026-10-30 [工具文件孤儿恢复](../validation/g6-tool-image-reconciliation.md)
+将观察到的 owner/身份/字节/SDDL 固定到私有计划，只允许隔离并缩小权限。
+逐效果比较元数据，部分撤权仅接受原始/private 两种精确描述符；清 journal
+前必须完全撤权。观察不验证/采纳未知 seal 或执行身份，SEC 项继续 open。
+
 2026-10-30 [工具 ZIP 恢复核对](../validation/g6-tool-reconciliation.md) 绑定
 profile、库存与 trust/recovery scope，整批检查后以 create-only 原生移动隔离；
 SQL 触发器替换拒绝，异常保留 exact journal 与字节。它不收编未知工具或恢复

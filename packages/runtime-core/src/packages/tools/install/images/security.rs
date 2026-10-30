@@ -173,6 +173,13 @@ pub(super) struct Policy {
     private_alternative: Option<Box<Policy>>,
 }
 impl Policy {
+    pub(super) fn digest(&self, directory: bool) -> String {
+        crate::packages::hash(if directory {
+            self.directory_canonical.as_bytes()
+        } else {
+            self.file_canonical.as_bytes()
+        })
+    }
     pub(super) fn new(profile_digest: &str, archive_digest: &str) -> Result<Self> {
         if !valid_digest(profile_digest) || !valid_digest(archive_digest) {
             return Err(InstallError::StateInvalid);
@@ -290,4 +297,31 @@ impl Policy {
         }
         Ok(())
     }
+}
+
+// Quarantine observation is not active-image admission. Freeze the complete
+// selected owner/DACL/label descriptor, including control/inheritance bits, but require
+// current T0 ownership. No observed ACE becomes an approved tool capability.
+pub(super) fn fingerprint(file: &File) -> Result<String> {
+    let (mut output, mut owner) = (ptr::null_mut(), ptr::null_mut());
+    if unsafe {
+        GetSecurityInfo(
+            file.as_raw_handle(),
+            SE_FILE_OBJECT,
+            INFORMATION,
+            &mut owner,
+            ptr::null_mut(),
+            ptr::null_mut(),
+            ptr::null_mut(),
+            &mut output,
+        )
+    } != 0
+    {
+        return Err(InstallError::Storage);
+    }
+    let owned = Local(output);
+    if owner.is_null() || sid_text(owner)? != current_user()? {
+        return Err(InstallError::PathRejected);
+    }
+    Ok(crate::packages::hash(canonical(owned.0)?.as_bytes()))
 }

@@ -2,6 +2,12 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime-core/src/packages/tools/install/images/reconciliation.rs` 管理固定
+image journal/receipt；`images/tree/orphans.rs` 负责有界 native observation、
+create-only 移动和叶子优先权限收缩。实际恢复/进程退出/LPAC 回归位于
+`packages/tests/tool_tests/install_tests/image_tests/reconciliation_tests.rs`。
+见 [文件恢复](./validation/g6-tool-image-reconciliation.md)。
+
 `runtime-core/src/packages/tools/install/reconciliation.rs` 提供原始工具 ZIP
 孤儿的显式 plan/apply/resume/abort；复用 crate-private G5 orphan 投影与原生
 移动，不新增调用方 namespace、客户端 DTO 或独立 writer。实际磁盘/备份/

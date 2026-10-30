@@ -389,6 +389,12 @@ Rust broker 的运行身份由会话/进程绑定；IPC、文件 handle、namesp
 
 ### P2.8a 集中工具仓库
 
+2026-10-30：P2.8a6 独立补齐 T0-owned 工具文件孤儿的显式观察/隔离，
+逐节点权限收缩，apply/abort 都在清 journal 前移除 artifact capability。
+还原后先处理文件、再处理原始 ZIP；同 writer、pending 互斥和原总预算不变。
+该范围仍无 seal 收编、accepted leases 或产品派发，见
+[工具文件恢复](./validation/g6-tool-image-reconciliation.md)。
+
 2026-10-30：P2.8a5 为原始工具 ZIP 孤儿提供显式只读计划、同 writer/journal
 隔离、断点续接与不删除字节的取消；绑定 profile、各库存及 trust/recovery
 scope，保留三池合计预算。只复用 G5 crate-private blob 操作，插件 v2 格式

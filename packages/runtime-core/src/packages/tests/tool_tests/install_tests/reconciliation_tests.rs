@@ -78,7 +78,7 @@ fn interrupt(world: &mut World, phase: ReconciliationPhase) {
         Some(ToolInstallError::Storage(InstallError::Storage))
     );
 }
-fn authority(world: &mut World) {
+pub(super) fn authority(world: &mut World) {
     world.trust = PackageTrustStore::with_recovery_authority(
         BootstrapPins {
             keys: serde_json::from_value(world.fixture.base.golden["pins"].clone()).unwrap(),
@@ -91,7 +91,7 @@ fn authority(world: &mut World) {
     )
     .unwrap();
 }
-fn recover(world: &mut World, checkpoint: &[u8], now: u64) {
+pub(super) fn recover(world: &mut World, checkpoint: &[u8], now: u64) {
     let request = world
         .trust
         .begin_trust_recovery(world.store.as_mut().unwrap(), now)

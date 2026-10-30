@@ -86,3 +86,11 @@ preserve fresh-request errors and pure command behavior. All ten broker and
 fourteen Runtime unit tests passed; Core all-target Clippy passed. The unchanged
 actual Host Todo fixture passed in 6.74 seconds under its original 30-second
 bound. The complete gate results are recorded separately after execution.
+
+The complete local gate for `ec973a4` exited zero with a clean worktree:
+11/11 workspace lint/types/test/build; Core 334+11+6; Runtime 24+6 native and
+all 17 Bun integrations including the unchanged fifty-start fixture; Chromium
+109 cases; Desktop 106 Bun, one Node and 36+6 native tests. Web 23/Desktop 25
+production artifacts were byte-identical; production refusal, Rust format,
+locked check and Clippy passed. Log:
+`execution-validation/g6/root-ci-ec973a4-20261030.log`.

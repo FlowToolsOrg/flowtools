@@ -1,6 +1,7 @@
 //! Explicit private materialization of currently admitted installed tool bytes.
 //! The resulting held files are inert: no tool lease, grant, activation or runner.
 mod native;
+pub mod reconciliation;
 mod security;
 mod tree;
 
@@ -234,6 +235,7 @@ fn validate_record(record: &Record, source: &ArchiveRecord, prepared: bool) -> R
 pub(crate) fn require_no_pending(
     connection: &rusqlite::Connection,
 ) -> std::result::Result<(), InstallError> {
+    reconciliation::ensure_idle(connection)?;
     let present: bool = connection
         .query_row(
             "SELECT EXISTS(SELECT 1 FROM core_metadata WHERE key=?1)",
@@ -615,6 +617,7 @@ pub fn abort_inert_tool_materialization(
     trust: &PackageTrustStore,
     store: &mut DataStore,
 ) -> Result<bool> {
+    reconciliation::ensure_idle(&store.connection)?;
     let source = source_state(trust, store)?;
     let state = inventory(store, &source)?;
     let Some(pending) = journal_on(&store.connection, &state, &source)? else {

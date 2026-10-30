@@ -4,6 +4,7 @@ mod filesystem;
 #[allow(dead_code)]
 #[path = "../../../../../../../apps/runtime/tests/isolation/harness.rs"]
 mod harness;
+mod reconciliation_tests;
 use super::*;
 use crate::packages::tools::install::images::{
     abort_inert_tool_materialization, inspect_inert_tool_images, materialize_fixture_with_hook,
@@ -489,7 +490,8 @@ fn lpac_report(world: &World, other: &World, root: &Path, capability: bool) -> V
     let inventory: Value = serde_json::from_str(
         &world
             .metadata(IMAGE_KEY)
-            .unwrap_or_else(|| world.metadata(IMAGE_PENDING).unwrap()),
+            .or_else(|| world.metadata(IMAGE_PENDING))
+            .unwrap_or_else(|| world.metadata(KEY).unwrap()),
     )
     .unwrap();
     let profile = inventory["profileDigest"]

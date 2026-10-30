@@ -1,4 +1,5 @@
 //! Fixed private namespace and handle-relative, create-only materialized files.
+mod orphans;
 use super::{
     native::{self, Kind, Open},
     security::Policy,
@@ -12,6 +13,7 @@ use crate::{
         install::{files, InstallError},
     },
 };
+pub(super) use orphans::Orphan;
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs::{File, OpenOptions},

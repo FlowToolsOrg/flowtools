@@ -90,3 +90,7 @@ PR 与 push 均 SUCCESS，已经单独核对。独立真实媒体完整 driver
 原生电源断电、完整文件系统竞争、orphan reconciliation、accepted leases、
 LKG/更新/GC、真实产品发行签名与许可证/来源批准、产品 native adapter、
 用户文件授权发布及独立安全验收仍待完成。G7 人工项 waived 不替代这些条件。
+
+后续独立 P2.8a6 提供 [工具文件孤儿核对](./g6-tool-image-reconciliation.md)：
+只观察、隔离及撤销 artifact capability，不收编旧 seal，不补发身份/lease。
+本文件所记录的 a3 验证不替代 a6 自身专项与完整门禁。

@@ -2,12 +2,23 @@
 
 日期：2026-10-30。G7 整体为 **in-progress / prototype**。
 
+G6 P2.8a6 新增 [工具文件孤儿恢复](./g6-tool-image-reconciliation.md)，
+先隔离并撤销 artifact capability，再核对原始 ZIP；不收编、不产生 accepted
+leases 或执行身份。二十一项专项、既有密封十八项、七项 compile-fail 和
+Clippy 通过；本提交完整门禁另记，G7 文件/媒体仍未闭环。
+
+撤销修复 `ec973a4` 的完整本机根门禁 exit 0，最终工作区无漂移：11/11
+lint/types/test/build、Core 334+11+6、Runtime 24+6/Bun 17（原 50 路冷启动）、
+Chromium 109、Desktop 106 Bun+Node 1+原生 36+6，Web 23/Desktop 25 产物
+一致。此前 `ba10b39` 的失败记录保留，详见 [durable jobs](./g3-durable-jobs.md)。
+
 G6 新增 [工具 ZIP 显式恢复核对](./g6-tool-reconciliation.md)，只隔离经完整
 计划绑定的惰性孤儿；密封文件孤儿、accepted leases、产品执行和 G7 文件/
 媒体闭环继续等待。该修改十八项专项、既有 G5 恢复十九项、Clippy 和六项
 compile-fail 已通过。`ba10b39` PR/push 均 SUCCESS；本机完整门禁在 Todo
 出队撤销的错误码竞争处失败，后续 Desktop/build/产物检查未运行。该问题已
-稳定复现并修复，见 [durable jobs](./g3-durable-jobs.md)，新提交整套验收另记。
+由 `ec973a4` 稳定复现并修复，上方记录其整套本机验收，见
+[durable jobs](./g3-durable-jobs.md)。
 
 前置签名绑定 `b3db65c` 的完整本机根门禁 exit 0，Core 313+11+5、11/11
 工作区与生产产物/最终干净检查通过；该 SHA 的 PR/push 均 SUCCESS。

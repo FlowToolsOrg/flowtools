@@ -176,6 +176,18 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G6 P2.8a6 image orphan reconciliation lives in
+`packages/tools/install/images/reconciliation.rs` and `images/tree/orphans.rs`.
+Keep exact profile/inventory/trust scope, bounded T0-owned native observations,
+whole-batch preflight, held-parent create-only quarantine and per-node metadata
+checks. Observed descriptors never admit an active image or capability. Protect
+leaves before parents; only already-quarantined nodes accept original/private
+policies on retry. Apply and abort must remove every artifact capability before
+clearing the exact journal, retaining all bytes and unmoved sources. Restore
+image orphans before raw ZIP orphans; all pending surfaces remain mutually
+exclusive and the original shared budget unchanged. See
+[image recovery evidence](./docs/validation/g6-tool-image-reconciliation.md).
+
 G6 P2.8a5 raw tool ZIP reconciliation is explicit T0 plan/apply/resume/abort in
 `packages/tools/install/reconciliation.rs`. Preserve opaque plans, exact profile/
 inventory/trust scope binding, whole-batch preflight, create-only held-parent

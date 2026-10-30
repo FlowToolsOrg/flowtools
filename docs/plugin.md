@@ -1,5 +1,9 @@
 # Flow Tool Plugin 开发指南
 
+G6 的 [孤立工具文件恢复](./validation/g6-tool-image-reconciliation.md) 仅由
+T0 观察、隔离并撤销 artifact capability。插件不能指定观察树、保留权限、
+注入计划或将恢复收据作为工具身份；它不签发 grants 或 accepted leases。
+
 G6 的 [工具 ZIP 恢复核对](./validation/g6-tool-reconciliation.md) 是 T0 显式
 惰性隔离操作；插件不能提供计划、路径或批准标志。恢复/隔离收据不生成
 签名信任、安装记录、accepted lease、grant 或可执行身份。

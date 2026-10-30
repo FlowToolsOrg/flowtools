@@ -1,5 +1,10 @@
 # Flow Tool Architecture
 
+G6 P2.8a6 显式观察并隔离 T0-owned 工具文件孤儿，保留完整身份/字节/安全
+描述符；逐节点写入 private policy 后才清 journal，abort 也须撤销已移动组
+的 artifact capability。仍使用同一个 writer 与总预算，观察不收编 seal 或
+产生执行身份，见 [文件恢复](./docs/validation/g6-tool-image-reconciliation.md)。
+
 G6 P2.8a5 显式核对恢复后的惰性工具 ZIP 孤儿，复用固定 blob namespace 与
 同一个 DataStore writer；整批预检、scope/库存绑定、逐效果复核及 SQL 前后
 核对保证中断后只继续 exact journal。隔离不收编、不删除或降低 trust floors，

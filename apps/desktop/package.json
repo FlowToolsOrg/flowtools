@@ -14,6 +14,7 @@
     "format": "oxfmt",
     "check-types": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "test": "bun test test ../../scripts && bun run test/rust-test-inventory.ts && cargo test --locked --features codegen --lib --test bindings --manifest-path src-tauri/Cargo.toml",
+    "test:plugin-webview": "cargo build --locked --manifest-path src-tauri/Cargo.toml --features plugin-webview-validation --bin validate-plugin-webviews && node ../ui-test/scripts/validate-plugin-webviews.ts && node ../ui-test/scripts/validate-plugin-webviews.ts --interrupt-after-native-ready && node ../ui-test/scripts/validate-plugin-webviews.ts --interrupt-before-cdp-snapshot",
     "preview": "vite preview",
     "tauri": "tauri"
   },

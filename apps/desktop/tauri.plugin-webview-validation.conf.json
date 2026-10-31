@@ -1,0 +1,26 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "FlowTools G5 WebView validation",
+  "version": "0.1.0",
+  "identifier": "com.flowtools.g5-plugin-webviews-validation-20261012",
+  "build": {
+    "frontendDist": "../ui-test/fixtures/plugin-webviews"
+  },
+  "app": {
+    "windows": [],
+    "security": {
+      "csp": "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self' ipc: http://ipc.localhost https://ipc.localhost; img-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "freezePrototype": true,
+      "capabilities": [
+        {
+          "identifier": "g5-validation-deny-native",
+          "windows": ["g5-*"],
+          "permissions": []
+        }
+      ]
+    }
+  },
+  "bundle": {
+    "active": false
+  }
+}

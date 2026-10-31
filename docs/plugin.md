@@ -95,6 +95,13 @@ T0 可以显式核对并以 journal 隔离无引用惰性内容，中断后继�
 作者不提供文件路径或锁授权；这不产生执行身份，见
 [提交保护证据](./validation/g5-commit-artifact-pins.md)。
 
+P2.1 的独立 WebView2 可行性 harness 仅运行固定 inert fixture，不接受作者
+插件或包路径。它验证四个独立 profile、HTTPS origin、严格 CSP、空 native
+ACL、最小 echo session 和浏览器效果拒绝；默认隐藏窗口并验证中断回收。
+frames 在该 profile 全部拒绝，不能用消息 Origin 字段替代 native 身份。
+见 [WebView 验证](./validation/g5-webview-feasibility.md)。作者不能据此
+使用第三方执行、grant 或 raw Tauri API；产品 broker/授权/数据接入仍 pending。
+
 本文面向 Flow Tool 开发者，目标是帮助你在当前仓库里快速开发并调试自己的
 plugin。
 

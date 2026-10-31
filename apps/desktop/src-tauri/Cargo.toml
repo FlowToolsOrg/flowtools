@@ -8,6 +8,12 @@ default-run = "desktop"
 
 [features]
 codegen = ["tauri/test"]
+plugin-webview-validation = ["dep:webview2-com", "dep:windows-core", "dep:getrandom"]
+
+[[bin]]
+name = "validate-plugin-webviews"
+path = "src/bin/validate-plugin-webviews.rs"
+required-features = ["plugin-webview-validation"]
 
 [[bin]]
 name = "export-bindings"
@@ -53,3 +59,8 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "io-uti
 tauri-plugin-devtools = "2.0.0"
 toasty = { version = "0.7", features = ["sqlite", "jiff"] }
 jiff = { version = "0.2.29", features = ["serde"] }
+
+[target.'cfg(windows)'.dependencies]
+webview2-com = { version = "=0.38.2", optional = true }
+windows-core = { version = "=0.61.2", optional = true }
+getrandom = { version = "=0.3.4", optional = true }

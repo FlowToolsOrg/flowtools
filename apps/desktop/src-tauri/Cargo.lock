@@ -1233,6 +1233,7 @@ version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
  "flowtools-runtime-core",
+ "getrandom 0.3.4",
  "jiff",
  "serde",
  "serde_json",
@@ -1252,6 +1253,8 @@ dependencies = [
  "tauri-specta",
  "toasty",
  "tokio",
+ "webview2-com",
+ "windows-core 0.61.2",
 ]
 
 [[package]]

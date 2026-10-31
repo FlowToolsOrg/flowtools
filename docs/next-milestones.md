@@ -368,6 +368,12 @@ symlink/junction 和同版本不同 hash 均拒绝。失败保持 last-known-goo
 
 ### P2.1 / P2.2 / P2.3b / P2.4b / P2.6b
 
+2026-10-12：P2.1 先提供独立 Windows/x64 WebView2 可行性 harness，默认隐藏
+四个一次性 profile 窗口；同 origin 分区对照、native ACL 清空、严格 CSP、
+全来源请求拒绝和中断回收分别验证，见
+[WebView 证据](./validation/g5-webview-feasibility.md)。它不接收真实安装
+包，不代替产品 Tauri 策略或 broker/consent/data 接入；P2.1/G5 保持 pending。
+
 第三方 React 使用独立 origin/session 的容器，通过 broker 操作；Windows 实测
 存储分区、导航、CSP 与 Tauri capability 合并，不能把另一个窗口自动当成隔离。
 T3 runner 不暴露任意 Node/Bun OS API，不继承环境密钥或 Host 句柄。

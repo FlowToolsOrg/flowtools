@@ -83,6 +83,14 @@ Rust opaque plan/apply/resume/abort，无产品 IPC、raw path、loader、第二
 之间拒绝写入/删除/替换。没有新增 IPC 或文件路径输入，见
 [提交保护证据](./validation/g5-commit-artifact-pins.md)。
 
+`apps/desktop/src-tauri/src/bin/validate-plugin-webviews.rs` 和专用
+`tauri.plugin-webview-validation.conf.json` 是 opt-in Debug 可行性入口。
+`apps/ui-test/scripts/validate-plugin-webviews.ts` 使用固定测试身份、四个
+一次性 profile、默认隐藏窗口与 owned loopback CDP；native/合同回归分别
+检查存储、session、ACL、CSP、请求拒绝与进程回收。详情见
+[WebView 证据](./validation/g5-webview-feasibility.md)。不是产品安装/激活
+入口，不改变第三方执行默认拒绝；P2.1/G5 保持 pending。
+
 [下一阶段实施设计](./next-milestones.md) 定义 G0–G8 的顺序与验收。
 G2 已新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`
 （无界面运行服务）、`packages/runtime-client`（生成 DTO 的 TS 客户端）和

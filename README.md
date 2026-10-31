@@ -98,6 +98,15 @@ and delete sharing. Existing writers refuse the transaction. See the
 [commit pin evidence](./docs/validation/g5-commit-artifact-pins.md); this does not
 complete filesystem, power-loss or third-party isolation acceptance.
 
+P2.1 adds an opt-in Windows WebView2 feasibility harness with four independent
+profiles, fixed HTTPS origins, strict CSP, empty native ACLs, bound echo sessions
+and native browser-effect refusal. Validation windows are hidden by default;
+normal and interrupted runs must drain their actual process trees. See
+[WebView feasibility](./docs/validation/g5-webview-feasibility.md). This separate
+harness does not activate installed plugins or complete production Tauri policy,
+broker/consent/data integration or independent security acceptance. P2.1/G5 remain
+pending.
+
 > An extensible, cross-platform toolbox powered by a plugin runtime.
 > Plugin Runtime for AI Age
 

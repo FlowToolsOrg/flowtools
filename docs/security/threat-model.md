@@ -71,6 +71,17 @@ formatVersion 2 和 orphan 拒绝由实际安装/备份/恢复集成回归覆盖
 替换/删除与新进程退出屏障。完整 ACL、publication/内存映射竞争、物理断电
 及第三方平台仍须分别验收；SEC-008/014/015 保持 open。
 
+独立 [WebView2 可行性 harness](../validation/g5-webview-feasibility.md)
+验证四个 profile（含同 origin 对照）、严格 CSP、生成 ACL 清空、native
+全来源请求拒绝、最小 echo session 与中断回收。早期实际测试暴露 ACL
+残留、公开 nonce 和导航拒绝仍发请求的问题，分别修复并保留失败记录。
+默认隐藏验证窗口；不调用产品 launcher/用户 DB。固定 frame URL 导航拒绝，
+about:blank/srcdoc 等继承 frame 未认证；顶层身份不能证明调用 frame。
+独立 CSP-bypass 原生请求测试仍观察到 TCP 预连接，native HTTP refusal 不
+证明 OS 网络隔离。进程 custody 另绑定出生时间，防止 PID 复用误判或误杀。
+产品 Tauri 配置和真实包/broker/consent/data
+仍未接入。SEC-001/002/008/014/015 均保持 open，独立安全批准 pending。
+
 2026-10-11 P2.5b 第六步在
 [native 发布文件层](../../packages/runtime-core/src/packages/install/files/rename.rs)
 修补第五步临时释放内部父目录 guards 的窗口：所有父目录句柄持续持有且

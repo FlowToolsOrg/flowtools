@@ -104,6 +104,15 @@ stage。T0 opaque plan 绑定真实 DB/profile、恢复 scope、库存和字节 
 回归见 [提交保护](./docs/validation/g5-commit-artifact-pins.md)，完整 ACL、
 文件竞争和断电验收仍 pending。
 
+P2.1 另有非默认 feature 的独立 Windows WebView2 验证二进制，不调用产品
+launcher 或用户数据库。四个隐藏窗口使用独立 profile 与固定 HTTPS origin；
+显式清空生成的 RuntimeAuthority，先安装 native 全资源/来源请求过滤和私有
+下载目录再导航。严格 CSP、最小 echo session 和真实 native 拒绝测试见
+[WebView 可行性](./docs/validation/g5-webview-feasibility.md)。独立 profile、
+顶层 WebView 身份与 frame 身份不同；固定 frame URL 导航拒绝，不认证
+about:blank/srcdoc 等继承 frame；请求过滤仍可能产生 TCP 预连接。尚未接入
+已安装身份、broker/consent/data 或产品 Tauri 权限，P2.1/G5 整体验收 pending。
+
 Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平台。
 当前仓库代码处于“先验证插件运行时，再落地桌面宿主”的阶段。
 

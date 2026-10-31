@@ -1250,6 +1250,13 @@ Phase 1 总收口要求以上内核退出标准与 P1.6 全部通过，才能推
 - 负责人：`TBD (Desktop / Security)`
 - 依赖：P1.1、P1.2
 
+2026-10-12：新增独立 Windows/x64 WebView2 prototype 可行性 harness，四个
+默认隐藏窗口使用独立 profile，含同 origin 分区对照；显式清空 native ACL，
+安装全资源/来源请求拒绝后才导航固定 fixture。实际存储、echo session、
+CSP/native filter、invoke、导航/弹窗/下载与中断回收范围见
+[WebView 证据](./validation/g5-webview-feasibility.md)。产品配置、已安装
+身份、broker/consent/data 与独立安全验收未完成，本项仍 pending。
+
 交付物：
 
 - 每个 T2/TL 插件使用独立 Tauri webview/window、唯一 label 和独立 origin。

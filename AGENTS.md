@@ -391,6 +391,23 @@ delete/rename, provider-writer and FilesPinned process-exit regressions. This
 does not certify memory-mapped writes, profile ACLs, publication races or power
 loss. See [commit pins](./docs/validation/g5-commit-artifact-pins.md).
 
+P2.1 native WebView feasibility lives in the nondefault
+`plugin-webview-validation` Desktop binary and dedicated configuration. Never
+call the product launcher or user DB from it. Require fresh disposable profiles,
+hidden windows, actual loopback listener/process/UDF ownership and complete child
+cleanup. Explicitly replace generated RuntimeAuthority; `capabilities = []` and
+config replacement alone do not clear embedded production ACLs. Install private
+download paths and all-resource/all-source native request refusal before fixture
+navigation; preserve independent CSP and native-filter probes. Fixed frame URL
+navigation is denied; about:blank/srcdoc/inherited frames are not certified.
+Top-level WebView binding is not invoking-frame authentication. Request refusal
+does not prevent speculative TCP connections or establish OS network isolation.
+Bind process custody to creation time as well as PID; reject reused parent edges
+and terminate only birth-matched bound process handles. No public CSP
+nonces, Origin-header identity fallback, arbitrary package paths or production
+activation. Record [WebView evidence](./docs/validation/g5-webview-feasibility.md);
+product integration and independent security acceptance remain pending.
+
 ## Coding Style and Naming Conventions
 
 - TypeScript strict mode is enabled; keep code type-safe and avoid `any`.

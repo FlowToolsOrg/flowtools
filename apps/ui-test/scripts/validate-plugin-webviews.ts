@@ -1,19 +1,20 @@
 import type { Browser, Page } from 'playwright'
 
 import assert from 'node:assert/strict'
-import { execFileSync, spawn } from 'node:child_process'
+import { execFileSync, spawn, spawnSync } from 'node:child_process'
 import { once } from 'node:events'
 import { mkdir, mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises'
 import { createServer, get } from 'node:https'
 import { createServer as createTcpServer } from 'node:net'
 import { tmpdir } from 'node:os'
-import { join, resolve, win32 } from 'node:path'
+import { basename, join, resolve, win32 } from 'node:path'
 
 import { chromium } from 'playwright'
 
 import {
   assertOwnedWebviewCdp,
   getOwnedNativeDescendants,
+  isValidationProcessRoot,
   probeLoopbackCdp,
   terminateNativeProcess,
   type NativeListener,
@@ -68,6 +69,15 @@ await Promise.all(
   )
 )
 const scratch = await mkdtemp(join(tmpdir(), 'flowtools-plugin-webview-'))
+const instance = basename(scratch)
+const nativeEnvironment = {
+  SystemRoot: process.env.SystemRoot,
+  USERPROFILE: process.env.USERPROFILE,
+  TEMP: process.env.TEMP,
+  TMP: process.env.TMP,
+  FLOWTOOLS_PLUGIN_WEBVIEW_VALIDATION_ROOT: scratch,
+  FLOWTOOLS_PLUGIN_WEBVIEW_VALIDATION_CDP_PORTS: ports.join(','),
+}
 const output = join(
   root,
   interruptBeforeSnapshot
@@ -80,6 +90,26 @@ await mkdir(output, { recursive: true })
 await writeFile(
   join(output, 'evidence.json'),
   JSON.stringify({ status: 'running', identity })
+)
+const mismatchedInstance = spawnSync(
+  executable,
+  ['--validation-instance=invalid'],
+  { env: nativeEnvironment, encoding: 'utf8', windowsHide: true, timeout: 5000 }
+)
+assert.equal(mismatchedInstance.error, undefined)
+assert.equal(mismatchedInstance.status, 101)
+assert.match(
+  mismatchedInstance.stderr,
+  /Exact disposable validation instance argument required/
+)
+assert.deepEqual(
+  await readdir(scratch),
+  [],
+  'Instance refusal must precede profile creation'
+)
+await writeFile(
+  join(output, 'instance-admission.json'),
+  JSON.stringify({ status: 101, profileEntries: [] })
 )
 let externalRequests = 0
 let externalConnections = 0
@@ -136,17 +166,10 @@ assert.equal(externalTlsConnections, 1)
 externalRequests = 0
 externalConnections = 0
 externalTlsConnections = 0
-const desktop = spawn(executable, [], {
+const desktop = spawn(executable, [`--validation-instance=${instance}`], {
   windowsHide: true,
   stdio: ['ignore', 'pipe', 'pipe'],
-  env: {
-    SystemRoot: process.env.SystemRoot,
-    USERPROFILE: process.env.USERPROFILE,
-    TEMP: process.env.TEMP,
-    TMP: process.env.TMP,
-    FLOWTOOLS_PLUGIN_WEBVIEW_VALIDATION_ROOT: scratch,
-    FLOWTOOLS_PLUGIN_WEBVIEW_VALIDATION_CDP_PORTS: ports.join(','),
-  },
+  env: nativeEnvironment,
 })
 let nativeOutput = ''
 desktop.stdout.on('data', value => (nativeOutput += String(value)))
@@ -188,9 +211,7 @@ function refreshOwnedNativePids(): NativeProcess[] {
   )
   if (
     rootProcess &&
-    rootProcess.ExecutablePath &&
-    win32.normalize(rootProcess.ExecutablePath).toLowerCase() ===
-      win32.normalize(executable).toLowerCase()
+    isValidationProcessRoot(rootProcess, executable, instance)
   ) {
     for (const process of getOwnedNativeDescendants(
       processes,
@@ -296,6 +317,13 @@ try {
     ) as NativeListener[]
     const processes = readNativeProcesses()
     assert.ok(desktop.pid)
+    const rootProcess = processes.find(
+      process => process.ProcessId === desktop.pid
+    )
+    assert.ok(
+      rootProcess && isValidationProcessRoot(rootProcess, executable, instance),
+      'CDP root must bind the exact disposable validation instance'
+    )
     refreshOwnedNativePids()
     assertOwnedWebviewCdp(
       processes,

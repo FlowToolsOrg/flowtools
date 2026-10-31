@@ -8,6 +8,7 @@ export type NativeProcess = {
   ParentProcessId: number
   CommandLine: string | null
   CreationDate: string
+  ExecutablePath?: string | null
 }
 export type NativeListener = { LocalAddress: string; OwningProcess: number }
 
@@ -36,6 +37,22 @@ export function probeLoopbackCdp(
 
 function profilePath(path: string): string {
   return win32.normalize(path.replace(/^\\\\\?\\/, '')).toLowerCase()
+}
+
+export function isValidationProcessRoot(
+  process: NativeProcess,
+  executable: string,
+  instance: string
+): boolean {
+  assert.match(instance, /^flowtools-plugin-webview-[a-z0-9_-]+$/i)
+  const marker = `--validation-instance=${instance}`
+  return (
+    !!process.ExecutablePath &&
+    profilePath(process.ExecutablePath) === profilePath(executable) &&
+    !!process.CommandLine &&
+    (process.CommandLine.endsWith(` ${marker}`) ||
+      process.CommandLine.endsWith(` "${marker}"`))
+  )
 }
 
 // CIM timestamps have microsecond precision. Date.parse alone discards the

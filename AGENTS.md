@@ -402,7 +402,9 @@ navigation; preserve independent CSP and native-filter probes. Fixed frame URL
 navigation is denied; about:blank/srcdoc/inherited frames are not certified.
 Top-level WebView binding is not invoking-frame authentication. Request refusal
 does not prevent speculative TCP connections or establish OS network isolation.
-Bind process custody to creation time as well as PID; reject reused parent edges
+Bind the first root observation to its unique disposable instance argument;
+matching the same executable path alone cannot establish root custody after PID
+reuse. Bind process custody to creation time as well as PID; reject reused parent edges
 and terminate only birth-matched bound process handles. No public CSP
 nonces, Origin-header identity fallback, arbitrary package paths or production
 activation. Record [WebView evidence](./docs/validation/g5-webview-feasibility.md);

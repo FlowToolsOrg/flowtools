@@ -178,6 +178,14 @@ fn fixture_root() -> Result<(PathBuf, [u16; 4]), String> {
         .map(PathBuf::from)
         .ok_or("Disposable validation root required")?;
     let root = root.canonicalize().map_err(|e| e.to_string())?;
+    let instance = root
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or("Validation instance name required")?;
+    if std::env::args().skip(1).collect::<Vec<_>>() != [format!("--validation-instance={instance}")]
+    {
+        return Err("Exact disposable validation instance argument required".into());
+    }
     let temp = std::env::temp_dir()
         .canonicalize()
         .map_err(|e| e.to_string())?;

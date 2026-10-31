@@ -6,6 +6,7 @@ import { createServer } from 'node:http'
 import {
   assertOwnedWebviewCdp,
   getOwnedNativeDescendants,
+  isValidationProcessRoot,
   probeLoopbackCdp,
   terminateNativeProcess,
   type NativeProcess,
@@ -60,6 +61,57 @@ describe('dedicated native plugin WebView validation entry', () => {
 })
 
 describe('native WebView CDP ownership validation', () => {
+  it('refuses a reused root PID belonging to another instance of the same image', () => {
+    const executable = 'C:\\owned\\validate-plugin-webviews.exe'
+    const root = {
+      ProcessId: 10,
+      ParentProcessId: 1,
+      CreationDate: '2026-10-31T00:00:00Z',
+      ExecutablePath: executable,
+      CommandLine: `"${executable}" --validation-instance=flowtools-plugin-webview-first`,
+    }
+    expect(
+      isValidationProcessRoot(
+        root,
+        executable,
+        'flowtools-plugin-webview-first'
+      )
+    ).toBe(true)
+    expect(
+      isValidationProcessRoot(
+        root,
+        executable,
+        'flowtools-plugin-webview-second'
+      )
+    ).toBe(false)
+    expect(
+      isValidationProcessRoot(
+        { ...root, ExecutablePath: 'C:\\other.exe' },
+        executable,
+        'flowtools-plugin-webview-first'
+      )
+    ).toBe(false)
+    expect(
+      isValidationProcessRoot(
+        {
+          ...root,
+          CommandLine: `"${executable}" --validation-instance=flowtools-plugin-webview-first-suffix`,
+        },
+        executable,
+        'flowtools-plugin-webview-first'
+      )
+    ).toBe(false)
+    expect(
+      isValidationProcessRoot(
+        {
+          ...root,
+          CommandLine: `"${executable}" "--validation-instance=flowtools-plugin-webview-first"`,
+        },
+        executable,
+        'flowtools-plugin-webview-first'
+      )
+    ).toBe(true)
+  })
   it('uses bounded literal-loopback HTTP without browser bad-port filtering or redirect following', async () => {
     let status = 200
     const requested: string[] = []

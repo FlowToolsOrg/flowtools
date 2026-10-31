@@ -1,6 +1,6 @@
 # G5 P2.1 Windows WebView feasibility
 
-- Date: 2026-10-13
+- Date: 2026-10-31
 - Scope: prototype, Windows/x64, dedicated disposable Debug harness
 - Status: targeted prototype checks passed; P2.1/G5 pending
 - Engineering review: Codex; independent security reviewer/date/conclusion pending
@@ -101,7 +101,11 @@ logs and fixture provenance even after assertion/cleanup failure. Disposable
 profiles are retained for inspection; they are never silently adopted as user
 data. A recorded `running` or `checks-passed-cleanup-pending` file is not a pass.
 
-Process custody binds both PID and microsecond creation time. Parent edges older
+The root process must carry the exact fresh-profile instance argument, verified
+by both native startup and the controller before CDP attachment or custody.
+A reused PID belonging to another run of the same binary cannot qualify merely
+because its image path matches. Process custody binds both PID and microsecond
+creation time. Parent edges older
 than a reused parent PID are excluded. Termination pins a Process handle and
 compares its actual birth before killing it; exit checks compare birth identities,
 so a new unrelated application reusing an old PID is neither killed nor reported
@@ -118,8 +122,11 @@ bun run --cwd apps/desktop test:plugin-webview
 ```
 
 This builds the opt-in native binary and runs the normal, post-CDP interruption
-and pre-snapshot startup-interruption harnesses sequentially. All three completed
-on 2026-10-13 with the final source, hidden windows and verified process drain.
+and pre-snapshot startup-interruption harnesses sequentially. The original runs
+completed on 2026-10-13; all three passed again on 2026-10-31 after binding the
+root instance, with hidden windows and verified process drain. Before each run,
+the real native image receives a mismatched instance argument: it must exit with
+exact status 101 and the expected refusal, before creating any profile entries.
 The normal terminal record is `passed`; both interrupted records are
 `interruption-cleanup-passed`. Local machine logs, counters and screenshots are
 written below ignored `execution-validation/g5-webviews*`.
@@ -144,6 +151,13 @@ timeout, while its cmd launcher control completed. This resembles
 but does not establish the exact cause here. Original deadlines and assertions
 remain intact. Local full acceptance and current-revision Windows CI remain
 pending; the earlier native harness results do not replace those gates.
+
+The clean, strict-environment workflow subsequently passed on integrated commit
+`a7dede2`, including all 101 Desktop contract tests and the original nine WebView
+cases. The instance-binding follow-up also passed Desktop's standard task under
+strict Turbo, feature clippy, source lint/types and all three actual native runs.
+These passes do not erase the separately retained inherited-environment failures
+or establish their exact cause. Final-head remote checks are reported separately.
 
 The actual hidden-WebView screenshot was visually inspected for fixture identity,
 origin and Chinese text; it is not manual product/accessibility approval:

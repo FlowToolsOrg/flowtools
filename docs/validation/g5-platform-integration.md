@@ -39,7 +39,13 @@ recovery ADR identity.
 The original targeted native evidence was collected on 2026-10-13; the standalone
 headless standard build/lint/types and 20-test run also passed on 2026-10-31.
 Integration on current main requires fresh checks; historical results are not
-current-revision acceptance.
+current-revision acceptance. A clean final-tree checkout of `a7dede2` subsequently
+passed the full Windows script on 2026-10-31: all 12 workspace lint/types/test/build
+tasks, Core 224 tests plus two compile-fail cases, headless 20, Runtime 24 native
+plus 16 client tests, Desktop 101 contracts plus 21 Rust/three bindings, and all
+72 Chromium tests. Root tests ran uncached before builds. Web 22/Desktop 24
+production artifacts were byte-identical after refusal probes; final Rust
+fmt/check/all-feature clippy and the clean-worktree gate passed.
 
 Local resumed contract tests exposed a native direct-spawn problem under pinned
 Bun 1.3.14. The new WebView suite had eight of nine passes, with a process-helper
@@ -49,7 +55,15 @@ timeout. No deadline, assertion, required gate or Turbo environment is relaxed.
 See the separately retained failure observations and
 [related upstream report](https://github.com/oven-sh/bun/issues/32011); the exact
 local cause is not certified. Current-revision full checks and remote CI are
-recorded with delivery and remain pending until completed.
+recorded with delivery. The standard strict-environment workflow above passed
+without changing deadlines, unlike the separately retained standalone failures.
+
+The final follow-up binds the very first root-process observation to a unique
+disposable instance argument as well as its image; subsequent custody still uses
+creation time. The real native image refuses a mismatched instance with status
+101 before profile creation. Desktop's strict standard task, scoped source
+lint/types, feature clippy and three hidden native lifecycle scenarios passed
+after this change. Final-head remote checks remain required.
 
 Signed installed execution identity, real third-party broker/consent/data
 integration, complete platform network/handle acceptance, private profile ACLs,

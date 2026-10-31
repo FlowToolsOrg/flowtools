@@ -16,7 +16,10 @@ test('Rust capability descriptors share strict schema without adding wire author
   const validate = new Ajv2020({ strict: false }).compile(
     schemas.capabilityOperation
   )
-  expect(fixtures.operations).toHaveLength(11)
+  expect(fixtures.operations).toHaveLength(12)
+  expect(fixtures.operations.map(item => item.operation)).toContain(
+    'notification'
+  )
   for (const operation of fixtures.operations) {
     expect(validate(operation)).toBe(true)
     expect(validate({ ...operation, pluginId: 'host', granted: true })).toBe(
@@ -34,6 +37,11 @@ test('Rust capability descriptors share strict schema without adding wire author
       parameters: { lock: 'one', action: 'probe', argv: [] },
     },
     { operation: 'native-invoke', parameters: { command: 'delete' } },
+    {
+      operation: 'notification',
+      parameters: { title: 'reminder', message: 'body', appId: 'powershell' },
+    },
+    { operation: 'notification', parameters: { xml: '<toast />' } },
   ])
     expect(validate(value)).toBe(false)
 })
@@ -67,7 +75,7 @@ test('Rust-derived golden protocol and full metadata match TS validators and dig
       },
       builtInCLIManifests.map(plugin => plugin.id)
     )
-  ).toHaveLength(12)
+  ).toHaveLength(13)
   const canonical = (value: unknown): unknown =>
     Array.isArray(value)
       ? value.map(canonical)

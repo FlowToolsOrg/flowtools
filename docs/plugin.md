@@ -1,5 +1,107 @@
 # Flow Tool Plugin 开发指南
 
+G6 的 [任务 artifact 保留](./validation/g6-accepted-tool-artifacts.md) 仅由明确
+T0 Rust 构造接入固定 T1 catalog；普通插件提交不能提供 lease、pins、路径或
+review selector。已有声明、当前 grant/epoch、实际 signed ZIP/现有 seal 和
+任务期限共同约束接收及派发复核；持有文件不授予 ToolExecute。默认产品
+Host 保持无 authority，原生媒体 SDK 入口和 G7 执行闭环尚待完成。
+
+G6 的 [消费方孤儿恢复](./validation/g6-tool-consumer-reconciliation.md) 仅由 T0
+观察和隔离固定域内未引用的 inert bytes，不能采纳旧包、替换工具 pins、恢复
+grants 或触发插件。未知 scope 必须先受控恢复再显式取消原批次，字节不删除。
+
+G6 的 [消费方安装锁](./validation/g6-tool-consumer-installation.md) 由 T0 将实际
+签名插件/service 与已安装工具 ZIP 绑定，不能由插件提供工具 pins、路径或审核
+标志。旧 tool-free G5 锁不转换；共享文件不共享 grants/身份。库存收据依旧惰性，
+不能运行工具；生产审核、accepted leases 与 G7 执行闭环继续等待。
+
+G6 的 [孤立工具文件恢复](./validation/g6-tool-image-reconciliation.md) 仅由
+T0 观察、隔离并撤销 artifact capability。插件不能指定观察树、保留权限、
+注入计划或将恢复收据作为工具身份；它不签发 grants 或 accepted leases。
+
+G6 的 [工具 ZIP 恢复核对](./validation/g6-tool-reconciliation.md) 是 T0 显式
+惰性隔离操作；插件不能提供计划、路径或批准标志。恢复/隔离收据不生成
+签名信任、安装记录、accepted lease、grant 或可执行身份。
+
+G6 的签名工具绑定使用独立 `signed-plugin-tool-archives-v1` profile；该路径
+把已有工具依赖 digest 与已准入的原始 signed ZIP 匹配，输出单独 typed
+packageDigest pin。它不改变 G4 元数据规划与旧 tool-free signed lock，也不
+使插件获得 executable path、grants 或 accepted lease，见
+[绑定证据](./validation/g6-signed-tool-bindings.md)。
+
+G6 P2.8a3 的 MaterializedInertTool 只由 T0 显式事务生成，内部持有经过密封/
+ACL 回读的原生文件句柄；没有公开 path、capability selector、argv 或启动 API。
+插件不能把诊断 pin 或归档收据转为授权，accepted leases 和 SDK 媒体入口仍待实现。
+见 [密封落盘边界](./validation/g6-tool-materialization.md)。
+
+G6 的 InstalledInertTool 只记录已持久存放的签名 ZIP，不代表插件可使用工具。
+诊断 ToolArchivePin 与 G4 ToolPin/已接受任务的 execution lock 不互换；插件
+不能据其构造 path、argv、lease 或 grants，见 [归档事务](./validation/g6-inert-tool-installation.md)。
+
+[真实媒体构建候选](./validation/g6-media-candidate.md) 只用于独立开发者专项，
+不是可供插件选择的 Host、系统工具路径、signed installed identity 或授权。
+ffprobe 只接受空的 program/group 容器；FFmpeg 退出 0 也不能替代完整进度及
+新输出验证，更不能直接提交用户文件。
+
+G6 的固定媒体 recipes/解析器是 T0 Rust 纯契约，不是可用 SDK media capability
+或任意 ToolExecute 授权。插件不能由 recipe 创建 path、argv、lease 或执行
+身份；实际受管工具与文件发布仍待连接，见 [媒体契约](./validation/g6-media-contracts.md)。
+
+G7 文件规划对象不是 SDK filesystem capability、grant 或可提交 plan ID。
+文件写入与共享媒体工具入口等待 G5/G6 执行门槛，插件不能以任意目录、shell
+或系统 FFmpeg 路径替代。见 [当前完成矩阵](./validation/g7-completion-matrix.md)。
+
+Windows LPAC 原生可行性探针不属于插件/工具目录，也不提供 SDK capability、
+argv、Host selector 或 grants。真实工具仍须通过签名发行、库存、lease 与
+正式 adapter，见 [平台证据](./validation/g5-windows-native-isolation.md)。
+
+搜索索引是元数据而非执行入口；注册/更新/禁用均同步索引。别名是 Host 偏好，
+不改变 Manifest 或命令 ID。触发上下文先预览，再走正常 SDK/Runtime 执行与
+授权检查，不新增隐式能力。见 [搜索证据](./validation/g7-launcher-search.md)。
+
+第 13 个内置命令为本地提醒，通知能力仍需独立 scope/background 授权。
+`notification.deliver` 返回尝试状态，未知不重发；不代表 OS 已显示。
+见 [提醒证据](./validation/g7-local-reminders.md)。
+
+调度编辑需要重新确认输入/时间并通过当前后台授权；恢复处置只永久作废旧计划，
+不会恢复插件 grant 或重放已消费位置。见 [编辑/恢复契约](./validation/g7-scheduling-edit-recovery.md)。
+
+P3.1b3 的有限调度只调用当前已批准的 headless 命令，冻结输入 digest 和包身份，
+每次检查后台权限及 epoch，撤销/更新不自动复活。原生调度确认与已有命令 grant
+分开；插件不取得 timer 或管理会话。见 [派发边界](./validation/g7-scheduling-dispatch.md)。
+
+P3.1b2 的调度 claim 只绑定既有命令身份、grant epoch 和输入 digest，不能
+替代当前授权或供插件选择身份；恢复未知尝试不自动重放发送。原始输入仍须
+单独私有保存，见 [持久化边界](./validation/g7-scheduling-store.md)。
+
+P3.1b1 的调度规则只属于 Runtime 原生规划层，不增加 SDK 插件 API、timer、
+后台执行或通知权限。occurrence index 不是 job ID、授权或持久幂等凭据；实际
+调度仍须独立 unattended 授权及逐次 broker 校验。见
+[规则与后续边界](./validation/g7-scheduling-rules.md)。
+
+G7 P3.1a1 的托盘、快捷键和自启动属于 Desktop 原生宿主，插件不获得
+注册全局热键、启动 daemon 或修改开机启动的接口。第二实例传参不执行
+插件命令，退出 Desktop 不改变 grants 或主动停止 Runtime。后续调度与
+办公闭环仍待门禁，见 [桌面入口证据](./validation/g7-desktop-shell.md)。
+原生热键冲突与外观重启的 [受控验收](./validation/g7-native-window-acceptance.md)
+使用单独的可信测试进程，不增加插件 capability、工具身份或第三方执行授权。
+
+P3.1a2 的外观偏好仅保存固定 system/light/dark 枚举，不注册或选择插件主题，
+不创建 grants、原生能力或新的数据 API。E02 的资源和作用域契约保持独立；
+同源 localStorage 不提供第三方隔离，见 [外观证据](./validation/g7-desktop-preferences.md)。
+
+P3.1a3 的设置页查询只显示既有 Host 的状态快照，不启动 Runtime、不读取
+插件输入/结果或创建 grants。插件身份仍由原生会话绑定，快照不是授权凭据，
+见 [状态证据](./validation/g7-runtime-status.md)。
+
+P3.1a4 的诊断预览/下载仅投影 Host 版本及本页状态，不读取插件载荷、日志或
+授权，不为插件增加文件接口；报告不是 grant 或执行凭据。原生保存仍待验收，
+见 [诊断证据](./validation/g7-runtime-diagnostic.md)。
+
+P3.1a5 的托盘 Runtime 快照属于原生 Host，仅显示模式、任务计数与查询时间，
+不向插件开放菜单、托盘或状态绕过接口，不读取插件载荷/授权或执行命令。
+原生交互未验证且人工复验已豁免；独立安全批准仍 pending，见 [托盘证据](./validation/g7-tray-runtime-status.md)。
+
 G6 P2.8a1 的工具 Manifest 独立于 SDK Plugin Manifest v1 与 G4 ToolPin。
 签名包的 source/license/buildFlavor 与完整文件清单须和工具 Manifest 一致，
 programs 只声明有限逻辑角色，resources 必须完全匹配 T0 构建审核布局。

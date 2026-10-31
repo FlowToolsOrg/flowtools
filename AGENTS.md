@@ -25,7 +25,7 @@ This repository is a Bun + Turbo monorepo.
 - `apps/ui-test`: consumer app for manual validation of `@flowtools/ui`.
   Manual UI validation remains required and complements automated coverage; it
   does not replace it.
-- `plugins/`: local plugin workspace with 12 built-in plugins (all app type,
+- `plugins/`: local plugin workspace with 13 built-in plugins (all app type,
   all CLI-compatible via `run()` + `inputSchema`).
 - `configs/tsdown`: shared package build config.
 - `docs/` and root docs such as `README.md` and `architecture.md`: product and
@@ -81,7 +81,7 @@ Run from repository root:
 - `bun run lint`: runs workspace lint tasks.
 - `bun run check-types`: runs workspace type checks.
 - `bun run test`: runs required workspace automated tests via Turbo.
-- `bun run smoke:plugins`: builds prerequisites and validates all twelve actual
+- `bun run smoke:plugins`: builds prerequisites and validates all thirteen actual
   compiled entries with controlled request/storage, schema rejection and abort.
 - `bun run docs:check`: read-only core/ADR/threat/PR-template contracts and inline
   local link path checks; no remote URL, anchor or security certification.
@@ -175,6 +175,277 @@ clean-worktree check. Preserve standard test/build order, strict Turbo env and
 all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
+
+G6 P2.8a9 accepted artifact retention lives in `packages/tools/install/leases.rs`
+and `images/lease_source.rs`. Only explicitly build-owned T0 fixed T1 catalogs
+use it; ordinary Runtime Hosts keep no tool authority and production reviews/pins
+stay empty. Actual installed signed ZIP admission and existing image identities,
+seals/policy/handles are required before the same jobs.metadata durable receipt.
+Keep the original writer/32KiB bound, exact run/caller/package/lock/epoch/deadline/
+profile/generation binding, final authorization after IO, and trigger-aware writes.
+Persist terminal/release only after ordinary root/service drain; unknown writes
+stop admission and retain roots, while Interrupted remains retained. Strict old
+references must block orphan cleanup on corruption or foreign scope. Restore never
+rebinds a seal or renews grants; normal signed floors still refuse old releases.
+The test-only seconds clock and six real-exit barriers never enter IPC/config.
+No executable getter, tool adapter, GC or product Host selector follows. See
+[accepted artifact evidence](./docs/validation/g6-accepted-tool-artifacts.md).
+
+G5/G6 installation metadata mutations share the fixed-slot, transaction-only
+`packages/runtime-core/src/packages/install/metadata.rs` guard. Preserve exact
+JSON bytes/formats, bounded TEXT reads, one affected row and one actual change
+including trigger effects. All four install domains and their reconciliation
+paths must use guarded writes and exact-byte pending deletion. Keep existing
+trust/inventory/native guards; no trigger substitution may be hidden by a later
+DELETE. See [SQL boundary evidence](./docs/validation/g5-install-metadata-guards.md).
+
+G6 P2.8a8 consumer orphan recovery lives in `packages/install/tool_consumers/reconciliation.rs`.
+Keep opaque read-only plans, exact profile/inventory/trust scope, full-batch byte
+preflight and held-parent create-only quarantine. Check frozen metadata inside
+the held-source callback before each move. Only this fixed recovery reader may
+inspect known raw records while unrelated raw orphans remain; never return/admit
+those unknown bytes or relax ordinary readers. All pending surfaces stay exclusive.
+New scope needs current controlled recovery then explicit abort; preserve moved/
+unmoved bytes, original locks/floors/budgets, and actual commit scope in receipts.
+No adoption, lease, executable identity or production profile follows. See
+[consumer recovery evidence](./docs/validation/g6-tool-consumer-reconciliation.md).
+
+G6 P2.8a7 inert consumer installation is in `packages/install/tool_consumers.rs`.
+Only actual signed plugin/service archives and re-admitted held installed tool
+ZIPs enter its separate fixed store/lock domain; no caller pins, namespaces or
+review flags. Keep legacy G5 v2 bytes and absent-domain a5/a6 recovery stamps
+unchanged, existing transitive pins fixed, the one writer/shared budget, current
+trust and a fresh final T0 clock. Recheck the original pending after inventory
+writes and before deletion; triggers must not erase substituted journals. All
+pending operations stay exclusive. New-domain orphans refuse rather than adopt;
+accepted leases and execution remain pending. Production
+review profiles stay empty. See [consumer evidence](./docs/validation/g6-tool-consumer-installation.md).
+
+G6 P2.8a6 image orphan reconciliation lives in
+`packages/tools/install/images/reconciliation.rs` and `images/tree/orphans.rs`.
+Keep exact profile/inventory/trust scope, bounded T0-owned native observations,
+whole-batch preflight, held-parent create-only quarantine and per-node metadata
+checks. Observed descriptors never admit an active image or capability. Protect
+leaves before parents; only already-quarantined nodes accept original/private
+policies on retry. Apply and abort must remove every artifact capability before
+clearing the exact journal, retaining all bytes and unmoved sources. Restore
+image orphans before raw ZIP orphans; all pending surfaces remain mutually
+exclusive and the original shared budget unchanged. See
+[image recovery evidence](./docs/validation/g6-tool-image-reconciliation.md).
+Partial-tree fixtures must explicitly select and read back the current T0 owner,
+preserving the inherited DACL/label; an elevated token's default owner is not a
+substitute for TokenUser. Never relax production owner refusal to fix a fixture.
+
+G6 P2.8a5 raw tool ZIP reconciliation is explicit T0 plan/apply/resume/abort in
+`packages/tools/install/reconciliation.rs`. Preserve opaque plans, exact profile/
+inventory/trust scope binding, whole-batch preflight, create-only held-parent
+quarantine, before/after SQL guards and byte-preserving cancellation. Any pending
+blocks unrelated plugin/tool/image work. Three pools including quarantine retain
+the original budget; plugin v2 bytes and fixed namespaces are unchanged. Image
+orphans refuse this path. No adoption, floor reset, lease, executable identity or
+production review follows. See [recovery evidence](./docs/validation/g6-tool-reconciliation.md).
+
+G6 P2.8a4 signed tool binding plans live in `packages/dependencies/tools.rs`.
+Only opaque compatible plugin archives and admitted InertToolArchive leaves
+enter the shared bounded solver. Keep the separate signed-plugin-tool-archives-v1
+profile and exact original ZIP packageDigest, consumer/target/flavor binding,
+root-candidate refusal and fresh final T0 trust/clock checks over every supplied
+candidate, even unused tools. G4 and the older tool-free signed lock retain their
+formats and refusal semantics. This is an inert plan, not installed multiversion
+inventory, an accepted lease, grant or executable identity. Production review
+profiles stay empty. See [signed binding evidence](./docs/validation/g6-signed-tool-bindings.md).
+
+G6 P2.8a3 explicitly materializes only re-admitted opaque installed tool bytes in
+`packages/tools/install/images.rs`. Keep the fixed private namespace, exact held
+file/dir identities, source provenance, protected owner/DACL/Medium label readback,
+artifact-specific read capability and create-only native publication. All three
+physical pools share the existing 256MiB/384-group budget, including quarantine.
+The same writer commits image inventory/journal; pending images block unrelated
+install/inspect/reconciliation. Explicit abort preflights the whole batch, preserves
+bytes and removes artifact capabilities before clearing its journal. Interrupted
+abort accepts only the two exact active/private policies for its quarantined group.
+Core tests must build the same non-published isolation probe before test inventory;
+the additional capability is test-only and actual token readback remains mandatory.
+MaterializedInertTool is still inert, never a lease, grant, executable identity or
+product dispatch option. Production review profiles remain empty. See
+[materialization evidence](./docs/validation/g6-tool-materialization.md).
+
+G6 real-media candidate validation is a separate, non-published Cargo workspace
+under `apps/runtime/test/fixtures/media-candidate`, never a Runtime option or
+normal build/test dependency. Preserve source/tag/commit/tree/hash checks, fixed
+candidate hashes, fatal missing-image/inventory checks, actual LPAC/Job assertions
+and unchanged production review profiles. Only exact empty ffprobe programs and
+stream_groups arrays may be ignored; nonempty nested metadata remains refused.
+The pinned FFmpeg maps -n refusal to exit 0: require complete progress and fresh
+output validation, never interpret exit 0 alone as conversion success. Raw stderr
+stays out of product history. This fixture grants no tool identity/lease or user
+file publication. See [candidate evidence](./docs/validation/g6-media-candidate.md).
+
+G6 P2.8a2 stores only inert tool ZIP groups in `packages/tools/install.rs`.
+Re-admit original signed bytes before IO and with a fresh final T0 clock; retain
+the single DataStore writer, exact inventory/journal comparisons and shared
+plugin/tool pending refusal. Both fixed pools share the original 256MiB/384-group
+physical budget including quarantine. The generic blob layer must preserve the
+plugin namespace and v2 record/lock bytes; no caller namespace or paths enter it.
+ToolArchivePin is diagnostic metadata, never G4 ToolPin or an execution lock.
+No implicit extraction, lease, executable identity or automatic orphan adoption follows
+from InstalledInertTool. Preserve copy/restore refusal and explicit abort-only
+quarantine. Production review profiles stay empty; see
+[tool storage evidence](./docs/validation/g6-inert-tool-installation.md).
+
+G6 fixed media recipes/projections live in `packages/tools/media.rs`. Keep the
+finite versioned actions, fixed input/output names, no shell/caller argv/filters,
+create-only output option and file-only input protocol. Projections must reject
+duplicate JSON keys, raw filenames/tags/unknown fields and bound streams, numbers,
+dimensions, progress lines and aggregate bytes. Progress is advisory: unknown
+timestamps stay unknown, malformed streams remain poisoned and high watermarks
+survive unknown records. `progress=end` is not process exit or validated output.
+This module grants no installed identity, lease, filesystem IO or execution.
+See [media contract evidence](./docs/validation/g6-media-contracts.md).
+
+G5 Windows native isolation feasibility uses `apps/runtime/tests/windows-isolation.rs`
+and the build-only `test/fixtures/isolation-probe`. Keep LPAC actual SID/security-
+attribute/capability readback before ResumeThread, the fixed registryRead bootstrap,
+explicit handle allowlist, CPU/memory/child/loader limits and real PID/Job drain
+assertions. The uncontained positive control and admission-failure selector are
+test-only; never expose them through Runtime/client configuration. Build the probe
+before the standard native test inventory; keep it outside Cargo default-members,
+ordinary builds and bundles. No signed executable identity or grant is produced.
+See [platform evidence](./docs/validation/g5-windows-native-isolation.md) and
+[ADR-0005](./docs/adr/0005-windows-native-tool-isolation.md).
+
+G7 file planning is read-only T0 admission in `runtime-core/src/file_workflows.rs`.
+Its `file_workflows/store.rs` persists only inert plan metadata in the existing
+DataStore and private definitions in DPAPI. Retain validated input IDs before
+orphan cleanup, including stale restore/copy scopes; corrupt state blocks cleanup.
+Exact challenge disposal cancels old plans without file effects or private deletion.
+See [plan-store evidence](./docs/validation/g7-file-plan-store.md).
+Keep opaque drafts, held ancestor/source handles, exact content/identity checks,
+create-only targets and inventory/hash budgets. Native rename is test-only;
+do not wire writes, client paths or arbitrary media executables around pending
+G5/G6 gates. See [matrix](./docs/validation/g7-completion-matrix.md).
+Before private-job orphan cleanup, retain strictly validated schedule input IDs
+even during restore/copy recovery. Retention never authorizes dispatch or clears
+scope markers; corrupt state must preserve bytes by refusing cleanup.
+CLI's compiled search cases run under the Node test Host against the actual Bun
+CLI, after its existing Bun suite. Preserve both 5s bounds, actual exit/JSON and
+source-canary assertions, exact case count, strict JS checking and fatal `&&`
+sequencing. Bun child-startup blocking is not a reason to relax product deadlines.
+The seven abnormal native drain fixtures use a test-only Node Host for the same
+compiled handlers; C still spawns the hash-pinned actual Bun descendant. Keep
+the existing real Job/PID ownership/alive/exit, lease/migration and all deadline
+assertions. Ordinary service tests and the production config still use Bun.
+Never expose the fixture Host choice as a runtime/client execution option.
+
+G7 search uses `@flowtools/sdk/search`, not independent Host scoring. Keep
+registration/removal synchronized with lifecycle and explain stable rankings.
+User regex must use bounded RE2JS; never restore arbitrary native JS RegExp.
+Launcher preferences contain bounded IDs/counts/aliases, with privacy/clear and
+honest failed storage. Explicit text/clipboard/file/image contexts stay in memory,
+use fixed input bindings and preview before ordinary authorized execution; never
+turn them into OS paths, grants, shortcut dispatch or an HTML execution bypass.
+See [search evidence](./docs/validation/g7-launcher-search.md).
+
+P3.1b5 reminders use the ordinary approved finite schedule/runner path. Keep
+notification scope/epoch checks at the effect point and one durable metadata-only
+attempt per run before OS IO. Unknown attempts never resend. The fixed native
+AppUserModelID must match Desktop; no caller XML/actions/paths or PowerShell
+impersonation. Requested is API acceptance, not display evidence. See
+[reminder evidence](./docs/validation/g7-local-reminders.md).
+
+P3.1b4 schedule replacement atomically cancels the exact old revision and creates
+a new immutable anchor; refuse active old runs and recheck grants. Restore disposal
+requires a state/profile/generation-bound challenge and explicit management consent.
+Keep old positions, attempts, clock floors and private inputs; never rearm or
+grant during recovery. See [edit/recovery evidence](./docs/validation/g7-scheduling-edit-recovery.md).
+
+P3.1b3's `runtime_scheduling.rs` dispatches only through normal submit/runner
+checks, with exact identity/epoch/background policy, private inputs, durable claims
+and no overlap. Keep management-only hosts inert, creation consent separate from
+grants, and cancelled/revoked schedules inactive after regrant. Time resolution
+uses explicit IANA/DST choices and no Host start in Desktop preview. Preserve
+safe-integer Rust DTO/schema bounds and global Specta BigInt refusal. See
+[dispatch evidence](./docs/validation/g7-scheduling-dispatch.md).
+
+P3.1b2's `scheduling/store.rs` borrows DataStore's single writer for bounded
+schedule state and exact-token claims. Preserve revision cancellation, immutable
+identity/epoch/input digest, no raw inputs, profile hash and restore-generation
+binding. Unknown committed attempts never replay automatically; failed/corrupt
+state never resets cursors. Wire dispatch must still recheck current policy.
+See [store evidence](./docs/validation/g7-scheduling-store.md).
+
+The maintainer waived remaining G7 manual acceptance on 2026-10-27 and requested
+moving to the next implementation task. Do not repeat those manual gates or ask
+for confirmation. Record them as waived, never passed. P3.1a1–a5 engineering
+scope is closed for this sequence; unimplemented G7 features, automated failures,
+execution policy and maturity labels are unchanged. See
+[closeout](./docs/validation/g7-shell-closeout.md).
+
+G7 P3.1b1 scheduling rules live in `packages/runtime-core/src/scheduling.rs`.
+Keep absolute UTC/elapsed interval semantics, finite budgets, explicit grace and
+missed-run policies, constant-time catch-up, immutable anchor, clock rollback
+refusal and permanent cancellation. This is an in-memory planning cursor, not
+durable duplicate protection, a job ID, grant or dispatch API. No timer, IPC,
+client store or notification effect is wired. Future persistence/claims must
+borrow the existing DataStore single writer; dispatch must recheck current
+package/command/grant/epoch and unattended authorization. Calendar/timezone
+resolution remains separate. See [rules evidence](./docs/validation/g7-scheduling-rules.md).
+
+G7 P3.1a1 lives in `apps/desktop/src-tauri/src/shell.rs` and `shell/policy.rs`.
+Register single-instance before plugins/DB setup; its args/cwd only restore the
+window, never dispatch commands. Close hides only the main window with a working
+tray and successful hide; errors retain recovery/exit. Autostart requires explicit
+native enable/disable and OS readback; debug/fixtures deny it. Do not add webview
+startup/shortcut permissions or stop Runtime on Desktop exit.
+Keep core menu/tray permissions withheld from webviews; do not restore the broad
+`core:default` alias. Real MockRuntime IPC refusal covers these native surfaces.
+Use the dedicated `tauri.shell-validation.conf.json` fixture. Residency is
+Desktop status only.
+P3.1a/G7 and G5/G6 execution gates remain pending; see
+[shell evidence](./docs/validation/g7-desktop-shell.md).
+
+For native manual acceptance, rebuild the dedicated shell fixture and verify its
+metadata-only `--runtime-validation-identity` output before launch. A cached
+`target/debug/desktop.exe` can have the default identity after ordinary builds.
+`apps/desktop/test/fixtures/shortcut-owner.cs` is an explicit manual positive
+control, never a production tool or CI substitute. Require actual registration
+and message counts, release/close it, and bind process cleanup to its recorded
+path/start time. See [native acceptance](./docs/validation/g7-native-window-acceptance.md).
+
+G7 P3.1a2 Host appearance preferences live in `src/settings/appearance.tsx`
+and `appearance-settings.tsx` under Desktop. Keep the root provider across routes,
+the bounded formatVersion-1 system/light/dark record, system media listener and
+explicit light/dark precedence for CSS variables and Tailwind utilities. Preserve
+unreadable records until user selection/reset; failed storage must retain usable
+controls and honest feedback. Reset removes only this preference. Never derive
+Runtime policy, grants or plugin resources from it. See
+[preference evidence](./docs/validation/g7-desktop-preferences.md).
+
+G7 P3.1a3 status settings use only the existing native control command's
+`runtime.status` / `initialize=false` branch. Keep Debug/main/origin checks,
+Desktop bootstrap with cold start disabled, exact handshake/status instance and
+an owned short-lived pipe. Never use ensure-runtime, manager fallback, profile
+initialization or grants for status queries. Clear old snapshots on query/failure;
+do not poll or present them as live. Browser preview stays disabled. See
+[status evidence](./docs/validation/g7-runtime-status.md).
+
+G7 P3.1a4 diagnostic preview projects only app/Tauri versions, timestamps and
+the existing ephemeral status observation. Keep the bounded allowlist, stable
+codes, query invalidation and explicit preview-then-download actions. Export
+never queries/starts Runtime or selects raw exceptions, logs, payloads, paths,
+credentials or grants. Use the fixed Blob filename and release object URLs;
+download dispatch is not OS save confirmation. Native WebView save and full
+diagnostics remain pending; see [diagnostic evidence](./docs/validation/g7-runtime-diagnostic.md).
+
+G7 P3.1a5 native tray snapshots live in `src-tauri/src/shell/runtime_status.rs`.
+Use only `managed_runtime::status_for_main_window` and the existing
+Debug/main/origin/profile check plus read-only `status_snapshot`. No query at
+construction/menu open, polling, cold start, initialization, manager fallback or
+grant. Clear old labels before connecting; keep the owned overlap gate and
+cancellation release, known mode/count projection and receipt-time disclaimer.
+Core menu/tray permissions stay withheld from webviews; `mock_shell_status` is
+codegen-only Rust test access, never an IPC command. Put actual window tests in
+the existing manifest-bearing bindings target. See [tray evidence](./docs/validation/g7-tray-runtime-status.md).
 
 G5 P2.5b archive admission lives in `packages/runtime-core/src/packages/archive.rs`.
 It consumes opaque verified descriptors and rechecks the exact manifest/archive
@@ -676,7 +947,7 @@ validation, and @flowtools/sdk/manifest/package for Node-only file verification.
 Use parsePluginManifest with an explicit Host target before loading artifacts.
 Keep custom Zod runtime validation explicit; never export an empty substitute.
 Run bun run verify:manifests after build:packages; it covers protocol fixtures
-and all twelve actual compiled T1 packages. Keep commands.ts independent of
+and all thirteen actual compiled T1 packages. Keep commands.ts independent of
 React/UI/Tauri and build fixed <known-id>.commands.js entries. Generated JSON
 lives outside dist to avoid self-referential hashes. CLI validates the bounded
 catalog and exact file list/hash before importing a command; no source fallback.

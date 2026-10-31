@@ -38,6 +38,16 @@ async function browserApi() {
 export default defineConfig(
   async (): Promise<ViteUserConfig> => ({
     plugins: [react(), tailwindcss()],
+    // Prebundle report validation dependencies before opening the test page.
+    // Late optimization otherwise reloads Chromium during test collection.
+    optimizeDeps: {
+      include: [
+        '@flowtools/runtime-client > ajv/dist/2020.js',
+        '@flowtools/sdk > semver',
+        '@flowtools/sdk > zod',
+        'vitest-browser-react',
+      ],
+    },
     resolve: {
       alias: [
         { find: /^@flowtools\/ui$/, replacement: uiSrcIndex },

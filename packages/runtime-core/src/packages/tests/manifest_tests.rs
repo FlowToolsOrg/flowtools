@@ -20,7 +20,7 @@ fn target() -> ManifestCompatibility {
     }
 }
 #[test]
-fn all_twelve_sdk_validated_builtin_manifests_also_pass_native_full_validation() {
+fn all_thirteen_sdk_validated_builtin_manifests_also_pass_native_full_validation() {
     let catalog = crate::catalog::BuiltinCatalog::embedded();
     let mut count = 0;
     for (_, value) in catalog.list() {
@@ -31,7 +31,7 @@ fn all_twelve_sdk_validated_builtin_manifests_also_pass_native_full_validation()
         );
         count += 1;
     }
-    assert_eq!(count, 12);
+    assert_eq!(count, 13);
 }
 #[test]
 fn sdk_and_rust_manifest_admission_agree_on_all_shared_cases() {

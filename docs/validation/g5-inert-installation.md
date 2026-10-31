@@ -147,3 +147,10 @@ semantic pins 保留旧义，G4 v1 lock 不得直接当作 signed archive lock�
 [契约加固证据](./g5-contract-hardening.md)。惰性事务、显式 abort、当前信任
 重检及目录保护不等于产品安装/激活、健康/LKG、物理断电验收或第三方 sandbox。
 P2.5b/G5 与独立安全批准保持 pending。
+
+## 2026-10-31 安装 SQL 边界补充
+
+旧 v2 库存/锁和原字节保持；最终库存写入与 commit/abort 清 journal 接入
+固定槽位事务保护，额外 SQL 触发器写入拒绝并回滚。此修复的复现、专项与
+完整门禁另记于 [安装元数据保护](./g5-install-metadata-guards.md)，不以旧门禁
+替代，也不新增激活/执行权限。

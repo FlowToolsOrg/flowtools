@@ -19,6 +19,7 @@ use std::{
 
 const INVENTORY: &str = "package-install-inventory-v1";
 const PENDING: &str = "package-install-pending-v1";
+mod metadata_guard_tests;
 mod reconciliation_tests;
 struct World {
     fixture: Fixture,

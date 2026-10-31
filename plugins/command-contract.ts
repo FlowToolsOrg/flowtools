@@ -23,6 +23,13 @@ const json = <T extends z.ZodType>(value: T) =>
     stdio: z.string().optional(),
   })
 const outputById: Record<string, z.ZodType> = {
+  'plugin-local-reminder': json(
+    z.strictObject({
+      result: z.strictObject({
+        status: z.enum(['requested', 'unsupported', 'failed', 'unknown']),
+      }),
+    })
+  ),
   'plugin-base64-encoder': json(
     z.strictObject({
       result: z.string(),
@@ -156,6 +163,7 @@ export function defineBuiltinCommand<T>(plugin: {
   } else outputContract = exportOperationSchema(outputSchema)
   const network = plugin.meta.id === 'plugin-website-latency'
   const storage = plugin.meta.id === 'plugin-todo-list'
+  const notification = plugin.meta.id === 'plugin-local-reminder'
   const command: CommandManifestV1 = commandManifestSchema.parse({
     id: 'run',
     name: `执行${plugin.meta.name}`,
@@ -170,7 +178,9 @@ export function defineBuiltinCommand<T>(plugin: {
       ? ['network-read']
       : storage
         ? ['data-read', 'data-write']
-        : [],
+        : notification
+          ? ['notification']
+          : [],
     permissions: network
       ? [
           {
@@ -187,7 +197,15 @@ export function defineBuiltinCommand<T>(plugin: {
               scopes: ['plugin-data'],
             },
           ]
-        : [],
+        : notification
+          ? [
+              {
+                capability: 'notification',
+                operations: ['notify'],
+                scopes: ['local'],
+              },
+            ]
+          : [],
     resources: {
       timeoutMs: 30_000,
       maxInputBytes: 1_048_576,

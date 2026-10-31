@@ -134,6 +134,7 @@ async function execute(
     throw new Error('Package changed')
   if (
     !(managed && snapshot) &&
+    !(managed && frames && request.pluginId === 'plugin-local-reminder') &&
     !(frames && plugin.manifest.dependencies.services.length) &&
     (command.effects.length || command.permissions.length)
   ) {
@@ -162,6 +163,10 @@ async function execute(
     log: () => {},
     services: frames?.services,
     artifacts: frames?.artifacts,
+    notification:
+      request.pluginId === 'plugin-local-reminder'
+        ? frames?.notification
+        : undefined,
     data: snapshot
       ? {
           async read(key) {

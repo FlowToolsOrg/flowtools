@@ -1,5 +1,6 @@
 [workspace]
-members = ["packages/runtime-core", "apps/runtime"]
+members = ["packages/runtime-core", "apps/runtime", "apps/runtime/test/fixtures/isolation-probe"]
+default-members = ["packages/runtime-core", "apps/runtime"]
 exclude = ["apps/desktop/src-tauri"]
 resolver = "2"
 

@@ -1,5 +1,126 @@
 # FlowTools 插件威胁模型
 
+2026-10-31 [消费方孤儿恢复](../validation/g6-tool-consumer-reconciliation.md)
+冻结原始观察、profile/库存与信任 scope，先整批复核，再在持有原生源句柄的
+callback 内比较相关元数据，create-only 隔离且不删除/采纳。新 scope 先受控
+恢复再显式取消；receipt 记录原计划和实际提交 scope。未知 raw 孤儿只保留，
+不作为候选；普通读取仍严格拒绝未知文件。SEC-001/003/004/010/014/015 继续 open。
+
+2026-10-31 [消费方安装锁](../validation/g6-tool-consumer-installation.md) 仅绑定
+当前实际签名插件/service 和 held 的已安装工具 ZIP，生产 review 仍为空。
+固定独立 namespace 保留旧 v2/旧恢复摘要，完整状态与当前信任/时钟复查后
+同 writer 提交；库存写入后、清 journal 前再次比对原 pending，拒绝 SQL
+触发器替换。共享预算与 pending 互斥覆盖新域；尚无 accepted lease/执行、
+G7 文件发布，SEC-001/003/004/010/014/015 继续 open。
+
+2026-10-30 [工具文件孤儿恢复](../validation/g6-tool-image-reconciliation.md)
+将观察到的 owner/身份/字节/SDDL 固定到私有计划，只允许隔离并缩小权限。
+逐效果比较元数据，部分撤权仅接受原始/private 两种精确描述符；清 journal
+前必须完全撤权。观察不验证/采纳未知 seal 或执行身份，SEC 项继续 open。
+
+2026-10-30 [工具 ZIP 恢复核对](../validation/g6-tool-reconciliation.md) 绑定
+profile、库存与 trust/recovery scope，整批检查后以 create-only 原生移动隔离；
+SQL 触发器替换拒绝，异常保留 exact journal 与字节。它不收编未知工具或恢复
+密封文件孤儿，也不签发身份/leases/grants；原有 SEC 项和独立审批继续 open。
+
+2026-10-29 [签名工具绑定](../validation/g6-signed-tool-bindings.md) 只把 opaque
+准入后的工具传给有界 solver，不接受 caller ToolCandidate、签名声明或
+验证 flags；独立锁域固定 consumer/target/flavor/原始 ZIP。当前根、撤销、
+expiry 与 floors 在求解后以新 T0 clock 再检查，所有候选均须通过。旧 lock
+不静默转换；该计划不证明库存/租约/执行，SEC-001/003/004/010/014/015 继续 open。
+
+2026-10-29 [工具文件密封落盘](../validation/g6-tool-materialization.md) 显式
+重准入原始签名归档，在固定私有目录 create-only 写入；绑定全部 native IDs、
+内容与当前用户/SYSTEM/唯一 artifact capability 的 protected ACL、Medium label。
+隔离撤销先整批预检，再移动并删除 capability ACE，最后清除 journal；SQL 失败
+保留可重试状态及原字节。真实 LPAC 测试验证共享读取、缺少能力/跨 profile/
+写入/降级和隔离后拒绝。尚无产品 native adapter、accepted leases、更新/GC 或
+第三方执行，SEC-001/003/004/008/010/014/015 与独立安全审批继续 open。
+
+2026-10-29 [真实媒体候选专项](../validation/g6-media-candidate.md) 以固定的
+source/tag/commit/tree/hash 和真实 LPAC/Job 运行验证媒体行为。ffprobe 的空
+program/group 容器只允许零项，拒绝任意 nested metadata；实际发现 FFmpeg
+-n 拒绝时可退出 0，进程退出、完整进度和新输出内容/身份须分别验证。
+专项未接产品安装/lease/grants/发布，源码/许可证、T3 与独立安全仍 pending；
+SEC-003/004/005/010/015 保持 open，不用媒体测试代替平台和效果点授权。
+
+2026-10-29 G6 惰性工具归档事务采用同一 writer 与 held-parent create-only
+发布，保留原始 envelope，提交前重验 trust/time/bytes 和 SQL journal。插件/
+工具 pending 互相阻止操作，共用原 physical byte/group 预算。真实退出、SQL
+失败、最终撤销/时钟/journal 替换、篡改及 copy/restore 拒绝有回归；不解包、
+运行或生成 leases/grants，SEC-001/003/004/008/010/014/015 继续 open，见
+[归档事务](../validation/g6-inert-tool-installation.md)。
+
+2026-10-29 G6 媒体纯契约只提供固定程序角色/参数及 bounded JSON/progress
+投影；重复 key、raw filename/tags、未知字段、数值/流/像素预算和进度洪泛
+有拒绝回归。未知进度不重置高水位；progress=end 不作为进程退出/文件验证。
+没有新增实际工具/路径/argv、IPC、grant 或文件效果，SEC-003/004/005/010/015
+保持 open，见 [媒体契约](../validation/g6-media-contracts.md)。
+
+2026-10-29 G5 Windows 原生工具可行性以每任务 LPAC 和真实进程正向对照验证
+私有文件/注册表/IPC/网络/另一任务目录及 junction 越界拒绝；恢复线程前读取
+实际 token/句柄身份，Job 覆盖内存、CPU 配置、子进程、输出、500ms 取消和
+kill-on-close。全部为独立测试 fixture，不新增产品入口或 grants；固定
+registryRead 用于 OS bootstrap，不允许包/客户端选择 capabilities。T3 引擎、
+真实 signed tool 身份/库存/lease/输出发布和独立 review 仍 pending，
+SEC-003/004/005/010/015 保持 open，见
+[平台证据](../validation/g5-windows-native-isolation.md)。
+
+2026-10-29 文件计划持久化继续只读：同一 DataStore 保存有界元数据，原路径与
+文件名复用 DPAPI 私密存储。严格校验后才保留计划 input IDs；损坏元数据拒绝
+孤立清理，恢复/copy scope 拒绝普通计划操作。精确 challenge 只能取消旧计划，
+不恢复授权或产生文件效果；没有新的插件/IPC 接口。DPAPI 不是同用户恶意程序
+隔离或受保护 profile ACL 的替代，SEC-003/008/013/015 与独立安全批准仍 pending。
+见 [计划存储验证](../validation/g7-file-plan-store.md)。
+
+2026-10-28 G7 文件只读规划用 held directory/source handles、严格名称/库存/
+大小/内容身份和目标不存在复核拒绝链接、重定向及冲突。无生产写入/原始路径
+IPC，测试 rename 不等于平台隔离或恢复证明。日程孤儿清理保留经校验的日程
+加密输入；恢复 scope 仍拒绝执行。SEC-003/008/013/015 与独立安全批准保持
+open/pending，见 [文件范围](../validation/g7-file-plan-admission.md) 和
+[完成矩阵](../validation/g7-completion-matrix.md)。
+
+2026-10-15 G7 P3.1a1：Windows 原生托盘及官方 single-instance/
+global-shortcut/autostart 插件只负责桌面入口；第二实例参数/cwd 不分发
+业务命令。自启动仅 release 当前身份的原生明确动作写入并回读；debug/
+fixture 拒绝；移除 `core:default` 隐含 menu/tray 权限，保留其余七组 core
+权限，并验证实际 IPC 默认拒绝。Desktop 退出不发送 Runtime stop。
+SEC-003/007/009/013 保持 open，ADR-0001/0002 边界不变；拒绝回归、验证
+范围及独立审阅 pending 见 [桌面入口证据](../validation/g7-desktop-shell.md)。
+
+2026-10-16 P3.1a2 的新增持久化只接受 128 字符以内、formatVersion 1 且字段
+完整的固定外观枚举；未知版本/字段、错误类型、超量与存储失败有浏览器回归。
+重置仅删除外观记录；无输入/输出/路径/凭据、grant 或原生 IPC 写入。
+同源存储不是隔离边界，SEC-003/007/009/013 保持 open；源文件、回归与残余
+验收见 [外观偏好证据](../validation/g7-desktop-preferences.md)。
+
+2026-10-19 原生验收使用独立 fixture 身份及仅占用固定热键的人工正向对照，
+验证真实冲突、第二实例恢复和原生外观重启；未改变任何产品 IPC、权限、
+Runtime/grant 或执行路径。生成文件无漂移，原有门禁/期限/拒绝断言未改。
+证据与剩余 OS/menu 验收见 [原生验收](../validation/g7-native-window-acceptance.md)；
+SEC-003/007/009/013 和独立安全审阅保持 open/pending。
+
+2026-10-20 P3.1a3 复用原生管理命令查询既有 Host 状态。固定 Desktop
+bootstrap/session 绑定身份，拒绝初始化标志和不可信 window/origin；只读
+分支没有 cold-start/manager fallback、grant 或 stop。未知/失败状态不继续
+显示旧快照；真实私有 profile、IPC 拒绝与浏览器证据见
+[状态验证](../validation/g7-runtime-status.md)。SEC-003/007/009/013 保持 open，
+独立审阅 pending；T1 同 realm 与 CSP 缺口没有因只读 UI 被关闭。
+
+2026-10-21 P3.1a4 诊断只从官方 app 版本与临时状态投影固定字段，限制 4096
+UTF-8 字节；拒绝非法元数据，仅保留稳定错误码，不复制未知字段/异常/日志/
+任务载荷/路径/凭据。预览和下载分别明确触发，新查询清除旧报告；固定 Blob
+文件名及 URL 释放不增加原生文件权限。原生 WebView 保存和完整诊断仍待验收，
+见 [诊断证据](../validation/g7-runtime-diagnostic.md)。SEC-003/007/009/013
+及独立审阅仍 open/pending，同 realm 与 CSP 边界未推进。
+
+2026-10-25 P3.1a5 的原生托盘显式查询仅复用实际 main 窗口的 Debug/origin/
+profile 守卫及 Desktop 只读握手；构建/开菜单不查询，无初始化、冷启动、管理
+回退或 grants。查询占用随取消释放，旧快照先清除，仅输出固定模式/计数/时间
+和既有稳定错误码。无新 IPC/DTO、webview menu/tray 权限或存储；真实窗口
+拒绝回归、剩余原生交互和独立批准见 [托盘证据](../validation/g7-tray-runtime-status.md)。
+SEC-003/007/009/013 保持 open；本机 Runtime 进程就绪失败仍未解决。
+
 - 复核日期：2026-10-04；源码基线：`eed0e4d`（P0.4 开始前）
 - 范围：Desktop/Web/CLI 插件入口，以及后续包安装、授权与应用更新设计
 - 状态：prototype；高风险项全部 open，未接受 production 风险豁免
@@ -418,6 +539,28 @@ loopback 均可用，但 public/wildcard/mixed listener、未监听的端点、�
 
 ### SEC-013 CLI 冷启动、后台任务与调用主体混淆
 
+G7 [搜索/上下文](../validation/g7-launcher-search.md) 不启动 Runtime 或赋予
+grant；用户正则仅走有界 RE2JS。剪贴板/文件/本窗口选择仅显式读取、内存预览，
+限制字节/输入绑定，不进入原生命令、HTML bridge 或持久历史；执行另行验证。
+
+P3.1b5 [提醒](../validation/g7-local-reminders.md) 在当前 broker 会话和通知
+scope/epoch 检查内先提交一次尝试再访问 OS；不保存明文内容，未知不重发。
+固定应用身份和纯文本输入不能替换为 caller XML/路径或 PowerShell 冒名。
+
+P3.1b4 的 [编辑/恢复](../validation/g7-scheduling-edit-recovery.md) 需要管理
+会话及明确确认；替换按旧 revision 原子提交，恢复 challenge 绑定确切状态和
+当前 profile/generation。处置不复位游标、降低 clock floor 或恢复授权。
+
+P3.1b3 的 [实际调度](../validation/g7-scheduling-dispatch.md) 需要管理会话明确
+创建且已有 background grant；每次重新检查包身份/epoch，不自动复活撤销的调度。
+claim 先提交、私有输入加密、真实无客户端执行/拒绝矩阵已有 fixture，通知、
+恢复/平台与独立安全验收继续实施，本威胁仍 open。
+
+P3.1b1 的 [有限调度规则](../validation/g7-scheduling-rules.md) 只返回惰性
+occurrence，不接持久 claims、timer、IPC、执行或通知。重复抑制仅对同一内存
+游标有效；不能据此声称恢复/外部副作用 exactly-once。后续调度需单写者原子
+claim、当前包/命令/grant/epoch 与独立 unattended 授权；本威胁保持 open。
+
 - 入口：规划中的本地 runtime IPC、CLI bootstrap、后台 job/调度；高危，open
 - 现状：CLI 仍在自身进程调用 T1 compiled inventory；尚无无界面服务、Host-bound
   client roles、冷启动 grants 或持久任务恢复。新增设计不会让 run flag 获得授权，
@@ -469,6 +612,13 @@ loopback 均可用，但 public/wildcard/mixed listener、未监听的端点、�
 
 ### SEC-015 共享工具包、间接 IO 与进程恢复
 
+- P2.8a9 增量：明确 T0 构造的固定 T1 任务在 accepted 前持有当前 signed
+  ZIP 与现有 seal，独立引用同原任务行提交。grant/epoch/期限在 IO 后复核；
+  不确定写入停止接收，Interrupted 保留根，持久终态及普通 service 后代排空
+  后才释放。复制/恢复不续权，损坏引用阻止孤儿清理。测试覆盖真实进程退出
+  和 Job 排空，范围见 [专项](../validation/g6-accepted-tool-artifacts.md)。
+  生产 Host 无 authority、review 为空；工具执行、accepted 旧版本续接、
+  GC、真实发行与独立安全审阅仍 pending，SEC-003/005/010/014/015 不关闭。
 - 入口：规划中的工具侧载/下载、artifact/lease/GC、媒体进程；严重，open
 - 现状：G6 P2.8a1 已提供严格惰性工具 Manifest/签名 ZIP/持久 trust 准入，
   source/license/flavor/资源角色须匹配 T0 构建审核策略，生产审核清单为空。

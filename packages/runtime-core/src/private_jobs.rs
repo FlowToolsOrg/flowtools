@@ -78,6 +78,19 @@ fn crypt(_bytes: &[u8], _context: &str, _encrypt: bool) -> Result<Vec<u8>, Error
     Err(ErrorCode::StorageFailed)
 }
 impl PrivateJobs {
+    /// Explicit authenticated retry of a known Host-derived identity. Existing
+    /// encrypted bytes must match exactly; corrupt/unrelated data is preserved.
+    pub(crate) fn write_or_verify(&self, id: &str, value: &Value) -> Result<(), ErrorCode> {
+        let path = self.path(id, "input")?;
+        if path.try_exists().map_err(|_| ErrorCode::StorageFailed)? {
+            if self.read(id, "input")? != *value {
+                return Err(ErrorCode::IdempotencyConflict);
+            }
+            Ok(())
+        } else {
+            self.write(id, "input", value)
+        }
+    }
     pub fn open(profile: &Path) -> Result<Self, ErrorCode> {
         let root = profile.join("private-jobs");
         safe_path(&root)?;

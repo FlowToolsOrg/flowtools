@@ -1,0 +1,12 @@
+[package]
+name = "flowtools-isolation-probe"
+version = "0.0.0"
+edition = "2021"
+publish = false
+description = "Build-only native isolation validation fixture; never packaged"
+
+[dependencies]
+serde_json.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_Security", "Win32_Security_Authorization", "Win32_Storage_FileSystem", "Win32_System_IO", "Win32_System_Registry", "Win32_System_Threading", "Win32_System_Memory", "Win32_System_LibraryLoader"] }

@@ -55,6 +55,22 @@ fn check<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>) -> Result<PathBuf,
         .map(|root| PathBuf::from(root).join("FlowToolsRuntimeV1"))
         .ok_or_else(|| error(ErrorCode::ApprovalRequired))
 }
+fn main_status_profile<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+) -> Result<PathBuf, RuntimeError> {
+    let window = app
+        .get_webview_window("main")
+        .ok_or_else(|| error(ErrorCode::SessionInvalid))?;
+    check(&window)
+}
+
+// Native tray entry only. Keep the same Debug/main/origin/profile guard and
+// exact read-only connection as settings, without any initialization parameter.
+pub(super) async fn status_for_main_window<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+) -> Result<RuntimeStatus, RuntimeError> {
+    status_snapshot(main_status_profile(app)?).await
+}
 fn executable() -> Result<PathBuf, RuntimeError> {
     let path = PathBuf::from(env!("FLOWTOOLS_DESKTOP_RUNTIME_PATH"));
     flowtools_runtime_core::data::safe_path(&path).map_err(error)?;
@@ -197,6 +213,48 @@ async fn exchange(pipe: &mut NamedPipeClient, request: &Request) -> Result<Respo
     .await
     .map_err(|_| error(ErrorCode::RuntimeDisconnected))?
     .map_err(|_| error(ErrorCode::RuntimeDisconnected))
+}
+
+// Attach only: no ensure-runtime, manager fallback, initialization or grant query.
+async fn status_snapshot(profile: PathBuf) -> Result<RuntimeStatus, RuntimeError> {
+    let native = bootstrap(profile, false, false).await?;
+    let mut pipe = ClientOptions::new()
+        .open(native.pipe)
+        .map_err(|_| error(ErrorCode::RuntimeDisconnected))?;
+    let opened = exchange(
+        &mut pipe,
+        &Request {
+            version: PROTOCOL_MAJOR,
+            request_id: uuid(),
+            session: None,
+            call: Call::Open(OpenSession {
+                token: native.token,
+                client_version: CLIENT_VERSION.into(),
+                expected_instance_id: None,
+            }),
+        },
+    )
+    .await?;
+    let proof = match opened.outcome {
+        Outcome::Session(proof) => proof,
+        Outcome::Error(failure) => return Err(failure),
+        _ => return Err(error(ErrorCode::InvalidResponse)),
+    };
+    let response = exchange(
+        &mut pipe,
+        &Request {
+            version: PROTOCOL_MAJOR,
+            request_id: uuid(),
+            session: Some(proof.clone()),
+            call: Call::Status,
+        },
+    )
+    .await?;
+    match response.outcome {
+        Outcome::Status(status) if status.instance_id == proof.instance_id => Ok(status),
+        Outcome::Error(failure) => Err(failure),
+        _ => Err(error(ErrorCode::InvalidResponse)),
+    }
 }
 fn business(call: &Call) -> bool {
     matches!(
@@ -377,11 +435,31 @@ pub async fn managed_runtime_control<R: tauri::Runtime>(
     call: Call,
     initialize: bool,
 ) -> Result<Outcome, RuntimeError> {
+    if matches!(call, Call::Status | Call::ScheduleResolve(_)) && initialize {
+        return Err(error(ErrorCode::SessionInvalid));
+    }
     let profile = check(&window)?;
+    if matches!(call, Call::Status) {
+        return status_snapshot(profile).await.map(Outcome::Status);
+    }
+    if let Call::ScheduleResolve(input) = call {
+        // The same Runtime-owned pure conversion is usable before a Host exists.
+        // No bootstrap, manager helper, profile initialization or business start.
+        return flowtools_runtime_core::scheduling::time::resolve_time(input)
+            .map(Outcome::ScheduleTime)
+            .map_err(error);
+    }
     if !matches!(
         call,
         Call::Permissions
             | Call::Plugins
+            | Call::Schedules
+            | Call::ScheduleCreate(_)
+            | Call::ScheduleResolve(_)
+            | Call::ScheduleCancel(_)
+            | Call::ScheduleReplace(_)
+            | Call::ScheduleRecovery
+            | Call::ScheduleDiscard(_)
             | Call::Grant(_)
             | Call::Revoke(_)
             | Call::Policy(_)
@@ -391,7 +469,16 @@ pub async fn managed_runtime_control<R: tauri::Runtime>(
     {
         return Err(error(ErrorCode::SessionInvalid));
     }
-    if !matches!(call, Call::Permissions | Call::Plugins | Call::Revoke(_)) {
+    if !matches!(
+        call,
+        Call::Permissions
+            | Call::Plugins
+            | Call::Schedules
+            | Call::Revoke(_)
+            | Call::ScheduleRecovery
+            | Call::ScheduleResolve(_)
+            | Call::ScheduleCancel(_)
+    ) {
         let encoded = serde_json::to_string(&call).map_err(|_| error(ErrorCode::InvalidRequest))?;
         if encoded.len() > 8192 {
             return Err(error(ErrorCode::FrameTooLarge));
@@ -504,6 +591,69 @@ pub fn destroyed<R: tauri::Runtime>(window: &tauri::Window<R>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn status_profile() -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "flowtools-validation-desktop-status-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ))
+    }
+
+    #[tokio::test]
+    async fn status_snapshot_does_not_initialize_a_missing_profile() {
+        let profile = status_profile();
+        assert!(!profile.exists());
+        let result = status_snapshot(profile.clone()).await;
+        assert_eq!(result.unwrap_err().code, ErrorCode::ApprovalRequired);
+        assert!(
+            !profile.exists(),
+            "Status must not initialize profile storage"
+        );
+    }
+
+    #[tokio::test]
+    async fn status_snapshot_reads_the_actual_host_and_never_cold_starts_after_exit() {
+        let profile = status_profile();
+        let (mut pipe, proof, temporary) = manager(profile.clone(), true).await.unwrap();
+        let temporary = temporary.unwrap();
+        let observed = status_snapshot(profile.clone()).await;
+        let expected = exchange(
+            &mut pipe,
+            &Request {
+                version: PROTOCOL_MAJOR,
+                request_id: uuid(),
+                session: Some(proof),
+                call: Call::Status,
+            },
+        )
+        .await;
+        drop(pipe);
+        temporary.close().await;
+
+        let before = ["bootstrap.json", "runtime.sqlite"]
+            .map(|name| std::fs::read(profile.join(name)).unwrap());
+        let offline = status_snapshot(profile.clone()).await;
+        let after = ["bootstrap.json", "runtime.sqlite"]
+            .map(|name| std::fs::read(profile.join(name)).unwrap());
+        let native = bootstrap(profile, false, false).await.unwrap();
+        let listener_absent = ClientOptions::new().open(native.pipe).is_err();
+
+        let observed = observed.unwrap();
+        let Outcome::Status(expected) = expected.unwrap().outcome else {
+            panic!("Actual Host must return its status");
+        };
+        assert_eq!(observed.instance_id, expected.instance_id);
+        assert_eq!(observed.mode, "management");
+        assert_eq!(observed.active_jobs, 0);
+        assert_eq!(observed.jobs, 0);
+        assert_eq!(offline.unwrap_err().code, ErrorCode::RuntimeDisconnected);
+        assert!(listener_absent, "Status must not start an offline Host");
+        assert_eq!(before, after, "Offline status must not write profile state");
+    }
 
     #[tokio::test]
     async fn cold_helper_finishes_while_the_started_host_is_still_running() {

@@ -187,11 +187,37 @@ pub async fn run() -> Result<(), &'static str> {
     let mut stdin = tokio::io::stdin();
     let mut byte = [0u8; 1];
     let mut tick = tokio::time::interval(Duration::from_millis(25));
+    let mut schedule_tick = tokio::time::interval(Duration::from_secs(1));
     let stop_reply = Arc::new(Semaphore::new(1));
+    let mut schedule_failure = false;
     loop {
         tokio::select! {
             _ = tokio::signal::ctrl_c() => break,
             _ = tick.tick() => {if stop_ready(&core, &stop_reply).await {break;}}
+            _ = schedule_tick.tick() => {
+                let mut locked = core.lock().await;
+                if let Err(code) = locked.tick_schedules() {
+                    if !matches!(code, ErrorCode::RecoveryPending | ErrorCode::InvalidRequest) {
+                        locked.fail_closed();
+                        schedule_failure = true;
+                        break;
+                    }
+                }
+                // Accepted jobs remain durable when the bounded channel is full.
+                // Retry queueing by identity, never repeat schedule acceptance.
+                for run in locked.pending_runs() {
+                    if scheduled.contains(&run) { continue; }
+                    match tasks.try_send(run) {
+                        Ok(()) => {}
+                        Err(tokio::sync::mpsc::error::TrySendError::Full(_)) => break,
+                        Err(_) => {
+                            locked.fail_closed();
+                            schedule_failure = true;
+                            break;
+                        }
+                    }
+                }
+            }
             _ = stdin.read(&mut byte), if stdin_lifetime => break,
             result = listener.connect(), if connections.len() < 15 => {
                 let Some(connected) = accept_connection(&mut listener, result, &pipe_name, &sid).await.map_err(|_| "IPC_ACCESS_FAILED")? else { continue; };
@@ -233,6 +259,9 @@ pub async fn run() -> Result<(), &'static str> {
         workers.abort_all();
         while workers.join_next().await.is_some() {}
         return Err("RUNNER_DRAIN_FAILED");
+    }
+    if schedule_failure {
+        return Err("SCHEDULE_STORAGE_FAILED");
     }
     Ok(())
 }

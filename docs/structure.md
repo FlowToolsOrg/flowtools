@@ -2,6 +2,130 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime-core/src/packages/tools/install/leases.rs` 管理固定 T1 任务的私有
+artifact 记录、当前 signed ZIP 准入与同 writer 任务写入保护；
+`images/lease_source.rs` 只持有已有密封文件，不创建文件或返回 executable
+路径。`runtime.rs` 连接普通接收/恢复/排空边界，专项在
+`packages/tests/tool_tests/install_tests/lease_tests/`。它与规划中的公共
+`tools/leases.rs` 执行/GC 系统不同，普通产品 Host 仍无工具 authority，见
+[范围](./validation/g6-accepted-tool-artifacts.md)。
+
+`runtime-core/src/packages/install/tool_consumers/reconciliation.rs` 管理固定消费方
+域的只读 orphan 计划、独立 journal/receipt 与显式隔离；借用 G5 blob 的
+held-source callback 进行移动前元数据复核。实际磁盘/备份/进程回归在
+`packages/tests/tool_tests/install_tests/consumer_tests/reconciliation_tests.rs`，
+见 [消费方恢复](./validation/g6-tool-consumer-reconciliation.md)。
+
+`runtime-core/src/packages/install/tool_consumers.rs` 管理固定工具消费方库存、
+独立 signed lock/journal 与 abort-only 恢复；`packages/tools/install/consumer_sources.rs`
+只从 held 的实际原始工具库存重准入候选。真实磁盘/进程/备份专项位于
+`packages/tests/tool_tests/install_tests/consumer_tests.rs` 和其 `recovery_tests.rs`。
+没有 wire、grant 或执行入口，见 [消费方安装](./validation/g6-tool-consumer-installation.md)。
+
+`runtime-core/src/packages/tools/install/images/reconciliation.rs` 管理固定
+image journal/receipt；`images/tree/orphans.rs` 负责有界 native observation、
+create-only 移动和叶子优先权限收缩。实际恢复/进程退出/LPAC 回归位于
+`packages/tests/tool_tests/install_tests/image_tests/reconciliation_tests.rs`。
+见 [文件恢复](./validation/g6-tool-image-reconciliation.md)。
+
+`runtime-core/src/packages/tools/install/reconciliation.rs` 提供原始工具 ZIP
+孤儿的显式 plan/apply/resume/abort；复用 crate-private G5 orphan 投影与原生
+移动，不新增调用方 namespace、客户端 DTO 或独立 writer。实际磁盘/备份/
+进程退出回归在 `packages/tests/tool_tests/install_tests/reconciliation_tests.rs`，
+见 [恢复核对](./validation/g6-tool-reconciliation.md)。
+
+`runtime-core/src/packages/dependencies/tools.rs` 定义独立签名插件/工具 ZIP 锁，
+复用父模块的有界选择与原始 ZIP pin 投影；专项位于
+`packages/tests/tool_tests/dependency_tests.rs`。不接 ToolCandidate、安装/租约或
+新 wire 命令，见 [签名绑定](./validation/g6-signed-tool-bindings.md)。
+
+`runtime-core/src/packages/tools/install/images.rs` 与 `images/{native,security,tree}.rs`
+提供显式惰性文件落盘、密封读取和显式隔离撤销。实际进程/NTFS 回归位于
+`packages/tests/tool_tests/install_tests/image_tests.rs`，复用现有非发布原生探针；
+标准 Core test 在 inventory 前构建该探针，普通 build 不构建它。
+见 [密封落盘](./validation/g6-tool-materialization.md)。
+
+`runtime-core/src/packages/tools/install.rs` 提供惰性工具 ZIP 安装/库存/abort；
+`packages/tests/tool_tests/install_tests.rs` 覆盖真实磁盘/进程退出。它复用
+`packages/install/files.rs` 的 crate-private blob 投影和固定 namespace；原插件
+格式不变，见 [归档事务](./validation/g6-inert-tool-installation.md)。
+
+`scripts/media-candidate/` 保存 build-only 源码锁、签名/Git 树验证和构建配方；
+`apps/runtime/test/fixtures/media-candidate/` 是独立非发布的真实媒体专项 workspace。
+仅显式 developer acceptance 使用，不进入普通 Runtime build/test 或客户端配置。
+见 [候选验证](./validation/g6-media-candidate.md)。
+
+`runtime-core/src/packages/tools/media.rs` 新增固定媒体 recipes 和有界
+inspection/progress 解析，测试与模块同文件；不包含工具安装、运行或插件入口。
+见 [媒体契约](./validation/g6-media-contracts.md)。
+
+`apps/runtime/tests/windows-isolation.rs` 及 `tests/isolation/` 承载 Windows
+LPAC 实际拒绝回归。`apps/runtime/test/fixtures/isolation-probe` 是单独编译、
+publish=false 的测试子进程，不是发布工具；不属于 Cargo default-members，
+标准 Runtime test 必须先构建。见 [平台证据](./validation/g5-windows-native-isolation.md)。
+
+`runtime-core/src/file_workflows.rs` 与 `file_workflows/windows.rs` 是 T0 只读
+NTFS 改名规划层，`file_workflows/tests.rs` 使用实际临时目录。
+`file_workflows/store.rs` 复用现有 DataStore/DPAPI 保存惰性计划，测试在
+`file_workflows/store/tests.rs`。尚无 GUI/CLI 文件提交或媒体执行入口；
+见 [持久化](./validation/g7-file-plan-store.md)、[范围](./validation/g7-file-plan-admission.md)
+及 [G7 矩阵](./validation/g7-completion-matrix.md)。
+
+`packages/sdk/src/search.ts` 提供纯索引，`sdk/benchmark/search.ts` 测 10k 命令。
+Desktop 的 `settings/launcher-preferences.ts` 与 `runtime/launcher-input.tsx`
+管理 Host 偏好及临时输入；CLI 入口为 `packages/cli/src/search.ts`。见
+[验证](./validation/g7-launcher-search.md)。
+
+`runtime-core/src/runtime_scheduling.rs` 接认证管理和 Host 派发；`scheduling/time.rs`
+负责共享 IANA/DST 解析。`apps/desktop/src/settings/schedule-settings.tsx` 与
+`packages/cli/src/schedules.ts` 使用同一契约；真实原生 fixture 在
+`apps/runtime/test/scheduling-fixture.mjs`，见 [记录](./validation/g7-scheduling-dispatch.md)。
+
+调度编辑/恢复复用 `scheduling/commands.rs`、`store.rs`、`runtime_scheduling.rs`
+及现有 GUI/CLI 入口；无第二份客户端调度库。见 [验证](./validation/g7-scheduling-edit-recovery.md)。
+
+`notifications.rs` 在既有 DataStore 记录通知尝试；Runtime 原生 adapter 位于
+`apps/runtime/src/notification.rs`，内置命令为 `plugins/plugin-local-reminder`。
+见 [提醒验证](./validation/g7-local-reminders.md)。
+
+`packages/runtime-core/src/scheduling/store.rs` 与 `store/tests.rs` 提供现有
+DataStore 的调度记录/claim 和 SQLite 拒绝回归；没有第二个数据库，见
+[持久化证据](./validation/g7-scheduling-store.md)。
+
+P3.1b1 的 `packages/runtime-core/src/scheduling.rs` 是纯 Rust 有限调度规则；
+`tests/scheduling.rs` 覆盖漏触发、重复/回拨/取消和算术边界。没有 wire DTO、
+timer 或存储；durable schedule/claims 和通知 adapter 仍属拟新增接入，见
+[调度规则](./validation/g7-scheduling-rules.md)。桌面壳当前工程范围已按维护者
+豁免剩余人工复验并收尾，见 [记录](./validation/g7-shell-closeout.md)。
+
+G7 P3.1a1 新增 `apps/desktop/src-tauri/src/shell.rs` 与 `shell/policy.rs`，
+负责 Windows 原生托盘、单实例/快捷键恢复和显式可选自启动；不进入 SDK
+能力或 Runtime 数据层。`tauri.shell-validation.conf.json` 使用独立测试
+身份，见 [桌面入口证据](./validation/g7-desktop-shell.md)。P3.1a/G7 仍 pending。
+`apps/desktop/test/fixtures/shortcut-owner.cs` 是显式启动的 Windows Forms
+人工验收夹具，仅临时占用固定热键并显示消息计数；不进入生产构建或工具目录。
+编译产物留在 ignored evidence，操作与清理见 [原生验收](./validation/g7-native-window-acceptance.md)。
+
+P3.1a2 的 `apps/desktop/src/settings/appearance.tsx` 持有桌面 UI 外观偏好与
+系统模式监听，`appearance-settings.tsx` 提供选择、重置和失败反馈；根布局
+跨路由持有 provider。浏览器回归在 `apps/ui-test/src/test/appearance/desktop-appearance.test.tsx`。
+没有新增 Runtime store 或插件主题加载器，见 [验证记录](./validation/g7-desktop-preferences.md)。
+
+P3.1a3 的 `apps/desktop/src/settings/runtime-status-settings.tsx` 通过既有
+`managed_runtime_control` 的只读分支显示 Host 状态快照；原生实现仍在
+`managed_runtime.rs`，没有新增 IPC command/DTO、Runtime store 或插件 API。
+见 [状态验证](./validation/g7-runtime-status.md)。
+
+P3.1a4 的 `apps/desktop/src/settings/runtime-status-diagnostic.ts` 负责限长
+白名单报告投影，`runtime-diagnostic-download.ts` 读取官方版本并按明确操作
+下载 Blob；状态卡持有临时预览，不新增 Runtime DTO 或存储。见
+[诊断验证](./validation/g7-runtime-diagnostic.md)。
+
+P3.1a5 的 `apps/desktop/src-tauri/src/shell/runtime_status.rs` 持有原生菜单与
+临时查询占用，`managed_runtime::status_for_main_window` 复用既有守卫/只读连接。
+没有新 IPC/DTO/存储；真实窗口拒绝测试在带所需 manifest 的 bindings 目标，
+见 [托盘验证](./validation/g7-tray-runtime-status.md)。
+
 G6 P2.8a1 新增 `packages/runtime-core/src/packages/tools.rs` 与
 `packages/tests/tool_tests.rs`，负责独立的 Runtime-owned 工具 Manifest 惰性
 准入。生产审核清单为空，公开测试 keys/来源/许可证不能进入生产清单。
@@ -199,7 +323,7 @@ SDK 已有命令/Manifest、依赖声明及 P1.6b 服务执行契约。Rust core
   与 entry 子进程拒绝路径；使用无 React 的 `@flowtools/sdk/execution` 子入口。
 - `plugins/test/cli-execution.test.ts`：真实编译后 CLI 的 generated flags / JSON
   envelope / schema 错误 / 非法 timeout / text 回归；不替换内置插件 `run()`。
-- `plugins/test/smoke-fixtures.ts` / `plugin-smoke.test.ts`：十二个真实 compiled
+- `plugins/test/smoke-fixtures.ts` / `plugin-smoke.test.ts`：十三个真实 compiled
   entries 与 CLI discovery 一一对应；注入受控 request/storage，实际 success、
   schema/abort 拒绝无副作用及异常 envelope。根 `smoke:plugins` 显式构建前置产物。
 - `plugins/test/state-network.test.ts`：SDK request 不能退回 raw fetch；Todo

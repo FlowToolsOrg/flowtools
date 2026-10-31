@@ -1,6 +1,8 @@
 import type { PluginManifestV1, JsonValue } from '@flowtools/sdk/manifest'
 import type { ToolContext } from '@flowtools/sdk/types'
 
+import { spawn } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
@@ -12,6 +14,9 @@ import {
 
 import { manifestDigest } from '../../src/manifest-digest'
 import { serveRunner } from '../../src/protocol'
+
+declare const __FLOWTOOLS_FIXTURE_BUN__: string
+declare const __FLOWTOOLS_FIXTURE_BUN_SHA256__: string
 
 await serveRunner(async (value, frames) => {
   const request = value as Record<string, unknown>
@@ -56,15 +61,26 @@ await serveRunner(async (value, frames) => {
       const data = input as { text: string; mode: string }
       if (manifest.id === 'fixture-c') {
         if (data.mode.startsWith('daemon')) {
-          const descendant = Bun.spawn(
-            [process.execPath, '--eval', 'await Bun.sleep(60000)'],
+          if (
+            createHash('sha256')
+              .update(readFileSync(__FLOWTOOLS_FIXTURE_BUN__))
+              .digest('hex') !== __FLOWTOOLS_FIXTURE_BUN_SHA256__
+          )
+            throw new Error('FIXTURE_BINARY_CHANGED')
+          const descendant = spawn(
+            __FLOWTOOLS_FIXTURE_BUN__,
+            ['--eval', 'await Bun.sleep(60000)'],
             {
-              stdin: 'ignore',
-              stdout: 'ignore',
-              stderr: 'ignore',
+              stdio: 'ignore',
+              windowsHide: true,
               detached: true,
             }
           )
+          await new Promise<void>((resolve, reject) => {
+            descendant.once('spawn', resolve)
+            descendant.once('error', reject)
+          })
+          if (!descendant.pid) throw new Error('FIXTURE_DESCENDANT_MISSING')
           descendant.unref()
           writeFileSync('fixture-descendant-ready', String(descendant.pid))
           if (data.mode === 'daemon-fail')

@@ -13,6 +13,7 @@ interface PackageManifest {
 
 const expectedSymbols: Record<string, readonly string[]> = {
   './services': ['executeManifestService', 'serviceTargetSchema'],
+  './search': ['CommandSearchIndex', 'SearchError'],
   './dependencies': [
     'serviceDefinitionSchema',
     'serviceDependencySchema',
@@ -77,6 +78,7 @@ describe('package exports', () => {
   test('execution/catalog subpaths are usable without React or source transpilers', async () => {
     for (const path of [
       'index.js',
+      'search.js',
       'execution.js',
       'dependencies.js',
       'services.js',

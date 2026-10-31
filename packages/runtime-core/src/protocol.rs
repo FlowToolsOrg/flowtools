@@ -32,6 +32,20 @@ pub enum Call {
     Open(OpenSession),
     #[serde(rename = "runtime.status")]
     Status,
+    #[serde(rename = "schedules.list")]
+    Schedules,
+    #[serde(rename = "schedules.resolve-time")]
+    ScheduleResolve(crate::scheduling::time::ResolveScheduleTime),
+    #[serde(rename = "schedules.create")]
+    ScheduleCreate(crate::scheduling::commands::CreateSchedule),
+    #[serde(rename = "schedules.cancel")]
+    ScheduleCancel(crate::scheduling::commands::ScheduleKey),
+    #[serde(rename = "schedules.replace")]
+    ScheduleReplace(crate::scheduling::commands::ReplaceSchedule),
+    #[serde(rename = "schedules.recovery")]
+    ScheduleRecovery,
+    #[serde(rename = "schedules.discard-restored")]
+    ScheduleDiscard(crate::scheduling::commands::ScheduleRecoveryKey),
     #[serde(rename = "plugins.list")]
     Plugins,
     #[serde(rename = "dependencies.plan")]
@@ -393,6 +407,14 @@ pub enum Outcome {
     Session(SessionProof),
     #[serde(rename = "status")]
     Status(RuntimeStatus),
+    #[serde(rename = "schedules")]
+    Schedules(Vec<crate::scheduling::store::ScheduleRecord>),
+    #[serde(rename = "schedule-recovery")]
+    ScheduleRecovery(Option<crate::scheduling::commands::ScheduleRecovery>),
+    #[serde(rename = "schedule-time")]
+    ScheduleTime(crate::scheduling::time::ResolvedScheduleTime),
+    #[serde(rename = "schedule")]
+    Schedule(Box<crate::scheduling::store::ScheduleRecord>),
     #[serde(rename = "plugins")]
     Plugins(Vec<PluginStatus>),
     #[serde(rename = "dependency-plan")]

@@ -551,6 +551,118 @@ Output schema:
 }
 ```
 
+## flowtools/plugin-local-reminder/run
+
+在共享 Runtime 中创建有限周期提醒，并查看发送尝试结果
+
+Version: 0.0.1; maturity: prototype.
+Targets: windows/x64, web/wasm32.
+Headless: true; cold start: true; interaction: none.
+Effects: notification.
+Permission requests: [{"capability":"notification","operations":["notify"],"scopes":["local"]}].
+Runtime validation: {"input":"required","output":"required"}.
+Budgets: {"timeoutMs":30000,"maxInputBytes":1048576,"maxOutputBytes":1048576}.
+
+```powershell
+bun run packages/cli/dist/cli.mjs describe plugin-local-reminder run --format json
+```
+
+| Flag      | Type   | Required | Default | Description |
+| --------- | ------ | -------- | ------- | ----------- |
+| --title   | string | true     |         | 提醒标题    |
+| --message | string | false    | ""      | 提醒内容    |
+
+Schema-valid input example:
+
+```json
+{
+  "title": "example",
+  "message": ""
+}
+```
+
+Input schema:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "提醒标题"
+    },
+    "message": {
+      "default": "",
+      "description": "提醒内容",
+      "type": "string",
+      "maxLength": 1024
+    }
+  },
+  "required": ["title"],
+  "additionalProperties": false
+}
+```
+
+Output schema:
+
+```json
+{
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "text"
+        },
+        "text": {
+          "type": "string"
+        },
+        "stdio": {
+          "type": "string"
+        }
+      },
+      "required": ["type", "text"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "json"
+        },
+        "value": {
+          "type": "object",
+          "properties": {
+            "result": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": ["requested", "unsupported", "failed", "unknown"]
+                }
+              },
+              "required": ["status"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["result"],
+          "additionalProperties": false
+        },
+        "stdio": {
+          "type": "string"
+        }
+      },
+      "required": ["type", "value"],
+      "additionalProperties": false
+    }
+  ]
+}
+```
+
 ## flowtools/plugin-random-picker/run
 
 在线名单随机点名工具

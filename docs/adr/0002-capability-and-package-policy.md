@@ -241,3 +241,22 @@ Cascade disable requires the complete current plan confirmation and persists
 through restart. Old locks/catalogs/backups remain available for controlled recovery.
 Signed artifact installation, filesystem/database transaction recovery and tool GC
 remain G5/G6. See [evidence](../validation/g4-service-calls.md).
+
+### G7 P3.1a1 native shell boundary
+
+The native tray/global shortcut only restore Desktop. Second-instance arguments
+are never command requests. Explicit OS startup registration creates no Runtime
+cold-start policy, unattended approval or plugin grant; debug/fixture builds deny
+it. Desktop exit never dispatches Host Stop. This additive Host prototype leaves
+the package/capability policy unchanged; see
+[shell scope and pending acceptance](../validation/g7-desktop-shell.md).
+
+Webview capabilities retain the seven non-menu/tray core defaults explicitly;
+they no longer inherit native menu/tray mutation from `core:default`. Real Tauri
+IPC rejection tests cover spoofed menus, recovery-tray removal and startup/
+shortcut operations. No new permission is granted.
+
+P3.1a2's bounded Desktop appearance record selects only system/light/dark UI.
+It cannot select plugin resources, native capabilities, Runtime policy or grants.
+No package/Manifest, IPC, CSP or permission change is introduced; see
+[preference scope](../validation/g7-desktop-preferences.md).

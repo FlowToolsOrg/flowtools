@@ -151,7 +151,9 @@ export function ManagedRuntimePanel() {
         scopes:
           pluginId === 'plugin-todo-list'
             ? [{ kind: 'plugin-data' as const, scope: { key_prefix: 'todos' } }]
-            : [],
+            : pluginId === 'plugin-local-reminder'
+              ? [{ kind: 'notification' as const }]
+              : [],
         expiresAt: Date.now() + 86400000,
         maxCalls: 128,
         coldStart: command.supportsColdStart,
@@ -241,7 +243,9 @@ export function ManagedRuntimePanel() {
                   command =>
                     command.id === 'run' &&
                     command.effects.every(effect =>
-                      ['data-read', 'data-write'].includes(effect)
+                      ['data-read', 'data-write', 'notification'].includes(
+                        effect
+                      )
                     )
                 )
               )

@@ -267,6 +267,36 @@
         "additionalProperties": false,
         "properties": {
           "operation": {
+            "const": "notification",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title",
+              "message"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "parameters"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
             "const": "tool-execute",
             "type": "string"
           },
@@ -339,6 +369,117 @@
             },
             "required": [
               "method"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "schedules.list",
+                "type": "string"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "schedules.resolve-time",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ResolveScheduleTime"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "schedules.create",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/CreateSchedule"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "schedules.cancel",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ScheduleKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "schedules.replace",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ReplaceSchedule"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "schedules.recovery",
+                "type": "string"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "schedules.discard-restored",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ScheduleRecoveryKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
             ],
             "type": "object"
           },
@@ -685,6 +826,42 @@
           }
         ]
       },
+      "CreateSchedule": {
+        "additionalProperties": false,
+        "properties": {
+          "commandId": {
+            "type": "string"
+          },
+          "definition": {
+            "$ref": "#/$defs/ScheduleDefinition"
+          },
+          "input": true,
+          "pluginId": {
+            "type": "string"
+          },
+          "requestKey": {
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/$defs/GrantTarget"
+          },
+          "timeoutMs": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "requestKey",
+          "target",
+          "pluginId",
+          "commandId",
+          "input",
+          "definition",
+          "timeoutMs"
+        ],
+        "type": "object"
+      },
       "DataImport": {
         "additionalProperties": false,
         "properties": {
@@ -863,6 +1040,28 @@
         ],
         "type": "string"
       },
+      "LocalTimeChoice": {
+        "enum": [
+          "reject",
+          "earlier",
+          "later"
+        ],
+        "type": "string"
+      },
+      "MissedRunPolicy": {
+        "oneOf": [
+          {
+            "const": "skip",
+            "description": "Discard overdue occurrences outside the explicit lateness grace.",
+            "type": "string"
+          },
+          {
+            "const": "coalesce-latest",
+            "description": "Return only the latest due occurrence, even outside the grace.\nOlder occurrences are discarded; no catch-up burst is produced.",
+            "type": "string"
+          }
+        ]
+      },
       "OpenSession": {
         "additionalProperties": false,
         "properties": {
@@ -1007,6 +1206,114 @@
         ],
         "type": "string"
       },
+      "ReplaceSchedule": {
+        "additionalProperties": false,
+        "properties": {
+          "create": {
+            "$ref": "#/$defs/CreateSchedule"
+          },
+          "previous": {
+            "$ref": "#/$defs/ScheduleKey"
+          }
+        },
+        "required": [
+          "previous",
+          "create"
+        ],
+        "type": "object"
+      },
+      "ResolveScheduleTime": {
+        "additionalProperties": false,
+        "properties": {
+          "choice": {
+            "$ref": "#/$defs/LocalTimeChoice"
+          },
+          "local": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "local",
+          "timeZone",
+          "choice"
+        ],
+        "type": "object"
+      },
+      "ScheduleDefinition": {
+        "additionalProperties": false,
+        "properties": {
+          "firstDueMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "graceMs": {
+            "format": "uint64",
+            "maximum": 60000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "intervalMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 1000,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "missed": {
+            "$ref": "#/$defs/MissedRunPolicy"
+          },
+          "occurrences": {
+            "format": "uint32",
+            "maximum": 10000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "firstDueMs",
+          "occurrences",
+          "graceMs",
+          "missed"
+        ],
+        "type": "object"
+      },
+      "ScheduleKey": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision"
+        ],
+        "type": "object"
+      },
+      "ScheduleRecoveryKey": {
+        "additionalProperties": false,
+        "properties": {
+          "challenge": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "challenge"
+        ],
+        "type": "object"
+      },
       "Scope": {
         "description": "Exact, Host-approved scopes; there are no wildcard grants.",
         "oneOf": [
@@ -1118,6 +1425,19 @@
             "properties": {
               "kind": {
                 "const": "clipboard",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "notification",
                 "type": "string"
               }
             },
@@ -1262,6 +1582,70 @@
           "coldStart"
         ],
         "type": "object"
+      },
+      "ClaimResult": {
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "state": {
+                "const": "claimed",
+                "type": "string"
+              }
+            },
+            "required": [
+              "state"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "runId": {
+                "type": "string"
+              },
+              "state": {
+                "const": "submitted",
+                "type": "string"
+              }
+            },
+            "required": [
+              "state",
+              "runId"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "$ref": "#/$defs/ErrorCode"
+              },
+              "state": {
+                "const": "rejected",
+                "type": "string"
+              }
+            },
+            "required": [
+              "state",
+              "code"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "state": {
+                "const": "interrupted",
+                "type": "string"
+              }
+            },
+            "required": [
+              "state"
+            ],
+            "type": "object"
+          }
+        ]
       },
       "CommandIdentity": {
         "additionalProperties": false,
@@ -1763,6 +2147,20 @@
         ],
         "type": "string"
       },
+      "MissedRunPolicy": {
+        "oneOf": [
+          {
+            "const": "skip",
+            "description": "Discard overdue occurrences outside the explicit lateness grace.",
+            "type": "string"
+          },
+          {
+            "const": "coalesce-latest",
+            "description": "Return only the latest due occurrence, even outside the grace.\nOlder occurrences are discarded; no catch-up burst is produced.",
+            "type": "string"
+          }
+        ]
+      },
       "Outcome": {
         "oneOf": [
           {
@@ -1790,6 +2188,84 @@
               },
               "type": {
                 "const": "status",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/$defs/ScheduleRecord"
+                },
+                "type": "array"
+              },
+              "type": {
+                "const": "schedules",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ScheduleRecovery"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": {
+                "const": "schedule-recovery",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/ResolvedScheduleTime"
+              },
+              "type": {
+                "const": "schedule-time",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/ScheduleRecord"
+              },
+              "type": {
+                "const": "schedule",
                 "type": "string"
               }
             },
@@ -2262,6 +2738,33 @@
         ],
         "type": "string"
       },
+      "ResolvedScheduleTime": {
+        "additionalProperties": false,
+        "properties": {
+          "dueMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "utc": {
+            "type": "string"
+          },
+          "zoned": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dueMs",
+          "utc",
+          "zoned",
+          "timeZone"
+        ],
+        "type": "object"
+      },
       "ReverseDependency": {
         "additionalProperties": false,
         "properties": {
@@ -2435,6 +2938,184 @@
         ],
         "type": "object"
       },
+      "ScheduleBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "grantEpoch": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "identity": {
+            "$ref": "#/$defs/CommandIdentity"
+          },
+          "inputDigest": {
+            "type": "string"
+          },
+          "timeoutMs": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "identity",
+          "grantEpoch",
+          "inputDigest",
+          "timeoutMs"
+        ],
+        "type": "object"
+      },
+      "ScheduleClaim": {
+        "additionalProperties": false,
+        "properties": {
+          "dueMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "index": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "result": {
+            "$ref": "#/$defs/ClaimResult"
+          },
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "index",
+          "dueMs",
+          "result"
+        ],
+        "type": "object"
+      },
+      "ScheduleDefinition": {
+        "additionalProperties": false,
+        "properties": {
+          "firstDueMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "graceMs": {
+            "format": "uint64",
+            "maximum": 60000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "intervalMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 1000,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "missed": {
+            "$ref": "#/$defs/MissedRunPolicy"
+          },
+          "occurrences": {
+            "format": "uint32",
+            "maximum": 10000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "firstDueMs",
+          "occurrences",
+          "graceMs",
+          "missed"
+        ],
+        "type": "object"
+      },
+      "ScheduleRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "binding": {
+            "$ref": "#/$defs/ScheduleBinding"
+          },
+          "cancelled": {
+            "type": "boolean"
+          },
+          "definition": {
+            "$ref": "#/$defs/ScheduleDefinition"
+          },
+          "id": {
+            "type": "string"
+          },
+          "lastClaim": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ScheduleClaim"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastObservedMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "nextIndex": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "skipped": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "definition",
+          "binding",
+          "nextIndex",
+          "cancelled",
+          "skipped"
+        ],
+        "type": "object"
+      },
+      "ScheduleRecovery": {
+        "additionalProperties": false,
+        "properties": {
+          "challenge": {
+            "type": "string"
+          },
+          "count": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "challenge",
+          "count"
+        ],
+        "type": "object"
+      },
       "Scope": {
         "description": "Exact, Host-approved scopes; there are no wildcard grants.",
         "oneOf": [
@@ -2546,6 +3227,19 @@
             "properties": {
               "kind": {
                 "const": "clipboard",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "notification",
                 "type": "string"
               }
             },

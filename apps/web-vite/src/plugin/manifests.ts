@@ -21,6 +21,7 @@ export const builtInManifestData = parseManifestCatalog(
     'plugin-hash-generator',
     'plugin-image-base64',
     'plugin-json-formatter',
+    'plugin-local-reminder',
     'plugin-random-picker',
     'plugin-regex-tester',
     'plugin-text-ops',
@@ -182,6 +183,34 @@ export const builtInManifests: PluginManifestEntry[] = [
           maturity: 'prototype',
         },
         () => import('@flowtools/plugins/plugin-json-formatter')
+      ),
+  },
+  {
+    id: 'plugin-local-reminder',
+    name: '本地提醒',
+    version: '0.0.1',
+    maturity: 'prototype',
+    description: '在共享 Runtime 中创建有限周期提醒，并查看发送尝试结果',
+    type: 'app',
+    permissions: ['notification'],
+    cliAvailable: true,
+    loader: () =>
+      loadManifestModule(
+        builtInManifestData.find(value => value.id === 'plugin-local-reminder'),
+        {
+          hostVersion: '0.1.0',
+          sdkVersion: '0.0.0',
+          platform: 'web',
+          arch: 'wasm32',
+        },
+        {
+          publisher: 'flowtools',
+          id: 'plugin-local-reminder',
+          version: '0.0.1',
+          type: 'app',
+          maturity: 'prototype',
+        },
+        () => import('@flowtools/plugins/plugin-local-reminder')
       ),
   },
   {
@@ -415,6 +444,11 @@ export const pluginCategories = [
     ],
   },
   {
+    id: '其他',
+    label: '其他',
+    pluginIds: ['plugin-local-reminder', 'plugin-todo-list'],
+  },
+  {
     id: '实用工具',
     label: '实用工具',
     pluginIds: ['plugin-random-picker'],
@@ -423,11 +457,6 @@ export const pluginCategories = [
     id: '文本工具',
     label: '文本工具',
     pluginIds: ['plugin-text-ops'],
-  },
-  {
-    id: '其他',
-    label: '其他',
-    pluginIds: ['plugin-todo-list'],
   },
   {
     id: '网络工具',

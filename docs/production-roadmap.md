@@ -15,7 +15,63 @@
 “页面已存在”或“类型已定义”作为完成标准，而以真实执行、失败可恢复、
 权限可强制、产物可验证和发布可回滚作为完成标准。
 
+2026-10-28 当前 G7 交付、自动检查和实际前置统一记录在
+[完成矩阵](./validation/g7-completion-matrix.md)。桌面壳/调度提醒/搜索已交付
+prototype；文件只读规划不等于可提交/撤销闭环，媒体仍等待真实受管工具与
+G5/G6 执行验收。人工 G7 项为 waived，整体不更新为 done。
+
 ## 1. 使用规则
+
+G6 P2.8a9 增加明确 T0 固定 T1 任务的
+[accepted artifact 保留](./validation/g6-accepted-tool-artifacts.md)：实际当前
+ZIP/已有 seal 在 durable receipt 前持有，同原任务行提交；未知写入或
+Interrupted 保留根，成功/失败/取消须持久终态及后代排空后才释放。没有
+产品 Host 开关、原生工具执行或 GC，生产审核仍为空。旧 release floor
+继续生效，旧版本续接与 P2.8c、真实发行/独立安全和 G7 整体保持 pending。
+
+G6 P2.8a8 的 [消费方孤儿恢复](./validation/g6-tool-consumer-reconciliation.md)
+只做 T0 整批观察与 create-only 隔离，持有源时复核元数据，显式续接/作废并
+保留字节。它不采纳或重锁包，不完成 accepted leases、执行或 G7 办公闭环。
+
+G6 P2.8a7 的 [消费方安装锁](./validation/g6-tool-consumer-installation.md) 使用
+独立固定域持久绑定实际签名插件/service 与已安装工具 ZIP，保留旧 G5 v2
+与旧恢复摘要；同一 writer、原共享预算及当前信任/最终时钟检查不变。
+它仍非 accepted lease/执行身份，G7 文件/媒体尚待完成。
+
+G6 P2.8a6 的 [工具文件孤儿恢复](./validation/g6-tool-image-reconciliation.md)
+是独立惰性子步：观察当前 T0-owned 树，显式隔离后逐节点撤销读取能力，
+中断只继续 exact journal；保留所有字节、原总预算与后续执行门槛。
+
+G6 P2.8a5 的 [原始工具 ZIP 恢复核对](./validation/g6-tool-reconciliation.md)
+补齐显式孤儿隔离与 exact journal 续接；保留库存、trust floors、所有字节及
+原有三个物理池预算。密封文件恢复、accepted leases、产品执行与 G7 仍 pending。
+
+G6 P2.8a4 的 [签名工具绑定规划](./validation/g6-signed-tool-bindings.md) 使用
+独立 ZIP 锁域、已准入工具和求解后的新鲜 trust/clock；旧 G4/无工具 signed
+契约保持不变。它不创建 installed execution identity、accepted leases 或 grants。
+
+G6 P2.8a3 提供 [私有工具文件密封落盘](./validation/g6-tool-materialization.md)，
+涵盖同 writer/journal、当前信任重查、原生身份/ACL 复核、整批 abort 预检与
+隔离撤销。真实 LPAC 能力回读及共享文件拒绝路径仍为测试证据；不提供 accepted
+leases 或产品执行身份，不据此关闭 G5/G6/G7 或提升 prototype 标签。
+
+G6 P2.8b2 补充 [真实媒体构建候选与 LPAC 专项](./validation/g6-media-candidate.md)，
+固定源码/签名/Git 树与 candidate bytes，实际处理确定性 WAV/H.264 输入。
+它是独立 developer acceptance；产品工具身份、leases、更新/恢复和 GUI/CLI
+媒体闭环仍待实现，来源/许可证与独立安全审核不由该测试代签。
+
+G6 P2.8a2 新增 [惰性工具归档事务](./validation/g6-inert-tool-installation.md)，
+涵盖共享单写者/预算、持久 journal、显式 abort 和实际退出拒绝回归；不含
+工具解包、执行身份、accepted leases、更新/GC 或 G7 媒体闭环。
+
+G6 P2.8b1 同时提供纯 Rust 固定媒体 recipes 与有界结果投影，详见
+[契约证据](./validation/g6-media-contracts.md)。它没有建立工具库存、accepted
+leases、启动进程或发布文件，不能作为 G7 已完成媒体闭环的证据。
+
+2026-10-29：G5 P2.2a 的 Windows 原生 LPAC 可行性已新增六项实际进程回归，
+范围和失败历史见 [平台证据](./validation/g5-windows-native-isolation.md)。
+它是 G6 执行前置子步骤，不代表 T3/真实工具发行、工具库存/leases 或 G7
+文件/媒体闭环完成；独立安全批准仍 pending。
 
 1. 本文档是生产化工作的路线图和进度来源。范围发生变化时，先更新路线图，
    再开始实现。
@@ -1575,6 +1631,79 @@ Phase 2 总退出标准：P2.1–P2.8 全部 `done`；第三方代码默认拒�
 
 ### P3.1 完成 Desktop 宿主产品能力
 
+P3.1b5 接入本地提醒、持久发送尝试及固定身份的 Windows 通知 API。真实无客户端
+执行返回 requested，GUI/CLI 管理和拒绝矩阵通过，见
+[提醒证据](./validation/g7-local-reminders.md)。整仓门禁与其余 G7 工作继续推进。
+
+P3.1b4 增加 GUI/CLI 原子调度替换与显式恢复处置，保留旧位置、输入和时钟下限，
+不自动恢复执行；见 [编辑/恢复证据](./validation/g7-scheduling-edit-recovery.md)。
+
+P3.1b3 实现认证管理、共享时区预览与 Host 后台派发，实际无客户端任务及
+撤销/取消回归通过，见 [证据](./validation/g7-scheduling-dispatch.md)。
+完整调度编辑、通知和其余 G7 功能继续实施，不提前推进父项成熟度。
+
+P3.1b2 已实现 DataStore 单写者中的调度位置和 exact-token claim，8 项 SQLite
+回归覆盖重启/恢复/取消/写失败；管理和派发继续接入，见
+[记录](./validation/g7-scheduling-store.md)。
+
+2026-10-27：按维护者明确要求豁免剩余 G7 人工验收，关闭当前 P3.1a1–a5
+工程工作项并推进 P3.1b；人工项不冒充通过，既有本机 Runtime 失败保留，
+`ea2bedb` 远端 PR 完整门禁通过。P3.1/G7 的未实现范围、执行前置与独立
+安全批准不随之完成，见 [收尾记录](./validation/g7-shell-closeout.md)。
+
+2026-10-15：P3.1a1 交付 Windows 原生托盘、单实例/快捷键恢复和显式
+可选自启动 prototype；debug/fixtures 拒绝写 OS 启动项。无新 webview
+权限、Runtime stop 或第三方执行入口。验证边界见
+[桌面入口证据](./validation/g7-desktop-shell.md)。P3.1a/P3.1/G7 保持 pending；
+设置/诊断、正式身份迁移、Runtime 状态及重启/平台验收另行完成。
+
+2026-10-16：P3.1a2 交付 system/light/dark 外观偏好的设备本地持久化、明确
+重置和失败反馈，根布局跨路由应用并响应系统变化。只完成这一项 UI 设置，
+不推进 P3.1a/P3.1/G7 父项；完整设置/诊断、OS 与 Runtime 验收仍 pending。
+见 [外观偏好证据](./validation/g7-desktop-preferences.md)。
+
+2026-10-19：本机 `06e29cd` 完整门禁通过，原生 fixture 补齐热键冲突时的
+第二实例恢复、释放并重启后的快捷键恢复及外观跨进程重启验收。
+可复用人工夹具与实际边界见 [原生验收](./validation/g7-native-window-acceptance.md)。
+同日后续 `73a4a1d` 的完整门禁失败于三项原样 Runtime 后代就绪/排空测试
+（21/24）；之前绿色不覆盖当前失败，本地最新整仓集成仍未接受。
+这不完成托盘菜单、OS 登录/重启、多屏热插拔、Runtime 状态或任务连续性；
+P3.1a/P3.1/G7 与独立安全批准保持 pending。
+
+2026-10-20：P3.1a3 在设置页增加只读 Host 状态快照，显示实际实例/模式与
+任务计数，不借查询冷启动、初始化或改变授权。失败清空旧状态；保持原有
+Debug/main/origin 限制。见 [状态证据](./validation/g7-runtime-status.md)。
+托盘 Runtime 集成、诊断、正式身份及完整平台验收仍 pending。
+本轮 `6432d76` 本机完整门禁在 87 项浏览器及 Core 222+2 通过后，Runtime
+21/24 失败，原因仍未确定。完整结果见上述状态证据，不以单项通过覆盖失败。
+
+2026-10-21：P3.1a4 增加限长版本/状态 JSON 预览与独立下载，生成不连接
+Runtime；失败不回显原始异常，新查询清空旧预览。7 项投影和 14 项状态卡
+浏览器回归及双宽度实际下载通过，见 [诊断证据](./validation/g7-runtime-diagnostic.md)。
+原生 WebView 保存、完整诊断、托盘状态、正式身份与平台/任务连续性仍 pending，
+P3.1a/P3.1/G7 不推进。
+
+该诊断产品提交 `4617afb` 的本机完整门禁在 94 项浏览器、Core 222+2 通过后，
+Runtime 后代就绪/排空路径 22/24 失败。独立 Desktop 99 Bun/30 Rust 单元/
+5 集成、11 工作区构建、生产产物对照及 Rust 检查通过，不覆盖整仓失败；
+原因未确定，原有期限、真实进程断言和失败传播均未改。
+
+2026-10-25 复核保留 10 月 21 日的专用 Windows Debug 原生保存证据：未查询
+状态报告使用真实 app/Tauri 版本，260 字节下载与预览完全一致，文件已归档，
+记录的测试进程已不存活。其余平台/正式包、保存异常与完整诊断仍待验收；
+P3.1a/P3.1/G7 和独立安全批准仍 pending。
+
+2026-10-25：P3.1a5 补充原生托盘只读 Runtime 快照，带查询时间、并发占用
+和稳定失败反馈，沿用 Debug/main/origin/profile 检查，无初始化/冷启动或
+新权限。35 Rust 单元/6 集成通过，实际托盘交互仍待验收，见
+[托盘证据](./validation/g7-tray-runtime-status.md)。本机进程就绪失败未解决，
+P3.1a/P3.1/G7 不推进。
+
+该托盘产品提交 `ca062a4` 的完整门禁保留 Runtime 20/24 后代就绪/排空失败；
+94 浏览器和 Core 222+2 通过。独立 Desktop 99 Bun/35 Rust 单元/6 集成、
+11 工作区构建、生产产物对照与 Clippy 通过，不覆盖该整仓失败；仍未更改
+Runtime、runner、Core、SDK 源码或任何测试期限/真实进程断言。
+
 - 状态：`pending`
 - 负责人：`TBD (Desktop)`
 - 依赖：P0.1、P1.4、P2.3、P2.4
@@ -1601,7 +1730,21 @@ cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 - Windows 重启、热键冲突、多屏切换和异常退出恢复清单通过。
 - 单实例不会损坏状态，第二实例请求能转发到已有窗口。
 
+P3.1b1（2026-10-27）已先交付纯 Runtime 一次性/有限 interval 规则与 11 项
+集成回归，含明确漏触发和单游标重复抑制；不接 timer、持久 claims、授权执行
+或通知，不完成 P3.1b/G7。后续先接现有单写者的调度状态与 claims，再接授权
+dispatch 和通知 adapter，见 [调度规则](./validation/g7-scheduling-rules.md)。
+
+`fcb83a4` 本机完整门禁：静态、94 浏览器、Core 222+11+2 通过；原样 Runtime
+20/24 后代就绪/排空失败，完整脚本 exit 1，未重试或放宽断言。人工验收豁免
+与当前工程收尾决定保持有效；调度规则专项通过不覆盖整仓失败。
+
 ### P3.2 完成生产级启动器与搜索
+
+2026-10-28 已实现共享拼音/模糊/别名/有界正则索引、排序解释、隐私/清空与
+显式上下文预览。实际 10k 查询 p95：文字 4.76ms、正则 21.08ms；见
+[实现与验证](./validation/g7-launcher-search.md)。完整 G7/根门禁与文件/媒体仍继续，
+不因该基准或构建通过提前提升生产成熟度。
 
 - 状态：`pending`
 - 负责人：`TBD (Search / UI)`

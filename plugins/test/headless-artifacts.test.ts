@@ -147,7 +147,7 @@ test('all real command artifacts run in a consumer with no React, GUI or source 
         const cancelled=await executeManifestCommand(manifest,'run',plugin,fixture.input,ctx,target,{signal:abort.signal});
         assert.equal(cancelled.error.code,'ABORTED');
       }
-      console.log('12 real command artifacts: no React/UI/source; actual outputs, schema rejection and abort passed');
+      console.log('13 real command artifacts: no React/UI/source; actual outputs, schema rejection and abort passed');
     `
     )
     const child = Bun.spawn(['node', join(root, 'probe.mjs')], {
@@ -162,7 +162,7 @@ test('all real command artifacts run in a consumer with no React, GUI or source 
     ])
     expect(stderr).toBe('')
     expect(code).toBe(0)
-    expect(stdout).toContain('12 real command artifacts')
+    expect(stdout).toContain('13 real command artifacts')
   } finally {
     const canonical = realpathSync(root)
     expect(dirname(canonical)).toBe(realpathSync(tmpdir()))

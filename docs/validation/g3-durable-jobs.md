@@ -59,3 +59,38 @@ bootstrap CI repair is a separate focused commit and both remote Windows gates
 passed. Final P1.3b validation remains separately recorded in the PR.
 
 Final local acceptance: docs, lint (zero warnings), types, all 11 uncached workspace test tasks, all 11 forced build tasks, Rust format/clippy, generated Runtime/manifests/command-doc read-only checks and production artifact refusal passed. Core 32 tests, native Host 4 tests, actual Host client fixtures 4 tests and fixed runner 2 tests passed. Root test/build ran sequentially with local Turbo concurrency=1; prior resource failures remain in execution-validation logs. Independent security review and standalone/GUI/diagnostic G3 steps remain pending.
+
+## Accepted queued jobs and revoked grants (2026-10-30)
+
+The complete local gate for `ba10b39` exposed a real queue race: revoking Todo
+after acceptance but before dequeue returned `APPROVAL_REQUIRED`, whereas
+revoking an already running job returned `GRANT_REVOKED`. Both remote Windows
+runs passed, which does not erase the local failure. The original native fixture,
+its 30-second bound and every Job/drain assertion remain unchanged.
+
+Accepted jobs now recheck their original policy epoch before ordinary command
+authorization, both at dequeue and when restoring durable jobs. Missing,
+revoked, expired or replaced grants return `GRANT_REVOKED`; a later regrant
+cannot authorize an old job. Dequeue uses one clock observation for authorization
+and session binding. New submissions retain `APPROVAL_REQUIRED`, pure validation
+keeps its existing epoch-zero behavior, and every effect still rechecks the
+session. No grant, execution option or wire operation is added.
+
+A deterministic Todo regression failed before the fix and passed afterward.
+It covers revoke, regrant, expiry and missing policy before dequeue, verifies
+that no runner starts or data revision changes, and keeps private input out of
+metadata. A real SQLite/DPAPI restart regression uses normal manager revoke and
+regrant: the old task becomes interrupted with `GRANT_REVOKED`, has no pending
+runner or retained private input, and never writes Todo. Broker tests separately
+preserve fresh-request errors and pure command behavior. All ten broker and
+fourteen Runtime unit tests passed; Core all-target Clippy passed. The unchanged
+actual Host Todo fixture passed in 6.74 seconds under its original 30-second
+bound. The complete gate results are recorded separately after execution.
+
+The complete local gate for `ec973a4` exited zero with a clean worktree:
+11/11 workspace lint/types/test/build; Core 334+11+6; Runtime 24+6 native and
+all 17 Bun integrations including the unchanged fifty-start fixture; Chromium
+109 cases; Desktop 106 Bun, one Node and 36+6 native tests. Web 23/Desktop 25
+production artifacts were byte-identical; production refusal, Rust format,
+locked check and Clippy passed. Log:
+`execution-validation/g6/root-ci-ec973a4-20261030.log`.

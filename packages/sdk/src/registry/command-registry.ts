@@ -1,5 +1,7 @@
 import type { CommandMode } from '../types/command'
 
+import { CommandSearchIndex } from '../search'
+
 /**
  * A command registered in the command registry.
  */
@@ -28,6 +30,8 @@ export interface RegisteredCommand {
    * Keywords for search matching.
    */
   keywords: string[]
+  /** Host aliases are search metadata, never command IDs or permissions. */
+  aliases?: string[]
   /**
    * Optional icon identifier.
    */
@@ -55,6 +59,7 @@ const MAX_RECENT = 5
  */
 export class CommandRegistry {
   private commands = new Map<string, RegisteredCommand>()
+  private index = new CommandSearchIndex()
   private recentIds: string[] = []
   private listeners = new Set<CommandRegistryListener>()
 
@@ -66,6 +71,7 @@ export class CommandRegistry {
     if (existing && existing.pluginId !== command.pluginId) {
       throw new Error('Command id belongs to another plugin')
     }
+    this.index.upsert(command)
     this.commands.set(command.id, command)
     this.notify()
   }
@@ -79,6 +85,7 @@ export class CommandRegistry {
     for (const [id, cmd] of this.commands) {
       if (cmd.pluginId === pluginId) {
         this.commands.delete(id)
+        this.index.remove(id)
         changed = true
       }
     }
@@ -115,36 +122,12 @@ export class CommandRegistry {
       return this.getOrdered()
     }
 
-    const all = this.getAll()
-    const scored: Array<{ cmd: RegisteredCommand; score: number }> = []
-
-    for (const cmd of all) {
-      let score = 0
-
-      if (cmd.title.toLowerCase().includes(trimmed)) {
-        score += 10
-      }
-
-      if (cmd.description?.toLowerCase().includes(trimmed)) {
-        score += 5
-      }
-
-      if (cmd.keywords.some(k => k.toLowerCase().includes(trimmed))) {
-        score += 3
-      }
-
-      if (cmd.pluginId.toLowerCase().includes(trimmed)) {
-        score += 1
-      }
-
-      if (score > 0) {
-        scored.push({ cmd, score })
-      }
-    }
-
-    scored.sort((a, b) => b.score - a.score)
-
-    return scored.map(s => s.cmd)
+    return this.index
+      .search(trimmed, { recent: this.recentIds })
+      .flatMap(result => {
+        const command = this.commands.get(result.id)
+        return command ? [command] : []
+      })
   }
 
   /**

@@ -10,6 +10,7 @@ const packageDir = dirname(fileURLToPath(import.meta.url))
 export default createPackageTsdownConfig({
   packageDir,
   entry: {
+    search: 'src/search.ts',
     services: 'src/services/service-execution.ts',
     dependencies: 'src/dependencies/index.ts',
     extensions: 'src/extensions/index.ts',

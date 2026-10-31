@@ -1,5 +1,126 @@
 # Flow Tool Architecture
 
+G6 P2.8a9 在明确 T0 构造的固定 T1 任务 accepted 前持有已准入 ZIP 与现有
+密封文件。独立 artifact 记录同原 jobs.metadata 单行提交；grant/epoch 与
+deadline 在 IO 后重查，终态及后代排空后才持久释放。管理/恢复只保留历史
+根，不续权；普通 Host 不配置工具 authority，生产 review 为空。原生工具
+执行、旧版本 accepted continuation、更新/GC 与 G7 文件/媒体仍未闭环，见
+[任务 artifact 保留](./docs/validation/g6-accepted-tool-artifacts.md)。
+
+G6 P2.8a8 为消费方域新增显式 orphan plan/apply/resume/abort；整批复核后
+通过 held-parent/create-only 移动隔离，每次实际移动前在持有源句柄的 callback
+内比较冻结元数据。新恢复 scope 只能先受控恢复、再显式作废；保留所有字节，
+不重锁或收编，见 [消费方恢复](./docs/validation/g6-tool-consumer-reconciliation.md)。
+
+G6 P2.8a7 在 `packages/install/tool_consumers.rs` 持久绑定实际签名插件/service
+图与已安装工具 ZIP；固定独立 namespace/profile 保留旧 G5 v2 格式。
+同一 writer 管理 journal 与最终当前信任复查，原 transitive pins 不自动重锁，
+所有池仍共用原预算。accepted leases 与执行仍待完成，见
+[消费方安装锁](./docs/validation/g6-tool-consumer-installation.md)。
+
+G6 P2.8a6 显式观察并隔离 T0-owned 工具文件孤儿，保留完整身份/字节/安全
+描述符；逐节点写入 private policy 后才清 journal，abort 也须撤销已移动组
+的 artifact capability。仍使用同一个 writer 与总预算，观察不收编 seal 或
+产生执行身份，见 [文件恢复](./docs/validation/g6-tool-image-reconciliation.md)。
+
+G6 P2.8a5 显式核对恢复后的惰性工具 ZIP 孤儿，复用固定 blob namespace 与
+同一个 DataStore writer；整批预检、scope/库存绑定、逐效果复核及 SQL 前后
+核对保证中断后只继续 exact journal。隔离不收编、不删除或降低 trust floors，
+密封文件孤儿继续拒绝，见 [恢复边界](./docs/validation/g6-tool-reconciliation.md)。
+
+G6 P2.8a4 的 `packages/dependencies/tools.rs` 在独立 profile 下把已准入工具 ZIP
+与签名插件/service 图绑定；消费方、版本、target、flavor 和原始 packageDigest
+进入锁，求解前后检查当前 trust/时间。G4 与旧 tool-free signed lock 不变；
+尚非已安装锁、accepted lease 或执行身份，见
+[签名工具绑定](./docs/validation/g6-signed-tool-bindings.md)。
+
+G6 P2.8a3 在同一 writer 中显式落盘已重新准入的工具文件，使用固定私有目录、
+文件/目录身份与完整字节密封、原生 ACL/Medium label 回读和独立 journal。
+隔离区在清除 journal 前撤销 artifact read capability；三个池共用原预算。
+它仍不产生执行身份、accepted lease 或产品启动入口，见
+[密封落盘证据](./docs/validation/g6-tool-materialization.md)。
+
+G6 的 [真实媒体候选专项](./docs/validation/g6-media-candidate.md) 位于独立非发布
+Cargo workspace，只验证固定构建 bytes/recipes 的实际 LPAC 处理。不成为 Runtime
+Host selector、工具身份/lease、grants 或用户输出提交入口；生产审核列表保持空。
+
+G6 惰性工具归档的显式事务复用既有 DataStore writer 和 held-parent blob
+层，固定 namespace 与插件库存分离，pending/256MiB/384 组预算相互约束。
+原始签名字节及最终时钟重查后才提交，不解包或返回执行/lease 身份，见
+[归档事务](./docs/validation/g6-inert-tool-installation.md)。
+
+G6 的 `packages/tools/media.rs` 只构造固定程序角色/参数 recipes，投影有界
+ffprobe/progress 元数据，不接 OS 路径或任意 argv，不创建 lease/进程/文件。
+进度不是退出或输出验证，未知记录不能重置高水位，见
+[媒体契约](./docs/validation/g6-media-contracts.md)。
+
+G5 原生工具平台可行性使用每任务 LPAC、恢复前实际 token/句柄身份检查和限额
+Job；六项真实拒绝回归只存在于独立测试探针。它未给产品增加执行入口、grant
+或工具身份，见 [ADR-0005](./docs/adr/0005-windows-native-tool-isolation.md) 与
+[平台证据](./docs/validation/g5-windows-native-isolation.md)。
+
+G7 文件规划在 T0 以不可构造的 `RenameDraft` 持有目录/文件身份，生产仅能预览
+和整批复核；无文件写 IPC、插件路径或第二份存储。日程输入在重启孤儿清理前
+按经校验的日程 ID 保留，恢复 scope 仍拒绝派发。见
+[完整矩阵与依赖](./docs/validation/g7-completion-matrix.md)。
+
+文件计划可由 T0 存入同一 DataStore：SQLite 只含 plan ID/digest 等有界元数据，
+原目录与文件定义复用 DPAPI 私密存储。重启清理保留严格校验的计划 input ID，
+复制/恢复 scope 仍拒绝使用；精确 challenge 仅用于取消旧计划，不执行文件效果。
+见 [计划持久化](./docs/validation/g7-file-plan-store.md)。
+
+G7 搜索复用 SDK 元数据索引及生命周期移除；偏好只保存有界 ID/次数/别名。
+显式上下文只在内存中带入已知命令预览，不授予文件或后台执行能力。
+见 [搜索/上下文](./docs/validation/g7-launcher-search.md)。
+
+本地提醒经普通授权 runner 发送，通知前用现有单写者记录一次尝试。未知状态
+不重发，requested 不代表显示成功，见 [验证](./docs/validation/g7-local-reminders.md)。
+
+P3.1b4 将调度替换的旧版本取消与新锚点创建放在同一提交；恢复处置只按当前
+profile/generation 与原状态 challenge 作废旧计划，保留位置和时钟下限。
+见 [编辑与恢复](./docs/validation/g7-scheduling-edit-recovery.md)。
+
+P3.1b3 的 Host tick 将已提交 claim 接到既有任务队列，每次检查当前身份、
+background grant/epoch；输入复用私有加密存储，未知接受状态 fail closed。
+管理会话创建/取消，Native 明确确认；GUI/CLI 共用 Rust 派生 wire 与 Jiff 时区
+解析，见 [派发证据](./docs/validation/g7-scheduling-dispatch.md)。
+
+P3.1b2 的 `scheduling/store.rs` 在现有 `core_metadata` 单写者持久化有限调度
+位置和随机 claim，先提交再返回一次派发尝试；不存原始输入。未知尝试不重放，
+复制数据库/恢复代际改变拒绝自动触发，见 [证据](./docs/validation/g7-scheduling-store.md)。
+
+P3.1b1 的 `runtime-core/src/scheduling.rs` 先提供纯 Rust 有限调度游标：绝对 UTC
+时间、固定 elapsed interval、显式 grace/漏触发策略、取消与单游标重复抑制。
+只返回惰性 occurrence；持久 claims、恢复、时区日历解析与授权/通知 adapter
+另行接入现有 Runtime 单写者和 broker。没有新增 IPC、数据库或插件 timer，见
+[调度规则](./docs/validation/g7-scheduling-rules.md)。当前桌面壳人工复验按维护者
+决定豁免，工程范围收尾见 [记录](./docs/validation/g7-shell-closeout.md)。
+
+G7 P3.1a1 的 Windows 原生 `shell.rs` 提供托盘、单实例/快捷键唤起和显式
+自启动。第二实例参数/cwd 不进入业务命令；无新 webview 权限/IPC 命令、
+Runtime store/grant 或 stop 调用。驻留行仅报告 Desktop；Runtime 快照见下文
+P3.1a5，调度另行接入，见 [桌面入口证据](./docs/validation/g7-desktop-shell.md)。
+受控 Windows 实窗已验证热键冲突下的第二实例恢复及原生外观重启保留；
+独立热键 owner 仅是人工验收夹具，不进入 Host/Runtime 执行面，见
+[原生验收](./docs/validation/g7-native-window-acceptance.md)。
+
+P3.1a2 的 Desktop 根布局持有 system/light/dark 外观偏好，使用版本化、限长的
+本地 UI 记录；启动即应用，系统变化实时更新，明确浅/深色优先于系统媒体规则。
+损坏记录保留到用户选择或重置；失败反馈不影响恢复控件。该状态不进入 Runtime
+数据、权限或 E02 插件主题资源，见 [外观证据](./docs/validation/g7-desktop-preferences.md)。
+
+P3.1a3 在设置页复用既有 Rust 管理命令的固定只读分支，连接当前已运行的
+Host 并回读状态快照。没有冷启动、管理进程 fallback、初始化或 grant 变更，
+失败清除旧快照，见 [状态证据](./docs/validation/g7-runtime-status.md)。
+
+P3.1a4 将本页临时状态与官方 app/Tauri 版本投影为限长诊断 JSON，先预览再
+明确下载；生成不连接 Runtime，新查询使旧预览失效。无日志、任务载荷、路径、
+凭据或新存储/权限，原生保存验收仍 pending，见 [诊断证据](./docs/validation/g7-runtime-diagnostic.md)。
+
+P3.1a5 的原生托盘动作复用主窗口 Debug/origin/profile 守卫和既有只读连接，
+显示带查询时间的 Runtime 快照；构建/打开菜单不查询，重复点击不并发连接，
+无冷启动或授权变更。实际托盘交互未验证，人工复验已豁免，见 [托盘证据](./docs/validation/g7-tray-runtime-status.md)。
+
 G6 P2.8a1 的 `packages/tools.rs` 复用 `PackageTrustStore` 单写者与严格 ZIP
 准入，核对原始签名工具 Manifest、完整文件角色及构建内固定审核策略，返回
 opaque inert bytes。返回前重新采样 T0 时间并检查当前根、撤销和 floors。
@@ -132,7 +253,7 @@ RPC 路由，二进制工具由共享 artifact store 与受管任务进程执行
   - `apps/web-vite/src/stores`：pluginRegistryStore、commandStore、runHistoryStore、settingsStore
   - `packages/sdk/src/compat/html-plugin.ts`：HTML `plugin.json` 类型、命令解析和兼容分级
   - `scripts/inspect-html-plugins.ts`：扫描本地 HTML 插件 checkout 并生成 `apps/desktop/src/data/html-plugin-catalog.json` 与 `docs/html-plugin-catalog.json`
-  - 12 个内置插件（全部为 app 类型，均提供 `setup()` + `run()` + `inputSchema`）
+  - 13 个内置插件（全部为 app 类型，均提供 `setup()` + `run()` + `inputSchema`）
 - 目录已创建，尚未实现：
   - `apps/docs`
   - `apps/web`
@@ -144,7 +265,7 @@ CLI 入口已就绪，桌面端可通过 `Command::new("flowtools")` 调用内�
 
 P0.3a1 在 SDK types 定义 maturity schema/type（prototype/experimental/beta/
 production），缺失 metadata 仅默认 prototype；compatibility evidence 独立。
-12 个内置 meta、Web/Desktop manifest、CLI list/info JSON/text 同步声明 prototype。
+13 个内置 meta、Web/Desktop manifest、CLI list/info JSON/text 同步声明 prototype。
 生成器按排序 inventory 同时更新两端与 CLI 固定清单；Desktop 补显式 plugins workspace 依赖，
 根 Turbo 的依赖 tests/build 顺序随真实 dependency graph 推导。该标签不是签名、
 API 认证或 grant，不能据此宣称 P0 done。
@@ -733,7 +854,7 @@ All maturity labels stay prototype; SEC-001–SEC-012 remain open.
 
 [Manifest v1](./docs/manifest-v1.md) 已提供纯 JSON 协议、有限 operation Schema、
 显式旧元数据适配和输入/输出执行校验。Node 文件验证独立于浏览器契约，校验
-不执行包代码。P1.1b 的十二个 `commands.ts` 构建独立于 React/UI，UI setup
+不执行包代码。当前十三个 `commands.ts` 构建独立于 React/UI，UI setup
 显式复用同一 command 实现并保留原 Todo store；CLI 只导入固定 `.commands.js`。
 实际 T1 Manifest 与文件 hash 在导入前验证；G5 仍负责签名、安装事务与隔离。
 

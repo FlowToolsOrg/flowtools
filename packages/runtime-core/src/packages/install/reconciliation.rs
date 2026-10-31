@@ -7,18 +7,18 @@ const LAST_RECEIPT: &str = "package-reconciliation-receipt-v1";
 
 #[derive(Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "kebab-case")]
-pub(super) enum Kind {
+pub(crate) enum Kind {
     Artifact,
     Stage,
 }
 impl Kind {
-    pub(super) fn parent(self) -> &'static str {
+    pub(crate) fn parent(self) -> &'static str {
         match self {
             Self::Artifact => "artifacts",
             Self::Stage => "staging",
         }
     }
-    pub(super) fn validate_source(self, name: &str) -> Result<(), InstallError> {
+    pub(crate) fn validate_source(self, name: &str) -> Result<(), InstallError> {
         let valid = match self {
             Self::Artifact => valid_digest(name),
             Self::Stage => uuid(name),
@@ -32,14 +32,14 @@ impl Kind {
 }
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(super) struct Orphan {
+pub(crate) struct Orphan {
     pub kind: Kind,
     pub source: String,
     pub destination_id: String,
     pub files: BTreeMap<String, BlobDescriptor>,
 }
 impl Orphan {
-    pub(super) fn destination(&self) -> String {
+    pub(crate) fn destination(&self) -> String {
         format!(
             "{}-{}",
             self.destination_id,
@@ -201,6 +201,7 @@ fn validate(pending: &Pending, state: &Inventory) -> Result<(), InstallError> {
     Ok(())
 }
 pub(super) fn ensure_idle(connection: &rusqlite::Connection) -> Result<(), InstallError> {
+    super::super::tools::install::require_no_pending_tool_transaction(connection)?;
     if read::<Pending>(connection, PENDING_RECONCILIATION)?.is_some() {
         return Err(InstallError::RecoveryPending);
     }
@@ -390,11 +391,7 @@ fn resume_with_layout(
             plan: &pending,
         },
     )?;
-    tx.execute(
-        "DELETE FROM core_metadata WHERE key=?1",
-        [PENDING_RECONCILIATION],
-    )
-    .map_err(|_| InstallError::Storage)?;
+    super::metadata::remove_pending(&tx, PENDING_RECONCILIATION)?;
     tx.commit().map_err(|_| InstallError::Storage)?;
     hook(ReconciliationPhase::Committed, store)?;
     Ok(summary(&pending))
@@ -444,11 +441,7 @@ pub fn abort_inert_reconciliation(
             plan: &pending,
         },
     )?;
-    tx.execute(
-        "DELETE FROM core_metadata WHERE key=?1",
-        [PENDING_RECONCILIATION],
-    )
-    .map_err(|_| InstallError::Storage)?;
+    super::metadata::remove_pending(&tx, PENDING_RECONCILIATION)?;
     tx.commit().map_err(|_| InstallError::Storage)?;
     Ok(true)
 }

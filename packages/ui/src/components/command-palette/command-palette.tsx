@@ -1,25 +1,8 @@
 import type { CommandPaletteItem, CommandPaletteRootProps } from './types'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 
-function filterItems(
-  items: CommandPaletteItem[],
-  query: string
-): CommandPaletteItem[] {
-  const trimmed = query.trim().toLowerCase()
-
-  if (trimmed.length === 0) {
-    return items
-  }
-
-  return items.filter(item => {
-    const titleMatch = item.title.toLowerCase().includes(trimmed)
-    const descMatch = item.description?.toLowerCase().includes(trimmed)
-    const sourceMatch = item.source?.toLowerCase().includes(trimmed)
-
-    return titleMatch || descMatch || sourceMatch
-  })
-}
+import { CommandSearchIndex } from '@flowtools/sdk/search'
 
 function CommandPaletteRoot({
   open,
@@ -30,19 +13,69 @@ function CommandPaletteRoot({
 }: CommandPaletteRootProps) {
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [mode, setMode] = useState<'text' | 'regex'>('text')
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
 
-  const filtered = filterItems(items, query)
+  const index = useMemo(() => {
+    try {
+      const search = new CommandSearchIndex()
+      for (const item of items)
+        search.upsert({
+          id: item.id,
+          pluginId: item.source?.slice(0, 128) || 'host',
+          title: item.title.slice(0, 256),
+          description: item.description?.slice(0, 1024),
+          keywords: item.keywords,
+          aliases: item.aliases,
+        })
+      return search
+    } catch {
+      return undefined
+    }
+  }, [items])
+  const results = useMemo(() => {
+    try {
+      if (!index) return { matches: [], error: true }
+      return {
+        matches: index.search(query, {
+          mode,
+          recent: items.filter(item => item.isRecent).map(item => item.id),
+        }),
+        error: false,
+      }
+    } catch {
+      return { matches: [], error: true }
+    }
+  }, [index, query, mode, items])
+  const byId = useMemo(
+    () => new Map(items.map(item => [item.id, item])),
+    [items]
+  )
+  const filtered = !query.trim()
+    ? items.slice(0, 100)
+    : results.matches.flatMap(result => {
+        const item = byId.get(result.id)
+        return item ? [item] : []
+      })
 
   useEffect(() => {
     if (open) {
       setQuery('')
       setSelectedIndex(0)
 
-      requestAnimationFrame(() => {
+      const previous =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : undefined
+      const frame = requestAnimationFrame(() => {
         inputRef.current?.focus()
       })
+      return () => {
+        cancelAnimationFrame(frame)
+        if (previous?.isConnected) previous.focus()
+      }
     }
   }, [open])
 
@@ -54,7 +87,9 @@ function CommandPaletteRoot({
     const list = listRef.current
     if (!list) return
 
-    const item = list.children[index] as HTMLElement | undefined
+    const item = list.querySelectorAll<HTMLElement>('[data-command-item]')[
+      index
+    ]
     if (item) {
       item.scrollIntoView({ block: 'nearest' })
     }
@@ -70,10 +105,30 @@ function CommandPaletteRoot({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      if (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) return
+      if (e.key === 'Tab') {
+        const elements = dialogRef.current?.querySelectorAll<HTMLElement>(
+          'button:not(:disabled),input:not(:disabled),select:not(:disabled)'
+        )
+        const first = elements?.[0],
+          last = elements?.[(elements?.length ?? 1) - 1]
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault()
+          last?.focus()
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault()
+          first?.focus()
+        }
+        return
+      }
+      if (e.key !== 'Escape' && e.target !== inputRef.current) return
       switch (e.key) {
         case 'ArrowDown': {
           e.preventDefault()
-          const next = Math.min(selectedIndex + 1, filtered.length - 1)
+          const next = Math.max(
+            0,
+            Math.min(selectedIndex + 1, filtered.length - 1)
+          )
           setSelectedIndex(next)
           scrollToIndex(next)
           break
@@ -109,6 +164,10 @@ function CommandPaletteRoot({
 
   return (
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Command palette"
       className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]"
       onKeyDown={handleKeyDown}
     >
@@ -129,6 +188,7 @@ function CommandPaletteRoot({
             <path d="m21 21-4.3-4.3" />
           </svg>
           <input
+            aria-label={placeholder}
             ref={inputRef}
             className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted"
             onChange={e => setQuery(e.target.value)}
@@ -142,6 +202,25 @@ function CommandPaletteRoot({
         </div>
 
         <div ref={listRef} className="max-h-80 overflow-y-auto p-1">
+          <label className="block px-3 py-2 text-xs">
+            搜索方式{' '}
+            <select
+              aria-label="搜索方式"
+              value={mode}
+              onChange={event => {
+                setMode(event.target.value as 'text' | 'regex')
+                setSelectedIndex(0)
+              }}
+            >
+              <option value="text">文字 / 拼音 / 模糊</option>
+              <option value="regex">正则表达式</option>
+            </select>
+          </label>
+          {results.error && (
+            <p role="status" className="px-3 text-sm">
+              搜索表达式无效或超出限制，请缩短后重试。
+            </p>
+          )}
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-8 text-center">
               <p className="text-sm text-muted">No commands found</p>
@@ -150,6 +229,7 @@ function CommandPaletteRoot({
           ) : (
             filtered.map((item, index) => (
               <button
+                data-command-item
                 key={item.id}
                 className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition ${
                   index === selectedIndex

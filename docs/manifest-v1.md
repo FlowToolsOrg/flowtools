@@ -67,7 +67,7 @@ validator 验证，不宣称有限 JSON Schema 表达了这些额外规则。
 
 构建把实际 dist 文件清单/字节 hash 和命令生成到目录外
 `plugins/.generated/builtin-manifests.json`。当前十二 Manifest 引用同一内置
-发行目录的完整文件清单，这是 monorepo T1 构建，不是十二个独立签名安装包。
+发行目录的完整文件清单，这是 monorepo T1 构建，不是十三个独立签名安装包。
 CLI 仍只接受编译进自身的固定 ID；执行前验证完整 Manifest、目标兼容与包文件，
 然后导入固定 command 文件并核对 runtime metadata/validator/command。
 浏览器 UI 是 bundler 绑定的 T1，外部入口继续拒绝；本步不引入第三方安装。

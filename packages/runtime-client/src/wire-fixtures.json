@@ -834,6 +834,178 @@
       }
     },
     {
+      "digest": "9d68e7bf6826688a207edeb2032f6f8d90b1fcb4ed593477efd0a2b1f6310a45",
+      "manifest": {
+        "commands": [
+          {
+            "description": "在共享 Runtime 中创建有限周期提醒，并查看发送尝试结果",
+            "effects": [
+              "notification"
+            ],
+            "headless": true,
+            "id": "run",
+            "inputSchema": {
+              "additionalProperties": false,
+              "properties": {
+                "message": {
+                  "default": "",
+                  "description": "提醒内容",
+                  "maxLength": 1024,
+                  "type": "string"
+                },
+                "title": {
+                  "description": "提醒标题",
+                  "maxLength": 64,
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title"
+              ],
+              "type": "object"
+            },
+            "interaction": "none",
+            "name": "执行本地提醒",
+            "outputSchema": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "text",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "text"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "json",
+                      "type": "string"
+                    },
+                    "value": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "result": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "status": {
+                              "enum": [
+                                "requested",
+                                "unsupported",
+                                "failed",
+                                "unknown"
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "status"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "result"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "permissions": [
+              {
+                "capability": "notification",
+                "operations": [
+                  "notify"
+                ],
+                "scopes": [
+                  "local"
+                ]
+              }
+            ],
+            "resources": {
+              "maxInputBytes": 1048576,
+              "maxOutputBytes": 1048576,
+              "timeoutMs": 30000
+            },
+            "runtimeValidation": {
+              "input": "required",
+              "output": "required"
+            },
+            "supportsColdStart": true
+          }
+        ],
+        "dependencies": {
+          "services": [],
+          "tools": []
+        },
+        "description": "在共享 Runtime 中创建有限周期提醒，并查看发送尝试结果",
+        "engines": {
+          "host": "^0.1.0",
+          "sdk": ">=0.0.0 <1.0.0"
+        },
+        "entries": {
+          "executor": "plugin-local-reminder.commands.js",
+          "ui": "plugin-local-reminder.js"
+        },
+        "files": [
+          {
+            "path": "plugin-local-reminder.commands.js",
+            "sha256": "a9bece6fc461239eb0f55f230a3d70ea36e797e603e5da58bfc97dd0b8226820",
+            "size": 69
+          },
+          {
+            "path": "plugin-local-reminder.js",
+            "sha256": "6eb8c9b018da781a000d624b3417fe779274208404f3e723d03a0a346f80e216",
+            "size": 60
+          }
+        ],
+        "formatVersion": 1,
+        "id": "plugin-local-reminder",
+        "maturity": "prototype",
+        "name": "本地提醒",
+        "publisher": "flowtools",
+        "signature": {
+          "status": "unsigned"
+        },
+        "targets": [
+          {
+            "arch": "x64",
+            "platform": "windows"
+          },
+          {
+            "arch": "wasm32",
+            "platform": "web"
+          }
+        ],
+        "type": "app",
+        "version": "0.0.1"
+      }
+    },
+    {
       "digest": "6335b9a045524004bd11521e04868fde76a9a854ba2d784bc5033af1e37b81a0",
       "manifest": {
         "commands": [
@@ -2073,6 +2245,13 @@
       "operation": "clipboard-write"
     },
     {
+      "operation": "notification",
+      "parameters": {
+        "message": "Fixture only",
+        "title": "Fixture reminder"
+      }
+    },
+    {
       "operation": "tool-execute",
       "parameters": {
         "action": "probe",
@@ -2082,10 +2261,10 @@
   ],
   "providerUnloadPlan": {
     "affectedLocks": [
-      "45f3f07728accfdb1c23715c9448eb2e6a95639b68777daa9e813599de08a3c0"
+      "f2dd39cc2bfaf7efe3841d3f5539a6db1dbdada8a7e214739b4e1360166e4f2f"
     ],
     "consumers": [],
-    "digest": "918aa8f2bcea586941def80829c6043e8ee7252877e9c353fb22a4a28948d655",
+    "digest": "c0cc5d1cdbfddde45f7dfc9cf24d3c47827617b62c7fbfb222f0de8864f71de0",
     "mode": "plan-only",
     "provider": {
       "digest": "aa50110fe95a458f2cc1b91c994f86bf325a52a16c8c643951452e06262c2906",

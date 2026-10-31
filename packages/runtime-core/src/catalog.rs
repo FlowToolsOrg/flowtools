@@ -200,7 +200,7 @@ mod tests {
     #[test]
     fn complete_t1_metadata_and_schemas_share_ts_artifact() {
         let catalog = BuiltinCatalog::embedded();
-        assert_eq!(catalog.list().count(), 12);
+        assert_eq!(catalog.list().count(), 13);
         for (_, manifest) in catalog.list() {
             assert!(catalog.validate_manifest(manifest).is_ok());
             let mut changed = manifest.clone();

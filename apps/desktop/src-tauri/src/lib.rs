@@ -9,6 +9,8 @@ mod managed_approval;
 mod managed_runtime;
 mod models;
 mod repositories;
+#[cfg(windows)]
+mod shell;
 #[cfg(all(windows, any(debug_assertions, feature = "codegen")))]
 mod validation_runtime;
 
@@ -72,6 +74,23 @@ fn command_builder<R: tauri::Runtime>() -> Builder<R> {
         validation_runtime::validation_runtime_disconnect::<tauri::Wry>
     ]);
     builder
+}
+
+#[cfg(feature = "codegen")]
+pub fn mock_command_builder() -> tauri::Builder<tauri::test::MockRuntime> {
+    // The real command table without app setup, native plugins or user databases.
+    tauri::test::mock_builder().invoke_handler(command_builder().invoke_handler())
+}
+
+#[cfg(all(windows, feature = "codegen"))]
+pub async fn mock_shell_status<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+) -> Result<
+    flowtools_runtime_core::protocol::RuntimeStatus,
+    flowtools_runtime_core::protocol::RuntimeError,
+> {
+    // Direct T0 test adapter only; never registered as a webview command.
+    managed_runtime::status_for_main_window(app).await
 }
 
 #[cfg(feature = "codegen")]
@@ -140,7 +159,14 @@ pub fn run() {
         log_plugin_builder = log_plugin_builder.skip_logger();
     }
 
-    let tauri_builder = tauri::Builder::default()
+    let tauri_builder = tauri::Builder::default();
+    #[cfg(windows)]
+    let tauri_builder = tauri_builder
+        .plugin(shell::single_instance())
+        .manage(shell::ShellState::default())
+        .on_window_event(shell::on_window_event);
+
+    let tauri_builder = tauri_builder
         .invoke_handler(commands_builder.invoke_handler())
         .setup(move |app| {
             commands_builder.mount_events(app);
@@ -151,6 +177,9 @@ pub fn run() {
                 .expect("failed to initialize database");
 
             app.manage(AppState { db: Mutex::new(db) });
+
+            #[cfg(windows)]
+            shell::setup(app);
 
             Ok(())
         })

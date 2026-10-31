@@ -16,7 +16,10 @@ The existing T1 runner is unchanged and does not become a third-party sandbox.
 
 The embedded engine is QuickJS-NG v0.17.0, commit
 `6d46d07d04041b40f4f49eaa7fdebe44c314c699`. Vendored provenance, license and
-per-file SHA-256 values are retained; the build checks those bytes. Only the
+per-file SHA-256 values are retained; the build checks those bytes. The
+engine vendor tree has explicit LF Git attributes so a Windows CRLF-default
+checkout preserves the pinned bytes. A disposable real Git checkout regression
+rehashes every original engine input against the same inventory. Only the
 engine is embedded, without the upstream CLI, libc/std/os modules, native module
 loading or untrusted bytecode. JSON input is double encoded and parsed as data,
 preserving own `__proto__`/`constructor` keys. Source has an owned terminating NUL;

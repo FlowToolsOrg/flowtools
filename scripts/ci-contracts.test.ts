@@ -2,7 +2,7 @@
 
 import { expect, test } from 'bun:test'
 import { spawnSync } from 'node:child_process'
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import {
   mkdirSync,
   mkdtempSync,
@@ -185,7 +185,7 @@ test('runs bounded Windows gates without caching JS build products', async () =>
     new URL('../.github/workflows/windows-quality.yml', import.meta.url)
   ).text()
   expect(rawWorkflow).toContain(
-    "hashFiles('Cargo.lock', 'apps/desktop/src-tauri/Cargo.lock')"
+    "hashFiles('Cargo.lock', 'apps/desktop/src-tauri/Cargo.lock', 'packages/headless-sandbox/Cargo.lock')"
   )
   const rawTurbo = (await Bun.file(
     new URL('../turbo.json', import.meta.url)
@@ -219,6 +219,9 @@ test('runs bounded Windows gates without caching JS build products', async () =>
   )
   expect(entry.indexOf("'docs:check'")).toBeLessThan(entry.indexOf("'lint'"))
   expect(entry).toContain("'check', '--locked'")
+  expect(entry).toContain(
+    "'clippy', '--locked', '--all-targets', '--features', 'codegen,plugin-webview-validation'"
+  )
 })
 
 test('clean bootstrap builds the declared Runtime client used by the native harness', async () => {
@@ -255,6 +258,7 @@ test('uncached native builds retain their actual Turbo prerequisite graph', () =
       'x',
       '--no-install',
       ...rootPackage.scripts['build:packages']!.split(' '),
+      '--filter=@flowtools/headless-sandbox',
       '--dry=json',
     ],
     {
@@ -274,6 +278,7 @@ test('uncached native builds retain their actual Turbo prerequisite graph', () =
         resolvedTaskDefinition: {
           cache: boolean
           passThroughEnv: string[] | null
+          dependsOn: string[]
         }
       }[]
     }
@@ -283,12 +288,14 @@ test('uncached native builds retain their actual Turbo prerequisite graph', () =
   for (const taskId of [
     '@flowtools/runtime#build',
     '@flowtools/runtime-core#build',
+    '@flowtools/headless-sandbox#build',
   ]) {
     const task = tasks.find(task => task.taskId === taskId)
     expect(task?.resolvedTaskDefinition.cache).toBe(false)
     expect(task?.resolvedTaskDefinition.passThroughEnv).toEqual([
       'CARGO_TARGET_DIR',
     ])
+    expect(task?.resolvedTaskDefinition.dependsOn).toEqual(['^build'])
   }
   expect(dependencies('@flowtools/runtime#build')).toEqual(
     expect.arrayContaining([
@@ -310,6 +317,52 @@ test('uncached native builds retain their actual Turbo prerequisite graph', () =
   expect(dependencies('@flowtools/runtime-client#build')).not.toContain(
     '@flowtools/runtime#build'
   )
+}, 30_000)
+
+test('pinned engine bytes survive an actual CRLF-default Git checkout', () => {
+  const fixture = mkdtempSync(join(tmpdir(), 'flowtools-ci-engine-'))
+  if (dirname(resolve(fixture)) !== resolve(tmpdir())) {
+    throw new Error('Engine fixture escaped temporary directory')
+  }
+  const prefix = 'packages/headless-sandbox/vendor/quickjs-ng'
+  const vendor = new URL(`../${prefix}/`, import.meta.url)
+  const entries = readFileSync(new URL('SHA256SUMS', vendor), 'utf8')
+    .trim()
+    .split(/\r?\n/)
+    .map(line => {
+      const match = /^([a-f0-9]{64})  ([a-z0-9._-]+)$/i.exec(line)
+      if (!match) throw new Error('Invalid build-owned engine digest entry')
+      return { digest: match[1]!, name: match[2]! }
+    })
+  const runGit = (args: string[]) => {
+    const result = spawnSync('git', args, { cwd: fixture, encoding: 'utf8' })
+    expect(result.status, result.stderr).toBe(0)
+  }
+  try {
+    writeFileSync(
+      join(fixture, '.gitattributes'),
+      readFileSync(new URL('../.gitattributes', import.meta.url))
+    )
+    mkdirSync(join(fixture, prefix), { recursive: true })
+    for (const entry of entries)
+      writeFileSync(
+        join(fixture, prefix, entry.name),
+        readFileSync(new URL(entry.name, vendor))
+      )
+    runGit(['init', '--quiet'])
+    runGit(['config', 'core.autocrlf', 'true'])
+    runGit(['config', 'core.eol', 'crlf'])
+    runGit(['add', '.'])
+    runGit(['checkout-index', '--force', '--all'])
+    for (const entry of entries) {
+      const bytes = readFileSync(join(fixture, prefix, entry.name))
+      expect(createHash('sha256').update(bytes).digest('hex')).toBe(
+        entry.digest
+      )
+    }
+  } finally {
+    rmSync(fixture, { recursive: true, force: true })
+  }
 }, 30_000)
 
 test('Runtime codegen stays clean after Windows CRLF checkout and rejects content drift', () => {

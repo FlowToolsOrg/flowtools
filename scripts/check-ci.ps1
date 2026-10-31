@@ -49,7 +49,7 @@ try {
     'check', '--locked', '--manifest-path', 'apps/desktop/src-tauri/Cargo.toml'
   )
   Invoke-QualityCommand 'Rust clippy' cargo @(
-    'clippy', '--locked', '--all-targets', '--features', 'codegen',
+    'clippy', '--locked', '--all-targets', '--features', 'codegen,plugin-webview-validation',
     '--manifest-path', 'apps/desktop/src-tauri/Cargo.toml', '--', '-D', 'warnings'
   )
   Assert-CleanWorktree

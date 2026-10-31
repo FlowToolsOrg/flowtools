@@ -1,5 +1,6 @@
 //! Explicit private materialization of currently admitted installed tool bytes.
 //! The resulting held files are inert: no tool lease, grant, activation or runner.
+pub(crate) mod lease_source;
 mod native;
 pub mod reconciliation;
 mod security;

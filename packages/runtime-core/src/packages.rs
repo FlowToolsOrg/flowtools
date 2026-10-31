@@ -913,7 +913,7 @@ fn required_optional_digest<'de, D: serde::Deserializer<'de>>(
 
 /// serde_json's default map accepts last-wins duplicate fields. Reject them
 /// recursively before typed parsing, keeping the verified bytes authoritative.
-fn strict_json(bytes: &[u8]) -> Result<Value, serde_json::Error> {
+pub(crate) fn strict_json(bytes: &[u8]) -> Result<Value, serde_json::Error> {
     struct Unique(Value);
     impl<'de> Deserialize<'de> for Unique {
         fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {

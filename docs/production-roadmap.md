@@ -22,6 +22,13 @@ G5/G6 执行验收。人工 G7 项为 waived，整体不更新为 done。
 
 ## 1. 使用规则
 
+G6 P2.8a9 增加明确 T0 固定 T1 任务的
+[accepted artifact 保留](./validation/g6-accepted-tool-artifacts.md)：实际当前
+ZIP/已有 seal 在 durable receipt 前持有，同原任务行提交；未知写入或
+Interrupted 保留根，成功/失败/取消须持久终态及后代排空后才释放。没有
+产品 Host 开关、原生工具执行或 GC，生产审核仍为空。旧 release floor
+继续生效，旧版本续接与 P2.8c、真实发行/独立安全和 G7 整体保持 pending。
+
 G6 P2.8a8 的 [消费方孤儿恢复](./validation/g6-tool-consumer-reconciliation.md)
 只做 T0 整批观察与 create-only 隔离，持有源时复核元数据，显式续接/作废并
 保留字节。它不采纳或重锁包，不完成 accepted leases、执行或 G7 办公闭环。

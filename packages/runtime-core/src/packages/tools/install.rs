@@ -2,6 +2,7 @@
 //! programs, accepted-job lease, activation or executable identity.
 pub(crate) mod consumer_sources;
 pub mod images;
+pub(crate) mod leases;
 pub mod reconciliation;
 use super::super::{
     self as packages, manifest::ManifestCompatibility, trust::PackageTrustStore, PackageArch,
@@ -267,6 +268,7 @@ fn known_inventory(
             return Err(invalid());
         }
     }
+    images::lease_source::validate_retained_jobs(store, &state)?;
     Ok((state, snapshot))
 }
 fn journal(store: &DataStore, state: &Inventory) -> Result<Option<Journal>> {

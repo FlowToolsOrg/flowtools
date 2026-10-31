@@ -1,5 +1,12 @@
 # Flow Tool Architecture
 
+G6 P2.8a9 在明确 T0 构造的固定 T1 任务 accepted 前持有已准入 ZIP 与现有
+密封文件。独立 artifact 记录同原 jobs.metadata 单行提交；grant/epoch 与
+deadline 在 IO 后重查，终态及后代排空后才持久释放。管理/恢复只保留历史
+根，不续权；普通 Host 不配置工具 authority，生产 review 为空。原生工具
+执行、旧版本 accepted continuation、更新/GC 与 G7 文件/媒体仍未闭环，见
+[任务 artifact 保留](./docs/validation/g6-accepted-tool-artifacts.md)。
+
 G6 P2.8a8 为消费方域新增显式 orphan plan/apply/resume/abort；整批复核后
 通过 held-parent/create-only 移动隔离，每次实际移动前在持有源句柄的 callback
 内比较冻结元数据。新恢复 scope 只能先受控恢复、再显式作废；保留所有字节，

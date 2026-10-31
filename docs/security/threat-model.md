@@ -612,6 +612,13 @@ claim、当前包/命令/grant/epoch 与独立 unattended 授权；本威胁保�
 
 ### SEC-015 共享工具包、间接 IO 与进程恢复
 
+- P2.8a9 增量：明确 T0 构造的固定 T1 任务在 accepted 前持有当前 signed
+  ZIP 与现有 seal，独立引用同原任务行提交。grant/epoch/期限在 IO 后复核；
+  不确定写入停止接收，Interrupted 保留根，持久终态及普通 service 后代排空
+  后才释放。复制/恢复不续权，损坏引用阻止孤儿清理。测试覆盖真实进程退出
+  和 Job 排空，范围见 [专项](../validation/g6-accepted-tool-artifacts.md)。
+  生产 Host 无 authority、review 为空；工具执行、accepted 旧版本续接、
+  GC、真实发行与独立安全审阅仍 pending，SEC-003/005/010/014/015 不关闭。
 - 入口：规划中的工具侧载/下载、artifact/lease/GC、媒体进程；严重，open
 - 现状：G6 P2.8a1 已提供严格惰性工具 Manifest/签名 ZIP/持久 trust 准入，
   source/license/flavor/资源角色须匹配 T0 构建审核策略，生产审核清单为空。

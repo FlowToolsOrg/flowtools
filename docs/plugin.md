@@ -1,5 +1,11 @@
 # Flow Tool Plugin 开发指南
 
+G6 的 [任务 artifact 保留](./validation/g6-accepted-tool-artifacts.md) 仅由明确
+T0 Rust 构造接入固定 T1 catalog；普通插件提交不能提供 lease、pins、路径或
+review selector。已有声明、当前 grant/epoch、实际 signed ZIP/现有 seal 和
+任务期限共同约束接收及派发复核；持有文件不授予 ToolExecute。默认产品
+Host 保持无 authority，原生媒体 SDK 入口和 G7 执行闭环尚待完成。
+
 G6 的 [消费方孤儿恢复](./validation/g6-tool-consumer-reconciliation.md) 仅由 T0
 观察和隔离固定域内未引用的 inert bytes，不能采纳旧包、替换工具 pins、恢复
 grants 或触发插件。未知 scope 必须先受控恢复再显式取消原批次，字节不删除。

@@ -1,5 +1,11 @@
 # Flow Tool
 
+G6 adds [accepted tool artifact retention](./docs/validation/g6-accepted-tool-artifacts.md)
+for explicitly wired T0 fixed T1 jobs. Exact signed ZIPs and existing sealed files
+are held before the ordinary durable receipt; historical roots survive uncertain
+completion and restore. Default product Hosts have no tool authority, production
+reviews remain empty, and native media execution and G7 file/media delivery remain pending.
+
 G6 adds [explicit inert consumer orphan recovery](./docs/validation/g6-tool-consumer-reconciliation.md)
 with whole-batch observation, guarded create-only quarantine and scope-bound
 resume/cancellation. It preserves bytes and installed locks; no adoption, leases

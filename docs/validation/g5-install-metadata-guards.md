@@ -46,6 +46,16 @@ Core all-target Clippy `-D warnings` 通过（13.39s），实际 Rust inventory 
 核对为 406 项，含六项新原生和五项固定槽位用例。Rust fmt、docs:check 与
 文档格式通过；不将这些结果计为新提交整仓或远端成功。
 
+随后 `060f235` 完整本机根门禁 exit 0，最终工作区无漂移：11/11 workspace
+lint/types/test/build；Core 406+11+9（单元 976.02s），Runtime 原生 24+6/Bun
+17（含原 50 路冷启动）、Chromium 109/34、Desktop 106 Bun+Node 1+原生 36+6，
+Web 23/Desktop 25 产物一致、production refusal 及最终 Rust 检查通过。
+日志 `execution-validation/g6/root-ci-060f235-20261031.log`。远端 ref 已核对为
+`060f235d2dace1a45d20ea88b7abb78d361e2e5d`；
+[PR 41196464140](https://github.com/FlowToolsOrg/flowtools/actions/runs/41196464140)
+与 [push 41196459042](https://github.com/FlowToolsOrg/flowtools/actions/runs/41196459042)
+均已完成且结论为 success；这是本 SHA 的远端完整门禁结果。
+
 复现工作区首次编译缺少生成的 `manifest-validation.json`，没有执行测试；
 `install-metadata-red-20261031.log` 保留该失败。补齐与当前通过门禁的
 同源产物并核对 SHA 后才得到上述六项实际失败。第一次修复试跑还复用了

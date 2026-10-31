@@ -389,6 +389,14 @@ Rust broker 的运行身份由会话/进程绑定；IPC、文件 handle、namesp
 
 ### P2.8a 集中工具仓库
 
+2026-10-31：P2.8a9 为明确 T0 配置的固定 T1 任务增加 accepted artifact
+保留。实际 signed ZIP 与已有 seal 的当前检查、持有句柄及独立记录同原
+jobs.metadata 单行提交，输入仍用原 DPAPI；终态/后代排空后才持久释放。
+管理、复制和恢复不续权，损坏引用阻止 orphan 清理；普通产品 Host 不配置
+authority，生产 review/pins 为空。它尚无原生工具派发、accepted 旧版本
+continuation、更新/GC 或 G7 文件/媒体闭环，见
+[范围与证据](./validation/g6-accepted-tool-artifacts.md)。
+
 2026-10-31：P2.8a8 为消费方域补齐显式 orphan plan/apply/resume/abort。
 冻结 profile、库存与当前 trust/recovery scope，先整批验证，再在实际 held
 source callback 内复核元数据后 create-only 隔离。保留字节、旧锁和原共享

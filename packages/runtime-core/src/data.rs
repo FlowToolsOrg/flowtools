@@ -130,18 +130,19 @@ impl DataStore {
     pub(crate) fn load_jobs(&self) -> Result<Vec<Value>, ErrorCode> {
         let mut statement = self
             .connection
-            .prepare("SELECT run_id,metadata FROM jobs ORDER BY run_id LIMIT 1025")
+            .prepare("SELECT run_id,CASE WHEN typeof(metadata)='text' AND length(CAST(metadata AS BLOB))<=32768 THEN metadata ELSE NULL END FROM jobs ORDER BY run_id LIMIT 1025")
             .map_err(db_error)?;
         let rows = statement
             .query_map([], |row| {
-                Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+                Ok((row.get::<_, String>(0)?, row.get::<_, Option<String>>(1)?))
             })
             .map_err(db_error)?;
         let values = rows
             .map(|row| {
                 let (run, text) = row.map_err(db_error)?;
-                let value: Value =
-                    serde_json::from_str(&text).map_err(|_| ErrorCode::StoreCorrupt)?;
+                let text = text.ok_or(ErrorCode::StoreCorrupt)?;
+                let value: Value = crate::packages::strict_json(text.as_bytes())
+                    .map_err(|_| ErrorCode::StoreCorrupt)?;
                 if value["snapshot"]["runId"] != run || text.len() > 32_768 {
                     return Err(ErrorCode::StoreCorrupt);
                 }

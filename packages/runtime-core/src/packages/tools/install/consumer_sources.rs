@@ -48,7 +48,7 @@ pub(crate) fn read(
     store: &mut DataStore,
     clock: &mut dyn FnMut() -> u64,
 ) -> Result<HeldToolArchives> {
-    read_with_admission(trust, store, clock, |t, s, b, c| {
+    read_with_admission(trust, store, clock, None, |t, s, b, c| {
         admit_tool_archive(t, s, b, c)
     })
 }
@@ -58,7 +58,32 @@ pub(crate) fn read_fixture(
     store: &mut DataStore,
     clock: &mut dyn FnMut() -> u64,
 ) -> Result<HeldToolArchives> {
-    read_with_admission(trust, store, clock, |t, s, b, c| {
+    read_with_admission(trust, store, clock, None, |t, s, b, c| {
+        super::super::admit_fixture(t, s, b, c)
+    })
+}
+// An accepted run retains exact old ZIP identities across updates. Selection
+// values are not proofs: every selected actual held ZIP is admitted again.
+pub(crate) fn read_exact(
+    trust: &PackageTrustStore,
+    store: &mut DataStore,
+    pins: &[ToolArchivePin],
+    clock: &mut dyn FnMut() -> u64,
+) -> Result<HeldToolArchives> {
+    images::require_no_pending(&store.connection)?;
+    read_with_admission(trust, store, clock, Some(pins), |t, s, b, c| {
+        admit_tool_archive(t, s, b, c)
+    })
+}
+#[cfg(test)]
+pub(crate) fn read_exact_fixture(
+    trust: &PackageTrustStore,
+    store: &mut DataStore,
+    pins: &[ToolArchivePin],
+    clock: &mut dyn FnMut() -> u64,
+) -> Result<HeldToolArchives> {
+    images::require_no_pending(&store.connection)?;
+    read_with_admission(trust, store, clock, Some(pins), |t, s, b, c| {
         super::super::admit_fixture(t, s, b, c)
     })
 }
@@ -66,6 +91,7 @@ fn read_with_admission(
     trust: &PackageTrustStore,
     store: &mut DataStore,
     clock: &mut dyn FnMut() -> u64,
+    requested: Option<&[ToolArchivePin]>,
     mut admission: impl FnMut(
         &PackageTrustStore,
         &mut DataStore,
@@ -94,23 +120,45 @@ fn read_with_admission(
     } else if !state.records.is_empty() {
         return Err(InstallError::ArtifactInvalid.into());
     }
-    let mut latest = BTreeMap::new();
-    for record in &state.records {
-        let key = (
-            &record.payload.publisher,
-            &record.payload.id,
-            &record.payload.build_flavor,
-        );
-        if latest.get(&key).is_none_or(|previous: &&Record| {
-            previous.payload.release_sequence < record.payload.release_sequence
-        }) {
-            latest.insert(key, record);
+    let selected = if let Some(pins) = requested {
+        if pins.len() > MAX_RECORDS {
+            return Err(InstallError::BudgetExceeded.into());
         }
-    }
+        let mut unique = BTreeSet::new();
+        let mut selected = Vec::new();
+        for pin in pins {
+            if !unique.insert(pin.archive_digest.as_str()) {
+                return Err(invalid());
+            }
+            selected.push(
+                state
+                    .records
+                    .iter()
+                    .find(|record| record.pin() == *pin)
+                    .ok_or(InstallError::ArtifactInvalid)?,
+            );
+        }
+        selected
+    } else {
+        let mut latest = BTreeMap::new();
+        for record in &state.records {
+            let key = (
+                &record.payload.publisher,
+                &record.payload.id,
+                &record.payload.build_flavor,
+            );
+            if latest.get(&key).is_none_or(|previous: &&Record| {
+                previous.payload.release_sequence < record.payload.release_sequence
+            }) {
+                latest.insert(key, record);
+            }
+        }
+        latest.into_values().collect()
+    };
     let mut held = Vec::new();
     let mut archives = Vec::new();
     let mut bytes = 0u64;
-    for record in latest.values() {
+    for record in selected {
         bytes = bytes
             .checked_add(record.payload.archive.size)
             .and_then(|n| n.checked_add(record.payload.manifest.size))
@@ -121,7 +169,7 @@ fn read_with_admission(
         let source = layout
             .as_ref()
             .ok_or(InstallError::ArtifactInvalid)?
-            .hold(*record)?;
+            .hold(record)?;
         let envelope = packages::decode_base64(&record.envelope).map_err(|_| invalid())?;
         let archive = admission(
             trust,

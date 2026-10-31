@@ -3,7 +3,7 @@
 mod filesystem;
 #[allow(dead_code)]
 #[path = "../../../../../../../apps/runtime/tests/isolation/harness.rs"]
-mod harness;
+pub(super) mod harness;
 mod metadata_guard_tests;
 mod reconciliation_tests;
 use super::*;

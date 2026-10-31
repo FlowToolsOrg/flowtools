@@ -176,6 +176,21 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G6 P2.8a9 accepted artifact retention lives in `packages/tools/install/leases.rs`
+and `images/lease_source.rs`. Only explicitly build-owned T0 fixed T1 catalogs
+use it; ordinary Runtime Hosts keep no tool authority and production reviews/pins
+stay empty. Actual installed signed ZIP admission and existing image identities,
+seals/policy/handles are required before the same jobs.metadata durable receipt.
+Keep the original writer/32KiB bound, exact run/caller/package/lock/epoch/deadline/
+profile/generation binding, final authorization after IO, and trigger-aware writes.
+Persist terminal/release only after ordinary root/service drain; unknown writes
+stop admission and retain roots, while Interrupted remains retained. Strict old
+references must block orphan cleanup on corruption or foreign scope. Restore never
+rebinds a seal or renews grants; normal signed floors still refuse old releases.
+The test-only seconds clock and six real-exit barriers never enter IPC/config.
+No executable getter, tool adapter, GC or product Host selector follows. See
+[accepted artifact evidence](./docs/validation/g6-accepted-tool-artifacts.md).
+
 G5/G6 installation metadata mutations share the fixed-slot, transaction-only
 `packages/runtime-core/src/packages/install/metadata.rs` guard. Preserve exact
 JSON bytes/formats, bounded TEXT reads, one affected row and one actual change

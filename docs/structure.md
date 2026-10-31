@@ -2,6 +2,14 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime-core/src/packages/tools/install/leases.rs` 管理固定 T1 任务的私有
+artifact 记录、当前 signed ZIP 准入与同 writer 任务写入保护；
+`images/lease_source.rs` 只持有已有密封文件，不创建文件或返回 executable
+路径。`runtime.rs` 连接普通接收/恢复/排空边界，专项在
+`packages/tests/tool_tests/install_tests/lease_tests/`。它与规划中的公共
+`tools/leases.rs` 执行/GC 系统不同，普通产品 Host 仍无工具 authority，见
+[范围](./validation/g6-accepted-tool-artifacts.md)。
+
 `runtime-core/src/packages/install/tool_consumers/reconciliation.rs` 管理固定消费方
 域的只读 orphan 计划、独立 journal/receipt 与显式隔离；借用 G5 blob 的
 held-source callback 进行移动前元数据复核。实际磁盘/备份/进程回归在

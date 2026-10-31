@@ -2,11 +2,24 @@
 
 日期：2026-10-31。G7 整体为 **in-progress / prototype**。
 
+P2.8a9 新增 [任务 artifact 保留](./g6-accepted-tool-artifacts.md)：明确 T0 固定
+T1 任务在 accepted 前持有原始 signed ZIP 与已有 seal，同原任务行持久化。
+两个消费方共享原生句柄，未知/Interrupted 保留根，终态/后代排空后释放；
+复制/恢复、损坏引用、撤销与新旧版本共存已有专项。普通产品 Host 不配置
+authority，生产 review 为空；accepted 旧版本 continuation、原生媒体 adapter、
+更新/GC 和 G7 文件提交/撤销/媒体发布仍待完成。当前完整门禁另记。
+
 工具 accepted leases 前的检查发现旧安装事务存在“SQL 替换后又清除
 journal”的缺口。四个安装域及其恢复路径现统一接入有限元数据保护；
 旧实现六项实际失败、修复后同六项及五项 SQLite/四项旧 SQL 专项通过，
-Clippy 和实际 inventory 406 项核对通过。新提交完整门禁仍待完成，见
+Clippy 和实际 inventory 406 项核对通过，见
 [安装 SQL 边界](./g5-install-metadata-guards.md)。不据此关闭 G5/G6 或 G7。
+该修复随后以 `060f235` 完整本机门禁通过（Core 406+11+9，单元 976.02s，
+11/11 workspace、Runtime 24+6/Bun 17、Chromium 109/34、Desktop 106+Node 1+
+原生 36+6、Web 23/Desktop 25、最终 Rust 与无漂移）；同 SHA 的
+[PR 41196464140](https://github.com/FlowToolsOrg/flowtools/actions/runs/41196464140) /
+[push 41196459042](https://github.com/FlowToolsOrg/flowtools/actions/runs/41196459042)
+也均为 success。
 
 G6 P2.8a8 新增 [消费方孤儿恢复](./g6-tool-consumer-reconciliation.md)：只读计划、
 整批复核、实际 held-source callback 元数据检查、create-only 隔离与显式

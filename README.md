@@ -113,7 +113,12 @@ environment/handles and bounded Job/engine resources. Native refusal, crash,
 cleanup and Host health controls passed 20 targeted tests. This does not certify
 complete network/handle confinement or activate installed plugins. See
 [headless feasibility](./docs/validation/g5-headless-feasibility.md) and
-[ADR-0004](./docs/adr/0004-headless-platform-isolation.md). P2.2/G5 remain pending.
+[ADR-0005](./docs/adr/0005-headless-platform-isolation.md). P2.2/G5 remain pending.
+
+The 2026-10-31 integration preserves main's dual-quorum recovery and inert
+inventory reconciliation. Current acceptance, known local failures and remaining
+platform gaps are distinguished in the
+[integration record](./docs/validation/g5-platform-integration.md).
 
 > An extensible, cross-platform toolbox powered by a plugin runtime.
 > Plugin Runtime for AI Age

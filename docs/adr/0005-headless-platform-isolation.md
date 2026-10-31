@@ -1,4 +1,4 @@
-# ADR-0004: Windows headless isolation feasibility profile
+# ADR-0005: Windows headless isolation feasibility profile
 
 - Date: 2026-10-13
 - Status: prototype design and executable feasibility harness; independent

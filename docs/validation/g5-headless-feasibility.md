@@ -5,7 +5,7 @@
 - Status: targeted implementation checks passed; P2.2/G5 remain pending
 - Engineering review: Codex; independent security reviewer/date/conclusion pending
 - Threats: SEC-001, SEC-002, SEC-008, SEC-014, SEC-015
-- Decision: [ADR-0004](../adr/0004-headless-platform-isolation.md)
+- Decision: [ADR-0005](../adr/0005-headless-platform-isolation.md)
 
 `packages/headless-sandbox` is a separate Cargo/Bun workspace containing a
 source-only JavaScript engine child and T0-owned native attack fixtures. It has

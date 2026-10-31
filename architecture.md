@@ -118,7 +118,7 @@ P2.2 的 `packages/headless-sandbox` 是独立 Windows/x64 可行性 harness，
 环境/句柄与 pre-resume Job 限制；错误 UI 策略不改系统设置，清理不确定即
 保留 fixture 并拒绝复用。20 项回归见
 [headless 证据](./docs/validation/g5-headless-feasibility.md)，选择与边界见
-[ADR-0004](./docs/adr/0004-headless-platform-isolation.md)。Winsock 初始化
+[ADR-0005](./docs/adr/0005-headless-platform-isolation.md)。Winsock 初始化
 拒绝、单一 Event 控制不证明完整平台隔离；没有已安装包执行或 broker 接入。
 
 Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平台。

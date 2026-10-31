@@ -96,7 +96,7 @@ digest、Windows T0 fixture controller、source-only child 与原生恶意样本
 它暴露标准 Bun/Turbo 质量任务，保留独立 Cargo.lock、静态 CRT 配置与
 CARGO_TARGET_DIR，不依赖 Runtime/SDK 安装或 grants。20 项原生/契约检查
 及仍待完成平台项见 [headless 证据](./validation/g5-headless-feasibility.md)
-与 [ADR-0004](./adr/0004-headless-platform-isolation.md)。
+与 [ADR-0005](./adr/0005-headless-platform-isolation.md)。
 
 [下一阶段实施设计](./next-milestones.md) 定义 G0–G8 的顺序与验收。
 G2 已新增 `packages/runtime-core`（无 Tauri 依赖的 Rust crate）、`apps/runtime`

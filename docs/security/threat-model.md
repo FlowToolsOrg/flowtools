@@ -83,7 +83,7 @@ about:blank/srcdoc 等继承 frame 未认证；顶层身份不能证明调用 fr
 仍未接入。SEC-001/002/008/014/015 均保持 open，独立安全批准 pending。
 
 P2.2 的 [独立 native harness](../validation/g5-headless-feasibility.md)
-按 [ADR-0004](../adr/0004-headless-platform-isolation.md) 固定 source engine、
+按 [ADR-0005](../adr/0005-headless-platform-isolation.md) 固定 source engine、
 AppContainer/AAP opt-out 和 token/环境/句柄/预算；实际恶意样本、精确异常、
 Event 正负对照和 worker/Drop 不确定状态检查已实施。仅测试父进程局部
 error mode 与子 WER，不改变系统策略；所有未确认清理都保留并拒绝复用。

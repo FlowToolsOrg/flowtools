@@ -420,7 +420,7 @@ Custody must propagate every unverified Drop to fixture uncertainty; preserve
 owned bytes/profile and refuse reuse. Winsock initialization refusal is not full
 network confinement, and Event evidence is not all handle types. No ordinary
 process fallback, package paths or third-party activation. Keep
-[ADR-0004](./docs/adr/0004-headless-platform-isolation.md) and
+[ADR-0005](./docs/adr/0005-headless-platform-isolation.md) and
 [headless evidence](./docs/validation/g5-headless-feasibility.md) accurate.
 
 ## Coding Style and Naming Conventions

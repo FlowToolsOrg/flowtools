@@ -377,8 +377,13 @@ symlink/junction 和同版本不同 hash 均拒绝。失败保持 last-known-goo
 P2.2 已有独立 Windows/x64 source-JavaScript 可行性 harness，固定 engine/
 OS profile、token、环境/句柄与预算，20 项针对性检查见
 [headless 证据](./validation/g5-headless-feasibility.md) 和
-[ADR-0004](./adr/0004-headless-platform-isolation.md)。完整网络/句柄平台
+[ADR-0005](./adr/0005-headless-platform-isolation.md)。完整网络/句柄平台
 验收、签名包身份与 broker/授权/数据接入仍待完成，保持 T3 默认拒绝。
+
+2026-10-31 接入当前 main 时保留已合入的双 quorum 恢复及库存核对，未用
+旧本地 handoff API 替换恢复协议；headless 决策使用 ADR-0005，见
+[本轮集成记录](./validation/g5-platform-integration.md)。历史 native 检查、
+当前本机失败和当前提交远端 CI 分别记录，G5 仍不标记完成。
 
 第三方 React 使用独立 origin/session 的容器，通过 broker 操作；Windows 实测
 存储分区、导航、CSP 与 Tauri capability 合并，不能把另一个窗口自动当成隔离。

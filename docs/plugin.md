@@ -98,7 +98,8 @@ T0 可以显式核对并以 journal 隔离无引用惰性内容，中断后继�
 P2.1 的独立 WebView2 可行性 harness 仅运行固定 inert fixture，不接受作者
 插件或包路径。它验证四个独立 profile、HTTPS origin、严格 CSP、空 native
 ACL、最小 echo session 和浏览器效果拒绝；默认隐藏窗口并验证中断回收。
-frames 在该 profile 全部拒绝，不能用消息 Origin 字段替代 native 身份。
+固定 frame URL 导航被拒绝；about:blank/srcdoc 等继承 frame 未认证，不能用
+消息 Origin 字段替代 native 身份。
 见 [WebView 验证](./validation/g5-webview-feasibility.md)。作者不能据此
 使用第三方执行、grant 或 raw Tauri API；产品 broker/授权/数据接入仍 pending。
 

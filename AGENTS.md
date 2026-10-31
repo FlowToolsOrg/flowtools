@@ -176,6 +176,17 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G6 P2.8a8 consumer orphan recovery lives in `packages/install/tool_consumers/reconciliation.rs`.
+Keep opaque read-only plans, exact profile/inventory/trust scope, full-batch byte
+preflight and held-parent create-only quarantine. Check frozen metadata inside
+the held-source callback before each move. Only this fixed recovery reader may
+inspect known raw records while unrelated raw orphans remain; never return/admit
+those unknown bytes or relax ordinary readers. All pending surfaces stay exclusive.
+New scope needs current controlled recovery then explicit abort; preserve moved/
+unmoved bytes, original locks/floors/budgets, and actual commit scope in receipts.
+No adoption, lease, executable identity or production profile follows. See
+[consumer recovery evidence](./docs/validation/g6-tool-consumer-reconciliation.md).
+
 G6 P2.8a7 inert consumer installation is in `packages/install/tool_consumers.rs`.
 Only actual signed plugin/service archives and re-admitted held installed tool
 ZIPs enter its separate fixed store/lock domain; no caller pins, namespaces or
@@ -184,7 +195,7 @@ unchanged, existing transitive pins fixed, the one writer/shared budget, current
 trust and a fresh final T0 clock. Recheck the original pending after inventory
 writes and before deletion; triggers must not erase substituted journals. All
 pending operations stay exclusive. New-domain orphans refuse rather than adopt;
-explicit orphan recovery, accepted leases and execution remain pending. Production
+accepted leases and execution remain pending. Production
 review profiles stay empty. See [consumer evidence](./docs/validation/g6-tool-consumer-installation.md).
 
 G6 P2.8a6 image orphan reconciliation lives in

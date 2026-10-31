@@ -188,7 +188,7 @@ fn guard_on(
 // Every node effect checks the same metadata rows in SQLite without repeatedly
 // parsing a whole, potentially large orphan tree. Extra/missing relevant rows or
 // non-text values refuse; no caller-selected keys or namespace enter this query.
-const OBSERVED_ROWS:&str="key GLOB 'package-trust-*' OR key='recovery-generation' OR key IN ('package-install-inventory-v1','tool-archive-inventory-v1','tool-image-inventory-v1','package-install-pending-v1','package-reconciliation-pending-v1','tool-archive-install-pending-v1','tool-archive-reconciliation-pending-v1','tool-image-materialization-pending-v1','tool-image-reconciliation-pending-v1','tool-consumer-inventory-v1','tool-consumer-install-pending-v1')";
+const OBSERVED_ROWS:&str="key GLOB 'package-trust-*' OR key='recovery-generation' OR key IN ('package-install-inventory-v1','tool-archive-inventory-v1','tool-image-inventory-v1','package-install-pending-v1','package-reconciliation-pending-v1','tool-archive-install-pending-v1','tool-archive-reconciliation-pending-v1','tool-image-materialization-pending-v1','tool-image-reconciliation-pending-v1','tool-consumer-inventory-v1','tool-consumer-install-pending-v1','tool-consumer-reconciliation-pending-v1')";
 struct MetadataGuard {
     rows: Vec<(String, String)>,
 }

@@ -1,11 +1,17 @@
 # FlowTools 插件威胁模型
 
+2026-10-31 [消费方孤儿恢复](../validation/g6-tool-consumer-reconciliation.md)
+冻结原始观察、profile/库存与信任 scope，先整批复核，再在持有原生源句柄的
+callback 内比较相关元数据，create-only 隔离且不删除/采纳。新 scope 先受控
+恢复再显式取消；receipt 记录原计划和实际提交 scope。未知 raw 孤儿只保留，
+不作为候选；普通读取仍严格拒绝未知文件。SEC-001/003/004/010/014/015 继续 open。
+
 2026-10-31 [消费方安装锁](../validation/g6-tool-consumer-installation.md) 仅绑定
 当前实际签名插件/service 和 held 的已安装工具 ZIP，生产 review 仍为空。
 固定独立 namespace 保留旧 v2/旧恢复摘要，完整状态与当前信任/时钟复查后
 同 writer 提交；库存写入后、清 journal 前再次比对原 pending，拒绝 SQL
 触发器替换。共享预算与 pending 互斥覆盖新域；尚无 accepted lease/执行、
-新域 orphan 恢复或 G7 文件发布，SEC-001/003/004/010/014/015 继续 open。
+G7 文件发布，SEC-001/003/004/010/014/015 继续 open。
 
 2026-10-30 [工具文件孤儿恢复](../validation/g6-tool-image-reconciliation.md)
 将观察到的 owner/身份/字节/SDDL 固定到私有计划，只允许隔离并缩小权限。

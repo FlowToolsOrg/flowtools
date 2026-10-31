@@ -54,7 +54,14 @@ Core all-target Clippy `-D warnings` 随后通过（15.31s），Rust fmt 与
 docs:check 通过。全套 Core 随后通过 375 单元（783.33s）+11 调度+8
 compile-fail，包含加强后的所有 pending 稳定拒绝码断言及原 G5/G6/G7
 回归；日志 `execution-validation/g6/tool-consumer-core-compat-20261031.log`。
-完整根门禁和本提交远端 CI 仍须另外完成。
+`6422974` 完整本机根门禁随后 exit 0、最终工作区无漂移：11/11 workspace
+lint/types/test/build，Core 375+11+8（单元 876.83s），Runtime 原生 24+6 /
+Bun 17（原实际 50 路冷启动），Chromium 109/34，Desktop 106 Bun+Node 1+
+原生 36+6。Web 23/Desktop 25 产物一致、production refusal 和最终 Rust
+检查均通过。日志 `execution-validation/g6/root-ci-6422974-20261031.log`。
+同 SHA [PR 41171644146](https://github.com/FlowToolsOrg/flowtools/actions/runs/41171644146)
+和 [push 41171640372](https://github.com/FlowToolsOrg/flowtools/actions/runs/41171640372)
+均 SUCCESS。
 
 日志 `execution-validation/g6/tool-consumer-focused-guard-20261031.log`、
 `tool-consumer-compatibility-20261031.log`、`tool-consumer-clippy-retry-20261031.log`。
@@ -65,6 +72,6 @@ pending 比较；另一条因用例主动安装 legacy provider，却误用禁�
 imports，另精确比较旧库存不变。首次可变借用编译错误与 Clippy 测试模块
 顺序拒绝日志也保留，未放宽任何原有门禁、断言或时限。
 
-消费方库存备份还原后的未知 orphan 没有自动修复或收编入口；对应文件会
-保留并阻止正常安装/核对。该 namespace 的显式 orphan reconciliation 仍须
-完成，不能用已有原始 ZIP 或 image 恢复 API 操作此域。
+P2.8a7 交付时，消费方库存备份还原后的未知 orphan 只有保留和拒绝复用。
+后续新增 [P2.8a8 独立恢复](./g6-tool-consumer-reconciliation.md)，仍不自动
+修复/收编，也不能用原始 ZIP 或 image 恢复 API 操作此域；其验证单独记录。

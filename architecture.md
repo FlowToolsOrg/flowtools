@@ -1,9 +1,14 @@
 # Flow Tool Architecture
 
+G6 P2.8a8 为消费方域新增显式 orphan plan/apply/resume/abort；整批复核后
+通过 held-parent/create-only 移动隔离，每次实际移动前在持有源句柄的 callback
+内比较冻结元数据。新恢复 scope 只能先受控恢复、再显式作废；保留所有字节，
+不重锁或收编，见 [消费方恢复](./docs/validation/g6-tool-consumer-reconciliation.md)。
+
 G6 P2.8a7 在 `packages/install/tool_consumers.rs` 持久绑定实际签名插件/service
 图与已安装工具 ZIP；固定独立 namespace/profile 保留旧 G5 v2 格式。
 同一 writer 管理 journal 与最终当前信任复查，原 transitive pins 不自动重锁，
-所有池仍共用原预算。新域 orphan 恢复、accepted leases 与执行仍待完成，见
+所有池仍共用原预算。accepted leases 与执行仍待完成，见
 [消费方安装锁](./docs/validation/g6-tool-consumer-installation.md)。
 
 G6 P2.8a6 显式观察并隔离 T0-owned 工具文件孤儿，保留完整身份/字节/安全

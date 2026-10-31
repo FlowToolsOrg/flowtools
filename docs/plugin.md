@@ -1,5 +1,9 @@
 # Flow Tool Plugin 开发指南
 
+G6 的 [消费方孤儿恢复](./validation/g6-tool-consumer-reconciliation.md) 仅由 T0
+观察和隔离固定域内未引用的 inert bytes，不能采纳旧包、替换工具 pins、恢复
+grants 或触发插件。未知 scope 必须先受控恢复再显式取消原批次，字节不删除。
+
 G6 的 [消费方安装锁](./validation/g6-tool-consumer-installation.md) 由 T0 将实际
 签名插件/service 与已安装工具 ZIP 绑定，不能由插件提供工具 pins、路径或审核
 标志。旧 tool-free G5 锁不转换；共享文件不共享 grants/身份。库存收据依旧惰性，

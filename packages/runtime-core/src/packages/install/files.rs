@@ -606,6 +606,13 @@ impl Layout {
         &self,
         orphan: &super::reconciliation::Orphan,
     ) -> Result<(), InstallError> {
+        self.quarantine_orphan_guarded(orphan, || Ok(()))
+    }
+    pub(crate) fn quarantine_orphan_guarded(
+        &self,
+        orphan: &super::reconciliation::Orphan,
+        validate: impl FnOnce() -> Result<(), InstallError>,
+    ) -> Result<(), InstallError> {
         if !self.check_orphan(orphan)? {
             return Ok(());
         }
@@ -615,6 +622,7 @@ impl Layout {
             if self.fingerprint_held(&source)? != orphan.files {
                 return Err(InstallError::ArtifactInvalid);
             }
+            validate()?;
             Ok(())
         })?;
         if self.check_orphan(orphan)? {

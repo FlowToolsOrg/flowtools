@@ -2,12 +2,23 @@
 
 日期：2026-10-31。G7 整体为 **in-progress / prototype**。
 
+G6 P2.8a8 新增 [消费方孤儿恢复](./g6-tool-consumer-reconciliation.md)：只读计划、
+整批复核、实际 held-source callback 元数据检查、create-only 隔离与显式
+续接/作废，保留所有字节/旧锁。专项二十项、完整 Core 395+11+9（单元
+1051.68s）、all-target Clippy 与文档检查通过；根门禁与当前 SHA 结果另记。
+accepted leases、产品执行和 G7 文件/媒体闭环仍未完成。
+
 G6 P2.8a7 新增 [实际消费方安装锁](./g6-tool-consumer-installation.md)，同一 writer
 将签名插件/service 图与实际 held 工具 ZIP 绑定到独立惰性域；旧格式、旧恢复
-摘要和 transitive pins 保留。新域 orphan 恢复、accepted leases 与 G7 文件/
+摘要和 transitive pins 保留。accepted leases 与 G7 文件/
 媒体执行仍待完成，不能将该安装收据计为办公闭环。
 该修改专项 18+2、Core 全套 375+11+8、all-target Clippy 与文档检查通过；
-完整本机根门禁和当前 SHA 远端结果另记。
+`6422974` 完整本机根门禁随后 exit 0、最终工作区无漂移：11/11 workspace、
+Runtime 原生 24+6/Bun 17、Chromium 109/34、Desktop 106 Bun+Node 1+原生
+36+6，Web 23/Desktop 25 产物一致和最终 Rust 检查通过。
+同 SHA [PR 41171644146](https://github.com/FlowToolsOrg/flowtools/actions/runs/41171644146)
+和 [push 41171640372](https://github.com/FlowToolsOrg/flowtools/actions/runs/41171640372)
+均 SUCCESS。
 
 `7c81a45` 的本机完整门禁在 Chromium 连接中断处失败；原样完整浏览器
 专项复验 109/109 通过，首次中断根因未确定。该 SHA 的 PR/push 远端均在

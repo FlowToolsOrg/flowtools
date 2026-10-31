@@ -1,5 +1,6 @@
 //! Separate inert signed-plugin/tool installation domain. Legacy G5 v2 bytes
 //! and tool-free locks are unchanged. This is never an execution/lease API.
+pub mod reconciliation;
 use super::*;
 use crate::packages::{
     dependencies::tools::{
@@ -208,6 +209,7 @@ fn journal(connection: &rusqlite::Connection, state: &Inventory) -> Result<Optio
 pub(crate) fn ensure_idle(
     connection: &rusqlite::Connection,
 ) -> std::result::Result<(), InstallError> {
+    reconciliation::ensure_idle(connection)?;
     let present: bool = connection
         .query_row(
             "SELECT EXISTS(SELECT 1 FROM core_metadata WHERE key=?1)",
@@ -305,14 +307,43 @@ fn validate_retained_inner(
     snapshot: &TrustSnapshot,
     tools: &[ToolArchivePin],
 ) -> Result<()> {
-    let state = inventory(store)?;
-    let pending = journal(&store.connection, &state)?;
+    let (state, pending) = validated_references(store, snapshot, tools)?;
     if state.records.is_empty() && pending.is_none() {
         if let Some(layout) = files::Layout::open_for_tool_consumers(store, false)? {
             layout.assert_owned(&state.records, None)?;
             layout.disk_bytes()?;
         }
         return Ok(());
+    }
+    let layout = files::Layout::open_for_tool_consumers(store, false)?
+        .ok_or(InstallError::ArtifactInvalid)?;
+    layout.assert_owned(
+        &state.records,
+        pending.as_ref().map(|p| p as &dyn BlobJournal),
+    )?;
+    for record in &state.records {
+        layout.read(record)?;
+    }
+    Ok(())
+}
+// Metadata/reference checks do not admit an orphan. Only the explicit fixed
+// consumer reconciler uses this path before its complete native observation.
+pub(crate) fn validate_reconciliation_references(
+    store: &DataStore,
+    snapshot: &TrustSnapshot,
+    tools: &[ToolArchivePin],
+) -> Result<()> {
+    validated_references(store, snapshot, tools).map(|_| ())
+}
+fn validated_references(
+    store: &DataStore,
+    snapshot: &TrustSnapshot,
+    tools: &[ToolArchivePin],
+) -> Result<(Inventory, Option<Journal>)> {
+    let state = inventory(store)?;
+    let pending = journal(&store.connection, &state)?;
+    if state.records.is_empty() && pending.is_none() {
+        return Ok((state, pending));
     }
     let legacy = super::inventory(&store.connection)?;
     for record in &legacy.records {
@@ -355,16 +386,7 @@ fn validate_retained_inner(
             }
         }
     }
-    let layout = files::Layout::open_for_tool_consumers(store, false)?
-        .ok_or(InstallError::ArtifactInvalid)?;
-    layout.assert_owned(
-        &state.records,
-        pending.as_ref().map(|p| p as &dyn BlobJournal),
-    )?;
-    for record in &state.records {
-        layout.read(record)?;
-    }
-    Ok(())
+    Ok((state, pending))
 }
 pub(crate) fn retained_usage(
     store: &DataStore,
@@ -593,7 +615,7 @@ fn resolve(
 // This transient exact guard freezes all relevant foreign metadata across SQL
 // writes/native publication. Fresh trust admission precedes the final capture;
 // normal observation-clock advancement is never mistaken for an old approval.
-const FOREIGN_ROWS: &str = "key GLOB 'package-trust-*' OR key='recovery-generation' OR key IN ('package-install-inventory-v1','tool-archive-inventory-v1','tool-image-inventory-v1','package-install-pending-v1','package-reconciliation-pending-v1','tool-archive-install-pending-v1','tool-archive-reconciliation-pending-v1','tool-image-materialization-pending-v1','tool-image-reconciliation-pending-v1')";
+const FOREIGN_ROWS: &str = "key GLOB 'package-trust-*' OR key='recovery-generation' OR key IN ('package-install-inventory-v1','tool-archive-inventory-v1','tool-image-inventory-v1','package-install-pending-v1','package-reconciliation-pending-v1','tool-archive-install-pending-v1','tool-archive-reconciliation-pending-v1','tool-image-materialization-pending-v1','tool-image-reconciliation-pending-v1','tool-consumer-reconciliation-pending-v1')";
 struct ForeignGuard {
     rows: Vec<(String, String)>,
 }
@@ -631,6 +653,7 @@ fn guard(
     expected: &str,
     check_scope: bool,
 ) -> Result<()> {
+    reconciliation::ensure_idle(&store.connection)?;
     companions_idle(&store.connection)?;
     if digest(&inventory(store)?)? != digest(state)?
         || companions(&store.connection)? != pending.companions_digest
@@ -647,6 +670,7 @@ fn guard(
     Ok(())
 }
 fn guard_on(connection: &rusqlite::Connection, state: &Inventory, expected: &str) -> Result<()> {
+    reconciliation::ensure_idle(connection)?;
     let current = inventory_on(connection, &state.profile_digest)?;
     if digest(&current)? != digest(state)?
         || journal(connection, &current)?
@@ -948,6 +972,7 @@ pub fn abort_inert_tool_consumer_install(
     trust: &PackageTrustStore,
     store: &mut DataStore,
 ) -> Result<bool> {
+    reconciliation::ensure_idle(&store.connection)?;
     companions_idle(&store.connection)?;
     // Current trust must be usable after any restore/copy recovery. Explicit
     // abort needs provenance/bytes, not renewed permission to use a revoked tool.

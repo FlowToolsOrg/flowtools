@@ -216,6 +216,20 @@ fn validate_record(record: &Record) -> Result<()> {
     Ok(())
 }
 fn inventory(trust: &PackageTrustStore, store: &mut DataStore) -> Result<Inventory> {
+    let (state, snapshot) = known_inventory(trust, store)?;
+    crate::packages::install::tool_consumers::validate_retained(
+        store,
+        &snapshot,
+        &state.records.iter().map(Record::pin).collect::<Vec<_>>(),
+    )?;
+    Ok(state)
+}
+// Strict ledger/profile decoding shared only with the explicit consumer orphan
+// reconciler. Ordinary readers still validate all retained consumer files above.
+fn known_inventory(
+    trust: &PackageTrustStore,
+    store: &mut DataStore,
+) -> Result<(Inventory, crate::packages::trust::TrustSnapshot)> {
     let blocked:bool=store.connection.query_row("SELECT EXISTS(SELECT 1 FROM core_metadata WHERE key IN ('package-install-pending-v1','package-reconciliation-pending-v1'))",[],|r|r.get(0)).map_err(storage)?;
     if blocked {
         return Err(InstallError::RecoveryPending.into());
@@ -254,12 +268,7 @@ fn inventory(trust: &PackageTrustStore, store: &mut DataStore) -> Result<Invento
             return Err(invalid());
         }
     }
-    crate::packages::install::tool_consumers::validate_retained(
-        store,
-        &snapshot,
-        &state.records.iter().map(Record::pin).collect::<Vec<_>>(),
-    )?;
-    Ok(state)
+    Ok((state, snapshot))
 }
 fn journal(store: &DataStore, state: &Inventory) -> Result<Option<Journal>> {
     journal_on(&store.connection, state)

@@ -22,10 +22,14 @@ G5/G6 执行验收。人工 G7 项为 waived，整体不更新为 done。
 
 ## 1. 使用规则
 
+G6 P2.8a8 的 [消费方孤儿恢复](./validation/g6-tool-consumer-reconciliation.md)
+只做 T0 整批观察与 create-only 隔离，持有源时复核元数据，显式续接/作废并
+保留字节。它不采纳或重锁包，不完成 accepted leases、执行或 G7 办公闭环。
+
 G6 P2.8a7 的 [消费方安装锁](./validation/g6-tool-consumer-installation.md) 使用
 独立固定域持久绑定实际签名插件/service 与已安装工具 ZIP，保留旧 G5 v2
 与旧恢复摘要；同一 writer、原共享预算及当前信任/最终时钟检查不变。
-它仍非 accepted lease/执行身份，新域 orphan 恢复与 G7 文件/媒体尚待完成。
+它仍非 accepted lease/执行身份，G7 文件/媒体尚待完成。
 
 G6 P2.8a6 的 [工具文件孤儿恢复](./validation/g6-tool-image-reconciliation.md)
 是独立惰性子步：观察当前 T0-owned 树，显式隔离后逐节点撤销读取能力，

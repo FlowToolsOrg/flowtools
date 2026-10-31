@@ -2,6 +2,12 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime-core/src/packages/install/tool_consumers/reconciliation.rs` 管理固定消费方
+域的只读 orphan 计划、独立 journal/receipt 与显式隔离；借用 G5 blob 的
+held-source callback 进行移动前元数据复核。实际磁盘/备份/进程回归在
+`packages/tests/tool_tests/install_tests/consumer_tests/reconciliation_tests.rs`，
+见 [消费方恢复](./validation/g6-tool-consumer-reconciliation.md)。
+
 `runtime-core/src/packages/install/tool_consumers.rs` 管理固定工具消费方库存、
 独立 signed lock/journal 与 abort-only 恢复；`packages/tools/install/consumer_sources.rs`
 只从 held 的实际原始工具库存重准入候选。真实磁盘/进程/备份专项位于

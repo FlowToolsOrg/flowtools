@@ -18,6 +18,7 @@ use crate::packages::{
 };
 const CONSUMERS: &str = "tool-consumer-inventory-v1";
 const CONSUMER_PENDING: &str = "tool-consumer-install-pending-v1";
+mod reconciliation_tests;
 mod recovery_tests;
 fn open(path: &Path, bootstrap: bool, cleanup: bool) -> World {
     let mut fixture = ToolFixture::new(CompressionMethod::Stored);

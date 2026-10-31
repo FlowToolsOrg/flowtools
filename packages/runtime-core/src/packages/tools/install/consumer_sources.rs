@@ -8,6 +8,28 @@ pub(crate) struct HeldToolArchives {
     _held: Vec<files::HeldBlob>,
     _layout: Option<files::Layout>,
 }
+// Recovery reads only known raw records; unknown raw groups may coexist after a
+// backup restore. They are never returned, admitted, adopted or moved here.
+pub(crate) fn validate_reconciliation_sources(
+    trust: &PackageTrustStore,
+    store: &mut DataStore,
+) -> Result<()> {
+    let (state, snapshot) = known_inventory(trust, store)?;
+    crate::packages::install::tool_consumers::validate_reconciliation_references(
+        store,
+        &snapshot,
+        &state.records.iter().map(Record::pin).collect::<Vec<_>>(),
+    )?;
+    if let Some(layout) = files::Layout::open_for_tools(store, false)? {
+        layout.disk_bytes()?;
+        for record in &state.records {
+            layout.read(record)?;
+        }
+    } else if !state.records.is_empty() {
+        return Err(InstallError::ArtifactInvalid.into());
+    }
+    Ok(())
+}
 pub(crate) fn validate_inventory(trust: &PackageTrustStore, store: &mut DataStore) -> Result<()> {
     let state = inventory(trust, store)?;
     if let Some(layout) = files::Layout::open_for_tools(store, false)? {

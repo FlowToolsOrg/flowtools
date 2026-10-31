@@ -389,11 +389,17 @@ Rust broker 的运行身份由会话/进程绑定；IPC、文件 handle、namesp
 
 ### P2.8a 集中工具仓库
 
+2026-10-31：P2.8a8 为消费方域补齐显式 orphan plan/apply/resume/abort。
+冻结 profile、库存与当前 trust/recovery scope，先整批验证，再在实际 held
+source callback 内复核元数据后 create-only 隔离。保留字节、旧锁和原共享
+预算；新 scope 先受控恢复再显式作废，不采纳/重锁，不产生 lease 或执行。
+见 [消费方恢复](./validation/g6-tool-consumer-reconciliation.md)。
+
 2026-10-31：P2.8a7 将 a4 的签名插件/service/工具锁保存到独立固定惰性库存，
 工具候选仅来自实际 held ZIP 的重新准入，不接受 caller pins 或 flags。
 保留旧 v2 格式和旧 a5/a6 恢复摘要、原 transitive pins、当前信任与最终时钟、
 单写者及原共享预算；中断仅显式 abort，所有字节保留。accepted leases、
-新域 orphan 恢复、执行与 G7 办公闭环仍待完成，见
+执行与 G7 办公闭环仍待完成，见
 [消费方安装](./validation/g6-tool-consumer-installation.md)。
 
 2026-10-30：P2.8a6 独立补齐 T0-owned 工具文件孤儿的显式观察/隔离，

@@ -6,6 +6,7 @@ use crate::packages::tools::install::images::reconciliation::{
     ImageReconciliationPlan, ImageReconciliationSummary,
 };
 use crate::packages::tools::install::reconciliation as raw;
+mod owner_fixture;
 const JOURNAL: &str = "tool-image-reconciliation-pending-v1";
 const RECEIPT: &str = "tool-image-reconciliation-receipt-v1";
 fn plan(world: &mut World) -> Result<ImageReconciliationPlan, ToolInstallError> {
@@ -51,6 +52,17 @@ fn partial_stage(world: &World) -> PathBuf {
     fs::create_dir(root.join("bin")).unwrap();
     fs::create_dir(root.join("bin/nested")).unwrap();
     fs::write(root.join("bin/nested/partial.dat"), b"PARTIAL_OWNED_BYTES").unwrap();
+    // An elevated Windows token may default newly created objects to the
+    // Administrators owner. This fixture needs T0 ownership while retaining
+    // the unfinished tree's inherited DACL/label for the interruption checks.
+    for path in [
+        root.clone(),
+        root.join("bin"),
+        root.join("bin/nested"),
+        root.join("bin/nested/partial.dat"),
+    ] {
+        owner_fixture::assign_current_user(&path);
+    }
     root
 }
 fn quarantine(world: &World) -> Vec<PathBuf> {

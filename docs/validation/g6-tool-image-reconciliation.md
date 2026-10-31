@@ -61,6 +61,35 @@ junction/hardlink。六个真实子进程在 journal、移动、部分权限写�
 docs:check 和 Rust fmt 通过。完整根门禁与当前提交远端结果另记，不将专项
 或前置提交的通过记为本提交整仓通过。
 
+### 2026-10-31：完整检查失败与 fixture 所有权修正
+
+`7c81a45` 的本机完整检查在 Chromium 第四个文件处失去浏览器连接，
+此前 3/34 文件、24 项通过；根流程 exit 1，后续检查未完成。原日志为
+`execution-validation/g6/root-ci-7c81a45-20261030.log`。未修改浏览器配置、
+测试或期限的单独完整复验通过 34/34 文件、109 项（34.26s），日志
+`execution-validation/g6/chromium-7c81a45-retry-20261030.log`。首次连接
+中断的 OS/浏览器根因尚未确定，单独复验不能替代完整根门禁。
+
+同 SHA 的 [PR 40999876428](https://github.com/FlowToolsOrg/flowtools/actions/runs/40999876428)
+与 [push 40999870526](https://github.com/FlowToolsOrg/flowtools/actions/runs/40999870526)
+均在 Core 351 pass / 4 fail 停止。四条失败都在含 `partial_stage` 的计划
+观察处得到 `Storage(PathRejected)`，其余新例及原密封例通过。该 fixture
+直接用 `std::fs` 创建部分树，没有明确设置每个节点的 T0 owner；Windows
+新对象采用创建令牌的默认 owner，该 SID 可能与 TokenUser 不同，参见
+[Microsoft owner 规则](https://learn.microsoft.com/en-us/windows/win32/secauthz/owner-of-a-new-object)。
+
+修正仅在测试构造阶段写入当前 T0 用户的 owner，逐节点原生读回验证，
+同时比较写入前后的 DACL/label SDDL，要求继承和权限内容完全不变。
+产品的当前用户 owner 拒绝、完整观察/批次复核、叶子先撤权、原有测试
+数量与实际 LPAC/Job/PID/期限断言均保留。修正后的专项、整仓与远端结果
+须分别记录，不能将本机专项通过视为 Server CI 已确认修复。
+
+修正后本机二十一项专项通过（137.71s），Core all-target Clippy
+`-D warnings` 通过（6.17s），docs:check、Rust fmt 与文档格式通过。
+日志为 `execution-validation/g6/image-reconciliation-owner-focused-20261031.log`
+和 `image-reconciliation-owner-clippy-20261031.log`；完整根门禁和修正提交
+远端检查待实际完成。
+
 accepted leases、产品安装锁/工具锁与执行身份、更新/LKG/GC、受管媒体和
 G7 用户文件提交/撤销/输出闭环仍待完成；独立安全和真实发行/法律审核不
 由工程自查替代。

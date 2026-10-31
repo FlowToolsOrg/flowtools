@@ -187,6 +187,9 @@ clearing the exact journal, retaining all bytes and unmoved sources. Restore
 image orphans before raw ZIP orphans; all pending surfaces remain mutually
 exclusive and the original shared budget unchanged. See
 [image recovery evidence](./docs/validation/g6-tool-image-reconciliation.md).
+Partial-tree fixtures must explicitly select and read back the current T0 owner,
+preserving the inherited DACL/label; an elevated token's default owner is not a
+substitute for TokenUser. Never relax production owner refusal to fix a fixture.
 
 G6 P2.8a5 raw tool ZIP reconciliation is explicit T0 plan/apply/resume/abort in
 `packages/tools/install/reconciliation.rs`. Preserve opaque plans, exact profile/

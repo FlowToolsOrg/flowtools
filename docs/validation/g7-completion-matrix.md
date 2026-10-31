@@ -1,6 +1,14 @@
 # G7 完成矩阵与剩余依赖
 
-日期：2026-10-30。G7 整体为 **in-progress / prototype**。
+日期：2026-10-31。G7 整体为 **in-progress / prototype**。
+
+`7c81a45` 的本机完整门禁在 Chromium 连接中断处失败；原样完整浏览器
+专项复验 109/109 通过，首次中断根因未确定。该 SHA 的 PR/push 远端均在
+Core 351 pass / 4 fail 停止，四例共用的部分树 fixture 未明确指定 T0
+owner。现修正测试构造并验证原生 owner 与未变的 DACL/label；产品 owner
+拒绝保持。修正后的完整检查另记，详见 [恢复记录](./g6-tool-image-reconciliation.md)。
+修正后本机全部二十一项恢复专项及 Core all-target Clippy 通过；完整本机
+根门禁和远端 Windows CI 仍须分别完成。
 
 G6 P2.8a6 新增 [工具文件孤儿恢复](./g6-tool-image-reconciliation.md)，
 先隔离并撤销 artifact capability，再核对原始 ZIP；不收编、不产生 accepted

@@ -408,6 +408,21 @@ nonces, Origin-header identity fallback, arbitrary package paths or production
 activation. Record [WebView evidence](./docs/validation/g5-webview-feasibility.md);
 product integration and independent security acceptance remain pending.
 
+P2.2's independent `packages/headless-sandbox` is a Windows/x64 prototype,
+not a product runner. Preserve pinned engine bytes, source-only JS, fixed
+static CRT, create-only disposable AppContainer profiles, exact token/SID and
+AAP opt-out controls, no broad inherited environment, explicit pipe handles and
+pre-resume Job admission. Native process errors stay observable without UI:
+scope and restore the parent's error mode before CreateProcess, leave parent WER
+untouched, and set/read back child WER no-UI flags. Retain exact Event inclusion/
+exclusion controls, crash/health tests and the shared 500 ms drain/worker budget.
+Custody must propagate every unverified Drop to fixture uncertainty; preserve
+owned bytes/profile and refuse reuse. Winsock initialization refusal is not full
+network confinement, and Event evidence is not all handle types. No ordinary
+process fallback, package paths or third-party activation. Keep
+[ADR-0004](./docs/adr/0004-headless-platform-isolation.md) and
+[headless evidence](./docs/validation/g5-headless-feasibility.md) accurate.
+
 ## Coding Style and Naming Conventions
 
 - TypeScript strict mode is enabled; keep code type-safe and avoid `any`.

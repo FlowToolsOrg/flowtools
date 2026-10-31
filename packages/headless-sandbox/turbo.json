@@ -1,0 +1,16 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "passThroughEnv": ["CARGO_TARGET_DIR"],
+      "cache": false
+    },
+    "test": {
+      "dependsOn": ["^test"],
+      "passThroughEnv": ["CARGO_TARGET_DIR"],
+      "cache": false,
+      "outputs": []
+    }
+  }
+}

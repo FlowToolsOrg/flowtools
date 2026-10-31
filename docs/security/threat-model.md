@@ -82,6 +82,15 @@ about:blank/srcdoc 等继承 frame 未认证；顶层身份不能证明调用 fr
 产品 Tauri 配置和真实包/broker/consent/data
 仍未接入。SEC-001/002/008/014/015 均保持 open，独立安全批准 pending。
 
+P2.2 的 [独立 native harness](../validation/g5-headless-feasibility.md)
+按 [ADR-0004](../adr/0004-headless-platform-isolation.md) 固定 source engine、
+AppContainer/AAP opt-out 和 token/环境/句柄/预算；实际恶意样本、精确异常、
+Event 正负对照和 worker/Drop 不确定状态检查已实施。仅测试父进程局部
+error mode 与子 WER，不改变系统策略；所有未确认清理都保留并拒绝复用。
+Winsock 初始化拒绝不证明完整出站网络控制，Event 不代表全部句柄类型；
+完整平台和产品身份/broker/consent/data 尚未接入。SEC-001/002/008/014/015
+保持 open，独立安全批准 pending。
+
 2026-10-11 P2.5b 第六步在
 [native 发布文件层](../../packages/runtime-core/src/packages/install/files/rename.rs)
 修补第五步临时释放内部父目录 guards 的窗口：所有父目录句柄持续持有且

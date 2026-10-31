@@ -1288,6 +1288,14 @@ cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 - 负责人：`TBD (Runtime / Desktop)`
 - 依赖：P1.3、P1.5
 
+2026-10-13：独立 Windows/x64 QuickJS-NG + AppContainer/AAP opt-out
+可行性 harness 交付 20 项 targeted checks：实际 token、固定环境/句柄、
+Job/engine 预算、精确异常/Host health、Drop 不确定状态传播和 profile 回收。
+详见 [headless 证据](./validation/g5-headless-feasibility.md) 与
+[ADR-0004](./adr/0004-headless-platform-isolation.md)。Winsock 初始化拒绝
+与 Event 控制不关闭完整网络/句柄平台门禁；真实签名身份、broker/consent/
+data、产品接入与独立安全验收 pending，本项和 G5 不标 done。
+
 交付物：
 
 - T3 插件运行于 Worker、受限子进程或等价可终止边界。

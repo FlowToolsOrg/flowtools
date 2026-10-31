@@ -107,6 +107,14 @@ harness does not activate installed plugins or complete production Tauri policy,
 broker/consent/data integration or independent security acceptance. P2.1/G5 remain
 pending.
 
+P2.2 adds an independent Windows/x64 source-JavaScript feasibility harness with
+a pinned QuickJS-NG engine, fresh AppContainer profile, verified token, fixed
+environment/handles and bounded Job/engine resources. Native refusal, crash,
+cleanup and Host health controls passed 20 targeted tests. This does not certify
+complete network/handle confinement or activate installed plugins. See
+[headless feasibility](./docs/validation/g5-headless-feasibility.md) and
+[ADR-0004](./docs/adr/0004-headless-platform-isolation.md). P2.2/G5 remain pending.
+
 > An extensible, cross-platform toolbox powered by a plugin runtime.
 > Plugin Runtime for AI Age
 

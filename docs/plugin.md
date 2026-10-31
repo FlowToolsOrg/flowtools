@@ -102,6 +102,12 @@ frames 在该 profile 全部拒绝，不能用消息 Origin 字段替代 native 
 见 [WebView 验证](./validation/g5-webview-feasibility.md)。作者不能据此
 使用第三方执行、grant 或 raw Tauri API；产品 broker/授权/数据接入仍 pending。
 
+P2.2 另有固定 source-JavaScript/JSON 的 Windows/x64 engine/OS 可行性
+fixture，不从插件包选择 exe、argv、环境或 native API。实际 token、私有
+文件、资源限制、Event 句柄、精确异常与回收测试见
+[headless 验证](./validation/g5-headless-feasibility.md)。其网络观察尚未
+完成平台验收；作者不能据此安装、激活或取得能力，T3 默认拒绝继续生效。
+
 本文面向 Flow Tool 开发者，目标是帮助你在当前仓库里快速开发并调试自己的
 plugin。
 

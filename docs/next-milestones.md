@@ -374,6 +374,12 @@ symlink/junction 和同版本不同 hash 均拒绝。失败保持 last-known-goo
 [WebView 证据](./validation/g5-webview-feasibility.md)。它不接收真实安装
 包，不代替产品 Tauri 策略或 broker/consent/data 接入；P2.1/G5 保持 pending。
 
+P2.2 已有独立 Windows/x64 source-JavaScript 可行性 harness，固定 engine/
+OS profile、token、环境/句柄与预算，20 项针对性检查见
+[headless 证据](./validation/g5-headless-feasibility.md) 和
+[ADR-0004](./adr/0004-headless-platform-isolation.md)。完整网络/句柄平台
+验收、签名包身份与 broker/授权/数据接入仍待完成，保持 T3 默认拒绝。
+
 第三方 React 使用独立 origin/session 的容器，通过 broker 操作；Windows 实测
 存储分区、导航、CSP 与 Tauri capability 合并，不能把另一个窗口自动当成隔离。
 T3 runner 不暴露任意 Node/Bun OS API，不继承环境密钥或 Host 句柄。

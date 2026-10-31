@@ -172,6 +172,10 @@
         "typescript": "catalog:",
       },
     },
+    "packages/headless-sandbox": {
+      "name": "@flowtools/headless-sandbox",
+      "version": "0.1.0",
+    },
     "packages/plugin-runner": {
       "name": "@flowtools/plugin-runner",
       "version": "0.1.0",
@@ -439,6 +443,8 @@
     "@flowtools/cli": ["@flowtools/cli@workspace:packages/cli"],
 
     "@flowtools/desktop": ["@flowtools/desktop@workspace:apps/desktop"],
+
+    "@flowtools/headless-sandbox": ["@flowtools/headless-sandbox@workspace:packages/headless-sandbox"],
 
     "@flowtools/plugin-runner": ["@flowtools/plugin-runner@workspace:packages/plugin-runner"],
 

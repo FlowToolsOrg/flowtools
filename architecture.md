@@ -113,6 +113,14 @@ launcher 或用户数据库。四个隐藏窗口使用独立 profile 与固定 H
 about:blank/srcdoc 等继承 frame；请求过滤仍可能产生 TCP 预连接。尚未接入
 已安装身份、broker/consent/data 或产品 Tauri 权限，P2.1/G5 整体验收 pending。
 
+P2.2 的 `packages/headless-sandbox` 是独立 Windows/x64 可行性 harness，
+固定 QuickJS-NG source engine、AppContainer/AAP opt-out、实际 token、
+环境/句柄与 pre-resume Job 限制；错误 UI 策略不改系统设置，清理不确定即
+保留 fixture 并拒绝复用。20 项回归见
+[headless 证据](./docs/validation/g5-headless-feasibility.md)，选择与边界见
+[ADR-0004](./docs/adr/0004-headless-platform-isolation.md)。Winsock 初始化
+拒绝、单一 Event 控制不证明完整平台隔离；没有已安装包执行或 broker 接入。
+
 Flow Tool 的产品方向是 **desktop-first（Tauri）** 的插件化工具平台。
 当前仓库代码处于“先验证插件运行时，再落地桌面宿主”的阶段。
 

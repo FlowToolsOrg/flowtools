@@ -84,6 +84,7 @@ pub(crate) fn ensure_idle(
     }
 }
 fn companions_idle(connection: &rusqlite::Connection) -> Result<()> {
+    crate::packages::install::tool_consumers::ensure_idle(connection)?;
     super::super::reconciliation::ensure_idle(connection)?;
     let present:bool=connection.query_row("SELECT EXISTS(SELECT 1 FROM core_metadata WHERE key IN ('package-install-pending-v1','package-reconciliation-pending-v1','tool-archive-install-pending-v1','tool-image-materialization-pending-v1'))",[],|r|r.get(0)).map_err(storage)?;
     if present {
@@ -96,6 +97,10 @@ fn companions(connection: &rusqlite::Connection) -> Result<String> {
     let mut values = BTreeMap::new();
     for key in ["package-install-inventory-v1", "tool-archive-inventory-v1"] {
         values.insert(key, read_on::<serde_json::Value>(connection, key)?);
+    }
+    // Preserve the original a6 stamp exactly when the new domain is absent.
+    if let Some(value) = read_on::<serde_json::Value>(connection, "tool-consumer-inventory-v1")? {
+        values.insert("tool-consumer-inventory-v1", Some(value));
     }
     value_digest(&values)
 }
@@ -183,7 +188,7 @@ fn guard_on(
 // Every node effect checks the same metadata rows in SQLite without repeatedly
 // parsing a whole, potentially large orphan tree. Extra/missing relevant rows or
 // non-text values refuse; no caller-selected keys or namespace enter this query.
-const OBSERVED_ROWS:&str="key GLOB 'package-trust-*' OR key='recovery-generation' OR key IN ('package-install-inventory-v1','tool-archive-inventory-v1','tool-image-inventory-v1','package-install-pending-v1','package-reconciliation-pending-v1','tool-archive-install-pending-v1','tool-archive-reconciliation-pending-v1','tool-image-materialization-pending-v1','tool-image-reconciliation-pending-v1')";
+const OBSERVED_ROWS:&str="key GLOB 'package-trust-*' OR key='recovery-generation' OR key IN ('package-install-inventory-v1','tool-archive-inventory-v1','tool-image-inventory-v1','package-install-pending-v1','package-reconciliation-pending-v1','tool-archive-install-pending-v1','tool-archive-reconciliation-pending-v1','tool-image-materialization-pending-v1','tool-image-reconciliation-pending-v1','tool-consumer-inventory-v1','tool-consumer-install-pending-v1')";
 struct MetadataGuard {
     rows: Vec<(String, String)>,
 }
@@ -483,4 +488,27 @@ pub(crate) fn apply_fixture_with_hook(
     hook: impl FnMut(ImageReconciliationPhase, &mut DataStore) -> Result<()>,
 ) -> Result<ImageReconciliationSummary> {
     apply_with_hook(trust, store, plan, hook)
+}
+#[cfg(test)]
+mod consumer_compatibility_tests {
+    use super::*;
+    #[test]
+    fn absent_consumer_inventory_preserves_the_original_a6_companion_stamp() {
+        let store = DataStore::memory().unwrap();
+        assert_eq!(
+            companions(&store.connection).unwrap(),
+            "f4b7a820c8e2bdc24073a00a9da35987e53163276dc2a808ae5531df17baf25e"
+        );
+        store
+            .connection
+            .execute(
+                "INSERT INTO core_metadata(key,value) VALUES('tool-consumer-inventory-v1','{}')",
+                [],
+            )
+            .unwrap();
+        assert_ne!(
+            companions(&store.connection).unwrap(),
+            "f4b7a820c8e2bdc24073a00a9da35987e53163276dc2a808ae5531df17baf25e"
+        );
+    }
 }

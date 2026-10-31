@@ -1,5 +1,11 @@
 # Flow Tool
 
+G6 adds [inert installed consumer/tool locks](./docs/validation/g6-tool-consumer-installation.md)
+from actual signed plugin/service archives and held installed tool ZIPs. A separate
+fixed store preserves legacy G5 v2 bytes and shares the existing writer/budget.
+Production tool reviews remain empty; leases, orphan recovery for this new domain
+and G7 file/media execution are pending.
+
 G6 adds explicit [orphaned tool-file reconciliation](./docs/validation/g6-tool-image-reconciliation.md)
 before raw ZIP recovery. It freezes T0-owned observations, quarantines without
 adoption and removes artifact read capabilities before clearing its journal.

@@ -1,5 +1,11 @@
 # Flow Tool Architecture
 
+G6 P2.8a7 在 `packages/install/tool_consumers.rs` 持久绑定实际签名插件/service
+图与已安装工具 ZIP；固定独立 namespace/profile 保留旧 G5 v2 格式。
+同一 writer 管理 journal 与最终当前信任复查，原 transitive pins 不自动重锁，
+所有池仍共用原预算。新域 orphan 恢复、accepted leases 与执行仍待完成，见
+[消费方安装锁](./docs/validation/g6-tool-consumer-installation.md)。
+
 G6 P2.8a6 显式观察并隔离 T0-owned 工具文件孤儿，保留完整身份/字节/安全
 描述符；逐节点写入 private policy 后才清 journal，abort 也须撤销已移动组
 的 artifact capability。仍使用同一个 writer 与总预算，观察不收编 seal 或

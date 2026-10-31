@@ -105,6 +105,10 @@ fn companions(connection: &rusqlite::Connection) -> Result<String> {
     for key in ["package-install-inventory-v1", "tool-image-inventory-v1"] {
         values.insert(key, read_on::<serde_json::Value>(connection, key)?);
     }
+    // Preserve the original a5 stamp exactly when the new domain is absent.
+    if let Some(value) = read_on::<serde_json::Value>(connection, "tool-consumer-inventory-v1")? {
+        values.insert("tool-consumer-inventory-v1", Some(value));
+    }
     value_digest(&values)
 }
 fn source_state(trust: &PackageTrustStore, store: &mut DataStore) -> Result<Inventory> {
@@ -443,4 +447,27 @@ pub(crate) fn apply_fixture_with_hook(
     hook: impl FnMut(ReconciliationPhase, &mut DataStore) -> Result<()>,
 ) -> Result<ToolArchiveReconciliationSummary> {
     apply_with_hook(trust, store, plan, hook)
+}
+#[cfg(test)]
+mod consumer_compatibility_tests {
+    use super::*;
+    #[test]
+    fn absent_consumer_inventory_preserves_the_original_a5_companion_stamp() {
+        let store = DataStore::memory().unwrap();
+        assert_eq!(
+            companions(&store.connection).unwrap(),
+            "3006dbfac8ad119fab8a69a2dfc953db89e1e8ce82ea02f3f2b4cfd47ee34062"
+        );
+        store
+            .connection
+            .execute(
+                "INSERT INTO core_metadata(key,value) VALUES('tool-consumer-inventory-v1','{}')",
+                [],
+            )
+            .unwrap();
+        assert_ne!(
+            companions(&store.connection).unwrap(),
+            "3006dbfac8ad119fab8a69a2dfc953db89e1e8ce82ea02f3f2b4cfd47ee34062"
+        );
+    }
 }

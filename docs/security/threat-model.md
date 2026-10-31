@@ -1,5 +1,12 @@
 # FlowTools 插件威胁模型
 
+2026-10-31 [消费方安装锁](../validation/g6-tool-consumer-installation.md) 仅绑定
+当前实际签名插件/service 和 held 的已安装工具 ZIP，生产 review 仍为空。
+固定独立 namespace 保留旧 v2/旧恢复摘要，完整状态与当前信任/时钟复查后
+同 writer 提交；库存写入后、清 journal 前再次比对原 pending，拒绝 SQL
+触发器替换。共享预算与 pending 互斥覆盖新域；尚无 accepted lease/执行、
+新域 orphan 恢复或 G7 文件发布，SEC-001/003/004/010/014/015 继续 open。
+
 2026-10-30 [工具文件孤儿恢复](../validation/g6-tool-image-reconciliation.md)
 将观察到的 owner/身份/字节/SDDL 固定到私有计划，只允许隔离并缩小权限。
 逐效果比较元数据，部分撤权仅接受原始/private 两种精确描述符；清 journal

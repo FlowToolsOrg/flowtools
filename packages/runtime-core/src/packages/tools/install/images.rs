@@ -235,6 +235,7 @@ fn validate_record(record: &Record, source: &ArchiveRecord, prepared: bool) -> R
 pub(crate) fn require_no_pending(
     connection: &rusqlite::Connection,
 ) -> std::result::Result<(), InstallError> {
+    crate::packages::install::tool_consumers::ensure_idle(connection)?;
     reconciliation::ensure_idle(connection)?;
     let present: bool = connection
         .query_row(
@@ -320,6 +321,7 @@ fn guard_on(
     pending: &Journal,
     digest: &str,
 ) -> Result<()> {
+    crate::packages::install::tool_consumers::ensure_idle(connection)?;
     if super::journal_on(connection, source)?.is_some() {
         return Err(InstallError::RecoveryPending.into());
     }
@@ -363,6 +365,7 @@ pub(super) fn trust_stamp(connection: &rusqlite::Connection) -> Result<String> {
     value_digest(&values)
 }
 fn source_state(trust: &PackageTrustStore, store: &mut DataStore) -> Result<super::Inventory> {
+    crate::packages::install::tool_consumers::ensure_idle(&store.connection)?;
     super::native()?;
     super::reconciliation::ensure_idle(&store.connection)?;
     let source = super::inventory(trust, store)?;
@@ -386,15 +389,18 @@ fn check_usage(
         .map(|l| l.disk_usage_reserving(0))
         .transpose()?
         .unwrap_or_default();
+    let consumers = crate::packages::install::tool_consumers::retained_usage(store)?;
     if usage
         .groups
         .checked_add(raw.groups)
         .and_then(|n| n.checked_add(plugins.groups))
+        .and_then(|n| n.checked_add(consumers.groups))
         .is_none_or(|n| n > files::MAX_GROUPS)
         || usage
             .bytes
             .checked_add(raw.bytes)
             .and_then(|n| n.checked_add(plugins.bytes))
+            .and_then(|n| n.checked_add(consumers.bytes))
             .and_then(|n| n.checked_add(extra))
             .is_none_or(|n| n > files::MAX_DISK_BYTES)
     {

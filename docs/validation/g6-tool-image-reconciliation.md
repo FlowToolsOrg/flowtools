@@ -88,7 +88,16 @@ docs:check 和 Rust fmt 通过。完整根门禁与当前提交远端结果另�
 `-D warnings` 通过（6.17s），docs:check、Rust fmt 与文档格式通过。
 日志为 `execution-validation/g6/image-reconciliation-owner-focused-20261031.log`
 和 `image-reconciliation-owner-clippy-20261031.log`；完整根门禁和修正提交
-远端检查待实际完成。
+远端检查分别记录。
+
+`9f60332` 完整本机根门禁 exit 0，最终工作区无漂移：11/11 workspace
+lint/types/test/build；Core 355+11+7（单元 701.79s）；Runtime 原生 24+6、
+Bun 17（原实际 50 路冷启动）；Chromium 109/34；Desktop 106 Bun、Node 1、
+原生 36+6。Web 23/Desktop 25 产物一致，production refusal、Rust fmt/
+locked check/Clippy 均通过。日志 `execution-validation/g6/root-ci-9f60332-20261031.log`。
+同 SHA 的 [PR 41168248139](https://github.com/FlowToolsOrg/flowtools/actions/runs/41168248139)
+和 [push 41168245056](https://github.com/FlowToolsOrg/flowtools/actions/runs/41168245056)
+均 SUCCESS。本机/远端成功没有删除上方 `7c81a45` 的失败记录。
 
 accepted leases、产品安装锁/工具锁与执行身份、更新/LKG/GC、受管媒体和
 G7 用户文件提交/撤销/输出闭环仍待完成；独立安全和真实发行/法律审核不

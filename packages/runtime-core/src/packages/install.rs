@@ -19,6 +19,7 @@ use std::collections::{BTreeMap, BTreeSet, HashSet, VecDeque};
 
 pub(crate) mod files;
 pub(crate) mod reconciliation;
+pub mod tool_consumers;
 pub use reconciliation::{
     abort_inert_reconciliation, apply_inert_reconciliation, plan_inert_reconciliation,
     resume_inert_reconciliation, InertReconciliationPlan, InertReconciliationSummary,
@@ -262,6 +263,15 @@ fn observed_inventory(
     store: &mut DataStore,
 ) -> Result<Inventory, InstallError> {
     super::tools::install::require_no_pending_tool_transaction(&store.connection)?;
+    tool_consumers::ensure_references(trust, store)?;
+    validated_inventory(trust, store)
+}
+// Internal reuse by the separate tool-consumer transaction after its explicit
+// companion-pending checks. The legacy public entry points retain the guard.
+fn validated_inventory(
+    trust: &PackageTrustStore,
+    store: &mut DataStore,
+) -> Result<Inventory, InstallError> {
     let snapshot = trust.snapshot(store)?;
     let state = inventory(&store.connection)?;
     for record in &state.records {
@@ -318,6 +328,7 @@ fn guard_pending(
     expected: &Journal,
     digest: &str,
 ) -> Result<(), InstallError> {
+    super::tools::install::require_no_pending_tool_transaction(connection)?;
     let current = inventory(connection)?;
     if json_digest(&current)? != expected.before_digest {
         return Err(InstallError::InventoryChanged);

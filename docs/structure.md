@@ -2,6 +2,12 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime-core/src/packages/install/tool_consumers.rs` 管理固定工具消费方库存、
+独立 signed lock/journal 与 abort-only 恢复；`packages/tools/install/consumer_sources.rs`
+只从 held 的实际原始工具库存重准入候选。真实磁盘/进程/备份专项位于
+`packages/tests/tool_tests/install_tests/consumer_tests.rs` 和其 `recovery_tests.rs`。
+没有 wire、grant 或执行入口，见 [消费方安装](./validation/g6-tool-consumer-installation.md)。
+
 `runtime-core/src/packages/tools/install/images/reconciliation.rs` 管理固定
 image journal/receipt；`images/tree/orphans.rs` 负责有界 native observation、
 create-only 移动和叶子优先权限收缩。实际恢复/进程退出/LPAC 回归位于

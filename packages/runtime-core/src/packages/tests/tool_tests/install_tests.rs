@@ -1,4 +1,5 @@
 //! Actual Windows inert ZIP transactions using the existing signed ToolFixture.
+mod consumer_tests;
 mod image_tests;
 mod reconciliation_tests;
 use super::*;

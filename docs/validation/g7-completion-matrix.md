@@ -2,13 +2,25 @@
 
 日期：2026-10-31。G7 整体为 **in-progress / prototype**。
 
+G6 P2.8a7 新增 [实际消费方安装锁](./g6-tool-consumer-installation.md)，同一 writer
+将签名插件/service 图与实际 held 工具 ZIP 绑定到独立惰性域；旧格式、旧恢复
+摘要和 transitive pins 保留。新域 orphan 恢复、accepted leases 与 G7 文件/
+媒体执行仍待完成，不能将该安装收据计为办公闭环。
+该修改专项 18+2、Core 全套 375+11+8、all-target Clippy 与文档检查通过；
+完整本机根门禁和当前 SHA 远端结果另记。
+
 `7c81a45` 的本机完整门禁在 Chromium 连接中断处失败；原样完整浏览器
 专项复验 109/109 通过，首次中断根因未确定。该 SHA 的 PR/push 远端均在
 Core 351 pass / 4 fail 停止，四例共用的部分树 fixture 未明确指定 T0
 owner。现修正测试构造并验证原生 owner 与未变的 DACL/label；产品 owner
 拒绝保持。修正后的完整检查另记，详见 [恢复记录](./g6-tool-image-reconciliation.md)。
 修正后本机全部二十一项恢复专项及 Core all-target Clippy 通过；完整本机
-根门禁和远端 Windows CI 仍须分别完成。
+根门禁 `9f60332` 随后 exit 0，最终工作区无漂移：11/11 workspace、Core
+355+11+7、Runtime 原生 24+6/Bun 17、Chromium 109/34、Desktop 106 Bun+
+Node 1+原生 36+6、Web 23/Desktop 25 产物一致及最终 Rust 检查通过。
+该 SHA 的 [PR 41168248139](https://github.com/FlowToolsOrg/flowtools/actions/runs/41168248139)
+和 [push 41168245056](https://github.com/FlowToolsOrg/flowtools/actions/runs/41168245056)
+均 SUCCESS，历史 `7c81a45` 失败保留。
 
 G6 P2.8a6 新增 [工具文件孤儿恢复](./g6-tool-image-reconciliation.md)，
 先隔离并撤销 artifact capability，再核对原始 ZIP；不收编、不产生 accepted

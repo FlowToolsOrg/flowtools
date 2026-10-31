@@ -176,6 +176,17 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G6 P2.8a7 inert consumer installation is in `packages/install/tool_consumers.rs`.
+Only actual signed plugin/service archives and re-admitted held installed tool
+ZIPs enter its separate fixed store/lock domain; no caller pins, namespaces or
+review flags. Keep legacy G5 v2 bytes and absent-domain a5/a6 recovery stamps
+unchanged, existing transitive pins fixed, the one writer/shared budget, current
+trust and a fresh final T0 clock. Recheck the original pending after inventory
+writes and before deletion; triggers must not erase substituted journals. All
+pending operations stay exclusive. New-domain orphans refuse rather than adopt;
+explicit orphan recovery, accepted leases and execution remain pending. Production
+review profiles stay empty. See [consumer evidence](./docs/validation/g6-tool-consumer-installation.md).
+
 G6 P2.8a6 image orphan reconciliation lives in
 `packages/tools/install/images/reconciliation.rs` and `images/tree/orphans.rs`.
 Keep exact profile/inventory/trust scope, bounded T0-owned native observations,

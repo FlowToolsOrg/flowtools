@@ -1,5 +1,6 @@
 //! Windows T0 inert signed-tool ZIP storage. No extraction, registry of runnable
 //! programs, accepted-job lease, activation or executable identity.
+pub(crate) mod consumer_sources;
 pub mod images;
 pub mod reconciliation;
 use super::super::{
@@ -253,6 +254,11 @@ fn inventory(trust: &PackageTrustStore, store: &mut DataStore) -> Result<Invento
             return Err(invalid());
         }
     }
+    crate::packages::install::tool_consumers::validate_retained(
+        store,
+        &snapshot,
+        &state.records.iter().map(Record::pin).collect::<Vec<_>>(),
+    )?;
     Ok(state)
 }
 fn journal(store: &DataStore, state: &Inventory) -> Result<Option<Journal>> {
@@ -294,6 +300,7 @@ fn guard_on(
     pending: &Journal,
     expected: &str,
 ) -> Result<()> {
+    crate::packages::install::tool_consumers::ensure_idle(connection)?;
     let current = journal_on(connection, state)?.ok_or_else(invalid)?;
     if value_digest(&current)? != expected {
         return Err(invalid());
@@ -447,7 +454,10 @@ fn install_with_hook(
         .map(|l| l.disk_usage_reserving(0))
         .transpose()?
         .unwrap_or_default()
-        .combine(images::retained_usage(store)?)?;
+        .combine(images::retained_usage(store)?)?
+        .combine(crate::packages::install::tool_consumers::retained_usage(
+            store,
+        )?)?;
     let usage = layout.disk_usage_reserving(usize::from(new_artifact))?;
     if usage
         .groups
@@ -662,5 +672,8 @@ pub(crate) fn retained_tool_usage(
         .map(|l| l.disk_usage_reserving(0))
         .transpose()?
         .unwrap_or_default()
-        .combine(images::retained_usage(store)?)
+        .combine(images::retained_usage(store)?)?
+        .combine(crate::packages::install::tool_consumers::retained_usage(
+            store,
+        )?)
 }

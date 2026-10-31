@@ -1,5 +1,10 @@
 # Flow Tool Plugin 开发指南
 
+G6 的 [消费方安装锁](./validation/g6-tool-consumer-installation.md) 由 T0 将实际
+签名插件/service 与已安装工具 ZIP 绑定，不能由插件提供工具 pins、路径或审核
+标志。旧 tool-free G5 锁不转换；共享文件不共享 grants/身份。库存收据依旧惰性，
+不能运行工具；生产审核、accepted leases 与 G7 执行闭环继续等待。
+
 G6 的 [孤立工具文件恢复](./validation/g6-tool-image-reconciliation.md) 仅由
 T0 观察、隔离并撤销 artifact capability。插件不能指定观察树、保留权限、
 注入计划或将恢复收据作为工具身份；它不签发 grants 或 accepted leases。

@@ -171,6 +171,12 @@ impl Layout {
     ) -> Result<Option<Self>, InstallError> {
         Self::open_named(store, create, "tool-package-store-v1")
     }
+    pub(super) fn open_for_tool_consumers(
+        store: &DataStore,
+        create: bool,
+    ) -> Result<Option<Self>, InstallError> {
+        Self::open_named(store, create, "tool-bound-plugin-store-v1")
+    }
     fn open_named(
         store: &DataStore,
         create: bool,

@@ -4,6 +4,7 @@ mod filesystem;
 #[allow(dead_code)]
 #[path = "../../../../../../../apps/runtime/tests/isolation/harness.rs"]
 mod harness;
+mod metadata_guard_tests;
 mod reconciliation_tests;
 use super::*;
 use crate::packages::tools::install::images::{

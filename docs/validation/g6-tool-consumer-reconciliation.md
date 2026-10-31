@@ -35,7 +35,14 @@ held-source callback 原生拒绝用例通过（0.10s）；日志
 `-D warnings` 通过（16.06s），Rust fmt 与 docs:check 通过。随后完整 Core
 395 项单元（1051.68s）、11 项调度与 9 项 compile-fail 全部通过，日志
 `execution-validation/g6/consumer-reconciliation-core-compat-20261031.log`，exit 0。
-根门禁及当前提交远端检查仍须实际完成，不用专项或旧提交结果替代。
+随后 `b45f960` 完整本机根门禁 exit 0，最终工作区无漂移：11/11 workspace
+lint/types/test/build，Core 395+11+9（单元 1019.92s）、Runtime 24+6/Bun 17
+（含原 50 路实际冷启动）、Chromium 109/34、Desktop 106 Bun+Node 1+原生
+36+6、Web 23/Desktop 25 产物一致、production refusal 及最终 Rust 检查通过。
+日志 `execution-validation/g6/root-ci-b45f960-20261031.log`。
+同 SHA 的 [PR 41177618924](https://github.com/FlowToolsOrg/flowtools/actions/runs/41177618924)
+和 [push 41177615465](https://github.com/FlowToolsOrg/flowtools/actions/runs/41177615465)
+均 SUCCESS，远端 ref 已核对与本地相同。
 
 accepted leases、产品执行、更新/GC/LKG、真实发行/许可证与独立安全批准、
 G7 用户文件提交/撤销和可播放媒体输出仍待完成。本步骤不会把孤儿字节

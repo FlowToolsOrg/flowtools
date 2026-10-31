@@ -597,8 +597,7 @@ fn materialize_with_hook(
         return Err(invalid());
     }
     write(&tx, KEY, &next)?;
-    tx.execute("DELETE FROM core_metadata WHERE key=?1", [PENDING])
-        .map_err(storage)?;
+    packages::install::metadata::remove_pending(&tx, PENDING)?;
     let written: Inventory = read_on(&tx, KEY)?.ok_or_else(invalid)?;
     let raw_source: super::Inventory = read_on(&tx, super::KEY)?.ok_or_else(invalid)?;
     if value_digest(&written)? != value_digest(&next)?
@@ -649,8 +648,7 @@ pub fn abort_inert_tool_materialization(
     if trust_stamp(&tx)? != stamp {
         return Err(invalid());
     }
-    tx.execute("DELETE FROM core_metadata WHERE key=?1", [PENDING])
-        .map_err(storage)?;
+    packages::install::metadata::remove_pending(&tx, PENDING)?;
     let written: Inventory = read_on(&tx, KEY)?.unwrap_or(Inventory {
         format_version: 1,
         profile_digest: state.profile_digest.clone(),

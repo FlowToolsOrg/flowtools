@@ -922,8 +922,7 @@ fn install_with_hook(
     {
         return Err(InstallError::InventoryChanged.into());
     }
-    tx.execute("DELETE FROM core_metadata WHERE key=?1", [PENDING])
-        .map_err(storage)?;
+    super::metadata::remove_pending(&tx, PENDING)?;
     final_guard.check(&tx)?;
     if read::<serde_json::Value>(&tx, PENDING)?.is_some()
         || digest(&inventory_on(&tx, &state.profile_digest)?)? != digest(&state)?
@@ -1000,8 +999,7 @@ pub fn abort_inert_tool_consumer_install(
         .map_err(storage)?;
     frozen.check(&tx)?;
     guard_on(&tx, &state, &expected)?;
-    tx.execute("DELETE FROM core_metadata WHERE key=?1", [PENDING])
-        .map_err(storage)?;
+    super::metadata::remove_pending(&tx, PENDING)?;
     frozen.check(&tx)?;
     if read::<serde_json::Value>(&tx, PENDING)?.is_some()
         || digest(&inventory_on(&tx, &state.profile_digest)?)? != digest(&state)?

@@ -176,6 +176,14 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G5/G6 installation metadata mutations share the fixed-slot, transaction-only
+`packages/runtime-core/src/packages/install/metadata.rs` guard. Preserve exact
+JSON bytes/formats, bounded TEXT reads, one affected row and one actual change
+including trigger effects. All four install domains and their reconciliation
+paths must use guarded writes and exact-byte pending deletion. Keep existing
+trust/inventory/native guards; no trigger substitution may be hidden by a later
+DELETE. See [SQL boundary evidence](./docs/validation/g5-install-metadata-guards.md).
+
 G6 P2.8a8 consumer orphan recovery lives in `packages/install/tool_consumers/reconciliation.rs`.
 Keep opaque read-only plans, exact profile/inventory/trust scope, full-batch byte
 preflight and held-parent create-only quarantine. Check frozen metadata inside

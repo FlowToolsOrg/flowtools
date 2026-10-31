@@ -188,8 +188,7 @@ fn write(tx: &rusqlite::Transaction<'_>, key: &str, value: &impl Serialize) -> R
     if text.len() > MAX_STATE_BYTES {
         return Err(InstallError::BudgetExceeded.into());
     }
-    tx.execute("INSERT INTO core_metadata(key,value) VALUES(?1,?2) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
-        rusqlite::params![key,text]).map_err(storage)?;
+    packages::install::metadata::write(tx, key, &text)?;
     Ok(())
 }
 fn validate_record(record: &Record) -> Result<()> {
@@ -571,8 +570,7 @@ fn install_with_hook(
         .map_err(storage)?;
     guard_on(&tx, &before, &pending, &prepared)?;
     write(&tx, KEY, &state)?;
-    tx.execute("DELETE FROM core_metadata WHERE key=?1", [PENDING])
-        .map_err(storage)?;
+    packages::install::metadata::remove_pending(&tx, PENDING)?;
     let committed: Inventory = read_on(&tx, KEY)?.ok_or_else(invalid)?;
     if value_digest(&committed)? != value_digest(&state)?
         || read_on::<Journal>(&tx, PENDING)?.is_some()
@@ -607,8 +605,7 @@ pub fn abort_inert_tool_install(trust: &PackageTrustStore, store: &mut DataStore
         .transaction_with_behavior(TransactionBehavior::Immediate)
         .map_err(storage)?;
     guard_on(&tx, &state, &pending, &expected)?;
-    tx.execute("DELETE FROM core_metadata WHERE key=?1", [PENDING])
-        .map_err(storage)?;
+    packages::install::metadata::remove_pending(&tx, PENDING)?;
     tx.commit().map_err(storage)?;
     Ok(true)
 }

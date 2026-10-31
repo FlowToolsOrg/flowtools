@@ -73,3 +73,10 @@ exit 0：inventory 301，287 单元 + 11 调度 + 3 compile-fail。日志
 `execution-validation/g6/core-tool-store-20261029.log`；单元部分约 456.93s。
 随后追加 stored-record 原生 target/manifest/file 预算拒绝，十五项与 all-target
 Clippy 再次通过。最终本提交的整仓及远端验收仍单独记录。
+
+## 2026-10-31 安装 SQL 边界补充
+
+原始工具 ZIP 的库存/commit/abort 与显式恢复现使用有限槽位事务保护，
+包括替换 pending 后又被清除的 SQL 拒绝。原格式、惰性身份、字节保留和
+生产空审核清单不变；本次结果另记于
+[安装元数据保护](./g5-install-metadata-guards.md)。

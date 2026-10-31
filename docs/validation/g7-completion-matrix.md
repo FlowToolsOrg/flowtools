@@ -2,11 +2,22 @@
 
 日期：2026-10-31。G7 整体为 **in-progress / prototype**。
 
+工具 accepted leases 前的检查发现旧安装事务存在“SQL 替换后又清除
+journal”的缺口。四个安装域及其恢复路径现统一接入有限元数据保护；
+旧实现六项实际失败、修复后同六项及五项 SQLite/四项旧 SQL 专项通过，
+Clippy 和实际 inventory 406 项核对通过。新提交完整门禁仍待完成，见
+[安装 SQL 边界](./g5-install-metadata-guards.md)。不据此关闭 G5/G6 或 G7。
+
 G6 P2.8a8 新增 [消费方孤儿恢复](./g6-tool-consumer-reconciliation.md)：只读计划、
 整批复核、实际 held-source callback 元数据检查、create-only 隔离与显式
 续接/作废，保留所有字节/旧锁。专项二十项、完整 Core 395+11+9（单元
-1051.68s）、all-target Clippy 与文档检查通过；根门禁与当前 SHA 结果另记。
-accepted leases、产品执行和 G7 文件/媒体闭环仍未完成。
+1051.68s）、all-target Clippy 与文档检查通过。随后 `b45f960` 完整本机门禁
+exit 0、最终工作区无漂移：11/11 workspace、Core 395+11+9（1019.92s）、
+Runtime 24+6/Bun 17、Chromium 109/34、Desktop 106 Bun+Node 1+原生 36+6、
+Web 23/Desktop 25 产物一致及最终 Rust 检查通过。同 SHA
+[PR 41177618924](https://github.com/FlowToolsOrg/flowtools/actions/runs/41177618924)
+与 [push 41177615465](https://github.com/FlowToolsOrg/flowtools/actions/runs/41177615465)
+均 SUCCESS。accepted leases、产品执行和 G7 文件/媒体闭环仍未完成。
 
 G6 P2.8a7 新增 [实际消费方安装锁](./g6-tool-consumer-installation.md)，同一 writer
 将签名插件/service 图与实际 held 工具 ZIP 绑定到独立惰性域；旧格式、旧恢复

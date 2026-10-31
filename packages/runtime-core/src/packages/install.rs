@@ -18,6 +18,7 @@ use rusqlite::{params, OptionalExtension, TransactionBehavior};
 use std::collections::{BTreeMap, BTreeSet, HashSet, VecDeque};
 
 pub(crate) mod files;
+pub(crate) mod metadata;
 pub(crate) mod reconciliation;
 pub mod tool_consumers;
 pub use reconciliation::{
@@ -181,7 +182,7 @@ fn read<T: serde::de::DeserializeOwned>(
     }
 }
 fn write<T: Serialize>(
-    connection: &rusqlite::Connection,
+    transaction: &rusqlite::Transaction<'_>,
     key: &str,
     value: &T,
 ) -> Result<(), InstallError> {
@@ -189,8 +190,7 @@ fn write<T: Serialize>(
     if text.len() > MAX_STATE_BYTES {
         return Err(InstallError::BudgetExceeded);
     }
-    connection.execute("INSERT INTO core_metadata(key,value) VALUES(?1,?2) ON CONFLICT(key) DO UPDATE SET value=excluded.value", params![key,text]).map_err(|_| InstallError::Storage)?;
-    Ok(())
+    metadata::write(transaction, key, &text)
 }
 fn validate_record(record: &Record) -> Result<(), InstallError> {
     validate_package(&record.payload).map_err(|_| InstallError::StateInvalid)?;
@@ -668,8 +668,7 @@ pub(super) fn install_with_hook(
         state.records.push(pending.record.clone());
     }
     write(&tx, KEY, &state)?;
-    tx.execute("DELETE FROM core_metadata WHERE key=?1", [PENDING])
-        .map_err(|_| InstallError::Storage)?;
+    metadata::remove_pending(&tx, PENDING)?;
     tx.commit().map_err(|_| InstallError::Storage)?;
     hook(InstallPhase::Committed, store)?;
     Ok(InstalledInertPackage {
@@ -725,8 +724,7 @@ pub fn abort_inert_install(
         .transaction_with_behavior(TransactionBehavior::Immediate)
         .map_err(|_| InstallError::Storage)?;
     guard_pending(&tx, &pending, &json_digest(&pending)?)?;
-    tx.execute("DELETE FROM core_metadata WHERE key=?1", [PENDING])
-        .map_err(|_| InstallError::Storage)?;
+    metadata::remove_pending(&tx, PENDING)?;
     tx.commit().map_err(|_| InstallError::Storage)?;
     Ok(true)
 }

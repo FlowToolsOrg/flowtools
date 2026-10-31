@@ -415,8 +415,7 @@ fn commit_receipt(
     guard_on(&tx, state, pending, Some(expected), scope)?;
     write(&tx, RECEIPT, &receipt)?;
     guard_on(&tx, state, pending, Some(expected), scope)?;
-    tx.execute("DELETE FROM core_metadata WHERE key=?1", [PENDING])
-        .map_err(storage)?;
+    crate::packages::install::metadata::remove_pending(&tx, PENDING)?;
     guard_on(&tx, state, pending, None, scope)?;
     if read::<serde_json::Value>(&tx, RECEIPT)?
         != Some(serde_json::to_value(&receipt).map_err(|_| invalid())?)

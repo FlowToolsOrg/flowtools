@@ -391,11 +391,7 @@ fn resume_with_layout(
             plan: &pending,
         },
     )?;
-    tx.execute(
-        "DELETE FROM core_metadata WHERE key=?1",
-        [PENDING_RECONCILIATION],
-    )
-    .map_err(|_| InstallError::Storage)?;
+    super::metadata::remove_pending(&tx, PENDING_RECONCILIATION)?;
     tx.commit().map_err(|_| InstallError::Storage)?;
     hook(ReconciliationPhase::Committed, store)?;
     Ok(summary(&pending))
@@ -445,11 +441,7 @@ pub fn abort_inert_reconciliation(
             plan: &pending,
         },
     )?;
-    tx.execute(
-        "DELETE FROM core_metadata WHERE key=?1",
-        [PENDING_RECONCILIATION],
-    )
-    .map_err(|_| InstallError::Storage)?;
+    super::metadata::remove_pending(&tx, PENDING_RECONCILIATION)?;
     tx.commit().map_err(|_| InstallError::Storage)?;
     Ok(true)
 }

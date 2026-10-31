@@ -94,3 +94,10 @@ LKG/更新/GC、真实产品发行签名与许可证/来源批准、产品 nativ
 后续独立 P2.8a6 提供 [工具文件孤儿核对](./g6-tool-image-reconciliation.md)：
 只观察、隔离及撤销 artifact capability，不收编旧 seal，不补发身份/lease。
 本文件所记录的 a3 验证不替代 a6 自身专项与完整门禁。
+
+## 2026-10-31 安装 SQL 边界补充
+
+密封文件库存写入与 commit/abort 的 journal 清除接入同一有限事务保护，
+拒绝 INSERT/UPDATE/DELETE 触发器额外写入。原 ACL/身份/LPAC 和实际句柄
+检查继续保留；新专项与门禁另记于
+[安装元数据保护](./g5-install-metadata-guards.md)，不是 accepted lease 或执行入口。

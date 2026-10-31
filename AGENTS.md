@@ -176,6 +176,15 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G6 P2.8b3 `packages/tools/media/completion.rs` joins only finite conversion exit,
+complete bounded progress, independent probe projection and observed file size.
+Keep exact WAV/WebM roles, poisoned-progress and metadata/privacy/size refusal;
+progress time/size remain advisory. This pure projection cannot prove fresh held
+output identity, owned Job drain, current grants or publication. Preserve all six
+independent candidate LPAC tests and their exact source/program hashes, time/PID/
+Job assertions; normal CI still does not execute that separate workspace. See
+[completion evidence](./docs/validation/g6-media-completion-projection.md).
+
 G6 P2.8a9 accepted artifact retention lives in `packages/tools/install/leases.rs`
 and `images/lease_source.rs`. Only explicitly build-owned T0 fixed T1 catalogs
 use it; ordinary Runtime Hosts keep no tool authority and production reviews/pins

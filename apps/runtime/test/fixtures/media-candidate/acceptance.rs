@@ -92,11 +92,15 @@ fn wave_pcm(bytes: &[u8]) -> &[u8] {
     }
     panic!("actual output has no complete PCM chunk")
 }
-fn inspect(bytes: &[u8]) -> media::MediaInspection {
+fn inspect_output(bytes: &[u8]) -> Vec<u8> {
     let fixture = fixture(ToolProgram::Ffprobe);
     fs::write(fixture.work.join("input"), bytes).unwrap();
     let (code, output, _) = run(&fixture, MediaActionV1::Inspect);
     assert_eq!(code, 0);
+    output
+}
+fn inspect(bytes: &[u8]) -> media::MediaInspection {
+    let output = inspect_output(bytes);
     media::parse_inspection(&output).unwrap_or_else(|error| {
         panic!(
             "controlled probe metadata {error:?}: {}",
@@ -143,6 +147,16 @@ fn actual_wav_extraction_preserves_pcm_and_refuses_existing_output() {
     let output = fs::read(fixture.work.join("output.wav")).unwrap();
     assert_eq!(wave_pcm(&output), wave_pcm(&input));
     assert_eq!(inspect(&output).duration_ms, Some(1000));
+    let output_probe = inspect_output(&output);
+    let completed = media::completion::project_completed_output(
+        MediaActionV1::ExtractAudioWav,
+        code,
+        &progress,
+        &output_probe,
+        output.len() as u64,
+    )
+    .unwrap();
+    assert_eq!(completed.bytes, Some(output.len() as u64));
     let existing = b"EXISTING_OUTPUT_MUST_NOT_CHANGE";
     fs::write(fixture.work.join("output.wav"), existing).unwrap();
     let (code, progress, stderr) = run(&fixture, MediaActionV1::ExtractAudioWav);
@@ -154,12 +168,23 @@ fn actual_wav_extraction_preserves_pcm_and_refuses_existing_output() {
     let mut refused_progress = ProgressDecoder::default();
     refused_progress.push(&progress).unwrap();
     assert!(refused_progress.finish().is_err());
+    // Even a previously valid output projection plus exit zero cannot turn
+    // this refused attempt into conversion success. Fresh identity is still
+    // the native adapter's separate responsibility.
+    assert!(media::completion::project_completed_output(
+        MediaActionV1::ExtractAudioWav,
+        code,
+        &progress,
+        &output_probe,
+        output.len() as u64
+    )
+    .is_err());
 }
 #[test]
 fn actual_webm_output_is_inspected_and_redecoded_in_new_private_jobs() {
     let fixture = fixture(ToolProgram::Ffmpeg);
     fs::write(fixture.work.join("input"), video(3, 16)).unwrap();
-    let (code, _, stderr) = run(&fixture, MediaActionV1::TranscodeWebm);
+    let (code, progress, stderr) = run(&fixture, MediaActionV1::TranscodeWebm);
     assert_eq!(
         code,
         0,
@@ -173,6 +198,15 @@ fn actual_webm_output_is_inspected_and_redecoded_in_new_private_jobs() {
     assert_eq!(info.streams[0].codec.as_deref(), Some("vp9"));
     assert_eq!(info.streams[0].dimensions, Some([16, 16]));
     assert_eq!(info.duration_ms, Some(3000));
+    let completed = media::completion::project_completed_output(
+        MediaActionV1::TranscodeWebm,
+        code,
+        &progress,
+        &inspect_output(&output),
+        output.len() as u64,
+    )
+    .unwrap();
+    assert_eq!(completed.streams[0].dimensions, Some([16, 16]));
     let second = self::fixture(ToolProgram::Ffmpeg);
     fs::write(second.work.join("input"), output).unwrap();
     let (code, _, _) = run(&second, MediaActionV1::TranscodeWebm);

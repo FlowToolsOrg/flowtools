@@ -1,5 +1,10 @@
 # Flow Tool
 
+G6 adds a [fixed media completion projection](./docs/validation/g6-media-completion-projection.md):
+exit zero, complete progress, and independently probed output metadata must agree
+with the observed nonempty file size and fixed output roles. Real candidate WAV/WebM
+tests exercise it; it does not prove fresh file identity or authorize publication.
+
 G6 adds [accepted tool artifact retention](./docs/validation/g6-accepted-tool-artifacts.md)
 for explicitly wired T0 fixed T1 jobs. Exact signed ZIPs and existing sealed files
 are held before the ordinary durable receipt; historical roots survive uncertain

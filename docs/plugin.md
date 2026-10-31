@@ -1,5 +1,9 @@
 # Flow Tool Plugin 开发指南
 
+G6 的 [完成投影](./validation/g6-media-completion-projection.md) 只联合有限
+转换结果的 exit/progress/输出 probe 与大小，不授予 SDK 媒体权限、文件
+身份或发布收据；实际访问/进程排空/当前授权仍由未来原生 adapter 负责。
+
 G6 的 [任务 artifact 保留](./validation/g6-accepted-tool-artifacts.md) 仅由明确
 T0 Rust 构造接入固定 T1 catalog；普通插件提交不能提供 lease、pins、路径或
 review selector。已有声明、当前 grant/epoch、实际 signed ZIP/现有 seal 和

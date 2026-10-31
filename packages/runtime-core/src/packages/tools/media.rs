@@ -4,6 +4,8 @@ use super::ToolProgram;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
+pub mod completion;
+
 pub const MAX_INSPECTION_BYTES: usize = 65_536;
 pub const MAX_MEDIA_BYTES: u64 = 268_435_456;
 pub const MAX_DURATION_MS: u64 = 604_800_000;

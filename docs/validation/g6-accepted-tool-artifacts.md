@@ -1,6 +1,6 @@
 # G6 接收任务时的工具 artifact 保留
 
-日期：2026-10-31。P2.8a9 engineering prototype；专项已过，当前完整门禁另记。
+日期：2026-10-31。P2.8a9 engineering prototype；专项/本机完整门禁已过，远端另记。
 
 当前实现是固定 T1 catalog 任务的接受阶段持有与元数据保留，不是
 原生工具派发。普通 Runtime Host 构造保持不带工具 authority；只有明确的
@@ -73,6 +73,23 @@ Rust fmt、文档格式与 docs:check 通过；未将专项记为当前完整门
 解析器或 session 约束。依赖预览重构第一次误用 lock/plan 返回类型；恢复
 用例第一次把底层 restore 当作 native management sanitize，已分别测试原有
 行为。失败日志及后续真实成功日志均保留，不将失败记为通过。
+
+随后 `4887b40` 完整本机根门禁 exit 0、最终无漂移：11/11 workspace
+lint/types/test/build；Core 425+11+9（单元 1129.28s）；Runtime 原生 24+6
+（42.33s/1.83s）及 Bun 17（含原 50 路实际冷启动）；Chromium 109/34；
+Desktop 106 Bun+Node 1+原生 36+6（4.20s/0.12s）；Web 23/Desktop 25 产物
+一致、production refusal 及最终 Rust 检查通过。日志
+`execution-validation/g6/root-ci-4887b40-retry-20261031.log`。
+
+首次相同 SHA 的根调用遗漏既有 `CARGO_TARGET_DIR`，Desktop build.rs 在
+绑定生成时定位 Runtime 失败；共享构建脚本残留其他工作区路径是推断，
+未将其记录为已证实的 Cargo 根因。指定原有共享 target 后相同干净提交
+完整重跑通过，没有修改门禁、时限、断言或生成文件。首次失败保留在
+`root-ci-4887b40-20261031.log`。远端已核对为
+`4887b40e70518554701ee08e31b1b20142347555`，
+[PR 41202920634](https://github.com/FlowToolsOrg/flowtools/actions/runs/41202920634) /
+[push 41202917208](https://github.com/FlowToolsOrg/flowtools/actions/runs/41202917208)
+当前运行中，不将本机成功写成远端成功。
 
 ## 后续边界
 

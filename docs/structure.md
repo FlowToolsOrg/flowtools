@@ -2,6 +2,11 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime-core/src/packages/tools/media/completion.rs` 复用已有有界解码器，
+投影固定转换的 exit/progress/输出 probe 与大小；不接路径或创建执行证明。
+独立媒体候选中的原六项测试接入真实 WAV/WebM/覆盖拒绝，见
+[专项](./validation/g6-media-completion-projection.md)。
+
 `runtime-core/src/packages/tools/install/leases.rs` 管理固定 T1 任务的私有
 artifact 记录、当前 signed ZIP 准入与同 writer 任务写入保护；
 `images/lease_source.rs` 只持有已有密封文件，不创建文件或返回 executable

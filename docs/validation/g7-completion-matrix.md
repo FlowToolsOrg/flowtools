@@ -2,12 +2,23 @@
 
 日期：2026-10-31。G7 整体为 **in-progress / prototype**。
 
+P2.8b3 新增 [固定媒体完成投影](./g6-media-completion-projection.md)，十七项
+Core 媒体契约与原六项真实 LPAC driver 已过。它联合 exit/progress/probe/
+大小，不证明 fresh 输出身份、Job drain、grant 或发布；原生 Runtime 工具
+adapter 和 G7 实际媒体闭环仍未接入。
+
 P2.8a9 新增 [任务 artifact 保留](./g6-accepted-tool-artifacts.md)：明确 T0 固定
 T1 任务在 accepted 前持有原始 signed ZIP 与已有 seal，同原任务行持久化。
 两个消费方共享原生句柄，未知/Interrupted 保留根，终态/后代排空后释放；
 复制/恢复、损坏引用、撤销与新旧版本共存已有专项。普通产品 Host 不配置
 authority，生产 review 为空；accepted 旧版本 continuation、原生媒体 adapter、
 更新/GC 和 G7 文件提交/撤销/媒体发布仍待完成。当前完整门禁另记。
+
+任务保留提交 `4887b40` 随后完整本机门禁 exit 0、无漂移：11/11 workspace，
+Core 425+11+9（1129.28s）、Runtime 24+6/Bun 17、Chromium 109/34、Desktop
+106+Node 1+原生 36+6、Web 23/Desktop 25、最终 Rust 检查通过。相同 SHA
+首次未指定约定 target 导致 Desktop 绑定定位失败，失败与完整重跑日志均
+保留；两路远端结果在上述专项记录中另记。
 
 工具 accepted leases 前的检查发现旧安装事务存在“SQL 替换后又清除
 journal”的缺口。四个安装域及其恢复路径现统一接入有限元数据保护；

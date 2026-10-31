@@ -22,6 +22,11 @@ G5/G6 执行验收。人工 G7 项为 waived，整体不更新为 done。
 
 ## 1. 使用规则
 
+G6 P2.8b3 的 [完成投影](./validation/g6-media-completion-projection.md) 联合
+固定转换的退出码、完整进度和独立输出 probe/大小；实际六项媒体 LPAC
+driver 保留并接入该投影。它不是 fresh 文件身份证明、原生 Runtime 工具
+adapter 或用户发布事务，G6/G7 父项保持 pending。
+
 G6 P2.8a9 增加明确 T0 固定 T1 任务的
 [accepted artifact 保留](./validation/g6-accepted-tool-artifacts.md)：实际当前
 ZIP/已有 seal 在 durable receipt 前持有，同原任务行提交；未知写入或

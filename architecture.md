@@ -1,5 +1,10 @@
 # Flow Tool Architecture
 
+G6 P2.8b3 的 [完成投影](./docs/validation/g6-media-completion-projection.md)
+联合固定转换的 exit/progress/独立 probe 与观察大小，拒绝 exit 0 但没有
+完整本次进度的覆盖拒绝。它只返回元数据；真实 held 输出身份、进程/Job
+排空和当前授权/发布事务仍属于原生 adapter，不能用此纯函数代替。
+
 G6 P2.8a9 在明确 T0 构造的固定 T1 任务 accepted 前持有已准入 ZIP 与现有
 密封文件。独立 artifact 记录同原 jobs.metadata 单行提交；grant/epoch 与
 deadline 在 IO 后重查，终态及后代排空后才持久释放。管理/恢复只保留历史

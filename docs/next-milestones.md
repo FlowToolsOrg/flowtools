@@ -472,6 +472,12 @@ plugin lock 和 task lease 防止卸载/更新误删已接受任务需要的版�
 
 ### P2.8b 受管执行与媒体适配
 
+2026-10-31：P2.8b3 补齐固定转换的
+[完成投影](./validation/g6-media-completion-projection.md)。联合完整进度、
+退出码和独立 ffprobe 的输出格式/角色/大小，不将 exit 0 当作成功。它只是
+纯元数据，十七项 Core 媒体契约及原六项真实媒体 LPAC driver 已过；当前
+仍需真实输出身份、受管进程与独立发布事务，不据此关闭 G6/G7。
+
 2026-10-29：P2.8b2 新增独立 build-only FFmpeg/ffprobe 候选及实际 LPAC
 专项，包含固定源码/签名/完整 Git 树与 program hashes。实测发现并修正
 ffprobe 空容器拒绝，补齐 WebM 必需 bsf；确认 -n 拒绝仍可能退出 0，后续

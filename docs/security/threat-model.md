@@ -612,6 +612,10 @@ claim、当前包/命令/grant/epoch 与独立 unattended 授权；本威胁保�
 
 ### SEC-015 共享工具包、间接 IO 与进程恢复
 
+- P2.8b3 增量：固定转换的纯完成投影要求 exit/progress/输出 probe 与观察
+  大小/角色一致；`-n` 实际 exit 0 的拒绝不能冒充成功。原六项真实候选
+  driver 与十七项 Core 媒体回归通过，见 [专项](../validation/g6-media-completion-projection.md)。
+  调用方元数据不证明 fresh identity、Job drain 或授权，不新增 IO 或发布能力。
 - P2.8a9 增量：明确 T0 构造的固定 T1 任务在 accepted 前持有当前 signed
   ZIP 与现有 seal，独立引用同原任务行提交。grant/epoch/期限在 IO 后复核；
   不确定写入停止接收，Interrupted 保留根，持久终态及普通 service 后代排空

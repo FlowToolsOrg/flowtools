@@ -192,6 +192,33 @@ impl Policy {
     pub(super) fn private() -> Result<Self> {
         Self::build(None)
     }
+    // An inspection workspace is private, Low and read-only to its actual
+    // per-call AppContainer SID. Input data never becomes an executable image.
+    pub(super) fn inspection(task_sid: &str) -> Result<Self> {
+        if !task_sid.starts_with("S-1-15-2-")
+            || task_sid.len() > 256
+            || !task_sid
+                .bytes()
+                .all(|byte| byte.is_ascii_digit() || matches!(byte, b'S' | b'-'))
+        {
+            return Err(InstallError::StateInvalid);
+        }
+        let owner = current_user()?;
+        let make = |directory| {
+            let inherit = if directory { "OICI" } else { "" };
+            let read = if directory { "FRFX" } else { "FR" };
+            descriptor(&format!("O:{owner}D:PAI(A;{inherit};FA;;;{owner})(A;{inherit};FA;;;SY)(A;{inherit};{read};;;{task_sid})S:AI(ML;{inherit};NW;;;LW)"))
+        };
+        let file = make(false)?;
+        let directory = make(true)?;
+        Ok(Self {
+            file_canonical: canonical(file.0)?,
+            directory_canonical: canonical(directory.0)?,
+            file,
+            directory,
+            private_alternative: None,
+        })
+    }
     pub(super) fn for_quarantine(profile: &str, archive: &str) -> Result<Self> {
         // A journal-owned quarantined group can have either exact policy while
         // an explicit abort is interrupted. Ordinary artifact reads never do.

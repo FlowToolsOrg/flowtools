@@ -176,6 +176,20 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G6 P2.8b6 native inspection lives in `runtime_media/inspection.rs` and
+`packages/tools/install/images/inspection/`. Preserve the opaque T0 handle,
+fixed ffprobe recipe, bounded literal input and no client path/argv/executable.
+Charge one whole-chain broker call, recheck each phase and current trust, retain
+the actual held image/input until owned process AND Job drain. Preparing precedes
+OS IO; Running precedes resume, using only existing jobs.metadata guards. Unknown
+SQL/drain or preparation failure stops admission and retains roots/private bytes;
+restart interrupts, never replays. Keep four active calls, eight attempts per task,
+64 retained groups, 1MiB input, 65536 output, five seconds and 500ms drain bounds.
+Keep real LPAC/SID/capability/image/Job readbacks before ResumeThread. The separate
+candidate driver counts original six plus native ten; ordinary Hosts still have
+no tool authority and production reviews stay empty. User files/conversion/output
+publication/GC remain pending. See [evidence](./docs/validation/g6-native-media-inspection.md).
+
 G6 P2.8b5 installed-media validation is a separate unpublished Cargo workspace
 under `apps/runtime/test/fixtures/managed-media-candidate`. It compiles the actual
 Core source modules with their cfg(test)-only authority; no product dependency,

@@ -80,6 +80,39 @@ impl RuntimeCore {
         adapter: impl FnOnce(&AdmittedMediaTool<'_>) -> Result<T, ErrorCode>,
         after_artifacts: impl FnOnce(&mut Self) -> Result<(), ErrorCode>,
     ) -> Result<T, ErrorCode> {
+        self.admit_media(
+            run_id,
+            action,
+            None,
+            after_artifacts,
+            |broker, session, identity, admitted| {
+                broker.invoke(
+                    session,
+                    &leases::media_operation(action),
+                    now(),
+                    |current| {
+                        if current != identity {
+                            return Err(ErrorCode::GrantRevoked);
+                        }
+                        adapter(admitted)
+                    },
+                )
+            },
+        )
+    }
+    fn admit_media<T>(
+        &mut self,
+        run_id: &str,
+        action: MediaActionV1,
+        claim: Option<&crate::broker::ToolCallClaim>,
+        after_artifacts: impl FnOnce(&mut Self) -> Result<(), ErrorCode>,
+        adapter: impl FnOnce(
+            &mut CapabilityBroker,
+            &BrokerSession,
+            &CommandIdentity,
+            &AdmittedMediaTool<'_>,
+        ) -> Result<T, ErrorCode>,
+    ) -> Result<T, ErrorCode> {
         self.check_run(run_id)?;
         if self.management_only {
             return Err(ErrorCode::SessionInvalid);
@@ -105,7 +138,12 @@ impl RuntimeCore {
             )
         };
         let operation = leases::media_operation(action);
-        let identity = self.broker.check_effect(&session, &operation, now())?;
+        let identity = match claim {
+            None => self.broker.check_effect(&session, &operation, now())?,
+            Some(claim) => self
+                .broker
+                .invoke_claimed_tool(claim, now(), |identity| Ok(identity.clone()))?,
+        };
         self.managed_authorization(&identity, self.jobs[&root].background)?;
         self.media_predecessor(&root)?;
         let snapshot = self.jobs[&root].snapshot.clone();
@@ -143,11 +181,11 @@ impl RuntimeCore {
             .as_ref()
             .unwrap()
             .media_tool(&lock, &consumer, action)?;
-        self.broker.invoke(&session, &operation, now(), |current| {
-            if current != &identity {
-                return Err(ErrorCode::GrantRevoked);
-            }
-            adapter(&admitted)
-        })
+        adapter(&mut self.broker, &session, &identity, &admitted)
     }
 }
+
+#[path = "runtime_media/inspection.rs"]
+pub(super) mod inspection;
+pub use inspection::{MediaInspectionHandle, MediaInspectionState};
+pub(super) use inspection::{NativeCall, StoredInspection};

@@ -42,7 +42,9 @@ impl ImageReference {
 // counterpart. Deserializing an ImageReference never creates one.
 pub(crate) struct HeldImage {
     reference: ImageReference,
-    _image: MaterializedInertTool,
+    pub(super) _image: MaterializedInertTool,
+    pub(super) profile_digest: String,
+    pub(super) programs: std::collections::BTreeMap<crate::packages::tools::ToolProgram, String>,
 }
 impl HeldImage {
     pub(crate) fn reference(&self) -> &ImageReference {
@@ -57,6 +59,19 @@ pub(crate) fn hold_existing(
 ) -> Result<HeldImage> {
     require_no_pending(&store.connection)?;
     let receipt = admitted.archive().descriptor();
+    let manifest = admitted
+        .archive()
+        .files()
+        .get("manifest.json")
+        .ok_or_else(invalid)?;
+    let manifest: crate::packages::tools::ToolManifest =
+        serde_json::from_value(packages::strict_json(manifest).map_err(|_| invalid())?)
+            .map_err(|_| invalid())?;
+    let programs = manifest
+        .programs
+        .into_iter()
+        .map(|program| (program.role, program.path))
+        .collect();
     trust
         .check_receipts(store, &[receipt], &receipt.payload().target, clock())
         .map_err(|e| ToolInstallError::Admission(e.into()))?;
@@ -102,6 +117,8 @@ pub(crate) fn hold_existing(
     held.extend(source_blob.guards);
     Ok(HeldImage {
         reference: ImageReference::from_record(record)?,
+        profile_digest: state.profile_digest.clone(),
+        programs,
         _image: MaterializedInertTool {
             record: record.clone(),
             _layout: layout,

@@ -381,9 +381,21 @@ test('signed installed-media candidate uses actual Core test sources in a separa
   for (const task of ['build', 'test', 'lint', 'check-types'])
     expect(runtime.scripts[task]).not.toContain('managed-media-candidate')
   const driver = read('scripts/test-managed-media-candidate.ps1')
-  expect(driver.match(/--target-dir/g)).toHaveLength(4)
+  expect(driver.match(/--target-dir/g)).toHaveLength(5)
   expect(driver).toContain("'--target-dir', $managedTargetRoot")
   expect(driver).toContain('$managedCount -ne 6')
+  expect(driver).toContain('$nativeCount -ne 10 -or $allManagedCount -ne 16')
+  expect(driver).toContain("'--skip', 'managed_media::native_inspection::'")
+  expect(driver).toContain("'Ten Core-owned native inspection checks'")
+  const nativeTests = readFileSync(
+    join(fixture, 'native_inspection.rs'),
+    'utf8'
+  )
+  expect(nativeTests.match(/#\[test\]/g)).toHaveLength(10)
+  expect(nativeTests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(nativeTests).toContain('start_media_inspection')
+  expect(nativeTests).toContain('Duration::from_secs(5)')
+  expect(nativeTests).toContain('assert_eq!(observations[0].1, 0)')
   expect(driver).toContain(
     "'--lib', 'managed_media::', '--', '--test-threads=1'"
   )
@@ -400,6 +412,31 @@ test('signed installed-media candidate uses actual Core test sources in a separa
   expect(preparation).toContain(
     'Unknown managed notice output preserved and refused'
   )
+})
+
+test('native media stays T0-only and fatal maintenance includes actual call drain', () => {
+  const root = fileURLToPath(new URL('../', import.meta.url))
+  const read = (path: string) => readFileSync(join(root, path), 'utf8')
+  const native = read('packages/runtime-core/src/runtime_media/inspection.rs')
+  const kernel = read(
+    'packages/runtime-core/src/packages/tools/install/images/inspection/kernel.rs'
+  )
+  expect(native).toMatch(
+    /pub struct MediaInspectionHandle\s*\{\s*instance: String,\s*id: String,/
+  )
+  expect(kernel).toContain('media::recipe(MediaActionV1::Inspect).arguments()')
+  expect(kernel).not.toMatch(/std::env::|Command::new|powershell|cmd\.exe/i)
+  for (const hook of [
+    'start_media_inspection_fixture',
+    'media_inspection_fixture_observations',
+    'tick_media_inspections_fixture',
+  ])
+    expect(native).toMatch(new RegExp(`#\\[cfg\\(test\\)\\]\\s*pub fn ${hook}`))
+  const server = read('apps/runtime/src/server.rs')
+  expect(server).toContain('locked.tick_media_inspections()')
+  expect(server).toContain('native_failure = true')
+  expect(server).toContain('locked.active_media_inspections() != 0')
+  expect(server).toContain('return Err("NATIVE_MEDIA_FAILED")')
 })
 
 test('native isolation probe is mandatory for tests and excluded from normal builds', () => {

@@ -2,6 +2,10 @@
 
 日期：2026-11-01。状态：prototype；实际六项专项通过，当前完整门禁另记。
 
+随后 `bb5ec8c` 的本机完整门禁及同 SHA 两路远端已 success，结果见
+[后续原生边界记录](./g6-native-media-inspection.md)。P2.8b6 将显式 driver
+扩展为分别核对/运行原六项与十项 Core 原生检查；下文保留 b5 当时的六项范围。
+
 P2.8b5 在独立、非发布的 `managed-media-candidate` Cargo workspace 中编译
 实际 Core 源文件，使用仅 `cfg(test)` 存在的私有 fixture authority。未复制
 或改写 Core 实现，没有产品 feature、Host selector、wire/Tauri command、

@@ -1,4 +1,6 @@
 //! Explicit signed-fixture/installed-image bridge. Not a product media adapter.
+#[path = "native_inspection.rs"]
+mod native_inspection;
 use crate::packages::tools::native_fixture as harness;
 use crate::{
     broker::Scope,
@@ -288,6 +290,9 @@ impl World {
         session
     }
     fn grant(&mut self, id: &str) {
+        self.grant_limit(id, 8);
+    }
+    fn grant_limit(&mut self, id: &str, max_calls: u32) {
         let admin = self.open("admin");
         let (manifest, _) = self.catalog.permission_operation(id, "convert").unwrap();
         let response = self.core.handle(
@@ -307,7 +312,7 @@ impl World {
                         })
                         .collect(),
                     expires_at: now() + 60_000.0,
-                    max_calls: 8,
+                    max_calls,
                     cold_start: false,
                     background: false,
                 }),
@@ -321,6 +326,9 @@ impl World {
     }
     fn start(&mut self, id: &str) -> String {
         self.grant(id);
+        self.start_granted(id)
+    }
+    fn start_granted(&mut self, id: &str) -> String {
         let cli = self.open("cli");
         let response = self.core.handle(
             "cli",

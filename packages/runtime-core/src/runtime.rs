@@ -20,6 +20,8 @@ use uuid::Uuid;
 
 #[cfg(windows)]
 pub use crate::packages::tools::install::leases::AdmittedMediaTool;
+#[cfg(windows)]
+pub use media::{MediaInspectionHandle, MediaInspectionState};
 
 #[cfg(windows)]
 #[path = "runtime_media.rs"]
@@ -73,6 +75,8 @@ struct Job {
     durable_metadata: std::cell::RefCell<Option<String>>,
     #[cfg(windows)]
     tool_lease: Option<ToolLease>,
+    #[cfg(windows)]
+    native_inspections: Vec<media::StoredInspection>,
 }
 fn retains_tool_artifacts(job: &Job) -> bool {
     #[cfg(windows)]
@@ -107,10 +111,14 @@ struct StoredJob {
     #[cfg(windows)]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     tool_artifacts: Option<StoredToolLease>,
+    #[cfg(windows)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    native_inspections: Vec<media::StoredInspection>,
 }
 impl StoredJob {
     #[cfg(windows)]
     fn validate_tool_artifacts(&self) -> Result<(), ErrorCode> {
+        media::inspection::validate_stored(self)?;
         match (&self.tool_artifacts, &self.dependency_lock) {
             (Some(lease), Some(lock)) => lease.validate(&self.snapshot, lock),
             (None, Some(lock)) if lock.tools.is_empty() => Ok(()),
@@ -139,6 +147,8 @@ impl StoredJob {
             service_calls: job.service_calls.clone(),
             #[cfg(windows)]
             tool_artifacts: job.tool_lease.as_ref().map(|lease| lease.stored().clone()),
+            #[cfg(windows)]
+            native_inspections: job.native_inspections.clone(),
         }
     }
 }
@@ -236,6 +246,8 @@ pub struct RuntimeCore {
     provider_candidates: HashMap<String, BuiltinCatalog>,
     #[cfg(windows)]
     tools: Option<ToolAuthority>,
+    #[cfg(windows)]
+    native_calls: HashMap<String, media::NativeCall>,
 }
 
 impl RuntimeCore {
@@ -265,6 +277,8 @@ impl RuntimeCore {
             provider_candidates: HashMap::new(),
             #[cfg(windows)]
             tools: None,
+            #[cfg(windows)]
+            native_calls: HashMap::new(),
         }
     }
 
@@ -618,6 +632,10 @@ impl RuntimeCore {
                     call.failure_code = Some(ErrorCode::ExecutionInterrupted);
                 }
             }
+            #[cfg(windows)]
+            for inspection in &mut stored.native_inspections {
+                inspection.interrupt();
+            }
             let key = (
                 stored.snapshot.root_caller.clone(),
                 stored.idempotency_key.clone(),
@@ -643,6 +661,8 @@ impl RuntimeCore {
                     durable_metadata: std::cell::RefCell::new(Some(durable_metadata)),
                     #[cfg(windows)]
                     tool_lease: stored.tool_artifacts.map(ToolLease::dormant),
+                    #[cfg(windows)]
+                    native_inspections: stored.native_inspections,
                 },
             );
             self.persist_job(&self.jobs[&run])?;
@@ -1485,6 +1505,8 @@ impl RuntimeCore {
             durable_metadata: std::cell::RefCell::new(None),
             #[cfg(windows)]
             tool_lease,
+            #[cfg(windows)]
+            native_inspections: Vec::new(),
         };
         if retains_tool_artifacts(&job)
             && serde_json::to_vec(&StoredJob::from_job(&job))
@@ -1911,6 +1933,13 @@ impl RuntimeCore {
         id: &str,
         mut result: Result<Value, ErrorCode>,
     ) -> Result<Value, ErrorCode> {
+        #[cfg(windows)]
+        {
+            if result.is_ok() && self.native_calls.values().any(|call| call.holds_run(id)) {
+                result = Err(ErrorCode::ExecutionInterrupted);
+            }
+            self.stop_native_inspections(id)?;
+        }
         if let Some(code) = self
             .service_invocations
             .get(id)
@@ -2234,6 +2263,20 @@ impl RuntimeCore {
             return;
         }
         let cancelled = self.state(run_id) == Some(JobState::Cancelling);
+        #[cfg(windows)]
+        if result.is_ok()
+            && self
+                .native_calls
+                .values()
+                .any(|call| call.holds_root(run_id))
+        {
+            result = Err(ErrorCode::ExecutionInterrupted);
+        }
+        #[cfg(windows)]
+        if self.stop_native_inspections(run_id).is_err() {
+            self.stopping = true;
+            return;
+        }
         if cancelled {
             result = Err(ErrorCode::Aborted);
         }
@@ -2328,7 +2371,7 @@ impl RuntimeCore {
         }
         // Unknown/interrupted tool-bearing work keeps its private bytes and
         // artifact roots until an explicit recovery/disposal decision.
-        if state == JobState::Interrupted && retains_tool_artifacts(&self.jobs[run_id]) {
+        if retains_tool_artifacts(&self.jobs[run_id]) {
             return;
         }
         if let Some(ref payloads) = self.private_jobs {
@@ -2347,6 +2390,16 @@ impl RuntimeCore {
 
     #[cfg(windows)]
     fn release_tool_handles_if_drained(&mut self, run: &str) -> Result<(), ErrorCode> {
+        if self.jobs.get(run).is_some_and(|job| {
+            job.native_inspections
+                .iter()
+                .any(|call| call.retains_artifacts())
+        }) {
+            return Ok(());
+        }
+        if self.native_calls.values().any(|call| call.holds_root(run)) {
+            return Ok(());
+        }
         let job = self.jobs.get_mut(run).ok_or(ErrorCode::JobNotFound)?;
         if !matches!(
             job.snapshot.state,
@@ -2384,6 +2437,11 @@ impl RuntimeCore {
             Some(JobState::Queued | JobState::Running)
         ) {
             if self.transition(run_id, JobState::Cancelling).is_err() {
+                return;
+            }
+            #[cfg(windows)]
+            if self.stop_native_inspections(run_id).is_err() {
+                self.stopping = true;
                 return;
             }
             if self.pending.remove(run_id).is_some() {

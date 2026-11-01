@@ -191,12 +191,14 @@ impl StoredToolLease {
 pub(crate) struct ToolLease {
     stored: StoredToolLease,
     _held: Vec<Arc<HeldImage>>,
+    checked_receipts: Vec<packages::VerifiedPackageDescriptor>,
 }
 impl ToolLease {
     pub(crate) fn dormant(stored: StoredToolLease) -> Self {
         Self {
             stored,
             _held: Vec::new(),
+            checked_receipts: Vec::new(),
         }
     }
     pub(crate) fn stored(&self) -> &StoredToolLease {
@@ -215,6 +217,7 @@ impl ToolLease {
     pub(crate) fn drop_released_handles(&mut self) {
         if !self.stored.retained {
             self._held.clear();
+            self.checked_receipts.clear();
         }
     }
 }
@@ -223,6 +226,7 @@ pub(crate) struct PreparedArtifacts {
     profile_digest: String,
     recovery_generation: Option<String>,
     held: Vec<Arc<HeldImage>>,
+    checked_receipts: Vec<packages::VerifiedPackageDescriptor>,
     metadata_stamp: String,
 }
 impl PreparedArtifacts {
@@ -259,6 +263,7 @@ impl PreparedArtifacts {
         Ok(ToolLease {
             stored,
             _held: self.held,
+            checked_receipts: self.checked_receipts,
         })
     }
 }
@@ -437,6 +442,7 @@ impl ToolAuthority {
             profile_digest: profile(store).map_err(failed)?,
             recovery_generation: generation(store)?,
             held,
+            checked_receipts: receipts.into_iter().cloned().collect(),
             metadata_stamp: metadata_stamp(&store.connection)?,
         })
     }
@@ -476,6 +482,71 @@ impl ToolAuthority {
             return Err(ErrorCode::RecoveryPending);
         }
         lease_source::validate_references(&self.trust, store, stored.references()).map_err(failed)
+    }
+    // Running-process checks keep the actual held files pinned and replay the
+    // current durable trust authority. A descriptor receipt is never a cached
+    // grant: resume/commit separately repeat full artifact IO through restore().
+    pub(crate) fn check_active(
+        &self,
+        store: &mut DataStore,
+        job: &JobSnapshot,
+        lock: &DependencyLock,
+        lease: &ToolLease,
+    ) -> std::result::Result<(), ErrorCode> {
+        lease.stored.validate(job, lock)?;
+        if !lease.stored.matches_scope(store)? {
+            return Err(ErrorCode::RecoveryPending);
+        }
+        if job.state != JobState::Running || !lease.stored.retained {
+            return Err(ErrorCode::SessionInvalid);
+        }
+        if lease._held.len() != lease.stored.images.len()
+            || lease
+                ._held
+                .iter()
+                .any(|held| !lease.stored.images.contains(held.reference()))
+            || lease.stored.images.iter().any(|image| {
+                lease
+                    ._held
+                    .iter()
+                    .filter(|held| held.reference() == image)
+                    .count()
+                    != 1
+            })
+        {
+            return Err(ErrorCode::DependencyArtifactMismatch);
+        }
+        let receipts = lease
+            .checked_receipts
+            .iter()
+            .filter(|receipt| {
+                lease
+                    .stored
+                    .images
+                    .iter()
+                    .any(|image| image.pin().archive_digest == receipt.package_digest())
+            })
+            .collect::<Vec<_>>();
+        if receipts.len() != lease.stored.images.len()
+            || lease.stored.images.iter().any(|image| {
+                receipts
+                    .iter()
+                    .filter(|receipt| receipt.package_digest() == image.pin().archive_digest)
+                    .count()
+                    != 1
+            })
+        {
+            return Err(ErrorCode::DependencyArtifactMismatch);
+        }
+        images::require_no_pending(&store.connection).map_err(|e| failed(e.into()))?;
+        let target = ManifestCompatibility::embedded()
+            .map_err(|_| ErrorCode::DependencyPlatformMismatch)?
+            .target;
+        let mut clock = self.clock()?;
+        self.trust
+            .check_receipts(store, &receipts, &target, clock())
+            .map_err(|e| failed(ToolInstallError::Admission(e.into())))?;
+        images::require_no_pending(&store.connection).map_err(|e| failed(e.into()))
     }
 }
 pub(crate) fn metadata_stamp(

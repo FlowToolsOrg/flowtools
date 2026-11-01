@@ -2,6 +2,12 @@
 
 日期：2026-11-01。G7 整体为 **in-progress / prototype**。
 
+P2.8b6 接入 [Core 原生媒体信息检查](./g6-native-media-inspection.md)：有界
+T0 输入、固定 ffprobe、独立 LPAC/Job、持久 phase 和逐阶段授权/信任复查。
+当前仍无用户文件 read/write grant、转换输出发布或 GUI/CLI 媒体闭环，普通
+产品 Host 无 tool authority；专项与本次整仓门禁分别记录，不能称 G7 完成。
+前一步 `bb5ec8c` 本机完整门禁及两路远端已 success，详见上述记录。
+
 P2.8b5 的 [实际安装媒体候选](./g6-installed-media-candidate.md) 专项六项通过
 （43.08s），在独立非发布 workspace 中连接签名 fixture ZIP、密封文件、
 任务持有、当前工具准入与真实 LPAC；原候选六项复验也通过（3.31s）。

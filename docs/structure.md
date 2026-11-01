@@ -2,14 +2,20 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime-core/src/runtime_media/inspection.rs` 与
+`packages/tools/install/images/inspection/` 管理有限 T0 原生信息检查：独立
+LPAC/Job、持有真实 image/input、原任务行 phase、当前授权和 owned drain。
+固定 ffprobe 与有界字节输入没有 wire/客户端路径或普通产品 Host selector；
+转换与用户输出事务尚未接入，见 [范围](./validation/g6-native-media-inspection.md)。
+
 `apps/runtime/test/fixtures/managed-media-candidate/` 是独立非发布的签名 fixture/
 实际安装媒体专项，复用实际 Core 源模块及私有测试 authority。显式
-`scripts/test-managed-media-candidate.ps1` 只运行自身六项，普通根 CI 不执行；
+`scripts/test-managed-media-candidate.ps1` 分别运行原六项及十项 Core 检查，普通根 CI 不执行；
 普通产品没有依赖或开关，见 [专项范围](./validation/g6-installed-media-candidate.md)。
 
 `runtime-core/src/runtime_media.rs` 与 `packages/tools/install/leases/invocation.rs`
 将固定媒体动作的当前 broker 检查、原任务记录、当前 signed ZIP/held image
-和实际 consumer pin 结合到 T0 借用回调；没有原生进程或文件 adapter。
+和实际 consumer pin 结合到 T0 借用回调；新的有限原生信息检查在上方单列。
 专项在 `lease_tests/invocation_tests.rs`，见
 [当前调用准入](./validation/g6-tool-effect-admission.md)。
 

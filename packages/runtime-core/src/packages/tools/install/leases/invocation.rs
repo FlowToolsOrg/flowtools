@@ -16,9 +16,27 @@ pub struct AdmittedMediaTool<'a> {
     action: MediaActionV1,
     consumer: &'a PackagePin,
     tool: &'a ToolPin,
-    _held: &'a HeldImage,
+    _held: &'a std::sync::Arc<HeldImage>,
 }
 impl AdmittedMediaTool<'_> {
+    pub(crate) fn prepare_inspection(
+        &self,
+        profile: &std::path::Path,
+        id: &str,
+        bytes: &[u8],
+        known: &std::collections::BTreeSet<String>,
+    ) -> std::result::Result<super::super::images::inspection::Inspection, ErrorCode> {
+        if self.action != MediaActionV1::Inspect {
+            return Err(ErrorCode::CapabilityUndeclared);
+        }
+        super::super::images::inspection::Inspection::prepare(
+            self._held.clone(),
+            profile,
+            id,
+            bytes,
+            known,
+        )
+    }
     pub fn action(&self) -> MediaActionV1 {
         self.action
     }

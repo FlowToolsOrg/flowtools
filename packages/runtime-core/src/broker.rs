@@ -8,6 +8,11 @@ use specta::Type;
 use std::collections::HashMap;
 use uuid::Uuid;
 
+#[cfg(windows)]
+mod tool_calls;
+#[cfg(windows)]
+pub(crate) use tool_calls::ToolCallClaim;
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Type, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CommandIdentity {
@@ -475,6 +480,15 @@ impl CapabilityBroker {
         session: &BrokerSession,
         operation: &CapabilityOperation,
     ) -> Result<(), ErrorCode> {
+        self.check_operation_scope(session, operation)?;
+        self.check_call_budget(session)
+    }
+
+    fn check_operation_scope(
+        &self,
+        session: &BrokerSession,
+        operation: &CapabilityOperation,
+    ) -> Result<(), ErrorCode> {
         let binding = &self.bindings[&session.id];
         let (effect, capability, method) = operation.declaration();
         if !binding.command["effects"]
@@ -520,9 +534,6 @@ impl CapabilityBroker {
         }
         if !grant.scopes.iter().any(|scope| scope.contains(operation)) {
             return Err(ErrorCode::ScopeDenied);
-        }
-        if binding.calls >= grant.max_calls {
-            return Err(ErrorCode::BudgetExceeded);
         }
         Ok(())
     }

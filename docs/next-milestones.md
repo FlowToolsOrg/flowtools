@@ -478,6 +478,12 @@ plugin lock 和 task lease 防止卸载/更新误删已接受任务需要的版�
 
 ### P2.8b 受管执行与媒体适配
 
+2026-11-01：P2.8b6 增加 [Core 原生信息检查](./validation/g6-native-media-inspection.md)。
+固定 ffprobe、T0 有界输入、独立 LPAC/Job 与 actor 持有，逐阶段当前授权和
+信任复查，原单 writer 记录 Preparing/Running/结束，未知保留且不重放。
+普通 Host 仍无工具 authority；用户文件转换、发布/撤销/恢复和真实发行仍待
+后续门槛，G5/G6/G7 不据此完成。专项与完整门禁分别记录。
+
 2026-11-01：P2.8b5 连接实际签名 fixture 安装/密封/任务持有与真实媒体
 LPAC 验证，使用独立非发布 workspace 的实际 Core 源模块，普通产品没有
 依赖或选择器。实际六项及 Clippy 已过，当前整仓门禁另记；公开测试签名或

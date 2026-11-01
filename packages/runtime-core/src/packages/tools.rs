@@ -242,6 +242,11 @@ fn validate_manifest(
     Ok(roles.into_iter().collect())
 }
 
+#[cfg(all(test, windows, target_arch = "x86_64"))]
+#[allow(dead_code)]
+#[path = "../../../../apps/runtime/tests/isolation/harness.rs"]
+pub(crate) mod native_fixture;
+
 #[cfg(test)]
 pub(super) fn admit_fixture(
     trust: &PackageTrustStore,

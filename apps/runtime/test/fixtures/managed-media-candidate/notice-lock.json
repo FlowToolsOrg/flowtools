@@ -1,0 +1,23 @@
+{
+  "formatVersion": 1,
+  "maturity": "prototype",
+  "combinedSha256": "2caebfa46fc66b558e81f9f16205ddf4d06eae15627a8a8151c6f452cb341e35",
+  "files": [
+    {
+      "path": "sources/ffmpeg-verified-n8.1.2/COPYING.LGPLv2.1",
+      "sha256": "246041b6ecf9bc32d718a62c57877c78b5eb397b6467e74ed7ae2626ab189c30"
+    },
+    {
+      "path": "sources/libvpx-6df3ec34557879fff673706f4a1d9fbd0f3a6f0e/LICENSE",
+      "sha256": "8267348d5af1262c11d1a08de2f5afc77457755f1ac658627dd9acf71011d615"
+    },
+    {
+      "path": "sources/libvpx-6df3ec34557879fff673706f4a1d9fbd0f3a6f0e/PATENTS",
+      "sha256": "cc3273e0694ea5896145e0677699b53471b03ea43021ddc50e7923fbb9f5023c"
+    },
+    {
+      "path": "sources/opus-1.6.1/COPYING",
+      "sha256": "01e1167d54a096d123cf6dfbbeb19587278845c6481d2d66d545669846079551"
+    }
+  ]
+}

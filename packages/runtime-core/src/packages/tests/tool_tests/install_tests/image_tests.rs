@@ -1,9 +1,7 @@
 //! Actual Windows materialized-file transactions, still using inert signed data.
 #[path = "../../../../../../../apps/runtime/tests/isolation/filesystem.rs"]
 mod filesystem;
-#[allow(dead_code)]
-#[path = "../../../../../../../apps/runtime/tests/isolation/harness.rs"]
-pub(super) mod harness;
+pub(super) use crate::packages::tools::native_fixture as harness;
 mod metadata_guard_tests;
 mod reconciliation_tests;
 use super::*;

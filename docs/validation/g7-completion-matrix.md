@@ -2,10 +2,21 @@
 
 日期：2026-11-01。G7 整体为 **in-progress / prototype**。
 
+P2.8b5 的 [实际安装媒体候选](./g6-installed-media-candidate.md) 专项六项通过
+（43.08s），在独立非发布 workspace 中连接签名 fixture ZIP、密封文件、
+任务持有、当前工具准入与真实 LPAC；原候选六项复验也通过（3.31s）。
+这是同步测试回调的验证，产品异步 adapter、用户文件发布与实际 G7 闭环
+仍 pending，当前整仓门禁另记。
+
 P2.8b4 新增 [当前 T0 工具调用准入](./g6-tool-effect-admission.md)，将实际
 consumer 的固定动作、不可变 pin/held image 与当前权限及任务原记录结合；
 借用上下文不提供 executable/path，普通产品 Host 无 authority。原生媒体
 进程、异步撤销/输出发布和文件提交/撤销仍未闭环，专项与完整门禁另记。
+
+该准入提交 `41fd82b` 随后完整本机根门禁 exit 0、最终无漂移：Core
+453+11+10（1267.65s）、11/11 workspace、Runtime 24+6/Bun 17、Chromium
+109/34、Desktop 106+Node 1+原生 36+6、Web 23/Desktop 25 及最终 Rust
+检查通过；当前两路远端在上述专项另记，前一步 `30ce0a0` 两路已 success。
 
 2026-11-01：工具任务的 [已提交整行比较](./g6-tool-job-metadata-fence.md)
 修复跨事务 SQL 改动被后续缓存写入覆盖的问题；原四项实际失败，修复后

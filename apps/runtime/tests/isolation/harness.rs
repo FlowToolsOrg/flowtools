@@ -367,6 +367,12 @@ struct ToolFiles<'a> {
     capability: Option<String>,
     root: &'a Path,
     other: &'a Path,
+    program: Option<&'a Path>,
+}
+#[allow(dead_code)]
+pub enum InstalledMediaProgram {
+    Ffmpeg,
+    Ffprobe,
 }
 impl Fixture {
     pub fn new() -> io::Result<Self> {
@@ -523,6 +529,47 @@ impl Fixture {
                 capability: grant.then(|| format!("FlowTools.ToolImages.v1.{profile}.{archive}")),
                 root,
                 other,
+                program: None,
+            }),
+        )
+    }
+    // Separate unpublished managed-candidate validation only. This never enters
+    // the Runtime product. The actual Core callback holds the exact signed image;
+    // only its fixed role below can be launched, with the existing static recipe.
+    #[allow(dead_code)]
+    pub fn launch_installed_media(
+        &self,
+        profile: &str,
+        archive: &str,
+        root: &Path,
+        role: InstalledMediaProgram,
+        args: &[&'static str],
+    ) -> io::Result<Child> {
+        let valid = |s: &str| {
+            s.len() == 64
+                && s.bytes()
+                    .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+        };
+        if !valid(profile) || !valid(archive) || !root.is_absolute() {
+            return Err(io::Error::other(
+                "invalid managed candidate fixture identity",
+            ));
+        }
+        let program = root.join(match role {
+            InstalledMediaProgram::Ffmpeg => "bin/ffmpeg.exe",
+            InstalledMediaProgram::Ffprobe => "bin/ffprobe.exe",
+        });
+        self.launch_checked(
+            (true, false),
+            "media",
+            0,
+            512 * 1024 * 1024,
+            args,
+            Some(ToolFiles {
+                capability: Some(format!("FlowTools.ToolImages.v1.{profile}.{archive}")),
+                root,
+                other: &self.root.join("other-task"),
+                program: Some(&program),
             }),
         )
     }
@@ -774,7 +821,11 @@ impl Fixture {
             env.sort_by_key(|v| v.to_ascii_uppercase());
             let mut environment: Vec<u16> = env.into_iter().flat_map(|v| wide(&v)).collect();
             environment.push(0);
-            let mut command = wide(format!("\"{}\"", self.program.display()));
+            let program = tools
+                .as_ref()
+                .and_then(|tool| tool.program)
+                .unwrap_or(&self.program);
+            let mut command = wide(format!("\"{}\"", program.display()));
             // All arguments come from static Rust recipes in test code. Keep the
             // basic test quoting deliberately closed rather than accept paths or
             // arbitrary command lines from a runtime caller.
@@ -788,7 +839,7 @@ impl Fixture {
             command.push(0);
             let mut info = PROCESS_INFORMATION::default();
             if CreateProcessW(
-                wide(&self.program).as_ptr(),
+                wide(program).as_ptr(),
                 command.as_mut_ptr(),
                 ptr::null(),
                 ptr::null(),
@@ -815,6 +866,7 @@ impl Fixture {
                 stderr: err_read,
                 private_inherited: false,
                 child_policy: 0,
+                admitted_image: None,
                 active_limit: actual_limits.BasicLimitInformation.ActiveProcessLimit,
             };
             let mut child_policy = windows_sys::Win32::System::SystemServices::PROCESS_MITIGATION_CHILD_PROCESS_POLICY::default();
@@ -911,6 +963,13 @@ impl Fixture {
                 child.wait_empty(Duration::from_millis(500))?;
                 return Ok(child);
             }
+            if tools.as_ref().is_some_and(|tool| tool.program.is_some()) {
+                let actual = child.image_path()?;
+                if fs::canonicalize(&actual)? != fs::canonicalize(program)? {
+                    return Err(io::Error::other("unexpected installed image before resume"));
+                }
+                child.admitted_image = Some(actual);
+            }
             if ResumeThread(child.thread.0) == u32::MAX {
                 return Err(stage("ResumeThread"));
             }
@@ -944,11 +1003,33 @@ pub struct Child {
     pub started: Instant,
     pub private_inherited: bool,
     pub child_policy: u32,
+    pub admitted_image: Option<PathBuf>,
     pub active_limit: u32,
     stdout: Handle,
     stderr: Handle,
 }
 impl Child {
+    #[allow(dead_code)]
+    pub fn image_path(&self) -> io::Result<PathBuf> {
+        let mut name = vec![0u16; 32768];
+        let mut length = name.len() as u32;
+        if unsafe {
+            windows_sys::Win32::System::Threading::QueryFullProcessImageNameW(
+                self.process.0,
+                0,
+                name.as_mut_ptr(),
+                &mut length,
+            )
+        } == 0
+            || length == 0
+            || length as usize >= name.len()
+        {
+            return Err(stage("actual owned process image"));
+        }
+        String::from_utf16(&name[..length as usize])
+            .map(PathBuf::from)
+            .map_err(|_| io::Error::other("invalid actual process image UTF16"))
+    }
     pub fn output(&self, bound: Duration, limit: usize) -> io::Result<(u32, Vec<u8>, Vec<u8>)> {
         let end = Instant::now() + bound;
         let (mut out, mut err) = (Vec::new(), Vec::new());

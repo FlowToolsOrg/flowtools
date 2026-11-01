@@ -2,6 +2,11 @@
 
 ## 下一阶段结构与当前实现
 
+`apps/runtime/test/fixtures/managed-media-candidate/` 是独立非发布的签名 fixture/
+实际安装媒体专项，复用实际 Core 源模块及私有测试 authority。显式
+`scripts/test-managed-media-candidate.ps1` 只运行自身六项，普通根 CI 不执行；
+普通产品没有依赖或开关，见 [专项范围](./validation/g6-installed-media-candidate.md)。
+
 `runtime-core/src/runtime_media.rs` 与 `packages/tools/install/leases/invocation.rs`
 将固定媒体动作的当前 broker 检查、原任务记录、当前 signed ZIP/held image
 和实际 consumer pin 结合到 T0 借用回调；没有原生进程或文件 adapter。

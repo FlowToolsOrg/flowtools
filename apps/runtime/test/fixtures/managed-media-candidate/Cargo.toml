@@ -1,0 +1,40 @@
+[package]
+name = "flowtools-managed-media-candidate-validation"
+version = "0.0.0"
+edition = "2021"
+publish = false
+autobins = false
+description = "Explicit signed-fixture/installed-image media validation; never a Runtime option"
+
+[workspace]
+
+[lib]
+path = "validation.rs"
+doctest = false
+
+# Compile the actual Core sources under cfg(test) in this separate unpublished
+# crate. No test authority or candidate bytes enter the product dependency graph.
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+specta = { version = "=2.0.0-rc.25", features = ["derive", "serde_json"] }
+specta-serde = "=0.0.12"
+specta-typescript = "=0.0.12"
+sha2 = "=0.10.9"
+base64 = "=0.22.1"
+ed25519-dalek = { version = "=2.2.0", default-features = false, features = ["std"] }
+uuid = { version = "=1.23.3", features = ["v4"] }
+jsonschema = { version = "=0.33.0", default-features = false }
+schemars = { version = "=1.2.1", features = ["derive"] }
+rusqlite = { version = "=0.39.0", features = ["bundled", "backup"] }
+node-semver = "=2.2.0"
+ryu-js = "=1.0.2"
+jiff = { version = "=0.2.37", features = ["tzdb-bundle-always"] }
+zip = { version = "=9.0.1", default-features = false, features = ["deflate-flate2"] }
+flate2 = { version = "=1.1.10", default-features = false, features = ["rust_backend"] }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "=0.61.2", features = ["Win32_Storage_FileSystem", "Win32_Foundation", "Win32_Security_Authorization", "Win32_Security_Cryptography", "Win32_System_Threading", "Win32_System_IO", "Win32_System_Ioctl", "Win32_System_SystemServices", "Wdk_Foundation", "Wdk_Storage_FileSystem", "Win32_Security_Isolation", "Win32_System_Com", "Win32_System_JobObjects", "Win32_System_Memory", "Win32_System_Pipes", "Win32_System_Registry", "Win32_System_WindowsProgramming", "Win32_UI_Shell"] }
+
+[profile.dev.package.sha2]
+opt-level = 3

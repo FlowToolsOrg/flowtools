@@ -59,3 +59,15 @@ compile-fail 通过（2.31s），包括借用上下文无法逃逸；Core 实际
 Rust fmt、文档格式和 docs:check 通过；当前提交完整根门禁和远端结果另记。
 G5/G6/G7 父项、accepted 旧版本续接、原生 runner、用户文件发布、真实发行/
 法律审核和独立安全批准仍 pending，生产 review profiles/pins 保持空。
+
+随后 `41fd82b` 完整本机根门禁 exit 0、最终无漂移：11/11 workspace
+lint/types/test/build；Core 453+11+10（单元 1267.65s）；Runtime 原生 24+6
+（43.81s/2.38s）及 Bun 17（含原 50 路冷启动）；Chromium 109/34；Desktop
+106 Bun+Node 1+原生 36+6（3.75s/0.14s）；Web 23/Desktop 25 产物一致、
+production refusal 和最终 Rust 检查通过。日志
+`execution-validation/g6/root-ci-41fd82b-20261101.log` / exit 0。
+
+远端 ref 已核对为 `41fd82b810bf1395df7814a1290eabeb1c8db8fb`；
+[PR 41274144420](https://github.com/FlowToolsOrg/flowtools/actions/runs/41274144420) /
+[push 41274141160](https://github.com/FlowToolsOrg/flowtools/actions/runs/41274141160)
+当前运行中。此前 `30ce0a0` 的两路远端已 success。

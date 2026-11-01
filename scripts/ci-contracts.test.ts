@@ -250,6 +250,158 @@ test('real media candidate stays an explicit pinned developer-only acceptance wo
   expect(driver).toContain("Invoke-QualityCommand 'Six real-media LPAC checks'")
 })
 
+test('signed installed-media candidate uses actual Core test sources in a separate pinned workspace', () => {
+  const root = fileURLToPath(new URL('../', import.meta.url))
+  const fixture = join(
+    root,
+    'apps/runtime/test/fixtures/managed-media-candidate'
+  )
+  const read = (path: string) => readFileSync(join(root, path), 'utf8')
+  type Dependency =
+    | string
+    | {
+        version?: string
+        workspace?: boolean
+        features?: string[]
+        [key: string]: unknown
+      }
+  type Cargo = {
+    package?: { publish?: boolean; autobins?: boolean }
+    workspace?: {
+      members?: string[]
+      dependencies?: Record<string, Dependency>
+    }
+    lib?: { path: string; doctest: boolean }
+    dependencies: Record<string, Dependency>
+    target?: Record<
+      string,
+      {
+        dependencies?: Record<string, Dependency>
+        'dev-dependencies'?: Record<string, Dependency>
+      }
+    >
+  }
+  const manifest = Bun.TOML.parse(
+    readFileSync(join(fixture, 'Cargo.toml'), 'utf8')
+  ) as Cargo
+  const core = Bun.TOML.parse(read('packages/runtime-core/Cargo.toml')) as Cargo
+  const workspace = Bun.TOML.parse(read('Cargo.toml')) as Cargo
+  expect(manifest.package?.publish).toBe(false)
+  expect(manifest.package?.autobins).toBe(false)
+  expect(manifest.workspace).toEqual({})
+  expect(manifest.lib).toEqual({ path: 'validation.rs', doctest: false })
+  expect(
+    readFileSync(join(fixture, '.gitignore'), 'utf8').trim().split(/\r?\n/)
+  ).toEqual(['/.generated/', '/target/'])
+  expect(workspace.workspace?.members).not.toContain(
+    'apps/runtime/test/fixtures/managed-media-candidate'
+  )
+  const normalize = (dependency: Dependency) =>
+    typeof dependency === 'string' ? { version: dependency } : dependency
+  expect(Object.keys(manifest.dependencies).sort()).toEqual(
+    Object.keys(core.dependencies).sort()
+  )
+  for (const [name, value] of Object.entries(core.dependencies)) {
+    const local = normalize(value)
+    const expected = local.workspace
+      ? {
+          ...normalize(workspace.workspace!.dependencies![name]!),
+          ...Object.fromEntries(
+            Object.entries(local).filter(([key]) => key !== 'workspace')
+          ),
+        }
+      : local
+    expect(normalize(manifest.dependencies[name]!)).toEqual(expected)
+  }
+  const windows = 'cfg(windows)'
+  const mergedFeatures = new Set([
+    ...normalize(core.target![windows]!.dependencies!['windows-sys']!)
+      .features!,
+    ...normalize(core.target![windows]!['dev-dependencies']!['windows-sys']!)
+      .features!,
+  ])
+  const actualWindows = normalize(
+    manifest.target![windows]!.dependencies!['windows-sys']!
+  )
+  expect(actualWindows.version).toBe('=0.61.2')
+  expect([...actualWindows.features!].sort()).toEqual(
+    [...mergedFeatures].sort()
+  )
+  const parseLock = (path: string) =>
+    Bun.TOML.parse(readFileSync(path, 'utf8')) as {
+      package: Array<{
+        name: string
+        version: string
+        source?: string
+        checksum?: string
+      }>
+    }
+  const trustedDependencies = new Set(
+    parseLock(join(root, 'Cargo.lock'))
+      .package.filter(p => p.source)
+      .map(p => `${p.name}@${p.version}:${p.source}:${p.checksum}`)
+  )
+  for (const pkg of parseLock(join(fixture, 'Cargo.lock')).package.filter(
+    p => p.source
+  )) {
+    expect(
+      trustedDependencies.has(
+        `${pkg.name}@${pkg.version}:${pkg.source}:${pkg.checksum}`
+      )
+    ).toBe(true)
+  }
+  const source = readFileSync(join(fixture, 'validation.rs'), 'utf8')
+  expect(source).toContain(
+    'include!("../../../../../packages/runtime-core/src/lib.rs");'
+  )
+  expect(source).toContain('#[cfg(test)]')
+  const tests = readFileSync(join(fixture, 'managed_media.rs'), 'utf8')
+  expect(tests.match(/#\[test\]/g)).toHaveLength(6)
+  expect(tests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(tests).toContain(
+    'include_bytes!("../media-candidate/.generated/bin/ffmpeg.exe")'
+  )
+  expect(tests).toContain('invoke_media_tool')
+  expect(tests).toContain(
+    'use crate::packages::tools::native_fixture as harness;'
+  )
+  expect(tests).toContain('launch_installed_media')
+  expect(tests).toMatch(/child\s*\.admitted_image/)
+  const harness = read('apps/runtime/tests/isolation/harness.rs')
+  const imageCheck = harness.indexOf('unexpected installed image before resume')
+  expect(imageCheck).toBeGreaterThanOrEqual(0)
+  expect(imageCheck).toBeLessThan(harness.indexOf('if ResumeThread('))
+  expect(tests).toContain('Duration::from_millis(500)')
+  const runtime = JSON.parse(read('apps/runtime/package.json')) as {
+    scripts: Record<string, string>
+  }
+  expect(runtime.scripts['validate:managed-media-candidate']).toBe(
+    'pwsh -NoProfile -File ../../scripts/test-managed-media-candidate.ps1'
+  )
+  for (const task of ['build', 'test', 'lint', 'check-types'])
+    expect(runtime.scripts[task]).not.toContain('managed-media-candidate')
+  const driver = read('scripts/test-managed-media-candidate.ps1')
+  expect(driver.match(/--target-dir/g)).toHaveLength(4)
+  expect(driver).toContain("'--target-dir', $managedTargetRoot")
+  expect(driver).toContain('$managedCount -ne 6')
+  expect(driver).toContain(
+    "'--lib', 'managed_media::', '--', '--test-threads=1'"
+  )
+  expect(driver).toContain(
+    "Invoke-QualityCommand 'Managed candidate all-target Clippy'"
+  )
+  expect(driver).toContain(
+    "Invoke-QualityCommand 'Six signed installed-image LPAC checks'"
+  )
+  expect(driver).not.toMatch(/--features|--pass-with-no-tests/)
+  const preparation = read('scripts/prepare-managed-media-candidate.ps1')
+  expect(preparation).toContain("'prepare-media-candidate.ps1'")
+  expect(preparation).toContain('Exact source notice hash required')
+  expect(preparation).toContain(
+    'Unknown managed notice output preserved and refused'
+  )
+})
+
 test('native isolation probe is mandatory for tests and excluded from normal builds', () => {
   const root = Bun.TOML.parse(
     readFileSync(new URL('../Cargo.toml', import.meta.url), 'utf8')

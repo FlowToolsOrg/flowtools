@@ -176,6 +176,20 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G6 P2.8b5 installed-media validation is a separate unpublished Cargo workspace
+under `apps/runtime/test/fixtures/managed-media-candidate`. It compiles the actual
+Core source modules with their cfg(test)-only authority; no product dependency,
+feature, config selector or executable getter follows. Its explicit driver must
+collect exactly six managed_media tests, verify dependency versions/checksums
+against the root lock and retain all original candidate/source/program hashes.
+Use actual signed-fixture ZIP installation, existing image seals/held references,
+normal current Core tool callbacks and actual owned-process image/token/capability
+readback before resume. Preserve 5s output/65536 aggregate bytes/500ms Job drain,
+the independent original six candidate checks and empty production reviews/pins.
+Public fixture signatures and bundled notices are not a production release, full
+source offer, legal approval or product async media adapter. See
+[installed candidate evidence](./docs/validation/g6-installed-media-candidate.md).
+
 G6 P2.8b4 current tool effects enter `runtime_media.rs` only through explicit T0
 fixed T1 authority. Preserve early and effect-point broker checks, all ancestor
 scopes/epochs/budgets, fresh signed ZIP/native image validation and exact committed

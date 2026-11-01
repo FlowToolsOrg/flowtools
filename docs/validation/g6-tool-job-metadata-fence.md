@@ -62,7 +62,7 @@ production refusal 与最终 Rust 检查通过。日志
 远端 ref 已核对为 `30ce0a0f1c3a22a7c2f28ab54d7d0da535e53ad0`；
 [PR 41270975564](https://github.com/FlowToolsOrg/flowtools/actions/runs/41270975564) /
 [push 41270972033](https://github.com/FlowToolsOrg/flowtools/actions/runs/41270972033)
-当前运行中，完成结果另记。
+均已 success。
 
 本修复不新增 wire、工具权限、执行身份、原生 adapter、GC 或文件发布。
 生产 review profiles/pins 保持空；G5/G6/G7 父项与独立安全批准仍 pending。

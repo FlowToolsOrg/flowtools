@@ -478,6 +478,12 @@ plugin lock 和 task lease 防止卸载/更新误删已接受任务需要的版�
 
 ### P2.8b 受管执行与媒体适配
 
+2026-11-01：P2.8b5 连接实际签名 fixture 安装/密封/任务持有与真实媒体
+LPAC 验证，使用独立非发布 workspace 的实际 Core 源模块，普通产品没有
+依赖或选择器。实际六项及 Clippy 已过，当前整仓门禁另记；公开测试签名或
+通知包不构成真实发行/法律/安全批准，见
+[安装候选范围](./validation/g6-installed-media-candidate.md)。
+
 2026-11-01：P2.8b4 新增 [当前 T0 调用准入](./validation/g6-tool-effect-admission.md)。
 固定动作槽独立解析为实际 consumer 的唯一 immutable pin 与 held image；
 IO 前后检查全链权限、当前 signed ZIP/文件与原任务记录，最后普通 broker

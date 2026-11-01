@@ -14,6 +14,7 @@ use std::{
 mod crash_tests;
 mod drain_tests;
 mod guard_tests;
+mod metadata_fence_tests;
 mod policy_tests;
 mod recovery_tests;
 

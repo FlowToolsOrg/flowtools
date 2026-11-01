@@ -1,11 +1,21 @@
 # G7 完成矩阵与剩余依赖
 
-日期：2026-10-31。G7 整体为 **in-progress / prototype**。
+日期：2026-11-01。G7 整体为 **in-progress / prototype**。
+
+2026-11-01：工具任务的 [已提交整行比较](./g6-tool-job-metadata-fence.md)
+修复跨事务 SQL 改动被后续缓存写入覆盖的问题；原四项实际失败，修复后
+相同四项通过。初次 create-only、未知状态保留文件/输入，摘要不授予权限。
+该改动不开放原生执行或关闭 G7，当前完整门禁另记。
 
 P2.8b3 新增 [固定媒体完成投影](./g6-media-completion-projection.md)，十七项
 Core 媒体契约与原六项真实 LPAC driver 已过。它联合 exit/progress/probe/
 大小，不证明 fresh 输出身份、Job drain、grant 或发布；原生 Runtime 工具
 adapter 和 G7 实际媒体闭环仍未接入。
+
+媒体投影提交 `24981c1` 随后完整本机根门禁 exit 0、无漂移：Core 431+11+9
+（1281.27s）、11/11 workspace、Runtime 24+6/Bun 17、Chromium 109/34、
+Desktop 106+Node 1+原生 36+6、Web 23/Desktop 25 与最终 Rust 检查通过；
+同 SHA 的远端结果在上述专项记录中另记。此前 `4887b40` 两路远端已 success。
 
 P2.8a9 新增 [任务 artifact 保留](./g6-accepted-tool-artifacts.md)：明确 T0 固定
 T1 任务在 accepted 前持有原始 signed ZIP 与已有 seal，同原任务行持久化。

@@ -4,6 +4,11 @@ use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 
+pub(crate) fn job_metadata_digest(text: &str) -> String {
+    use sha2::{Digest, Sha256};
+    format!("{:x}", Sha256::digest(text.as_bytes()))
+}
+
 pub const SCHEMA_VERSION: u32 = 2;
 pub const MAX_DATA_BYTES: usize = 65_536;
 const SCHEMA_V1: &str = "
@@ -128,6 +133,15 @@ impl DataStore {
         Ok(())
     }
     pub(crate) fn load_jobs(&self) -> Result<Vec<Value>, ErrorCode> {
+        Ok(self
+            .load_job_records()?
+            .into_iter()
+            .map(|(value, _)| value)
+            .collect())
+    }
+    // Preserve an exact-byte predecessor digest for the guarded tool-job writer.
+    // It is ephemeral T0 state, never a new database field or client token.
+    pub(crate) fn load_job_records(&self) -> Result<Vec<(Value, String)>, ErrorCode> {
         let mut statement = self
             .connection
             .prepare("SELECT run_id,CASE WHEN typeof(metadata)='text' AND length(CAST(metadata AS BLOB))<=32768 THEN metadata ELSE NULL END FROM jobs ORDER BY run_id LIMIT 1025")
@@ -146,9 +160,9 @@ impl DataStore {
                 if value["snapshot"]["runId"] != run || text.len() > 32_768 {
                     return Err(ErrorCode::StoreCorrupt);
                 }
-                Ok(value)
+                Ok((value, job_metadata_digest(&text)))
             })
-            .collect::<Result<Vec<Value>, ErrorCode>>()?;
+            .collect::<Result<Vec<(Value, String)>, ErrorCode>>()?;
         if values.len() > 1024 {
             return Err(ErrorCode::BudgetExceeded);
         }

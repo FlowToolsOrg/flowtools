@@ -1,6 +1,6 @@
 # G6 接收任务时的工具 artifact 保留
 
-日期：2026-10-31。P2.8a9 engineering prototype；专项/本机完整门禁已过，远端另记。
+日期：2026-10-31。P2.8a9 engineering prototype；专项/本机及两路远端完整门禁已过。
 
 当前实现是固定 T1 catalog 任务的接受阶段持有与元数据保留，不是
 原生工具派发。普通 Runtime Host 构造保持不带工具 authority；只有明确的
@@ -89,7 +89,7 @@ Desktop 106 Bun+Node 1+原生 36+6（4.20s/0.12s）；Web 23/Desktop 25 产物
 `4887b40e70518554701ee08e31b1b20142347555`，
 [PR 41202920634](https://github.com/FlowToolsOrg/flowtools/actions/runs/41202920634) /
 [push 41202917208](https://github.com/FlowToolsOrg/flowtools/actions/runs/41202917208)
-当前运行中，不将本机成功写成远端成功。
+均已完成且结论为 success。这些是 `4887b40` 的远端完整结果。
 
 ## 后续边界
 

@@ -176,6 +176,17 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+Tool-bearing task writes must compare the last exact committed jobs.metadata
+bytes inside the existing transaction before updating. The actor's predecessor
+digest is ephemeral, advances only after commit, and is never a grant/token or
+database field. Initial acceptance is create-only; missing/changed/non-TEXT or
+over-budget rows refuse cached transitions, completion, diagnostics and release.
+Keep trigger-aware row counts/readback, original 32KiB/1024-row bounds and old
+tool-free bytes. Restore binds its whole-batch original digests in the existing
+outer transaction. Unknown writes stop admission and retain native handles/bytes;
+do not recreate missing receipts or roll back conservative trust observations.
+See [job metadata evidence](./docs/validation/g6-tool-job-metadata-fence.md).
+
 G6 P2.8b3 `packages/tools/media/completion.rs` joins only finite conversion exit,
 complete bounded progress, independent probe projection and observed file size.
 Keep exact WAV/WebM roles, poisoned-progress and metadata/privacy/size refusal;

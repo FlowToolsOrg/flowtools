@@ -389,6 +389,12 @@ Rust broker 的运行身份由会话/进程绑定；IPC、文件 handle、namesp
 
 ### P2.8a 集中工具仓库
 
+2026-11-01：为 a9 的工具任务写入补齐
+[完整已提交记录比较](./validation/g6-tool-job-metadata-fence.md)。初次接收
+仅 INSERT，后续在原事务内比较 actor 的原字节摘要和旧 TEXT；跨事务
+trigger 改动、记录丢失和未知状态不能被缓存覆盖。摘要不持久或对外发放，
+不重建收据、不回退时钟或产生执行权限；完整门禁另记。
+
 2026-10-31：P2.8a9 为明确 T0 配置的固定 T1 任务增加 accepted artifact
 保留。实际 signed ZIP 与已有 seal 的当前检查、持有句柄及独立记录同原
 jobs.metadata 单行提交，输入仍用原 DPAPI；终态/后代排空后才持久释放。

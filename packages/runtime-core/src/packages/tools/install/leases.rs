@@ -500,7 +500,8 @@ pub(crate) fn persist_job(
     run: &str,
     value: &serde_json::Value,
     expected: Option<&str>,
-) -> std::result::Result<(), ErrorCode> {
+    expected_job: Option<&str>,
+) -> std::result::Result<String, ErrorCode> {
     let encoded = serde_json::to_string(value).map_err(|_| ErrorCode::StorageFailed)?;
     // Preserve the existing restore bound, rather than writing a row that the
     // next Host cannot read. No raw inputs enter this metadata-only record.
@@ -510,7 +511,7 @@ pub(crate) fn persist_job(
     let tx =
         rusqlite::Transaction::new_unchecked(&store.connection, TransactionBehavior::Immediate)
             .map_err(|_| ErrorCode::StorageFailed)?;
-    write_job_row(&tx, run, &encoded, expected)?;
+    write_job_row(&tx, run, &encoded, expected, expected_job)?;
     #[cfg(test)]
     if value["snapshot"]["state"] == "accepted" {
         fixture_barrier(FixtureExit::BeforeAcceptCommit);
@@ -527,7 +528,7 @@ pub(crate) fn persist_job(
         }
         _ => {}
     }
-    Ok(())
+    Ok(crate::data::job_metadata_digest(&encoded))
 }
 // Supported restore already holds DataStore's outer transaction. Do not start
 // another writer or discard historical roots when its recovery scope changes.
@@ -535,15 +536,17 @@ pub(crate) fn persist_restored_job(
     connection: &rusqlite::Connection,
     run: &str,
     value: &serde_json::Value,
+    expected_job: &str,
 ) -> std::result::Result<(), ErrorCode> {
     let encoded = serde_json::to_string(value).map_err(|_| ErrorCode::StorageFailed)?;
-    write_job_row(connection, run, &encoded, None)
+    write_job_row(connection, run, &encoded, None, Some(expected_job))
 }
 fn write_job_row(
     connection: &rusqlite::Connection,
     run: &str,
     encoded: &str,
     expected: Option<&str>,
+    expected_job: Option<&str>,
 ) -> std::result::Result<(), ErrorCode> {
     if connection.is_autocommit() {
         return Err(ErrorCode::StorageFailed);
@@ -555,9 +558,26 @@ fn write_job_row(
     if expected.is_some_and(|expected| expected != before) {
         return Err(ErrorCode::DependencyArtifactMismatch);
     }
+    let previous: Option<Option<String>> = connection.query_row(
+        "SELECT CASE WHEN typeof(metadata)='text' AND length(CAST(metadata AS BLOB))<=32768 THEN metadata ELSE NULL END FROM jobs WHERE run_id=?1",
+        [run], |row|row.get(0),
+    ).optional().map_err(|_|ErrorCode::StorageFailed)?;
+    let previous = match (previous, expected_job) {
+        (None, None) => None,
+        (Some(Some(text)), Some(expected))
+            if crate::data::job_metadata_digest(&text) == expected =>
+        {
+            Some(text)
+        }
+        _ => return Err(ErrorCode::StoreCorrupt),
+    };
     let changes = connection.total_changes();
-    let affected = connection.execute("INSERT INTO jobs(run_id,metadata) VALUES(?1,?2) ON CONFLICT(run_id) DO UPDATE SET metadata=excluded.metadata",
-        rusqlite::params![run, encoded]).map_err(|_| ErrorCode::StorageFailed)?;
+    let affected = if let Some(previous)=previous {
+        connection.execute("UPDATE jobs SET metadata=?2 WHERE run_id=?1 AND typeof(metadata)='text' AND CAST(metadata AS BLOB)=CAST(?3 AS BLOB)",
+            rusqlite::params![run, encoded, previous])
+    } else {
+        connection.execute("INSERT INTO jobs(run_id,metadata) VALUES(?1,?2)",rusqlite::params![run, encoded])
+    }.map_err(|_| ErrorCode::StorageFailed)?;
     let written: String = connection
         .query_row("SELECT metadata FROM jobs WHERE run_id=?1", [run], |r| {
             r.get(0)

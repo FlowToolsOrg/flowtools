@@ -61,6 +61,9 @@ struct Job {
     idempotency_key: String,
     dependency_lock: Option<DependencyLock>,
     service_calls: Vec<ServiceCallDiagnostic>,
+    // Digest of the last exact committed bytes, held only in this actor. Unknown SQL changes
+    // cannot be overwritten by a later cached transition or lease release.
+    durable_metadata: std::cell::RefCell<Option<String>>,
     #[cfg(windows)]
     tool_lease: Option<ToolLease>,
 }
@@ -136,14 +139,24 @@ fn persist_stored_job(
     store: &DataStore,
     stored: &StoredJob,
     expected: Option<&str>,
+    durable: &std::cell::RefCell<Option<String>>,
 ) -> Result<(), ErrorCode> {
     let value = serde_json::to_value(stored).map_err(|_| ErrorCode::StorageFailed)?;
     #[cfg(windows)]
     if stored.tool_artifacts.is_some() {
-        return leases::persist_job(store, &stored.snapshot.run_id, &value, expected);
+        let previous = durable.borrow().clone();
+        let committed = leases::persist_job(
+            store,
+            &stored.snapshot.run_id,
+            &value,
+            expected,
+            previous.as_deref(),
+        )?;
+        durable.replace(Some(committed));
+        return Ok(());
     }
     #[cfg(not(windows))]
-    let _ = expected;
+    let _ = (expected, durable);
     store.save_job(&stored.snapshot.run_id, &value)
 }
 // Strict read-only retention for T0 package/image cleanup. Corrupt rows block
@@ -418,7 +431,12 @@ impl RuntimeCore {
     }
     fn persist_job_inner(&self, job: &Job, expected: Option<&str>) -> Result<(), ErrorCode> {
         if self.private_jobs.is_some() {
-            persist_stored_job(&self.data, &StoredJob::from_job(job), expected)?;
+            persist_stored_job(
+                &self.data,
+                &StoredJob::from_job(job),
+                expected,
+                &job.durable_metadata,
+            )?;
         }
         Ok(())
     }
@@ -475,7 +493,7 @@ impl RuntimeCore {
         if self.private_jobs.is_none() {
             return Ok(());
         }
-        for value in self.data.load_jobs()? {
+        for (value, durable_metadata) in self.data.load_job_records()? {
             let mut stored: StoredJob =
                 serde_json::from_value(value).map_err(|_| ErrorCode::StoreCorrupt)?;
             if stored.format_version != 1
@@ -615,6 +633,7 @@ impl RuntimeCore {
                     broker_session: None,
                     dependency_lock: stored.dependency_lock,
                     service_calls: stored.service_calls,
+                    durable_metadata: std::cell::RefCell::new(Some(durable_metadata)),
                     #[cfg(windows)]
                     tool_lease: stored.tool_artifacts.map(ToolLease::dormant),
                 },
@@ -1456,6 +1475,7 @@ impl RuntimeCore {
             idempotency_key: submit.idempotency_key,
             dependency_lock,
             service_calls: Vec::new(),
+            durable_metadata: std::cell::RefCell::new(None),
             #[cfg(windows)]
             tool_lease,
         };
@@ -1547,7 +1567,8 @@ impl RuntimeCore {
         });
         let stored = StoredJob::from_job(job);
         if self.private_jobs.is_some() {
-            if let Err(code) = persist_stored_job(&self.data, &stored, None) {
+            if let Err(code) = persist_stored_job(&self.data, &stored, None, &job.durable_metadata)
+            {
                 job.snapshot = previous;
                 job.events.pop();
                 self.stopping = true;
@@ -2331,7 +2352,7 @@ impl RuntimeCore {
         }
         job.tool_lease.as_mut().unwrap().mark_released()?;
         let stored = StoredJob::from_job(job);
-        if let Err(code) = persist_stored_job(&self.data, &stored, None) {
+        if let Err(code) = persist_stored_job(&self.data, &stored, None, &job.durable_metadata) {
             self.jobs
                 .get_mut(run)
                 .unwrap()
@@ -2449,10 +2470,10 @@ pub(crate) fn interrupt_restored_jobs(connection: &rusqlite::Connection) -> Resu
             }
             #[cfg(windows)]
             stored.validate_tool_artifacts()?;
-            Ok((run, stored))
+            Ok((run, stored, crate::data::job_metadata_digest(&value)))
         })
         .collect::<Result<Vec<_>, ErrorCode>>()?;
-    for (run, mut stored) in rows {
+    for (run, mut stored, _durable_metadata) in rows {
         if stored.snapshot.state == JobState::Succeeded {
             connection
                 .execute(
@@ -2496,6 +2517,7 @@ pub(crate) fn interrupt_restored_jobs(connection: &rusqlite::Connection) -> Resu
                     connection,
                     &run,
                     &serde_json::to_value(&stored).map_err(|_| ErrorCode::StorageFailed)?,
+                    &_durable_metadata,
                 )?;
                 continue;
             }

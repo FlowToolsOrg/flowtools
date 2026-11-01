@@ -612,6 +612,11 @@ claim、当前包/命令/grant/epoch 与独立 unattended 授权；本威胁保�
 
 ### SEC-015 共享工具包、间接 IO 与进程恢复
 
+- 2026-11-01 任务一致性增量：工具任务的后续写入比较 actor 最后成功提交
+  的完整原字节，初次仅 create-only，拒绝跨事务 SQL 改动被缓存覆盖。摘要
+  仅存在 T0 内存，不是认证或 grant；未知状态停止 admission 并保留实际
+  句柄/输入，保守 trust 时间不回退。旧实现四项实际失败、修复后相同四项
+  通过，见 [专项](../validation/g6-tool-job-metadata-fence.md)。SEC-014/015 保持 open。
 - P2.8b3 增量：固定转换的纯完成投影要求 exit/progress/输出 probe 与观察
   大小/角色一致；`-n` 实际 exit 0 的拒绝不能冒充成功。原六项真实候选
   driver 与十七项 Core 媒体回归通过，见 [专项](../validation/g6-media-completion-projection.md)。

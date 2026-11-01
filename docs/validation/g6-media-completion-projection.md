@@ -48,3 +48,16 @@ Rust fmt、文档格式与 docs:check 同样通过；当前提交完整门禁仍
 
 本页不将前一 SHA 的完整门禁计为本提交通过；真实发行/审核 profiles、
 原生 Runtime 工具 adapter、用户文件发布与 G7 闭环仍 pending。
+
+随后 `24981c1` 完整本机根门禁 exit 0、最终无漂移：11/11 workspace
+lint/types/test/build；Core 431+11+9（单元 1281.27s）；Runtime 原生 24+6
+（46.55s/2.20s）及 Bun 17（含原 50 路冷启动）；Chromium 109/34；Desktop
+106 Bun+Node 1+原生 36+6（3.52s/0.11s）；Web 23/Desktop 25 产物一致、
+production refusal 和最终 Rust 检查通过。日志
+`execution-validation/g6/root-ci-24981c1-20261031.log`。
+
+远端 ref 已核对为 `24981c126d9875f63c44d9fe3c82f9b26e07550c`，
+[PR 41267501533](https://github.com/FlowToolsOrg/flowtools/actions/runs/41267501533) /
+[push 41267498969](https://github.com/FlowToolsOrg/flowtools/actions/runs/41267498969)
+当前运行中，完成结果另记。前一步 `4887b40` 的两路远端 CI 已 success，
+不将它计为当前 SHA 成功。

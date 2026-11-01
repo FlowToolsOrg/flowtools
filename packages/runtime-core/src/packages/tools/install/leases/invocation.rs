@@ -19,6 +19,42 @@ pub struct AdmittedMediaTool<'a> {
     _held: &'a std::sync::Arc<HeldImage>,
 }
 impl AdmittedMediaTool<'_> {
+    pub(crate) fn prepare_audio_extraction(
+        &self,
+        profile: &std::path::Path,
+        id: &str,
+        bytes: &[u8],
+        known: &std::collections::BTreeSet<String>,
+    ) -> std::result::Result<super::super::images::inspection::Extraction, ErrorCode> {
+        if self.action != MediaActionV1::ExtractAudioWav {
+            return Err(ErrorCode::CapabilityUndeclared);
+        }
+        super::super::images::inspection::Extraction::prepare(
+            self._held.clone(),
+            profile,
+            id,
+            bytes,
+            known,
+        )
+    }
+    pub(crate) fn prepare_extracted_probe(
+        &self,
+        profile: &std::path::Path,
+        id: &str,
+        bytes: &[u8],
+        known: &std::collections::BTreeSet<String>,
+    ) -> std::result::Result<super::super::images::inspection::Inspection, ErrorCode> {
+        if self.action != MediaActionV1::ExtractAudioWav {
+            return Err(ErrorCode::CapabilityUndeclared);
+        }
+        super::super::images::inspection::Inspection::prepare(
+            self._held.clone(),
+            profile,
+            id,
+            bytes,
+            known,
+        )
+    }
     pub(crate) fn prepare_inspection(
         &self,
         profile: &std::path::Path,

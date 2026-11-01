@@ -1,4 +1,6 @@
 //! Explicit signed-fixture/installed-image bridge. Not a product media adapter.
+#[path = "native_audio.rs"]
+mod native_audio;
 #[path = "native_inspection.rs"]
 mod native_inspection;
 use crate::packages::tools::native_fixture as harness;
@@ -185,6 +187,9 @@ struct World {
 }
 impl World {
     fn new() -> Self {
+        Self::new_with_ids(&["consumer", "other-consumer"])
+    }
+    fn new_with_ids(ids: &[&str]) -> Self {
         let fixture = SignedFixture::new();
         let path =
             std::env::temp_dir().join(format!("flowtools-managed-media-{}", uuid::Uuid::new_v4()));
@@ -235,7 +240,7 @@ impl World {
             "../../../../../packages/sdk/test/fixtures/manifest-admission-v1.json"
         ))
         .unwrap();
-        let manifests=["consumer","other-consumer"].into_iter().map(|id|{
+        let manifests=ids.iter().copied().map(|id|{
             let mut value=base["base"].clone();
             value["publisher"]=json!("fixture-publisher"); value["id"]=json!(id); value["version"]=json!("1.0.0");
             value["commands"][0]["effects"]=json!(["tool-execute"]);
@@ -293,6 +298,9 @@ impl World {
         self.grant_limit(id, 8);
     }
     fn grant_limit(&mut self, id: &str, max_calls: u32) {
+        self.grant_options(id, max_calls, false);
+    }
+    fn grant_options(&mut self, id: &str, max_calls: u32, background: bool) {
         let admin = self.open("admin");
         let (manifest, _) = self.catalog.permission_operation(id, "convert").unwrap();
         let response = self.core.handle(
@@ -314,7 +322,7 @@ impl World {
                     expires_at: now() + 60_000.0,
                     max_calls,
                     cold_start: false,
-                    background: false,
+                    background,
                 }),
                 Some(admin),
             ),
@@ -329,6 +337,9 @@ impl World {
         self.start_granted(id)
     }
     fn start_granted(&mut self, id: &str) -> String {
+        self.start_granted_options(id, false)
+    }
+    fn start_granted_options(&mut self, id: &str, background: bool) -> String {
         let cli = self.open("cli");
         let response = self.core.handle(
             "cli",
@@ -338,7 +349,7 @@ impl World {
                     command_id: "convert".into(),
                     input: json!({"text":"MANAGED_MEDIA_PRIVATE_INPUT"}),
                     idempotency_key: uuid::Uuid::new_v4().to_string(),
-                    background: false,
+                    background,
                     deadline: now() + 20_000.0,
                 }),
                 Some(cli),

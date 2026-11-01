@@ -38,7 +38,7 @@ enum Phase {
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(in crate::runtime) struct StoredInspection {
-    id: String,
+    pub(super) id: String,
     run: String,
     consumer: PackagePin,
     archive: String,
@@ -202,13 +202,9 @@ impl RuntimeCore {
             .to_owned();
         let known = self.inspection_ids()?;
         if known.len() >= 64
-            || self
-                .native_calls
-                .values()
-                .filter(|call| call.process.is_some())
-                .count()
-                >= 4
-            || self.jobs[&root].native_inspections.len() >= 8
+            || self.active_media_inspections() >= 4
+            || self.jobs[&root].native_inspections.len() + self.jobs[&root].native_audio.len() >= 8
+            || self.audio_calls.values().any(|call| call.holds_run(run))
             || self
                 .native_calls
                 .values()
@@ -334,7 +330,7 @@ impl RuntimeCore {
             id,
         })
     }
-    fn inspection_ids(&self) -> Result<BTreeSet<String>, ErrorCode> {
+    pub(super) fn inspection_ids(&self) -> Result<BTreeSet<String>, ErrorCode> {
         let mut ids = BTreeSet::new();
         for (value, committed) in self.data.load_job_records()? {
             let stored: StoredJob =
@@ -349,6 +345,11 @@ impl RuntimeCore {
             }
             for call in &stored.native_inspections {
                 if !ids.insert(call.id.clone()) {
+                    return Err(ErrorCode::StoreCorrupt);
+                }
+            }
+            for id in super::audio::input_ids(&stored) {
+                if !ids.insert(id.to_owned()) {
                     return Err(ErrorCode::StoreCorrupt);
                 }
             }
@@ -449,6 +450,7 @@ impl RuntimeCore {
             .values()
             .filter(|call| call.process.is_some())
             .count()
+            + self.active_audio_calls()
     }
     fn tick_inspections_inner(
         &mut self,
@@ -467,7 +469,7 @@ impl RuntimeCore {
                 .and_then(|()| call.process.as_mut().unwrap().poll());
             let ended = match observed {
                 Ok(Observation::Running) => Ok(()),
-                Ok(Observation::Complete(value)) => {
+                Ok(Observation::Complete(value, _)) => {
                     before_commit(self);
                     let committed = self.admit_media(
                         &call.run,
@@ -485,7 +487,7 @@ impl RuntimeCore {
             self.native_calls.insert(id, call);
             ended?;
         }
-        Ok(())
+        self.tick_audio_calls()
     }
     /// Polls only this actor's opaque reference. Successful projections are
     /// transient and still require current authority when collected.
@@ -514,6 +516,7 @@ impl RuntimeCore {
         &mut self,
         run: &str,
     ) -> Result<(), ErrorCode> {
+        self.stop_audio_calls(run)?;
         let ids: Vec<_> = self
             .native_calls
             .iter()

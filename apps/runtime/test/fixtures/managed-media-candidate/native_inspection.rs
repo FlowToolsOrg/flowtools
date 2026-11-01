@@ -2,7 +2,7 @@
 use super::*;
 use crate::runtime::MediaInspectionState;
 use std::time::Instant;
-fn revoke(core: &mut RuntimeCore, admin: SessionProof) {
+pub(super) fn revoke(core: &mut RuntimeCore, admin: SessionProof) {
     let response = core.handle(
         "admin",
         request(

@@ -1,7 +1,7 @@
 //! Closed Windows/x64 LPAC kernel for ffprobe inspection. No uncontained branch,
 //! caller argv/environment, PID reopening or public executable/handle getter.
 use super::token::{sid_text, token, token_lpac, token_u32, wide};
-use crate::packages::tools::media::{self, MediaActionV1};
+use super::{capture::Capture, profile::Profile};
 use std::{
     ffi::c_void,
     io,
@@ -173,12 +173,16 @@ pub(super) struct Process {
     pid: u32,
     resumed: Option<Instant>,
     finished: bool,
-    bytes: usize,
-    out: Vec<u8>,
+    capture: Capture,
+    read_bytes: usize,
 }
 pub(super) enum Poll {
     Running,
-    Exited { code: u32, stdout: Vec<u8> },
+    Exited {
+        code: u32,
+        stdout: Vec<u8>,
+        stderr: Vec<u8>,
+    },
 }
 impl Process {
     #[cfg(test)]
@@ -192,6 +196,7 @@ impl Process {
         ))
     }
     pub(super) fn prepare(
+        profile: Profile,
         image: &Path,
         work: &Path,
         container: &Container,
@@ -273,7 +278,7 @@ impl Process {
             ))?;
             let pipe = || -> io::Result<(OwnedHandle, OwnedHandle)> {
                 let (mut read, mut write) = (ptr::null_mut(), ptr::null_mut());
-                if CreatePipe(&mut read, &mut write, &sa, 4096) == 0 {
+                if CreatePipe(&mut read, &mut write, &sa, profile.pipe_bytes()) == 0 {
                     return Err(last());
                 }
                 let pair = (owned(read)?, owned(write)?);
@@ -406,7 +411,7 @@ impl Process {
             environment.push(0);
             let mut command = wide(format!("\"{}\"", image.display()));
             command.pop();
-            for arg in media::recipe(MediaActionV1::Inspect).arguments() {
+            for arg in profile.arguments() {
                 command.extend(format!(" \"{arg}\"").encode_utf16());
             }
             command.push(0);
@@ -439,8 +444,8 @@ impl Process {
                 pid: info.dwProcessId,
                 resumed: None,
                 finished: false,
-                bytes: 0,
-                out: Vec::new(),
+                capture: Capture::new(profile),
+                read_bytes: profile.read_bytes(),
             };
             process.validate(container, &caps, image, private_event.as_raw_handle())?;
             if AssignProcessToJobObject(
@@ -659,13 +664,13 @@ impl Process {
                 return Err(last());
             }
             if available > 0 {
-                let mut bytes = [0u8; 8192];
+                let mut bytes = [0u8; 65_536];
                 let mut read = 0;
                 if unsafe {
                     ReadFile(
                         pipe.as_raw_handle(),
                         bytes.as_mut_ptr(),
-                        available.min(bytes.len() as u32),
+                        available.min(self.read_bytes as u32),
                         &mut read,
                         ptr::null_mut(),
                     )
@@ -673,16 +678,9 @@ impl Process {
                 {
                     return Err(last());
                 }
-                self.bytes = self
-                    .bytes
-                    .checked_add(read as usize)
-                    .ok_or_else(|| io::Error::other("Native output size overflow"))?;
-                if self.bytes > 65_536 {
+                if let Err(error) = self.capture.push(stdout, &bytes[..read as usize]) {
                     self.cancel()?;
-                    return Err(io::Error::other("Native output budget exceeded"));
-                }
-                if stdout {
-                    self.out.extend_from_slice(&bytes[..read as usize]);
+                    return Err(error);
                 }
                 buffered += available.saturating_sub(read);
             }
@@ -696,9 +694,11 @@ impl Process {
                 return Err(last());
             }
             self.finished = true;
+            let (stdout, stderr) = self.capture.finish()?;
             return Ok(Poll::Exited {
                 code,
-                stdout: std::mem::take(&mut self.out),
+                stdout,
+                stderr,
             });
         }
         Ok(Poll::Running)

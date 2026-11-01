@@ -185,7 +185,10 @@ impl RuntimeCore {
     }
 }
 
+#[path = "runtime_media/audio.rs"]
+pub(super) mod audio;
 #[path = "runtime_media/inspection.rs"]
 pub(super) mod inspection;
+pub use audio::{CompletedAudio, MediaAudioHandle, MediaAudioState};
 pub use inspection::{MediaInspectionHandle, MediaInspectionState};
 pub(super) use inspection::{NativeCall, StoredInspection};

@@ -368,10 +368,12 @@ test('signed installed-media candidate uses actual Core test sources in a separa
   for (const task of ['build', 'test', 'lint', 'check-types'])
     expect(runtime.scripts[task]).not.toContain('managed-media-candidate')
   const driver = read('scripts/test-managed-media-candidate.ps1')
-  expect(driver.match(/--target-dir/g)).toHaveLength(5)
+  expect(driver.match(/--target-dir/g)).toHaveLength(6)
   expect(driver).toContain("'--target-dir', $managedTargetRoot")
   expect(driver).toContain('$managedCount -ne 6')
-  expect(driver).toContain('$nativeCount -ne 10 -or $allManagedCount -ne 16')
+  expect(driver).toContain(
+    '$nativeCount -ne 10 -or $audioCount -ne 8 -or $allManagedCount -ne 24'
+  )
   expect(driver).toContain("'--skip', 'managed_media::native_inspection::'")
   expect(driver).toContain("'Ten Core-owned native inspection checks'")
   const nativeTests = readFileSync(
@@ -383,6 +385,10 @@ test('signed installed-media candidate uses actual Core test sources in a separa
   expect(nativeTests).toContain('start_media_inspection')
   expect(nativeTests).toContain('Duration::from_secs(5)')
   expect(nativeTests).toContain('assert_eq!(observations[0].1, 0)')
+  const audioTests = readFileSync(join(fixture, 'native_audio.rs'), 'utf8')
+  expect(audioTests.match(/#\[test\]/g)).toHaveLength(8)
+  expect(audioTests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(driver).toContain("'Eight Core-owned bounded WAV checks'")
   expect(driver).toContain(
     "'--lib', 'managed_media::', '--', '--test-threads=1'"
   )
@@ -408,10 +414,17 @@ test('native media stays T0-only and fatal maintenance includes actual call drai
   const kernel = read(
     'packages/runtime-core/src/packages/tools/install/images/inspection/kernel.rs'
   )
+  const profile = read(
+    'packages/runtime-core/src/packages/tools/install/images/inspection/profile.rs'
+  )
   expect(native).toMatch(
     /pub struct MediaInspectionHandle\s*\{\s*instance: String,\s*id: String,/
   )
-  expect(kernel).toContain('media::recipe(MediaActionV1::Inspect).arguments()')
+  expect(profile).toContain('media::recipe(MediaActionV1::Inspect).arguments()')
+  expect(kernel).toContain('profile.arguments()')
+  expect(profile).not.toMatch(
+    /std::env::|Command::new|powershell|cmd\.exe|Deserialize|Serialize/i
+  )
   expect(kernel).not.toMatch(/std::env::|Command::new|powershell|cmd\.exe/i)
   for (const hook of [
     'start_media_inspection_fixture',

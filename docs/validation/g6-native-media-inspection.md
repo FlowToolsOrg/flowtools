@@ -3,6 +3,10 @@
 日期：2026-11-01。P2.8b6，prototype；专项与最终整仓结果分别记录。
 G5/G6/G7 父项保持未完成，G7 剩余人工验收仍为 waived。
 
+后续 `b804353` 已通过完整本机与同 SHA 两路 Windows CI，当前代码的 WAV
+扩展、6/10/8 专项及剩余范围见 [后续记录](./g6-native-audio-extraction.md)。
+下文保持 b6 的纯信息检查边界，不把后续转换当作用户文件发布。
+
 `RuntimeCore::start_media_inspection` 接受最多 1MiB 的非空 T0 输入字节，
 以 opaque、不可序列化的 actor handle 查询结果。仅支持固定 inspect-v1 /
 ffprobe recipe；不接用户路径、可执行文件、argv、环境、shell、URL 或客户端

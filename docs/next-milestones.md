@@ -478,6 +478,11 @@ plugin lock 和 task lease 防止卸载/更新误删已接受任务需要的版�
 
 ### P2.8b 受管执行与媒体适配
 
+2026-11-01：P2.8b7 的 [有界原生 WAV](./validation/g6-native-audio-extraction.md)
+在一个调用预算内串行运行实际 ffmpeg 与独立 ffprobe，持有两个私有输入，
+硬配额和阶段持久化保留。已有 6/10/8 专项与固定 Chromium 全 PCM 解码
+证据；当前整仓门禁另记。仍不是用户路径/文件 grant 或输出发布，G7 未闭环。
+
 2026-11-01：P2.8b6 增加 [Core 原生信息检查](./validation/g6-native-media-inspection.md)。
 固定 ffprobe、T0 有界输入、独立 LPAC/Job 与 actor 持有，逐阶段当前授权和
 信任复查，原单 writer 记录 Preparing/Running/结束，未知保留且不重放。

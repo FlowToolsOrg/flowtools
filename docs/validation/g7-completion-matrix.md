@@ -2,6 +2,11 @@
 
 日期：2026-11-01。G7 整体为 **in-progress / prototype**。
 
+P2.8b7 新增 [Core 有界 WAV 提取](./g6-native-audio-extraction.md)：一个调用
+预算、两个实际 LPAC/Job、硬 stdout/progress 预算、独立同字节 probe 和当前
+授权/信任复查。6/10/8 专项及固定 Chromium 逐 PCM 解码通过，当前整仓另记；
+用户文件 grant、WebM adapter、GUI/CLI 发布/撤销/恢复仍未完成。
+
 P2.8b6 接入 [Core 原生媒体信息检查](./g6-native-media-inspection.md)：有界
 T0 输入、固定 ffprobe、独立 LPAC/Job、持久 phase 和逐阶段授权/信任复查。
 当前仍无用户文件 read/write grant、转换输出发布或 GUI/CLI 媒体闭环，普通

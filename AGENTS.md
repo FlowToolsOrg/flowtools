@@ -181,6 +181,20 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G6 P2.8b7 `runtime_media/audio.rs` owns fixed bounded WAV extraction and its
+independent ffprobe under one currently checked tool call. No user path/argv/
+output publication. Keep original Inspect/V1 recipes and completion rejection;
+the private pipe profile bounds stdout1MiB/progress64KiB, sticky overflow, actual
+owned process AND Job drain before copying into a second create-only Low input.
+Both resumes/commit/collection recheck current authority and physical artifacts.
+Use the existing jobs.metadata writer and original bounds; reserve both input
+UUIDs before effects, retain unknown/interrupted bytes, and never replay native
+attempts through the pure-background retry exception. Share four active calls,
+eight logical attempts and64physical input groups with inspection. The separate
+driver must count6original+10inspection+8audio=24. Real candidate hashes and
+production empty review/authority remain. User files/WebM/publishing/GC remain
+pending. See [evidence](./docs/validation/g6-native-audio-extraction.md).
+
 G6 P2.8b6 native inspection lives in `runtime_media/inspection.rs` and
 `packages/tools/install/images/inspection/`. Preserve the opaque T0 handle,
 fixed ffprobe recipe, bounded literal input and no client path/argv/executable.

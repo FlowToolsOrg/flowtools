@@ -21,6 +21,8 @@ use uuid::Uuid;
 #[cfg(windows)]
 pub use crate::packages::tools::install::leases::AdmittedMediaTool;
 #[cfg(windows)]
+pub use media::{CompletedAudio, MediaAudioHandle, MediaAudioState};
+#[cfg(windows)]
 pub use media::{MediaInspectionHandle, MediaInspectionState};
 
 #[cfg(windows)]
@@ -77,6 +79,8 @@ struct Job {
     tool_lease: Option<ToolLease>,
     #[cfg(windows)]
     native_inspections: Vec<media::StoredInspection>,
+    #[cfg(windows)]
+    native_audio: Vec<media::audio::StoredAudio>,
 }
 fn retains_tool_artifacts(job: &Job) -> bool {
     #[cfg(windows)]
@@ -114,11 +118,15 @@ struct StoredJob {
     #[cfg(windows)]
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     native_inspections: Vec<media::StoredInspection>,
+    #[cfg(windows)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    native_audio: Vec<media::audio::StoredAudio>,
 }
 impl StoredJob {
     #[cfg(windows)]
     fn validate_tool_artifacts(&self) -> Result<(), ErrorCode> {
         media::inspection::validate_stored(self)?;
+        media::audio::validate_stored(self)?;
         match (&self.tool_artifacts, &self.dependency_lock) {
             (Some(lease), Some(lock)) => lease.validate(&self.snapshot, lock),
             (None, Some(lock)) if lock.tools.is_empty() => Ok(()),
@@ -149,6 +157,8 @@ impl StoredJob {
             tool_artifacts: job.tool_lease.as_ref().map(|lease| lease.stored().clone()),
             #[cfg(windows)]
             native_inspections: job.native_inspections.clone(),
+            #[cfg(windows)]
+            native_audio: job.native_audio.clone(),
         }
     }
 }
@@ -248,6 +258,8 @@ pub struct RuntimeCore {
     tools: Option<ToolAuthority>,
     #[cfg(windows)]
     native_calls: HashMap<String, media::NativeCall>,
+    #[cfg(windows)]
+    audio_calls: HashMap<String, media::audio::AudioCall>,
 }
 
 impl RuntimeCore {
@@ -279,6 +291,8 @@ impl RuntimeCore {
             tools: None,
             #[cfg(windows)]
             native_calls: HashMap::new(),
+            #[cfg(windows)]
+            audio_calls: HashMap::new(),
         }
     }
 
@@ -636,6 +650,10 @@ impl RuntimeCore {
             for inspection in &mut stored.native_inspections {
                 inspection.interrupt();
             }
+            #[cfg(windows)]
+            for audio in &mut stored.native_audio {
+                audio.interrupt();
+            }
             let key = (
                 stored.snapshot.root_caller.clone(),
                 stored.idempotency_key.clone(),
@@ -663,6 +681,8 @@ impl RuntimeCore {
                     tool_lease: stored.tool_artifacts.map(ToolLease::dormant),
                     #[cfg(windows)]
                     native_inspections: stored.native_inspections,
+                    #[cfg(windows)]
+                    native_audio: stored.native_audio,
                 },
             );
             self.persist_job(&self.jobs[&run])?;
@@ -682,6 +702,9 @@ impl RuntimeCore {
             }
             let snapshot = job.snapshot.clone();
             let background = job.background;
+            #[cfg(windows)]
+            let no_native_attempts =
+                job.native_inspections.is_empty() && job.native_audio.is_empty();
             let action_digest = job.action_digest.clone();
             let dependency_lock = job.dependency_lock.clone();
             #[cfg(windows)]
@@ -730,6 +753,8 @@ impl RuntimeCore {
             let retryable = matches!(snapshot.state, JobState::Accepted | JobState::Queued)
                 || (snapshot.state == JobState::Running
                     && snapshot.plugin_id == "plugin-base64-encoder");
+            #[cfg(windows)]
+            let retryable = retryable && no_native_attempts;
             if background && retryable && authorization.is_ok() {
                 #[cfg(windows)]
                 if let Some(stored) = stored_artifacts {
@@ -1507,6 +1532,8 @@ impl RuntimeCore {
             tool_lease,
             #[cfg(windows)]
             native_inspections: Vec::new(),
+            #[cfg(windows)]
+            native_audio: Vec::new(),
         };
         if retains_tool_artifacts(&job)
             && serde_json::to_vec(&StoredJob::from_job(&job))
@@ -1935,7 +1962,10 @@ impl RuntimeCore {
     ) -> Result<Value, ErrorCode> {
         #[cfg(windows)]
         {
-            if result.is_ok() && self.native_calls.values().any(|call| call.holds_run(id)) {
+            if result.is_ok()
+                && (self.native_calls.values().any(|call| call.holds_run(id))
+                    || self.audio_calls.values().any(|call| call.holds_run(id)))
+            {
                 result = Err(ErrorCode::ExecutionInterrupted);
             }
             self.stop_native_inspections(id)?;
@@ -2265,10 +2295,14 @@ impl RuntimeCore {
         let cancelled = self.state(run_id) == Some(JobState::Cancelling);
         #[cfg(windows)]
         if result.is_ok()
-            && self
+            && (self
                 .native_calls
                 .values()
                 .any(|call| call.holds_root(run_id))
+                || self
+                    .audio_calls
+                    .values()
+                    .any(|call| call.holds_root(run_id)))
         {
             result = Err(ErrorCode::ExecutionInterrupted);
         }
@@ -2390,6 +2424,14 @@ impl RuntimeCore {
 
     #[cfg(windows)]
     fn release_tool_handles_if_drained(&mut self, run: &str) -> Result<(), ErrorCode> {
+        if self
+            .jobs
+            .get(run)
+            .is_some_and(|job| job.native_audio.iter().any(|call| call.retains_artifacts()))
+            || self.audio_calls.values().any(|call| call.holds_root(run))
+        {
+            return Ok(());
+        }
         if self.jobs.get(run).is_some_and(|job| {
             job.native_inspections
                 .iter()

@@ -93,36 +93,23 @@ test('Desktop requires the native Node companion and strictly checks its JavaScr
   expect(config.include).toEqual(['ci-native-contracts.node.mjs'])
 })
 
-test('root and workspace lint accept defined CSS classes and reject unknown ones', () => {
-  const root = fileURLToPath(new URL('../', import.meta.url))
-  const consumer = join(root, 'apps', 'ui-test')
-  const fixture = join(consumer, 'src', `lint-probe-${randomUUID()}.tsx`)
-  try {
-    for (const cwd of [root, consumer]) {
-      writeFileSync(
-        fixture,
-        'export const probe = <div className="appearance-lab" />\n'
-      )
-      const allowed = spawnSync(process.execPath, ['x', 'oxlint', fixture], {
-        cwd,
-        encoding: 'utf8',
-      })
-      expect(allowed.status, allowed.stdout + allowed.stderr).toBe(0)
-      writeFileSync(
-        fixture,
-        'export const probe = <div className="appearance-lab-unknown" />\n'
-      )
-      const denied = spawnSync(process.execPath, ['x', 'oxlint', fixture], {
-        cwd,
-        encoding: 'utf8',
-      })
-      expect(denied.status, denied.stdout + denied.stderr).toBe(1)
-      expect(denied.stdout + denied.stderr).toContain('no-unknown-classes')
-    }
-  } finally {
-    unlinkSync(fixture)
-  }
-}, 30_000)
+test('Node companion retains all actual CSS lint assertions and the original total deadline', () => {
+  const source = readFileSync(
+    new URL('./ci-native-contracts.node.mjs', import.meta.url),
+    'utf8'
+  )
+  expect(source).toContain('exactly two native contracts must complete')
+  expect(source).toContain("spawnSync('bun', ['x', 'oxlint', fixture]")
+  expect(source).toContain('for (const cwd of [root, consumer])')
+  expect(source).toContain('appearance-lab-unknown')
+  expect(source).toContain('assert.equal(allowed.status, 0,')
+  expect(source).toContain('assert.equal(denied.status, 1,')
+  expect(source).toContain('no-unknown-classes')
+  expect(source).toContain('timeout: 30_000')
+  expect(source).toContain('timeout: remaining')
+  expect(source).toContain('performance.now() - started < 30_000')
+  expect(source).toContain('unlinkSync(fixture)')
+})
 
 function psLiteral(value: string): string {
   return `'${value.replaceAll("'", "''")}'`

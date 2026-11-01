@@ -142,6 +142,11 @@ Before running browser tests on a new machine, run
 pinned; do not substitute an arbitrary system browser for the regression gate.
 Keep browser test files serial (`fileParallelism: false`) to bound Windows
 page/transform memory; every test file and assertion still runs.
+The Desktop Node test companion must complete both real contracts: Cargo
+workspace resolution keeps its original 5s bound; root/consumer CSS lint keeps
+all four actual Bun/oxlint executions, success/refusal assertions and the original
+30s total bound. Keep exact two-case completion, strict JS types/lint and fatal
+`&&` sequencing. Bun child-startup stalls never justify longer test deadlines.
 Root Turbo tests depend on dependency tests (`^test`); package contract tests
 build their own artifacts before assertions. Tests are uncached so a successful
 cached result cannot hide missing build output. Run root `test` and `build`

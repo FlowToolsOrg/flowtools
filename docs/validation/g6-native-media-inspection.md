@@ -98,6 +98,21 @@ Host fatal-drain 契约 **1 pass / 10 assertions**，严格 TypeScript 通过。
 Native 新增契约均通过。该重复的本机启动问题需单独修复/验证，保留原失败；
 不提升原 30s 或任何产品期限。当前提交尚无完整根门禁通过声明。
 
+后续独立修复将既有 CSS 回归移至已经必跑的测试专用 Node companion，仍
+启动实际 Bun x oxlint，按 root/consumer 分别执行已定义类成功、未知类拒绝，
+四次实际执行和 no-unknown-classes 断言均保留。原 30s 总界限不变；增加
+每次剩余时间、真实 PID、无信号/启动错误和聚合输出上限检查。Cargo 实际
+解析仍保持原 5s，两个用例必须全部完成；Desktop 既有 fatal &&、严格 JS
+types/lint 和生产 Host/工具链/期限均保持。
+
+Node companion **2 pass / 0 fail**：CSS 四次共 1.76s、Cargo 391ms，日志
+`execution-validation/g6/css-lint-node-companion-initial-20261101.log`。
+这验证测试宿主调整，不宣称已解决底层 Bun/OS 启动阻塞。完整根门禁另记。
+
+随后主 Bun 二十项 **20 pass / 0 fail**（44.29s，617 assertions）；Node 两项
+再次通过，CSS 1.98s / Cargo 395ms。JS 增加 unknown 与实际结构检查来保留
+严格类型检查，没有使用 any、ts-ignore 或 lint suppression。
+
 ## 仍未交付
 
 当前输入是有界 T0 字节，尚不是用户文件选择/read grant 或 GUI/CLI 办公流程。

@@ -1,14 +1,89 @@
-// Only the test Host changes. Keep the real Cargo process and original 5s bound;
+// Only the test Host changes. Keep real Cargo/Bun processes and original bounds;
 // Bun child startup can block the Windows event loop before a test can proceed.
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { realpathSync } from 'node:fs'
+import { randomUUID } from 'node:crypto'
+import { realpathSync, writeFileSync, unlinkSync } from 'node:fs'
+import { join } from 'node:path'
 import { after, test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 
 let completed = 0
 after(() =>
-  assert.equal(completed, 1, 'exactly one native contract must complete')
+  assert.equal(completed, 2, 'exactly two native contracts must complete')
+)
+
+test(
+  'root and workspace lint accept defined CSS classes and reject unknown ones',
+  { timeout: 30_000 },
+  () => {
+    const started = performance.now()
+    /** @type {unknown} */
+    const root = fileURLToPath(new URL('../', import.meta.url))
+    assert.ok(typeof root === 'string')
+    /** @type {unknown} */
+    const consumer = join(root, 'apps', 'ui-test')
+    assert.ok(typeof consumer === 'string')
+    /** @type {unknown} */
+    const fixture = join(consumer, 'src', `lint-probe-${randomUUID()}.tsx`)
+    assert.ok(typeof fixture === 'string')
+    /**
+     * @param {string} cwd
+     * @returns {{status:number,stdout:string,stderr:string}}
+     */
+    const runLint = cwd => {
+      const remaining = Math.floor(30_000 - (performance.now() - started))
+      assert.ok(remaining > 0, 'original complete CSS test bound')
+      /** @type {unknown} */
+      const result = spawnSync('bun', ['x', 'oxlint', fixture], {
+        cwd,
+        encoding: 'utf8',
+        timeout: remaining,
+        maxBuffer: 1_048_576,
+      })
+      assert.ok(result && typeof result === 'object')
+      assert.ok(!('error' in result) || result.error === undefined)
+      assert.ok(
+        'pid' in result && typeof result.pid === 'number' && result.pid > 0,
+        'actual Bun lint child'
+      )
+      assert.ok('signal' in result && result.signal === null)
+      assert.ok('status' in result && typeof result.status === 'number')
+      assert.ok('stdout' in result && typeof result.stdout === 'string')
+      assert.ok('stderr' in result && typeof result.stderr === 'string')
+      return {
+        status: Number(result.status),
+        stdout: String(result.stdout),
+        stderr: String(result.stderr),
+      }
+    }
+    try {
+      for (const cwd of [root, consumer]) {
+        writeFileSync(
+          fixture,
+          'export const probe = <div className="appearance-lab" />\n'
+        )
+        const allowed = runLint(cwd)
+        assert.equal(allowed.status, 0, allowed.stdout + allowed.stderr)
+        writeFileSync(
+          fixture,
+          'export const probe = <div className="appearance-lab-unknown" />\n'
+        )
+        const denied = runLint(cwd)
+        assert.equal(denied.status, 1, denied.stdout + denied.stderr)
+        assert.ok(
+          (denied.stdout + denied.stderr).includes('no-unknown-classes')
+        )
+      }
+      assert.ok(
+        performance.now() - started < 30_000,
+        'original complete CSS test bound'
+      )
+      completed++
+    } finally {
+      unlinkSync(fixture)
+    }
+  }
 )
 
 test(

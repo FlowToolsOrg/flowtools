@@ -52,5 +52,17 @@ Runtime 二十四项（5.22s）及恢复五项（0.76s）兼容检查通过，�
 `job-metadata-fence-recovery-compat-20261101.log` / exit 0；Rust fmt、
 文档格式及 docs:check 通过。未将这些专项当作当前完整门禁或远端结果。
 
+随后 `30ce0a0` 完整本机根门禁 exit 0、最终无漂移：11/11 workspace
+lint/types/test/build；Core 440+11+9（单元 1159.42s）；Runtime 原生 24+6
+（47.89s/2.02s）及 Bun 17（含原 50 路冷启动）；Chromium 109/34；Desktop
+106 Bun+Node 1+原生 36+6（3.84s/0.12s）；Web 23/Desktop 25 产物一致、
+production refusal 与最终 Rust 检查通过。日志
+`execution-validation/g6/root-ci-30ce0a0-20261101.log` / exit 0。
+
+远端 ref 已核对为 `30ce0a0f1c3a22a7c2f28ab54d7d0da535e53ad0`；
+[PR 41270975564](https://github.com/FlowToolsOrg/flowtools/actions/runs/41270975564) /
+[push 41270972033](https://github.com/FlowToolsOrg/flowtools/actions/runs/41270972033)
+当前运行中，完成结果另记。
+
 本修复不新增 wire、工具权限、执行身份、原生 adapter、GC 或文件发布。
 生产 review profiles/pins 保持空；G5/G6/G7 父项与独立安全批准仍 pending。

@@ -1,5 +1,10 @@
 # Flow Tool
 
+G6 adds [current T0 media-effect admission](./docs/validation/g6-tool-effect-admission.md):
+fixed T1 callbacks recheck the accepted signed artifact, actual consumer binding,
+task record and delegated grants. The borrowed context exposes diagnostic pins;
+native process execution and user-file publication remain pending.
+
 G6 adds a [fixed media completion projection](./docs/validation/g6-media-completion-projection.md):
 exit zero, complete progress, and independently probed output metadata must agree
 with the observed nonempty file size and fixed output roles. Real candidate WAV/WebM

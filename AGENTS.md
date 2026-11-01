@@ -176,6 +176,18 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G6 P2.8b4 current tool effects enter `runtime_media.rs` only through explicit T0
+fixed T1 authority. Preserve early and effect-point broker checks, all ancestor
+scopes/epochs/budgets, fresh signed ZIP/native image validation and exact committed
+task-row comparisons around IO. The fixed `ffmpeg` ToolLock scope is a declaration
+slot; resolve it independently to the authenticated consumer's unique immutable
+pin and held image. Never borrow a root pin for a provider without that binding.
+`AdmittedMediaTool` is callback-borrowed diagnostic context, with no executable/
+path/capability getter or reusable grant. Running service effect failures cannot
+be hidden by successful completion. No process/file adapter, client wire or product
+Host selector follows; async resume/commit and real owned drain remain separate.
+See [effect admission evidence](./docs/validation/g6-tool-effect-admission.md).
+
 Tool-bearing task writes must compare the last exact committed jobs.metadata
 bytes inside the existing transaction before updating. The actor's predecessor
 digest is ephemeral, advances only after commit, and is never a grant/token or

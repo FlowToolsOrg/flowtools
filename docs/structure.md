@@ -2,6 +2,12 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime-core/src/runtime_media.rs` 与 `packages/tools/install/leases/invocation.rs`
+将固定媒体动作的当前 broker 检查、原任务记录、当前 signed ZIP/held image
+和实际 consumer pin 结合到 T0 借用回调；没有原生进程或文件 adapter。
+专项在 `lease_tests/invocation_tests.rs`，见
+[当前调用准入](./validation/g6-tool-effect-admission.md)。
+
 `runtime-core/src/packages/tools/media/completion.rs` 复用已有有界解码器，
 投影固定转换的 exit/progress/输出 probe 与大小；不接路径或创建执行证明。
 独立媒体候选中的原六项测试接入真实 WAV/WebM/覆盖拒绝，见

@@ -18,6 +18,13 @@ use serde_json::{json, Value};
 use std::collections::{BTreeMap, HashMap};
 use uuid::Uuid;
 
+#[cfg(windows)]
+pub use crate::packages::tools::install::leases::AdmittedMediaTool;
+
+#[cfg(windows)]
+#[path = "runtime_media.rs"]
+mod media;
+
 #[path = "runtime_scheduling.rs"]
 mod scheduling;
 
@@ -1904,14 +1911,13 @@ impl RuntimeCore {
         id: &str,
         mut result: Result<Value, ErrorCode>,
     ) -> Result<Value, ErrorCode> {
-        if result.is_err() {
-            if let Some(code) = self
-                .service_invocations
-                .get(id)
-                .and_then(|call| call.failure.clone())
-            {
-                result = Err(code);
-            }
+        if let Some(code) = self
+            .service_invocations
+            .get(id)
+            .and_then(|call| call.failure.clone())
+        {
+            // A provider's return value cannot erase a rejected effect.
+            result = Err(code);
         }
         if result.is_ok() {
             result = self.check_run(id).and(result);

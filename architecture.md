@@ -1,5 +1,11 @@
 # Flow Tool Architecture
 
+G6 P2.8b4 的 [当前工具调用准入](./docs/validation/g6-tool-effect-admission.md)
+在固定 T0 回调前重新检查实际 signed ZIP/held image、原任务记录及完整委托
+链授权；按实际 consumer 选择唯一 immutable pin，预算只计一次。上下文
+不能发放 executable/path 或延迟许可；普通 Host 无 authority，尚无原生
+进程/用户文件 adapter，异步恢复与发布仍须独立复核。
+
 G6 P2.8b3 的 [完成投影](./docs/validation/g6-media-completion-projection.md)
 联合固定转换的 exit/progress/独立 probe 与观察大小，拒绝 exit 0 但没有
 完整本次进度的覆盖拒绝。它只返回元数据；真实 held 输出身份、进程/Job

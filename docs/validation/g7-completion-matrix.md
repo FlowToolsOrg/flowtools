@@ -2,10 +2,20 @@
 
 日期：2026-11-01。G7 整体为 **in-progress / prototype**。
 
+P2.8b4 新增 [当前 T0 工具调用准入](./g6-tool-effect-admission.md)，将实际
+consumer 的固定动作、不可变 pin/held image 与当前权限及任务原记录结合；
+借用上下文不提供 executable/path，普通产品 Host 无 authority。原生媒体
+进程、异步撤销/输出发布和文件提交/撤销仍未闭环，专项与完整门禁另记。
+
 2026-11-01：工具任务的 [已提交整行比较](./g6-tool-job-metadata-fence.md)
 修复跨事务 SQL 改动被后续缓存写入覆盖的问题；原四项实际失败，修复后
 相同四项通过。初次 create-only、未知状态保留文件/输入，摘要不授予权限。
 该改动不开放原生执行或关闭 G7，当前完整门禁另记。
+
+任务记录修复 `30ce0a0` 随后完整本机根门禁 exit 0、最终无漂移：Core
+440+11+9（1159.42s）、11/11 workspace、Runtime 24+6/Bun 17、Chromium
+109/34、Desktop 106+Node 1+原生 36+6、Web 23/Desktop 25 和最终 Rust
+检查通过。同 SHA 两路远端结果在上述专项中另记；`24981c1` 两路已 success。
 
 P2.8b3 新增 [固定媒体完成投影](./g6-media-completion-projection.md)，十七项
 Core 媒体契约与原六项真实 LPAC driver 已过。它联合 exit/progress/probe/

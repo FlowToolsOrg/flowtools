@@ -13,6 +13,10 @@ use std::{
     sync::{Arc, Weak},
 };
 
+mod invocation;
+pub(crate) use invocation::media_operation;
+pub use invocation::AdmittedMediaTool;
+
 const PROFILE: &str = "accepted-t1-tool-artifacts-v1";
 #[cfg(test)]
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -558,19 +562,7 @@ fn write_job_row(
     if expected.is_some_and(|expected| expected != before) {
         return Err(ErrorCode::DependencyArtifactMismatch);
     }
-    let previous: Option<Option<String>> = connection.query_row(
-        "SELECT CASE WHEN typeof(metadata)='text' AND length(CAST(metadata AS BLOB))<=32768 THEN metadata ELSE NULL END FROM jobs WHERE run_id=?1",
-        [run], |row|row.get(0),
-    ).optional().map_err(|_|ErrorCode::StorageFailed)?;
-    let previous = match (previous, expected_job) {
-        (None, None) => None,
-        (Some(Some(text)), Some(expected))
-            if crate::data::job_metadata_digest(&text) == expected =>
-        {
-            Some(text)
-        }
-        _ => return Err(ErrorCode::StoreCorrupt),
-    };
+    let previous = job_predecessor(connection, run, expected_job)?;
     let changes = connection.total_changes();
     let affected = if let Some(previous)=previous {
         connection.execute("UPDATE jobs SET metadata=?2 WHERE run_id=?1 AND typeof(metadata)='text' AND CAST(metadata AS BLOB)=CAST(?3 AS BLOB)",
@@ -591,4 +583,30 @@ fn write_job_row(
         return Err(ErrorCode::StorageFailed);
     }
     Ok(())
+}
+pub(crate) fn check_job_predecessor(
+    store: &DataStore,
+    run: &str,
+    expected: &str,
+) -> std::result::Result<(), ErrorCode> {
+    job_predecessor(&store.connection, run, Some(expected)).map(|_| ())
+}
+fn job_predecessor(
+    connection: &rusqlite::Connection,
+    run: &str,
+    expected: Option<&str>,
+) -> std::result::Result<Option<String>, ErrorCode> {
+    let previous: Option<Option<String>> = connection.query_row(
+        "SELECT CASE WHEN typeof(metadata)='text' AND length(CAST(metadata AS BLOB))<=32768 THEN metadata ELSE NULL END FROM jobs WHERE run_id=?1",
+        [run], |row|row.get(0),
+    ).optional().map_err(|_|ErrorCode::StorageFailed)?;
+    match (previous, expected) {
+        (None, None) => Ok(None),
+        (Some(Some(text)), Some(expected))
+            if crate::data::job_metadata_digest(&text) == expected =>
+        {
+            Ok(Some(text))
+        }
+        _ => Err(ErrorCode::StoreCorrupt),
+    }
 }

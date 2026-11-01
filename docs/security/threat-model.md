@@ -612,6 +612,12 @@ claim、当前包/命令/grant/epoch 与独立 unattended 授权；本威胁保�
 
 ### SEC-015 共享工具包、间接 IO 与进程恢复
 
+- P2.8b4 增量：固定 T0 媒体回调在实际 artifact IO 前后检查完整委托链、当前
+  grant/epoch/期限/预算与原任务记录；当前签名字节/原 seal 重新验证，实际
+  consumer 必须拥有唯一工具 pin。借用上下文无 executable/path/capability
+  getter，拒绝效果不能被服务成功结果掩盖。见
+  [专项](../validation/g6-tool-effect-admission.md)。仍无原生进程/文件 adapter；
+  异步 resume/commit、owned PID/Job/drain 与发布尚未连接，SEC-014/015 保持 open。
 - 2026-11-01 任务一致性增量：工具任务的后续写入比较 actor 最后成功提交
   的完整原字节，初次仅 create-only，拒绝跨事务 SQL 改动被缓存覆盖。摘要
   仅存在 T0 内存，不是认证或 grant；未知状态停止 admission 并保留实际

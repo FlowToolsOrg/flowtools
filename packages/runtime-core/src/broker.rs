@@ -424,6 +424,30 @@ impl CapabilityBroker {
         at: f64,
         adapter: impl FnOnce(&CommandIdentity) -> Result<T, ErrorCode>,
     ) -> Result<T, ErrorCode> {
+        let (identity, chain) = self.invocation_chain(session, operation, at)?;
+        for hop in &chain {
+            self.bindings.get_mut(&hop.id).unwrap().calls += 1;
+        }
+        adapter(&identity)
+    }
+    // Early refusal before potentially expensive T0 artifact IO. This produces
+    // no grant/ticket and consumes no call: invoke() repeats it at the effect.
+    #[cfg(windows)]
+    pub(crate) fn check_effect(
+        &self,
+        session: &BrokerSession,
+        operation: &CapabilityOperation,
+        at: f64,
+    ) -> Result<CommandIdentity, ErrorCode> {
+        self.invocation_chain(session, operation, at)
+            .map(|(identity, _)| identity)
+    }
+    fn invocation_chain(
+        &self,
+        session: &BrokerSession,
+        operation: &CapabilityOperation,
+        at: f64,
+    ) -> Result<(CommandIdentity, Vec<BrokerSession>), ErrorCode> {
         self.check_session(session, at)?;
         let binding = &self.bindings[&session.id];
         let identity = binding.identity.clone();
@@ -443,10 +467,7 @@ impl CapabilityBroker {
             self.check_operation(hop, operation)?;
             self.check_call_budget(hop)?;
         }
-        for hop in &chain {
-            self.bindings.get_mut(&hop.id).unwrap().calls += 1;
-        }
-        adapter(&identity)
+        Ok((identity, chain))
     }
 
     fn check_operation(

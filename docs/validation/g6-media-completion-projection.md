@@ -59,5 +59,4 @@ production refusal 和最终 Rust 检查通过。日志
 远端 ref 已核对为 `24981c126d9875f63c44d9fe3c82f9b26e07550c`，
 [PR 41267501533](https://github.com/FlowToolsOrg/flowtools/actions/runs/41267501533) /
 [push 41267498969](https://github.com/FlowToolsOrg/flowtools/actions/runs/41267498969)
-当前运行中，完成结果另记。前一步 `4887b40` 的两路远端 CI 已 success，
-不将它计为当前 SHA 成功。
+均已 success；前一步 `4887b40` 的两路远端 CI 也已 success。

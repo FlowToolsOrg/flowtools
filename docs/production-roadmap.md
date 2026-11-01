@@ -22,6 +22,11 @@ G5/G6 执行验收。人工 G7 项为 waived，整体不更新为 done。
 
 ## 1. 使用规则
 
+G6 P2.8b4 的 [当前工具调用准入](./validation/g6-tool-effect-admission.md) 在
+T0 借用回调前复核 signed ZIP/held image、实际 consumer pin、原任务记录
+及全链当前权限；服务不能用成功返回掩盖效果拒绝。它没有原生进程、用户
+文件 adapter 或产品执行开关，普通 Host/review 继续拒绝，G6/G7 不关闭。
+
 G6 P2.8b3 的 [完成投影](./validation/g6-media-completion-projection.md) 联合
 固定转换的退出码、完整进度和独立输出 probe/大小；实际六项媒体 LPAC
 driver 保留并接入该投影。它不是 fresh 文件身份证明、原生 Runtime 工具

@@ -48,6 +48,15 @@ scope 或变更 publisher/hash 时重新审查与征求授权，不能凭相同 
 UNC、ADS、reparse point、大小写和符号链接必须进入恶意 fixture。
 网络 CSP 只作纵深防御，不能替代 broker 出站策略或用户 grant。
 
+2026-11-01 P2.8b4 补充：`ToolLock` 的精确 scope key 是由 T0
+固定媒体 recipe 选择的声明/grant 槽，不是 G4 语义 digest 或执行身份。
+G4 digest 包含 Manifest 自身，不能令 Manifest 预先声明自己的最终 digest。
+进入效果前须另将该槽解析到当前任务锁中实际 consumer 的唯一工具 pin，
+并重新验证当前 signed ZIP、原 seal/实际文件、grant/epoch/期限及所有委托
+hop。固定槽不产生 wildcard、版本选择或第三方权限；返回借用上下文不能
+成为延迟许可，原生执行/输出发布仍待独立 adapter，见
+[当前准入范围](../validation/g6-tool-effect-admission.md)。
+
 冷启动、Host 后台驻留、开机自启、调度触发与业务资源权限分开。
 supportsColdStart 声明只表示命令无需界面；Host bootstrap policy 只允许启动受管
 内核。内核接受命令后重新检查包身份、命令 grant、scope 与 epoch。非交互 CLI

@@ -478,6 +478,12 @@ plugin lock 和 task lease 防止卸载/更新误删已接受任务需要的版�
 
 ### P2.8b 受管执行与媒体适配
 
+2026-11-01：P2.8b4 新增 [当前 T0 调用准入](./validation/g6-tool-effect-admission.md)。
+固定动作槽独立解析为实际 consumer 的唯一 immutable pin 与 held image；
+IO 前后检查全链权限、当前 signed ZIP/文件与原任务记录，最后普通 broker
+计一次预算进入借用回调。服务拒绝不能被成功结果掩盖。没有原生进程/文件
+adapter、wire 或产品 Host selector；实际媒体执行、异步复核和发布仍待完成。
+
 2026-10-31：P2.8b3 补齐固定转换的
 [完成投影](./validation/g6-media-completion-projection.md)。联合完整进度、
 退出码和独立 ffprobe 的输出格式/角色/大小，不将 exit 0 当作成功。它只是

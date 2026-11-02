@@ -3,6 +3,8 @@
 mod native_audio;
 #[path = "native_inspection.rs"]
 mod native_inspection;
+#[path = "native_video.rs"]
+mod native_video;
 use crate::packages::tools::native_fixture as harness;
 use crate::{
     broker::Scope,

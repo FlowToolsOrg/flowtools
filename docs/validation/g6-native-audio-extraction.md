@@ -123,3 +123,12 @@ Desktop 108+Node 2+原生 36+6、Web 23/Desktop 25 与最终 Rust 检查通过�
 同 SHA 的 [PR 41312363809](https://github.com/FlowToolsOrg/flowtools/actions/runs/41312363809)
 及 [push 41312358557](https://github.com/FlowToolsOrg/flowtools/actions/runs/41312358557)
 均 success；不替代当前修改树的整仓门禁。
+
+当前 WAV 提交 `77d8954` 随后完整本机根门禁 exit 0、最终无漂移：Core
+462+11+10（1314.59s）、11/11 workspace、Runtime 24+6（45.16s/1.08s）及
+Bun 17、Chromium 109/34、Desktop 108+Node 2+原生 36+6（4.19s/0.15s），
+Web 23/Desktop 25 产物一致及 production refusal、最终 Rust 检查全部通过。
+已推送并以 git ls-remote 核对完整 SHA；该 SHA 的
+[PR 41321514942](https://github.com/FlowToolsOrg/flowtools/actions/runs/41321514942)
+与 [push 41321511610](https://github.com/FlowToolsOrg/flowtools/actions/runs/41321511610)
+于 2026-11-02 核实均 success。

@@ -23,6 +23,8 @@ pub use crate::packages::tools::install::leases::AdmittedMediaTool;
 #[cfg(windows)]
 pub use media::{CompletedAudio, MediaAudioHandle, MediaAudioState};
 #[cfg(windows)]
+pub use media::{CompletedVideo, MediaVideoHandle, MediaVideoState};
+#[cfg(windows)]
 pub use media::{MediaInspectionHandle, MediaInspectionState};
 
 #[cfg(windows)]
@@ -81,6 +83,8 @@ struct Job {
     native_inspections: Vec<media::StoredInspection>,
     #[cfg(windows)]
     native_audio: Vec<media::audio::StoredAudio>,
+    #[cfg(windows)]
+    native_video: Vec<media::audio::StoredAudio>,
 }
 fn retains_tool_artifacts(job: &Job) -> bool {
     #[cfg(windows)]
@@ -121,6 +125,9 @@ struct StoredJob {
     #[cfg(windows)]
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     native_audio: Vec<media::audio::StoredAudio>,
+    #[cfg(windows)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    native_video: Vec<media::audio::StoredAudio>,
 }
 impl StoredJob {
     #[cfg(windows)]
@@ -159,6 +166,8 @@ impl StoredJob {
             native_inspections: job.native_inspections.clone(),
             #[cfg(windows)]
             native_audio: job.native_audio.clone(),
+            #[cfg(windows)]
+            native_video: job.native_video.clone(),
         }
     }
 }
@@ -654,6 +663,10 @@ impl RuntimeCore {
             for audio in &mut stored.native_audio {
                 audio.interrupt();
             }
+            #[cfg(windows)]
+            for video in &mut stored.native_video {
+                video.interrupt();
+            }
             let key = (
                 stored.snapshot.root_caller.clone(),
                 stored.idempotency_key.clone(),
@@ -683,6 +696,8 @@ impl RuntimeCore {
                     native_inspections: stored.native_inspections,
                     #[cfg(windows)]
                     native_audio: stored.native_audio,
+                    #[cfg(windows)]
+                    native_video: stored.native_video,
                 },
             );
             self.persist_job(&self.jobs[&run])?;
@@ -703,8 +718,9 @@ impl RuntimeCore {
             let snapshot = job.snapshot.clone();
             let background = job.background;
             #[cfg(windows)]
-            let no_native_attempts =
-                job.native_inspections.is_empty() && job.native_audio.is_empty();
+            let no_native_attempts = job.native_inspections.is_empty()
+                && job.native_audio.is_empty()
+                && job.native_video.is_empty();
             let action_digest = job.action_digest.clone();
             let dependency_lock = job.dependency_lock.clone();
             #[cfg(windows)]
@@ -1534,6 +1550,8 @@ impl RuntimeCore {
             native_inspections: Vec::new(),
             #[cfg(windows)]
             native_audio: Vec::new(),
+            #[cfg(windows)]
+            native_video: Vec::new(),
         };
         if retains_tool_artifacts(&job)
             && serde_json::to_vec(&StoredJob::from_job(&job))
@@ -2424,6 +2442,13 @@ impl RuntimeCore {
 
     #[cfg(windows)]
     fn release_tool_handles_if_drained(&mut self, run: &str) -> Result<(), ErrorCode> {
+        if self
+            .jobs
+            .get(run)
+            .is_some_and(|job| job.native_video.iter().any(|call| call.retains_artifacts()))
+        {
+            return Ok(());
+        }
         if self
             .jobs
             .get(run)

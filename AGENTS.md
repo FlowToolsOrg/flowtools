@@ -181,6 +181,16 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G6 P2.8b8 adds only bounded T0 WebM bytes through the existing conversion actor.
+Keep fixed VP9/optional Opus pipes, fresh held probe input and independent full
+frame counting. Unknown duration stays unknown; never relax original V1 positive
+duration rules or infer time from progress. Every stream needs a bounded canonical
+positive frame count; nonempty decode-error stderr refuses. Video shares all
+existing input/attempt/process budgets and drain/current authorization checks.
+Keep nativeAudio bytes/profile unchanged; nativeVideo's fixed domain binds its
+profile, and restore interrupts both without replay or grant renewal. Production
+reviews/Host authority remain empty. See [video evidence](./docs/validation/g6-native-video-transcoding.md).
+
 G6 P2.8b7 `runtime_media/audio.rs` owns fixed bounded WAV extraction and its
 independent ffprobe under one currently checked tool call. No user path/argv/
 output publication. Keep original Inspect/V1 recipes and completion rejection;

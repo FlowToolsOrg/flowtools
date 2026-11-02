@@ -19,14 +19,17 @@ pub struct AdmittedMediaTool<'a> {
     _held: &'a std::sync::Arc<HeldImage>,
 }
 impl AdmittedMediaTool<'_> {
-    pub(crate) fn prepare_audio_extraction(
+    pub(crate) fn prepare_conversion(
         &self,
         profile: &std::path::Path,
         id: &str,
         bytes: &[u8],
         known: &std::collections::BTreeSet<String>,
     ) -> std::result::Result<super::super::images::inspection::Extraction, ErrorCode> {
-        if self.action != MediaActionV1::ExtractAudioWav {
+        if !matches!(
+            self.action,
+            MediaActionV1::ExtractAudioWav | MediaActionV1::TranscodeWebm
+        ) {
             return Err(ErrorCode::CapabilityUndeclared);
         }
         super::super::images::inspection::Extraction::prepare(
@@ -35,24 +38,29 @@ impl AdmittedMediaTool<'_> {
             id,
             bytes,
             known,
+            self.action,
         )
     }
-    pub(crate) fn prepare_extracted_probe(
+    pub(crate) fn prepare_conversion_probe(
         &self,
         profile: &std::path::Path,
         id: &str,
         bytes: &[u8],
         known: &std::collections::BTreeSet<String>,
-    ) -> std::result::Result<super::super::images::inspection::Inspection, ErrorCode> {
-        if self.action != MediaActionV1::ExtractAudioWav {
+    ) -> std::result::Result<super::super::images::inspection::ConversionProbe, ErrorCode> {
+        if !matches!(
+            self.action,
+            MediaActionV1::ExtractAudioWav | MediaActionV1::TranscodeWebm
+        ) {
             return Err(ErrorCode::CapabilityUndeclared);
         }
-        super::super::images::inspection::Inspection::prepare(
+        super::super::images::inspection::ConversionProbe::prepare(
             self._held.clone(),
             profile,
             id,
             bytes,
             known,
+            self.action,
         )
     }
     pub(crate) fn prepare_inspection(

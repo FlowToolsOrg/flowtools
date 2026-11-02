@@ -1,11 +1,11 @@
-//! Finite WAV extraction into bounded T0 memory, followed by an independent
+//! Finite WAV/WebM conversion into bounded T0 memory, followed by an independent
 //! fresh private-file ffprobe. No user output path or publication authority.
 use super::*;
 use crate::{
     broker::ToolCallClaim,
     packages::tools::{
         install::images::inspection::{
-            self, Extraction, ExtractionObservation, Inspection, Observation,
+            self, ConversionProbe, Extraction, ExtractionObservation, ProbeObservation,
         },
         media::{self, MediaInspection},
     },
@@ -22,6 +22,57 @@ pub enum MediaAudioState {
 pub struct CompletedAudio {
     metadata: MediaInspection,
     bytes: Vec<u8>,
+}
+pub struct MediaVideoHandle {
+    instance: String,
+    id: String,
+}
+pub enum MediaVideoState {
+    Running,
+    Complete(CompletedVideo),
+}
+pub struct CompletedVideo {
+    metadata: MediaInspection,
+    bytes: Vec<u8>,
+    frames: Vec<(u32, u32)>,
+}
+impl CompletedVideo {
+    pub fn metadata(&self) -> &MediaInspection {
+        &self.metadata
+    }
+    pub fn bytes(&self) -> &[u8] {
+        &self.bytes
+    }
+    pub fn decoded_frames(&self) -> &[(u32, u32)] {
+        &self.frames
+    }
+    pub fn into_bytes(self) -> Vec<u8> {
+        self.bytes
+    }
+}
+struct CapturedMedia {
+    metadata: MediaInspection,
+    bytes: Vec<u8>,
+    frames: Vec<(u32, u32)>,
+}
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Kind {
+    Audio,
+    Video,
+}
+impl Kind {
+    fn action(self) -> MediaActionV1 {
+        match self {
+            Self::Audio => MediaActionV1::ExtractAudioWav,
+            Self::Video => MediaActionV1::TranscodeWebm,
+        }
+    }
+    fn profile(self) -> &'static str {
+        match self {
+            Self::Audio => "native-audio-pipe-v1",
+            Self::Video => "native-video-pipe-v1",
+        }
+    }
 }
 impl CompletedAudio {
     pub fn metadata(&self) -> &MediaInspection {
@@ -97,13 +148,14 @@ pub(super) fn input_ids(stored: &StoredJob) -> impl Iterator<Item = &str> {
     stored
         .native_audio
         .iter()
+        .chain(stored.native_video.iter())
         .flat_map(|call| [call.id.as_str(), call.probe_id.as_str()])
 }
 pub(in crate::runtime) fn validate_stored(stored: &StoredJob) -> Result<(), ErrorCode> {
-    if stored.native_audio.is_empty() {
+    if stored.native_audio.is_empty() && stored.native_video.is_empty() {
         return Ok(());
     }
-    if stored.native_audio.len() + stored.native_inspections.len() > 8 {
+    if stored.native_audio.len() + stored.native_video.len() + stored.native_inspections.len() > 8 {
         return Err(ErrorCode::StoreCorrupt);
     }
     let lock = stored
@@ -119,7 +171,12 @@ pub(in crate::runtime) fn validate_stored(stored: &StoredJob) -> Result<(), Erro
         .iter()
         .map(|call| call.id.as_str())
         .collect();
-    for call in &stored.native_audio {
+    for (kind, call) in stored
+        .native_audio
+        .iter()
+        .map(|call| (Kind::Audio, call))
+        .chain(stored.native_video.iter().map(|call| (Kind::Video, call)))
+    {
         let consumer = if call.run == stored.snapshot.run_id {
             lock.packages.iter().find(|pin| {
                 pin.id == stored.snapshot.plugin_id && pin.digest == stored.snapshot.package_digest
@@ -133,7 +190,7 @@ pub(in crate::runtime) fn validate_stored(stored: &StoredJob) -> Result<(), Erro
         }
         .ok_or(ErrorCode::StoreCorrupt)?;
         if call.format_version != 1
-            || call.profile != "native-audio-pipe-v1"
+            || call.profile != kind.profile()
             || !uuid(&call.id)
             || !uuid(&call.probe_id)
             || !ids.insert(call.id.as_str())
@@ -172,7 +229,7 @@ pub(in crate::runtime) fn validate_stored(stored: &StoredJob) -> Result<(), Erro
 enum Process {
     Extract(Extraction),
     Probe {
-        process: Inspection,
+        process: ConversionProbe,
         bytes: Vec<u8>,
         progress: Vec<u8>,
     },
@@ -199,11 +256,12 @@ impl Process {
     }
 }
 pub(in crate::runtime) struct AudioCall {
+    kind: Kind,
     root: String,
     run: String,
     claim: ToolCallClaim,
     process: Option<Process>,
-    outcome: Option<Result<CompletedAudio, ErrorCode>>,
+    outcome: Option<Result<CapturedMedia, ErrorCode>>,
     #[cfg(test)]
     observations: Vec<(u32, u32, bool, String, bool)>,
 }
@@ -223,9 +281,14 @@ impl RuntimeCore {
         input: &[u8],
         after_prepare: impl FnOnce(&mut Self, (u32, u32, bool, String, bool)) -> Result<(), ErrorCode>,
     ) -> Result<MediaAudioHandle, ErrorCode> {
-        let result = self.start_audio_inner(run, input, |core, process| {
-            after_prepare(core, process.snapshot()?)
-        });
+        let result = self
+            .start_audio_inner(run, input, Kind::Audio, |core, process| {
+                after_prepare(core, process.snapshot()?)
+            })
+            .map(|id| MediaAudioHandle {
+                instance: self.instance_id.clone(),
+                id,
+            });
         self.media_result(run, result)
     }
     #[cfg(test)]
@@ -264,15 +327,51 @@ impl RuntimeCore {
         run: &str,
         input: &[u8],
     ) -> Result<MediaAudioHandle, ErrorCode> {
-        let result = self.start_audio_inner(run, input, |_, _| Ok(()));
+        let result = self
+            .start_audio_inner(run, input, Kind::Audio, |_, _| Ok(()))
+            .map(|id| MediaAudioHandle {
+                instance: self.instance_id.clone(),
+                id,
+            });
+        self.media_result(run, result)
+    }
+    pub fn start_media_video(
+        &mut self,
+        run: &str,
+        input: &[u8],
+    ) -> Result<MediaVideoHandle, ErrorCode> {
+        let result = self
+            .start_audio_inner(run, input, Kind::Video, |_, _| Ok(()))
+            .map(|id| MediaVideoHandle {
+                instance: self.instance_id.clone(),
+                id,
+            });
+        self.media_result(run, result)
+    }
+    #[cfg(test)]
+    pub fn start_media_video_fixture(
+        &mut self,
+        run: &str,
+        input: &[u8],
+        after_prepare: impl FnOnce(&mut Self, (u32, u32, bool, String, bool)) -> Result<(), ErrorCode>,
+    ) -> Result<MediaVideoHandle, ErrorCode> {
+        let result = self
+            .start_audio_inner(run, input, Kind::Video, |core, process| {
+                after_prepare(core, process.snapshot()?)
+            })
+            .map(|id| MediaVideoHandle {
+                instance: self.instance_id.clone(),
+                id,
+            });
         self.media_result(run, result)
     }
     fn start_audio_inner(
         &mut self,
         run: &str,
         input: &[u8],
+        kind: Kind,
         after_prepare: impl FnOnce(&mut Self, &Process) -> Result<(), ErrorCode>,
-    ) -> Result<MediaAudioHandle, ErrorCode> {
+    ) -> Result<String, ErrorCode> {
         if !inspection::valid_input(input) {
             return Err(ErrorCode::InputInvalid);
         }
@@ -286,7 +385,7 @@ impl RuntimeCore {
         let job = &self.jobs[&root];
         if known.len() > 62
             || self.active_media_inspections() >= 4
-            || job.native_inspections.len() + job.native_audio.len() >= 8
+            || job.native_inspections.len() + job.native_audio.len() + job.native_video.len() >= 8
             || self.native_calls.values().any(|call| call.holds_run(run))
             || self.audio_calls.values().any(|call| call.holds_run(run))
         {
@@ -294,15 +393,11 @@ impl RuntimeCore {
         }
         let claim = self.admit_media(
             run,
-            MediaActionV1::ExtractAudioWav,
+            kind.action(),
             None,
             |_| Ok(()),
             |broker, session, _, _| {
-                broker.claim_tool_call(
-                    session,
-                    &leases::media_operation(MediaActionV1::ExtractAudioWav),
-                    now(),
-                )
+                broker.claim_tool_call(session, &leases::media_operation(kind.action()), now())
             },
         )?;
         let identity = claim.identity();
@@ -332,7 +427,7 @@ impl RuntimeCore {
             });
         let stored = StoredAudio {
             format_version: 1,
-            profile: "native-audio-pipe-v1".into(),
+            profile: kind.profile().into(),
             id: id.clone(),
             probe_id,
             run: run.into(),
@@ -345,7 +440,10 @@ impl RuntimeCore {
             output: None,
         };
         self.media_predecessor(&root)?;
-        self.jobs.get_mut(&root).unwrap().native_audio.push(stored);
+        match kind {
+            Kind::Audio => self.jobs.get_mut(&root).unwrap().native_audio.push(stored),
+            Kind::Video => self.jobs.get_mut(&root).unwrap().native_video.push(stored),
+        }
         self.persist_audio(&root)?;
         let known = self.inspection_ids()?;
         let profile = self
@@ -354,6 +452,7 @@ impl RuntimeCore {
             .ok_or(ErrorCode::StorageFailed)?
             .to_owned();
         let mut call = AudioCall {
+            kind,
             root: root.clone(),
             run: run.into(),
             claim,
@@ -365,13 +464,13 @@ impl RuntimeCore {
         let mut entered = false;
         let prepared = self.admit_media(
             run,
-            MediaActionV1::ExtractAudioWav,
+            kind.action(),
             Some(&call.claim),
             |_| Ok(()),
             |broker, _, _, tool| {
                 broker.invoke_claimed_tool(&call.claim, now(), |_| {
                     entered = true;
-                    tool.prepare_audio_extraction(&profile, &id, input, &known)
+                    tool.prepare_conversion(&profile, &id, input, &known)
                 })
             },
         );
@@ -398,7 +497,7 @@ impl RuntimeCore {
             self.audio_phase(&root, &id, Phase::Extracting)?;
             self.admit_media(
                 run,
-                MediaActionV1::ExtractAudioWav,
+                kind.action(),
                 Some(&call.claim),
                 |_| Ok(()),
                 |broker, _, _, _| {
@@ -415,10 +514,7 @@ impl RuntimeCore {
             return Err(code);
         }
         self.audio_calls.insert(id.clone(), call);
-        Ok(MediaAudioHandle {
-            instance: self.instance_id.clone(),
-            id,
-        })
+        Ok(id)
     }
     fn persist_audio(&mut self, root: &str) -> Result<(), ErrorCode> {
         if let Err(code) = self.persist_job(&self.jobs[root]) {
@@ -429,11 +525,10 @@ impl RuntimeCore {
     }
     fn audio_phase(&mut self, root: &str, id: &str, phase: Phase) -> Result<(), ErrorCode> {
         self.media_predecessor(root)?;
-        self.jobs
-            .get_mut(root)
-            .unwrap()
-            .native_audio
+        let job = self.jobs.get_mut(root).unwrap();
+        job.native_audio
             .iter_mut()
+            .chain(job.native_video.iter_mut())
             .find(|call| call.id == id)
             .ok_or(ErrorCode::StoreCorrupt)?
             .phase = phase;
@@ -477,7 +572,7 @@ impl RuntimeCore {
         &mut self,
         id: &str,
         call: &mut AudioCall,
-        outcome: Result<CompletedAudio, ErrorCode>,
+        outcome: Result<CapturedMedia, ErrorCode>,
     ) -> Result<(), ErrorCode> {
         if let Err(code) = Self::drop_audio_process(call) {
             self.stopping = true;
@@ -508,12 +603,11 @@ impl RuntimeCore {
     ) -> Result<(), ErrorCode> {
         Self::drop_audio_process(call)?;
         self.media_predecessor(&call.root)?;
-        let stored = self
-            .jobs
-            .get_mut(&call.root)
-            .unwrap()
+        let job = self.jobs.get_mut(&call.root).unwrap();
+        let stored = job
             .native_audio
             .iter_mut()
+            .chain(job.native_video.iter_mut())
             .find(|call| call.id == id)
             .ok_or(ErrorCode::StoreCorrupt)?;
         stored.phase = Phase::PreparingProbe;
@@ -532,13 +626,13 @@ impl RuntimeCore {
         let mut entered = false;
         let prepared = self.admit_media(
             &call.run,
-            MediaActionV1::ExtractAudioWav,
+            call.kind.action(),
             Some(&call.claim),
             |_| Ok(()),
             |broker, _, _, tool| {
                 broker.invoke_claimed_tool(&call.claim, now(), |_| {
                     entered = true;
-                    tool.prepare_extracted_probe(&profile, &probe_id, &bytes, &known)
+                    tool.prepare_conversion_probe(&profile, &probe_id, &bytes, &known)
                 })
             },
         );
@@ -564,7 +658,7 @@ impl RuntimeCore {
         self.audio_phase(&call.root, id, Phase::Probing)?;
         let resumed = self.admit_media(
             &call.run,
-            MediaActionV1::ExtractAudioWav,
+            call.kind.action(),
             Some(&call.claim),
             |_| Ok(()),
             |broker, _, _, _| {
@@ -615,24 +709,41 @@ impl RuntimeCore {
                         bytes,
                         progress,
                     } => match process.poll() {
-                        Ok(Observation::Running) => Ok(()),
-                        Ok(Observation::Complete(_, raw)) => {
-                            let output = media::completion::project_completed_output(
-                                MediaActionV1::ExtractAudioWav,
-                                0,
-                                progress,
-                                &raw,
-                                bytes.len() as u64,
-                            )
+                        Ok(ProbeObservation::Running) => Ok(()),
+                        Ok(ProbeObservation::Complete(raw)) => {
+                            let output = match call.kind {
+                                Kind::Audio => media::completion::project_completed_output(
+                                    call.kind.action(),
+                                    0,
+                                    progress,
+                                    &raw,
+                                    bytes.len() as u64,
+                                )
+                                .map(|metadata| CapturedMedia {
+                                    metadata,
+                                    bytes: std::mem::take(bytes),
+                                    frames: Vec::new(),
+                                }),
+                                Kind::Video => media::streaming::project_completed_webm_stream(
+                                    0,
+                                    progress,
+                                    &raw,
+                                    bytes.len() as u64,
+                                )
+                                .map(|result| {
+                                    let frames = result.decoded_frames().to_vec();
+                                    CapturedMedia {
+                                        metadata: result.into_metadata(),
+                                        frames,
+                                        bytes: std::mem::take(bytes),
+                                    }
+                                }),
+                            }
                             .map_err(|_| ErrorCode::OutputInvalid);
-                            let output = output.map(|metadata| CompletedAudio {
-                                metadata,
-                                bytes: std::mem::take(bytes),
-                            });
                             before_commit(self, call.process.as_ref().unwrap());
                             let committed = self.admit_media(
                                 &call.run,
-                                MediaActionV1::ExtractAudioWav,
+                                call.kind.action(),
                                 Some(&call.claim),
                                 |_| Ok(()),
                                 |broker, _, _, _| {
@@ -666,6 +777,9 @@ impl RuntimeCore {
             .audio_calls
             .get(&handle.id)
             .ok_or(ErrorCode::SessionInvalid)?;
+        if call.kind != Kind::Audio {
+            return Err(ErrorCode::SessionInvalid);
+        }
         if call.outcome.is_none() {
             return Ok(MediaAudioState::Running);
         }
@@ -673,7 +787,42 @@ impl RuntimeCore {
         if call.outcome.as_ref().unwrap().is_ok() {
             self.check_audio(&call)?;
         }
-        call.outcome.unwrap().map(MediaAudioState::Complete)
+        call.outcome.unwrap().map(|result| {
+            MediaAudioState::Complete(CompletedAudio {
+                metadata: result.metadata,
+                bytes: result.bytes,
+            })
+        })
+    }
+    pub fn poll_media_video(
+        &mut self,
+        handle: &MediaVideoHandle,
+    ) -> Result<MediaVideoState, ErrorCode> {
+        if handle.instance != self.instance_id {
+            return Err(ErrorCode::InstanceMismatch);
+        }
+        self.tick_media_inspections()?;
+        let call = self
+            .audio_calls
+            .get(&handle.id)
+            .ok_or(ErrorCode::SessionInvalid)?;
+        if call.kind != Kind::Video {
+            return Err(ErrorCode::SessionInvalid);
+        }
+        if call.outcome.is_none() {
+            return Ok(MediaVideoState::Running);
+        }
+        let call = self.audio_calls.remove(&handle.id).unwrap();
+        if call.outcome.as_ref().unwrap().is_ok() {
+            self.check_audio(&call)?;
+        }
+        call.outcome.unwrap().map(|result| {
+            MediaVideoState::Complete(CompletedVideo {
+                metadata: result.metadata,
+                bytes: result.bytes,
+                frames: result.frames,
+            })
+        })
     }
     pub(in crate::runtime) fn stop_audio_calls(&mut self, run: &str) -> Result<(), ErrorCode> {
         let ids: Vec<_> = self

@@ -203,7 +203,10 @@ impl RuntimeCore {
         let known = self.inspection_ids()?;
         if known.len() >= 64
             || self.active_media_inspections() >= 4
-            || self.jobs[&root].native_inspections.len() + self.jobs[&root].native_audio.len() >= 8
+            || self.jobs[&root].native_inspections.len()
+                + self.jobs[&root].native_audio.len()
+                + self.jobs[&root].native_video.len()
+                >= 8
             || self.audio_calls.values().any(|call| call.holds_run(run))
             || self
                 .native_calls
@@ -469,7 +472,7 @@ impl RuntimeCore {
                 .and_then(|()| call.process.as_mut().unwrap().poll());
             let ended = match observed {
                 Ok(Observation::Running) => Ok(()),
-                Ok(Observation::Complete(value, _)) => {
+                Ok(Observation::Complete(value)) => {
                     before_commit(self);
                     let committed = self.admit_media(
                         &call.run,

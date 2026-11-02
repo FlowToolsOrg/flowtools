@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
 pub mod completion;
+pub mod streaming;
 
 pub const MAX_INSPECTION_BYTES: usize = 65_536;
 pub const MAX_MEDIA_BYTES: u64 = 268_435_456;

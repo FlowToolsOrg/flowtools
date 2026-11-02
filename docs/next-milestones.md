@@ -478,6 +478,11 @@ plugin lock 和 task lease 防止卸载/更新误删已接受任务需要的版�
 
 ### P2.8b 受管执行与媒体适配
 
+2026-11-01：P2.8b8 [有界原生 WebM](./validation/g6-native-video-transcoding.md)
+复用实际转换 actor，独立全帧 probe、严格 VP9/Opus 角色和同字节输出检查。
+原 V1 正时长条件不变，管道新投影保留未知时长；实际候选和整仓结果另记。
+不开放普通 Host authority、用户文件 grant 或发布，G7 继续 pending。
+
 2026-11-01：P2.8b7 的 [有界原生 WAV](./validation/g6-native-audio-extraction.md)
 在一个调用预算内串行运行实际 ffmpeg 与独立 ffprobe，持有两个私有输入，
 硬配额和阶段持久化保留。已有 6/10/8 专项与固定 Chromium 全 PCM 解码

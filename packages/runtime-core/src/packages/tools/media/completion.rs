@@ -69,7 +69,15 @@ pub fn project_completed_output(
     {
         return Err(CompletionError::OutputInvalid);
     }
-    let valid = match action {
+    if !matches_recipe_profile(action, &output) {
+        return Err(CompletionError::OutputInvalid);
+    }
+    // Progress time/size remain advisory, including N/A. Actual output size and
+    // media properties come from T0 observations and the separate probe result.
+    Ok(output)
+}
+pub(super) fn matches_recipe_profile(action: MediaActionV1, output: &MediaInspection) -> bool {
+    match action {
         MediaActionV1::ExtractAudioWav => {
             output.formats == ["wav"]
                 && output.streams.len() == 1
@@ -92,13 +100,7 @@ pub fn project_completed_output(
                 })
         }
         MediaActionV1::Inspect => false,
-    };
-    if !valid {
-        return Err(CompletionError::OutputInvalid);
     }
-    // Progress time/size remain advisory, including N/A. Actual output size and
-    // media properties come from T0 observations and the separate probe result.
-    Ok(output)
 }
 
 #[cfg(test)]

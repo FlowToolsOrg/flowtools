@@ -2,6 +2,10 @@
 
 日期：2026-11-01。G7 整体为 **in-progress / prototype**。
 
+P2.8b8 增加 [Core 有界 WebM](./g6-native-video-transcoding.md)：固定管道输出、
+独立新鲜输入的全帧解码检查和原完整授权/排空路径。未知时长保持未知，原
+V1 完成条件不放宽；当前修改树验证另记，用户文件及 GUI/CLI 发布仍 pending。
+
 P2.8b7 新增 [Core 有界 WAV 提取](./g6-native-audio-extraction.md)：一个调用
 预算、两个实际 LPAC/Job、硬 stdout/progress 预算、独立同字节 probe 和当前
 授权/信任复查。6/10/8 专项及固定 Chromium 逐 PCM 解码通过，当前整仓另记；

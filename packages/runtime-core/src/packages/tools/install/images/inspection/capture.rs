@@ -22,7 +22,7 @@ impl Capture {
     }
     fn invalid(&self) -> io::Error {
         io::Error::new(
-            if self.profile == Profile::ExtractAudio {
+            if self.profile.is_encoding() {
                 io::ErrorKind::FileTooLarge
             } else {
                 io::ErrorKind::Other
@@ -87,9 +87,12 @@ mod tests {
         assert!(capture.finish().is_err());
     }
     #[test]
-    fn audio_bytes_and_progress_have_independent_hard_limits_and_sticky_refusal() {
-        for overflow_stdout in [true, false] {
-            let mut capture = Capture::new(Profile::ExtractAudio);
+    fn conversion_bytes_and_progress_have_independent_hard_limits_and_sticky_refusal() {
+        for (profile, overflow_stdout) in [Profile::ExtractAudio, Profile::TranscodeWebm]
+            .into_iter()
+            .flat_map(|profile| [true, false].map(|overflow| (profile, overflow)))
+        {
+            let mut capture = Capture::new(profile);
             capture.push(true, &vec![0xA5; 1_048_576]).unwrap();
             capture.push(false, &vec![b'x'; 65_536]).unwrap();
             assert_eq!(

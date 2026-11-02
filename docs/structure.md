@@ -2,6 +2,11 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime_media/audio.rs` 同一有限 actor 还支持固定 WebM：`media/streaming.rs`
+单独验证全帧独立 probe，未知时长不伪造，原 V1 投影不变；音频/视频共享
+已有预算、writer、授权/保留与 owned drain。仅 T0 字节 API，无用户文件
+发布，见 [视频范围](./validation/g6-native-video-transcoding.md)。
+
 `runtime-core/src/runtime_media/audio.rs` 与私有 `inspection/profile.rs` /
 `capture.rs` 在固定 byte/stdio 预算内提取 WAV，实际首个 Job 排空后再由
 独立 ffprobe 读取新建的同字节输入；复用原 writer、权限与保留边界。仅 T0
@@ -15,7 +20,7 @@ LPAC/Job、持有真实 image/input、原任务行 phase、当前授权和 owned
 
 `apps/runtime/test/fixtures/managed-media-candidate/` 是独立非发布的签名 fixture/
 实际安装媒体专项，复用实际 Core 源模块及私有测试 authority。显式
-`scripts/test-managed-media-candidate.ps1` 分别运行原六项、十项信息检查及八项 WAV 检查，普通根 CI 不执行；
+`scripts/test-managed-media-candidate.ps1` 分别运行原六项、十项信息检查、八项 WAV 及九项 WebM 检查，普通根 CI 不执行；
 普通产品没有依赖或开关，见 [专项范围](./validation/g6-installed-media-candidate.md)。
 
 `runtime-core/src/runtime_media.rs` 与 `packages/tools/install/leases/invocation.rs`

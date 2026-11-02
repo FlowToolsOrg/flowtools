@@ -84,4 +84,4 @@ panic 而 exit 2；相同严格检查改用绝对 typeRoots 后单独通过，�
 `execution-validation/g6/root-ci-afd50f4-20261102.log`。已推送并以 ls-remote
 核对相同 SHA；[PR 41414986075](https://github.com/FlowToolsOrg/flowtools/actions/runs/41414986075)
 与 [push 41414977562](https://github.com/FlowToolsOrg/flowtools/actions/runs/41414977562)
-当时仍在运行，不能记为 success；PR 保持 Draft。
+后续均已核对 success；PR 保持 Draft，健康结果约束的激活仍 pending。

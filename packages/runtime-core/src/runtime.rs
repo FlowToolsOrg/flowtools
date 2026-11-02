@@ -35,6 +35,8 @@ mod media;
 
 #[path = "runtime_scheduling.rs"]
 mod scheduling;
+#[path = "runtime_service_journal.rs"]
+mod service_journal;
 
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -265,6 +267,8 @@ pub struct RuntimeCore {
     service_invocations: HashMap<String, ServiceInvocation>,
     retained_catalogs: Vec<BuiltinCatalog>,
     provider_candidates: HashMap<String, BuiltinCatalog>,
+    // Exact bytes from the last confirmed journal commit, never a durable grant.
+    provider_journal: Option<String>,
     #[cfg(windows)]
     tools: Option<ToolAuthority>,
     #[cfg(windows)]
@@ -298,6 +302,7 @@ impl RuntimeCore {
             service_invocations: HashMap::new(),
             retained_catalogs: Vec::new(),
             provider_candidates: HashMap::new(),
+            provider_journal: None,
             #[cfg(windows)]
             tools: None,
             #[cfg(windows)]
@@ -404,41 +409,7 @@ impl RuntimeCore {
         catalog: BuiltinCatalog,
         setup: impl FnOnce(&mut Self) -> Result<(), ErrorCode>,
     ) -> Result<Self, ErrorCode> {
-        let journal: Option<String> = store
-            .connection
-            .query_row(
-                "SELECT value FROM core_metadata WHERE key='service-catalog-state-v1'",
-                [],
-                |row| row.get(0),
-            )
-            .optional()
-            .map_err(|_| ErrorCode::StorageFailed)?;
-        let disabled = if let Some(text) = journal {
-            let journal: ProviderJournal =
-                serde_json::from_str(&text).map_err(|_| ErrorCode::StoreCorrupt)?;
-            if journal.format_version != 1
-                || journal.disabled.len() > 128
-                || uuid::Uuid::parse_str(&journal.backup_id).is_err()
-            {
-                return Err(ErrorCode::StoreCorrupt);
-            }
-            if journal.phase != "committed"
-                || journal.pending_catalog.is_some()
-                || journal.active_catalog != catalog.snapshot_digest()
-            {
-                return Err(ErrorCode::RecoveryPending);
-            }
-            if journal.disabled.iter().any(|identity| {
-                !catalog
-                    .list()
-                    .any(|(id, m)| id == &identity.id && m["publisher"] == identity.publisher)
-            }) {
-                return Err(ErrorCode::StoreCorrupt);
-            }
-            journal.disabled
-        } else {
-            Vec::new()
-        };
+        let (journal, disabled) = service_journal::load(&store.connection, &catalog)?;
         let policy =
             PolicyStore::load_snapshot(&mut store, &catalog.snapshot_digest(), catalog.clone())?;
         if cold_started && !policy.cold_start {
@@ -448,6 +419,7 @@ impl RuntimeCore {
             Self::validation("unused-cli".into(), "unused-desktop".into()).with_data_store(store);
         core.tokens = tokens;
         core.catalog = catalog;
+        core.provider_journal = journal;
         setup(&mut core)?;
         core.services.restore_disabled(disabled);
         core.management_only = management_only;
@@ -2197,6 +2169,15 @@ impl RuntimeCore {
             return Err(ErrorCode::RuntimeBusy);
         }
         let plan = self.services.presented_plan(ticket)?;
+        let previous = match service_journal::read(&self.data.connection) {
+            Ok(previous) if previous == self.provider_journal => previous,
+            result => {
+                let code = result.err().unwrap_or(ErrorCode::StoreCorrupt);
+                self.stopping = true;
+                self.shutdown();
+                return Err(code);
+            }
+        };
         let backup = match self.data.backup() {
             Ok(backup) => backup,
             Err(code) => {
@@ -2210,16 +2191,6 @@ impl RuntimeCore {
             .and_then(|name| name.strip_prefix("runtime-backup-"))
             .ok_or(ErrorCode::StorageFailed)?
             .to_owned();
-        let previous: Option<String> = self
-            .data
-            .connection
-            .query_row(
-                "SELECT value FROM core_metadata WHERE key='service-catalog-state-v1'",
-                [],
-                |row| row.get(0),
-            )
-            .optional()
-            .map_err(|_| ErrorCode::StorageFailed)?;
         let pending = self
             .provider_candidates
             .get(ticket)
@@ -2232,14 +2203,11 @@ impl RuntimeCore {
             backup_id,
             disabled: self.services.disabled(),
         };
-        let write_journal = |connection: &rusqlite::Connection,
-                             journal: &ProviderJournal|
-         -> Result<(), ErrorCode> {
-            connection.execute("INSERT INTO core_metadata(key,value) VALUES('service-catalog-state-v1',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value",[serde_json::to_string(journal).map_err(|_|ErrorCode::StorageFailed)?]).map_err(|_|ErrorCode::StorageFailed)?;
-            Ok(())
-        };
+        let prepared = serde_json::to_string(&journal).map_err(|_| ErrorCode::StorageFailed)?;
         let result = (|| {
-            write_journal(&self.data.connection, &journal).map_err(|code| (code, false))?;
+            service_journal::replace(&mut self.data, previous.as_deref(), Some(&prepared))
+                .map_err(|code| (code, false))?;
+            self.provider_journal = Some(prepared.clone());
             let tx = self
                 .data
                 .connection
@@ -2256,42 +2224,44 @@ impl RuntimeCore {
                     journal.active_catalog = active;
                 }
                 journal.phase = "committed".into();
-                write_journal(&tx, &journal)
+                let committed =
+                    serde_json::to_string(&journal).map_err(|_| ErrorCode::StorageFailed)?;
+                service_journal::write_in(&tx, Some(&prepared), Some(&committed))?;
+                Ok(committed)
             });
             match result {
-                Ok(()) => tx.commit().map_err(|_| (ErrorCode::StorageFailed, false)),
+                Ok(committed) => tx
+                    .commit()
+                    .map(|()| committed)
+                    .map_err(|_| (ErrorCode::StorageFailed, false)),
                 Err(code) => match tx.rollback() {
                     Ok(()) => Err((code, true)),
                     Err(_) => Err((ErrorCode::StorageFailed, false)),
                 },
             }
         })();
-        if let Err((code, rollback_confirmed)) = result {
-            // An uncertain commit/rollback cannot reopen old admission.
-            if !rollback_confirmed {
-                self.stopping = true;
-                self.shutdown();
+        let committed = match result {
+            Ok(committed) => committed,
+            Err((code, rollback_confirmed)) => {
+                // An uncertain commit/rollback cannot reopen old admission.
+                if !rollback_confirmed {
+                    self.stopping = true;
+                    self.shutdown();
+                    return Err(code);
+                }
+                if let Err(restore_code) =
+                    service_journal::replace(&mut self.data, Some(&prepared), previous.as_deref())
+                {
+                    self.stopping = true;
+                    self.shutdown();
+                    return Err(restore_code);
+                }
+                self.provider_journal = previous;
+                self.abort_provider_change(ticket);
                 return Err(code);
             }
-            let restored = if let Some(previous) = previous {
-                self.data.connection.execute(
-                    "UPDATE core_metadata SET value=?1 WHERE key='service-catalog-state-v1'",
-                    [previous],
-                )
-            } else {
-                self.data.connection.execute(
-                    "DELETE FROM core_metadata WHERE key='service-catalog-state-v1'",
-                    [],
-                )
-            };
-            if restored.is_err() {
-                self.stopping = true;
-                self.shutdown();
-                return Err(ErrorCode::StorageFailed);
-            }
-            self.abort_provider_change(ticket);
-            return Err(code);
-        }
+        };
+        self.provider_journal = Some(committed);
         if let Err(code) = self.services.commit_change(ticket, || Ok(())) {
             self.stopping = true;
             self.shutdown();

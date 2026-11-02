@@ -537,6 +537,10 @@ artifact，完成验证后以 create-only 或明确 overwrite 授权提交。文
 
 ### P2.8c 更新、共享和恢复
 
+2026-11-02：加固既有 provider [迁移恢复日志](./validation/g6-provider-journal-fence.md)
+的有界读取、精确原字节前值与 trigger-aware 事务。未知提交/恢复停止准入，
+确认回滚后才重开旧 catalog；不等同于工具激活、GC/LKG 或 G7 闭环。
+
 2026-11-02：P2.8c3 增加 [固定原生健康检查](./validation/g6-native-tool-health.md)：
 合成 PCM 经原 WAV 转换与独立 probe，逐样本核对后再按普通当前 floor 收取。
 两项 Core 与五项实际候选通过，完整 44 项另记；不激活版本或开放新权限。

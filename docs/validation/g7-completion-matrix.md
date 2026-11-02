@@ -2,6 +2,10 @@
 
 日期：2026-11-02。G7 整体为 **in-progress / prototype**。
 
+既有 provider [恢复日志边界](./g6-provider-journal-fence.md) 增加固定槽位的
+有界读取、原字节前值、trigger-aware 事务与确认回滚恢复。它是版本切换前置
+的故障拒绝加固；工具激活、GC/LKG 及用户文件/媒体闭环继续 pending。
+
 P2.8c3 的 [固定健康检查](./g6-native-tool-health.md) 复用原授权/排空链，
 对固定合成 PCM 的真实转换及 probe 结果逐样本核对，再作当前 floor 检查。
 当前两项 Core/五项原生通过，完整门禁另记；版本激活与 G7 执行闭环仍 pending。

@@ -181,6 +181,16 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+Provider migration journals use the fixed `runtime_service_journal.rs` slot,
+bounded TEXT reads and the existing DataStore writer. Preserve format-1 bytes,
+the actor's exact last-confirmed predecessor, one affected/actual row change and
+readback inside each transaction. Preparation, final commit and rollback restore
+all use this guard; unknown writes stop admission and retain prepared state.
+Only confirmed migration rollback AND exact-byte restore reopen the old catalog.
+This is not tool activation, GC or a grant; installation domains keep their
+original `packages/install/metadata.rs` guard. See
+[journal evidence](./docs/validation/g6-provider-journal-fence.md).
+
 G6 P2.8c3 native health uses only fixed synthetic PCM through the ordinary WAV
 actor and its independent actual probe. Preserve exact-sample validation,
 current-floor collection, all ancestor grants/claims, original metadata and

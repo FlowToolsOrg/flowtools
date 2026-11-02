@@ -50,3 +50,14 @@ low-order R、错误 key 长度、阈值、弱 key/角色复用、签名编码�
 Cargo root 的完整 profile 精确检查。严格 TS 使用正常绝对 typeRoots，文档
 契约通过。日志 `execution-validation/g6/signature-latency-main-focused-20261102.log`。
 最终干净提交仍须完整根门禁，不将这些聚焦结果称为整仓或生产通过。
+
+`e4ed1e6903953c782d346d14086c78835d7b9826` 随后完整本机根门禁 **exit 0**、
+最终无漂移：Core 486+11+11（455.58s）、11/11 workspace、Runtime 24+6
+（47.76s/2.02s）及 Bun 17、Chromium 113/35、Desktop 108 Bun+Node 2+
+原生 37+6（4.27s/0.16s），Web 23/Desktop 25 一致性与 production refusal、
+最终 Rust check/clippy（18.85s/12.05s）通过。与前一步同套 Core 的 1474.29s
+相比，这次本机减少约 69%；不将单次环境对比称为稳定生产性能指标。
+日志 `execution-validation/g6/root-ci-e4ed1e6-20261102.log`。已推送并以
+ls-remote 核对相同 SHA；[PR 41424481274](https://github.com/FlowToolsOrg/flowtools/actions/runs/41424481274)
+与 [push 41424473938](https://github.com/FlowToolsOrg/flowtools/actions/runs/41424473938)
+在记录时仍运行，结果 pending；PR 保持 Draft。

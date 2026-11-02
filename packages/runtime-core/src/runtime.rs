@@ -1040,6 +1040,19 @@ impl RuntimeCore {
             return Err(ErrorCode::ApprovalRequired);
         }
         match request.call {
+            Call::ToolInventory(query) => {
+                if self.policy.is_none() {
+                    return Err(ErrorCode::ApprovalRequired);
+                }
+                #[cfg(windows)]
+                if let Some(tools) = &self.tools {
+                    return tools
+                        .inventory(&mut self.data, &query)
+                        .map(Outcome::ToolInventory);
+                }
+                crate::tool_inventory::ToolInventoryPage::not_configured(&query)
+                    .map(Outcome::ToolInventory)
+            }
             Call::ScheduleResolve(input) => {
                 crate::scheduling::time::resolve_time(input).map(Outcome::ScheduleTime)
             }

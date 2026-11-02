@@ -181,6 +181,13 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G6 P2.8c2 `tools.inventory` is an attach-only read-only observation. Preserve
+the existing strict inventory/native/retained-job readers, four shared physical
+pools, finite pages and snapshot checks. NotConfigured has no storage claim.
+No authority, admission, execution, deletion or cold-start follows. GUI/CLI use
+the Rust-generated schema and shared client checks; paths, seal IDs, run IDs,
+inputs, tokens and argv stay private. See [evidence](./docs/validation/g6-tool-inventory-management.md).
+
 G6 P2.8c1 adds only live logical-call continuity after ordinary
 current-floor admission and actual native preparation. Keep HeldDescriptor and
 LiveToolCall opaque and ephemeral, bound to writer/DB/generation/pins and exact

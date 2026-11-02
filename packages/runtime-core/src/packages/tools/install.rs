@@ -1,6 +1,7 @@
 //! Windows T0 inert signed-tool ZIP storage. No extraction, registry of runnable
 //! programs, accepted-job lease, activation or executable identity.
 pub(crate) mod consumer_sources;
+pub(crate) mod diagnostics;
 pub mod images;
 pub(crate) mod leases;
 pub mod reconciliation;

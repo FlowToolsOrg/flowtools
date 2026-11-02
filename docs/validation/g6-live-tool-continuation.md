@@ -106,3 +106,13 @@ WebM **9 pass**（138.70s）、续接 **6 pass**（84.01s），均 0 fail / 0 ig
 `execution-validation/g6/live-tool-host-check-main-20261102.log` 与
 `live-tool-ci-contracts-main-20261102.log`。文档及严格类型检查通过；当前提交
 完整根门禁与对应远端仍须单独运行。
+
+`b4f8049151b536967ed5757e5e919e1ba1941cc8` 随后完整本机根门禁 **exit 0**、
+最终无漂移：Core 478+11+10（1410.25s）、11/11 workspace lint/types/test/build、
+Runtime 24+6（44.21s/2.20s）及 Bun 17、Chromium 109/34、Desktop
+108 Bun+Node 2+原生 36+6（3.81s/0.15s），Web 23/Desktop 25 一致性与
+production refusal、最终 Rust check/clippy（12.15s/9.02s）通过。
+日志 `execution-validation/g6/root-ci-b4f8049-20261102.log`。已推送并以
+ls-remote 核对同一 SHA；[PR 41395085530](https://github.com/FlowToolsOrg/flowtools/actions/runs/41395085530)
+与 [push 41395080112](https://github.com/FlowToolsOrg/flowtools/actions/runs/41395080112)
+当时仍运行中，不能记为 success。PR 保持 Draft；G5/G6/G7 不关闭。

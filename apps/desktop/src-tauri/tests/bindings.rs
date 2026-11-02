@@ -108,41 +108,46 @@ mod ipc_tests {
 
     #[test]
     fn status_control_refuses_untrusted_windows_origins_and_initialization() {
-        for (label, origin, initialize) in [
-            ("external", "http://localhost:1420", false),
-            ("main", "https://untrusted.invalid", false),
-            ("main", "http://localhost:1420", true),
+        for call in [
+            serde_json::json!({"method":"runtime.status"}),
+            serde_json::json!({"method":"tools.inventory", "payload":{"offset":0,"snapshot":null}}),
         ] {
-            let mut context = tauri::generate_context!();
-            context.config_mut().build.dev_url = Some("http://localhost:1420".parse().unwrap());
-            let app = desktop_lib::mock_command_builder().build(context).unwrap();
-            let window = tauri::WebviewWindowBuilder::new(
-                &app,
-                label,
-                tauri::WebviewUrl::External(origin.parse().unwrap()),
-            )
-            .build()
-            .unwrap();
-            let response = tauri::test::get_ipc_response(
-                &window,
-                tauri::webview::InvokeRequest {
-                    cmd: "managed_runtime_control".into(),
-                    callback: tauri::ipc::CallbackFn(0),
-                    error: tauri::ipc::CallbackFn(1),
-                    // Reach the native handler; its guard must inspect the real
-                    // window URL/label even with a trusted invoke URL.
-                    url: "http://tauri.localhost".parse().unwrap(),
-                    body: tauri::ipc::InvokeBody::Json(serde_json::json!({
-                        "call": {"method":"runtime.status"}, "initialize":initialize
-                    })),
-                    headers: Default::default(),
-                    invoke_key: tauri::test::INVOKE_KEY.into(),
-                },
-            );
-            assert_eq!(
-                response.unwrap_err(),
-                serde_json::json!({"code":"SESSION_INVALID"})
-            );
+            for (label, origin, initialize) in [
+                ("external", "http://localhost:1420", false),
+                ("main", "https://untrusted.invalid", false),
+                ("main", "http://localhost:1420", true),
+            ] {
+                let mut context = tauri::generate_context!();
+                context.config_mut().build.dev_url = Some("http://localhost:1420".parse().unwrap());
+                let app = desktop_lib::mock_command_builder().build(context).unwrap();
+                let window = tauri::WebviewWindowBuilder::new(
+                    &app,
+                    label,
+                    tauri::WebviewUrl::External(origin.parse().unwrap()),
+                )
+                .build()
+                .unwrap();
+                let response = tauri::test::get_ipc_response(
+                    &window,
+                    tauri::webview::InvokeRequest {
+                        cmd: "managed_runtime_control".into(),
+                        callback: tauri::ipc::CallbackFn(0),
+                        error: tauri::ipc::CallbackFn(1),
+                        // Reach the native handler; its guard must inspect the real
+                        // window URL/label even with a trusted invoke URL.
+                        url: "http://tauri.localhost".parse().unwrap(),
+                        body: tauri::ipc::InvokeBody::Json(serde_json::json!({
+                            "call": call, "initialize":initialize
+                        })),
+                        headers: Default::default(),
+                        invoke_key: tauri::test::INVOKE_KEY.into(),
+                    },
+                );
+                assert_eq!(
+                    response.unwrap_err(),
+                    serde_json::json!({"code":"SESSION_INVALID"})
+                );
+            }
         }
     }
 

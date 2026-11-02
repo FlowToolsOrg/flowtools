@@ -43,7 +43,7 @@ fn fixture_barrier(point: FixtureExit) {
     }
 }
 const ROWS: &str = "key GLOB 'package-trust-*' OR key='recovery-generation' OR key IN ('package-install-inventory-v1','package-install-pending-v1','package-reconciliation-pending-v1','tool-archive-inventory-v1','tool-archive-install-pending-v1','tool-archive-reconciliation-pending-v1','tool-image-inventory-v1','tool-image-materialization-pending-v1','tool-image-reconciliation-pending-v1','tool-consumer-inventory-v1','tool-consumer-install-pending-v1','tool-consumer-reconciliation-pending-v1')";
-fn failed(error: ToolInstallError) -> ErrorCode {
+pub(super) fn failed(error: ToolInstallError) -> ErrorCode {
     match error {
         ToolInstallError::Storage(InstallError::RecoveryPending)
         | ToolInstallError::Admission(ToolAdmissionError::Package(
@@ -275,6 +275,13 @@ pub(crate) struct ToolAuthority {
     fixture_clock: Option<Arc<std::sync::atomic::AtomicU64>>,
 }
 impl ToolAuthority {
+    pub(crate) fn inventory(
+        &self,
+        store: &mut DataStore,
+        query: &crate::tool_inventory::ToolInventoryQuery,
+    ) -> std::result::Result<crate::tool_inventory::ToolInventoryPage, ErrorCode> {
+        super::diagnostics::observe(&self.trust, store, query)
+    }
     pub(crate) fn new(trust: PackageTrustStore) -> Self {
         Self {
             trust,

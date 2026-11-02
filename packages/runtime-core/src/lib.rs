@@ -13,3 +13,4 @@ pub mod recovery;
 pub mod runtime;
 pub mod scheduling;
 pub mod services;
+pub mod tool_inventory;

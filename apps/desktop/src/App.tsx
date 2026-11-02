@@ -85,6 +85,7 @@ import {
 } from './settings/launcher-preferences'
 import { RuntimeStatusSettings } from './settings/runtime-status-settings'
 import { ScheduleSettings } from './settings/schedule-settings'
+import { ToolSettings } from './settings/tool-settings'
 import { commands as desktopCommands } from './utils/bindings'
 import './App.css'
 
@@ -1259,6 +1260,7 @@ function SettingsView() {
         <RuntimeStatusSettings />
         <ManagedRuntimePanel />
         <ScheduleSettings />
+        <ToolSettings />
         <DesktopAppearanceSettings />
         <SettingsRow
           label="启动快捷键"

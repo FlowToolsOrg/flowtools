@@ -14,7 +14,7 @@ export type BootstrapPolicy = {
 	coldStart: boolean,
 };
 
-export type Call = { method: "session.open"; payload: OpenSession } | { method: "runtime.status" } | { method: "schedules.list" } | { method: "schedules.resolve-time"; payload: ResolveScheduleTime } | { method: "schedules.create"; payload: CreateSchedule } | { method: "schedules.cancel"; payload: ScheduleKey } | { method: "schedules.replace"; payload: ReplaceSchedule } | { method: "schedules.recovery" } | { method: "schedules.discard-restored"; payload: ScheduleRecoveryKey } | { method: "plugins.list" } | { method: "dependencies.plan"; payload: DependencyPlanRequest } | { method: "dependencies.unload-plan"; payload: ProviderKey } | { method: "services.calls"; payload: JobKey } | { method: "jobs.submit"; payload: SubmitJob } | { method: "jobs.lookup"; payload: IdempotencyKey } | { method: "jobs.status"; payload: JobKey } | { method: "jobs.diagnose"; payload: JobKey } | { method: "jobs.list" } | { method: "jobs.cancel"; payload: JobKey } | { method: "jobs.events"; payload: EventCursor } | { method: "data.read"; payload: DataRead } | { method: "data.write"; payload: DataWrite } | { method: "data.transaction"; payload: DataTransaction } | { method: "data.import-legacy"; payload: DataImport } | { method: "permissions.list" } | { method: "permissions.grant"; payload: PermissionGrant } | { method: "permissions.revoke"; payload: PermissionKey } | { method: "policy.set"; payload: BootstrapPolicy } | { method: "policy.import"; payload: PolicyImport } | { method: "runtime.stop" };
+export type Call = { method: "session.open"; payload: OpenSession } | { method: "runtime.status" } | { method: "tools.inventory"; payload: ToolInventoryQuery } | { method: "schedules.list" } | { method: "schedules.resolve-time"; payload: ResolveScheduleTime } | { method: "schedules.create"; payload: CreateSchedule } | { method: "schedules.cancel"; payload: ScheduleKey } | { method: "schedules.replace"; payload: ReplaceSchedule } | { method: "schedules.recovery" } | { method: "schedules.discard-restored"; payload: ScheduleRecoveryKey } | { method: "plugins.list" } | { method: "dependencies.plan"; payload: DependencyPlanRequest } | { method: "dependencies.unload-plan"; payload: ProviderKey } | { method: "services.calls"; payload: JobKey } | { method: "jobs.submit"; payload: SubmitJob } | { method: "jobs.lookup"; payload: IdempotencyKey } | { method: "jobs.status"; payload: JobKey } | { method: "jobs.diagnose"; payload: JobKey } | { method: "jobs.list" } | { method: "jobs.cancel"; payload: JobKey } | { method: "jobs.events"; payload: EventCursor } | { method: "data.read"; payload: DataRead } | { method: "data.write"; payload: DataWrite } | { method: "data.transaction"; payload: DataTransaction } | { method: "data.import-legacy"; payload: DataImport } | { method: "permissions.list" } | { method: "permissions.grant"; payload: PermissionGrant } | { method: "permissions.revoke"; payload: PermissionKey } | { method: "policy.set"; payload: BootstrapPolicy } | { method: "policy.import"; payload: PolicyImport } | { method: "runtime.stop" };
 
 /**
  *  Narrow operations: no caller/plugin/namespace, raw paths, SQL, argv or env.
@@ -244,7 +244,7 @@ export type OpenSession = {
 	expectedInstanceId: string | null,
 };
 
-export type Outcome = { type: "session"; data: SessionProof } | { type: "status"; data: RuntimeStatus } | { type: "schedules"; data: ScheduleRecord[] } | { type: "schedule-recovery"; data: ScheduleRecovery | null } | { type: "schedule-time"; data: ResolvedScheduleTime } | { type: "schedule"; data: ScheduleRecord } | { type: "plugins"; data: PluginStatus[] } | { type: "dependency-plan"; data: DependencyPlan } | { type: "provider-change-plan"; data: ProviderChangePlan } | { type: "service-calls"; data: ServiceCallDiagnostic[] } | { type: "receipt"; data: JobReceipt } | { type: "job"; data: JobSnapshot } | { type: "jobs"; data: JobSnapshot[] } | { type: "diagnostic"; data: RunDiagnostic } | { type: "events"; data: JobEvent[] } | { type: "data"; data: DataSnapshot } | { type: "data-batch"; data: DataSnapshot[] } | { type: "permissions"; data: PermissionRecord[] } | { type: "policy"; data: BootstrapPolicy } | { type: "stopping" } | { type: "error"; data: RuntimeError };
+export type Outcome = { type: "session"; data: SessionProof } | { type: "status"; data: RuntimeStatus } | { type: "tool-inventory"; data: ToolInventoryPage } | { type: "schedules"; data: ScheduleRecord[] } | { type: "schedule-recovery"; data: ScheduleRecovery | null } | { type: "schedule-time"; data: ResolvedScheduleTime } | { type: "schedule"; data: ScheduleRecord } | { type: "plugins"; data: PluginStatus[] } | { type: "dependency-plan"; data: DependencyPlan } | { type: "provider-change-plan"; data: ProviderChangePlan } | { type: "service-calls"; data: ServiceCallDiagnostic[] } | { type: "receipt"; data: JobReceipt } | { type: "job"; data: JobSnapshot } | { type: "jobs"; data: JobSnapshot[] } | { type: "diagnostic"; data: RunDiagnostic } | { type: "events"; data: JobEvent[] } | { type: "data"; data: DataSnapshot } | { type: "data-batch"; data: DataSnapshot[] } | { type: "permissions"; data: PermissionRecord[] } | { type: "policy"; data: BootstrapPolicy } | { type: "stopping" } | { type: "error"; data: RuntimeError };
 
 export type PackagePin = {
 	publisher: string,
@@ -500,6 +500,45 @@ export type SubmitJob = {
 	deadline: number | null,
 };
 
+export type ToolDeletionBlocker = "installed-dependent" | "retained-task" | "deletion-not-implemented";
+
+export type ToolDependent = {
+	publisher: string,
+	id: string,
+	version: string,
+};
+
+export type ToolInventoryAvailability = "not-configured" | "observed";
+
+export type ToolInventoryItem = {
+	publisher: string,
+	id: string,
+	version: string,
+	buildFlavor: string,
+	archiveDigest: string,
+	sourceRegistry: string,
+	sourceArtifact: string,
+	archiveBytes: number,
+	materialized: boolean,
+	dependents: ToolDependent[],
+	retainedJobs: number,
+	deletionBlockers: ToolDeletionBlocker[],
+};
+
+export type ToolInventoryPage = {
+	availability: ToolInventoryAvailability,
+	snapshot: string | null,
+	total: number,
+	nextOffset: number | null,
+	storage: ToolStorageUsage | null,
+	items: ToolInventoryItem[],
+};
+
+export type ToolInventoryQuery = {
+	offset: number,
+	snapshot: string | null,
+};
+
 export type ToolPin = {
 	consumer: DependencyIdentity,
 	publisher: string,
@@ -508,6 +547,14 @@ export type ToolPin = {
 	target: DependencyTarget,
 	buildFlavor: string,
 	digest: string,
+};
+
+/**  All four shared installation pools, including their retained/quarantined bytes. */
+export type ToolStorageUsage = {
+	bytes: number,
+	groups: number,
+	maxBytes: number,
+	maxGroups: number,
 };
 
 export const SCHEDULE_LIMITS = {"maxGraceMs":60000,"maxOccurrences":10000,"maxSchedules":128,"maxTimestampMs":253402300799999,"minIntervalMs":1000} as const

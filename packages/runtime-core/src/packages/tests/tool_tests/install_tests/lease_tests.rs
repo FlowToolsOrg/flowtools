@@ -19,6 +19,64 @@ mod metadata_fence_tests;
 mod policy_tests;
 mod recovery_tests;
 
+#[test]
+fn tool_inventory_counts_shared_retained_tasks_and_refuses_changed_job_rows() {
+    let mut world = World::new();
+    prepare_image(&mut world);
+    let catalog = catalog(&world, &["consumer", "middle"]);
+    let mut core = core(&mut world, catalog.clone(), false);
+    for id in ["consumer", "middle"] {
+        grant(&mut core, &catalog, id);
+    }
+    let first = submit(&mut core, operation("consumer", "inventory-first"));
+    let second = submit(&mut core, operation("middle", "inventory-second"));
+    let cli = open(&mut core, "cli");
+    let inventory = |core: &mut RuntimeCore| {
+        core.handle(
+            "cli",
+            request(
+                Call::ToolInventory(crate::tool_inventory::ToolInventoryQuery {
+                    offset: 0,
+                    snapshot: None,
+                }),
+                Some(cli.clone()),
+            ),
+        )
+        .outcome
+    };
+    let before = row(&mut core, &first.run_id);
+    let Outcome::ToolInventory(page) = inventory(&mut core) else {
+        panic!("Expected tool observation");
+    };
+    assert!(page.items[0].materialized);
+    assert_eq!(page.items[0].retained_jobs, 2);
+    assert!(page.items[0]
+        .deletion_blockers
+        .contains(&crate::tool_inventory::ToolDeletionBlocker::RetainedTask));
+    let encoded = serde_json::to_string(&page).unwrap();
+    for private in [
+        "PRIVATE_TOOL_JOB_INPUT_CANARY",
+        "runtime.sqlite",
+        "sealId",
+        "sourceArtifactId",
+        &first.run_id,
+        &second.run_id,
+    ] {
+        assert!(!encoded.contains(private));
+    }
+    assert_eq!(before, row(&mut core, &first.run_id));
+    core.with_tool_fixture_store(|store| {
+        store
+            .connection
+            .execute(
+                "UPDATE jobs SET metadata='corrupt-private-row' WHERE run_id=?1",
+                [&first.run_id],
+            )
+            .unwrap();
+    });
+    assert!(matches!(inventory(&mut core), Outcome::Error(_)));
+}
+
 fn tokens() -> HashMap<String, String> {
     HashMap::from([
         ("cli".into(), "local-cli".into()),

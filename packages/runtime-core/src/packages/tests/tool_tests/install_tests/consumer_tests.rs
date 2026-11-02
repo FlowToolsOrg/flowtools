@@ -17,6 +17,40 @@ use crate::packages::{
     },
 };
 const CONSUMERS: &str = "tool-consumer-inventory-v1";
+
+#[test]
+fn tool_inventory_reports_both_installed_dependents_without_re_admitting_fixture_tools() {
+    let mut world = world();
+    world.install().unwrap();
+    let first = input(&world, "middle", vec![], true, 1);
+    install(&mut world, &first).unwrap();
+    let second = input(&world, "consumer", vec![service("middle")], true, 1);
+    install(&mut world, &second).unwrap();
+    let before = world.metadata(CONSUMERS);
+    let query = crate::tool_inventory::ToolInventoryQuery {
+        offset: 0,
+        snapshot: None,
+    };
+    let page = crate::packages::tools::install::diagnostics::observe(
+        &world.trust,
+        world.store.as_mut().unwrap(),
+        &query,
+    )
+    .unwrap();
+    assert_eq!(page.items.len(), 1);
+    assert_eq!(
+        page.items[0]
+            .dependents
+            .iter()
+            .map(|d| d.id.as_str())
+            .collect::<Vec<_>>(),
+        ["consumer", "middle"]
+    );
+    assert!(page.items[0]
+        .deletion_blockers
+        .contains(&crate::tool_inventory::ToolDeletionBlocker::InstalledDependent));
+    assert_eq!(before, world.metadata(CONSUMERS));
+}
 const CONSUMER_PENDING: &str = "tool-consumer-install-pending-v1";
 mod reconciliation_tests;
 mod recovery_tests;

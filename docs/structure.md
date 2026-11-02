@@ -2,6 +2,11 @@
 
 ## 下一阶段结构与当前实现
 
+`tool_inventory.rs` 的 Rust DTO 与 `tools/install/diagnostics.rs` 提供有限
+库存观察；GUI 设置及 CLI `tools list` 共用生成协议与 client 校验，只连接
+已运行 Runtime。空间、依赖与保留数不是准入、删除或执行许可。当前验证
+见 [工具管理观察](./validation/g6-tool-inventory-management.md)。
+
 `packages/trust/held.rs` 与 `tools/install/leases/continuation.rs` 管理单次
 在途逻辑调用的内存续接。普通 current-floor 准入与排队恢复路径不变；精确
 旧 descriptor 与 writer/恢复 scope、原任务及 action 绑定，不产生 grant、

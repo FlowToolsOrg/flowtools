@@ -1,6 +1,10 @@
 # G7 完成矩阵与剩余依赖
 
-日期：2026-11-01。G7 整体为 **in-progress / prototype**。
+日期：2026-11-02。G7 整体为 **in-progress / prototype**。
+
+P2.8c2 增加 [工具库存管理](./g6-tool-inventory-management.md) 的共享 Runtime
+查询、GUI 与 CLI 只读入口；普通 Host 明确返回尚未配置，查询不启用执行。
+当前自动验证另记，文件事务/撤销、媒体发布、更新/GC 等实际闭环仍 pending。
 
 P2.8c1 在 [有限续接](./g6-live-tool-continuation.md) 实现单次已在途调用的
 writer/descriptor/任务绑定，普通旧版本准入不放宽，不恢复排队任务或用户 grant。

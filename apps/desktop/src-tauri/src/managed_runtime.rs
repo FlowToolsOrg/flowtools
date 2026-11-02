@@ -217,6 +217,16 @@ async fn exchange(pipe: &mut NamedPipeClient, request: &Request) -> Result<Respo
 
 // Attach only: no ensure-runtime, manager fallback, initialization or grant query.
 async fn status_snapshot(profile: PathBuf) -> Result<RuntimeStatus, RuntimeError> {
+    match readonly_snapshot(profile, Call::Status).await? {
+        Outcome::Status(status) => Ok(status),
+        _ => Err(error(ErrorCode::InvalidResponse)),
+    }
+}
+async fn readonly_snapshot(profile: PathBuf, call: Call) -> Result<Outcome, RuntimeError> {
+    if !matches!(call, Call::Status | Call::ToolInventory(_)) {
+        return Err(error(ErrorCode::SessionInvalid));
+    }
+    let status_query = matches!(call, Call::Status);
     let native = bootstrap(profile, false, false).await?;
     let mut pipe = ClientOptions::new()
         .open(native.pipe)
@@ -246,12 +256,15 @@ async fn status_snapshot(profile: PathBuf) -> Result<RuntimeStatus, RuntimeError
             version: PROTOCOL_MAJOR,
             request_id: uuid(),
             session: Some(proof.clone()),
-            call: Call::Status,
+            call,
         },
     )
     .await?;
     match response.outcome {
-        Outcome::Status(status) if status.instance_id == proof.instance_id => Ok(status),
+        Outcome::Status(status) if status_query && status.instance_id == proof.instance_id => {
+            Ok(Outcome::Status(status))
+        }
+        Outcome::ToolInventory(page) if !status_query => Ok(Outcome::ToolInventory(page)),
         Outcome::Error(failure) => Err(failure),
         _ => Err(error(ErrorCode::InvalidResponse)),
     }
@@ -261,6 +274,7 @@ fn business(call: &Call) -> bool {
         call,
         Call::Open(_)
             | Call::Status
+            | Call::ToolInventory(_)
             | Call::Plugins
             | Call::Jobs
             | Call::Submit(_)
@@ -435,12 +449,19 @@ pub async fn managed_runtime_control<R: tauri::Runtime>(
     call: Call,
     initialize: bool,
 ) -> Result<Outcome, RuntimeError> {
-    if matches!(call, Call::Status | Call::ScheduleResolve(_)) && initialize {
+    if matches!(
+        call,
+        Call::Status | Call::ToolInventory(_) | Call::ScheduleResolve(_)
+    ) && initialize
+    {
         return Err(error(ErrorCode::SessionInvalid));
     }
     let profile = check(&window)?;
     if matches!(call, Call::Status) {
         return status_snapshot(profile).await.map(Outcome::Status);
+    }
+    if matches!(call, Call::ToolInventory(_)) {
+        return readonly_snapshot(profile, call).await;
     }
     if let Call::ScheduleResolve(input) = call {
         // The same Runtime-owned pure conversion is usable before a Host exists.
@@ -613,6 +634,50 @@ mod tests {
             !profile.exists(),
             "Status must not initialize profile storage"
         );
+    }
+
+    #[tokio::test]
+    async fn tool_inventory_observation_never_initializes_or_cold_starts_an_offline_profile() {
+        let profile = status_profile();
+        let call = || {
+            Call::ToolInventory(flowtools_runtime_core::tool_inventory::ToolInventoryQuery {
+                offset: 0,
+                snapshot: None,
+            })
+        };
+        assert_eq!(
+            readonly_snapshot(profile.clone(), call())
+                .await
+                .unwrap_err()
+                .code,
+            ErrorCode::ApprovalRequired
+        );
+        assert!(!profile.exists());
+        let (pipe, _, temporary) = manager(profile.clone(), true).await.unwrap();
+        let observed = readonly_snapshot(profile.clone(), call()).await.unwrap();
+        assert!(matches!(
+            observed,
+            Outcome::ToolInventory(flowtools_runtime_core::tool_inventory::ToolInventoryPage {
+                availability:
+                    flowtools_runtime_core::tool_inventory::ToolInventoryAvailability::NotConfigured,
+                storage: None,
+                ..
+            })
+        ));
+        drop(pipe);
+        temporary.unwrap().close().await;
+        let before =
+            ["bootstrap.json", "runtime.sqlite"].map(|n| std::fs::read(profile.join(n)).unwrap());
+        assert_eq!(
+            readonly_snapshot(profile.clone(), call())
+                .await
+                .unwrap_err()
+                .code,
+            ErrorCode::RuntimeDisconnected
+        );
+        let after =
+            ["bootstrap.json", "runtime.sqlite"].map(|n| std::fs::read(profile.join(n)).unwrap());
+        assert_eq!(before, after);
     }
 
     #[tokio::test]

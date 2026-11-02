@@ -1,5 +1,6 @@
 //! Actual Windows inert ZIP transactions using the existing signed ToolFixture.
 mod consumer_tests;
+mod diagnostic_tests;
 mod image_tests;
 mod lease_tests;
 mod metadata_guard_tests;

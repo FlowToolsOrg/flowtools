@@ -376,6 +376,23 @@
             "additionalProperties": false,
             "properties": {
               "method": {
+                "const": "tools.inventory",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ToolInventoryQuery"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
                 "const": "schedules.list",
                 "type": "string"
               }
@@ -1533,6 +1550,26 @@
           "deadline"
         ],
         "type": "object"
+      },
+      "ToolInventoryQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "offset": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "snapshot": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "offset"
+        ],
+        "type": "object"
       }
     },
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2188,6 +2225,23 @@
               },
               "type": {
                 "const": "status",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/ToolInventoryPage"
+              },
+              "type": {
+                "const": "tool-inventory",
                 "type": "string"
               }
             },
@@ -3392,6 +3446,156 @@
         ],
         "type": "object"
       },
+      "ToolDeletionBlocker": {
+        "enum": [
+          "installed-dependent",
+          "retained-task",
+          "deletion-not-implemented"
+        ],
+        "type": "string"
+      },
+      "ToolDependent": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "publisher",
+          "id",
+          "version"
+        ],
+        "type": "object"
+      },
+      "ToolInventoryAvailability": {
+        "enum": [
+          "not-configured",
+          "observed"
+        ],
+        "type": "string"
+      },
+      "ToolInventoryItem": {
+        "additionalProperties": false,
+        "properties": {
+          "archiveBytes": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "archiveDigest": {
+            "type": "string"
+          },
+          "buildFlavor": {
+            "type": "string"
+          },
+          "deletionBlockers": {
+            "items": {
+              "$ref": "#/$defs/ToolDeletionBlocker"
+            },
+            "type": "array"
+          },
+          "dependents": {
+            "items": {
+              "$ref": "#/$defs/ToolDependent"
+            },
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "materialized": {
+            "type": "boolean"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "retainedJobs": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "sourceArtifact": {
+            "type": "string"
+          },
+          "sourceRegistry": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "publisher",
+          "id",
+          "version",
+          "buildFlavor",
+          "archiveDigest",
+          "sourceRegistry",
+          "sourceArtifact",
+          "archiveBytes",
+          "materialized",
+          "dependents",
+          "retainedJobs",
+          "deletionBlockers"
+        ],
+        "type": "object"
+      },
+      "ToolInventoryPage": {
+        "additionalProperties": false,
+        "properties": {
+          "availability": {
+            "$ref": "#/$defs/ToolInventoryAvailability"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/$defs/ToolInventoryItem"
+            },
+            "type": "array"
+          },
+          "nextOffset": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "snapshot": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "storage": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ToolStorageUsage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "total": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "availability",
+          "total",
+          "items"
+        ],
+        "type": "object"
+      },
       "ToolPin": {
         "additionalProperties": false,
         "properties": {
@@ -3425,6 +3629,39 @@
           "target",
           "buildFlavor",
           "digest"
+        ],
+        "type": "object"
+      },
+      "ToolStorageUsage": {
+        "additionalProperties": false,
+        "description": "All four shared installation pools, including their retained/quarantined bytes.",
+        "properties": {
+          "bytes": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "groups": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxBytes": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxGroups": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bytes",
+          "groups",
+          "maxBytes",
+          "maxGroups"
         ],
         "type": "object"
       }

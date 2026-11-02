@@ -537,6 +537,10 @@ artifact，完成验证后以 create-only 或明确 overwrite 授权提交。文
 
 ### P2.8c 更新、共享和恢复
 
+2026-11-02：P2.8c2 增加 [只读工具库存管理](./validation/g6-tool-inventory-management.md)
+的 Runtime 分页观察、GUI 设置与 CLI 入口。显示来源、空间、依赖和保留阻断，
+不冷启动或授予工具 authority；当前自动验证另记，更新/删除功能仍未实现。
+
 2026-11-02：P2.8c1 实现 [单次在途工具续接](./validation/g6-live-tool-continuation.md)。
 只保留普通当前准入后的原 descriptor 与逻辑调用，floor 前进不授予新调用，
 根/撤销/过期仍拒绝。重开不重建凭据，默认 Host/review 不变；签名和当前 39 项专项

@@ -33,6 +33,7 @@ import { printExecutionResult, runPlugin } from './runner'
 import { addScheduleCommands } from './schedules'
 import { CLIInputError, isCLIInputError, parseJsonInput } from './schema'
 import { addSearchCommand } from './search'
+import { addToolCommands } from './tools'
 
 const program = new Command()
   .name('flowtools')
@@ -47,6 +48,7 @@ addJobCommands(program)
 addScheduleCommands(program)
 addSearchCommand(program)
 addDependencyCommands(program)
+addToolCommands(program)
 
 function writeJson(value: unknown) {
   process.stdout.write(JSON.stringify(value, null, 2) + '\n')
@@ -375,6 +377,7 @@ main().catch(error => {
       'runtime',
       'jobs',
       'dependencies',
+      'tools',
       'schedules',
     ].includes(process.argv[2] ?? '')
   ) {

@@ -32,6 +32,8 @@ pub enum Call {
     Open(OpenSession),
     #[serde(rename = "runtime.status")]
     Status,
+    #[serde(rename = "tools.inventory")]
+    ToolInventory(crate::tool_inventory::ToolInventoryQuery),
     #[serde(rename = "schedules.list")]
     Schedules,
     #[serde(rename = "schedules.resolve-time")]
@@ -407,6 +409,8 @@ pub enum Outcome {
     Session(SessionProof),
     #[serde(rename = "status")]
     Status(RuntimeStatus),
+    #[serde(rename = "tool-inventory")]
+    ToolInventory(crate::tool_inventory::ToolInventoryPage),
     #[serde(rename = "schedules")]
     Schedules(Vec<crate::scheduling::store::ScheduleRecord>),
     #[serde(rename = "schedule-recovery")]

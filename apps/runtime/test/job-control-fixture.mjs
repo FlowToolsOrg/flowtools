@@ -107,8 +107,36 @@ function success(result) {
 }
 try {
   success(await invoke(['init', '--policy', policy]))
+  const offlineBefore = await Promise.all(
+    ['bootstrap.json', 'runtime.sqlite'].map(name =>
+      readFile(join(profile, name))
+    )
+  )
+  const offlineTools = await invoke(['tools', 'list'])
+  assert.equal(offlineTools.code, 1)
+  assert.equal(
+    object(object(offlineTools.lines[0]).error).code,
+    'RUNTIME_DISCONNECTED'
+  )
+  assert.deepEqual(
+    await Promise.all(
+      ['bootstrap.json', 'runtime.sqlite'].map(name =>
+        readFile(join(profile, name))
+      )
+    ),
+    offlineBefore
+  )
   const started = object(success(await invoke(['runtime', 'start'])))
   assert.equal(started.activeJobs, 0)
+  const toolInventory = success(await invoke(['tools', 'list']))
+  assert.deepEqual(toolInventory, {
+    availability: 'not-configured',
+    snapshot: null,
+    total: 0,
+    nextOffset: null,
+    storage: null,
+    items: [],
+  })
   const deadline = String(Date.now() + 25000)
   const args = [
     'jobs',
@@ -147,6 +175,7 @@ try {
   assert.ok(listed)
   assert.equal(listed.result, null)
   assert.ok(!JSON.stringify(listing).includes('CONTROL_PRIVATE_CANARY'))
+  assert.deepEqual(success(await invoke(['tools', 'list'])), toolInventory)
   const status = object(
     success(await invoke(['jobs', 'status', String(receipt.runId)]))
   )

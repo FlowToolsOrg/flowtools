@@ -18,6 +18,7 @@ import type {
   CreateSchedule,
   ScheduleRecord,
   ReplaceSchedule,
+  ToolInventoryQuery,
 } from './bindings'
 
 import {
@@ -31,6 +32,7 @@ import {
 import { CLIENT_VERSION, PROTOCOL_MAJOR } from './bindings'
 import { decodeResponse, encodeRequest } from './codec'
 import { validScheduleDefinition, validScheduleRecord } from './scheduling'
+import { decodeToolInventoryPage } from './tool-inventory'
 
 export interface RuntimeTransport {
   exchange(request: Request): Promise<Response>
@@ -49,6 +51,24 @@ export class RuntimeClientError extends Error {
 
 /** No independent plugin/task/grant stores; queries are Runtime-owned facts. */
 export class RuntimeClient {
+  async toolInventory(
+    query: ToolInventoryQuery = {
+      offset: 0,
+      snapshot: null,
+    }
+  ) {
+    const result = await this.call({
+      method: 'tools.inventory',
+      payload: query,
+    })
+    if (result.type !== 'tool-inventory')
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    try {
+      return decodeToolInventoryPage(result.data, query)
+    } catch {
+      throw new RuntimeClientError('INVALID_RESPONSE')
+    }
+  }
   async schedules(): Promise<ScheduleRecord[]> {
     const result = await this.call({ method: 'schedules.list' })
     if (
@@ -262,6 +282,7 @@ export class RuntimeClient {
     const expected = {
       'session.open': 'session',
       'runtime.status': 'status',
+      'tools.inventory': 'tool-inventory',
       'schedules.list': 'schedules',
       'schedules.resolve-time': 'schedule-time',
       'schedules.create': 'schedule',

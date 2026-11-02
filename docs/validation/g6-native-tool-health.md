@@ -75,3 +75,13 @@ panic 而 exit 2；相同严格检查改用绝对 typeRoots 后单独通过，�
 日志 `execution-validation/g6/tool-health-main-type-docs-fixed-20261102.log`。
 未通过放宽类型或换用宽松模式规避；原 panic 与此前隔离工作区失败日志保留。
 最终干净提交仍须完整根门禁及对应远端检查。
+
+`afd50f41b7994f7dcffd29e40b6181267dadc054` 随后完整本机根门禁 **exit 0**、
+最终无漂移：Core 486+11+11（1474.29s）、11/11 workspace、Runtime 24+6
+（45.21s/1.87s）及 Bun 17、Chromium 113/35、Desktop 108 Bun+Node 2+
+原生 37+6（3.94s/0.16s），Web 23/Desktop 25 一致性与 production refusal、
+最终 Rust check/clippy（7.02s/6.36s）通过。日志
+`execution-validation/g6/root-ci-afd50f4-20261102.log`。已推送并以 ls-remote
+核对相同 SHA；[PR 41414986075](https://github.com/FlowToolsOrg/flowtools/actions/runs/41414986075)
+与 [push 41414977562](https://github.com/FlowToolsOrg/flowtools/actions/runs/41414977562)
+当时仍在运行，不能记为 success；PR 保持 Draft。

@@ -58,3 +58,15 @@ jiff = { version = "0.2.29", features = ["serde"] }
 tauri-plugin-autostart = "2"
 tauri-plugin-global-shortcut = "2"
 tauri-plugin-single-instance = "2"
+
+# Keep strict signature arithmetic fast in development/test hosts too. These
+# overrides leave application checks and the crypto dependencies' checks enabled.
+[profile.dev.package.ed25519-dalek]
+opt-level = 3
+debug-assertions = true
+overflow-checks = true
+
+[profile.dev.package.curve25519-dalek]
+opt-level = 3
+debug-assertions = true
+overflow-checks = true

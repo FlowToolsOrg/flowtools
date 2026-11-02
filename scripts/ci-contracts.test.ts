@@ -54,8 +54,49 @@ test('native integrity hashing is optimized without weakening debug checks', () 
     readFileSync(new URL('../Cargo.toml', import.meta.url), 'utf8')
   ) as { profile: Record<string, unknown> }
   expect(manifest.profile).toEqual({
-    dev: { package: { sha2: { 'opt-level': 3 } } },
+    dev: {
+      package: {
+        sha2: { 'opt-level': 3 },
+        'ed25519-dalek': {
+          'opt-level': 3,
+          'debug-assertions': true,
+          'overflow-checks': true,
+        },
+        'curve25519-dalek': {
+          'opt-level': 3,
+          'debug-assertions': true,
+          'overflow-checks': true,
+        },
+      },
+    },
   })
+  for (const relative of [
+    '../apps/desktop/src-tauri/Cargo.toml',
+    '../apps/runtime/test/fixtures/managed-media-candidate/Cargo.toml',
+  ]) {
+    const other = Bun.TOML.parse(
+      readFileSync(new URL(relative, import.meta.url), 'utf8')
+    ) as { profile: Record<string, unknown> }
+    const packageOverrides = {
+      'ed25519-dalek': {
+        'opt-level': 3,
+        'debug-assertions': true,
+        'overflow-checks': true,
+      },
+      'curve25519-dalek': {
+        'opt-level': 3,
+        'debug-assertions': true,
+        'overflow-checks': true,
+      },
+    }
+    expect(other.profile).toEqual({
+      dev: {
+        package: relative.includes('managed-media')
+          ? { sha2: { 'opt-level': 3 }, ...packageOverrides }
+          : packageOverrides,
+      },
+    })
+  }
 })
 
 test('Desktop requires the native Node companion and strictly checks its JavaScript', () => {

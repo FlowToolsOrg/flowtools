@@ -18,3 +18,15 @@ uuid = { version = "=1.23.3", features = ["v4"] }
 # usable on CI CPUs too. Tests inherit dev; application debug checks stay enabled.
 [profile.dev.package.sha2]
 opt-level = 3
+
+# Keep strict signature arithmetic fast in development/test hosts too. These
+# overrides leave application checks and the crypto dependencies' checks enabled.
+[profile.dev.package.ed25519-dalek]
+opt-level = 3
+debug-assertions = true
+overflow-checks = true
+
+[profile.dev.package.curve25519-dalek]
+opt-level = 3
+debug-assertions = true
+overflow-checks = true

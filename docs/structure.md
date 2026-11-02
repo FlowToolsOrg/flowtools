@@ -2,6 +2,9 @@
 
 ## 下一阶段结构与当前实现
 
+开发/测试的签名算术只在三个 Cargo root 的密码库依赖上优化，显式保留
+调试和溢出检查。不是全局关检查或生产权限，见 [耗时与验证](./validation/runtime-signature-latency.md)。
+
 `runtime_media/audio/health.rs` 复用原 actor 执行固定合成信号的真实工具健康
 检查；当前 floor、完整授权与输出样本必须仍匹配。只有有限诊断观察，没有
 激活、客户端执行或用户文件入口，见 [健康检查](./validation/g6-native-tool-health.md)。

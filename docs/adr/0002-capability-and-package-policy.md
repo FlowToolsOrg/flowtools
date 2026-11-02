@@ -48,6 +48,14 @@ scope 或变更 publisher/hash 时重新审查与征求授权，不能凭相同 
 UNC、ADS、reparse point、大小写和符号链接必须进入恶意 fixture。
 网络 CSP 只作纵深防御，不能替代 broker 出站策略或用户 grant。
 
+2026-11-02 P2.8c1 prototype：已通过普通当前 floor、实际 native prepare 和
+完整授权的单次在途调用可持有内存 continuity；只允许原已知 descriptor 因
+后续版本 floor 前进而续接，普通准入/新调用仍拒绝旧版本。凭据绑定实际 writer、
+DB/恢复代次、原 lease 与具体 run/consumer/action/UUID/epoch/deadline；
+不是 rollback flag 或新 grant。原签名/字节、根/撤销/有效期、每效果当前授权
+与排空仍需验证，重开/恢复不能重建凭据。当前实现及验证状态见
+[有限续接](../validation/g6-live-tool-continuation.md)，不据此关闭 SEC 项或 G6。
+
 2026-11-01 P2.8b4 补充：`ToolLock` 的精确 scope key 是由 T0
 固定媒体 recipe 选择的声明/grant 槽，不是 G4 语义 digest 或执行身份。
 G4 digest 包含 Manifest 自身，不能令 Manifest 预先声明自己的最终 digest。

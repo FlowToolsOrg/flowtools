@@ -57,13 +57,47 @@ pub(crate) fn hold_existing(
     admitted: &InertToolArchive,
     mut clock: impl FnMut() -> u64,
 ) -> Result<HeldImage> {
+    hold_existing_inner(
+        trust,
+        store,
+        admitted.archive(),
+        &mut clock,
+        |trust, store, receipt, now| {
+            trust
+                .check_receipts(store, &[receipt], &receipt.payload().target, now)
+                .map(|_| ())
+        },
+    )
+}
+pub(in crate::packages::tools) fn hold_existing_for_call(
+    trust: &PackageTrustStore,
+    store: &mut DataStore,
+    admitted: &crate::packages::tools::ExistingToolArchive,
+    mut clock: impl FnMut() -> u64,
+) -> Result<HeldImage> {
+    hold_existing_inner(
+        trust,
+        store,
+        admitted.archive(),
+        &mut clock,
+        |trust, store, _, now| trust.check_held_descriptor(store, admitted.held(), now),
+    )
+}
+fn hold_existing_inner(
+    trust: &PackageTrustStore,
+    store: &mut DataStore,
+    archive: &crate::packages::archive::ValidatedArchive,
+    clock: &mut dyn FnMut() -> u64,
+    check: impl Fn(
+        &PackageTrustStore,
+        &mut DataStore,
+        &packages::VerifiedPackageDescriptor,
+        u64,
+    ) -> std::result::Result<(), packages::PackageError>,
+) -> Result<HeldImage> {
     require_no_pending(&store.connection)?;
-    let receipt = admitted.archive().descriptor();
-    let manifest = admitted
-        .archive()
-        .files()
-        .get("manifest.json")
-        .ok_or_else(invalid)?;
+    let receipt = archive.descriptor();
+    let manifest = archive.files().get("manifest.json").ok_or_else(invalid)?;
     let manifest: crate::packages::tools::ToolManifest =
         serde_json::from_value(packages::strict_json(manifest).map_err(|_| invalid())?)
             .map_err(|_| invalid())?;
@@ -72,9 +106,7 @@ pub(crate) fn hold_existing(
         .into_iter()
         .map(|program| (program.role, program.path))
         .collect();
-    trust
-        .check_receipts(store, &[receipt], &receipt.payload().target, clock())
-        .map_err(|e| ToolInstallError::Admission(e.into()))?;
+    check(trust, store, receipt, clock()).map_err(|e| ToolInstallError::Admission(e.into()))?;
     let source = source_state(trust, store)?;
     let original = source
         .records
@@ -100,9 +132,7 @@ pub(crate) fn hold_existing(
     layout.assert_owned(&state.records, None)?;
     check_usage(store, &layout, 0, 0)?;
     let mut held = layout.read(record, &state.profile_digest)?;
-    trust
-        .check_receipts(store, &[receipt], &original.payload.target, clock())
-        .map_err(|e| ToolInstallError::Admission(e.into()))?;
+    check(trust, store, receipt, clock()).map_err(|e| ToolInstallError::Admission(e.into()))?;
     require_no_pending(&store.connection)?;
     let current_source = source_state(trust, store)?;
     let current_state = inventory(store, &current_source)?;

@@ -368,11 +368,11 @@ test('signed installed-media candidate uses actual Core test sources in a separa
   for (const task of ['build', 'test', 'lint', 'check-types'])
     expect(runtime.scripts[task]).not.toContain('managed-media-candidate')
   const driver = read('scripts/test-managed-media-candidate.ps1')
-  expect(driver.match(/--target-dir/g)).toHaveLength(7)
+  expect(driver.match(/--target-dir/g)).toHaveLength(8)
   expect(driver).toContain("'--target-dir', $managedTargetRoot")
   expect(driver).toContain('$managedCount -ne 6')
   expect(driver).toContain(
-    '$nativeCount -ne 10 -or $audioCount -ne 8 -or $videoCount -ne 9 -or $allManagedCount -ne 33'
+    '$nativeCount -ne 10 -or $audioCount -ne 8 -or $videoCount -ne 9 -or $continuationCount -ne 6 -or $allManagedCount -ne 39'
   )
   expect(driver).toContain("'--skip', 'managed_media::native_inspection::'")
   expect(driver).toContain("'Ten Core-owned native inspection checks'")
@@ -385,6 +385,14 @@ test('signed installed-media candidate uses actual Core test sources in a separa
   expect(nativeTests).toContain('start_media_inspection')
   expect(nativeTests).toContain('Duration::from_secs(5)')
   expect(nativeTests).toContain('assert_eq!(observations[0].1, 0)')
+  const continuationTests = readFileSync(
+    join(fixture, 'native_continuation.rs'),
+    'utf8'
+  )
+  expect(continuationTests.match(/#\[test\]/g)).toHaveLength(6)
+  expect(continuationTests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(driver).toContain("'Six live media continuation checks'")
+  expect(driver).toContain("'--skip', 'managed_media::native_continuation::'")
   const videoTests = readFileSync(join(fixture, 'native_video.rs'), 'utf8')
   expect(videoTests.match(/#\[test\]/g)).toHaveLength(9)
   expect(videoTests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)

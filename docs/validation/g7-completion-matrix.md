@@ -2,6 +2,10 @@
 
 日期：2026-11-01。G7 整体为 **in-progress / prototype**。
 
+P2.8c1 在 [有限续接](./g6-live-tool-continuation.md) 实现单次已在途调用的
+writer/descriptor/任务绑定，普通旧版本准入不放宽，不恢复排队任务或用户 grant。
+当前签名与 39 项专项已通过，整仓另记；更新/GC、用户文件及 GUI/CLI 闭环继续 pending。
+
 P2.8b8 增加 [Core 有界 WebM](./g6-native-video-transcoding.md)：固定管道输出、
 独立新鲜输入的全帧解码检查和原完整授权/排空路径。未知时长保持未知，原
 V1 完成条件不放宽；当前修改树验证另记，用户文件及 GUI/CLI 发布仍 pending。

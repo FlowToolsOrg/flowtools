@@ -1,6 +1,8 @@
 //! Explicit signed-fixture/installed-image bridge. Not a product media adapter.
 #[path = "native_audio.rs"]
 mod native_audio;
+#[path = "native_continuation.rs"]
+mod native_continuation;
 #[path = "native_inspection.rs"]
 mod native_inspection;
 #[path = "native_video.rs"]

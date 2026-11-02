@@ -3,8 +3,11 @@
 use super::*;
 use std::collections::BTreeMap;
 
-pub(crate) struct HeldToolArchives {
-    pub(crate) archives: Vec<InertToolArchive>,
+pub(crate) type HeldToolArchives = HeldArchives<InertToolArchive>;
+pub(in crate::packages::tools) type HeldCallArchives =
+    HeldArchives<super::super::ExistingToolArchive>;
+pub(crate) struct HeldArchives<A> {
+    pub(crate) archives: Vec<A>,
     _held: Vec<files::HeldBlob>,
     _layout: Option<files::Layout>,
 }
@@ -87,7 +90,70 @@ pub(crate) fn read_exact_fixture(
         super::super::admit_fixture(t, s, b, c)
     })
 }
-fn read_with_admission(
+// Closed in-memory proof source; not a Runtime/client configuration choice.
+pub(in crate::packages::tools) fn read_for_call(
+    trust: &PackageTrustStore,
+    store: &mut DataStore,
+    pins: &[ToolArchivePin],
+    proofs: &[std::sync::Arc<crate::packages::trust::HeldDescriptor>],
+    clock: &mut dyn FnMut() -> u64,
+) -> Result<HeldCallArchives> {
+    read_for_call_with(
+        trust,
+        store,
+        pins,
+        proofs,
+        clock,
+        super::super::admit_existing_tool_archive,
+    )
+}
+#[cfg(test)]
+pub(in crate::packages::tools) fn read_for_call_fixture(
+    trust: &PackageTrustStore,
+    store: &mut DataStore,
+    pins: &[ToolArchivePin],
+    proofs: &[std::sync::Arc<crate::packages::trust::HeldDescriptor>],
+    clock: &mut dyn FnMut() -> u64,
+) -> Result<HeldCallArchives> {
+    read_for_call_with(
+        trust,
+        store,
+        pins,
+        proofs,
+        clock,
+        super::super::admit_existing_fixture,
+    )
+}
+fn read_for_call_with(
+    trust: &PackageTrustStore,
+    store: &mut DataStore,
+    pins: &[ToolArchivePin],
+    proofs: &[std::sync::Arc<crate::packages::trust::HeldDescriptor>],
+    clock: &mut dyn FnMut() -> u64,
+    admission: impl Fn(
+        &PackageTrustStore,
+        &mut DataStore,
+        ToolArchiveInput<'_>,
+        &mut dyn FnMut() -> u64,
+        std::sync::Arc<crate::packages::trust::HeldDescriptor>,
+    )
+        -> std::result::Result<super::super::ExistingToolArchive, ToolAdmissionError>,
+) -> Result<HeldCallArchives> {
+    images::require_no_pending(&store.connection)?;
+    read_with_admission(trust, store, clock, Some(pins), |t, s, b, c| {
+        let digest = packages::hash(b.archive);
+        let held = proofs
+            .iter()
+            .find(|proof| proof.original().package_digest() == digest)
+            .ok_or(ToolAdmissionError::Package(
+                packages::PackageError::TrustInvalid,
+            ))?
+            .clone();
+        admission(t, s, b, c, held)
+    })
+}
+
+fn read_with_admission<A: super::super::ToolArchiveBytes>(
     trust: &PackageTrustStore,
     store: &mut DataStore,
     clock: &mut dyn FnMut() -> u64,
@@ -97,8 +163,8 @@ fn read_with_admission(
         &mut DataStore,
         ToolArchiveInput<'_>,
         &mut dyn FnMut() -> u64,
-    ) -> std::result::Result<InertToolArchive, ToolAdmissionError>,
-) -> Result<HeldToolArchives> {
+    ) -> std::result::Result<A, ToolAdmissionError>,
+) -> Result<HeldArchives<A>> {
     native()?;
     // Own consumer pending is intentionally excluded: this read returns only
     // inert opaque candidates for that transaction's final re-admission.
@@ -181,14 +247,15 @@ fn read_with_admission(
             },
             clock,
         )?;
-        if value_digest(archive.archive().descriptor().payload())? != value_digest(&record.payload)?
+        if value_digest(archive.validated().descriptor().payload())?
+            != value_digest(&record.payload)?
         {
             return Err(invalid());
         }
         archives.push(archive);
         held.push(source);
     }
-    Ok(HeldToolArchives {
+    Ok(HeldArchives {
         archives,
         _held: held,
         _layout: layout,

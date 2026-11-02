@@ -2,6 +2,11 @@
 
 ## 下一阶段结构与当前实现
 
+`packages/trust/held.rs` 与 `tools/install/leases/continuation.rs` 管理单次
+在途逻辑调用的内存续接。普通 current-floor 准入与排队恢复路径不变；精确
+旧 descriptor 与 writer/恢复 scope、原任务及 action 绑定，不产生 grant、
+安装候选或重放。签名/实际 39 项专项已通过，当前整仓结果另记，见 [范围](./validation/g6-live-tool-continuation.md)。
+
 `runtime_media/audio.rs` 同一有限 actor 还支持固定 WebM：`media/streaming.rs`
 单独验证全帧独立 probe，未知时长不伪造，原 V1 投影不变；音频/视频共享
 已有预算、writer、授权/保留与 owned drain。仅 T0 字节 API，无用户文件

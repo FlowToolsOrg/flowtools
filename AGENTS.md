@@ -181,6 +181,17 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G6 P2.8c1 adds only live logical-call continuity after ordinary
+current-floor admission and actual native preparation. Keep HeldDescriptor and
+LiveToolCall opaque and ephemeral, bound to writer/DB/generation/pins and exact
+job/consumer/action/UUID/epoch/deadline. Normal admission and fresh calls still
+refuse old releases. Only the exact known original descriptor may cross a raised
+floor; current root/revocation/expiry/signature/bytes/policy remain mandatory.
+Never renew a descriptor/grant, lower floors, rebind images, replay stored jobs
+or expose a config/Host selector. ExistingToolArchive is not an install candidate.
+Keep 6/10/8/9 original candidate groups plus six continuation cases, total 39.
+Signed/native focused gates passed; full acceptance is recorded separately in [continuation evidence](./docs/validation/g6-live-tool-continuation.md).
+
 G6 P2.8b8 adds only bounded T0 WebM bytes through the existing conversion actor.
 Keep fixed VP9/optional Opus pipes, fresh held probe input and independent full
 frame counting. Unknown duration stays unknown; never relax original V1 positive

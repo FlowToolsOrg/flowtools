@@ -84,6 +84,7 @@ impl RuntimeCore {
             run_id,
             action,
             None,
+            None,
             after_artifacts,
             |broker, session, identity, admitted| {
                 broker.invoke(
@@ -100,11 +101,54 @@ impl RuntimeCore {
             },
         )
     }
+    fn media_consumer(identity: &CommandIdentity) -> PackagePin {
+        PackagePin {
+            publisher: identity.publisher.clone(),
+            id: identity.plugin_id.clone(),
+            version: identity.version.clone(),
+            digest: identity.package_digest.clone(),
+        }
+    }
+    fn begin_live_media(
+        &mut self,
+        root: &str,
+        run: &str,
+        id: &str,
+        claim: &crate::broker::ToolCallClaim,
+        action: MediaActionV1,
+    ) -> Result<leases::LiveToolCall, ErrorCode> {
+        let identity = self
+            .broker
+            .invoke_claimed_tool(claim, now(), |identity| Ok(identity.clone()))?;
+        self.managed_authorization(&identity, self.jobs[root].background)?;
+        self.media_predecessor(root)?;
+        let job = &self.jobs[root];
+        let consumer = Self::media_consumer(&identity);
+        let live = self
+            .tools
+            .as_ref()
+            .ok_or(ErrorCode::DependencyArtifactMismatch)?
+            .begin_live_call(
+                &mut self.data,
+                &job.snapshot,
+                job.dependency_lock.as_ref().unwrap(),
+                job.tool_lease.as_ref().unwrap(),
+                &leases::LiveCallBinding {
+                    id,
+                    run,
+                    consumer: &consumer,
+                    action,
+                },
+            );
+        self.media_predecessor(root)?;
+        live
+    }
     fn admit_media<T>(
         &mut self,
         run_id: &str,
         action: MediaActionV1,
         claim: Option<&crate::broker::ToolCallClaim>,
+        live: Option<(&leases::LiveToolCall, &str)>,
         after_artifacts: impl FnOnce(&mut Self) -> Result<(), ErrorCode>,
         adapter: impl FnOnce(
             &mut CapabilityBroker,
@@ -113,6 +157,9 @@ impl RuntimeCore {
             &AdmittedMediaTool<'_>,
         ) -> Result<T, ErrorCode>,
     ) -> Result<T, ErrorCode> {
+        if live.is_some() && claim.is_none() {
+            return Err(ErrorCode::SessionInvalid);
+        }
         self.check_run(run_id)?;
         if self.management_only {
             return Err(ErrorCode::SessionInvalid);
@@ -157,11 +204,27 @@ impl RuntimeCore {
             .ok_or(ErrorCode::DependencyArtifactMismatch)?
             .stored()
             .clone();
-        let restored = self
+        let consumer = Self::media_consumer(&identity);
+        let tools = self
             .tools
             .as_mut()
-            .ok_or(ErrorCode::DependencyArtifactMismatch)?
-            .restore(&mut self.data, &snapshot, &lock, &stored);
+            .ok_or(ErrorCode::DependencyArtifactMismatch)?;
+        let restored = match live {
+            None => tools.restore(&mut self.data, &snapshot, &lock, &stored),
+            Some((live, id)) => tools.restore_live_call(
+                &mut self.data,
+                &snapshot,
+                &lock,
+                &stored,
+                live,
+                &leases::LiveCallBinding {
+                    id,
+                    run: run_id,
+                    consumer: &consumer,
+                    action,
+                },
+            ),
+        };
         // Conservative trust IO is allowed to advance its clock; it must not
         // hide an intervening change to this accepted task's durable record.
         self.media_predecessor(&root)?;
@@ -170,12 +233,7 @@ impl RuntimeCore {
         self.check_run(run_id)?;
         self.media_predecessor(&root)?;
         self.managed_authorization(&identity, self.jobs[&root].background)?;
-        let consumer = PackagePin {
-            publisher: identity.publisher.clone(),
-            id: identity.plugin_id.clone(),
-            version: identity.version.clone(),
-            digest: identity.package_digest.clone(),
-        };
+
         let admitted = self.jobs[&root]
             .tool_lease
             .as_ref()

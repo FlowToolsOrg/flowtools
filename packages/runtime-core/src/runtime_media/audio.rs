@@ -256,6 +256,8 @@ impl Process {
     }
 }
 pub(in crate::runtime) struct AudioCall {
+    id: String,
+    continuation: Option<leases::LiveToolCall>,
     kind: Kind,
     root: String,
     run: String,
@@ -395,6 +397,7 @@ impl RuntimeCore {
             run,
             kind.action(),
             None,
+            None,
             |_| Ok(()),
             |broker, session, _, _| {
                 broker.claim_tool_call(session, &leases::media_operation(kind.action()), now())
@@ -452,6 +455,8 @@ impl RuntimeCore {
             .ok_or(ErrorCode::StorageFailed)?
             .to_owned();
         let mut call = AudioCall {
+            id: id.clone(),
+            continuation: None,
             kind,
             root: root.clone(),
             run: run.into(),
@@ -466,6 +471,7 @@ impl RuntimeCore {
             run,
             kind.action(),
             Some(&call.claim),
+            None,
             |_| Ok(()),
             |broker, _, _, tool| {
                 broker.invoke_claimed_tool(&call.claim, now(), |_| {
@@ -493,12 +499,20 @@ impl RuntimeCore {
             }
         }
         let resumed = (|| {
+            call.continuation =
+                Some(self.begin_live_media(&root, run, &id, &call.claim, kind.action())?);
             after_prepare(self, call.process.as_ref().unwrap())?;
             self.audio_phase(&root, &id, Phase::Extracting)?;
             self.admit_media(
                 run,
                 kind.action(),
                 Some(&call.claim),
+                Some((
+                    call.continuation
+                        .as_ref()
+                        .ok_or(ErrorCode::SessionInvalid)?,
+                    &call.id,
+                )),
                 |_| Ok(()),
                 |broker, _, _, _| {
                     broker.invoke_claimed_tool(&call.claim, now(), |_| {
@@ -547,11 +561,20 @@ impl RuntimeCore {
         self.tools
             .as_ref()
             .ok_or(ErrorCode::DependencyArtifactMismatch)?
-            .check_active(
+            .check_live_call(
                 &mut self.data,
                 &job.snapshot,
                 job.dependency_lock.as_ref().unwrap(),
                 job.tool_lease.as_ref().unwrap(),
+                call.continuation
+                    .as_ref()
+                    .ok_or(ErrorCode::SessionInvalid)?,
+                &leases::LiveCallBinding {
+                    id: &call.id,
+                    run: &call.run,
+                    consumer: &Self::media_consumer(call.claim.identity()),
+                    action: call.kind.action(),
+                },
             )?;
         self.media_predecessor(&call.root)?;
         self.check_run(&call.run)?;
@@ -628,6 +651,12 @@ impl RuntimeCore {
             &call.run,
             call.kind.action(),
             Some(&call.claim),
+            Some((
+                call.continuation
+                    .as_ref()
+                    .ok_or(ErrorCode::SessionInvalid)?,
+                &call.id,
+            )),
             |_| Ok(()),
             |broker, _, _, tool| {
                 broker.invoke_claimed_tool(&call.claim, now(), |_| {
@@ -660,6 +689,12 @@ impl RuntimeCore {
             &call.run,
             call.kind.action(),
             Some(&call.claim),
+            Some((
+                call.continuation
+                    .as_ref()
+                    .ok_or(ErrorCode::SessionInvalid)?,
+                &call.id,
+            )),
             |_| Ok(()),
             |broker, _, _, _| {
                 broker.invoke_claimed_tool(&call.claim, now(), |_| {
@@ -745,6 +780,12 @@ impl RuntimeCore {
                                 &call.run,
                                 call.kind.action(),
                                 Some(&call.claim),
+                                Some((
+                                    call.continuation
+                                        .as_ref()
+                                        .ok_or(ErrorCode::SessionInvalid)?,
+                                    &call.id,
+                                )),
                                 |_| Ok(()),
                                 |broker, _, _, _| {
                                     broker.invoke_claimed_tool(&call.claim, now(), |_| output)

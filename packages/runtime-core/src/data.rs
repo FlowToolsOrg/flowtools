@@ -24,6 +24,8 @@ PRAGMA user_version=2;";
 pub struct DataStore {
     pub(crate) connection: Connection,
     path: Option<PathBuf>,
+    #[cfg(any(windows, test))]
+    writer_instance: uuid::Uuid,
 }
 
 fn db_error(error: rusqlite::Error) -> ErrorCode {
@@ -121,6 +123,10 @@ fn validate_key(key: &str) -> Result<(), ErrorCode> {
 }
 
 impl DataStore {
+    #[cfg(any(windows, test))]
+    pub(crate) fn writer_instance(&self) -> uuid::Uuid {
+        self.writer_instance
+    }
     pub(crate) fn database_path(&self) -> Option<&Path> {
         self.path.as_deref()
     }
@@ -172,6 +178,8 @@ impl DataStore {
         let mut store = Self {
             connection: Connection::open_in_memory().map_err(db_error)?,
             path: None,
+            #[cfg(any(windows, test))]
+            writer_instance: uuid::Uuid::new_v4(),
         };
         store.migrate(|| Ok(()))?;
         Ok(store)
@@ -196,6 +204,8 @@ impl DataStore {
         let mut store = Self {
             connection: Connection::open(path).map_err(db_error)?,
             path: Some(path.into()),
+            #[cfg(any(windows, test))]
+            writer_instance: uuid::Uuid::new_v4(),
         };
         healthy(&store.connection)?;
         let version: u32 = store

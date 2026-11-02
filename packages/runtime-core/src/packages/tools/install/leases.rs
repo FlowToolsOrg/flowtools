@@ -13,6 +13,8 @@ use std::{
     sync::{Arc, Weak},
 };
 
+mod continuation;
+pub(crate) use continuation::{LiveCallBinding, LiveToolCall};
 mod invocation;
 pub(crate) use invocation::media_operation;
 pub use invocation::AdmittedMediaTool;
@@ -56,23 +58,17 @@ fn failed(error: ToolInstallError) -> ErrorCode {
     }
 }
 fn generation(store: &DataStore) -> std::result::Result<Option<String>, ErrorCode> {
-    let generation: Option<String> = store
-        .connection
-        .query_row(
-            "SELECT value FROM core_metadata WHERE key='recovery-generation'",
-            [],
-            |r| r.get(0),
-        )
-        .optional()
-        .map_err(|_| ErrorCode::StorageFailed)?;
-    if generation
-        .as_ref()
-        .is_some_and(|value| value.is_empty() || value.len() > 128)
-    {
-        return Err(ErrorCode::StoreCorrupt);
+    let generation: Option<Option<String>> = store.connection.query_row(
+        "SELECT CASE WHEN typeof(value)='text' AND length(CAST(value AS BLOB)) BETWEEN 1 AND 128 THEN value ELSE NULL END FROM core_metadata WHERE key='recovery-generation'",
+        [], |r| r.get(0),
+    ).optional().map_err(|_| ErrorCode::StorageFailed)?;
+    match generation {
+        None => Ok(None),
+        Some(Some(value)) => Ok(Some(value)),
+        Some(None) => Err(ErrorCode::StoreCorrupt),
     }
-    Ok(generation)
 }
+
 fn image_matches(tool: &ToolPin, image: &ImageReference) -> bool {
     let pin = image.pin();
     tool.publisher == pin.publisher
@@ -192,6 +188,7 @@ pub(crate) struct ToolLease {
     stored: StoredToolLease,
     _held: Vec<Arc<HeldImage>>,
     checked_receipts: Vec<packages::VerifiedPackageDescriptor>,
+    held_descriptors: Vec<Arc<crate::packages::trust::HeldDescriptor>>,
 }
 impl ToolLease {
     pub(crate) fn dormant(stored: StoredToolLease) -> Self {
@@ -199,6 +196,7 @@ impl ToolLease {
             stored,
             _held: Vec::new(),
             checked_receipts: Vec::new(),
+            held_descriptors: Vec::new(),
         }
     }
     pub(crate) fn stored(&self) -> &StoredToolLease {
@@ -218,6 +216,7 @@ impl ToolLease {
         if !self.stored.retained {
             self._held.clear();
             self.checked_receipts.clear();
+            self.held_descriptors.clear();
         }
     }
 }
@@ -227,6 +226,7 @@ pub(crate) struct PreparedArtifacts {
     recovery_generation: Option<String>,
     held: Vec<Arc<HeldImage>>,
     checked_receipts: Vec<packages::VerifiedPackageDescriptor>,
+    held_descriptors: Vec<Arc<crate::packages::trust::HeldDescriptor>>,
     metadata_stamp: String,
 }
 impl PreparedArtifacts {
@@ -264,6 +264,7 @@ impl PreparedArtifacts {
             stored,
             _held: self.held,
             checked_receipts: self.checked_receipts,
+            held_descriptors: self.held_descriptors,
         })
     }
 }
@@ -436,6 +437,22 @@ impl ToolAuthority {
         self.trust
             .check_receipts(store, &receipts, &target, clock())
             .map_err(|e| failed(ToolInstallError::Admission(e.into())))?;
+        let held_descriptors = receipts
+            .iter()
+            .filter(|receipt| {
+                held.iter()
+                    .any(|image| image.reference().pin().archive_digest == receipt.package_digest())
+            })
+            .map(|receipt| {
+                self.trust
+                    .hold_current_descriptor(store, receipt, clock())
+                    .map(Arc::new)
+                    .map_err(|e| failed(ToolInstallError::Admission(e.into())))
+            })
+            .collect::<std::result::Result<Vec<_>, _>>()?;
+        self.trust
+            .check_receipts(store, &receipts, &target, clock())
+            .map_err(|e| failed(ToolInstallError::Admission(e.into())))?;
         images::require_no_pending(&store.connection).map_err(|e| failed(e.into()))?;
         Ok(PreparedArtifacts {
             lock,
@@ -443,6 +460,7 @@ impl ToolAuthority {
             recovery_generation: generation(store)?,
             held,
             checked_receipts: receipts.into_iter().cloned().collect(),
+            held_descriptors,
             metadata_stamp: metadata_stamp(&store.connection)?,
         })
     }
@@ -486,13 +504,13 @@ impl ToolAuthority {
     // Running-process checks keep the actual held files pinned and replay the
     // current durable trust authority. A descriptor receipt is never a cached
     // grant: resume/commit separately repeat full artifact IO through restore().
-    pub(crate) fn check_active(
+    fn active_receipts<'a>(
         &self,
         store: &mut DataStore,
         job: &JobSnapshot,
         lock: &DependencyLock,
-        lease: &ToolLease,
-    ) -> std::result::Result<(), ErrorCode> {
+        lease: &'a ToolLease,
+    ) -> std::result::Result<Vec<&'a packages::VerifiedPackageDescriptor>, ErrorCode> {
         lease.stored.validate(job, lock)?;
         if !lease.stored.matches_scope(store)? {
             return Err(ErrorCode::RecoveryPending);
@@ -539,6 +557,16 @@ impl ToolAuthority {
             return Err(ErrorCode::DependencyArtifactMismatch);
         }
         images::require_no_pending(&store.connection).map_err(|e| failed(e.into()))?;
+        Ok(receipts)
+    }
+    pub(crate) fn check_active(
+        &self,
+        store: &mut DataStore,
+        job: &JobSnapshot,
+        lock: &DependencyLock,
+        lease: &ToolLease,
+    ) -> std::result::Result<(), ErrorCode> {
+        let receipts = self.active_receipts(store, job, lock, lease)?;
         let target = ManifestCompatibility::embedded()
             .map_err(|_| ErrorCode::DependencyPlatformMismatch)?
             .target;

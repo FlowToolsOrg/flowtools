@@ -4,6 +4,10 @@ use super::*;
 use crate::data::DataStore;
 use rusqlite::{params, OptionalExtension, TransactionBehavior};
 
+#[cfg(any(windows, test))]
+mod held;
+#[cfg(any(windows, test))]
+pub(in crate::packages) use held::HeldDescriptor;
 mod recovery;
 pub use recovery::{TrustRecoveryApproval, TrustRecoveryChallenge, RECOVERY_PAYLOAD_TYPE};
 
@@ -237,6 +241,18 @@ impl PackageTrustStore {
         target: &PackageTarget,
         now: u64,
     ) -> Result<VerifiedRoot, PackageError> {
+        self.check_receipts_with(store, receipts, target, now, |receipt, policy| {
+            validate_floors(receipt.payload(), receipt.package_digest(), policy)
+        })
+    }
+    fn check_receipts_with(
+        &self,
+        store: &mut DataStore,
+        receipts: &[&VerifiedPackageDescriptor],
+        target: &PackageTarget,
+        now: u64,
+        check_floor: impl Fn(&VerifiedPackageDescriptor, &AdmissionPolicy) -> Result<(), PackageError>,
+    ) -> Result<VerifiedRoot, PackageError> {
         self.observe(store, now)?;
         let tx = store
             .connection
@@ -294,7 +310,7 @@ impl PackageTrustStore {
                 policy.clock,
                 MAX_PACKAGE_LIFETIME,
             )?;
-            validate_floors(payload, receipt.package_digest(), &policy)?;
+            check_floor(receipt, &policy)?;
         }
         Ok(root)
     }

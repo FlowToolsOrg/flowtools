@@ -122,6 +122,8 @@ pub(in crate::runtime) fn validate_stored(stored: &StoredJob) -> Result<(), Erro
     Ok(())
 }
 pub(in crate::runtime) struct NativeCall {
+    id: String,
+    continuation: Option<leases::LiveToolCall>,
     root: String,
     run: String,
     claim: ToolCallClaim,
@@ -219,6 +221,7 @@ impl RuntimeCore {
             run,
             MediaActionV1::Inspect,
             None,
+            None,
             |_| Ok(()),
             |broker, session, _, _| {
                 broker.claim_tool_call(
@@ -276,6 +279,8 @@ impl RuntimeCore {
             .ok_or(ErrorCode::StorageFailed)?
             .to_owned();
         let mut call = NativeCall {
+            id: id.clone(),
+            continuation: None,
             root: root.clone(),
             run: run.into(),
             claim,
@@ -288,6 +293,7 @@ impl RuntimeCore {
             run,
             MediaActionV1::Inspect,
             Some(&call.claim),
+            None,
             |_| Ok(()),
             |broker, _, _, tool| {
                 broker.invoke_claimed_tool(&call.claim, now(), |_| {
@@ -307,12 +313,25 @@ impl RuntimeCore {
             }
         }
         let resumed = (|| {
+            call.continuation = Some(self.begin_live_media(
+                &root,
+                run,
+                &id,
+                &call.claim,
+                MediaActionV1::Inspect,
+            )?);
             after_prepare(self, call.process.as_ref().unwrap())?;
             self.set_inspection_phase(&root, &id, Phase::Running)?;
             self.admit_media(
                 run,
                 MediaActionV1::Inspect,
                 Some(&call.claim),
+                Some((
+                    call.continuation
+                        .as_ref()
+                        .ok_or(ErrorCode::SessionInvalid)?,
+                    &call.id,
+                )),
                 |_| Ok(()),
                 |broker, _, _, _| {
                     broker.invoke_claimed_tool(&call.claim, now(), |_| {
@@ -399,11 +418,20 @@ impl RuntimeCore {
         self.tools
             .as_ref()
             .ok_or(ErrorCode::DependencyArtifactMismatch)?
-            .check_active(
+            .check_live_call(
                 &mut self.data,
                 &job.snapshot,
                 job.dependency_lock.as_ref().unwrap(),
                 job.tool_lease.as_ref().unwrap(),
+                call.continuation
+                    .as_ref()
+                    .ok_or(ErrorCode::SessionInvalid)?,
+                &leases::LiveCallBinding {
+                    id: &call.id,
+                    run: &call.run,
+                    consumer: &Self::media_consumer(call.claim.identity()),
+                    action: MediaActionV1::Inspect,
+                },
             )?;
         self.media_predecessor(&call.root)?;
         self.check_run(&call.run)?;
@@ -478,6 +506,12 @@ impl RuntimeCore {
                         &call.run,
                         MediaActionV1::Inspect,
                         Some(&call.claim),
+                        Some((
+                            call.continuation
+                                .as_ref()
+                                .ok_or(ErrorCode::SessionInvalid)?,
+                            &call.id,
+                        )),
                         |_| Ok(()),
                         |broker, _, _, _| {
                             broker.invoke_claimed_tool(&call.claim, now(), |_| Ok(value))

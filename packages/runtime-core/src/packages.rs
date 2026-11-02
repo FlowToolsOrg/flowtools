@@ -412,6 +412,16 @@ pub fn verify_package(
     archive_bytes: &[u8],
     policy: &AdmissionPolicy,
 ) -> Result<VerifiedPackageDescriptor, PackageError> {
+    verify_package_inner(root, envelope, manifest_bytes, archive_bytes, policy, None)
+}
+fn verify_package_inner(
+    root: &VerifiedRoot,
+    envelope: &[u8],
+    manifest_bytes: &[u8],
+    archive_bytes: &[u8],
+    policy: &AdmissionPolicy,
+    held: Option<&VerifiedPackageDescriptor>,
+) -> Result<VerifiedPackageDescriptor, PackageError> {
     validate_clock(policy.clock)?;
     validate_time(
         root.payload.issued_at,
@@ -469,7 +479,20 @@ pub fn verify_package(
         MAX_ARCHIVE_BYTES,
     )?;
     validate_manifest_header(manifest_bytes, &package)?;
-    validate_floors(&package, &package_digest, policy)?;
+    match held {
+        None => validate_floors(&package, &package_digest, policy)?,
+        Some(original) => {
+            // Exact original signed metadata: never renew expiry or accept a
+            // same-ZIP replacement descriptor through a held proof.
+            if descriptor_digest != original.descriptor_digest()
+                || original.root_digest() != root.payload_digest()
+                || policy.clock.now < original.verified_at()
+            {
+                return Err(PackageError::TrustInvalid);
+            }
+            validate_held_floors(&package, &package_digest, policy, original)?;
+        }
+    }
     Ok(VerifiedPackageDescriptor {
         payload: package,
         package_digest,
@@ -528,6 +551,37 @@ fn validate_floors(
         return Err(PackageError::ReleaseRollback);
     }
     Ok(())
+}
+
+// Only the opaque, writer-bound held-descriptor adapter calls this path.
+// Normal verification still calls validate_floors without any exception.
+fn validate_held_floors(
+    package: &PackagePayload,
+    digest: &str,
+    policy: &AdmissionPolicy,
+    original: &VerifiedPackageDescriptor,
+) -> Result<(), PackageError> {
+    if digest != original.package_digest()
+        || serde_json::to_value(package).map_err(|_| PackageError::TrustInvalid)?
+            != serde_json::to_value(original.payload()).map_err(|_| PackageError::TrustInvalid)?
+        || !policy.known_versions.iter().any(|known| {
+            known.kind == package.kind
+                && known.publisher == package.publisher
+                && known.id == package.id
+                && known.target == package.target
+                && known.version == package.version
+                && known.release_sequence == package.release_sequence
+                && known.package_digest == digest
+        })
+    {
+        return Err(PackageError::TrustInvalid);
+    }
+    match validate_floors(package, digest, policy) {
+        // No floor is changed, no rollback policy is supplied, and every other
+        // refusal (including equivocation) remains fatal.
+        Err(PackageError::ReleaseRollback) => Ok(()),
+        result => result,
+    }
 }
 
 fn decode_envelope(bytes: &[u8], expected_type: &str) -> Result<DecodedEnvelope, PackageError> {

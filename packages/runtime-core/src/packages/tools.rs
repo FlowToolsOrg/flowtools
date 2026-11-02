@@ -123,6 +123,83 @@ impl InertToolArchive {
     }
 }
 
+// Distinct from ordinary admission: never an installation/planning candidate.
+#[cfg(windows)]
+pub(crate) struct ExistingToolArchive {
+    archive: ValidatedArchive,
+    held: std::sync::Arc<super::trust::HeldDescriptor>,
+}
+#[cfg(windows)]
+impl ExistingToolArchive {
+    pub(crate) fn archive(&self) -> &ValidatedArchive {
+        &self.archive
+    }
+    pub(in crate::packages::tools) fn held(&self) -> &super::trust::HeldDescriptor {
+        &self.held
+    }
+}
+#[cfg(windows)]
+trait ToolArchiveBytes {
+    fn validated(&self) -> &ValidatedArchive;
+}
+#[cfg(windows)]
+impl ToolArchiveBytes for InertToolArchive {
+    fn validated(&self) -> &ValidatedArchive {
+        &self.archive
+    }
+}
+#[cfg(windows)]
+impl ToolArchiveBytes for ExistingToolArchive {
+    fn validated(&self) -> &ValidatedArchive {
+        &self.archive
+    }
+}
+#[cfg(windows)]
+pub(super) fn admit_existing_tool_archive(
+    trust: &PackageTrustStore,
+    store: &mut DataStore,
+    input: ToolArchiveInput<'_>,
+    clock: &mut dyn FnMut() -> u64,
+    held: std::sync::Arc<super::trust::HeldDescriptor>,
+) -> Result<ExistingToolArchive, ToolAdmissionError> {
+    admit_existing_with_profiles(trust, store, input, clock, held, REVIEWED_TOOLS)
+}
+#[cfg(windows)]
+fn admit_existing_with_profiles(
+    trust: &PackageTrustStore,
+    store: &mut DataStore,
+    input: ToolArchiveInput<'_>,
+    clock: &mut dyn FnMut() -> u64,
+    held: std::sync::Arc<super::trust::HeldDescriptor>,
+    profiles: &[ReviewedToolProfile],
+) -> Result<ExistingToolArchive, ToolAdmissionError> {
+    if input.manifest.len() > MAX_TOOL_MANIFEST_BYTES {
+        return Err(ToolAdmissionError::ManifestBudgetExceeded);
+    }
+    let target = ManifestCompatibility::embedded()?.target;
+    let descriptor = trust.verify_held_descriptor(
+        store,
+        &held,
+        DescriptorVerification {
+            envelope: input.envelope,
+            manifest: input.manifest,
+            archive: input.archive,
+            target: target.clone(),
+            now: clock(),
+        },
+    )?;
+    if descriptor.payload().files.len() > MAX_TOOL_FILES {
+        return Err(ToolAdmissionError::ManifestBudgetExceeded);
+    }
+    if descriptor.payload().kind != PackageKind::Tool {
+        return Err(ToolAdmissionError::ManifestInvalid);
+    }
+    let archive = validate_archive(&descriptor, input.manifest, input.archive)?;
+    let _programs = validate_manifest(&archive, &target, profiles)?;
+    trust.check_held_descriptor(store, &held, clock())?;
+    Ok(ExistingToolArchive { archive, held })
+}
+
 pub fn admit_tool_archive(
     trust: &PackageTrustStore,
     store: &mut DataStore,
@@ -248,28 +325,41 @@ fn validate_manifest(
 pub(crate) mod native_fixture;
 
 #[cfg(test)]
+const FIXTURE: &[ReviewedToolProfile] = &[ReviewedToolProfile {
+    publisher: "fixture-publisher",
+    id: "ffmpeg",
+    registry: "fixture-registry",
+    artifact: "fixture-ffmpeg",
+    license: "LGPL-2.1-or-later",
+    build_flavor: "fixture-static",
+    target: PackageTarget {
+        platform: super::PackagePlatform::Windows,
+        arch: super::PackageArch::X64,
+    },
+    programs: &[
+        (ToolProgram::Ffmpeg, "bin/ffmpeg.exe"),
+        (ToolProgram::Ffprobe, "bin/ffprobe.exe"),
+    ],
+    resources: &["licenses/ffmpeg.txt"],
+}];
+
+#[cfg(test)]
 pub(super) fn admit_fixture(
     trust: &PackageTrustStore,
     store: &mut DataStore,
     input: ToolArchiveInput<'_>,
     clock: impl FnMut() -> u64,
 ) -> Result<InertToolArchive, ToolAdmissionError> {
-    const FIXTURE: &[ReviewedToolProfile] = &[ReviewedToolProfile {
-        publisher: "fixture-publisher",
-        id: "ffmpeg",
-        registry: "fixture-registry",
-        artifact: "fixture-ffmpeg",
-        license: "LGPL-2.1-or-later",
-        build_flavor: "fixture-static",
-        target: PackageTarget {
-            platform: super::PackagePlatform::Windows,
-            arch: super::PackageArch::X64,
-        },
-        programs: &[
-            (ToolProgram::Ffmpeg, "bin/ffmpeg.exe"),
-            (ToolProgram::Ffprobe, "bin/ffprobe.exe"),
-        ],
-        resources: &["licenses/ffmpeg.txt"],
-    }];
     admit_with_profiles(trust, store, input, clock, FIXTURE)
+}
+
+#[cfg(all(windows, test))]
+pub(in crate::packages::tools) fn admit_existing_fixture(
+    trust: &PackageTrustStore,
+    store: &mut DataStore,
+    input: ToolArchiveInput<'_>,
+    clock: &mut dyn FnMut() -> u64,
+    held: std::sync::Arc<super::trust::HeldDescriptor>,
+) -> Result<ExistingToolArchive, ToolAdmissionError> {
+    admit_existing_with_profiles(trust, store, input, clock, held, FIXTURE)
 }

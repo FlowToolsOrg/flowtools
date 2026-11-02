@@ -2,6 +2,10 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime_media/audio/health.rs` 复用原 actor 执行固定合成信号的真实工具健康
+检查；当前 floor、完整授权与输出样本必须仍匹配。只有有限诊断观察，没有
+激活、客户端执行或用户文件入口，见 [健康检查](./validation/g6-native-tool-health.md)。
+
 `tool_inventory.rs` 的 Rust DTO 与 `tools/install/diagnostics.rs` 提供有限
 库存观察；GUI 设置及 CLI `tools list` 共用生成协议与 client 校验，只连接
 已运行 Runtime。空间、依赖与保留数不是准入、删除或执行许可。当前验证

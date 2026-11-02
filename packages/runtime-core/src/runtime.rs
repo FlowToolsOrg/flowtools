@@ -26,6 +26,8 @@ pub use media::{CompletedAudio, MediaAudioHandle, MediaAudioState};
 pub use media::{CompletedVideo, MediaVideoHandle, MediaVideoState};
 #[cfg(windows)]
 pub use media::{MediaInspectionHandle, MediaInspectionState};
+#[cfg(windows)]
+pub use media::{ToolHealthHandle, ToolHealthObservation, ToolHealthState};
 
 #[cfg(windows)]
 #[path = "runtime_media.rs"]

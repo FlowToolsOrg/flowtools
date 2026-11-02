@@ -2,6 +2,10 @@
 
 日期：2026-11-02。G7 整体为 **in-progress / prototype**。
 
+P2.8c3 的 [固定健康检查](./g6-native-tool-health.md) 复用原授权/排空链，
+对固定合成 PCM 的真实转换及 probe 结果逐样本核对，再作当前 floor 检查。
+当前两项 Core/五项原生通过，完整门禁另记；版本激活与 G7 执行闭环仍 pending。
+
 P2.8c2 增加 [工具库存管理](./g6-tool-inventory-management.md) 的共享 Runtime
 查询、GUI 与 CLI 只读入口；普通 Host 明确返回尚未配置，查询不启用执行。
 当前自动验证另记，文件事务/撤销、媒体发布、更新/GC 等实际闭环仍 pending。

@@ -11,6 +11,8 @@ use crate::{
     },
 };
 use sha2::{Digest, Sha256};
+#[path = "audio/health.rs"]
+pub(super) mod health;
 pub struct MediaAudioHandle {
     instance: String,
     id: String,

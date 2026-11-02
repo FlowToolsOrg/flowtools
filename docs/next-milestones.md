@@ -537,6 +537,10 @@ artifact，完成验证后以 create-only 或明确 overwrite 授权提交。文
 
 ### P2.8c 更新、共享和恢复
 
+2026-11-02：P2.8c3 增加 [固定原生健康检查](./validation/g6-native-tool-health.md)：
+合成 PCM 经原 WAV 转换与独立 probe，逐样本核对后再按普通当前 floor 收取。
+两项 Core 与五项实际候选通过，完整 44 项另记；不激活版本或开放新权限。
+
 2026-11-02：P2.8c2 增加 [只读工具库存管理](./validation/g6-tool-inventory-management.md)
 的 Runtime 分页观察、GUI 设置与 CLI 入口。显示来源、空间、依赖和保留阻断，
 不冷启动或授予工具 authority；当前自动验证另记，更新/删除功能仍未实现。

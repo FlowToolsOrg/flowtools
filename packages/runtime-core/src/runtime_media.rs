@@ -1,6 +1,7 @@
 //! T0-only fixed media effect admission. No process or user file adapter.
 use super::*;
 use crate::{dependencies::PackagePin, packages::tools::media::MediaActionV1};
+pub use audio::health::{ToolHealthHandle, ToolHealthObservation, ToolHealthState};
 
 impl RuntimeCore {
     /// Enters a current broker effect with the exact accepted consumer/tool pin

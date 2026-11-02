@@ -3,6 +3,8 @@
 mod native_audio;
 #[path = "native_continuation.rs"]
 mod native_continuation;
+#[path = "native_health.rs"]
+mod native_health;
 #[path = "native_inspection.rs"]
 mod native_inspection;
 #[path = "native_video.rs"]

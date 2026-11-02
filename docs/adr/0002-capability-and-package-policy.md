@@ -277,3 +277,9 @@ P3.1a2's bounded Desktop appearance record selects only system/light/dark UI.
 It cannot select plugin resources, native capabilities, Runtime policy or grants.
 No package/Manifest, IPC, CSP or permission change is introduced; see
 [preference scope](../validation/g7-desktop-preferences.md).
+
+2026-11-02 P2.8c3 prototype：固定合成 PCM 通过原普通授权 WAV actor 与
+独立 probe 后，还须逐样本匹配、实际进程/Job 排空与普通 current-floor
+复查，才能形成有限健康观察。观察不是版本激活、rollback consent、用户
+文件授权或后续执行许可；实际 Core/候选检查状态见
+[固定健康检查](../validation/g6-native-tool-health.md)，独立安全批准不变。

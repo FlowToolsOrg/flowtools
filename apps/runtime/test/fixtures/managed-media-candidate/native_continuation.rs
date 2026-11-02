@@ -3,13 +3,13 @@ use super::*;
 use crate::packages::trust::DescriptorVerification;
 use crate::runtime::{MediaAudioState, MediaInspectionState, MediaVideoState};
 use std::time::Instant;
-struct Newer {
+pub(super) struct Newer {
     package: PackagePayload,
     manifest: Vec<u8>,
     archive: Vec<u8>,
     envelope: Vec<u8>,
 }
-fn newer(world: &World) -> Newer {
+pub(super) fn newer(world: &World) -> Newer {
     let mut package = world.fixture.package.clone();
     package.version = "2.0.0".into();
     package.release_sequence += 1;
@@ -45,7 +45,12 @@ fn newer(world: &World) -> Newer {
         envelope,
     }
 }
-fn advance(core: &mut RuntimeCore, trust: &PackageTrustStore, release: &Newer, time: u64) {
+pub(super) fn advance(
+    core: &mut RuntimeCore,
+    trust: &PackageTrustStore,
+    release: &Newer,
+    time: u64,
+) {
     core.with_tool_fixture_store(|store| {
         trust
             .verify_descriptor(

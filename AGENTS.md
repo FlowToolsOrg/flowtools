@@ -181,6 +181,13 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+G6 P2.8c3 native health uses only fixed synthetic PCM through the ordinary WAV
+actor and its independent actual probe. Preserve exact-sample validation,
+current-floor collection, all ancestor grants/claims, original metadata and
+shared budgets/drain. A non-serializable health observation is not activation,
+an execution grant, rollback consent or a new Host selector. See
+[evidence](./docs/validation/g6-native-tool-health.md).
+
 G6 P2.8c2 `tools.inventory` is an attach-only read-only observation. Preserve
 the existing strict inventory/native/retained-job readers, four shared physical
 pools, finite pages and snapshot checks. NotConfigured has no storage claim.

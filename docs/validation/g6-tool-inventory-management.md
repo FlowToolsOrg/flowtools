@@ -95,3 +95,17 @@ IPC 的状态/库存两种操作、三个不可信 window/origin/initialize 组�
 
 仍需完成真正工具更新/健康切换/GC/LKG、正式工具审查及两个媒体插件共享
 执行；G7 的用户文件授权、事务/撤销与输出发布仍未闭环。
+
+`4c0ea8d833adc372e3dd2ca5528314a0ee988822` 随后完整本机根门禁 **exit 0**、
+最终无漂移：11/11 workspace，Core 484+11+10（1237.89s），Runtime
+24+6（44.96s/1.86s）及 Bun 17、Chromium 113/35、Desktop 108 Bun+Node 2+
+原生 37+6（3.66s/0.15s），Web 23/Desktop 25 产物一致及 production refusal、
+最终 Rust check/clippy（8.28s/5.07s）通过。日志
+`execution-validation/g6/root-ci-4c0ea8d-20261102.log`。已推送并以 ls-remote
+核对相同 SHA；[PR 41401126271](https://github.com/FlowToolsOrg/flowtools/actions/runs/41401126271)
+及 [push 41401120548](https://github.com/FlowToolsOrg/flowtools/actions/runs/41401120548)
+当时仍在运行，不能记为 success。前一步 b4f8049 两路远端已 success。
+
+上述 `4c0ea8d` 的 [PR Windows 41401126271](https://github.com/FlowToolsOrg/flowtools/actions/runs/41401126271)
+与 [push Windows 41401120548](https://github.com/FlowToolsOrg/flowtools/actions/runs/41401120548)
+随后均已核对为 **success**。PR 仍为 Draft，未合并或提升 G7 成熟度。

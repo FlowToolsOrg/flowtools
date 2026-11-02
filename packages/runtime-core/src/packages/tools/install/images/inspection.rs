@@ -125,6 +125,15 @@ pub(crate) enum ExtractionObservation {
     Complete { bytes: Vec<u8>, progress: Vec<u8> },
 }
 impl Extraction {
+    pub(crate) fn progress(&self) -> Result<media::MediaProgress, ErrorCode> {
+        self.process.progress().map_err(|error| {
+            if error.kind() == std::io::ErrorKind::InvalidData {
+                ErrorCode::OutputInvalid
+            } else {
+                failed(error)
+            }
+        })
+    }
     pub(crate) fn prepare(
         source: Arc<HeldImage>,
         profile: &Path,

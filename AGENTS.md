@@ -181,6 +181,15 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+Native media progress observes the original bounded capture through opaque T0
+handles. Preserve complete-record decoding, unknown time/size and current full
+authorization/metadata checks. Converting/Validating/Complete follow actual actor
+and independent probe/drain state, never progress=end alone. Observation does not
+advance maintenance, collect outputs or charge another call; refusals use the
+original owned drain and unknown-state retention. No new wire or execution grant
+follows. Keep original 6/10/8/9/6/5 groups plus five progress checks, total 49.
+See [progress evidence](./docs/validation/g6-native-media-progress.md).
+
 Provider migration journals use the fixed `runtime_service_journal.rs` slot,
 bounded TEXT reads and the existing DataStore writer. Preserve format-1 bytes,
 the actor's exact last-confirmed predecessor, one affected/actual row change and

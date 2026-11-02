@@ -13,6 +13,8 @@ use crate::{
 use sha2::{Digest, Sha256};
 #[path = "audio/health.rs"]
 pub(super) mod health;
+#[path = "audio/progress.rs"]
+pub(super) mod progress;
 pub struct MediaAudioHandle {
     instance: String,
     id: String,
@@ -266,6 +268,7 @@ pub(in crate::runtime) struct AudioCall {
     claim: ToolCallClaim,
     process: Option<Process>,
     outcome: Option<Result<CapturedMedia, ErrorCode>>,
+    progress: media::MediaProgress,
     #[cfg(test)]
     observations: Vec<(u32, u32, bool, String, bool)>,
 }
@@ -465,6 +468,7 @@ impl RuntimeCore {
             claim,
             process: None,
             outcome: None,
+            progress: media::MediaProgress::default(),
             #[cfg(test)]
             observations: Vec::new(),
         };
@@ -627,6 +631,11 @@ impl RuntimeCore {
         after_prepare: &mut impl FnMut(&mut Self, &Process) -> Result<(), ErrorCode>,
     ) -> Result<(), ErrorCode> {
         Self::drop_audio_process(call)?;
+        let mut decoder = media::ProgressDecoder::default();
+        call.progress = decoder
+            .push(&progress)
+            .and_then(|_| decoder.finish())
+            .map_err(|_| ErrorCode::OutputInvalid)?;
         self.media_predecessor(&call.root)?;
         let job = self.jobs.get_mut(&call.root).unwrap();
         let stored = job

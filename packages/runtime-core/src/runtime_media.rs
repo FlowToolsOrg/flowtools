@@ -2,6 +2,7 @@
 use super::*;
 use crate::{dependencies::PackagePin, packages::tools::media::MediaActionV1};
 pub use audio::health::{ToolHealthHandle, ToolHealthObservation, ToolHealthState};
+pub use audio::progress::{MediaConversionProgress, MediaConversionStage};
 
 impl RuntimeCore {
     /// Enters a current broker effect with the exact accepted consumer/tool pin

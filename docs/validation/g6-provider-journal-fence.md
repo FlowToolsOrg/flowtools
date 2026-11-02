@@ -71,3 +71,13 @@ A/B/C、原 owned PID/Job drain、迁移等待、拒绝/取消/撤权、旧任�
 这些 fixture、生产 Host 或原期限。日志
 `provider-journal-native-host-focused-20261102.log`。文档/格式契约通过；
 最终干净提交仍需原完整根门禁，不能用聚焦测试代替。
+
+`16665da87aafaf743ee96da4e2ce220372660a54` 随后完整本机根门禁 **exit 0**、
+最终无漂移：Core 498+11+11（541.60s）、11/11 workspace、Runtime 24+6
+（46.49s/2.09s）及 Bun 17、Chromium 113/35、Desktop 108 Bun+Node 2+
+原生 37+6（4.21s/0.11s），Web 23/Desktop 25 产物一致及 production refusal、
+最终 Rust check/clippy（8.43s/6.88s）通过。已推送并核对相同远端 SHA，
+[PR 41430253763](https://github.com/FlowToolsOrg/flowtools/actions/runs/41430253763)
+与 [push 41430245804](https://github.com/FlowToolsOrg/flowtools/actions/runs/41430245804)
+分别核对 success。PR 保持 Draft，G7 成熟度不提升。日志
+`execution-validation/g6/root-ci-16665da-20261102.log`。

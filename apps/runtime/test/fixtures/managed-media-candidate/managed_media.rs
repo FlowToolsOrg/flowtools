@@ -7,6 +7,8 @@ mod native_continuation;
 mod native_health;
 #[path = "native_inspection.rs"]
 mod native_inspection;
+#[path = "native_progress.rs"]
+mod native_progress;
 #[path = "native_video.rs"]
 mod native_video;
 use crate::packages::tools::native_fixture as harness;

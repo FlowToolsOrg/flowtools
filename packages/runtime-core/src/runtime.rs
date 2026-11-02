@@ -25,6 +25,8 @@ pub use media::{CompletedAudio, MediaAudioHandle, MediaAudioState};
 #[cfg(windows)]
 pub use media::{CompletedVideo, MediaVideoHandle, MediaVideoState};
 #[cfg(windows)]
+pub use media::{MediaConversionProgress, MediaConversionStage};
+#[cfg(windows)]
 pub use media::{MediaInspectionHandle, MediaInspectionState};
 #[cfg(windows)]
 pub use media::{ToolHealthHandle, ToolHealthObservation, ToolHealthState};

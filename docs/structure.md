@@ -2,6 +2,10 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime_media/audio/progress.rs` 提供 WAV/WebM 的有限阶段与 advisory 进度，
+复用原 capture、当前授权与停止/排空；不驱动 maintenance 或收取输出。
+无客户端执行入口，见 [实际进度验证](./validation/g6-native-media-progress.md)。
+
 `runtime_service_journal.rs` 固定槽位守卫保护既有 provider 迁移日志：有界
 TEXT、原字节前值、事务内 trigger-aware 写入和确认回滚恢复。没有新 wire、
 数据库格式或版本激活权，见 [恢复日志边界](./validation/g6-provider-journal-fence.md)。

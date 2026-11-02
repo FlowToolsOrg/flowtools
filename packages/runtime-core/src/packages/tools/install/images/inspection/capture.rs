@@ -10,6 +10,15 @@ pub(super) struct Capture {
     finished: bool,
 }
 impl Capture {
+    pub(super) fn progress(&self) -> io::Result<crate::packages::tools::media::MediaProgress> {
+        if self.refused || self.finished || !self.profile.is_encoding() {
+            return Err(self.invalid());
+        }
+        let mut decoder = crate::packages::tools::media::ProgressDecoder::default();
+        decoder
+            .push(&self.stderr)
+            .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "Native progress refused"))
+    }
     pub(super) fn new(profile: Profile) -> Self {
         Self {
             profile,
@@ -71,6 +80,51 @@ impl Capture {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn progress_observes_only_complete_records_and_never_finishes_the_capture() {
+        let mut capture = Capture::new(Profile::ExtractAudio);
+        capture
+            .push(false, b"out_time_us=1000\r\nprogress=cont")
+            .unwrap();
+        assert_eq!(capture.progress().unwrap().output_time_ms, None);
+        capture.push(false, b"inue\r\n").unwrap();
+        assert_eq!(capture.progress().unwrap().output_time_ms, Some(1));
+        capture
+            .push(false, b"out_time_us=N/A\ntotal_size=N/A\nprogress=end\n")
+            .unwrap();
+        let observed = capture.progress().unwrap();
+        assert!(observed.ended);
+        assert_eq!(observed.output_time_ms, None);
+        assert_eq!(observed.reported_bytes, None);
+        capture.push(true, b"PRIVATE_BINARY_OUTPUT").unwrap();
+        assert_eq!(capture.progress().unwrap(), observed);
+        assert_eq!(capture.finish().unwrap().0, b"PRIVATE_BINARY_OUTPUT");
+        assert!(capture.progress().is_err());
+    }
+    #[test]
+    fn progress_refuses_poisoned_or_overflowed_capture_and_never_returns_private_stderr() {
+        let mut capture = Capture::new(Profile::TranscodeWebm);
+        capture
+            .push(false, b"out_time_us=2000\nprogress=continue\n")
+            .unwrap();
+        assert_eq!(capture.progress().unwrap().output_time_ms, Some(2));
+        capture
+            .push(false, b"out_time_us=1000\nprogress=continue\n")
+            .unwrap();
+        assert_eq!(
+            capture.progress().unwrap_err().kind(),
+            io::ErrorKind::InvalidData
+        );
+        capture.push(false, b"progress=end\n").unwrap();
+        assert!(capture.progress().is_err());
+        let mut capture = Capture::new(Profile::ExtractAudio);
+        capture.push(false, &vec![b'x'; 65536]).unwrap();
+        assert!(capture.push(false, b"x").is_err());
+        assert!(capture.progress().is_err());
+        let mut capture = Capture::new(Profile::Inspect);
+        capture.push(false, b"PRIVATE_STDERR").unwrap();
+        assert!(capture.progress().is_err());
+    }
     #[test]
     fn inspection_keeps_original_aggregate_limit_and_discards_private_stderr() {
         let mut capture = Capture::new(Profile::Inspect);

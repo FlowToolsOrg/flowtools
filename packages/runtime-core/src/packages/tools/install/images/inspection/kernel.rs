@@ -185,6 +185,9 @@ pub(super) enum Poll {
     },
 }
 impl Process {
+    pub(super) fn progress(&self) -> io::Result<crate::packages::tools::media::MediaProgress> {
+        self.capture.progress()
+    }
     #[cfg(test)]
     pub(super) fn snapshot(&self) -> io::Result<(u32, u32, bool, String, bool)> {
         Ok((

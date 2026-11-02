@@ -478,6 +478,10 @@ plugin lock 和 task lease 防止卸载/更新误删已接受任务需要的版�
 
 ### P2.8b 受管执行与媒体适配
 
+2026-11-02：增加 Core [媒体阶段与有限进度](./validation/g6-native-media-progress.md)。
+原 opaque handle 返回转换/验证/完成及原 advisory 时间/大小；原授权、配额、
+metadata 与实际排空保持。没有用户文件或 wire，G7 闭环继续 pending。
+
 2026-11-01：P2.8b8 [有界原生 WebM](./validation/g6-native-video-transcoding.md)
 复用实际转换 actor，独立全帧 probe、严格 VP9/Opus 角色和同字节输出检查。
 原 V1 正时长条件不变，管道新投影保留未知时长；实际候选和整仓结果另记。

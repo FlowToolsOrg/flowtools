@@ -19,9 +19,9 @@ pub(super) fn newer(world: &World) -> Newer {
     let mut zip = ZipWriter::new(Cursor::new(Vec::new()));
     for (path, bytes) in [
         ("manifest.json", manifest.as_slice()),
-        ("bin/ffmpeg.exe", FFMPEG),
-        ("bin/ffprobe.exe", FFPROBE),
-        ("licenses/ffmpeg.txt", NOTICES),
+        ("bin/ffmpeg.exe", world.fixture.ffmpeg),
+        ("bin/ffprobe.exe", world.fixture.ffprobe),
+        ("licenses/ffmpeg.txt", world.fixture.notices),
     ] {
         zip.start_file(
             path,

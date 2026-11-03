@@ -1,6 +1,12 @@
 # G7 完成矩阵与剩余依赖
 
-日期：2026-11-02。G7 整体为 **in-progress / prototype**。
+日期：2026-11-03。G7 整体为 **in-progress / prototype**。
+
+已按维护者要求自行取得官方 FFmpeg 来源：官方链接的 Windows 完整 pair
+只作来源数据保留；另从 PGP 验证的官方 8.1.3 源码构建原预算内的受限
+静态 ffmpeg/ffprobe。新增四项真实原生验证通过，原 57 项保留；完整门禁
+另记，见 [来源与验证](./g6-official-media-source.md)。正式发行/独立审核、
+健康激活/GC 与文件/媒体用户闭环继续执行，不能以下载或专项替代 G7 交付。
 
 Core [有限媒体进度](./g6-native-media-progress.md) 区分转换、独立验证与完成；
 每次观察仍检查当前授权，原始 stderr 保密，重复查询不收取结果或消耗新调用。

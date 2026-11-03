@@ -40,3 +40,34 @@ inventory, warnings-as-errors Clippy and all six real-process tests. Missing ima
 changed bytes or any failed command fail the task. Neither root CI nor ordinary
 Runtime build/test silently invokes or skips this separate acceptance workspace.
 See [actual scope, failures and evidence](../../docs/validation/g6-media-candidate.md).
+
+The additional official 8.1.3 tarball candidate has its own source/program lock;
+the original 8.1.2 hashes and six checks remain mandatory. FFmpeg publishes source
+and links Windows providers on its [download page](https://ffmpeg.org/download.html).
+The fixed BtbN reference ZIP is retained as data; its programs exceed our existing
+32MiB image bound. The small candidate is our static build of the PGP-verified
+official source, using the original codec build root and restricted configure flags.
+
+```powershell
+pwsh -NoProfile -File scripts/download-official-media.ps1 -Destination 'D:\owned\official-build'
+```
+
+```sh
+bash scripts/media-candidate/build-official.sh /absolute/official-build /absolute/original-codec-build
+```
+
+Build verification checks the official RSA fingerprint, exact archive/key/signature,
+source inventory and original codec source lock before configure. Existing source
+files must match; no signature or hash fallback is available. The recipe requires
+the original verified codec build/toolchain; it neither installs tools nor claims
+bit reproducibility or independent review of that toolchain.
+
+```powershell
+pwsh -NoProfile -File scripts/test-managed-media-candidate.ps1 -BuildRoot 'C:\owned\original-build' -OfficialBuildRoot 'D:\owned\official-build'
+```
+
+This explicit driver verifies the source signature again, exact programs/notices,
+four actual source refusal controls and all 61 native checks. New images occupy a
+separate create-only ignored fixture directory. They do not replace old images,
+populate production review lists or grant user-file execution. See
+[official source evidence](../../docs/validation/g6-official-media-source.md).

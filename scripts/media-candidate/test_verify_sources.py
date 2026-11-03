@@ -2,6 +2,7 @@ import copy
 import gzip
 import importlib.util
 import io
+import lzma
 from pathlib import Path
 import tarfile
 import tempfile
@@ -54,6 +55,7 @@ class SourceVerification(unittest.TestCase):
     def test_hostile_archive_paths_links_duplicates_and_expansion(self):
         good = ("source/a", tarfile.REGTYPE, b"body")
         self.assertEqual(verify.read_archive(archive([good]), "source"), [(("a",), b"body", False)])
+        self.assertEqual(verify.read_archive(lzma.compress(gzip.decompress(archive([good]))), "source", "xz"), [(("a",), b"body", False)])
         for records in (
             [("source/../escape", tarfile.REGTYPE, b"body")],
             [("/source/a", tarfile.REGTYPE, b"body")],
@@ -64,9 +66,13 @@ class SourceVerification(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 verify.read_archive(archive(records), "source")
+            with self.assertRaises(ValueError):
+                verify.read_archive(lzma.compress(gzip.decompress(archive(records))), "source", "xz")
         with patch.object(verify, "MAX_EXPANDED", 64):
             with self.assertRaisesRegex(ValueError, "expanded"):
                 verify.read_archive(gzip.compress(b"x" * 128), "source")
+            with self.assertRaisesRegex(ValueError, "expanded"):
+                verify.read_archive(lzma.compress(b"x" * 128), "source", "xz")
 
     def test_existing_source_changes_refuse_without_overwrite(self):
         entries = [(("part", "source.c"), b"source", False)]

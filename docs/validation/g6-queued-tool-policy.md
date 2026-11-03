@@ -58,3 +58,10 @@ all-target Clippy（8.89s）通过。主工作区完整 CI 契约 20 pass / 648 
 （38.95s），文档检查 11 documents / 12 required threat IDs 通过。当前
 提交的干净根门禁和远端仍独立记录。日志
 `execution-validation/g6/queued-tool-policy-full-driver-20261103.log`。
+
+随后 `27902f3` 完整本机根门禁 exit 0，最终无漂移：11/11 workspace、
+Core 511+11+12、Runtime 24+6/Bun 17、Chromium 113/35、Desktop 108 Bun+
+Node 2+37+6、Web 23/Desktop 25 一致性及生产拒绝检查、最终 Rust 检查通过。
+相同 SHA 的 [PR 41573666581](https://github.com/FlowToolsOrg/flowtools/actions/runs/41573666581)
+与 [push 41573659340](https://github.com/FlowToolsOrg/flowtools/actions/runs/41573659340)
+均 completed / success。这是队列策略提交的证据，新来源修改的完整验收另记。

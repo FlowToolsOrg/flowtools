@@ -4,6 +4,7 @@ import gzip
 import hashlib
 import io
 import json
+import lzma
 import os
 from pathlib import Path, PurePosixPath
 import shutil
@@ -62,9 +63,11 @@ def git_objects(tag, commit, pin):
     return payload, signature
 
 
-def read_archive(data, top):
+def read_archive(data, top, compression="gzip"):
     require(len(data) <= MAX_ARCHIVE, "archive budget")
-    with gzip.GzipFile(fileobj=io.BytesIO(data)) as stream:
+    require(compression in ("gzip", "xz"), "archive compression")
+    decompressor = gzip.GzipFile(fileobj=io.BytesIO(data)) if compression == "gzip" else lzma.LZMAFile(io.BytesIO(data))
+    with decompressor as stream:
         expanded = stream.read(MAX_EXPANDED + 1)
     require(len(expanded) <= MAX_EXPANDED, "expanded tar budget")
     entries, seen, folded = [], set(), set()

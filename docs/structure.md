@@ -2,6 +2,11 @@
 
 ## 下一阶段结构与当前实现
 
+`scripts/media-candidate/official-8.1.3-lock.json`、官方源码签名/公钥和显式
+`build-official.sh` 固定额外的官方来源静态候选；普通 Runtime 无依赖或开关。
+独立 driver 保留原 57 项并新增来源四项，见
+[官方来源与实际验证](./validation/g6-official-media-source.md)。
+
 `managed-media-candidate/native_queue.rs` 以普通实际收据/安装/派发/恢复验证
 排队工具锁与 epoch 不变、失效拒绝和历史根保留。没有生产行为改动，见
 [队列策略](./validation/g6-queued-tool-policy.md)。

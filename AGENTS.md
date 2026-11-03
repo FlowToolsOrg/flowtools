@@ -181,6 +181,15 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+The additional official 8.1.3 source candidate has separate fixed archive/key/
+signature/program pins and actual GPGv verification. Keep the original 57 native
+cases and hashes, plus four official-source cases (61 total), four actual source
+refusal controls and current LPAC/PID/Job assertions. The last writer positive
+control retains its actual handle and original 500ms drain bound. Developer
+downloads/build roots never enter product IPC or a Host selector. Production
+reviews remain empty; upstream signatures are not FlowTools release approval.
+See [official source evidence](./docs/validation/g6-official-media-source.md).
+
 Queued tool jobs retain their accepted package/lock/epoch/deadline and original
 artifact references. Dispatch uses ordinary current-floor restore and accepted
 authorization; never borrow a live-call descriptor, rebind a newer image or renew

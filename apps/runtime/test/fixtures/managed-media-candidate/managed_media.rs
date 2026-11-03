@@ -9,6 +9,8 @@ mod native_continuation;
 mod native_health;
 #[path = "native_inspection.rs"]
 mod native_inspection;
+#[path = "native_official.rs"]
+mod native_official;
 #[path = "native_progress.rs"]
 mod native_progress;
 #[path = "native_queue.rs"]
@@ -93,6 +95,9 @@ struct SignedFixture {
     package: PackagePayload,
     manifest: Vec<u8>,
     archive: Vec<u8>,
+    ffmpeg: &'static [u8],
+    ffprobe: &'static [u8],
+    notices: &'static [u8],
 }
 impl SignedFixture {
     fn new() -> Self {
@@ -100,6 +105,11 @@ impl SignedFixture {
         candidate("ffprobe", FFPROBE).unwrap();
         let notice_lock: Value = serde_json::from_str(include_str!("notice-lock.json")).unwrap();
         assert_eq!(hash(NOTICES), notice_lock["combinedSha256"]);
+        Self::from_images(FFMPEG, FFPROBE, NOTICES)
+    }
+    // Called only after the fixed legacy/official fixture's independent pinned
+    // checks. This private test builder is not a Runtime source/Host selector.
+    fn from_images(ffmpeg: &'static [u8], ffprobe: &'static [u8], notices: &'static [u8]) -> Self {
         let golden: Value = serde_json::from_str(include_str!(
             "../../../../../packages/sdk/test/fixtures/signed-package-v1.json"
         ))
@@ -124,9 +134,9 @@ impl SignedFixture {
             targets: vec![package.target.clone()],
         });
         let entries = BTreeMap::from([
-            ("bin/ffmpeg.exe", FFMPEG),
-            ("bin/ffprobe.exe", FFPROBE),
-            ("licenses/ffmpeg.txt", NOTICES),
+            ("bin/ffmpeg.exe", ffmpeg),
+            ("bin/ffprobe.exe", ffprobe),
+            ("licenses/ffmpeg.txt", notices),
         ]);
         package.files = entries
             .iter()
@@ -166,6 +176,9 @@ impl SignedFixture {
             package,
             manifest,
             archive,
+            ffmpeg,
+            ffprobe,
+            notices,
         }
     }
     fn clock(&self) -> u64 {
@@ -203,6 +216,9 @@ impl World {
     }
     fn new_with_ids(ids: &[&str]) -> Self {
         let fixture = SignedFixture::new();
+        Self::with_fixture(ids, fixture)
+    }
+    fn with_fixture(ids: &[&str], fixture: SignedFixture) -> Self {
         let path =
             std::env::temp_dir().join(format!("flowtools-managed-media-{}", uuid::Uuid::new_v4()));
         fs::create_dir(&path).unwrap();
@@ -600,8 +616,29 @@ fn two_actual_consumers_share_one_signed_installed_image_and_inspect_in_distinct
     permissions.set_readonly(false);
     fs::set_permissions(&binary, permissions).unwrap();
     assert!(OpenOptions::new().write(true).open(&binary).is_err());
+    let released = std::time::Instant::now();
     world.core.finish(&second, Ok(json!("fixture")));
-    let _writer = OpenOptions::new().write(true).open(&binary).unwrap();
+    assert_eq!(world.row(&second)["toolArtifacts"]["retained"], false);
+    // The real owned process and Job are already empty. Windows may retain an
+    // executable image briefly after its final process handle closes; acquire
+    // the actual writer within the same original 500ms drain bound, never by
+    // dropping the last positive-control assertion or accepting another error.
+    let _writer = loop {
+        match OpenOptions::new().write(true).open(&binary) {
+            Ok(writer) => break writer,
+            Err(error)
+                if error.raw_os_error() == Some(32)
+                    && released.elapsed() < Duration::from_millis(500) =>
+            {
+                std::thread::sleep(Duration::from_millis(1));
+            }
+            Err(error) => panic!(
+                "Released image writer refused after {:?}: {error}",
+                released.elapsed()
+            ),
+        }
+    };
+    assert!(released.elapsed() < Duration::from_millis(500));
 }
 #[test]
 fn signed_installed_ffmpeg_extracts_fresh_wav_then_independent_ffprobe_validates_it() {

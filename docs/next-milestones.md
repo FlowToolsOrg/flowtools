@@ -478,6 +478,11 @@ plugin lock 和 task lease 防止卸载/更新误删已接受任务需要的版�
 
 ### P2.8b 受管执行与媒体适配
 
+2026-11-03：自行下载官方链接的 Windows pair，并从实际 PGP 验证的官方
+8.1.3 源码构建符合原预算的受限静态 pair；新旧来源/程序 pins 分离，原 57
+项保留并增加四项真实原生来源验证。不是正式发行/独立审核或产品 Host
+激活，完整验证另记，见 [官方来源证据](./validation/g6-official-media-source.md)。
+
 2026-11-02：增加 Core [媒体阶段与有限进度](./validation/g6-native-media-progress.md)。
 原 opaque handle 返回转换/验证/完成及原 advisory 时间/大小；原授权、配额、
 metadata 与实际排空保持。没有用户文件或 wire，G7 闭环继续 pending。

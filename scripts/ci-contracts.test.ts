@@ -409,11 +409,11 @@ test('signed installed-media candidate uses actual Core test sources in a separa
   for (const task of ['build', 'test', 'lint', 'check-types'])
     expect(runtime.scripts[task]).not.toContain('managed-media-candidate')
   const driver = read('scripts/test-managed-media-candidate.ps1')
-  expect(driver.match(/--target-dir/g)).toHaveLength(12)
+  expect(driver.match(/--target-dir/g)).toHaveLength(13)
   expect(driver).toContain("'--target-dir', $managedTargetRoot")
   expect(driver).toContain('$managedCount -ne 6')
   expect(driver).toContain(
-    '$nativeCount -ne 10 -or $audioCount -ne 8 -or $videoCount -ne 9 -or $continuationCount -ne 6 -or $healthCount -ne 5 -or $progressCount -ne 5 -or $cohortCount -ne 4 -or $queueCount -ne 4 -or $allManagedCount -ne 57'
+    '$nativeCount -ne 10 -or $audioCount -ne 8 -or $videoCount -ne 9 -or $continuationCount -ne 6 -or $healthCount -ne 5 -or $progressCount -ne 5 -or $cohortCount -ne 4 -or $queueCount -ne 4 -or $officialCount -ne 4 -or $allManagedCount -ne 61'
   )
   expect(driver).toContain("'--skip', 'managed_media::native_inspection::'")
   expect(driver).toContain("'Ten Core-owned native inspection checks'")
@@ -460,6 +460,62 @@ test('signed installed-media candidate uses actual Core test sources in a separa
   expect(queueTests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
   expect(driver).toContain("'Four signed queued-tool policy checks'")
   expect(driver).toContain("'--skip', 'managed_media::native_queue::'")
+
+  const officialTests = readFileSync(
+    join(fixture, 'native_official.rs'),
+    'utf8'
+  )
+  expect(officialTests.match(/#\[test\]/g)).toHaveLength(4)
+  expect(officialTests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(driver).toContain("'Four official signed-source media checks'")
+  expect(driver).toContain("'--skip', 'managed_media::native_official::'")
+  expect(driver).toContain("'prepare-official-media-candidate.ps1'")
+  expect(driver).toContain('-BuildRoot $OfficialBuildRoot')
+  const officialPreparation = read(
+    'scripts/prepare-official-media-candidate.ps1'
+  )
+  expect(officialPreparation).toContain('usr/bin/gpgv.exe')
+  expect(officialPreparation).toContain(
+    '--keyring $officialGpgKey --status-fd 1'
+  )
+  expect(officialPreparation).toContain(
+    'FCF986EA15E6E293A5644F10B4322F04D67658D8'
+  )
+  expect(officialPreparation).toContain('[IO.FileMode]::CreateNew')
+  expect(officialPreparation).not.toMatch(
+    /trust-model always|skip.signature|skip.verification/i
+  )
+  const officialRefusals = read('scripts/test-official-media-source.ps1')
+  expect(driver).toContain(
+    "Invoke-QualityCommand 'Four official source refusal controls'"
+  )
+  expect(driver).toContain("'test-official-media-source.ps1'")
+  expect(officialRefusals).toContain('$sourceCompleted -ne 4')
+  expect(officialRefusals).toContain(
+    "'Official PGP signature/fingerprint refused'"
+  )
+  expect(officialRefusals).toContain(
+    "'Invalid source/program material published fixture output'"
+  )
+  expect(officialRefusals).toContain("'Unknown download was changed'")
+  const officialBuild = read('scripts/media-candidate/build-official.sh')
+  expect(officialBuild).toContain('verify_official_source.py')
+  expect(officialBuild).toContain(
+    '--disable-autodetect --disable-network --disable-shared'
+  )
+  expect(officialBuild).toContain('--enable-protocol=file,pipe')
+  const officialSource = read(
+    'scripts/media-candidate/verify_official_source.py'
+  )
+  expect(officialSource).toContain('input=archive')
+  expect(officialSource).toContain(
+    'verify_or_extract(sources / "ffmpeg-8.1.3", entries, True)'
+  )
+  expect(officialSource).not.toMatch(/shell=True|check=False|verify=False/)
+  expect(tests).toContain(
+    'assert_eq!(world.row(&second)["toolArtifacts"]["retained"], false)'
+  )
+  expect(tests).toContain('released.elapsed() < Duration::from_millis(500)')
 
   const videoTests = readFileSync(join(fixture, 'native_video.rs'), 'utf8')
   expect(videoTests.match(/#\[test\]/g)).toHaveLength(9)

@@ -1,5 +1,10 @@
 # Flow Tool Plugin 开发指南
 
+G6 的 [显式未派发队列处置](./validation/g6-queued-tool-discard.md) 仅供 T0
+确认取消可证明从未执行的 Interrupted 队列。插件/SDK/CLI 不能构造或提交
+该 opaque 计划；它不新增 ToolExecute、文件权限或执行入口。原包/锁/epoch/
+deadline 不改绑，输入与工具文件仍保留，已执行的原生历史不走该路径。
+
 G6 的 [完成投影](./validation/g6-media-completion-projection.md) 只联合有限
 转换结果的 exit/progress/输出 probe 与大小，不授予 SDK 媒体权限、文件
 身份或发布收据；实际访问/进程排空/当前授权仍由未来原生 adapter 负责。

@@ -181,6 +181,16 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+Queued-tool discard is T0-only in `runtime_tool_queue_discard.rs`. Only a retained
+Interrupted queue with contiguous never-Running events, identical accepted/start
+time, no service/native attempts and actually drained roots is eligible. Keep
+opaque instance/row/scope confirmation and the original transaction's metadata
+stamp, exact predecessor, affected/actual/readback guards. Persist cancellation
+before dropping only its held images; unknown writes retain and stop admission.
+No private input/image deletion, replay, epoch/floor renewal or client selector.
+Keep all original 61 native cases plus six discard cases (67 total). See
+[disposition evidence](./docs/validation/g6-queued-tool-discard.md).
+
 The additional official 8.1.3 source candidate has separate fixed archive/key/
 signature/program pins and actual GPGv verification. Keep the original 57 native
 cases and hashes, plus four official-source cases (61 total), four actual source

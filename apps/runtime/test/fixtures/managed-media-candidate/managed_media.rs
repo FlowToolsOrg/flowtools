@@ -15,6 +15,8 @@ mod native_official;
 mod native_progress;
 #[path = "native_queue.rs"]
 mod native_queue;
+#[path = "native_queue_discard.rs"]
+mod native_queue_discard;
 #[path = "native_video.rs"]
 mod native_video;
 use crate::packages::tools::native_fixture as harness;

@@ -1,5 +1,11 @@
 # Flow Tool
 
+G6 adds [explicit interrupted-queue disposition](./docs/validation/g6-queued-tool-discard.md):
+T0 can confirm cancellation of an unchanged tool queue proven never to have run.
+The original guarded transaction commits before its artifact references release;
+private input and physical images remain. Native history, GC, activation and G7
+file/media delivery remain pending; no plugin or client execution authority follows.
+
 G6 adds [current T0 media-effect admission](./docs/validation/g6-tool-effect-admission.md):
 fixed T1 callbacks recheck the accepted signed artifact, actual consumer binding,
 task record and delegated grants. The borrowed context exposes diagnostic pins;

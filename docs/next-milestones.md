@@ -546,6 +546,11 @@ artifact，完成验证后以 create-only 或明确 overwrite 授权提交。文
 
 ### P2.8c 更新、共享和恢复
 
+2026-11-03：增加 [从未派发队列的 T0 显式处置](./validation/g6-queued-tool-discard.md)。
+只取消完整事件证明从未运行且无原生准备的 Interrupted 队列；实例/整行/当前
+scope 复核和原事务写入确认后释放本任务根。输入/工具字节不删除，未知写入
+保留并停止准入。原生历史、GC/LKG、健康激活和产品执行闭环继续 pending。
+
 2026-11-03：以实际签名版本验证 [已接受工具队列策略](./validation/g6-queued-tool-policy.md)。
 原包/锁/epoch/deadline 不改绑；floor 失效导致 Interrupted 并跨目录更新/重启
 保留旧根与私有输入。新任务重新授权，撤权不影响其他消费方；没有旧版续权、

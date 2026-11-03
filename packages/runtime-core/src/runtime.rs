@@ -37,6 +37,11 @@ mod media;
 
 #[path = "runtime_provider_cohorts.rs"]
 mod provider_cohorts;
+#[cfg(windows)]
+#[path = "runtime_tool_queue_discard.rs"]
+mod tool_queue_discard;
+#[cfg(windows)]
+pub use tool_queue_discard::QueuedToolDiscardPlan;
 #[path = "runtime_scheduling.rs"]
 mod scheduling;
 #[path = "runtime_service_journal.rs"]

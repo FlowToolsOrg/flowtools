@@ -5,7 +5,7 @@ use crate::private_jobs::PrivateJobs;
 use native_cohort::{candidate, fresh_health, install};
 use native_continuation::newer;
 
-fn enqueue(world: &mut World, id: &str, background: bool) -> String {
+pub(super) fn enqueue(world: &mut World, id: &str, background: bool) -> String {
     let cli = world.open("cli");
     let response = world.core.handle(
         "cli",

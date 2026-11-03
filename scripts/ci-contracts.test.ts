@@ -409,11 +409,11 @@ test('signed installed-media candidate uses actual Core test sources in a separa
   for (const task of ['build', 'test', 'lint', 'check-types'])
     expect(runtime.scripts[task]).not.toContain('managed-media-candidate')
   const driver = read('scripts/test-managed-media-candidate.ps1')
-  expect(driver.match(/--target-dir/g)).toHaveLength(13)
+  expect(driver.match(/--target-dir/g)).toHaveLength(14)
   expect(driver).toContain("'--target-dir', $managedTargetRoot")
   expect(driver).toContain('$managedCount -ne 6')
   expect(driver).toContain(
-    '$nativeCount -ne 10 -or $audioCount -ne 8 -or $videoCount -ne 9 -or $continuationCount -ne 6 -or $healthCount -ne 5 -or $progressCount -ne 5 -or $cohortCount -ne 4 -or $queueCount -ne 4 -or $officialCount -ne 4 -or $allManagedCount -ne 61'
+    '$nativeCount -ne 10 -or $audioCount -ne 8 -or $videoCount -ne 9 -or $continuationCount -ne 6 -or $healthCount -ne 5 -or $progressCount -ne 5 -or $cohortCount -ne 4 -or $queueCount -ne 4 -or $officialCount -ne 4 -or $discardCount -ne 6 -or $allManagedCount -ne 67'
   )
   expect(driver).toContain("'--skip', 'managed_media::native_inspection::'")
   expect(driver).toContain("'Ten Core-owned native inspection checks'")
@@ -516,6 +516,29 @@ test('signed installed-media candidate uses actual Core test sources in a separa
     'assert_eq!(world.row(&second)["toolArtifacts"]["retained"], false)'
   )
   expect(tests).toContain('released.elapsed() < Duration::from_millis(500)')
+  const discardTests = readFileSync(
+    join(fixture, 'native_queue_discard.rs'),
+    'utf8'
+  )
+  expect(discardTests.match(/#\[test\]/g)).toHaveLength(6)
+  expect(discardTests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(driver).toContain(
+    "Invoke-QualityCommand 'Six explicit queued-tool discard checks'"
+  )
+  expect(driver).toContain("'--skip', 'managed_media::native_queue_discard::'")
+  const discard = read(
+    'packages/runtime-core/src/runtime_tool_queue_discard.rs'
+  )
+  expect(discard).toContain('pub struct QueuedToolDiscardPlan')
+  expect(discard).toContain('job.started_at != job.accepted_at')
+  expect(discard).toContain('!self.services.root_drained(run)')
+  expect(discard).toContain('Some(&authority)')
+  expect(discard).toContain(
+    '.apply_confirmed_release(stored.tool_artifacts.unwrap())'
+  )
+  expect(discard).not.toMatch(
+    /Serialize,|Deserialize,|std::fs::|Command::new|std::env::/
+  )
 
   const videoTests = readFileSync(join(fixture, 'native_video.rs'), 'utf8')
   expect(videoTests.match(/#\[test\]/g)).toHaveLength(9)

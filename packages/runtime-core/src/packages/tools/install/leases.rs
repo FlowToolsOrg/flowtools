@@ -176,6 +176,12 @@ impl StoredToolLease {
     pub(crate) fn retained(&self) -> bool {
         self.retained
     }
+    pub(crate) fn released_copy(&self) -> std::result::Result<Self, ErrorCode> {
+        let mut released = self.clone();
+        released.retained = false;
+        released.digest = released.digest()?;
+        Ok(released)
+    }
     pub(crate) fn references(&self) -> &[ImageReference] {
         &self.images
     }
@@ -191,6 +197,12 @@ pub(crate) struct ToolLease {
     held_descriptors: Vec<Arc<crate::packages::trust::HeldDescriptor>>,
 }
 impl ToolLease {
+    // Caller must first persist this exact released copy through the ordinary
+    // guarded job writer, after proving that all owned work is drained.
+    pub(crate) fn apply_confirmed_release(&mut self, released: StoredToolLease) {
+        self.stored = released;
+        self.drop_released_handles();
+    }
     pub(crate) fn dormant(stored: StoredToolLease) -> Self {
         Self {
             stored,

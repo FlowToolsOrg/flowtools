@@ -67,7 +67,8 @@ pwsh -NoProfile -File scripts/test-managed-media-candidate.ps1 -BuildRoot 'C:\ow
 ```
 
 This explicit driver verifies the source signature again, exact programs/notices,
-four actual source refusal controls and all 61 native checks. New images occupy a
+four actual source refusal controls and all 67 native checks (the original 61 plus
+six explicit interrupted-queue disposition cases). New images occupy a
 separate create-only ignored fixture directory. They do not replace old images,
 populate production review lists or grant user-file execution. See
 [official source evidence](../../docs/validation/g6-official-media-source.md).

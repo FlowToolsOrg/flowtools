@@ -1,5 +1,11 @@
 # Flow Tool Architecture
 
+G6 的 [未派发队列处置](./docs/validation/g6-queued-tool-discard.md) 由 T0 提供
+不可序列化的实例/整行/当前 scope 计划。只允许完整事件证明从未执行、没有
+服务或原生准备且已排空的 Interrupted 队列；原 jobs.metadata 事务确认后
+才释放自己的 artifact 引用。输入与物理文件保留，未知写入停止准入；不新增
+writer、wire、执行 grant 或 GC，已有原生历史继续等待独立恢复/处置。
+
 G6 P2.8b4 的 [当前工具调用准入](./docs/validation/g6-tool-effect-admission.md)
 在固定 T0 回调前重新检查实际 signed ZIP/held image、原任务记录及完整委托
 链授权；按实际 consumer 选择唯一 immutable pin，预算只计一次。上下文

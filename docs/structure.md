@@ -2,6 +2,11 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime_tool_queue_discard.rs` 对能证明从未开始的 Interrupted 工具队列提供
+实例/原行/当前 scope 绑定的 T0 确认；原 writer 持久取消后才释放该任务根，
+保留输入与所有物理文件。实际原生历史继续拒绝，见
+[处置证据](./validation/g6-queued-tool-discard.md)。
+
 `scripts/media-candidate/official-8.1.3-lock.json`、官方源码签名/公钥和显式
 `build-official.sh` 固定额外的官方来源静态候选；普通 Runtime 无依赖或开关。
 独立 driver 保留原 57 项并新增来源四项，见

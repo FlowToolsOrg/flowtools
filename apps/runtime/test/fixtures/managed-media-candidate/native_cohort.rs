@@ -5,7 +5,7 @@ use crate::runtime::{MediaInspectionState, ToolHealthState};
 use native_continuation::{newer, Newer};
 use std::time::Instant;
 
-fn install(world: &mut World, release: &Newer, materialize: bool) {
+pub(super) fn install(world: &mut World, release: &Newer, materialize: bool) {
     let trust = world.fixture.trust();
     let time = world.fixture.clock();
     world.core.with_tool_fixture_store(|store| {
@@ -33,7 +33,7 @@ fn install(world: &mut World, release: &Newer, materialize: bool) {
         }
     });
 }
-fn candidate(world: &World, release: &Newer) -> BuiltinCatalog {
+pub(super) fn candidate(world: &World, release: &Newer) -> BuiltinCatalog {
     BuiltinCatalog::from_host_manifests(
         world
             .catalog
@@ -69,7 +69,7 @@ fn submit(world: &mut World, id: &str) -> Outcome {
         )
         .outcome
 }
-fn fresh_health(world: &mut World, id: &str, release: &Newer) -> String {
+pub(super) fn fresh_health(world: &mut World, id: &str, release: &Newer) -> String {
     assert!(matches!(
         submit(world, id),
         Outcome::Error(RuntimeError {

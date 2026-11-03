@@ -181,6 +181,16 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+Queued tool jobs retain their accepted package/lock/epoch/deadline and original
+artifact references. Dispatch uses ordinary current-floor restore and accepted
+authorization; never borrow a live-call descriptor, rebind a newer image or renew
+the epoch. Stale-floor interruption retains private input and old roots across
+catalog commit/restart, without replay. Confirmed revocation releases only after
+ordinary terminal/drain persistence and does not revoke other consumers. Preserve
+original 6/10/8/9/6/5/5/4 media groups plus four queue cases, total 57; these are
+policy verification, not disposal/GC/activation or a new production grant. See
+[queued policy evidence](./docs/validation/g6-queued-tool-policy.md).
+
 Provider cohort updates live in `runtime_provider_cohorts.rs`: opaque instance-
 bound confirmation, same catalog members/publishers and strictly newer changed
 versions. Keep all original provider/root/service drains, fresh held new artifacts,

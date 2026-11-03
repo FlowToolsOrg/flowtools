@@ -69,3 +69,10 @@ TEXT、精确前值、实际 row/trigger 计数和事务内 readback 不变。�
 全部二十项，Bun 的路径过滤还收集了两份忽略目录中的历史副本，未将它们
 算作新增覆盖。文档只读检查通过 11 documents / 12 required threat IDs。
 当前提交的干净根门禁与远端结果仍须分别完成。
+
+随后提交 `144cbf0` 的干净本机根门禁 **exit 0**：11/11 workspace lint/types/
+test/build；Core 511+11+12（单元 570.75s），Runtime 24+6（48.79s/2.53s）
+及 Bun 17，Chromium 113/35（34.09s），Desktop 108 Bun + Node 2 + Rust
+37+6（4.05s/0.14s），Web 23/Desktop 25 字节等值与拒绝、最终 Rust 检查/
+Clippy（8.15s/8.31s）和无漂移通过。提交已推送并核对远端 ref/PR head；
+远端两路结果仍单独记录，不代替独立 review 或 G7 完成。

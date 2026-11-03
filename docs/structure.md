@@ -2,6 +2,10 @@
 
 ## 下一阶段结构与当前实现
 
+`managed-media-candidate/native_queue.rs` 以普通实际收据/安装/派发/恢复验证
+排队工具锁与 epoch 不变、失效拒绝和历史根保留。没有生产行为改动，见
+[队列策略](./validation/g6-queued-tool-policy.md)。
+
 `runtime_provider_cohorts.rs` 将多个固定消费方的目录版本作为整批变更，全部
 旧 root/service 排空、当前新 artifact 复核后，经原 format-1 日志一次提交。
 不继承旧 grants，也不激活工具发行，见 [整批更新](./validation/g6-provider-cohort-updates.md)。

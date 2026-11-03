@@ -541,6 +541,11 @@ artifact，完成验证后以 create-only 或明确 overwrite 授权提交。文
 
 ### P2.8c 更新、共享和恢复
 
+2026-11-03：以实际签名版本验证 [已接受工具队列策略](./validation/g6-queued-tool-policy.md)。
+原包/锁/epoch/deadline 不改绑；floor 失效导致 Interrupted 并跨目录更新/重启
+保留旧根与私有输入。新任务重新授权，撤权不影响其他消费方；没有旧版续权、
+历史处置、GC/LKG 或产品激活入口。此项验证已有行为，不冒称新增执行能力。
+
 2026-11-03：增加 T0 [多消费方目录整批切换](./validation/g6-provider-cohort-updates.md)。
 相同成员/publisher、严格版本提升，原实例/图确认、全部旧任务排空和原 format-1
 迁移日志保护一次目录提交。当前新工具必须重新持有并复核，旧 grants 不转移；

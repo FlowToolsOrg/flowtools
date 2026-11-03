@@ -11,6 +11,8 @@ mod native_health;
 mod native_inspection;
 #[path = "native_progress.rs"]
 mod native_progress;
+#[path = "native_queue.rs"]
+mod native_queue;
 #[path = "native_video.rs"]
 mod native_video;
 use crate::packages::tools::native_fixture as harness;

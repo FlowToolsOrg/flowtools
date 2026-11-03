@@ -35,10 +35,13 @@ pub use media::{ToolHealthHandle, ToolHealthObservation, ToolHealthState};
 #[path = "runtime_media.rs"]
 mod media;
 
+#[path = "runtime_provider_cohorts.rs"]
+mod provider_cohorts;
 #[path = "runtime_scheduling.rs"]
 mod scheduling;
 #[path = "runtime_service_journal.rs"]
 mod service_journal;
+pub use provider_cohorts::ProviderCohortPlan;
 
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -269,6 +272,7 @@ pub struct RuntimeCore {
     service_invocations: HashMap<String, ServiceInvocation>,
     retained_catalogs: Vec<BuiltinCatalog>,
     provider_candidates: HashMap<String, BuiltinCatalog>,
+    provider_cohorts: HashMap<String, provider_cohorts::Candidate>,
     // Exact bytes from the last confirmed journal commit, never a durable grant.
     provider_journal: Option<String>,
     #[cfg(windows)]
@@ -304,6 +308,7 @@ impl RuntimeCore {
             service_invocations: HashMap::new(),
             retained_catalogs: Vec::new(),
             provider_candidates: HashMap::new(),
+            provider_cohorts: HashMap::new(),
             provider_journal: None,
             #[cfg(windows)]
             tools: None,
@@ -2101,7 +2106,9 @@ impl RuntimeCore {
         id: &str,
         candidate: BuiltinCatalog,
     ) -> Result<crate::services::ProviderChangePlan, ErrorCode> {
-        if self.provider_candidates.len() >= 64 || self.retained_catalogs.len() >= 64 {
+        if self.provider_candidates.len() + self.provider_cohorts.len() >= 64
+            || self.retained_catalogs.len() >= 64
+        {
             return Err(ErrorCode::BudgetExceeded);
         }
         let mut plan = self.provider_unload_plan(id)?;
@@ -2134,6 +2141,9 @@ impl RuntimeCore {
         plan = self
             .services
             .change_plan(&plan.provider, Some(replacement))?;
+        if self.cohort_provider(&plan.provider) {
+            return Err(ErrorCode::RuntimeBusy);
+        }
         self.provider_candidates
             .insert(plan.digest.clone(), candidate);
         Ok(plan)
@@ -2148,12 +2158,18 @@ impl RuntimeCore {
         if self.stopping {
             return Err(ErrorCode::RuntimeBusy);
         }
+        if self.cohort_provider(&plan.provider) {
+            return Err(ErrorCode::ApprovalRequired);
+        }
         if plan.replacement.is_some() && !self.provider_candidates.contains_key(&plan.digest) {
             return Err(ErrorCode::ApprovalRequired);
         }
         self.services.begin_change(plan, confirmation, cascade)
     }
     pub fn abort_provider_change(&mut self, ticket: &str) {
+        if self.cohort_member(ticket) {
+            return;
+        }
         self.services.abort_change(ticket);
         self.provider_candidates.remove(ticket);
     }
@@ -2167,12 +2183,15 @@ impl RuntimeCore {
         if self.stopping {
             return Err(ErrorCode::RuntimeBusy);
         }
+        if self.cohort_member(ticket) {
+            return Err(ErrorCode::ApprovalRequired);
+        }
         if !self.services.drained(ticket)? {
             return Err(ErrorCode::RuntimeBusy);
         }
         let plan = self.services.presented_plan(ticket)?;
-        let previous = match service_journal::read(&self.data.connection) {
-            Ok(previous) if previous == self.provider_journal => previous,
+        match service_journal::read(&self.data.connection) {
+            Ok(previous) if previous == self.provider_journal => (),
             result => {
                 let code = result.err().unwrap_or(ErrorCode::StoreCorrupt);
                 self.stopping = true;
@@ -2206,64 +2225,33 @@ impl RuntimeCore {
             disabled: self.services.disabled(),
         };
         let prepared = serde_json::to_string(&journal).map_err(|_| ErrorCode::StorageFailed)?;
-        let result = (|| {
-            service_journal::replace(&mut self.data, previous.as_deref(), Some(&prepared))
-                .map_err(|code| (code, false))?;
-            self.provider_journal = Some(prepared.clone());
-            let tx = self
-                .data
-                .connection
-                .transaction()
-                .map_err(|_| (ErrorCode::StorageFailed, true))?;
-            let result = migrate(&tx).and_then(|()| {
-                if plan.replacement.is_none() {
-                    journal.disabled.extend(plan.consumers.clone());
-                    journal.disabled.push(plan.provider.identity());
-                    journal.disabled.sort();
-                    journal.disabled.dedup();
-                }
-                if let Some(active) = journal.pending_catalog.take() {
-                    journal.active_catalog = active;
-                }
-                journal.phase = "committed".into();
-                let committed =
-                    serde_json::to_string(&journal).map_err(|_| ErrorCode::StorageFailed)?;
-                service_journal::write_in(&tx, Some(&prepared), Some(&committed))?;
-                Ok(committed)
-            });
-            match result {
-                Ok(committed) => tx
-                    .commit()
-                    .map(|()| committed)
-                    .map_err(|_| (ErrorCode::StorageFailed, false)),
-                Err(code) => match tx.rollback() {
-                    Ok(()) => Err((code, true)),
-                    Err(_) => Err((ErrorCode::StorageFailed, false)),
-                },
-            }
-        })();
-        let committed = match result {
-            Ok(committed) => committed,
-            Err((code, rollback_confirmed)) => {
-                // An uncertain commit/rollback cannot reopen old admission.
-                if !rollback_confirmed {
-                    self.stopping = true;
-                    self.shutdown();
-                    return Err(code);
-                }
-                if let Err(restore_code) =
-                    service_journal::replace(&mut self.data, Some(&prepared), previous.as_deref())
-                {
-                    self.stopping = true;
-                    self.shutdown();
-                    return Err(restore_code);
-                }
-                self.provider_journal = previous;
+        if plan.replacement.is_none() {
+            journal.disabled.extend(plan.consumers.clone());
+            journal.disabled.push(plan.provider.identity());
+            journal.disabled.sort();
+            journal.disabled.dedup();
+        }
+        if let Some(active) = journal.pending_catalog.take() {
+            journal.active_catalog = active;
+        }
+        journal.phase = "committed".into();
+        let committed = serde_json::to_string(&journal).map_err(|_| ErrorCode::StorageFailed)?;
+        if let Err(failure) = service_journal::migrate(
+            &mut self.data,
+            &mut self.provider_journal,
+            prepared,
+            committed,
+            migrate,
+            |_| Ok(()),
+        ) {
+            if failure.restored {
                 self.abort_provider_change(ticket);
-                return Err(code);
+            } else {
+                self.stopping = true;
+                self.shutdown();
             }
-        };
-        self.provider_journal = Some(committed);
+            return Err(failure.code);
+        }
         if let Err(code) = self.services.commit_change(ticket, || Ok(())) {
             self.stopping = true;
             self.shutdown();

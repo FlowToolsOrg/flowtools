@@ -2,6 +2,10 @@
 
 ## 下一阶段结构与当前实现
 
+`runtime_provider_cohorts.rs` 将多个固定消费方的目录版本作为整批变更，全部
+旧 root/service 排空、当前新 artifact 复核后，经原 format-1 日志一次提交。
+不继承旧 grants，也不激活工具发行，见 [整批更新](./validation/g6-provider-cohort-updates.md)。
+
 `runtime_media/audio/progress.rs` 提供 WAV/WebM 的有限阶段与 advisory 进度，
 复用原 capture、当前授权与停止/排空；不驱动 maintenance 或收取输出。
 无客户端执行入口，见 [实际进度验证](./validation/g6-native-media-progress.md)。

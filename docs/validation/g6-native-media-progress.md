@@ -57,3 +57,10 @@ hashes、格式和 all-target Clippy（18.67s）通过。新 WAV 用例将 grant
 单次调用，重复进度观察及收取均成功，之后新调用准确返回 BudgetExceeded，
 任务仍只有一个 native attempt。没有放宽任何原预算、期限或断言。日志
 `execution-validation/g6/media-progress-full-driver-20261102.log`。
+
+随后提交 `69666ce` 的完整本机根门禁 exit 0：11/11 workspace lint/types/test/
+build、Core 500+11+11、Runtime 24+6、Chromium 113（35 files）、Desktop
+108 Bun + Node 2 + Rust 37+6、生产产物等值/拒绝及最终无漂移通过。对应
+[PR 41470321494](https://github.com/FlowToolsOrg/flowtools/actions/runs/41470321494)
+与 [push 41470311151](https://github.com/FlowToolsOrg/flowtools/actions/runs/41470311151)
+均 SUCCESS；不等同于完整 G7 验收。

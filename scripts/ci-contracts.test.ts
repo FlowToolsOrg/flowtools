@@ -409,11 +409,11 @@ test('signed installed-media candidate uses actual Core test sources in a separa
   for (const task of ['build', 'test', 'lint', 'check-types'])
     expect(runtime.scripts[task]).not.toContain('managed-media-candidate')
   const driver = read('scripts/test-managed-media-candidate.ps1')
-  expect(driver.match(/--target-dir/g)).toHaveLength(10)
+  expect(driver.match(/--target-dir/g)).toHaveLength(11)
   expect(driver).toContain("'--target-dir', $managedTargetRoot")
   expect(driver).toContain('$managedCount -ne 6')
   expect(driver).toContain(
-    '$nativeCount -ne 10 -or $audioCount -ne 8 -or $videoCount -ne 9 -or $continuationCount -ne 6 -or $healthCount -ne 5 -or $progressCount -ne 5 -or $allManagedCount -ne 49'
+    '$nativeCount -ne 10 -or $audioCount -ne 8 -or $videoCount -ne 9 -or $continuationCount -ne 6 -or $healthCount -ne 5 -or $progressCount -ne 5 -or $cohortCount -ne 4 -or $allManagedCount -ne 53'
   )
   expect(driver).toContain("'--skip', 'managed_media::native_inspection::'")
   expect(driver).toContain("'Ten Core-owned native inspection checks'")
@@ -448,6 +448,12 @@ test('signed installed-media candidate uses actual Core test sources in a separa
   expect(progressTests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
   expect(driver).toContain("'Five current native progress checks'")
   expect(driver).toContain("'--skip', 'managed_media::native_progress::'")
+
+  const cohortTests = readFileSync(join(fixture, 'native_cohort.rs'), 'utf8')
+  expect(cohortTests.match(/#\[test\]/g)).toHaveLength(4)
+  expect(cohortTests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(driver).toContain("'Four signed native cohort update checks'")
+  expect(driver).toContain("'--skip', 'managed_media::native_cohort::'")
 
   const videoTests = readFileSync(join(fixture, 'native_video.rs'), 'utf8')
   expect(videoTests.match(/#\[test\]/g)).toHaveLength(9)

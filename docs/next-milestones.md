@@ -541,6 +541,11 @@ artifact，完成验证后以 create-only 或明确 overwrite 授权提交。文
 
 ### P2.8c 更新、共享和恢复
 
+2026-11-03：增加 T0 [多消费方目录整批切换](./validation/g6-provider-cohort-updates.md)。
+相同成员/publisher、严格版本提升，原实例/图确认、全部旧任务排空和原 format-1
+迁移日志保护一次目录提交。当前新工具必须重新持有并复核，旧 grants 不转移；
+未知提交保留 prepared 并停止准入。不是发行激活、队列续权、GC/LKG 或 G7 闭环。
+
 2026-11-02：加固既有 provider [迁移恢复日志](./validation/g6-provider-journal-fence.md)
 的有界读取、精确原字节前值与 trigger-aware 事务。未知提交/恢复停止准入，
 确认回滚后才重开旧 catalog；不等同于工具激活、GC/LKG 或 G7 闭环。

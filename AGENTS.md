@@ -181,6 +181,17 @@ all service-level rejection/mode tests; fingerprint scans cannot replace them.
 
 ## Production Maturity Labels
 
+Provider cohort updates live in `runtime_provider_cohorts.rs`: opaque instance-
+bound confirmation, same catalog members/publishers and strictly newer changed
+versions. Keep all original provider/root/service drains, fresh held new artifacts,
+the one format-1 journal/transaction/restore path and bounded policy/tool metadata
+guards. Single-provider APIs must not split a staged cohort. Only confirmed rollback
+and exact restore reopen old members; unknown commit/restore retains prepared state
+and stops admission. New package grants are explicit; never lower tool floors,
+delete retained images or treat catalog consent as tool activation/GC/Host authority.
+Keep original 6/10/8/9/6/5/5 media groups plus four cohort cases, total 53.
+See [cohort evidence](./docs/validation/g6-provider-cohort-updates.md).
+
 Native media progress observes the original bounded capture through opaque T0
 handles. Preserve complete-record decoding, unknown time/size and current full
 authorization/metadata checks. Converting/Validating/Complete follow actual actor

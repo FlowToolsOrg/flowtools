@@ -15,7 +15,7 @@ try {
   Invoke-QualityCommand 'Managed candidate isolation probe' cargo @('build', '--locked', '--manifest-path', 'apps/runtime/test/fixtures/isolation-probe/Cargo.toml', '--target-dir', $managedTargetRoot)
   Invoke-QualityCommand 'Managed candidate formatting' cargo @('fmt', '--manifest-path', $managedManifest, '--', '--check')
   # Core test source modules compile for private test authority, but their suites
-  # remain in normal Core CI. Keep original six, inspection ten, audio eight, video nine, live continuation six, fixed health five and progress five
+  # remain in normal Core CI. Keep original six, inspection ten, audio eight, video nine, live continuation six, fixed health five, progress five and cohort four
   # independently counted; no ignored, missing or unexpected test is acceptance.
   $managedInventory = & cargo test --locked --manifest-path $managedManifest --target-dir $managedTargetRoot --lib managed_media:: -- --list
   if ($LASTEXITCODE -ne 0) { throw "Managed candidate inventory failed: $LASTEXITCODE" }
@@ -27,15 +27,17 @@ try {
   $continuationCount = @($managedInventory | Where-Object { $_ -match '^managed_media::native_continuation::[^:]+: test$' }).Count
   $healthCount = @($managedInventory | Where-Object { $_ -match '^managed_media::native_health::[^:]+: test$' }).Count
   $progressCount = @($managedInventory | Where-Object { $_ -match '^managed_media::native_progress::[^:]+: test$' }).Count
+  $cohortCount = @($managedInventory | Where-Object { $_ -match '^managed_media::native_cohort::[^:]+: test$' }).Count
   $allManagedCount = @($managedInventory | Where-Object { $_ -match '^managed_media::.*: test$' }).Count
-  if ($nativeCount -ne 10 -or $audioCount -ne 8 -or $videoCount -ne 9 -or $continuationCount -ne 6 -or $healthCount -ne 5 -or $progressCount -ne 5 -or $allManagedCount -ne 49) { throw "Native media inventory mismatch: expected 10/8/9/6/5/5/49, collected $nativeCount/$audioCount/$videoCount/$continuationCount/$healthCount/$progressCount/$allManagedCount" }
+  if ($nativeCount -ne 10 -or $audioCount -ne 8 -or $videoCount -ne 9 -or $continuationCount -ne 6 -or $healthCount -ne 5 -or $progressCount -ne 5 -or $cohortCount -ne 4 -or $allManagedCount -ne 53) { throw "Native media inventory mismatch: expected 10/8/9/6/5/5/4/53, collected $nativeCount/$audioCount/$videoCount/$continuationCount/$healthCount/$progressCount/$cohortCount/$allManagedCount" }
   Write-Output 'Verified exactly 6 managed real-media tests.'
   Invoke-QualityCommand 'Managed candidate all-target Clippy' cargo @('clippy', '--locked', '--manifest-path', $managedManifest, '--target-dir', $managedTargetRoot, '--all-targets', '--', '-D', 'warnings')
-  Invoke-QualityCommand 'Six signed installed-image LPAC checks' cargo @('test', '--locked', '--manifest-path', $managedManifest, '--target-dir', $managedTargetRoot, '--lib', 'managed_media::', '--', '--test-threads=1', '--skip', 'managed_media::native_inspection::', '--skip', 'managed_media::native_audio::', '--skip', 'managed_media::native_video::', '--skip', 'managed_media::native_continuation::', '--skip', 'managed_media::native_health::', '--skip', 'managed_media::native_progress::')
+  Invoke-QualityCommand 'Six signed installed-image LPAC checks' cargo @('test', '--locked', '--manifest-path', $managedManifest, '--target-dir', $managedTargetRoot, '--lib', 'managed_media::', '--', '--test-threads=1', '--skip', 'managed_media::native_inspection::', '--skip', 'managed_media::native_audio::', '--skip', 'managed_media::native_video::', '--skip', 'managed_media::native_continuation::', '--skip', 'managed_media::native_health::', '--skip', 'managed_media::native_progress::', '--skip', 'managed_media::native_cohort::')
   Invoke-QualityCommand 'Ten Core-owned native inspection checks' cargo @('test', '--locked', '--manifest-path', $managedManifest, '--target-dir', $managedTargetRoot, '--lib', 'managed_media::native_inspection::', '--', '--test-threads=1')
   Invoke-QualityCommand 'Eight Core-owned bounded WAV checks' cargo @('test', '--locked', '--manifest-path', $managedManifest, '--target-dir', $managedTargetRoot, '--lib', 'managed_media::native_audio::', '--', '--test-threads=1')
   Invoke-QualityCommand 'Nine Core-owned bounded WebM checks' cargo @('test', '--locked', '--manifest-path', $managedManifest, '--target-dir', $managedTargetRoot, '--lib', 'managed_media::native_video::', '--', '--test-threads=1')
   Invoke-QualityCommand 'Six live media continuation checks' cargo @('test', '--locked', '--manifest-path', $managedManifest, '--target-dir', $managedTargetRoot, '--lib', 'managed_media::native_continuation::', '--', '--test-threads=1')
   Invoke-QualityCommand 'Five fixed native health checks' cargo @('test', '--locked', '--manifest-path', $managedManifest, '--target-dir', $managedTargetRoot, '--lib', 'managed_media::native_health::', '--', '--test-threads=1')
   Invoke-QualityCommand 'Five current native progress checks' cargo @('test', '--locked', '--manifest-path', $managedManifest, '--target-dir', $managedTargetRoot, '--lib', 'managed_media::native_progress::', '--', '--test-threads=1')
+  Invoke-QualityCommand 'Four signed native cohort update checks' cargo @('test', '--locked', '--manifest-path', $managedManifest, '--target-dir', $managedTargetRoot, '--lib', 'managed_media::native_cohort::', '--', '--test-threads=1')
 } finally { Pop-Location }

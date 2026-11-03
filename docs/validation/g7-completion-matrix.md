@@ -245,6 +245,10 @@ Bun 继续解析 TOML 的完整 profile；不以文本匹配替换原语义校�
 
 ## 不可跳过的真实前置
 
+2026-11-03 新增 [多消费方目录整批切换](./g6-provider-cohort-updates.md)：当前
+签名新工具与整个候选目录复核后，等待每个旧消费方排空并经原日志一次提交。
+新版本仍须重新授权；这不完成正式发行/激活、GC/LKG 或用户媒体发布。
+
 `packages/runtime-core/src/packages/tools.rs` 的 `REVIEWED_TOOLS` 仍为空，
 只有测试条件下存在 fixture profile。Core 已有固定 T0 授权的实际受限媒体
 actor；普通产品 Host 未配置工具 authority，不能据此开放用户文件入口。

@@ -4,10 +4,10 @@ use crate::packages::trust::DescriptorVerification;
 use crate::runtime::{MediaAudioState, MediaInspectionState, MediaVideoState};
 use std::time::Instant;
 pub(super) struct Newer {
-    package: PackagePayload,
-    manifest: Vec<u8>,
-    archive: Vec<u8>,
-    envelope: Vec<u8>,
+    pub(super) package: PackagePayload,
+    pub(super) manifest: Vec<u8>,
+    pub(super) archive: Vec<u8>,
+    pub(super) envelope: Vec<u8>,
 }
 pub(super) fn newer(world: &World) -> Newer {
     let mut package = world.fixture.package.clone();

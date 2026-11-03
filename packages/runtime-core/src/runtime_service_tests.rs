@@ -1,4 +1,6 @@
 use super::*;
+#[path = "runtime_service_tests/cohort_tests.rs"]
+mod cohort_tests;
 #[path = "runtime_service_tests/journal_tests.rs"]
 mod journal_tests;
 

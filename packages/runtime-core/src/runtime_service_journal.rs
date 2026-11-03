@@ -90,3 +90,63 @@ pub(super) fn replace(
     write_in(&tx, expected, replacement)?;
     tx.commit().map_err(|_| ErrorCode::StorageFailed)
 }
+
+pub(super) struct MigrationFailure {
+    pub code: ErrorCode,
+    pub restored: bool,
+}
+/// The one provider journal transaction/restore path, shared by single and cohort updates.
+pub(super) fn migrate(
+    store: &mut DataStore,
+    cached: &mut Option<String>,
+    prepared: String,
+    committed: String,
+    migration: impl FnOnce(&rusqlite::Transaction<'_>) -> Result<(), ErrorCode>,
+    guard: impl Fn(&rusqlite::Connection) -> Result<(), ErrorCode>,
+) -> Result<(), MigrationFailure> {
+    let previous = cached.clone();
+    let result = (|| {
+        guard(&store.connection).map_err(|code| (code, false))?;
+        replace(store, previous.as_deref(), Some(&prepared)).map_err(|code| (code, false))?;
+        *cached = Some(prepared.clone());
+        let tx = store
+            .connection
+            .transaction()
+            .map_err(|_| (ErrorCode::StorageFailed, true))?;
+        let result = guard(&tx).and_then(|()| migration(&tx)).and_then(|()| {
+            guard(&tx)?;
+            write_in(&tx, Some(&prepared), Some(&committed))?;
+            guard(&tx)
+        });
+        match result {
+            Ok(()) => tx.commit().map_err(|_| (ErrorCode::StorageFailed, false)),
+            Err(code) => match tx.rollback() {
+                Ok(()) => Err((code, true)),
+                Err(_) => Err((ErrorCode::StorageFailed, false)),
+            },
+        }
+    })();
+    match result {
+        Ok(()) => {
+            *cached = Some(committed);
+            Ok(())
+        }
+        Err((code, true)) => {
+            guard(&store.connection)
+                .and_then(|()| replace(store, Some(&prepared), previous.as_deref()))
+                .map_err(|code| MigrationFailure {
+                    code,
+                    restored: false,
+                })?;
+            *cached = previous;
+            Err(MigrationFailure {
+                code,
+                restored: true,
+            })
+        }
+        Err((code, false)) => Err(MigrationFailure {
+            code,
+            restored: false,
+        }),
+    }
+}

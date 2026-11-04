@@ -1,5 +1,11 @@
 # FlowTools 生产化路线图
 
+2026-11-04：G8 先实施 P2.7a 扫描基础：完整历史密钥检测、Bun 与四份 Cargo
+锁实时审计、固定工具双摘要和实际拒绝对照接入 Windows PR/main/codex/release
+门禁。依赖安全更新保留原 Manifest/Runtime 拒绝契约；见
+[证据与边界](./validation/g8-security-scanners.md)。P2.7/G8 整体仍 pending，
+informational 维护性/健全性警告、独立审核、签名/市场和 Beta 均未由扫描批准。
+
 2026-11-04：G7 已按维护者批准的 Windows/T1 功能原型范围完成：文件逐效果
 提交/重试/撤销、两插件共享的实际媒体处理与日程/提醒、桌面和搜索。
 实现源代码 `02d416a` 的干净完整本机根门禁已通过；最终文档提交与同 SHA

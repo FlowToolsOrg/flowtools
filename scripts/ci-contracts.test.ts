@@ -21,7 +21,11 @@ interface WorkflowStep {
   run?: string
   if?: string
   env?: Record<string, string>
-  with?: { path?: string; 'persist-credentials'?: boolean }
+  with?: {
+    path?: string
+    'persist-credentials'?: boolean
+    'fetch-depth'?: number
+  }
   'continue-on-error'?: boolean
 }
 
@@ -677,6 +681,36 @@ test('uses unprivileged PR events and immutable action references', () => {
   }
   expect(workflow.jobs.quality.steps[0]?.with?.['persist-credentials']).toBe(
     false
+  )
+})
+
+test('security gates require full history and remain fatal on PR and release branches', async () => {
+  expect(workflow.on.push).toEqual({
+    branches: ['main', 'codex/**', 'release/**'],
+  })
+  expect(workflow.jobs.quality.steps[0]?.with?.['fetch-depth']).toBe(0)
+  const entry = await Bun.file(
+    new URL('./check-ci.ps1', import.meta.url)
+  ).text()
+  expect(entry).toContain("'run', 'test:security'")
+  expect(entry.indexOf("'test:security'")).toBeGreaterThan(
+    entry.indexOf("'install', '--frozen-lockfile'")
+  )
+  expect(entry.indexOf("'test:security'")).toBeLessThan(
+    entry.indexOf("'build:packages'")
+  )
+  const root = (await Bun.file(
+    new URL('../package.json', import.meta.url)
+  ).json()) as { scripts: Record<string, string> }
+  expect(root.scripts['test:security']).toBe(
+    'bun test ./scripts/security-contracts.test.ts && pwsh -NoProfile -File scripts/check-security.ps1'
+  )
+  const scanner = await Bun.file(
+    new URL('./check-security.ps1', import.meta.url)
+  ).text()
+  expect(scanner).toContain(". (Join-Path $PSScriptRoot 'ci-gates.ps1')")
+  expect(scanner).not.toMatch(
+    /continue-on-error|SilentlyContinue|catch\s*\{\s*\}/
   )
 })
 

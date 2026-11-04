@@ -1,5 +1,10 @@
 # Flow Tool Plugin 开发指南
 
+G8 P2.7a 将仓库依赖与历史密钥扫描纳入 Windows 门禁；新增依赖或密钥 fixture
+不能靠扩大豁免通过。Manifest v1 的 UTF-16 文本长度和有限操作 JSON Schema
+保持兼容，Zod 导出的原始类型 union 在构建时展开为既有 anyOf。不会因此开放
+第三方加载、工具路径或 grant。见 [验证](./validation/g8-security-scanners.md)。
+
 G7 已完成批准的 Windows/T1 功能原型；新增媒体信息/转换两个实际内置插件，
 总计十五个。其 `run()` 只调用
 Host 绑定的 `ctx.media.run(planId)`；源路径、输出路径、程序选择和原生权限

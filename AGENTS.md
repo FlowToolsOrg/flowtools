@@ -1,5 +1,17 @@
 # Repository Guidelines
 
+G8 P2.7a adds `bun run test:security` / `audit:dependencies` and
+`scripts/check-security.ps1`. Preserve complete Git history, upstream Gitleaks
+rules, redacted output, exact historical finding fingerprints, both archive and
+executable SHA-256 pins, actual scanner refusal controls and live audits of all
+four Cargo lockfiles. Network/database/scanner errors must fail; never suppress
+advisories, use stale/offline fallback or widen secret exceptions. Rust
+informational warnings remain visible and require review. Desktop no longer
+compiles CrabNebula devtools. Zod updates must preserve v1 UTF-16 limits, the
+original 405-case corpus and finite operation dialect. See
+[scope and evidence](./docs/validation/g8-security-scanners.md). This substep does
+not complete P2.7/G8 or authorize releases/third-party execution.
+
 2026-11-04：G7 已完成维护者批准的 Windows/T1 功能原型范围。当前实现源代码
 `02d416a` 已通过干净完整本机根门禁，详见
 [交付与边界](./docs/validation/g7-functional-delivery.md)；最终文档提交的远端

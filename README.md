@@ -1,5 +1,11 @@
 # Flow Tool
 
+G8 starts with P2.7a: `bun run test:security` runs scanner contracts, full-history
+redacted secret scanning and live dependency audits of Bun and all four Cargo
+locks. Windows PR/main/feature/release gates run it before builds. See
+[scope and evidence](./docs/validation/g8-security-scanners.md); security review,
+signed distribution, marketplace and Beta acceptance remain pending.
+
 G7 is complete within the approved Windows/T1 functional prototype scope:
 journaled file commit/retry/undo, two real managed media plugins, scheduling,
 reminders, launcher search and Desktop settings share the Runtime and CLI.

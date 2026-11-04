@@ -1,5 +1,12 @@
 # Flow Tool Architecture
 
+G8 P2.7a 的安全扫描由仓库构建脚本管理：固定上游 ZIP/程序摘要、完整 Git
+历史与精确历史豁免、实时 Bun/Rust 审计及真实拒绝对照。扫描工具只安装到
+系统临时目录，不进入产品 bundle、IPC、Host selector 或用户 profile。
+Desktop 移除 CrabNebula 调试依赖；通知 adapter 升级官方库，固定身份/纯文本
+和 broker/claim 语义不变。Zod 安全升级保留 v1 UTF-16 边界和旧原生契约。
+见 [验证与残余限制](./docs/validation/g8-security-scanners.md)；P2.7/G8 仍 pending。
+
 G7 已按批准范围完成 Windows/T1 功能原型；当前完整门禁与边界见
 [交付记录](./docs/validation/g7-functional-delivery.md)。实际文件/媒体链为：
 管理面绑定显式选择与 plan 摘要，Core 单 writer 保存私有定义/逐效果日志；

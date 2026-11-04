@@ -31,6 +31,70 @@ const ctx: ToolContext = {
   utils: { now: Date.now },
 }
 
+test('operation export keeps compact primitive unions in the finite v1 dialect', () => {
+  const schema = z.object({
+    value: z.union([z.string(), z.number()]),
+    nullable: z.number().nullable(),
+    bounded: z.union([z.string().min(2), z.number().min(3)]),
+  })
+  const exported = exportOperationSchema(schema)
+  expect(exported.properties!.value).toEqual({
+    anyOf: [{ type: 'string' }, { type: 'number' }],
+  })
+  for (const value of [
+    { value: 'text', nullable: null, bounded: 'ab' },
+    { value: 2, nullable: 3, bounded: 4 },
+    { value: false, nullable: null, bounded: 4 },
+    { value: 2, nullable: false, bounded: 4 },
+    { value: 2, nullable: null, bounded: 'a' },
+    { value: 2, nullable: null, bounded: 2 },
+  ]) {
+    expect(validateOperationValue(exported, value).success).toBe(
+      schema.safeParse(value).success
+    )
+  }
+  // Package-authored schemas still cannot add a new type-array dialect.
+  expect(
+    operationSchema.safeParse({ type: ['string', 'number'] }).success
+  ).toBe(false)
+})
+
+test('Manifest v1 keeps UTF-16 scope and nested operation text limits after Zod upgrades', () => {
+  const manifest = manifestFixture()
+  manifest.commands[0]!.permissions = [
+    {
+      capability: 'fs',
+      operations: ['read'],
+      scopes: ['😀'.repeat(512)],
+    },
+  ]
+  expect(() => parsePluginManifest(manifest)).not.toThrow()
+  manifest.commands[0]!.permissions[0]!.scopes[0] += 'x'
+  expect(() => parsePluginManifest(manifest)).toThrow()
+  expect(
+    operationSchema.safeParse({
+      type: 'string',
+      description: '😀'.repeat(2048),
+    }).success
+  ).toBe(true)
+  expect(
+    operationSchema.safeParse({
+      type: 'string',
+      description: '😀'.repeat(2048) + 'x',
+    }).success
+  ).toBe(false)
+  for (const length of [64, 65]) {
+    const key = '😀'.repeat(length)
+    expect(
+      operationSchema.safeParse({
+        type: 'object',
+        properties: { [key]: { type: 'string' } },
+        additionalProperties: false,
+      }).success
+    ).toBe(length === 64)
+  }
+})
+
 test('manifest execution refuses invalid runtime validators, default-expanded budgets and huge timeouts before run', async () => {
   let calls = 0
   const plugin = {

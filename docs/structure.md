@@ -1,5 +1,11 @@
 # Flow Tools 架构设计规范
 
+G8 P2.7a 的 `scripts/security-tools.ps1` 固定 Windows x64 扫描器来源与双摘要；
+`check-security.ps1` 负责完整历史密钥扫描、Bun 和四份 Cargo 锁审计；
+`test-security-scanners.ps1` 运行真实干净/恶意历史与锁文件对照，
+`security-contracts.test.ts` 和既有 `ci-contracts.test.ts` 约束失败传播与 CI。
+工具安装只使用临时目录。详见 [范围与证据](./validation/g8-security-scanners.md)。
+
 2026-11-03：维护者明确授权按 Windows 固定 T1 功能原型完成 G7，允许精确锁定的官方源码 FFmpeg/ffprobe 通过原受管工具链用于实际功能。正式发行、Windows 代码签名和独立安全/许可证审核保持 pending；人工验收为 waived。本授权仅覆盖固定内置流程，不开放任意工具路径、第三方代码或绕过当前 grant/身份/排空检查。
 
 ## 下一阶段结构与当前实现

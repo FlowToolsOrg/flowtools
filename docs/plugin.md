@@ -1,5 +1,9 @@
 # Flow Tool Plugin 开发指南
 
+客户端 wire 校验改用构建期生成函数；原 DTO、有限数字格式和接受/拒绝规则
+不变，不授予插件权限。修改协议需运行生成与漂移检查，见
+[P2.7c1](./validation/g8-csp-validators.md)。
+
 Runtime 请求与服务输出不接受任何深度的重复 JSON 键，包含插件业务 input/
 execution 数据。客户端应发送无歧义 JSON；语法验证不替代 Manifest、身份、
 grant 和效果检查。见 [P2.7b](./validation/g8-security-regressions.md)。

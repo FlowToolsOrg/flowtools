@@ -722,6 +722,10 @@ grace、跳过/合并漏触发、重复检查/时钟回拨/取消与算术限额
 
 ## 10. G8：分发与未来生态
 
+P2.7c1 移除客户端 CSP 阻碍：从 Rust schema 生成 standalone wire 校验，
+build/契约检查只读拒绝漂移。见 [证据](./validation/g8-csp-validators.md)。
+下一子项 P2.7c2 配置并验证实际 CSP，不允许为兼容 AJV 放开 unsafe-eval。
+
 P2.7b（2026-11-04）：严格帧解析与确定性协议/重签 ZIP/媒体 property 回归，
 详见 [证据与风险索引](./validation/g8-security-regressions.md)。本子项只加固
 输入边界，不关闭 P2.7/G8。维护者暂缓发行签名；独立审核、macOS 实机和

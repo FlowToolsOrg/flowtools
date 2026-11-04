@@ -1,5 +1,11 @@
 # Repository Guidelines
 
+G8 P2.7c1 generates standalone wire validators from the Rust schema before CSP
+hardening. Client builds and Runtime contract verification must reject stale
+validator bytes; never refresh them to bypass CI. Keep generated LF attributes,
+original numeric formats and the actual no-dynamic-code artifact regression.
+See [evidence](./docs/validation/g8-csp-validators.md).
+
 G8 P2.7b routes native requests and private service output through the shared
 strict JSON frame decoder. Reject duplicate keys at every depth before dispatch;
 preserve existing size/deadline/authorization checks and wire versions. Keep the

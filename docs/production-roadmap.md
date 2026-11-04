@@ -1,5 +1,9 @@
 # FlowTools 生产化路线图
 
+P2.7c 分为 c1 构建期 wire 校验与 c2 实际 CSP。c1 的客户端产物已在禁止
+动态代码生成的实际运行中通过正反校验，见
+[记录](./validation/g8-csp-validators.md)；不据此声称 c2 或 P2.7/G8 完成。
+
 2026-11-04：P2.7b 修复原生嵌套重复键被覆盖的问题，协议/私有 runner 共用
 严格帧解码，新增真实解析器的确定性 property 回归和 SEC-001–015 测试索引。
 见 [证据](./validation/g8-security-regressions.md)。P2.7/G8 仍 pending；发行

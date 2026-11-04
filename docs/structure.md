@@ -1,5 +1,9 @@
 # Flow Tools 架构设计规范
 
+`packages/runtime-client/generate-validators.ts` 从 Rust wire-schema 生成固定
+校验器，正常 Core generate/verify 流程接入生成/只读比较，client build 也检查
+漂移。见 [P2.7c1](./validation/g8-csp-validators.md)。
+
 `packages/runtime-core/src/protocol.rs` 的严格帧解码供 Runtime 连接与私有
 runner 共用；`packages/tests/security_properties.rs` 在原 Core 测试 inventory
 运行确定性变异，实际 framed IO 拒绝在 Runtime tests 中验证。见

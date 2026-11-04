@@ -1,5 +1,8 @@
 # Flow Tool
 
+Runtime client wire validation is generated at build time for CSP compatibility.
+Builds reject stale validators; see [P2.7c1](./docs/validation/g8-csp-validators.md).
+
 G8 P2.7b now rejects duplicate JSON keys in native requests and service output
 before dispatch. Deterministic parser/property regressions cover the wire,
 re-signed ZIPs and media projections; see the

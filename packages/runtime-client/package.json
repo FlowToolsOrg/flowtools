@@ -14,8 +14,10 @@
     }
   },
   "scripts": {
-    "build": "tsdown --config tsdown.config.ts",
-    "lint": "oxlint --type-aware --type-check src && oxlint --type-aware --type-check --tsconfig tsconfig.test.json test",
+    "build": "bun run generate-validators.ts --check && tsdown --config tsdown.config.ts",
+    "generate:validators": "bun run generate-validators.ts",
+    "verify:validators": "bun run generate-validators.ts --check",
+    "lint": "oxlint --type-aware --type-check src generate-validators.ts && oxlint --type-aware --type-check --tsconfig tsconfig.test.json test",
     "check-types": "tsgo --noEmit && tsgo --noEmit -p tsconfig.test.json",
     "test": "bun run build && bun test test"
   },

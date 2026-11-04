@@ -1,5 +1,8 @@
 # Flow Tool Architecture
 
+P2.7c1 将 Rust wire schema 的 AJV 校验移至构建期，客户端运行时不再编译
+Schema；build/契约检查拒绝陈旧产物。见 [证据](./docs/validation/g8-csp-validators.md)。
+
 G8 P2.7b：原生请求和私有 runner 输出先共用 Core 严格 JSON 帧解码，递归
 拒绝重复键，再验证原 DTO；身份/grant/效果仍由原 Runtime 检查负责。
 固定种子协议、重新签名 ZIP、媒体变异回归见

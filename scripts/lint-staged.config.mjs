@@ -6,6 +6,8 @@ const generated = new Set([
   'packages/runtime-client/src/bindings.ts',
   'packages/runtime-client/src/wire-schema.json',
   'packages/runtime-client/src/wire-fixtures.json',
+  'packages/runtime-client/src/wire-validators.cjs',
+  'packages/runtime-client/src/wire-validators.d.cts',
   'apps/desktop/src/utils/bindings.ts',
 ])
 /** Exclude immutable signed bytes and generated bindings before command batches.

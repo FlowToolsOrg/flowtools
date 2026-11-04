@@ -896,9 +896,13 @@ test('Runtime codegen stays clean after Windows CRLF checkout and rejects conten
     new URL('../.gitattributes', import.meta.url),
     'utf8'
   )
-  const files = ['bindings.ts', 'wire-schema.json', 'wire-fixtures.json'].map(
-    name => `packages/runtime-client/src/${name}`
-  )
+  const files = [
+    'bindings.ts',
+    'wire-schema.json',
+    'wire-fixtures.json',
+    'wire-validators.cjs',
+    'wire-validators.d.cts',
+  ].map(name => `packages/runtime-client/src/${name}`)
   const runGit = (args: string[]) => {
     const result = spawnSync('git', args, { cwd: fixture, encoding: 'utf8' })
     if (result.status !== 0) {

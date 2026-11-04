@@ -10,6 +10,8 @@ test('an all-ignored signed/generated staged chunk schedules no formatter', () =
         'packages/runtime-core/assets/builtin-media/manifest.json',
         'packages/runtime-core/assets/builtin-media/package.dsse.json',
         'packages/runtime-client/src/wire-schema.json',
+        'packages/runtime-client/src/wire-validators.cjs',
+        'packages/runtime-client/src/wire-validators.d.cts',
       ].map(p => resolve(root, p)),
       false
     )

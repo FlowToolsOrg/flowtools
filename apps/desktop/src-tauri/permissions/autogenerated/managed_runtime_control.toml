@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-managed-runtime-control"
+description = "Enables the managed_runtime_control command without any pre-configured scope."
+commands.allow = ["managed_runtime_control"]
+
+[[permission]]
+identifier = "deny-managed-runtime-control"
+description = "Denies the managed_runtime_control command without any pre-configured scope."
+commands.deny = ["managed_runtime_control"]

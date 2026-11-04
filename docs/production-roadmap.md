@@ -1,5 +1,9 @@
 # FlowTools 生产化路线图
 
+P2.7d 加入实际应用命令 ACL，移除宽泛 default 权限集合，并把验证命令授权
+留在单独配置；已有原生身份拒绝与新增 pre-handler 对照通过，见
+[记录](./validation/g8-native-acl.md)。T1、独立审核与 P2.7/G8 状态不升级。
+
 P2.7c2 配置非空 Desktop 生产 CSP，实际 Chromium 拦截脚本/eval/嵌入/
 form/worker 等，并验证构建客户端在无 eval 权限下工作。见
 [证据与残余范围](./validation/g8-desktop-csp.md)。P2.7/G8 与独立审核不提前完成。

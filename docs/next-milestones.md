@@ -722,6 +722,10 @@ grace、跳过/合并漏触发、重复检查/时钟回拨/取消与算术限额
 
 ## 10. G8：分发与未来生态
 
+P2.7d 使用显式 AppManifest/main capability 和独立验证权限，实际 native IPC
+回归见 [证据](./validation/g8-native-acl.md)。剩余独立审核、网络/平台边界、
+正式分发与真实试用退出条件保留。
+
 P2.7c2 的非空生产 CSP 与实际攻击/客户端回归见
 [验证](./validation/g8-desktop-csp.md)。HTTP(S) 出站仍未成为 per-plugin
 broker，正式包 WebView/macOS 与独立安全审核不能用源策略测试替代。

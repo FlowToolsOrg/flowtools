@@ -1,5 +1,11 @@
 # FlowTools 插件威胁模型
 
+P2.7d（2026-11-04）将应用命令接入 AppManifest ACL，普通 capability 不再
+使用插件/core default 集合，验证命令仅在固定身份 overlay 授权。下方早期
+“未配置 AppManifest”的描述由此替代；实际 native IPC 与原 guard 证据见
+[记录](../validation/g8-native-acl.md)。主窗口同 realm/T1、store load 与通用
+IO 残余不因此消失，SEC-003/004/006/007/011/012 仍 open。
+
 P2.7c2（2026-11-04）以非空 CSP 取代 Desktop 空策略；拒绝远程/内联脚本、
 eval、frame/object/worker、base/form，保留动态样式与 T1 HTTP(S) connect。
 下方“CSP 为空”的早期描述由此替代；出站 broker、第三方隔离与独立批准仍

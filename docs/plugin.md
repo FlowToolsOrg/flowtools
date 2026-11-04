@@ -1,5 +1,9 @@
 # Flow Tool Plugin 开发指南
 
+Desktop 原生命令现在受 main/local AppManifest ACL 约束，插件/core 默认
+权限集已收敛为显式列表；这不是插件自身的 grant。普通构建无 validation、
+raw SQL/FS 写入/clipboard/shell 权限，详见 [d](./validation/g8-native-acl.md)。
+
 Desktop 生产 CSP 不允许动态脚本/eval、第三方 frame/worker 或远程脚本；
 内置插件仍使用已编译入口。HTTP(S) request 保持现有 T1 行为，不构成通用
 网络隔离或 grant。开发策略独立，见 [c2](./validation/g8-desktop-csp.md)。

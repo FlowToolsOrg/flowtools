@@ -1,5 +1,12 @@
 # Repository Guidelines
 
+G8 P2.7d uses an explicit application AppManifest and local main-window command
+permissions. Never restore broad plugin/core default sets or grant validation
+commands in production capabilities. Keep generated permission TOML LF/content
+drift checks, actual pre-handler IPC refusals and the original native guard tests.
+See [evidence](./docs/validation/g8-native-acl.md). Main-window T1 authority is
+not per-plugin isolation or release approval.
+
 G8 P2.7c2 requires the nonempty production Desktop CSP and pre-SDK Zod jitless
 bootstrap. Keep production scripts free of unsafe-inline/unsafe-eval and remote
 sources; preserve Tauri's hash/nonce injection. Dev-only sources must remain in

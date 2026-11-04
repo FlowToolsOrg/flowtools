@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-validation-runtime"
+description = "Enables the validation_runtime command without any pre-configured scope."
+commands.allow = ["validation_runtime"]
+
+[[permission]]
+identifier = "deny-validation-runtime"
+description = "Denies the validation_runtime command without any pre-configured scope."
+commands.deny = ["validation_runtime"]

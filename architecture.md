@@ -1,5 +1,9 @@
 # Flow Tool Architecture
 
+P2.7d 通过 AppManifest 将已有应用命令接入 Tauri ACL，主窗口权限逐项列出，
+验证权限只存在固定身份的验证配置。原 Runtime grant/origin 检查保留，见
+[证据](./docs/validation/g8-native-acl.md)。不是逐插件隔离或新执行授权。
+
 P2.7c2：Desktop 生产 CSP 限制脚本、资源与嵌入；独立 devCsp 保留开发需求。
 bootstrap 先设置 Zod jitless，再加载 SDK/路由，wire 校验采用 c1 静态产物。
 HTTP(S) connect 仍为 T1 兼容范围，见 [证据](./docs/validation/g8-desktop-csp.md)。

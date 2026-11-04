@@ -1,5 +1,9 @@
 # Flow Tool
 
+Desktop native commands now use an application ACL and explicit main-window
+permissions. See [P2.7d validation](./docs/validation/g8-native-acl.md) for actual
+pre-handler refusals and remaining T1 boundaries.
+
 Desktop now has a production CSP with restricted scripts and blocked embedded
 content. [P2.7c2 evidence](./docs/validation/g8-desktop-csp.md) records actual
 browser refusals and the remaining network/native acceptance boundaries.

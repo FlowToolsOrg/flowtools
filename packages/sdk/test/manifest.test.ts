@@ -95,6 +95,24 @@ test('Manifest v1 keeps UTF-16 scope and nested operation text limits after Zod 
   }
 })
 
+test('operation export never rewrites schema-like default data', () => {
+  const payload = { type: ['string', 'number'], nested: { type: 'object' } }
+  const schema = z.object({
+    payload: z
+      .strictObject({
+        type: z.array(z.string()),
+        nested: z.strictObject({ type: z.string() }),
+      })
+      .default(payload),
+  })
+  const exported = exportOperationSchema(schema)
+  expect(exported.properties!.payload!.default).toEqual(payload)
+  expect(validateOperationValue(exported, {}, true)).toEqual({
+    success: true,
+    data: { payload },
+  })
+})
+
 test('manifest execution refuses invalid runtime validators, default-expanded budgets and huge timeouts before run', async () => {
   let calls = 0
   const plugin = {

@@ -34,13 +34,15 @@ HeroUI React/styles 固定为原先验证的 3.0.3，oxlint 固定为 1.66.0；
 
 Zod 4.6 的 primitive type 数组只在构建导出转换为现有 anyOf，包输入仍拒绝
 type 数组；显式保留 Manifest/command/scope/operation 文本的 UTF-16 限额。
+转换只访问 properties/items/anyOf 中的 Schema 节点，默认业务数据即使含有
+type 数组或 type=object 也保持原样；增加实际默认值补齐的拒绝/保留回归。
 原 405 项 corpus 的输入、接受结果和归一化字节均不变，原生验证语义不改。
 
 ## 验证记录
 
 - Bun audit：没有已知漏洞命中。
 - 四份 Cargo 锁：没有 vulnerability 项；informational 警告仍公开可见。
-- SDK Manifest 专项 49 项通过；原 405-case corpus 和 Rust 生成内容检查通过。
+- SDK Manifest 专项 50 项通过；原 405-case corpus 和 Rust 生成内容检查通过。
 - 25 项脚本/CI 契约、实际扫描器对照、actionlint 1.7.12 通过。
 - 首轮完整本机根门禁 `a297b6f` 在安全扫描/生成检查后停于 UI lint：
   重新求解的 HeroUI 移除了仍被依赖的 Text 导出。固定回原验证版本后，

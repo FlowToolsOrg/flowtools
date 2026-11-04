@@ -365,7 +365,12 @@ export function exportOperationSchema(
       delete node.type
     }
     if (node.type === 'object') node.additionalProperties = false
-    Object.values(node).forEach(closeObjects)
+    // Visit schema positions only. Defaults and enum/const values are data,
+    // even when their keys happen to be named type, properties or anyOf.
+    if (node.properties && typeof node.properties === 'object')
+      Object.values(node.properties).forEach(closeObjects)
+    if (node.items) closeObjects(node.items)
+    if (Array.isArray(node.anyOf)) node.anyOf.forEach(closeObjects)
   }
   closeObjects(data)
   return operationSchema.parse(data)

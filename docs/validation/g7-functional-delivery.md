@@ -44,7 +44,8 @@ GUI/CLI 共用 Rust 生成的协议和单 writer，不接受 executable、argv �
 - 固定归档 `2b26f1bc4731c8db82f2bda708a96354bd31acf1af2cc16058f108d25ccfe415`，
   manifest `198713e499838a7f09258835fcb90b4b4121937377e4fa7135af2eb9998af233`。
   新生成的独立本地 Ed25519 根 quorum 为 2/2，另有一个 publisher key；未使用
-  公开 fixture 私钥。私钥仅存开发者仓库外 DPAPI 文件，普通 build 不读私钥。
+  公开 fixture 私钥。私钥仅存 Git 忽略的开发目录内的 DPAPI 文件，不随源码
+  或产品提交/打包，普通 build 不读私钥。
 - `assets/builtin-media` 的原始签名字节不经过换行或 JSON 格式化。工具准入只为
   精确 archive/manifest/source/license/flavor/layout 匹配提供独立原型 policy；
   `REVIEWED_TOOLS` 仍为空。安装、镜像、accepted lease、current-floor、真实 LPAC、
@@ -89,3 +90,19 @@ pending，不因原型签名或测试而获得法律/安全批准。一般第三
 生成 fixture，并给纯语义图提供同一工具的 metadata candidate；不增加
 安装/执行 authority。对应 Rust roundtrip 与 Runtime client 检查随后复验，
 新的完整门禁单独记录，不覆盖首次失败。
+
+`e55140d` 的首次重跑使用仓库内 TEMP，Core 文件/发布测试 22 项返回
+`RuntimeBusy`（497 pass / 22 fail）。同一编译二进制在仓库内复现失败，
+移至工作区外 `D:/flowtools-g7-test-temp` 后 24 项全部通过；未改变祖先目录
+共享/身份保护，具体持柄进程未确定。工作区外的完整重跑随后通过 Core
+519+11+13、Runtime 原生 27+6 与 Chromium 117/36，但 Runtime Bun 为
+16 pass / 2 fail：新工具自动安装阻断了恢复后权限管理，旧库存 fixture 仍
+预期未配置。失败日志保留，不以这些已通过的子项代替整仓成功。
+
+修复将固定 Host 目录图与执行准入分开：只有 build-owned 工具声明用于
+语义图；恢复状态保留原 trust/安装字节与 ToolAuthority，原工具任务接收、
+持有回执恢复和每个 native effect 仍完整复核。实际恢复 fixture 增加了
+权限管理/无工具任务可用、库存与媒体启动继续 `RECOVERY_PENDING` 的断言；
+库存 fixture 则核对真实锁定归档、镜像和原共享配额，未放宽原期限/保护。
+修复后精确运行当前 `clients.test.ts`，五项实际进程回归全部通过（85.65s），
+Runtime lint/严格 types/Clippy 与文档契约通过；完整根门禁再次单独执行。

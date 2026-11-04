@@ -38,6 +38,31 @@ impl BuiltinCatalog {
         self.manifests.iter()
     }
 
+    /// Metadata for the fixed built-in graph only. This cannot prepare or admit
+    /// a tool; accepted jobs still need the current signed archive and image.
+    #[cfg(windows)]
+    pub(crate) fn builtin_media_declaration(
+        &self,
+    ) -> Result<crate::dependencies::ToolCandidate, ErrorCode> {
+        let (manifest, _) = self.command("plugin-media-inspector", "run")?;
+        let tool = &manifest["dependencies"]["tools"][0];
+        let field = |name: &str| {
+            tool[name]
+                .as_str()
+                .map(str::to_owned)
+                .ok_or(ErrorCode::DependencyInvalid)
+        };
+        Ok(crate::dependencies::ToolCandidate {
+            publisher: field("publisher")?,
+            id: field("id")?,
+            version: field("version")?,
+            target: serde_json::from_value(tool["target"].clone())
+                .map_err(|_| ErrorCode::DependencyInvalid)?,
+            build_flavor: field("buildFlavor")?,
+            digest: field("digest")?,
+        })
+    }
+
     /// T0 build/test snapshot constructor; never exposed as a wire/catalog import.
     /// Callers must supply full SDK-validated, build-owned manifests.
     pub fn from_host_manifests(manifests: Vec<Value>) -> Result<Self, ErrorCode> {

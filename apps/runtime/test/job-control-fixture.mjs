@@ -128,15 +128,34 @@ try {
   )
   const started = object(success(await invoke(['runtime', 'start'])))
   assert.equal(started.activeJobs, 0)
-  const toolInventory = success(await invoke(['tools', 'list']))
-  assert.deepEqual(toolInventory, {
-    availability: 'not-configured',
-    snapshot: null,
-    total: 0,
-    nextOffset: null,
-    storage: null,
-    items: [],
+  const toolInventory = object(success(await invoke(['tools', 'list'])))
+  assert.equal(toolInventory.availability, 'observed')
+  assert.match(String(toolInventory.snapshot), /^[a-f0-9]{64}$/)
+  assert.equal(toolInventory.total, 1)
+  assert.equal(toolInventory.nextOffset, null)
+  assert.deepEqual(toolInventory.storage, {
+    bytes: 42764494,
+    groups: 2,
+    maxBytes: 268435456,
+    maxGroups: 384,
   })
+  assert.deepEqual(toolInventory.items, [
+    {
+      publisher: 'flowtools-builtin',
+      id: 'ffmpeg',
+      version: '8.1.3',
+      buildFlavor: 'flowtools-t1-lgpl-static-v1',
+      archiveDigest:
+        '2b26f1bc4731c8db82f2bda708a96354bd31acf1af2cc16058f108d25ccfe415',
+      sourceRegistry: 'ffmpeg-official',
+      sourceArtifact: 'ffmpeg-8-1-3-flowtools-t1',
+      archiveBytes: 21380817,
+      materialized: true,
+      dependents: [],
+      retainedJobs: 0,
+      deletionBlockers: ['deletion-not-implemented'],
+    },
+  ])
   const deadline = String(Date.now() + 25000)
   const args = [
     'jobs',

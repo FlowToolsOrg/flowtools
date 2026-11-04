@@ -409,6 +409,37 @@ impl RuntimeCore {
             },
         )
     }
+    /// Actual fixed Windows host. A restored trust scope may still manage
+    /// permissions and run tool-free jobs. Its catalog graph uses declarations,
+    /// while every tool acceptance/restore/effect retains the original authority.
+    #[cfg(windows)]
+    pub fn managed_builtin(
+        tokens: HashMap<String, String>,
+        mut store: DataStore,
+        management_only: bool,
+        cold_started: bool,
+    ) -> Result<Self, ErrorCode> {
+        let trust = match crate::packages::tools::builtin::ensure_installed(&mut store) {
+            Ok(trust) => trust,
+            Err(ErrorCode::RecoveryPending) => crate::packages::tools::builtin::trust()
+                .map_err(|_| ErrorCode::DependencyArtifactMismatch)?,
+            Err(code) => return Err(code),
+        };
+        let catalog = BuiltinCatalog::embedded_with_media();
+        let declaration = catalog.builtin_media_declaration()?;
+        Self::managed_catalog_inner(
+            tokens,
+            store,
+            management_only,
+            cold_started,
+            catalog,
+            move |core| {
+                core.tools = Some(ToolAuthority::new(trust));
+                core.services
+                    .set_catalog_with_tools(&core.catalog, &[declaration])
+            },
+        )
+    }
     #[cfg(all(windows, test))]
     pub(crate) fn managed_fixture_tool_catalog(
         tokens: HashMap<String, String>,

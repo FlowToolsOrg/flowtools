@@ -137,7 +137,7 @@ pub async fn run() -> Result<(), &'static str> {
     };
     let mut listener =
         create_pipe(&pipe_name, &sid, true).map_err(|_| "RUNTIME_ALREADY_RUNNING")?;
-    let mut store = DataStore::open(&path.join("runtime.sqlite")).map_err(|code| match code {
+    let store = DataStore::open(&path.join("runtime.sqlite")).map_err(|code| match code {
         ErrorCode::RecoveryPending => "RECOVERY_PENDING",
         ErrorCode::StoreCorrupt => "STORE_CORRUPT",
         ErrorCode::StoreBusy => "STORE_BUSY",
@@ -152,9 +152,7 @@ pub async fn run() -> Result<(), &'static str> {
         }
     } else {
         let (_, bootstrap) = crate::profile::load(&path).map_err(|_| "SETUP_REQUIRED")?;
-        let trust = flowtools_runtime_core::packages::tools::builtin::ensure_installed(&mut store)
-            .map_err(|_| "BUILTIN_MEDIA_UNAVAILABLE")?;
-        RuntimeCore::managed_tool_catalog(
+        RuntimeCore::managed_builtin(
             std::collections::HashMap::from([
                 (bootstrap.cli_token, "local-cli".into()),
                 (bootstrap.desktop_token, "local-desktop".into()),
@@ -163,11 +161,11 @@ pub async fn run() -> Result<(), &'static str> {
             store,
             args[2] == "--management",
             args[2] == "--cold-start",
-            flowtools_runtime_core::catalog::BuiltinCatalog::embedded_with_media(),
-            trust,
         )
         .map_err(|code| match code {
             ErrorCode::ColdStartDenied => "COLD_START_DENIED",
+            ErrorCode::DependencyArtifactMismatch => "BUILTIN_MEDIA_UNAVAILABLE",
+            ErrorCode::RecoveryPending => "RECOVERY_PENDING",
             _ => "RUNTIME_DATA_UNAVAILABLE",
         })?
     };

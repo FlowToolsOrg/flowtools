@@ -53,6 +53,8 @@ type 数组或 type=object 也保持原样；增加实际默认值补齐的拒�
   Core 519+11+13、Runtime 27+6、Desktop 原生测试、全部工作区构建、
   production artifact 对照和最终干净工作区检查；没有过滤/跳过测试。
 - 后续默认数据导出修复的 50 项 SDK 专项通过；Tokio 补丁不改变原生参数/期限。
+  客户端调度测试保留原拒绝断言，移除 Bun 同步 matcher 的多余 await；
+  实测 matcher 返回 undefined，客户端 lint/types 与 25 项测试通过。
   最终提交的完整本机与同 SHA 远端验证记录汇总于
   [Draft PR #17](https://github.com/FlowToolsOrg/flowtools/pull/17)。
 

@@ -551,6 +551,588 @@ Output schema:
 }
 ```
 
+## flowtools/plugin-local-reminder/run
+
+在共享 Runtime 中创建有限周期提醒，并查看发送尝试结果
+
+Version: 0.0.1; maturity: prototype.
+Targets: windows/x64, web/wasm32.
+Headless: true; cold start: true; interaction: none.
+Effects: notification.
+Permission requests: [{"capability":"notification","operations":["notify"],"scopes":["local"]}].
+Runtime validation: {"input":"required","output":"required"}.
+Budgets: {"timeoutMs":30000,"maxInputBytes":1048576,"maxOutputBytes":1048576}.
+
+```powershell
+bun run packages/cli/dist/cli.mjs describe plugin-local-reminder run --format json
+```
+
+| Flag      | Type   | Required | Default | Description |
+| --------- | ------ | -------- | ------- | ----------- |
+| --title   | string | true     |         | 提醒标题    |
+| --message | string | false    | ""      | 提醒内容    |
+
+Schema-valid input example:
+
+```json
+{
+  "title": "example",
+  "message": ""
+}
+```
+
+Input schema:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "提醒标题"
+    },
+    "message": {
+      "default": "",
+      "description": "提醒内容",
+      "type": "string",
+      "maxLength": 1024
+    }
+  },
+  "required": ["title"],
+  "additionalProperties": false
+}
+```
+
+Output schema:
+
+```json
+{
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "text"
+        },
+        "text": {
+          "type": "string"
+        },
+        "stdio": {
+          "type": "string"
+        }
+      },
+      "required": ["type", "text"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "json"
+        },
+        "value": {
+          "type": "object",
+          "properties": {
+            "result": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": ["requested", "unsupported", "failed", "unknown"]
+                }
+              },
+              "required": ["status"],
+              "additionalProperties": false
+            }
+          },
+          "required": ["result"],
+          "additionalProperties": false
+        },
+        "stdio": {
+          "type": "string"
+        }
+      },
+      "required": ["type", "value"],
+      "additionalProperties": false
+    }
+  ]
+}
+```
+
+## flowtools/plugin-media-converter/run
+
+提取 WAV 音频或使用固定 VP9/Opus WebM 预设
+
+Version: 0.0.1; maturity: prototype.
+Targets: windows/x64, web/wasm32.
+Headless: true; cold start: true; interaction: none.
+Effects: file-read, tool-execute, file-create.
+Permission requests: [{"capability":"fs","operations":["read","create"],"scopes":["selected-media-input","selected-media-output"]},{"capability":"tool","operations":["execute"],"scopes":["lock:ffmpeg:extract-audio-wav-v1","lock:ffmpeg:transcode-webm-v1"]}].
+Runtime validation: {"input":"required","output":"required"}.
+Budgets: {"timeoutMs":30000,"maxInputBytes":1048576,"maxOutputBytes":1048576}.
+
+```powershell
+bun run packages/cli/dist/cli.mjs describe plugin-media-converter run --format json
+```
+
+| Flag          | Type   | Required | Default | Description |
+| ------------- | ------ | -------- | ------- | ----------- |
+| --plan-id     | string | true     |         |             |
+| --plan-digest | string | true     |         |             |
+
+Schema-valid input example:
+
+```json
+{
+  "planId": "examplexxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "planDigest": "examplexxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+}
+```
+
+Input schema:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "planId": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36
+    },
+    "planDigest": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64
+    }
+  },
+  "required": ["planId", "planDigest"],
+  "additionalProperties": false
+}
+```
+
+Output schema:
+
+```json
+{
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "text"
+        },
+        "text": {
+          "type": "string"
+        },
+        "stdio": {
+          "type": "string"
+        }
+      },
+      "required": ["type", "text"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "json"
+        },
+        "value": {
+          "type": "object",
+          "properties": {
+            "result": {
+              "type": "object",
+              "properties": {
+                "formats": {
+                  "maxItems": 8,
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "durationMs": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "sourceBytes": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "streams": {
+                  "maxItems": 32,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string"
+                      },
+                      "codec": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "width": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "height": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "sampleRate": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "channels": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "codec",
+                      "width",
+                      "height",
+                      "sampleRate",
+                      "channels"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "published": {
+                  "type": "boolean"
+                },
+                "outputBytes": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "outputSha256": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "formats",
+                "durationMs",
+                "sourceBytes",
+                "streams",
+                "published",
+                "outputBytes",
+                "outputSha256"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": ["result"],
+          "additionalProperties": false
+        },
+        "stdio": {
+          "type": "string"
+        }
+      },
+      "required": ["type", "value"],
+      "additionalProperties": false
+    }
+  ]
+}
+```
+
+## flowtools/plugin-media-inspector/run
+
+查看所选媒体的格式、时长与音视频轨道
+
+Version: 0.0.1; maturity: prototype.
+Targets: windows/x64, web/wasm32.
+Headless: true; cold start: true; interaction: none.
+Effects: file-read, tool-execute.
+Permission requests: [{"capability":"fs","operations":["read"],"scopes":["selected-media-input"]},{"capability":"tool","operations":["execute"],"scopes":["lock:ffmpeg:inspect-v1"]}].
+Runtime validation: {"input":"required","output":"required"}.
+Budgets: {"timeoutMs":30000,"maxInputBytes":1048576,"maxOutputBytes":1048576}.
+
+```powershell
+bun run packages/cli/dist/cli.mjs describe plugin-media-inspector run --format json
+```
+
+| Flag          | Type   | Required | Default | Description |
+| ------------- | ------ | -------- | ------- | ----------- |
+| --plan-id     | string | true     |         |             |
+| --plan-digest | string | true     |         |             |
+
+Schema-valid input example:
+
+```json
+{
+  "planId": "examplexxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "planDigest": "examplexxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+}
+```
+
+Input schema:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "planId": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36
+    },
+    "planDigest": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64
+    }
+  },
+  "required": ["planId", "planDigest"],
+  "additionalProperties": false
+}
+```
+
+Output schema:
+
+```json
+{
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "text"
+        },
+        "text": {
+          "type": "string"
+        },
+        "stdio": {
+          "type": "string"
+        }
+      },
+      "required": ["type", "text"],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "json"
+        },
+        "value": {
+          "type": "object",
+          "properties": {
+            "result": {
+              "type": "object",
+              "properties": {
+                "formats": {
+                  "maxItems": 8,
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "durationMs": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "sourceBytes": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "streams": {
+                  "maxItems": 32,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string"
+                      },
+                      "codec": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "width": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "height": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "sampleRate": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "channels": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "codec",
+                      "width",
+                      "height",
+                      "sampleRate",
+                      "channels"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "published": {
+                  "type": "boolean"
+                },
+                "outputBytes": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "outputSha256": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "formats",
+                "durationMs",
+                "sourceBytes",
+                "streams",
+                "published",
+                "outputBytes",
+                "outputSha256"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": ["result"],
+          "additionalProperties": false
+        },
+        "stdio": {
+          "type": "string"
+        }
+      },
+      "required": ["type", "value"],
+      "additionalProperties": false
+    }
+  ]
+}
+```
+
 ## flowtools/plugin-random-picker/run
 
 在线名单随机点名工具

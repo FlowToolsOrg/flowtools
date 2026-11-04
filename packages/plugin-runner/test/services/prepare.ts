@@ -11,7 +11,13 @@ const directory = resolve(import.meta.dirname, '../../.generated/g4-services')
 mkdirSync(directory, { recursive: true })
 const bundle = await Bun.build({
   entrypoints: [resolve(import.meta.dirname, 'runner.ts')],
-  target: 'bun',
+  target: 'node',
+  define: {
+    __FLOWTOOLS_FIXTURE_BUN__: JSON.stringify(process.execPath),
+    __FLOWTOOLS_FIXTURE_BUN_SHA256__: JSON.stringify(
+      createHash('sha256').update(readFileSync(process.execPath)).digest('hex')
+    ),
+  },
   outdir: directory,
   naming: 'fixture-runner.js',
 })

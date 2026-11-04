@@ -152,7 +152,7 @@ pub async fn run() -> Result<(), &'static str> {
         }
     } else {
         let (_, bootstrap) = crate::profile::load(&path).map_err(|_| "SETUP_REQUIRED")?;
-        RuntimeCore::managed(
+        RuntimeCore::managed_builtin(
             std::collections::HashMap::from([
                 (bootstrap.cli_token, "local-cli".into()),
                 (bootstrap.desktop_token, "local-desktop".into()),
@@ -164,6 +164,8 @@ pub async fn run() -> Result<(), &'static str> {
         )
         .map_err(|code| match code {
             ErrorCode::ColdStartDenied => "COLD_START_DENIED",
+            ErrorCode::DependencyArtifactMismatch => "BUILTIN_MEDIA_UNAVAILABLE",
+            ErrorCode::RecoveryPending => "RECOVERY_PENDING",
             _ => "RUNTIME_DATA_UNAVAILABLE",
         })?
     };
@@ -187,11 +189,49 @@ pub async fn run() -> Result<(), &'static str> {
     let mut stdin = tokio::io::stdin();
     let mut byte = [0u8; 1];
     let mut tick = tokio::time::interval(Duration::from_millis(25));
+    let mut schedule_tick = tokio::time::interval(Duration::from_secs(1));
     let stop_reply = Arc::new(Semaphore::new(1));
+    let mut schedule_failure = false;
+    let mut native_failure = false;
     loop {
         tokio::select! {
             _ = tokio::signal::ctrl_c() => break,
-            _ = tick.tick() => {if stop_ready(&core, &stop_reply).await {break;}}
+            _ = tick.tick() => {
+                #[cfg(windows)]
+                {
+                    let mut locked = core.lock().await;
+                    if locked.tick_media_inspections().is_err() {
+                        locked.fail_closed();
+                        native_failure = true;
+                        break;
+                    }
+                }
+                if stop_ready(&core, &stop_reply).await { break; }
+            }
+            _ = schedule_tick.tick() => {
+                let mut locked = core.lock().await;
+                if let Err(code) = locked.tick_schedules() {
+                    if !matches!(code, ErrorCode::RecoveryPending | ErrorCode::InvalidRequest) {
+                        locked.fail_closed();
+                        schedule_failure = true;
+                        break;
+                    }
+                }
+                // Accepted jobs remain durable when the bounded channel is full.
+                // Retry queueing by identity, never repeat schedule acceptance.
+                for run in locked.pending_runs() {
+                    if scheduled.contains(&run) { continue; }
+                    match tasks.try_send(run) {
+                        Ok(()) => {}
+                        Err(tokio::sync::mpsc::error::TrySendError::Full(_)) => break,
+                        Err(_) => {
+                            locked.fail_closed();
+                            schedule_failure = true;
+                            break;
+                        }
+                    }
+                }
+            }
             _ = stdin.read(&mut byte), if stdin_lifetime => break,
             result = listener.connect(), if connections.len() < 15 => {
                 let Some(connected) = accept_connection(&mut listener, result, &pipe_name, &sid).await.map_err(|_| "IPC_ACCESS_FAILED")? else { continue; };
@@ -224,7 +264,10 @@ pub async fn run() -> Result<(), &'static str> {
     while connections.join_next().await.is_some() {}
     let drained = tokio::time::timeout(Duration::from_secs(5), async {
         while workers.join_next().await.is_some() {}
-        while core.lock().await.active_service_calls() != 0 {
+        while {
+            let locked = core.lock().await;
+            locked.active_service_calls() != 0 || locked.active_media_inspections() != 0
+        } {
             tokio::time::sleep(Duration::from_millis(10)).await;
         }
     })
@@ -233,6 +276,12 @@ pub async fn run() -> Result<(), &'static str> {
         workers.abort_all();
         while workers.join_next().await.is_some() {}
         return Err("RUNNER_DRAIN_FAILED");
+    }
+    if schedule_failure {
+        return Err("SCHEDULE_STORAGE_FAILED");
+    }
+    if native_failure {
+        return Err("NATIVE_MEDIA_FAILED");
     }
     Ok(())
 }
@@ -450,6 +499,8 @@ fn runner_config() -> &'static str {
 
 #[path = "service_runner.rs"]
 mod service_runner;
+#[path = "user_media.rs"]
+mod user_media;
 
 #[cfg(test)]
 async fn execute(spec: &RunSpec, core: Core, workspace: &Path) -> Result<Value, ErrorCode> {
@@ -797,3 +848,6 @@ mod tests {
 #[cfg(test)]
 #[path = "service_tests.rs"]
 mod service_tests;
+#[cfg(test)]
+#[path = "user_media_tests.rs"]
+mod user_media_tests;

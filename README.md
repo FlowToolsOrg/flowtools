@@ -1,5 +1,143 @@
 # Flow Tool
 
+G7 is complete within the approved Windows/T1 functional prototype scope:
+journaled file commit/retry/undo, two real managed media plugins, scheduling,
+reminders, launcher search and Desktop settings share the Runtime and CLI.
+See [usage and validation](./docs/validation/g7-functional-delivery.md) and the
+[completion matrix](./docs/validation/g7-completion-matrix.md) for limits and gate evidence.
+
+2026-11-03：维护者明确授权按 Windows 固定 T1 功能原型完成 G7，允许精确锁定的官方源码 FFmpeg/ffprobe 通过原受管工具链用于实际功能。正式发行、Windows 代码签名和独立安全/许可证审核保持 pending；人工验收为 waived。本授权仅覆盖固定内置流程，不开放任意工具路径、第三方代码或绕过当前 grant/身份/排空检查。
+
+The following implementation notes retain their historical stage conclusions;
+their pending G7 statements are superseded by the current completion matrix above.
+
+G6 adds [explicit interrupted-queue disposition](./docs/validation/g6-queued-tool-discard.md):
+T0 can confirm cancellation of an unchanged tool queue proven never to have run.
+The original guarded transaction commits before its artifact references release;
+private input and physical images remain. Native history, GC, activation and G7
+file/media delivery remain pending; no plugin or client execution authority follows.
+
+G6 adds [current T0 media-effect admission](./docs/validation/g6-tool-effect-admission.md):
+fixed T1 callbacks recheck the accepted signed artifact, actual consumer binding,
+task record and delegated grants. The borrowed context exposes diagnostic pins;
+native process execution and user-file publication remain pending.
+
+G6 adds a [fixed media completion projection](./docs/validation/g6-media-completion-projection.md):
+exit zero, complete progress, and independently probed output metadata must agree
+with the observed nonempty file size and fixed output roles. Real candidate WAV/WebM
+tests exercise it; it does not prove fresh file identity or authorize publication.
+
+G6 adds [accepted tool artifact retention](./docs/validation/g6-accepted-tool-artifacts.md)
+for explicitly wired T0 fixed T1 jobs. Exact signed ZIPs and existing sealed files
+are held before the ordinary durable receipt; historical roots survive uncertain
+completion and restore. Default product Hosts have no tool authority, production
+reviews remain empty, and native media execution and G7 file/media delivery remain pending.
+
+G6 adds [explicit inert consumer orphan recovery](./docs/validation/g6-tool-consumer-reconciliation.md)
+with whole-batch observation, guarded create-only quarantine and scope-bound
+resume/cancellation. It preserves bytes and installed locks; no adoption, leases
+or product file/media execution follow.
+
+G6 adds [inert installed consumer/tool locks](./docs/validation/g6-tool-consumer-installation.md)
+from actual signed plugin/service archives and held installed tool ZIPs. A separate
+fixed store preserves legacy G5 v2 bytes and shares the existing writer/budget.
+Production tool reviews remain empty; leases and G7 file/media execution are pending.
+
+G6 adds explicit [orphaned tool-file reconciliation](./docs/validation/g6-tool-image-reconciliation.md)
+before raw ZIP recovery. It freezes T0-owned observations, quarantines without
+adoption and removes artifact read capabilities before clearing its journal.
+These files remain inert; accepted leases and product execution are pending.
+
+G6 adds explicit [inert tool ZIP recovery reconciliation](./docs/validation/g6-tool-reconciliation.md)
+with read-only plans, durable quarantine/resume and byte-preserving cancellation.
+It does not adopt tools or enable execution; image orphans use the separate path above.
+
+G6 has a separate [signed tool binding planner](./docs/validation/g6-signed-tool-bindings.md)
+for verified plugin/service graphs and admitted tool ZIPs. Its locks remain inert;
+accepted leases, installed execution identities and G7 media delivery are pending.
+
+G6 also provides explicit [private tool-file materialization](./docs/validation/g6-tool-materialization.md)
+with sealed identities, native ACL checks and abort-only quarantine. It remains
+inert; production review, accepted leases and product execution are pending.
+
+G6 now has an explicit [real-media build candidate and LPAC acceptance workspace](./docs/validation/g6-media-candidate.md).
+It is developer-only; production tool review, identity, leases and G7 workflows remain pending.
+
+G6 signed tool archives now have an explicit inert install/journal/abort path
+through the existing writer and held-parent blob layer. This does not extract or
+run tools; see [scope and evidence](./docs/validation/g6-inert-tool-installation.md).
+
+G7's delivered shell, scheduling/reminders and search are tracked in the
+[completion matrix](./docs/validation/g7-completion-matrix.md). File rename
+planning is read-only; actual file/media workflows still require the recorded
+G5/G6 execution prerequisites. G7 remains in progress, with manual checks waived.
+
+The Windows native-tool isolation feasibility gate now uses real LPAC processes,
+positive controls and bounded Job cleanup. It remains test-only; see
+[scope and evidence](./docs/validation/g5-windows-native-isolation.md).
+
+G6 now also has fixed Rust media recipes and bounded inspection/progress parsers;
+these remain inert until managed installation, leases and execution are wired.
+See [media contract scope](./docs/validation/g6-media-contracts.md).
+
+Launcher search now shares pinyin, fuzzy, alias and bounded-regex matching across
+SDK/UI/CLI, with explainable rankings, private history controls and explicit
+input-context previews. See [search and 10k benchmark](./docs/validation/g7-launcher-search.md).
+
+Local reminders run through the authorized background Host with durable
+notification attempts and GUI/CLI management. See
+[Windows API evidence](./docs/validation/g7-local-reminders.md).
+
+Schedule editing and explicit restore disposal now share the GUI/CLI contract;
+atomic replacement and challenge replay checks are covered in
+[edit/recovery evidence](./docs/validation/g7-scheduling-edit-recovery.md).
+
+P3.1b3 connects finite schedules to the existing authenticated Host queue, with
+private inputs, per-trigger background/epoch checks and GUI/CLI management.
+Explicit IANA/DST preview and a real no-client execution fixture are covered;
+see [dispatch evidence](./docs/validation/g7-scheduling-dispatch.md).
+
+P3.1b2 persists finite schedule positions and claims through Runtime's existing
+single writer, with restart, cancellation and restore-scope refusal tests. See
+[durable scheduling](./docs/validation/g7-scheduling-store.md).
+
+The current G7 desktop-shell engineering work is closed; the maintainer waived
+remaining manual acceptance on 2026-10-27. See [closeout](./docs/validation/g7-shell-closeout.md).
+P3.1b1 now provides Runtime-owned one-shot/finite-interval planning with explicit
+missed-run policies, cancellation and per-cursor duplicate suppression. Durable
+scheduling, authorized dispatch and notifications are next; see
+[scheduling rules](./docs/validation/g7-scheduling-rules.md).
+
+G7 P3.1a1 adds a Windows native tray, single-instance wakeup and
+Ctrl+Shift+Space window restore. Optional startup requires explicit native menu
+actions in the current release identity; debug/fixture builds deny it. Desktop
+exit does not stop Runtime. Full P3.1a/G7 and G5/G6 execution gates remain pending.
+See [desktop shell evidence](./docs/validation/g7-desktop-shell.md).
+Controlled Windows acceptance now covers shortcut conflict recovery and native
+appearance restart; see [native window acceptance](./docs/validation/g7-native-window-acceptance.md)
+for the reusable test-only shortcut owner and remaining OS/menu gates.
+
+G7 P3.1a2 persists Desktop's system/light/dark preference across navigation and
+restart, with explicit reset and storage failure feedback. This is a Host UI
+preference, separate from Runtime policy and plugin theme resources. See
+[appearance evidence](./docs/validation/g7-desktop-preferences.md).
+
+G7 P3.1a3 adds an explicit read-only Runtime status snapshot in Desktop settings.
+It attaches only to an already running Host and never initializes, cold-starts
+or changes grants. See [status evidence](./docs/validation/g7-runtime-status.md).
+
+G7 P3.1a4 previews a bounded version/status diagnostic report before a separate
+JSON download request. It never queries Runtime or includes task payloads/logs.
+One controlled Windows Debug unqueried-report save is verified against the
+native preview. Broader native save behavior and full diagnostics remain pending;
+see [diagnostic evidence](./docs/validation/g7-runtime-diagnostic.md).
+
+G7 P3.1a5 adds an explicit native tray Runtime snapshot query with receipt time,
+overlap prevention and stable failure feedback. It reuses the settings guard and
+read-only connection; no startup, initialization or grant is implied. Actual
+tray interaction remains unverified and manual acceptance is waived; see
+[tray status evidence](./docs/validation/g7-tray-runtime-status.md).
+
 G6 P2.8a1 adds strict inert tool Manifest admission through the existing durable
 trust store and ZIP verifier. Source, license, build flavor and complete resource
 roles must match a private build-owned review profile; the production list is
@@ -181,14 +319,14 @@ development-mode results and standalone packaged-app acceptance are recorded
 separately; a successful build or URL-resolution test is not visual sign-off.
 This helper does not isolate code or stop synchronous loops. Execution
 metadata records input shape only, never raw input values or field names.
-`bun run smoke:plugins` builds package prerequisites and exercises all twelve
+`bun run smoke:plugins` builds package prerequisites and exercises all fifteen
 real compiled entries through the CLI SDK runner with controlled in-memory
 storage and scoped fixture responses, not public network or user data. It also
 checks schema rejection, cancellation and actual plugin exceptions.
 Todo JSON runs share the host app store with its panel (CLI retains its existing
 validated `todos` key). Website latency uses SDK request with no raw fetch fallback.
 The SDK's maturity vocabulary is `prototype`, `experimental`, `beta`,
-`production`; missing metadata means `prototype`. All twelve built-ins and both
+`production`; missing metadata means `prototype`. All fifteen built-ins and both
 host manifests explicitly declare `prototype`, also shown by CLI list/info.
 Compatibility evidence (`indexed` through `production-certified`) is separate
 and never grants execution or proves maturity. Shared UI, Web and Desktop read
@@ -272,7 +410,7 @@ verification is recorded in [the artifact gate](./docs/validation/p0-production-
     API globals expected by those plugins. Bridge calls are handled by the
     desktop SDK runtime context and then mapped to Tauri plugins where native
     access is required.
-- Local plugin workspace with 12 built-in plugins (all app type, all CLI-compatible via `run()` + `inputSchema`):
+- Local plugin workspace with 15 built-in plugins (all app type, all CLI-compatible via `run()` + `inputSchema`):
   - `plugins/plugin-todo-list` — 待办清单（host-managed store）
   - `plugins/plugin-uuid-generator` — UUID 生成器
   - `plugins/plugin-hash-generator` — 哈希生成器
@@ -285,6 +423,9 @@ verification is recorded in [the artifact gate](./docs/validation/p0-production-
   - `plugins/plugin-regex-tester` — 正则表达式测试
   - `plugins/plugin-image-base64` — 图片 ↔ Base64
   - `plugins/plugin-website-latency` — 网站延迟测试
+  - `plugins/plugin-local-reminder` — 本地提醒
+  - `plugins/plugin-media-inspector` — 受管媒体信息
+  - `plugins/plugin-media-converter` — 受管 WAV/WebM 转换
 - Planned (directory created, not yet implemented):
   - `apps/docs`
   - `apps/web`
@@ -768,7 +909,7 @@ All maturity labels stay prototype; SEC-001–SEC-012 remain open.
 The React-free SDK manifest subpath validates serialized commands and package
 metadata. Node file verification is a separate read-only subpath; it does not
 grant external execution. See [Manifest v1](./docs/manifest-v1.md). P1.1a is
-implemented. P1.1b builds twelve separate UI/command entries and validates the
+implemented. P1.1b now builds fifteen separate UI/command entries and validates the
 fixed compiled CLI packages before import. P1.1c adds Manifest-driven
 `commands`, `describe`, help, flags and sequential JSON batch input. Web/Desktop
 validate the same contract before UI import and use it for execution. See the
@@ -966,7 +1107,7 @@ A/B/C fixtures execute through real compiled handlers and bounded child pipes.
 Updates wait for accepted work and owned processes, then back up and migrate;
 uncertain commits refuse admission and require recovery. CLI
 `dependencies unload-plan` and `dependencies calls` inspect metadata only.
-The twelve production built-ins still declare no services. G4 implementation
+The fifteen bundled prototype built-ins still declare no services. G4 implementation
 remains prototype; six real abnormal-drain fixtures have independent baseline
 evidence, while this integration and independent security approval remain pending. Signed installation,
 third-party isolation and real tool storage remain G5/G6.

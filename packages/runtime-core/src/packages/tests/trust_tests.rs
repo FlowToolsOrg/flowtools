@@ -11,6 +11,7 @@ use std::{
 };
 use zip::{write::SimpleFileOptions, CompressionMethod, ZipWriter};
 
+mod held_tests;
 mod recovery_tests;
 
 fn manager(fixture: &Fixture) -> PackageTrustStore {

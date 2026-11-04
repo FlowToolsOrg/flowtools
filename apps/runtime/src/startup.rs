@@ -93,7 +93,11 @@ pub fn dispatch(args: &[String]) -> Option<Result<(), &'static str>> {
     if args.len() != 2
         || !matches!(
             args[0].as_str(),
-            "--ensure-runtime" | "--endpoint" | "--desktop-bootstrap" | "--manager-bootstrap"
+            "--ensure-runtime"
+                | "--start-runtime"
+                | "--endpoint"
+                | "--desktop-bootstrap"
+                | "--manager-bootstrap"
         )
     {
         return None;
@@ -113,7 +117,7 @@ pub fn dispatch(args: &[String]) -> Option<Result<(), &'static str>> {
             );
             return Ok(());
         }
-        if args[0] == "--ensure-runtime" {
+        if matches!(args[0].as_str(), "--ensure-runtime" | "--start-runtime") {
             let _lock = lock(&pipe, &sid)?;
             if !present(&pipe) {
                 let exe = std::env::current_exe().map_err(|_| "SETUP_REQUIRED")?;
@@ -122,7 +126,11 @@ pub fn dispatch(args: &[String]) -> Option<Result<(), &'static str>> {
                     .args([
                         "--profile",
                         path.to_str().ok_or("SETUP_REQUIRED")?,
-                        "--cold-start",
+                        if args[0] == "--start-runtime" {
+                            "--serve"
+                        } else {
+                            "--cold-start"
+                        },
                     ])
                     .creation_flags(0x08000000)
                     .env_clear()

@@ -8,6 +8,13 @@
 
 ## 背景
 
+2026-11-04 的 G7 固定 T1 入口将本地用户确认转成一次有时限的文件 handle /
+工具 lock-action grant；原 plan、输入内容/身份及不可变 tool pin 共同约束效果。
+本地原型 quorum 签名与 exact archive/manifest policy 独立于仍为空的正式
+`REVIEWED_TOOLS`，不得当成独立安全/许可证批准。文件日志未知时保留回执，
+媒体发布未知时保留 staging/原输入并拒绝重放；恢复后不续借旧授权。
+见 [实际交付](../validation/g7-functional-delivery.md)。
+
 当前权限粒度是 `fs/network/storage/db/native` 等字符串，SDK 注入能力来自
 manifest；Desktop adapter 提供 raw SQL 和通用 invoke。目录解析与数据库
 记录不具备包准入的完整性或授权含义。具体入口见
@@ -47,6 +54,23 @@ scope 或变更 publisher/hash 时重新审查与征求授权，不能凭相同 
 `..` 检查或先 canonicalize 后重新按字符串打开不足以解决竞争。Windows drive、
 UNC、ADS、reparse point、大小写和符号链接必须进入恶意 fixture。
 网络 CSP 只作纵深防御，不能替代 broker 出站策略或用户 grant。
+
+2026-11-02 P2.8c1 prototype：已通过普通当前 floor、实际 native prepare 和
+完整授权的单次在途调用可持有内存 continuity；只允许原已知 descriptor 因
+后续版本 floor 前进而续接，普通准入/新调用仍拒绝旧版本。凭据绑定实际 writer、
+DB/恢复代次、原 lease 与具体 run/consumer/action/UUID/epoch/deadline；
+不是 rollback flag 或新 grant。原签名/字节、根/撤销/有效期、每效果当前授权
+与排空仍需验证，重开/恢复不能重建凭据。当前实现及验证状态见
+[有限续接](../validation/g6-live-tool-continuation.md)，不据此关闭 SEC 项或 G6。
+
+2026-11-01 P2.8b4 补充：`ToolLock` 的精确 scope key 是由 T0
+固定媒体 recipe 选择的声明/grant 槽，不是 G4 语义 digest 或执行身份。
+G4 digest 包含 Manifest 自身，不能令 Manifest 预先声明自己的最终 digest。
+进入效果前须另将该槽解析到当前任务锁中实际 consumer 的唯一工具 pin，
+并重新验证当前 signed ZIP、原 seal/实际文件、grant/epoch/期限及所有委托
+hop。固定槽不产生 wildcard、版本选择或第三方权限；返回借用上下文不能
+成为延迟许可，原生执行/输出发布仍待独立 adapter，见
+[当前准入范围](../validation/g6-tool-effect-admission.md)。
 
 冷启动、Host 后台驻留、开机自启、调度触发与业务资源权限分开。
 supportsColdStart 声明只表示命令无需界面；Host bootstrap policy 只允许启动受管
@@ -241,3 +265,28 @@ Cascade disable requires the complete current plan confirmation and persists
 through restart. Old locks/catalogs/backups remain available for controlled recovery.
 Signed artifact installation, filesystem/database transaction recovery and tool GC
 remain G5/G6. See [evidence](../validation/g4-service-calls.md).
+
+### G7 P3.1a1 native shell boundary
+
+The native tray/global shortcut only restore Desktop. Second-instance arguments
+are never command requests. Explicit OS startup registration creates no Runtime
+cold-start policy, unattended approval or plugin grant; debug/fixture builds deny
+it. Desktop exit never dispatches Host Stop. This additive Host prototype leaves
+the package/capability policy unchanged; see
+[shell scope and pending acceptance](../validation/g7-desktop-shell.md).
+
+Webview capabilities retain the seven non-menu/tray core defaults explicitly;
+they no longer inherit native menu/tray mutation from `core:default`. Real Tauri
+IPC rejection tests cover spoofed menus, recovery-tray removal and startup/
+shortcut operations. No new permission is granted.
+
+P3.1a2's bounded Desktop appearance record selects only system/light/dark UI.
+It cannot select plugin resources, native capabilities, Runtime policy or grants.
+No package/Manifest, IPC, CSP or permission change is introduced; see
+[preference scope](../validation/g7-desktop-preferences.md).
+
+2026-11-02 P2.8c3 prototype：固定合成 PCM 通过原普通授权 WAV actor 与
+独立 probe 后，还须逐样本匹配、实际进程/Job 排空与普通 current-floor
+复查，才能形成有限健康观察。观察不是版本激活、rollback consent、用户
+文件授权或后续执行许可；实际 Core/候选检查状态见
+[固定健康检查](../validation/g6-native-tool-health.md)，独立安全批准不变。

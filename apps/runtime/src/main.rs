@@ -1,5 +1,6 @@
 #[cfg(any(feature = "standalone", test))]
 mod bundle;
+mod notification;
 #[cfg(windows)]
 mod process_job;
 #[cfg(windows)]

@@ -134,6 +134,7 @@ test('all real command artifacts run in a consumer with no React, GUI or source 
         const ctx={env:{pluginId:fixture.id,pluginType:'app',platform:'unknown',mode:'test'},
           ui:{toast(){},openPanel(){},closePanel(){}},signal:new AbortController().signal,log(){},utils:{now:Date.now},
           storage:{get:key=>values.get(key),set:(key,value)=>{writes.push(key);values.set(key,value)}},
+          media:{run:async planId=>{assert.equal(planId,'00000000-0000-4000-8000-000000000001');return structuredClone(fixture.expected.value.result)}},
           request:async input=>{assert.equal(input,'https://latency.fixture.invalid/');requests.push(input);return new Response('fixture')}};
         const manifest=manifests.find(item=>item.id===fixture.id);
         const target={hostVersion:'0.1.0',sdkVersion:'0.0.0',platform:'windows',arch:'x64'};
@@ -147,7 +148,7 @@ test('all real command artifacts run in a consumer with no React, GUI or source 
         const cancelled=await executeManifestCommand(manifest,'run',plugin,fixture.input,ctx,target,{signal:abort.signal});
         assert.equal(cancelled.error.code,'ABORTED');
       }
-      console.log('12 real command artifacts: no React/UI/source; actual outputs, schema rejection and abort passed');
+      console.log('15 real command artifacts: no React/UI/source; actual outputs, schema rejection and abort passed');
     `
     )
     const child = Bun.spawn(['node', join(root, 'probe.mjs')], {
@@ -162,7 +163,7 @@ test('all real command artifacts run in a consumer with no React, GUI or source 
     ])
     expect(stderr).toBe('')
     expect(code).toBe(0)
-    expect(stdout).toContain('12 real command artifacts')
+    expect(stdout).toContain('15 real command artifacts')
   } finally {
     const canonical = realpathSync(root)
     expect(dirname(canonical)).toBe(realpathSync(tmpdir()))

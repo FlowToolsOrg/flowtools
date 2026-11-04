@@ -1,0 +1,15 @@
+{
+  "identifier": "com.flowtools.shell-validation-20261015",
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "FlowTools shell validation - test data only",
+        "width": 1000,
+        "height": 720,
+        "visible": true,
+        "zoomHotkeysEnabled": true
+      }
+    ]
+  }
+}

@@ -1,3 +1,7 @@
+#[cfg(windows)]
+use crate::packages::tools::install::leases::{
+    self, PreparedArtifacts, StoredToolLease, ToolAuthority, ToolLease,
+};
 use crate::{
     broker::{BrokerSession, CapabilityBroker, CapabilityOperation, CommandIdentity, Grant, Scope},
     catalog::{digest, BuiltinCatalog},
@@ -13,6 +17,39 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, HashMap};
 use uuid::Uuid;
+
+#[cfg(windows)]
+pub use crate::packages::tools::install::leases::AdmittedMediaTool;
+#[cfg(windows)]
+pub use media::{CompletedAudio, MediaAudioHandle, MediaAudioState};
+#[cfg(windows)]
+pub use media::{CompletedVideo, MediaVideoHandle, MediaVideoState};
+#[cfg(windows)]
+pub use media::{MediaConversionProgress, MediaConversionStage};
+#[cfg(windows)]
+pub use media::{MediaInspectionHandle, MediaInspectionState};
+#[cfg(windows)]
+pub use media::{ToolHealthHandle, ToolHealthObservation, ToolHealthState};
+
+#[cfg(windows)]
+#[path = "runtime_media.rs"]
+mod media;
+
+#[path = "runtime_provider_cohorts.rs"]
+mod provider_cohorts;
+#[cfg(windows)]
+#[path = "runtime_tool_queue_discard.rs"]
+mod tool_queue_discard;
+#[cfg(windows)]
+pub use tool_queue_discard::QueuedToolDiscardPlan;
+#[path = "runtime_scheduling.rs"]
+mod scheduling;
+#[path = "runtime_service_journal.rs"]
+mod service_journal;
+#[cfg(windows)]
+#[path = "runtime_user_media.rs"]
+mod user_media;
+pub use provider_cohorts::ProviderCohortPlan;
 
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -36,6 +73,11 @@ struct Session {
     connection: String,
     caller: String,
 }
+struct PlannedDependencies {
+    lock: DependencyLock,
+    #[cfg(windows)]
+    artifacts: Option<PreparedArtifacts>,
+}
 struct Job {
     snapshot: JobSnapshot,
     owner_connection: String,
@@ -49,6 +91,30 @@ struct Job {
     idempotency_key: String,
     dependency_lock: Option<DependencyLock>,
     service_calls: Vec<ServiceCallDiagnostic>,
+    // Digest of the last exact committed bytes, held only in this actor. Unknown SQL changes
+    // cannot be overwritten by a later cached transition or lease release.
+    durable_metadata: std::cell::RefCell<Option<String>>,
+    #[cfg(windows)]
+    tool_lease: Option<ToolLease>,
+    #[cfg(windows)]
+    native_inspections: Vec<media::StoredInspection>,
+    #[cfg(windows)]
+    native_audio: Vec<media::audio::StoredAudio>,
+    #[cfg(windows)]
+    native_video: Vec<media::audio::StoredAudio>,
+}
+fn retains_tool_artifacts(job: &Job) -> bool {
+    #[cfg(windows)]
+    {
+        job.tool_lease
+            .as_ref()
+            .is_some_and(|lease| lease.stored().retained())
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = job;
+        false
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -67,8 +133,31 @@ struct StoredJob {
     dependency_lock: Option<DependencyLock>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     service_calls: Vec<ServiceCallDiagnostic>,
+    #[cfg(windows)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    tool_artifacts: Option<StoredToolLease>,
+    #[cfg(windows)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    native_inspections: Vec<media::StoredInspection>,
+    #[cfg(windows)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    native_audio: Vec<media::audio::StoredAudio>,
+    #[cfg(windows)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    native_video: Vec<media::audio::StoredAudio>,
 }
 impl StoredJob {
+    #[cfg(windows)]
+    fn validate_tool_artifacts(&self) -> Result<(), ErrorCode> {
+        media::inspection::validate_stored(self)?;
+        media::audio::validate_stored(self)?;
+        match (&self.tool_artifacts, &self.dependency_lock) {
+            (Some(lease), Some(lock)) => lease.validate(&self.snapshot, lock),
+            (None, Some(lock)) if lock.tools.is_empty() => Ok(()),
+            (None, None) => Ok(()),
+            _ => Err(ErrorCode::StoreCorrupt),
+        }
+    }
     fn from_job(job: &Job) -> Self {
         let mut snapshot = job.snapshot.clone();
         if let Some(ref mut result) = snapshot.result {
@@ -88,8 +177,62 @@ impl StoredJob {
             events: job.events.clone(),
             dependency_lock: job.dependency_lock.clone(),
             service_calls: job.service_calls.clone(),
+            #[cfg(windows)]
+            tool_artifacts: job.tool_lease.as_ref().map(|lease| lease.stored().clone()),
+            #[cfg(windows)]
+            native_inspections: job.native_inspections.clone(),
+            #[cfg(windows)]
+            native_audio: job.native_audio.clone(),
+            #[cfg(windows)]
+            native_video: job.native_video.clone(),
         }
     }
+}
+fn persist_stored_job(
+    store: &DataStore,
+    stored: &StoredJob,
+    expected: Option<&str>,
+    durable: &std::cell::RefCell<Option<String>>,
+) -> Result<(), ErrorCode> {
+    let value = serde_json::to_value(stored).map_err(|_| ErrorCode::StorageFailed)?;
+    #[cfg(windows)]
+    if stored.tool_artifacts.is_some() {
+        let previous = durable.borrow().clone();
+        let committed = leases::persist_job(
+            store,
+            &stored.snapshot.run_id,
+            &value,
+            expected,
+            previous.as_deref(),
+        )?;
+        durable.replace(Some(committed));
+        return Ok(());
+    }
+    #[cfg(not(windows))]
+    let _ = (expected, durable);
+    store.save_job(&stored.snapshot.run_id, &value)
+}
+// Strict read-only retention for T0 package/image cleanup. Corrupt rows block
+// cleanup; reading historical roots never creates a runnable lease or grant.
+#[cfg(windows)]
+pub(crate) fn retained_tool_leases(store: &DataStore) -> Result<Vec<StoredToolLease>, ErrorCode> {
+    let mut leases = Vec::new();
+    for value in store.load_jobs()? {
+        let stored: StoredJob =
+            serde_json::from_value(value).map_err(|_| ErrorCode::StoreCorrupt)?;
+        if stored.format_version != 1
+            || stored.snapshot.format_version != 1
+            || uuid::Uuid::parse_str(&stored.snapshot.run_id).is_err()
+            || !valid_key(&stored.idempotency_key)
+        {
+            return Err(ErrorCode::StoreCorrupt);
+        }
+        stored.validate_tool_artifacts()?;
+        if let Some(lease) = stored.tool_artifacts.filter(StoredToolLease::retained) {
+            leases.push(lease);
+        }
+    }
+    Ok(leases)
 }
 
 /// Payload is transient runner input, never serializable diagnostics/history.
@@ -124,6 +267,7 @@ pub struct RuntimeCore {
     sessions: HashMap<String, Session>,
     catalog: BuiltinCatalog,
     jobs: BTreeMap<String, Job>,
+    user_media_stages: BTreeMap<String, String>,
     keys: HashMap<(String, String), String>,
     pending: HashMap<String, RunSpec>,
     broker: CapabilityBroker,
@@ -137,9 +281,37 @@ pub struct RuntimeCore {
     service_invocations: HashMap<String, ServiceInvocation>,
     retained_catalogs: Vec<BuiltinCatalog>,
     provider_candidates: HashMap<String, BuiltinCatalog>,
+    provider_cohorts: HashMap<String, provider_cohorts::Candidate>,
+    // Exact bytes from the last confirmed journal commit, never a durable grant.
+    provider_journal: Option<String>,
+    #[cfg(windows)]
+    tools: Option<ToolAuthority>,
+    #[cfg(windows)]
+    native_calls: HashMap<String, media::NativeCall>,
+    #[cfg(windows)]
+    audio_calls: HashMap<String, media::audio::AudioCall>,
 }
 
 impl RuntimeCore {
+    fn file_plan_view(&self, id: &str, revision: u32) -> Result<Outcome, ErrorCode> {
+        use crate::file_workflows::{
+            store::{execution, FilePlanStore},
+            FilePlanView,
+        };
+        let record = FilePlanStore::list(&self.data)?
+            .into_iter()
+            .find(|p| p.id == id)
+            .ok_or(ErrorCode::InvalidRequest)?;
+        let preview = FilePlanStore::preview(&self.data, id, revision)?;
+        let execution = execution::records(&self.data)?
+            .into_iter()
+            .find(|p| p.plan_id == id);
+        Ok(Outcome::FilePlan(Box::new(FilePlanView {
+            record,
+            preview,
+            execution,
+        })))
+    }
     // Host binds credentials to caller identities. Neither comes from the wire payload.
     pub fn validation(cli_token: String, desktop_token: String) -> Self {
         Self {
@@ -151,6 +323,7 @@ impl RuntimeCore {
             sessions: HashMap::new(),
             catalog: BuiltinCatalog::embedded(),
             jobs: BTreeMap::new(),
+            user_media_stages: BTreeMap::new(),
             keys: HashMap::new(),
             pending: HashMap::new(),
             broker: CapabilityBroker::default(),
@@ -164,6 +337,14 @@ impl RuntimeCore {
             service_invocations: HashMap::new(),
             retained_catalogs: Vec::new(),
             provider_candidates: HashMap::new(),
+            provider_cohorts: HashMap::new(),
+            provider_journal: None,
+            #[cfg(windows)]
+            tools: None,
+            #[cfg(windows)]
+            native_calls: HashMap::new(),
+            #[cfg(windows)]
+            audio_calls: HashMap::new(),
         }
     }
 
@@ -190,46 +371,112 @@ impl RuntimeCore {
     /// Build-owned T0 snapshots only. No wire method can import a catalog.
     pub fn managed_catalog(
         tokens: HashMap<String, String>,
-        mut store: DataStore,
+        store: DataStore,
         management_only: bool,
         cold_started: bool,
         catalog: BuiltinCatalog,
     ) -> Result<Self, ErrorCode> {
-        let journal: Option<String> = store
-            .connection
-            .query_row(
-                "SELECT value FROM core_metadata WHERE key='service-catalog-state-v1'",
-                [],
-                |row| row.get(0),
-            )
-            .optional()
-            .map_err(|_| ErrorCode::StorageFailed)?;
-        let disabled = if let Some(text) = journal {
-            let journal: ProviderJournal =
-                serde_json::from_str(&text).map_err(|_| ErrorCode::StoreCorrupt)?;
-            if journal.format_version != 1
-                || journal.disabled.len() > 128
-                || uuid::Uuid::parse_str(&journal.backup_id).is_err()
-            {
-                return Err(ErrorCode::StoreCorrupt);
-            }
-            if journal.phase != "committed"
-                || journal.pending_catalog.is_some()
-                || journal.active_catalog != catalog.snapshot_digest()
-            {
-                return Err(ErrorCode::RecoveryPending);
-            }
-            if journal.disabled.iter().any(|identity| {
-                !catalog
-                    .list()
-                    .any(|(id, m)| id == &identity.id && m["publisher"] == identity.publisher)
-            }) {
-                return Err(ErrorCode::StoreCorrupt);
-            }
-            journal.disabled
-        } else {
-            Vec::new()
+        Self::managed_catalog_inner(
+            tokens,
+            store,
+            management_only,
+            cold_started,
+            catalog,
+            |core| core.refresh_service_catalog(),
+        )
+    }
+    /// Explicit build-owned T0 wiring only. Ordinary Runtime Hosts use managed()
+    /// and never select pins, reviewed builds or a tool authority from IPC/flags.
+    /// This constructor does not install, activate or authorize native execution.
+    #[cfg(windows)]
+    pub fn managed_tool_catalog(
+        tokens: HashMap<String, String>,
+        store: DataStore,
+        management_only: bool,
+        cold_started: bool,
+        catalog: BuiltinCatalog,
+        trust: crate::packages::trust::PackageTrustStore,
+    ) -> Result<Self, ErrorCode> {
+        Self::managed_catalog_inner(
+            tokens,
+            store,
+            management_only,
+            cold_started,
+            catalog,
+            move |core| {
+                core.tools = Some(ToolAuthority::new(trust));
+                core.refresh_service_catalog()
+            },
+        )
+    }
+    /// Actual fixed Windows host. A restored trust scope may still manage
+    /// permissions and run tool-free jobs. Its catalog graph uses declarations,
+    /// while every tool acceptance/restore/effect retains the original authority.
+    #[cfg(windows)]
+    pub fn managed_builtin(
+        tokens: HashMap<String, String>,
+        mut store: DataStore,
+        management_only: bool,
+        cold_started: bool,
+    ) -> Result<Self, ErrorCode> {
+        let trust = match crate::packages::tools::builtin::ensure_installed(&mut store) {
+            Ok(trust) => trust,
+            Err(ErrorCode::RecoveryPending) => crate::packages::tools::builtin::trust()
+                .map_err(|_| ErrorCode::DependencyArtifactMismatch)?,
+            Err(code) => return Err(code),
         };
+        let catalog = BuiltinCatalog::embedded_with_media();
+        let declaration = catalog.builtin_media_declaration()?;
+        Self::managed_catalog_inner(
+            tokens,
+            store,
+            management_only,
+            cold_started,
+            catalog,
+            move |core| {
+                core.tools = Some(ToolAuthority::new(trust));
+                core.services
+                    .set_catalog_with_tools(&core.catalog, &[declaration])
+            },
+        )
+    }
+    #[cfg(all(windows, test))]
+    pub(crate) fn managed_fixture_tool_catalog(
+        tokens: HashMap<String, String>,
+        store: DataStore,
+        management_only: bool,
+        catalog: BuiltinCatalog,
+        trust: crate::packages::trust::PackageTrustStore,
+        clock: std::sync::Arc<std::sync::atomic::AtomicU64>,
+    ) -> Result<Self, ErrorCode> {
+        Self::managed_catalog_inner(
+            tokens,
+            store,
+            management_only,
+            false,
+            catalog,
+            move |core| {
+                core.tools = Some(ToolAuthority::fixture(trust, clock));
+                core.refresh_service_catalog()
+            },
+        )
+    }
+    #[cfg(all(windows, test))]
+    pub(crate) fn with_tool_fixture_store<T>(
+        &mut self,
+        action: impl FnOnce(&mut DataStore) -> T,
+    ) -> T {
+        action(&mut self.data)
+    }
+    fn managed_catalog_inner(
+        tokens: HashMap<String, String>,
+        mut store: DataStore,
+        management_only: bool,
+        cold_started: bool,
+        catalog: BuiltinCatalog,
+        setup: impl FnOnce(&mut Self) -> Result<(), ErrorCode>,
+    ) -> Result<Self, ErrorCode> {
+        let (journal, disabled) = service_journal::load(&store.connection, &catalog)?;
         let policy =
             PolicyStore::load_snapshot(&mut store, &catalog.snapshot_digest(), catalog.clone())?;
         if cold_started && !policy.cold_start {
@@ -239,7 +486,8 @@ impl RuntimeCore {
             Self::validation("unused-cli".into(), "unused-desktop".into()).with_data_store(store);
         core.tokens = tokens;
         core.catalog = catalog;
-        core.services.set_catalog(&core.catalog)?;
+        core.provider_journal = journal;
+        setup(&mut core)?;
         core.services.restore_disabled(disabled);
         core.management_only = management_only;
         core.cold_started = cold_started;
@@ -253,24 +501,84 @@ impl RuntimeCore {
         core.policy = Some(policy);
         core.private_jobs = core.data.profile().map(PrivateJobs::open).transpose()?;
         core.restore_jobs()?;
+        // Claimed-but-unreported attempts are never blindly replayed on restart.
+        // Restore/copy mismatch blocks scheduling while ordinary recovery remains usable.
+        if let Err(code) = crate::scheduling::store::ScheduleStore::recover(&mut core.data) {
+            if code != ErrorCode::RecoveryPending {
+                return Err(code);
+            }
+        }
         Ok(core)
     }
 
     fn persist_job(&self, job: &Job) -> Result<(), ErrorCode> {
+        self.persist_job_inner(job, None)
+    }
+    fn persist_job_inner(&self, job: &Job, expected: Option<&str>) -> Result<(), ErrorCode> {
         if self.private_jobs.is_some() {
-            self.data.save_job(
-                &job.snapshot.run_id,
-                &serde_json::to_value(StoredJob::from_job(job))
-                    .map_err(|_| ErrorCode::StorageFailed)?,
+            persist_stored_job(
+                &self.data,
+                &StoredJob::from_job(job),
+                expected,
+                &job.durable_metadata,
             )?;
         }
         Ok(())
+    }
+    fn refresh_service_catalog(&mut self) -> Result<(), ErrorCode> {
+        match self.services.set_catalog(&self.catalog) {
+            Ok(()) => Ok(()),
+            Err(code) => {
+                #[cfg(windows)]
+                if let Some(tools) = self.tools.as_ref() {
+                    return tools.set_catalog(&mut self.data, &mut self.services, &self.catalog);
+                }
+                Err(code)
+            }
+        }
+    }
+    fn plan_catalog(
+        &mut self,
+        catalog: &BuiltinCatalog,
+        ids: &[String],
+    ) -> Result<crate::dependencies::DependencyPlan, ErrorCode> {
+        match ServiceRegistry::dependency_plan_with_tools(catalog, ids, &[]) {
+            Ok(lock) => Ok(lock),
+            Err(code) => {
+                #[cfg(windows)]
+                if let Some(tools) = self.tools.as_ref() {
+                    return tools.plan(&mut self.data, catalog, ids);
+                }
+                Err(code)
+            }
+        }
+    }
+    fn plan_job_dependencies(&mut self, id: &str) -> Result<PlannedDependencies, ErrorCode> {
+        let ids = [id.to_owned()];
+        match ServiceRegistry::plan(&self.catalog, &ids) {
+            Ok(lock) => Ok(PlannedDependencies {
+                lock,
+                #[cfg(windows)]
+                artifacts: None,
+            }),
+            Err(code) => {
+                #[cfg(windows)]
+                if let Some(tools) = self.tools.as_mut() {
+                    let artifacts = tools.prepare(&mut self.data, &self.catalog, &ids)?;
+                    return Ok(PlannedDependencies {
+                        lock: artifacts.lock().clone(),
+                        artifacts: Some(artifacts),
+                    });
+                }
+                Err(code)
+            }
+        }
     }
     fn restore_jobs(&mut self) -> Result<(), ErrorCode> {
         if self.private_jobs.is_none() {
             return Ok(());
         }
-        for value in self.data.load_jobs()? {
+        for (value, durable_metadata) in self.data.load_job_records()? {
             let mut stored: StoredJob =
                 serde_json::from_value(value).map_err(|_| ErrorCode::StoreCorrupt)?;
             if stored.format_version != 1
@@ -278,6 +586,16 @@ impl RuntimeCore {
                 || !valid_key(&stored.idempotency_key)
             {
                 return Err(ErrorCode::StoreCorrupt);
+            }
+            #[cfg(windows)]
+            stored.validate_tool_artifacts()?;
+            #[cfg(windows)]
+            if let (Some(tools), Some(lease)) =
+                (self.tools.as_ref(), stored.tool_artifacts.as_ref())
+            {
+                if lease.retained() {
+                    tools.validate_retained(&mut self.data, lease)?;
+                }
             }
             if let Some(lock) = &stored.dependency_lock {
                 if lock
@@ -378,6 +696,18 @@ impl RuntimeCore {
                     call.failure_code = Some(ErrorCode::ExecutionInterrupted);
                 }
             }
+            #[cfg(windows)]
+            for inspection in &mut stored.native_inspections {
+                inspection.interrupt();
+            }
+            #[cfg(windows)]
+            for audio in &mut stored.native_audio {
+                audio.interrupt();
+            }
+            #[cfg(windows)]
+            for video in &mut stored.native_video {
+                video.interrupt();
+            }
             let key = (
                 stored.snapshot.root_caller.clone(),
                 stored.idempotency_key.clone(),
@@ -400,11 +730,23 @@ impl RuntimeCore {
                     broker_session: None,
                     dependency_lock: stored.dependency_lock,
                     service_calls: stored.service_calls,
+                    durable_metadata: std::cell::RefCell::new(Some(durable_metadata)),
+                    #[cfg(windows)]
+                    tool_lease: stored.tool_artifacts.map(ToolLease::dormant),
+                    #[cfg(windows)]
+                    native_inspections: stored.native_inspections,
+                    #[cfg(windows)]
+                    native_audio: stored.native_audio,
+                    #[cfg(windows)]
+                    native_video: stored.native_video,
                 },
             );
             self.persist_job(&self.jobs[&run])?;
             let job = &self.jobs[&run];
             if job.snapshot.state.terminal() {
+                if retains_tool_artifacts(job) {
+                    continue;
+                }
                 if now() >= job.accepted_at + 86_400_000.0 {
                     self.private_jobs.as_ref().unwrap().remove(&run, "output")?;
                 }
@@ -415,22 +757,41 @@ impl RuntimeCore {
                 continue;
             }
             let snapshot = job.snapshot.clone();
+            let background = job.background;
+            #[cfg(windows)]
+            let no_native_attempts = job.native_inspections.is_empty()
+                && job.native_audio.is_empty()
+                && job.native_video.is_empty();
+            let action_digest = job.action_digest.clone();
+            let dependency_lock = job.dependency_lock.clone();
+            #[cfg(windows)]
+            let stored_artifacts = job.tool_lease.as_ref().map(|lease| lease.stored().clone());
             let catalog = self.catalog.clone();
             let contract = catalog.command(&snapshot.plugin_id, &snapshot.command_id);
             let authorization = contract.and_then(|(manifest, command)| {
                 let identity =
                     CommandIdentity::from_manifest(&snapshot.root_caller, manifest, command);
-                self.managed_authorization(&identity, job.background)?;
-                if digest(manifest) != snapshot.package_digest
-                    || self.broker.authorize_command(&identity, command, now())?
-                        != snapshot.grant_epoch
-                {
+                if digest(manifest) != snapshot.package_digest {
                     return Err(ErrorCode::GrantRevoked);
                 }
+                self.broker.reauthorize_accepted(
+                    &identity,
+                    command,
+                    snapshot.grant_epoch,
+                    now(),
+                )?;
+                self.managed_authorization(&identity, background)
+                    .map_err(|code| {
+                        if code == ErrorCode::ApprovalRequired && snapshot.grant_epoch != 0 {
+                            ErrorCode::GrantRevoked
+                        } else {
+                            code
+                        }
+                    })?;
                 if snapshot.deadline <= now() {
                     return Err(ErrorCode::Timeout);
                 }
-                if let Some(lock) = &job.dependency_lock {
+                if let Some(lock) = &dependency_lock {
                     for pin in &lock.packages {
                         if !catalog.list().any(|(id, m)| {
                             id == &pin.id
@@ -449,8 +810,26 @@ impl RuntimeCore {
             let retryable = matches!(snapshot.state, JobState::Accepted | JobState::Queued)
                 || (snapshot.state == JobState::Running
                     && snapshot.plugin_id == "plugin-base64-encoder");
-            if job.background && retryable && authorization.is_ok() {
-                if let Some(lock) = &job.dependency_lock {
+            #[cfg(windows)]
+            let retryable = retryable && no_native_attempts;
+            if background && retryable && authorization.is_ok() {
+                #[cfg(windows)]
+                if let Some(stored) = stored_artifacts {
+                    let restored = match (self.tools.as_mut(), dependency_lock.as_ref()) {
+                        (Some(tools), Some(lock)) => {
+                            tools.restore(&mut self.data, &snapshot, lock, &stored)
+                        }
+                        _ => Err(ErrorCode::DependencyArtifactMismatch),
+                    };
+                    match restored {
+                        Ok(lease) => self.jobs.get_mut(&run).unwrap().tool_lease = Some(lease),
+                        Err(code) => {
+                            self.finish_internal(&run, Err(code), Some(JobState::Interrupted));
+                            continue;
+                        }
+                    }
+                }
+                if let Some(lock) = &dependency_lock {
                     self.services.accept(
                         &run,
                         lock.clone(),
@@ -466,8 +845,8 @@ impl RuntimeCore {
                 )?;
                 if prepared != input
                     || digest(
-                        &json!({"package":snapshot.package_digest,"command":snapshot.command_id,"lock":snapshot.dependency_lock,"input":input,"background":job.background,"deadline":snapshot.deadline}),
-                    ) != job.action_digest
+                        &json!({"package":snapshot.package_digest,"command":snapshot.command_id,"lock":snapshot.dependency_lock,"input":input,"background":background,"deadline":snapshot.deadline}),
+                    ) != action_digest
                 {
                     return Err(ErrorCode::StoreCorrupt);
                 }
@@ -506,10 +885,16 @@ impl RuntimeCore {
                 }
             }
         }
+        let mut retained: std::collections::HashSet<String> = self.jobs.keys().cloned().collect();
+        retained.extend(crate::scheduling::store::ScheduleStore::retained_input_ids(
+            &self.data,
+        )?);
+        retained
+            .extend(crate::file_workflows::store::FilePlanStore::retained_input_ids(&self.data)?);
         self.private_jobs
             .as_ref()
             .unwrap()
-            .remove_orphans(&self.jobs.keys().cloned().collect())?;
+            .remove_orphans(&retained)?;
         Ok(())
     }
     pub fn pending_runs(&self) -> Vec<String> {
@@ -674,6 +1059,22 @@ impl RuntimeCore {
                 | Call::Policy(_)
                 | Call::PolicyImport(_)
                 | Call::Stop
+                | Call::ScheduleCreate(_)
+                | Call::ScheduleCancel(_)
+                | Call::ScheduleReplace(_)
+                | Call::ScheduleRecovery
+                | Call::ScheduleDiscard(_)
+                | Call::FilePlanCreate(_)
+                | Call::FilePlans
+                | Call::FilePlanPreview(_)
+                | Call::FilePlanCommit(_)
+                | Call::FilePlanUndo(_)
+                | Call::FilePlanCancel(_)
+                | Call::FilePlanRecovery
+                | Call::FilePlanDiscard(_)
+                | Call::MediaPlanCreate(_)
+                | Call::MediaPlanPreview(_)
+                | Call::MediaStart(_)
         ) && !management
         {
             return Err(ErrorCode::SessionInvalid);
@@ -690,7 +1091,164 @@ impl RuntimeCore {
         {
             return Err(ErrorCode::ApprovalRequired);
         }
+        #[cfg(windows)]
+        let request_method_undo = matches!(&request.call, Call::FilePlanUndo(_));
         match request.call {
+            Call::FilePlanRecovery => {
+                crate::file_workflows::store::FilePlanStore::recovery(&self.data)
+                    .map(Outcome::FileRecovery)
+            }
+            Call::FilePlanDiscard(key) => {
+                crate::file_workflows::store::FilePlanStore::discard_restored(
+                    &mut self.data,
+                    &key.challenge,
+                )
+                .map(Outcome::FilePlans)
+            }
+            Call::MediaPlanCreate(create) => {
+                #[cfg(windows)]
+                {
+                    crate::file_workflows::media_io::create(&mut self.data, create)
+                        .map(Outcome::MediaPlan)
+                }
+                #[cfg(not(windows))]
+                {
+                    let _ = create;
+                    Err(ErrorCode::CapabilityUndeclared)
+                }
+            }
+            Call::MediaPlanPreview(key) => {
+                crate::file_workflows::media_io::get(&self.data, &key.id).map(Outcome::MediaPlan)
+            }
+            Call::MediaStart(key) => {
+                #[cfg(windows)]
+                {
+                    self.start_user_media(connection, key).map(Outcome::Receipt)
+                }
+                #[cfg(not(windows))]
+                {
+                    let _ = key;
+                    Err(ErrorCode::CapabilityUndeclared)
+                }
+            }
+            Call::MediaProgress(key) => {
+                let job = self.jobs.get(&key.run_id).ok_or(ErrorCode::JobNotFound)?;
+                if job.snapshot.state == JobState::Running {
+                    self.check_run(&key.run_id)?;
+                }
+                let stage = if job.snapshot.state.terminal() {
+                    format!("{:?}", job.snapshot.state).to_ascii_lowercase()
+                } else {
+                    self.user_media_stages
+                        .get(&key.run_id)
+                        .cloned()
+                        .unwrap_or("queued".into())
+                };
+                Ok(Outcome::MediaProgress(
+                    crate::file_workflows::media_io::UserMediaProgress {
+                        run_id: key.run_id,
+                        stage,
+                    },
+                ))
+            }
+            Call::FilePlanCreate(create) => {
+                if create.directory.len() > 32768 {
+                    return Err(ErrorCode::InputInvalid);
+                }
+                let draft = crate::file_workflows::prepare_rename(
+                    std::path::Path::new(&create.directory),
+                    &create.prefix,
+                    self.data.profile().ok_or(ErrorCode::StorageFailed)?,
+                )?;
+                let record = crate::file_workflows::store::FilePlanStore::persist(
+                    &mut self.data,
+                    &create.request_key,
+                    draft,
+                )?;
+                self.file_plan_view(&record.id, record.revision)
+            }
+            Call::FilePlans => crate::file_workflows::store::FilePlanStore::list(&self.data)
+                .map(Outcome::FilePlans),
+            Call::FilePlanPreview(key) => self.file_plan_view(&key.id, key.revision),
+            Call::FilePlanCancel(key) => {
+                crate::file_workflows::store::FilePlanStore::cancel(
+                    &mut self.data,
+                    &key.id,
+                    key.revision,
+                )?;
+                crate::file_workflows::store::FilePlanStore::list(&self.data)
+                    .map(Outcome::FilePlans)
+            }
+            Call::FilePlanCommit(key) | Call::FilePlanUndo(key) => {
+                #[cfg(windows)]
+                {
+                    // The management session is bound to this connection/instance.
+                    // The single writer holds it through every exact-digest effect.
+                    let undo = request_method_undo;
+                    crate::file_workflows::store::execution::execute(
+                        &mut self.data,
+                        &key.id,
+                        key.revision,
+                        &key.digest,
+                        undo,
+                        || {
+                            if management {
+                                Ok(())
+                            } else {
+                                Err(ErrorCode::ApprovalRequired)
+                            }
+                        },
+                    )
+                    .map(Outcome::FileExecution)
+                }
+                #[cfg(not(windows))]
+                {
+                    let _ = key;
+                    Err(ErrorCode::CapabilityUndeclared)
+                }
+            }
+            Call::ToolInventory(query) => {
+                if self.policy.is_none() {
+                    return Err(ErrorCode::ApprovalRequired);
+                }
+                #[cfg(windows)]
+                if let Some(tools) = &self.tools {
+                    return tools
+                        .inventory(&mut self.data, &query)
+                        .map(Outcome::ToolInventory);
+                }
+                crate::tool_inventory::ToolInventoryPage::not_configured(&query)
+                    .map(Outcome::ToolInventory)
+            }
+            Call::ScheduleResolve(input) => {
+                crate::scheduling::time::resolve_time(input).map(Outcome::ScheduleTime)
+            }
+            Call::Schedules => {
+                if self.policy.is_none() {
+                    return Err(ErrorCode::ApprovalRequired);
+                }
+                Ok(Outcome::Schedules(
+                    crate::scheduling::store::ScheduleStore::list(&self.data)?,
+                ))
+            }
+            Call::ScheduleCreate(create) => self
+                .create_schedule(create)
+                .map(|record| Outcome::Schedule(Box::new(record))),
+            Call::ScheduleCancel(key) => self
+                .cancel_schedule(key)
+                .map(|record| Outcome::Schedule(Box::new(record))),
+            Call::ScheduleReplace(replace) => self
+                .replace_schedule(replace)
+                .map(|record| Outcome::Schedule(Box::new(record))),
+            Call::ScheduleRecovery => crate::scheduling::store::ScheduleStore::recovery(&self.data)
+                .map(Outcome::ScheduleRecovery),
+            Call::ScheduleDiscard(key) => {
+                crate::scheduling::store::ScheduleStore::discard_restored(
+                    &mut self.data,
+                    &key.challenge,
+                )
+                .map(Outcome::Schedules)
+            }
             Call::PolicyImport(import) => {
                 let policy = self.policy.as_mut().unwrap();
                 policy.import(&mut self.data, import)?;
@@ -785,9 +1343,6 @@ impl RuntimeCore {
                     .collect(),
             )),
             Call::DependencyPlan(request) => {
-                use crate::dependencies::{
-                    DependencyCatalog, DependencyIdentity, DependencyTarget,
-                };
                 if request.plugin_ids.is_empty() {
                     return Err(ErrorCode::DependencyInvalid);
                 }
@@ -807,44 +1362,9 @@ impl RuntimeCore {
                 {
                     return Err(ErrorCode::DependencyInvalid);
                 }
-                let manifests: Vec<_> = self.catalog.list().map(|(_, m)| m.clone()).collect();
-                let mut roots = Vec::new();
-                for id in request.plugin_ids {
-                    let manifest = manifests
-                        .iter()
-                        .find(|m| m["id"] == id)
-                        .ok_or(ErrorCode::DependencyMissing)?;
-                    roots.push(DependencyIdentity {
-                        publisher: manifest["publisher"]
-                            .as_str()
-                            .ok_or(ErrorCode::DependencyInvalid)?
-                            .into(),
-                        id,
-                    });
-                }
-                let platform = match std::env::consts::OS {
-                    "windows" => "windows",
-                    "macos" => "macos",
-                    "linux" => "linux",
-                    _ => return Err(ErrorCode::DependencyPlatformMismatch),
-                };
-                let arch = match std::env::consts::ARCH {
-                    "x86_64" => "x64",
-                    "aarch64" => "arm64",
-                    _ => return Err(ErrorCode::DependencyPlatformMismatch),
-                };
-                let catalog = DependencyCatalog::from_manifests(manifests, vec![])
-                    .map_err(ErrorCode::from)?;
+                let catalog = self.catalog.clone();
                 Ok(Outcome::DependencyPlan(
-                    catalog
-                        .resolve(
-                            &roots,
-                            &DependencyTarget {
-                                platform: platform.into(),
-                                arch: arch.into(),
-                            },
-                        )
-                        .map_err(ErrorCode::from)?,
+                    self.plan_catalog(&catalog, &request.plugin_ids)?,
                 ))
             }
             Call::ProviderUnloadPlan(key) => Ok(Outcome::ProviderChangePlan(
@@ -1090,9 +1610,8 @@ impl RuntimeCore {
         if !valid_key(&submit.idempotency_key) || !submit.deadline.is_finite() {
             return Err(ErrorCode::InvalidRequest);
         }
-        let (manifest, command) = self
-            .catalog
-            .command(&submit.plugin_id, &submit.command_id)?;
+        let catalog = self.catalog.clone();
+        let (manifest, command) = catalog.command(&submit.plugin_id, &submit.command_id)?;
         let identity = CommandIdentity::from_manifest(caller, manifest, command);
         self.managed_authorization(&identity, submit.background)?;
         let grant_epoch = self.broker.authorize_command(&identity, command, now())?;
@@ -1102,9 +1621,7 @@ impl RuntimeCore {
             submit.input,
             self.policy.is_some(),
         )?;
-        let (manifest, command) = self
-            .catalog
-            .command(&submit.plugin_id, &submit.command_id)?;
+        let (manifest, command) = catalog.command(&submit.plugin_id, &submit.command_id)?;
         let accepted_at = now();
         let package_digest = digest(manifest);
         let key = (caller.to_owned(), submit.idempotency_key.clone());
@@ -1113,14 +1630,32 @@ impl RuntimeCore {
             .keys
             .get(&key)
             .map(|run| self.jobs[run].snapshot.dependency_lock.clone());
-        let dependency_lock = if existing.is_none() {
-            Some(ServiceRegistry::plan(
-                &self.catalog,
-                std::slice::from_ref(&submit.plugin_id),
-            )?)
+        if existing.is_none() {
+            if submit.deadline <= accepted_at {
+                return Err(ErrorCode::Timeout);
+            }
+            if submit.deadline
+                > accepted_at + command["resources"]["timeoutMs"].as_f64().unwrap_or(0.0)
+            {
+                return Err(ErrorCode::InvalidRequest);
+            }
+            if self.jobs.len() >= 1024
+                || self
+                    .jobs
+                    .values()
+                    .filter(|job| !job.snapshot.state.terminal())
+                    .count()
+                    >= 128
+            {
+                return Err(ErrorCode::RuntimeBusy);
+            }
+        }
+        let planned = if existing.is_none() {
+            Some(self.plan_job_dependencies(&submit.plugin_id)?)
         } else {
             None
         };
+        let dependency_lock = planned.as_ref().map(|planned| planned.lock.clone());
         let lock_digest =
             existing.unwrap_or_else(|| dependency_lock.as_ref().unwrap().digest.clone());
         let action_digest = digest(
@@ -1133,29 +1668,17 @@ impl RuntimeCore {
             }
             return Ok(self.receipt(run_id));
         }
-        if submit.deadline <= accepted_at {
+        // Dependency IO may outlive an earlier approval or deadline. It does
+        // not extend the requested command budget or reuse a cached epoch.
+        let final_at = now();
+        if submit.deadline <= final_at {
             return Err(ErrorCode::Timeout);
         }
-        if submit.deadline > accepted_at + command["resources"]["timeoutMs"].as_f64().unwrap_or(0.0)
-        {
-            return Err(ErrorCode::InvalidRequest);
-        }
-        if self.jobs.len() >= 1024
-            || self
-                .jobs
-                .values()
-                .filter(|job| !job.snapshot.state.terminal())
-                .count()
-                >= 128
-        {
-            return Err(ErrorCode::RuntimeBusy);
-        }
+        self.broker
+            .reauthorize_accepted(&identity, command, grant_epoch, final_at)?;
+        self.managed_authorization(&identity, submit.background)?;
+        let accepted_at = final_at;
         let run_id = Uuid::new_v4().to_string();
-        self.services.accept(
-            &run_id,
-            dependency_lock.as_ref().unwrap().clone(),
-            command["resources"]["maxOutputBytes"].as_u64().unwrap_or(0) as usize,
-        )?;
         let snapshot = JobSnapshot {
             format_version: 1,
             run_id: run_id.clone(),
@@ -1177,30 +1700,63 @@ impl RuntimeCore {
             kind: "object".into(),
             size: input.as_object().map_or(0, |v| v.len() as u32),
         };
-        self.jobs.insert(
-            run_id.clone(),
-            Job {
-                snapshot,
-                owner_connection: connection.into(),
-                background: submit.background,
-                accepted_at,
-                started_at: accepted_at,
-                input_summary,
-                action_digest,
-                events: Vec::new(),
-                broker_session: None,
-                idempotency_key: submit.idempotency_key,
-                dependency_lock,
-                service_calls: Vec::new(),
-            },
-        );
+        #[cfg(windows)]
+        let (tool_lease, artifact_stamp) = match planned.and_then(|planned| planned.artifacts) {
+            Some(artifacts) => {
+                let stamp = artifacts.metadata_stamp().to_owned();
+                (Some(artifacts.bind(&snapshot)?), Some(stamp))
+            }
+            None => (None, None),
+        };
+        #[cfg(not(windows))]
+        let artifact_stamp: Option<String> = None;
+        let job = Job {
+            snapshot,
+            owner_connection: connection.into(),
+            background: submit.background,
+            accepted_at,
+            started_at: accepted_at,
+            input_summary,
+            action_digest,
+            events: Vec::new(),
+            broker_session: None,
+            idempotency_key: submit.idempotency_key,
+            dependency_lock,
+            service_calls: Vec::new(),
+            durable_metadata: std::cell::RefCell::new(None),
+            #[cfg(windows)]
+            tool_lease,
+            #[cfg(windows)]
+            native_inspections: Vec::new(),
+            #[cfg(windows)]
+            native_audio: Vec::new(),
+            #[cfg(windows)]
+            native_video: Vec::new(),
+        };
+        if retains_tool_artifacts(&job)
+            && serde_json::to_vec(&StoredJob::from_job(&job))
+                .map_err(|_| ErrorCode::StorageFailed)?
+                .len()
+                > 32_768
+        {
+            return Err(ErrorCode::BudgetExceeded);
+        }
+        self.services.accept(
+            &run_id,
+            job.dependency_lock.as_ref().unwrap().clone(),
+            command["resources"]["maxOutputBytes"].as_u64().unwrap_or(0) as usize,
+        )?;
+        self.jobs.insert(run_id.clone(), job);
         if let Some(ref payloads) = self.private_jobs {
             if let Err(error) = payloads.write(&run_id, "input", &input) {
                 self.jobs.remove(&run_id);
                 self.services.release_root(&run_id);
                 return Err(error);
             }
-            if self.persist_job(&self.jobs[&run_id]).is_err() {
+            if self
+                .persist_job_inner(&self.jobs[&run_id], artifact_stamp.as_deref())
+                .is_err()
+            {
                 // Do not assume an IO error proves absence of a durable record.
                 self.stopping = true;
                 return Err(ErrorCode::AcceptanceUnknown);
@@ -1263,10 +1819,10 @@ impl RuntimeCore {
             sequence: job.snapshot.sequence,
             state: next,
         });
-        let stored =
-            serde_json::to_value(StoredJob::from_job(job)).map_err(|_| ErrorCode::StorageFailed)?;
+        let stored = StoredJob::from_job(job);
         if self.private_jobs.is_some() {
-            if let Err(code) = self.data.save_job(run_id, &stored) {
+            if let Err(code) = persist_stored_job(&self.data, &stored, None, &job.durable_metadata)
+            {
                 job.snapshot = previous;
                 job.events.pop();
                 self.stopping = true;
@@ -1284,21 +1840,40 @@ impl RuntimeCore {
         if self.jobs[run_id].snapshot.state != JobState::Queued {
             return None;
         }
-        let snapshot = &self.jobs[run_id].snapshot;
+        let snapshot = self.jobs[run_id].snapshot.clone();
+        #[cfg(windows)]
+        if let Some(stored) = self.jobs[run_id]
+            .tool_lease
+            .as_ref()
+            .map(|lease| lease.stored().clone())
+        {
+            let lock = self.jobs[run_id].dependency_lock.clone();
+            let restored = match (self.tools.as_mut(), lock.as_ref()) {
+                (Some(tools), Some(lock)) => {
+                    tools.restore(&mut self.data, &snapshot, lock, &stored)
+                }
+                _ => Err(ErrorCode::DependencyArtifactMismatch),
+            };
+            match restored {
+                Ok(lease) => self.jobs.get_mut(run_id)?.tool_lease = Some(lease),
+                Err(code) => {
+                    self.finish_internal(run_id, Err(code), Some(JobState::Interrupted));
+                    return None;
+                }
+            }
+        }
         let (manifest, command) = self
             .catalog
             .command(&snapshot.plugin_id, &snapshot.command_id)
             .ok()?;
         let identity = CommandIdentity::from_manifest(&snapshot.root_caller, manifest, command);
+        let dispatched_at = now();
         let session = self
             .broker
-            .authorize_command(&identity, command, now())
-            .and_then(|epoch| {
-                if epoch != snapshot.grant_epoch {
-                    return Err(ErrorCode::GrantRevoked);
-                }
+            .reauthorize_accepted(&identity, command, snapshot.grant_epoch, dispatched_at)
+            .and_then(|()| {
                 self.broker
-                    .bind(identity, command.clone(), snapshot.deadline, now())
+                    .bind(identity, command.clone(), snapshot.deadline, dispatched_at)
             });
         match session {
             Ok(session) => self.jobs.get_mut(run_id)?.broker_session = Some(session),
@@ -1583,14 +2158,23 @@ impl RuntimeCore {
         id: &str,
         mut result: Result<Value, ErrorCode>,
     ) -> Result<Value, ErrorCode> {
-        if result.is_err() {
-            if let Some(code) = self
-                .service_invocations
-                .get(id)
-                .and_then(|call| call.failure.clone())
+        #[cfg(windows)]
+        {
+            if result.is_ok()
+                && (self.native_calls.values().any(|call| call.holds_run(id))
+                    || self.audio_calls.values().any(|call| call.holds_run(id)))
             {
-                result = Err(code);
+                result = Err(ErrorCode::ExecutionInterrupted);
             }
+            self.stop_native_inspections(id)?;
+        }
+        if let Some(code) = self
+            .service_invocations
+            .get(id)
+            .and_then(|call| call.failure.clone())
+        {
+            // A provider's return value cannot erase a rejected effect.
+            result = Err(code);
         }
         if result.is_ok() {
             result = self.check_run(id).and(result);
@@ -1614,6 +2198,8 @@ impl RuntimeCore {
                 self.stopping = true;
                 return Err(ErrorCode::StorageFailed);
             }
+            #[cfg(windows)]
+            self.release_tool_handles_if_drained(&call.root)?;
         }
         finished.and(result)
     }
@@ -1682,7 +2268,7 @@ impl RuntimeCore {
         &mut self,
         id: &str,
     ) -> Result<crate::services::ProviderChangePlan, ErrorCode> {
-        self.services.set_catalog(&self.catalog)?;
+        self.refresh_service_catalog()?;
         let manifest = self
             .catalog
             .list()
@@ -1706,7 +2292,9 @@ impl RuntimeCore {
         id: &str,
         candidate: BuiltinCatalog,
     ) -> Result<crate::services::ProviderChangePlan, ErrorCode> {
-        if self.provider_candidates.len() >= 64 || self.retained_catalogs.len() >= 64 {
+        if self.provider_candidates.len() + self.provider_cohorts.len() >= 64
+            || self.retained_catalogs.len() >= 64
+        {
             return Err(ErrorCode::BudgetExceeded);
         }
         let mut plan = self.provider_unload_plan(id)?;
@@ -1718,7 +2306,7 @@ impl RuntimeCore {
         {
             return Err(ErrorCode::DependencyInvalid);
         }
-        ServiceRegistry::plan(
+        self.plan_catalog(
             &candidate,
             &candidate
                 .list()
@@ -1739,6 +2327,9 @@ impl RuntimeCore {
         plan = self
             .services
             .change_plan(&plan.provider, Some(replacement))?;
+        if self.cohort_provider(&plan.provider) {
+            return Err(ErrorCode::RuntimeBusy);
+        }
         self.provider_candidates
             .insert(plan.digest.clone(), candidate);
         Ok(plan)
@@ -1753,12 +2344,18 @@ impl RuntimeCore {
         if self.stopping {
             return Err(ErrorCode::RuntimeBusy);
         }
+        if self.cohort_provider(&plan.provider) {
+            return Err(ErrorCode::ApprovalRequired);
+        }
         if plan.replacement.is_some() && !self.provider_candidates.contains_key(&plan.digest) {
             return Err(ErrorCode::ApprovalRequired);
         }
         self.services.begin_change(plan, confirmation, cascade)
     }
     pub fn abort_provider_change(&mut self, ticket: &str) {
+        if self.cohort_member(ticket) {
+            return;
+        }
         self.services.abort_change(ticket);
         self.provider_candidates.remove(ticket);
     }
@@ -1772,10 +2369,22 @@ impl RuntimeCore {
         if self.stopping {
             return Err(ErrorCode::RuntimeBusy);
         }
+        if self.cohort_member(ticket) {
+            return Err(ErrorCode::ApprovalRequired);
+        }
         if !self.services.drained(ticket)? {
             return Err(ErrorCode::RuntimeBusy);
         }
         let plan = self.services.presented_plan(ticket)?;
+        match service_journal::read(&self.data.connection) {
+            Ok(previous) if previous == self.provider_journal => (),
+            result => {
+                let code = result.err().unwrap_or(ErrorCode::StoreCorrupt);
+                self.stopping = true;
+                self.shutdown();
+                return Err(code);
+            }
+        };
         let backup = match self.data.backup() {
             Ok(backup) => backup,
             Err(code) => {
@@ -1789,16 +2398,6 @@ impl RuntimeCore {
             .and_then(|name| name.strip_prefix("runtime-backup-"))
             .ok_or(ErrorCode::StorageFailed)?
             .to_owned();
-        let previous: Option<String> = self
-            .data
-            .connection
-            .query_row(
-                "SELECT value FROM core_metadata WHERE key='service-catalog-state-v1'",
-                [],
-                |row| row.get(0),
-            )
-            .optional()
-            .map_err(|_| ErrorCode::StorageFailed)?;
         let pending = self
             .provider_candidates
             .get(ticket)
@@ -1811,65 +2410,33 @@ impl RuntimeCore {
             backup_id,
             disabled: self.services.disabled(),
         };
-        let write_journal = |connection: &rusqlite::Connection,
-                             journal: &ProviderJournal|
-         -> Result<(), ErrorCode> {
-            connection.execute("INSERT INTO core_metadata(key,value) VALUES('service-catalog-state-v1',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value",[serde_json::to_string(journal).map_err(|_|ErrorCode::StorageFailed)?]).map_err(|_|ErrorCode::StorageFailed)?;
-            Ok(())
-        };
-        let result = (|| {
-            write_journal(&self.data.connection, &journal).map_err(|code| (code, false))?;
-            let tx = self
-                .data
-                .connection
-                .transaction()
-                .map_err(|_| (ErrorCode::StorageFailed, true))?;
-            let result = migrate(&tx).and_then(|()| {
-                if plan.replacement.is_none() {
-                    journal.disabled.extend(plan.consumers.clone());
-                    journal.disabled.push(plan.provider.identity());
-                    journal.disabled.sort();
-                    journal.disabled.dedup();
-                }
-                if let Some(active) = journal.pending_catalog.take() {
-                    journal.active_catalog = active;
-                }
-                journal.phase = "committed".into();
-                write_journal(&tx, &journal)
-            });
-            match result {
-                Ok(()) => tx.commit().map_err(|_| (ErrorCode::StorageFailed, false)),
-                Err(code) => match tx.rollback() {
-                    Ok(()) => Err((code, true)),
-                    Err(_) => Err((ErrorCode::StorageFailed, false)),
-                },
-            }
-        })();
-        if let Err((code, rollback_confirmed)) = result {
-            // An uncertain commit/rollback cannot reopen old admission.
-            if !rollback_confirmed {
-                self.stopping = true;
-                self.shutdown();
-                return Err(code);
-            }
-            let restored = if let Some(previous) = previous {
-                self.data.connection.execute(
-                    "UPDATE core_metadata SET value=?1 WHERE key='service-catalog-state-v1'",
-                    [previous],
-                )
+        let prepared = serde_json::to_string(&journal).map_err(|_| ErrorCode::StorageFailed)?;
+        if plan.replacement.is_none() {
+            journal.disabled.extend(plan.consumers.clone());
+            journal.disabled.push(plan.provider.identity());
+            journal.disabled.sort();
+            journal.disabled.dedup();
+        }
+        if let Some(active) = journal.pending_catalog.take() {
+            journal.active_catalog = active;
+        }
+        journal.phase = "committed".into();
+        let committed = serde_json::to_string(&journal).map_err(|_| ErrorCode::StorageFailed)?;
+        if let Err(failure) = service_journal::migrate(
+            &mut self.data,
+            &mut self.provider_journal,
+            prepared,
+            committed,
+            migrate,
+            |_| Ok(()),
+        ) {
+            if failure.restored {
+                self.abort_provider_change(ticket);
             } else {
-                self.data.connection.execute(
-                    "DELETE FROM core_metadata WHERE key='service-catalog-state-v1'",
-                    [],
-                )
-            };
-            if restored.is_err() {
                 self.stopping = true;
                 self.shutdown();
-                return Err(ErrorCode::StorageFailed);
             }
-            self.abort_provider_change(ticket);
-            return Err(code);
+            return Err(failure.code);
         }
         if let Err(code) = self.services.commit_change(ticket, || Ok(())) {
             self.stopping = true;
@@ -1879,7 +2446,7 @@ impl RuntimeCore {
         if let Some(candidate) = self.provider_candidates.remove(ticket) {
             self.retained_catalogs.push(self.catalog.clone());
             self.catalog = candidate;
-            if let Err(code) = self.services.set_catalog(&self.catalog) {
+            if let Err(code) = self.refresh_service_catalog() {
                 self.stopping = true;
                 self.shutdown();
                 return Err(code);
@@ -1905,6 +2472,24 @@ impl RuntimeCore {
             return;
         }
         let cancelled = self.state(run_id) == Some(JobState::Cancelling);
+        #[cfg(windows)]
+        if result.is_ok()
+            && (self
+                .native_calls
+                .values()
+                .any(|call| call.holds_root(run_id))
+                || self
+                    .audio_calls
+                    .values()
+                    .any(|call| call.holds_root(run_id)))
+        {
+            result = Err(ErrorCode::ExecutionInterrupted);
+        }
+        #[cfg(windows)]
+        if self.stop_native_inspections(run_id).is_err() {
+            self.stopping = true;
+            return;
+        }
         if cancelled {
             result = Err(ErrorCode::Aborted);
         }
@@ -1992,6 +2577,16 @@ impl RuntimeCore {
             // decides from durable metadata, never from this in-memory state.
             return;
         }
+        #[cfg(windows)]
+        if self.release_tool_handles_if_drained(run_id).is_err() {
+            self.stopping = true;
+            return;
+        }
+        // Unknown/interrupted tool-bearing work keeps its private bytes and
+        // artifact roots until an explicit recovery/disposal decision.
+        if retains_tool_artifacts(&self.jobs[run_id]) {
+            return;
+        }
         if let Some(ref payloads) = self.private_jobs {
             let cleanup = payloads.remove(run_id, "input").and_then(|_| {
                 if state != JobState::Succeeded {
@@ -2006,12 +2601,75 @@ impl RuntimeCore {
         }
     }
 
+    #[cfg(windows)]
+    fn release_tool_handles_if_drained(&mut self, run: &str) -> Result<(), ErrorCode> {
+        if self
+            .jobs
+            .get(run)
+            .is_some_and(|job| job.native_video.iter().any(|call| call.retains_artifacts()))
+        {
+            return Ok(());
+        }
+        if self
+            .jobs
+            .get(run)
+            .is_some_and(|job| job.native_audio.iter().any(|call| call.retains_artifacts()))
+            || self.audio_calls.values().any(|call| call.holds_root(run))
+        {
+            return Ok(());
+        }
+        if self.jobs.get(run).is_some_and(|job| {
+            job.native_inspections
+                .iter()
+                .any(|call| call.retains_artifacts())
+        }) {
+            return Ok(());
+        }
+        if self.native_calls.values().any(|call| call.holds_root(run)) {
+            return Ok(());
+        }
+        let job = self.jobs.get_mut(run).ok_or(ErrorCode::JobNotFound)?;
+        if !matches!(
+            job.snapshot.state,
+            JobState::Succeeded | JobState::Failed | JobState::Cancelled
+        ) || !self.services.root_drained(run)
+            || !retains_tool_artifacts(job)
+        {
+            return Ok(());
+        }
+        job.tool_lease.as_mut().unwrap().mark_released()?;
+        let stored = StoredJob::from_job(job);
+        if let Err(code) = persist_stored_job(&self.data, &stored, None, &job.durable_metadata) {
+            self.jobs
+                .get_mut(run)
+                .unwrap()
+                .tool_lease
+                .as_mut()
+                .unwrap()
+                .retain()?;
+            self.stopping = true;
+            return Err(code);
+        }
+        self.jobs
+            .get_mut(run)
+            .unwrap()
+            .tool_lease
+            .as_mut()
+            .unwrap()
+            .drop_released_handles();
+        Ok(())
+    }
     pub fn cancel(&mut self, run_id: &str) {
         if matches!(
             self.state(run_id),
             Some(JobState::Queued | JobState::Running)
         ) {
             if self.transition(run_id, JobState::Cancelling).is_err() {
+                return;
+            }
+            #[cfg(windows)]
+            if self.stop_native_inspections(run_id).is_err() {
+                self.stopping = true;
                 return;
             }
             if self.pending.remove(run_id).is_some() {
@@ -2072,10 +2730,10 @@ fn namespace(identity: &CommandIdentity) -> String {
 /// Offline recovery never replays accepted work; preserve its metadata for review.
 pub(crate) fn interrupt_restored_jobs(connection: &rusqlite::Connection) -> Result<(), ErrorCode> {
     let rows = connection
-        .prepare("SELECT run_id,metadata FROM jobs LIMIT 1025")
+        .prepare("SELECT run_id,CASE WHEN typeof(metadata)='text' AND length(CAST(metadata AS BLOB))<=32768 THEN metadata ELSE NULL END FROM jobs LIMIT 1025")
         .map_err(|_| ErrorCode::StoreCorrupt)?
         .query_map([], |row| {
-            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+            Ok((row.get::<_, String>(0)?, row.get::<_, Option<String>>(1)?))
         })
         .map_err(|_| ErrorCode::StoreCorrupt)?
         .collect::<Result<Vec<_>, _>>()
@@ -2083,17 +2741,31 @@ pub(crate) fn interrupt_restored_jobs(connection: &rusqlite::Connection) -> Resu
     if rows.len() > 1024 {
         return Err(ErrorCode::BudgetExceeded);
     }
-    for (run, value) in rows {
-        let mut stored: StoredJob =
-            serde_json::from_str(&value).map_err(|_| ErrorCode::StoreCorrupt)?;
-        if stored.snapshot.run_id != run
-            || stored.format_version != 1
-            || value.len() > 32768
-            || uuid::Uuid::parse_str(&run).is_err()
-            || !valid_key(&stored.idempotency_key)
-        {
-            return Err(ErrorCode::StoreCorrupt);
-        }
+    // Preflight the whole bounded batch before any restored-row mutation.
+    let rows = rows
+        .into_iter()
+        .map(|(run, value)| {
+            let value = value.ok_or(ErrorCode::StoreCorrupt)?;
+            let stored: StoredJob = serde_json::from_value(
+                crate::packages::strict_json(value.as_bytes())
+                    .map_err(|_| ErrorCode::StoreCorrupt)?,
+            )
+            .map_err(|_| ErrorCode::StoreCorrupt)?;
+            if stored.snapshot.run_id != run
+                || stored.format_version != 1
+                || stored.snapshot.format_version != 1
+                || value.len() > 32768
+                || uuid::Uuid::parse_str(&run).is_err()
+                || !valid_key(&stored.idempotency_key)
+            {
+                return Err(ErrorCode::StoreCorrupt);
+            }
+            #[cfg(windows)]
+            stored.validate_tool_artifacts()?;
+            Ok((run, stored, crate::data::job_metadata_digest(&value)))
+        })
+        .collect::<Result<Vec<_>, ErrorCode>>()?;
+    for (run, mut stored, _durable_metadata) in rows {
         if stored.snapshot.state == JobState::Succeeded {
             connection
                 .execute(
@@ -2131,6 +2803,16 @@ pub(crate) fn interrupt_restored_jobs(connection: &rusqlite::Connection) -> Resu
                     },
                 },
             });
+            #[cfg(windows)]
+            if stored.tool_artifacts.is_some() {
+                leases::persist_restored_job(
+                    connection,
+                    &run,
+                    &serde_json::to_value(&stored).map_err(|_| ErrorCode::StorageFailed)?,
+                    &_durable_metadata,
+                )?;
+                continue;
+            }
             connection
                 .execute(
                     "UPDATE jobs SET metadata=?1 WHERE run_id=?2",
@@ -2778,6 +3460,243 @@ mod tests {
                 code: ErrorCode::ProtocolMismatch
             })
         ));
+    }
+
+    #[test]
+    fn queued_todo_revocation_never_starts_a_runner_or_becomes_a_new_approval_request() {
+        for mode in ["revoke", "regrant", "expire", "missing-policy"] {
+            let mut core = RuntimeCore::managed(
+                HashMap::from([
+                    ("cli".into(), "local-cli".into()),
+                    ("admin".into(), "local-manager".into()),
+                ]),
+                DataStore::memory().unwrap(),
+                false,
+                false,
+            )
+            .unwrap();
+            let admin = open(&mut core, "admin", "admin");
+            let (manifest, _) = core.catalog.command("plugin-todo-list", "run").unwrap();
+            let grant = PermissionGrant {
+                plugin_id: "plugin-todo-list".into(),
+                command_id: "run".into(),
+                target: GrantTarget::Cli,
+                package_digest: digest(manifest),
+                effects: vec!["data-read".into(), "data-write".into()],
+                scopes: vec![Scope::PluginData {
+                    key_prefix: "todos".into(),
+                }],
+                expires_at: now() + 60_000.0,
+                max_calls: 16,
+                cold_start: false,
+                background: true,
+            };
+            assert!(matches!(
+                core.handle("admin", request(Call::Grant(grant), Some(admin)))
+                    .outcome,
+                Outcome::Permissions(_)
+            ));
+            let proof = open(&mut core, "conn", "cli");
+            let mut operation = submit();
+            operation.plugin_id = "plugin-todo-list".into();
+            operation.input = json!({"todo":"QUEUED_REVOCATION_PRIVATE_CANARY"});
+            let outcome = core
+                .handle("conn", request(Call::Submit(operation), Some(proof)))
+                .outcome;
+            let Outcome::Receipt(receipt) = outcome else {
+                panic!("Receipt: {}", serde_json::to_string(&outcome).unwrap());
+            };
+            let job = &core.jobs[&receipt.run_id];
+            assert_eq!(job.snapshot.state, JobState::Queued);
+            let epoch = job.snapshot.grant_epoch;
+            let original_started_at = job.started_at;
+            assert_ne!(epoch, 0);
+            let (manifest, command) = core.catalog.command("plugin-todo-list", "run").unwrap();
+            let identity = CommandIdentity::from_manifest("local-cli", manifest, command);
+            if mode == "missing-policy" {
+                core.broker = CapabilityBroker::default();
+            } else if mode == "expire" {
+                core.broker
+                    .restore_policy(
+                        identity,
+                        epoch,
+                        Some(Grant {
+                            effects: vec!["data-read".into(), "data-write".into()],
+                            scopes: vec![Scope::PluginData {
+                                key_prefix: "todos".into(),
+                            }],
+                            expires_at: now() - 1.0,
+                            max_calls: 16,
+                        }),
+                    )
+                    .unwrap();
+            } else {
+                core.broker.revoke(&identity).unwrap();
+                if mode == "regrant" {
+                    core.broker
+                        .approve(
+                            identity,
+                            Grant {
+                                effects: vec!["data-read".into(), "data-write".into()],
+                                scopes: vec![Scope::PluginData {
+                                    key_prefix: "todos".into(),
+                                }],
+                                expires_at: now() + 60_000.0,
+                                max_calls: 16,
+                            },
+                        )
+                        .unwrap();
+                }
+            }
+            assert!(core.take_run(&receipt.run_id).is_none(), "{mode}");
+            let job = &core.jobs[&receipt.run_id];
+            assert_eq!(job.snapshot.state, JobState::Failed, "{mode}");
+            assert!(
+                matches!(
+                    job.snapshot.result.as_ref().unwrap().outcome,
+                    ExecutionOutcome::Failure {
+                        error: RuntimeError {
+                            code: ErrorCode::GrantRevoked
+                        },
+                        ..
+                    }
+                ),
+                "{mode}"
+            );
+            assert_eq!(job.started_at, original_started_at);
+            assert!(job.broker_session.is_none());
+            assert!(!job
+                .events
+                .iter()
+                .any(|event| event.state == JobState::Running));
+            assert!(!core.pending.contains_key(&receipt.run_id));
+            assert_eq!(
+                core.data
+                    .read("flowtools:plugin-todo-list", "todos")
+                    .unwrap()
+                    .revision,
+                0
+            );
+            assert!(!serde_json::to_string(&job.snapshot)
+                .unwrap()
+                .contains("QUEUED_REVOCATION_PRIVATE_CANARY"));
+        }
+    }
+
+    #[test]
+    fn queued_revocation_survives_restart_without_inheriting_regrant() {
+        for regrant in [false, true] {
+            let profile = std::env::temp_dir().join(format!(
+                "flowtools-validation-queued-revoke-{}",
+                Uuid::new_v4()
+            ));
+            std::fs::create_dir(&profile).unwrap();
+            let database = profile.join("runtime.sqlite");
+            let reopen = || {
+                RuntimeCore::managed(
+                    HashMap::from([
+                        ("cli".into(), "local-cli".into()),
+                        ("admin".into(), "local-manager".into()),
+                    ]),
+                    DataStore::open(&database).unwrap(),
+                    false,
+                    false,
+                )
+                .unwrap()
+            };
+            let mut core = reopen();
+            let admin = open(&mut core, "admin", "admin");
+            let (manifest, _) = core.catalog.command("plugin-todo-list", "run").unwrap();
+            let grant = PermissionGrant {
+                plugin_id: "plugin-todo-list".into(),
+                command_id: "run".into(),
+                target: GrantTarget::Cli,
+                package_digest: digest(manifest),
+                effects: vec!["data-read".into(), "data-write".into()],
+                scopes: vec![Scope::PluginData {
+                    key_prefix: "todos".into(),
+                }],
+                expires_at: now() + 60_000.0,
+                max_calls: 16,
+                cold_start: false,
+                background: true,
+            };
+            assert!(matches!(
+                core.handle(
+                    "admin",
+                    request(Call::Grant(grant.clone()), Some(admin.clone()))
+                )
+                .outcome,
+                Outcome::Permissions(_)
+            ));
+            let cli = open(&mut core, "cli", "cli");
+            let operation = SubmitJob {
+                plugin_id: "plugin-todo-list".into(),
+                command_id: "run".into(),
+                input: json!({"todo":"RESTART_REVOCATION_PRIVATE_CANARY"}),
+                idempotency_key: "queued-before-revoke".into(),
+                background: true,
+                deadline: now() + 30_000.0,
+            };
+            let Outcome::Receipt(receipt) = core
+                .handle("cli", request(Call::Submit(operation), Some(cli)))
+                .outcome
+            else {
+                panic!("Receipt");
+            };
+            assert!(matches!(
+                core.handle(
+                    "admin",
+                    request(
+                        Call::Revoke(PermissionKey {
+                            plugin_id: "plugin-todo-list".into(),
+                            command_id: "run".into(),
+                            target: GrantTarget::Cli,
+                        }),
+                        Some(admin.clone())
+                    )
+                )
+                .outcome,
+                Outcome::Permissions(_)
+            ));
+            if regrant {
+                assert!(matches!(
+                    core.handle("admin", request(Call::Grant(grant), Some(admin)))
+                        .outcome,
+                    Outcome::Permissions(_)
+                ));
+            }
+            drop(core);
+            let core = reopen();
+            assert!(core.pending_runs().is_empty());
+            let snapshot = core.job_snapshot(&receipt.run_id).unwrap();
+            assert_eq!(snapshot.state, JobState::Interrupted);
+            assert!(matches!(
+                snapshot.result.as_ref().unwrap().outcome,
+                ExecutionOutcome::Failure {
+                    error: RuntimeError {
+                        code: ErrorCode::GrantRevoked
+                    },
+                    ..
+                }
+            ));
+            assert!(!serde_json::to_string(&snapshot)
+                .unwrap()
+                .contains("RESTART_REVOCATION_PRIVATE_CANARY"));
+            assert_eq!(
+                core.data
+                    .read("flowtools:plugin-todo-list", "todos")
+                    .unwrap()
+                    .revision,
+                0
+            );
+            assert!(core
+                .private_jobs
+                .as_ref()
+                .unwrap()
+                .read(&receipt.run_id, "input")
+                .is_err());
+        }
     }
 
     #[test]

@@ -10,6 +10,14 @@ pub struct BuiltinCatalog {
 
 impl BuiltinCatalog {
     pub fn embedded() -> Self {
+        let mut catalog = Self::embedded_with_media();
+        // Generic/validation Hosts have no native media adapter or tool authority.
+        // The actual Windows T0 Host opts into its fixed build-owned pair below.
+        catalog.manifests.remove("plugin-media-inspector");
+        catalog.manifests.remove("plugin-media-converter");
+        catalog
+    }
+    pub fn embedded_with_media() -> Self {
         let catalog: Value = serde_json::from_str(include_str!("../.generated/catalog.json"))
             .expect("Build-owned Manifest v1 artifact");
         let manifests = catalog["plugins"]
@@ -28,6 +36,31 @@ impl BuiltinCatalog {
 
     pub fn list(&self) -> impl Iterator<Item = (&String, &Value)> {
         self.manifests.iter()
+    }
+
+    /// Metadata for the fixed built-in graph only. This cannot prepare or admit
+    /// a tool; accepted jobs still need the current signed archive and image.
+    #[cfg(windows)]
+    pub(crate) fn builtin_media_declaration(
+        &self,
+    ) -> Result<crate::dependencies::ToolCandidate, ErrorCode> {
+        let (manifest, _) = self.command("plugin-media-inspector", "run")?;
+        let tool = &manifest["dependencies"]["tools"][0];
+        let field = |name: &str| {
+            tool[name]
+                .as_str()
+                .map(str::to_owned)
+                .ok_or(ErrorCode::DependencyInvalid)
+        };
+        Ok(crate::dependencies::ToolCandidate {
+            publisher: field("publisher")?,
+            id: field("id")?,
+            version: field("version")?,
+            target: serde_json::from_value(tool["target"].clone())
+                .map_err(|_| ErrorCode::DependencyInvalid)?,
+            build_flavor: field("buildFlavor")?,
+            digest: field("digest")?,
+        })
     }
 
     /// T0 build/test snapshot constructor; never exposed as a wire/catalog import.
@@ -200,7 +233,7 @@ mod tests {
     #[test]
     fn complete_t1_metadata_and_schemas_share_ts_artifact() {
         let catalog = BuiltinCatalog::embedded();
-        assert_eq!(catalog.list().count(), 12);
+        assert_eq!(catalog.list().count(), 13);
         for (_, manifest) in catalog.list() {
             assert!(catalog.validate_manifest(manifest).is_ok());
             let mut changed = manifest.clone();

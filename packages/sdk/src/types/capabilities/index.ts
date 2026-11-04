@@ -12,6 +12,7 @@ export type {
   NotificationCapability,
   NotificationInput,
   NotificationLevel,
+  NotificationStatus,
 } from './notification'
 export type {
   RequestCapability,

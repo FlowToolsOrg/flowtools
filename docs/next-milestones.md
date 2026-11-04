@@ -1,7 +1,7 @@
 # FlowTools 下一阶段目标与实施设计
 
 - 决策日期：2026-10-04
-- 状态：accepted-design；G1、G2 固定 Windows/T1 验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4 P1.6a/P1.6b 与六条异常排空基线已实现为固定 Windows/T1 prototype，2026-10-12 本地完整集成已过，当前提交远端 CI 与独立安全批准 pending；G5 P2.5a 及 P2.5b 六个惰性准入/事务子步骤已实现为 prototype，2026-10-12 契约加固本地完整门禁已过，当前提交远端 CI 与独立安全批准 pending；P2.5b/G5 整体和 G6–G8 保持 pending
+- 状态：accepted-design；G1、G2 固定 Windows/T1 验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4 P1.6a/P1.6b 与六条异常排空基线已实现为固定 Windows/T1 prototype，2026-10-12 本地完整集成已过，当前提交远端 CI 与独立安全批准 pending；G5 P2.5a 及 P2.5b 六个惰性准入/事务子步骤已实现为 prototype，2026-10-12 契约加固本地完整门禁已过，当前提交远端 CI 与独立安全批准 pending；P2.5b/G5、G6 的生产范围和 G8 保持 pending；G7 已完成批准的 Windows/T1 功能原型，人工项 waived，当前证据见 G7 交付记录
 - 决策来源：维护者已确认的产品讨论；实施责任由 Repository Maintainer 分配
 - 进度来源：[生产路线图](./production-roadmap.md)
 
@@ -363,6 +363,14 @@ symlink/junction 和同版本不同 hash 均拒绝。失败保持 last-known-goo
 
 ### P2.1 / P2.2 / P2.3b / P2.4b / P2.6b
 
+2026-10-29：P2.2a 原生工具平台可行性新增每任务 LPAC、实际 token/capability
+回读、固定环境/句柄 allowlist 和限额 Job。六项真实原生测试含普通正向对照、
+私有注册表/文件/IPC/网络/跨任务/junction 拒绝、DLL/内存、子进程、输出洪泛、
+500ms 取消、Job 关闭及恢复线程前拒绝。专用探针只在标准测试中构建；普通
+产品入口不变。见 [ADR-0005](./adr/0005-windows-native-tool-isolation.md) 与
+[专项证据](./validation/g5-windows-native-isolation.md)。T3 引擎、正式工具
+adapter、签名发行/库存/leases/恢复及独立安全批准仍待完成，不据此关闭 G5/G6。
+
 第三方 React 使用独立 origin/session 的容器，通过 broker 操作；Windows 实测
 存储分区、导航、CSP 与 Tauri capability 合并，不能把另一个窗口自动当成隔离。
 T3 runner 不暴露任意 Node/Bun OS API，不继承环境密钥或 Host 句柄。
@@ -380,6 +388,67 @@ Rust broker 的运行身份由会话/进程绑定；IPC、文件 handle、namesp
 ## 8. G6：共享 FFmpeg 与工具链
 
 ### P2.8a 集中工具仓库
+
+2026-11-01：为 a9 的工具任务写入补齐
+[完整已提交记录比较](./validation/g6-tool-job-metadata-fence.md)。初次接收
+仅 INSERT，后续在原事务内比较 actor 的原字节摘要和旧 TEXT；跨事务
+trigger 改动、记录丢失和未知状态不能被缓存覆盖。摘要不持久或对外发放，
+不重建收据、不回退时钟或产生执行权限；完整门禁另记。
+
+2026-10-31：P2.8a9 为明确 T0 配置的固定 T1 任务增加 accepted artifact
+保留。实际 signed ZIP 与已有 seal 的当前检查、持有句柄及独立记录同原
+jobs.metadata 单行提交，输入仍用原 DPAPI；终态/后代排空后才持久释放。
+管理、复制和恢复不续权，损坏引用阻止 orphan 清理；普通产品 Host 不配置
+authority，生产 review/pins 为空。它尚无原生工具派发、accepted 旧版本
+continuation、更新/GC 或 G7 文件/媒体闭环，见
+[范围与证据](./validation/g6-accepted-tool-artifacts.md)。
+
+2026-10-31：P2.8a8 为消费方域补齐显式 orphan plan/apply/resume/abort。
+冻结 profile、库存与当前 trust/recovery scope，先整批验证，再在实际 held
+source callback 内复核元数据后 create-only 隔离。保留字节、旧锁和原共享
+预算；新 scope 先受控恢复再显式作废，不采纳/重锁，不产生 lease 或执行。
+见 [消费方恢复](./validation/g6-tool-consumer-reconciliation.md)。
+
+2026-10-31：P2.8a7 将 a4 的签名插件/service/工具锁保存到独立固定惰性库存，
+工具候选仅来自实际 held ZIP 的重新准入，不接受 caller pins 或 flags。
+保留旧 v2 格式和旧 a5/a6 恢复摘要、原 transitive pins、当前信任与最终时钟、
+单写者及原共享预算；中断仅显式 abort，所有字节保留。accepted leases、
+执行与 G7 办公闭环仍待完成，见
+[消费方安装](./validation/g6-tool-consumer-installation.md)。
+
+2026-10-30：P2.8a6 独立补齐 T0-owned 工具文件孤儿的显式观察/隔离，
+逐节点权限收缩，apply/abort 都在清 journal 前移除 artifact capability。
+还原后先处理文件、再处理原始 ZIP；同 writer、pending 互斥和原总预算不变。
+该范围仍无 seal 收编、accepted leases 或产品派发，见
+[工具文件恢复](./validation/g6-tool-image-reconciliation.md)。
+
+2026-10-30：P2.8a5 为原始工具 ZIP 孤儿提供显式只读计划、同 writer/journal
+隔离、断点续接与不删除字节的取消；绑定 profile、各库存及 trust/recovery
+scope，保留三池合计预算。只复用 G5 crate-private blob 操作，插件 v2 格式
+保持不变；密封文件孤儿、accepted leases 和产品执行仍 pending，见
+[工具归档恢复](./validation/g6-tool-reconciliation.md)。
+
+2026-10-29：P2.8a4 提供独立签名插件/工具归档绑定计划。只接受完整准入的
+opaque 插件与工具候选，将 service 图中的各 consumer 固定到原始工具 ZIP；
+独立 profile/digest 与 G4/旧 signed lock 区分，求解后以新 T0 时钟检查当前
+根、撤销、expiry 和 floors，未使用候选也不能绕过。该计划仍未持久安装或
+建立 accepted leases，见 [签名绑定](./validation/g6-signed-tool-bindings.md)。
+
+2026-10-29：P2.8a3 新增显式私有工具文件落盘。当前签名归档重准入后，以同一
+writer 记录独立 journal，密封全部文件/目录身份、字节和 ACL；原生 create-only
+发布后再次检查当前 trust、源库存、时间与实际文件，才原子提交。显式 abort
+保留字节并撤销隔离文件的 artifact capability。真实 LPAC 多任务共享读取、
+写入/降级/跨 profile 拒绝及五个进程退出 barrier 有专项回归；仍无 accepted
+lease、执行身份或产品启动入口。生产审核清单为空；见
+[密封落盘证据](./validation/g6-tool-materialization.md)。
+
+2026-10-29：P2.8a2 新增显式惰性工具归档安装事务，复用 DataStore 单写者
+和现有 held-parent blob 层；工具归档库存与 G4 ToolPin/插件锁分离。目标是原始
+签名字节重准入、journal、create-only 发布和显式 quarantine abort，跨插件/
+工具 pending 互斥与合计磁盘预算。该子步仍不解包、创建 lease 或执行身份，
+生产审核清单保持空；十五项原生专项与范围见
+[归档事务证据](./validation/g6-inert-tool-installation.md)。实际执行/更新/恢复
+与 G7 闭环继续等待后续实现。
 
 2026-10-13：P2.8a1 首个独立子步骤提供 Runtime-owned 工具 Manifest 的
 惰性准入，复用已有持久 descriptor trust 与严格 ZIP32 归档。source/license/
@@ -409,6 +478,62 @@ plugin lock 和 task lease 防止卸载/更新误删已接受任务需要的版�
 
 ### P2.8b 受管执行与媒体适配
 
+2026-11-03：自行下载官方链接的 Windows pair，并从实际 PGP 验证的官方
+8.1.3 源码构建符合原预算的受限静态 pair；新旧来源/程序 pins 分离，原 57
+项保留并增加四项真实原生来源验证。不是正式发行/独立审核或产品 Host
+激活，完整验证另记，见 [官方来源证据](./validation/g6-official-media-source.md)。
+
+2026-11-02：增加 Core [媒体阶段与有限进度](./validation/g6-native-media-progress.md)。
+原 opaque handle 返回转换/验证/完成及原 advisory 时间/大小；原授权、配额、
+metadata 与实际排空保持。没有用户文件或 wire，G7 闭环继续 pending。
+
+2026-11-01：P2.8b8 [有界原生 WebM](./validation/g6-native-video-transcoding.md)
+复用实际转换 actor，独立全帧 probe、严格 VP9/Opus 角色和同字节输出检查。
+原 V1 正时长条件不变，管道新投影保留未知时长；实际候选和整仓结果另记。
+不开放普通 Host authority、用户文件 grant 或发布，G7 继续 pending。
+
+2026-11-01：P2.8b7 的 [有界原生 WAV](./validation/g6-native-audio-extraction.md)
+在一个调用预算内串行运行实际 ffmpeg 与独立 ffprobe，持有两个私有输入，
+硬配额和阶段持久化保留。已有 6/10/8 专项与固定 Chromium 全 PCM 解码
+证据；当前整仓门禁另记。仍不是用户路径/文件 grant 或输出发布，G7 未闭环。
+
+2026-11-01：P2.8b6 增加 [Core 原生信息检查](./validation/g6-native-media-inspection.md)。
+固定 ffprobe、T0 有界输入、独立 LPAC/Job 与 actor 持有，逐阶段当前授权和
+信任复查，原单 writer 记录 Preparing/Running/结束，未知保留且不重放。
+普通 Host 仍无工具 authority；用户文件转换、发布/撤销/恢复和真实发行仍待
+后续门槛，G5/G6/G7 不据此完成。专项与完整门禁分别记录。
+
+2026-11-01：P2.8b5 连接实际签名 fixture 安装/密封/任务持有与真实媒体
+LPAC 验证，使用独立非发布 workspace 的实际 Core 源模块，普通产品没有
+依赖或选择器。实际六项及 Clippy 已过，当前整仓门禁另记；公开测试签名或
+通知包不构成真实发行/法律/安全批准，见
+[安装候选范围](./validation/g6-installed-media-candidate.md)。
+
+2026-11-01：P2.8b4 新增 [当前 T0 调用准入](./validation/g6-tool-effect-admission.md)。
+固定动作槽独立解析为实际 consumer 的唯一 immutable pin 与 held image；
+IO 前后检查全链权限、当前 signed ZIP/文件与原任务记录，最后普通 broker
+计一次预算进入借用回调。服务拒绝不能被成功结果掩盖。没有原生进程/文件
+adapter、wire 或产品 Host selector；实际媒体执行、异步复核和发布仍待完成。
+
+2026-10-31：P2.8b3 补齐固定转换的
+[完成投影](./validation/g6-media-completion-projection.md)。联合完整进度、
+退出码和独立 ffprobe 的输出格式/角色/大小，不将 exit 0 当作成功。它只是
+纯元数据，十七项 Core 媒体契约及原六项真实媒体 LPAC driver 已过；当前
+仍需真实输出身份、受管进程与独立发布事务，不据此关闭 G6/G7。
+
+2026-10-29：P2.8b2 新增独立 build-only FFmpeg/ffprobe 候选及实际 LPAC
+专项，包含固定源码/签名/完整 Git 树与 program hashes。实测发现并修正
+ffprobe 空容器拒绝，补齐 WebM 必需 bsf；确认 -n 拒绝仍可能退出 0，后续
+必须联合完整进度与新输出验证。该专项不是普通 Runtime 工具身份/lease 或
+用户文件执行路径；见 [构建/实际测试证据](./validation/g6-media-candidate.md)。
+
+2026-10-29：P2.8b1 新增固定媒体 recipes 与有界 ffprobe/progress 投影。
+只接受 inspect、WAV 提取、WebM 转码三种版本化动作；程序角色与 workspace
+名称由 Rust 固定，不接 executable/path/argv/filter/URL。此纯契约不启动工具、
+创建 lease 或写文件；真实发行/安装/授权/LPAC adapter 和 G7 实际媒体闭环
+仍是后续验收条件，范围与十项纯契约回归见
+[媒体契约](./validation/g6-media-contracts.md)。
+
 提供 `media.inspect`、`media.extract-audio`、`media.transcode` 等版本化操作。
 插件传 input/output handle 与有限 preset，Rust 构造参数数组并直接创建进程，
 不使用 shell，也不接受不受约束 argv。对 FFmpeg 输入/字幕/filter/播放列表间接
@@ -420,6 +545,38 @@ artifact，完成验证后以 create-only 或明确 overwrite 授权提交。文
 时返回冲突，不保证转换可逆，也不自动覆盖。FFmpeg 原始 stderr 不直接进日志。
 
 ### P2.8c 更新、共享和恢复
+
+2026-11-03：增加 [从未派发队列的 T0 显式处置](./validation/g6-queued-tool-discard.md)。
+只取消完整事件证明从未运行且无原生准备的 Interrupted 队列；实例/整行/当前
+scope 复核和原事务写入确认后释放本任务根。输入/工具字节不删除，未知写入
+保留并停止准入。原生历史、GC/LKG、健康激活和产品执行闭环继续 pending。
+
+2026-11-03：以实际签名版本验证 [已接受工具队列策略](./validation/g6-queued-tool-policy.md)。
+原包/锁/epoch/deadline 不改绑；floor 失效导致 Interrupted 并跨目录更新/重启
+保留旧根与私有输入。新任务重新授权，撤权不影响其他消费方；没有旧版续权、
+历史处置、GC/LKG 或产品激活入口。此项验证已有行为，不冒称新增执行能力。
+
+2026-11-03：增加 T0 [多消费方目录整批切换](./validation/g6-provider-cohort-updates.md)。
+相同成员/publisher、严格版本提升，原实例/图确认、全部旧任务排空和原 format-1
+迁移日志保护一次目录提交。当前新工具必须重新持有并复核，旧 grants 不转移；
+未知提交保留 prepared 并停止准入。不是发行激活、队列续权、GC/LKG 或 G7 闭环。
+
+2026-11-02：加固既有 provider [迁移恢复日志](./validation/g6-provider-journal-fence.md)
+的有界读取、精确原字节前值与 trigger-aware 事务。未知提交/恢复停止准入，
+确认回滚后才重开旧 catalog；不等同于工具激活、GC/LKG 或 G7 闭环。
+
+2026-11-02：P2.8c3 增加 [固定原生健康检查](./validation/g6-native-tool-health.md)：
+合成 PCM 经原 WAV 转换与独立 probe，逐样本核对后再按普通当前 floor 收取。
+两项 Core 与五项实际候选通过，完整 44 项另记；不激活版本或开放新权限。
+
+2026-11-02：P2.8c2 增加 [只读工具库存管理](./validation/g6-tool-inventory-management.md)
+的 Runtime 分页观察、GUI 设置与 CLI 入口。显示来源、空间、依赖和保留阻断，
+不冷启动或授予工具 authority；当前自动验证另记，更新/删除功能仍未实现。
+
+2026-11-02：P2.8c1 实现 [单次在途工具续接](./validation/g6-live-tool-continuation.md)。
+只保留普通当前准入后的原 descriptor 与逻辑调用，floor 前进不授予新调用，
+根/撤销/过期仍拒绝。重开不重建凭据，默认 Host/review 不变；签名和当前 39 项专项
+已通过，当前整仓另记。真正更新切换、队列策略、健康检查、GC/LKG 与 G7 闭环仍 pending。
 
 安装新版本 -> 健康检查 -> 新任务切新 lock -> 旧任务完成 -> 无租约后 GC。
 发现撤销版本时拒绝新调用并按政策终止活跃任务，不回滚到已撤销版本。
@@ -437,10 +594,115 @@ Tauri [sidecar](https://v2.tauri.app/develop/sidecar/) 用于构建捆绑程序�
 
 ## 9. G7：统一 UI 与三个办公闭环
 
+2026-11-04：G7 已完成维护者批准的 Windows 固定 T1 功能原型范围。文件提交、
+逐效果日志/重试/撤销与两个实际媒体插件、用户输入/输出发布、日程/提醒及
+GUI/CLI 共用 Runtime，当前源代码的完整本机根门禁已通过，见
+[交付记录](./validation/g7-functional-delivery.md)。最终文档提交的同 SHA 远端
+验证记录在 [PR #15](https://github.com/FlowToolsOrg/flowtools/pull/15)。正式发行/
+代码签名/独立审核继续 pending，人工项 waived；下列旧记录为历史阶段证据。
+
+2026-10-29：T0 文件计划可在现有单写者/DPAPI 中持久化，保持稳定 ID、取消状态、
+复制/恢复 scope 和严格孤立清理保留；仅为惰性规划层，GUI/CLI 提交、文件效果
+journal/撤销与媒体执行尚未接入。见 [存储证据](./validation/g7-file-plan-store.md)。
+
+2026-10-28 收口矩阵见 [G7 当前状态](./validation/g7-completion-matrix.md)。
+文件整理新增 [只读 NTFS 规划准入](./validation/g7-file-plan-admission.md)，
+尚无持久 plan ID 或可执行/撤销入口；不跳过 G5/G6 文件/工具执行门槛。
+重启时保留日程加密输入的回归已补齐，备份恢复仍拒绝派发而只允许显式作废。
+
+2026-10-28：P3.2 接入 SDK/UI/Desktop/CLI 同源搜索、排序解释、历史隐私与
+显式上下文；10k 文字/正则 p95 分别 4.76/21.08ms，专项验证见
+[搜索记录](./validation/g7-launcher-search.md)。继续完整根门禁和文件/媒体闭环。
+
+2026-10-28：P3.1b5 的本地提醒经普通调度/授权 runner 在无 GUI 时执行，固定
+身份的 Windows API 返回 requested；发送前持久记录且未知不重发。
+见 [证据](./validation/g7-local-reminders.md)。继续整仓门禁、搜索与文件/媒体闭环。
+
+2026-10-28：P3.1b4 补齐显式编辑与备份恢复后作废旧日程，GUI/CLI 共用管理
+契约，原子替换、版本冲突和恢复 challenge 回放验证通过。保留位置/时钟下限，
+不恢复 grants 或重放；通知与搜索/办公闭环继续实施，见
+[证据](./validation/g7-scheduling-edit-recovery.md)。
+
+P3.1b3 已接真实 Host 队列与 GUI/CLI 创建、查询、取消，当前后台授权/epoch
+逐次验证，私有输入加密且时区/DST 明确解析。无客户端时的实际插件执行与
+撤销/取消拒绝 fixture 通过；继续编辑、恢复与通知，见
+[派发证据](./validation/g7-scheduling-dispatch.md)。
+
+P3.1b2（2026-10-27）已接现有单写者持久化有限调度位置和 claim，8 项实际
+SQLite 拒绝/恢复回归通过；接下来持续实现认证管理与 Host 派发，见
+[证据](./validation/g7-scheduling-store.md)。
+
+2026-10-27：维护者明确取消 G7 人工验收，当前 P3.1a1–a5 桌面壳工程范围
+收尾并转入 P3.1b 调度规则；未运行的人工项记录为豁免，不计为通过。远端
+`ea2bedb` PR 完整门禁通过，本机 Runtime 20/24 失败保留。尚未实现的调度、
+搜索及三个办公闭环继续按序推进，G7 不因此标记整体完成。
+见 [收尾决定](./validation/g7-shell-closeout.md)。
+
+2026-10-15：P3.1a1 先交付可独立验证的 Windows 桌面入口 prototype：
+托盘、单实例/快捷键恢复及原生显式可选自启动，见
+[验证边界](./validation/g7-desktop-shell.md)。不执行第二实例业务参数，
+不创建 grants 或停止 Runtime。P3.1a/G7 保持 pending；调度和文件/媒体
+副作用仍须等待相关 G5/G6 及授权/平台门禁通过。
+
+2026-10-16：P3.1a2 补齐固定外观偏好的持久化、重置与失败反馈，启动/换页
+不丢选择，系统深色不覆盖手动浅色。仅 Host UI preference；诊断、原生入口
+剩余验收与 Runtime 状态仍 pending，见 [外观证据](./validation/g7-desktop-preferences.md)。
+
+2026-10-19：`06e29cd` 本机完整 Windows 门禁及两轮远端 CI 通过；独立身份
+原生实窗验证热键冲突时第二实例恢复、释放并重启后热键恢复，以及进程重启
+前后外观选中态保留。新增可复用的人工热键 owner，见
+[原生验收](./validation/g7-native-window-acceptance.md)。托盘菜单点击、OS 重启/
+多屏与后台任务连续性、诊断及权威 Runtime 状态仍 pending，父项不推进。
+同日后续 `73a4a1d` 完整门禁再次失败于原样 Runtime 后代就绪/排空路径
+（21/24）；本地最新集成仍未通过，保留之前绿色与当前失败两次独立证据。
+
+2026-10-20：P3.1a3 补齐设置页的显式只读 Runtime 状态快照，不借查询启动
+Host、初始化、改变 grants 或拉取任务载荷。既有 `1451c77` 两轮远端 CI 已
+通过；本轮 `6432d76` 完整门禁 Runtime 21/24 失败（malformed-frame、
+provider-error、root-cancel 后代就绪/排空），之前/远端绿色不覆盖该失败。见
+[状态证据](./validation/g7-runtime-status.md)。托盘 Runtime 集成、诊断及平台/
+任务连续性验收仍 pending，P3.1a/G7 父项不推进。
+
+2026-10-21：P3.1a4 交付固定版本/状态字段的诊断预览及独立 JSON 下载，生成
+不重查或启动 Runtime，新查询使旧报告失效。7 项投影及 14 项状态卡浏览器
+回归、桌面/窄屏实际 Chromium 下载通过，见 [诊断证据](./validation/g7-runtime-diagnostic.md)。
+原生 WebView 保存、完整日志/崩溃诊断、托盘状态及平台/任务连续性仍 pending；
+P3.1a/G7 父项不推进。
+
+该诊断产品提交 `4617afb` 的完整 Windows 门禁在 94 项浏览器及 Core 222+2
+通过后，Runtime 22/24 失败（root-cancel、deadline 的后代就绪/排空）；原因
+未确定。独立 Desktop 99 Bun/30 Rust 单元/5 集成、11 工作区构建及生产
+产物拒绝检查通过，均不替代整仓失败。详细日志见上述诊断证据。
+
+2026-10-25 收尾复核：10 月 21 日专用 Windows Debug 实窗已验证未查询状态的
+诊断预览与下载，260 字节保存文件和原生预览逐字一致；测试文件已归档，本次
+按记录路径/启动时间核对无存活测试进程。其余原生保存场景、完整诊断及 G7
+父项仍 pending，未重试或改写上述整仓失败结果。
+
+2026-10-25：P3.1a5 增加原生托盘的显式 Runtime 快照查询，复用已有只读
+来源守卫与连接，不启动/初始化或更改 grants。35 项 Rust 单元和 6 项集成
+通过；原生托盘点击/布局仍待验收，见 [托盘证据](./validation/g7-tray-runtime-status.md)。
+原样 root-cancel 诊断用例仍在 5.14 秒就绪失败，未改期限或真实进程断言；
+G7 父项及后续授权调度/三个办公闭环保持 pending。
+
+该产品提交 `ca062a4` 完整门禁在 94 浏览器/Core 222+2 通过后，原样 Runtime
+20/24 失败（provider-error、oversized-frame、job-access-denial、root-cancel 的
+后代就绪/排空）。独立 Desktop 99 Bun/35 Rust 单元/6 集成、11 工作区构建
+及生产产物对照通过，均不替代完整门禁；原因未确定，父项不推进。
+
 P3.1a 做托盘、单实例、全局快捷键、可选自启动与后台状态；内核不依赖托盘存活。
 P3.1b 做 Host 调度器与通知 adapter：one-shot/有限周期任务、时区/夏令时、
 missed-run 和重复触发策略；调度器只能调用已授权命令，插件不自行启动 timer daemon。
 没有 GUI 时也能记录提醒结果；无法发送系统通知的平台返回明确支持状态。
+
+2026-10-27：P3.1b1 已实现 Runtime-owned 一次性/有限 interval 规划游标，显式
+grace、跳过/合并漏触发、重复检查/时钟回拨/取消与算术限额，11 项 Rust 集成
+及 Clippy 通过。只完成纯规则子项，持久 claims、授权调度、日历时区与通知
+仍按后续步骤接入，见 [验证](./validation/g7-scheduling-rules.md)。
+
+该产品 `fcb83a4` 的完整门禁在静态检查、94 浏览器与 Core 222+11+2 通过后，
+保留原样 Runtime 20/24 后代就绪/排空失败；不重试或放宽，结果见上述记录。
+人工豁免继续有效，不因这次已记录的自动失败重新要求人工验收。
 
 `packages/ui` 提供 Form/List/Detail/Progress/Result 标准组合、tokens 和统一错误/
 取消/键盘/无障碍约定；T2 使用同版本 UI 包构建到自己的容器，不共享宿主 realm。

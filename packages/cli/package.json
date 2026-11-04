@@ -24,8 +24,8 @@
     "lint": "oxlint --type-aware --type-check",
     "lint:fix": "oxlint --fix --type-aware --type-check",
     "format": "oxfmt",
-    "check-types": "tsgo --noEmit",
-    "test": "bun run build && bun test src"
+    "check-types": "tsgo --noEmit && tsgo --noEmit -p tsconfig.test.json",
+    "test": "bun run build && bun test src && node --test test/compiled-search.test.mjs"
   },
   "dependencies": {
     "@flowtools/runtime-client": "workspace:*",

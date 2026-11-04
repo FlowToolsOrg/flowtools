@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "maturity": "prototype",
+  "ffmpeg": {
+    "version": "8.1.2",
+    "archive": "ffmpeg-github-n8.1.2.tar.gz",
+    "url": "https://codeload.github.com/FFmpeg/FFmpeg/tar.gz/n8.1.2",
+    "sha256": "9fd092511605bbebafe095ea6d38d9e40f34d12f7386e1258372df8be0576eb7",
+    "tag": "1c2c67c0b9f7f66ab32c19dcf7f227bcd290aa4c",
+    "commit": "38b88335f99e76ed89ff3c93f877fdefce736c13",
+    "tree": "1a0883de7a83dc0b87d0fd89c145a7b4553f1563",
+    "signer": "DD1EC9E8DE085C629B3E1846B18E8928B3948D64",
+    "keySha256": "d45547894de8fc2116ed4a5a6f5ebb65912348a035429cb7532f6a4b69766a74"
+  },
+  "opus": {
+    "version": "1.6.1",
+    "archive": "opus-1.6.1.tar.gz",
+    "url": "https://downloads.xiph.org/releases/opus/opus-1.6.1.tar.gz",
+    "sha256": "6ffcb593207be92584df15b32466ed64bbec99109f007c82205f0194572411a1"
+  },
+  "libvpx": {
+    "version": "1.17.0",
+    "commit": "6df3ec34557879fff673706f4a1d9fbd0f3a6f0e",
+    "archive": "libvpx-1.17.0.tar.gz",
+    "url": "https://codeload.github.com/webmproject/libvpx/tar.gz/6df3ec34557879fff673706f4a1d9fbd0f3a6f0e",
+    "sha256": "073bd6202e4c55c8cb759abbb123aecd4cc8d99f52ba27af790178cfb1108423"
+  }
+}

@@ -1,4 +1,8 @@
 use super::*;
+#[path = "runtime_service_tests/cohort_tests.rs"]
+mod cohort_tests;
+#[path = "runtime_service_tests/journal_tests.rs"]
+mod journal_tests;
 
 fn profile() -> std::path::PathBuf {
     let path = std::env::temp_dir().join(format!(

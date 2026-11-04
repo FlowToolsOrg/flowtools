@@ -23,13 +23,28 @@ export class RuntimeReadinessError extends RuntimeClientError {
         : undefined)
   }
 }
+/** Called only by a local command with explicit approval to start its task. */
+export async function startUserRuntime(profile: string) {
+  await endpoint(profile, false, true)
+}
 
-async function endpoint(profile: string, start: boolean): Promise<string> {
+async function endpoint(
+  profile: string,
+  start: boolean,
+  explicit = false
+): Promise<string> {
   const executable = await runtimeExecutable()
   const stdout = await new Promise<string>((resolve, reject) => {
     const child = spawn(
       executable,
-      [start ? '--ensure-runtime' : '--endpoint', profile],
+      [
+        explicit
+          ? '--start-runtime'
+          : start
+            ? '--ensure-runtime'
+            : '--endpoint',
+        profile,
+      ],
       {
         windowsHide: true,
         stdio: ['ignore', 'pipe', 'pipe'],

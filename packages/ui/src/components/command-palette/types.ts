@@ -18,6 +18,8 @@ export interface CommandPaletteItem {
    * Source plugin or section name.
    */
   source?: string
+  keywords?: string[]
+  aliases?: string[]
   /**
    * Optional icon identifier.
    */

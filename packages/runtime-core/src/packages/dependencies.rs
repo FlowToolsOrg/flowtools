@@ -1,5 +1,7 @@
 //! Inert signed dependency plans over currently trusted, byte-verified archives.
-//! No installed inventory, tool admission, persisted locks, grants or execution.
+//! No installed inventory, persisted locks, grants or execution. The separate
+//! tools profile consumes only opaque, already admitted tool archives.
+pub mod tools;
 use super::{
     manifest::{validate_bytes, CompatiblePluginArchive, ManifestCompatibility},
     trust::PackageTrustStore,
@@ -9,7 +11,7 @@ use crate::{
     data::DataStore,
     dependencies::{
         DependencyCatalog, DependencyEdge, DependencyError, DependencyIdentity, DependencyTarget,
-        PackageCandidate, PackagePin, ReverseDependency, ToolPin,
+        PackageCandidate, PackagePin, ReverseDependency, ToolCandidate, ToolPin,
     },
 };
 use serde::{Deserialize, Serialize};
@@ -68,7 +70,8 @@ pub struct SignedArchiveLock {
     pub roots: Vec<DependencyIdentity>,
     pub packages: Vec<SignedArchivePin>,
     pub services: Vec<SignedServicePin>,
-    /// Tool archive admission remains unavailable; this field must stay empty.
+    /// Legacy tool-free profile: this field stays empty. The separate tools
+    /// profile has its own admitted ZIP pins and cannot be substituted here.
     pub tools: Vec<ToolPin>,
     pub edges: Vec<DependencyEdge>,
     pub topology: Vec<DependencyIdentity>,
@@ -145,7 +148,36 @@ pub fn plan_signed_plugin(
     store: &mut DataStore,
     request: SignedDependencyRequest<'_>,
 ) -> Result<VerifiedPluginDependencyPlan, SignedDependencyError> {
-    if request.providers.len() >= MAX_CANDIDATES {
+    let resolved = resolve_signed(request, trust, store, &[])?;
+    if !resolved.tools.is_empty() {
+        return Err(DependencyError::ArtifactConflict.into());
+    }
+    Ok(VerifiedPluginDependencyPlan {
+        candidate: resolved.candidate,
+        lock: resolved.graph,
+        root_digest: resolved.root_digest,
+        verified_at: resolved.verified_at,
+    })
+}
+struct ResolvedSigned {
+    candidate: SignedArchivePin,
+    graph: SignedArchiveLock,
+    root_digest: String,
+    verified_at: u64,
+    tools: Vec<tools::SignedToolArchivePin>,
+}
+fn resolve_signed(
+    request: SignedDependencyRequest<'_>,
+    trust: &PackageTrustStore,
+    store: &mut DataStore,
+    tool_archives: &[&super::tools::InertToolArchive],
+) -> Result<ResolvedSigned, SignedDependencyError> {
+    if request
+        .providers
+        .len()
+        .checked_add(tool_archives.len())
+        .is_none_or(|n| n >= MAX_CANDIDATES)
+    {
         return Err(DependencyError::BudgetExceeded.into());
     }
     let archives: Vec<_> = std::iter::once(request.candidate)
@@ -154,6 +186,11 @@ pub fn plan_signed_plugin(
     let manifest_bytes: u64 = archives
         .iter()
         .map(|archive| archive.archive().descriptor().payload().manifest.size)
+        .chain(
+            tool_archives
+                .iter()
+                .map(|tool| tool.archive().descriptor().payload().manifest.size),
+        )
         .sum();
     if manifest_bytes > MAX_MANIFEST_BYTES {
         return Err(DependencyError::BudgetExceeded.into());
@@ -161,6 +198,7 @@ pub fn plan_signed_plugin(
     let receipts: Vec<_> = archives
         .iter()
         .map(|archive| archive.archive().descriptor())
+        .chain(tool_archives.iter().map(|tool| tool.archive().descriptor()))
         .collect();
     let root =
         trust.check_receipts(store, &receipts, &request.compatibility.target, request.now)?;
@@ -194,13 +232,52 @@ pub fn plan_signed_plugin(
         .iter()
         .map(|archive| PackageCandidate::from_verified_archive(archive))
         .collect::<Result<Vec<_>, _>>()?;
-    // Tools await their own complete admission/compatibility and G6 inventory.
-    // An unverified ToolCandidate can never be supplied through this path.
-    let catalog = DependencyCatalog::new(packages, vec![])?;
+    // This temporary solver projection never escapes as a G4 lock. Its tool
+    // candidates come only from opaque admission and pin original signed ZIPs.
+    // The legacy entry supplies none and retains its previous refusal behavior.
+    let tool_candidates = tool_archives
+        .iter()
+        .map(|tool| {
+            let receipt = tool.archive().descriptor();
+            let payload = receipt.payload();
+            Ok(ToolCandidate {
+                publisher: payload.publisher.clone(),
+                id: payload.id.clone(),
+                version: payload.version.clone(),
+                target: serde_json::from_value(
+                    serde_json::to_value(&payload.target)
+                        .map_err(|_| DependencyError::InvalidDeclaration)?,
+                )
+                .map_err(|_| DependencyError::InvalidDeclaration)?,
+                build_flavor: payload.build_flavor.clone(),
+                digest: receipt.package_digest().into(),
+            })
+        })
+        .collect::<Result<Vec<_>, DependencyError>>()?;
+    let catalog = DependencyCatalog::new(packages, tool_candidates)?;
     let semantic = catalog.resolve(&[candidate.identity()], &target)?.lock;
-    if !semantic.tools.is_empty() {
-        return Err(DependencyError::ArtifactConflict.into());
-    }
+    let tool_pins = semantic
+        .tools
+        .iter()
+        .map(|pin| {
+            let archive = tool_archives
+                .iter()
+                .find(|archive| {
+                    let receipt = archive.archive().descriptor();
+                    let payload = receipt.payload();
+                    payload.publisher == pin.publisher
+                        && payload.id == pin.id
+                        && payload.version == pin.version
+                        && payload.build_flavor == pin.build_flavor
+                        && receipt.package_digest() == pin.digest
+                })
+                .ok_or(DependencyError::ArtifactConflict)?;
+            Ok(tools::SignedToolArchivePin::from_archive(
+                archive,
+                pin.consumer.clone(),
+            ))
+        })
+        .collect::<Result<Vec<_>, DependencyError>>()?;
     let mut exact = BTreeMap::new();
     for archive in &archives {
         let descriptor = archive.archive().descriptor();
@@ -264,9 +341,10 @@ pub fn plan_signed_plugin(
         return Err(DependencyError::ArtifactConflict.into());
     }
     lock.digest = lock.verified_digest()?;
-    Ok(VerifiedPluginDependencyPlan {
+    Ok(ResolvedSigned {
+        tools: tool_pins,
         candidate,
-        lock,
+        graph: lock,
         root_digest: root.payload_digest().into(),
         verified_at: request.now,
     })

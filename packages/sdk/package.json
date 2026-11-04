@@ -10,6 +10,10 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
+    "./search": {
+      "types": "./dist/search.d.ts",
+      "import": "./dist/search.js"
+    },
     "./services": {
       "types": "./dist/services.d.ts",
       "import": "./dist/services.js"
@@ -80,6 +84,7 @@
     }
   },
   "scripts": {
+    "benchmark:search": "node --expose-gc benchmark/search.ts",
     "build": "tsdown --config tsdown.config.ts",
     "dev": "tsdown --config tsdown.config.ts --watch",
     "lint": "oxlint --type-aware --type-check",
@@ -90,6 +95,8 @@
     "test": "bun run build && bun test test"
   },
   "dependencies": {
+    "pinyin-pro": "3.29.5",
+    "re2js": "2.9.0",
     "semver": "7.7.4",
     "sucrase": "^3.35.0",
     "zod": "catalog:"

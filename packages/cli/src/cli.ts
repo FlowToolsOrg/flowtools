@@ -25,12 +25,17 @@ import {
   getBuiltinCommandManifest,
   scanPlugins,
 } from './discovery'
+import { addFileCommands } from './files'
 import { addRuntimeCommands } from './host'
 import { addJobCommands } from './jobs'
 import { addManagementCommands, managementFailure } from './management'
+import { addMediaCommands } from './media'
 import { parseRunArguments, requestedRunFormat } from './run-arguments'
 import { printExecutionResult, runPlugin } from './runner'
+import { addScheduleCommands } from './schedules'
 import { CLIInputError, isCLIInputError, parseJsonInput } from './schema'
+import { addSearchCommand } from './search'
+import { addToolCommands } from './tools'
 
 const program = new Command()
   .name('flowtools')
@@ -42,7 +47,12 @@ const program = new Command()
 addManagementCommands(program)
 addRuntimeCommands(program)
 addJobCommands(program)
+addScheduleCommands(program)
+addSearchCommand(program)
 addDependencyCommands(program)
+addToolCommands(program)
+addFileCommands(program)
+addMediaCommands(program)
 
 function writeJson(value: unknown) {
   process.stdout.write(JSON.stringify(value, null, 2) + '\n')
@@ -365,9 +375,17 @@ main().catch(error => {
   )
     return
   if (
-    ['init', 'permissions', 'runtime', 'jobs', 'dependencies'].includes(
-      process.argv[2] ?? ''
-    )
+    [
+      'init',
+      'permissions',
+      'runtime',
+      'jobs',
+      'dependencies',
+      'tools',
+      'schedules',
+      'files',
+      'media',
+    ].includes(process.argv[2] ?? '')
   ) {
     managementFailure(error)
     return
@@ -381,6 +399,8 @@ main().catch(error => {
         String(error.code).startsWith('commander.'))
       ? 'INPUT_INVALID'
       : 'LOAD_FAILED',
-    requestedRunFormat(process.argv.slice(2))
+    process.argv[2] === 'search'
+      ? 'json'
+      : requestedRunFormat(process.argv.slice(2))
   )
 })

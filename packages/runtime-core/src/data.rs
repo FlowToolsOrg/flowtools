@@ -4,6 +4,11 @@ use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 
+pub(crate) fn job_metadata_digest(text: &str) -> String {
+    use sha2::{Digest, Sha256};
+    format!("{:x}", Sha256::digest(text.as_bytes()))
+}
+
 pub const SCHEMA_VERSION: u32 = 2;
 pub const MAX_DATA_BYTES: usize = 65_536;
 const SCHEMA_V1: &str = "
@@ -19,6 +24,8 @@ PRAGMA user_version=2;";
 pub struct DataStore {
     pub(crate) connection: Connection,
     path: Option<PathBuf>,
+    #[cfg(any(windows, test))]
+    writer_instance: uuid::Uuid,
 }
 
 fn db_error(error: rusqlite::Error) -> ErrorCode {
@@ -116,6 +123,13 @@ fn validate_key(key: &str) -> Result<(), ErrorCode> {
 }
 
 impl DataStore {
+    #[cfg(any(windows, test))]
+    pub(crate) fn writer_instance(&self) -> uuid::Uuid {
+        self.writer_instance
+    }
+    pub(crate) fn database_path(&self) -> Option<&Path> {
+        self.path.as_deref()
+    }
     pub(crate) fn profile(&self) -> Option<&Path> {
         self.path.as_deref().and_then(|p| p.parent())
     }
@@ -125,26 +139,36 @@ impl DataStore {
         Ok(())
     }
     pub(crate) fn load_jobs(&self) -> Result<Vec<Value>, ErrorCode> {
+        Ok(self
+            .load_job_records()?
+            .into_iter()
+            .map(|(value, _)| value)
+            .collect())
+    }
+    // Preserve an exact-byte predecessor digest for the guarded tool-job writer.
+    // It is ephemeral T0 state, never a new database field or client token.
+    pub(crate) fn load_job_records(&self) -> Result<Vec<(Value, String)>, ErrorCode> {
         let mut statement = self
             .connection
-            .prepare("SELECT run_id,metadata FROM jobs ORDER BY run_id LIMIT 1025")
+            .prepare("SELECT run_id,CASE WHEN typeof(metadata)='text' AND length(CAST(metadata AS BLOB))<=32768 THEN metadata ELSE NULL END FROM jobs ORDER BY run_id LIMIT 1025")
             .map_err(db_error)?;
         let rows = statement
             .query_map([], |row| {
-                Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+                Ok((row.get::<_, String>(0)?, row.get::<_, Option<String>>(1)?))
             })
             .map_err(db_error)?;
         let values = rows
             .map(|row| {
                 let (run, text) = row.map_err(db_error)?;
-                let value: Value =
-                    serde_json::from_str(&text).map_err(|_| ErrorCode::StoreCorrupt)?;
+                let text = text.ok_or(ErrorCode::StoreCorrupt)?;
+                let value: Value = crate::packages::strict_json(text.as_bytes())
+                    .map_err(|_| ErrorCode::StoreCorrupt)?;
                 if value["snapshot"]["runId"] != run || text.len() > 32_768 {
                     return Err(ErrorCode::StoreCorrupt);
                 }
-                Ok(value)
+                Ok((value, job_metadata_digest(&text)))
             })
-            .collect::<Result<Vec<Value>, ErrorCode>>()?;
+            .collect::<Result<Vec<(Value, String)>, ErrorCode>>()?;
         if values.len() > 1024 {
             return Err(ErrorCode::BudgetExceeded);
         }
@@ -154,6 +178,8 @@ impl DataStore {
         let mut store = Self {
             connection: Connection::open_in_memory().map_err(db_error)?,
             path: None,
+            #[cfg(any(windows, test))]
+            writer_instance: uuid::Uuid::new_v4(),
         };
         store.migrate(|| Ok(()))?;
         Ok(store)
@@ -178,6 +204,8 @@ impl DataStore {
         let mut store = Self {
             connection: Connection::open(path).map_err(db_error)?,
             path: Some(path.into()),
+            #[cfg(any(windows, test))]
+            writer_instance: uuid::Uuid::new_v4(),
         };
         healthy(&store.connection)?;
         let version: u32 = store

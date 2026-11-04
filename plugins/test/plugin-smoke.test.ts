@@ -33,6 +33,21 @@ function controlledContext(pluginId: string) {
     log: () => {},
     utils: { now: Date.now },
     storage,
+    media: {
+      run: async planId => {
+        if (planId !== '00000000-0000-4000-8000-000000000001')
+          throw new Error('SCOPE_DENIED')
+        return {
+          formats: ['wav'],
+          durationMs: 1000,
+          sourceBytes: 32044,
+          streams: [],
+          published: false,
+          outputBytes: null,
+          outputSha256: null,
+        }
+      },
+    },
     request: async input => {
       const url =
         typeof input === 'string'
@@ -51,7 +66,7 @@ function controlledContext(pluginId: string) {
 
 test('smoke fixtures exactly cover the runnable CLI inventory', () => {
   const discovered = scanPlugins()
-  expect(discovered).toHaveLength(12)
+  expect(discovered).toHaveLength(15)
   expect(discovered.every(plugin => plugin.hasRun && plugin.hasSchema)).toBe(
     true
   )

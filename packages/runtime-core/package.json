@@ -8,7 +8,7 @@
     "build": "bun run generate-catalog.ts && cargo build --locked --manifest-path Cargo.toml",
     "lint": "oxlint --type-aware --type-check *.ts && cargo fmt --manifest-path Cargo.toml -- --check && cargo clippy --locked --manifest-path Cargo.toml --all-targets -- -D warnings",
     "check-types": "tsgo --noEmit && cargo check --locked --manifest-path Cargo.toml --all-targets",
-    "test": "bun run manifest-conformance.ts --check && bun run generate-catalog.ts && bun run ../../scripts/check-rust-tests.ts Cargo.toml && cargo test --locked --manifest-path Cargo.toml"
+    "test": "bun run manifest-conformance.ts --check && bun run generate-catalog.ts && cargo build --locked --manifest-path ../../apps/runtime/test/fixtures/isolation-probe/Cargo.toml && bun run ../../scripts/check-rust-tests.ts Cargo.toml && cargo test --locked --manifest-path Cargo.toml -- --test-threads=1"
   },
   "dependencies": {
     "@flowtools/plugins": "workspace:*",

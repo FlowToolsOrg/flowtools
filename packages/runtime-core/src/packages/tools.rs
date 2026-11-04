@@ -1,5 +1,6 @@
-//! G6 P2.8a1: strict, inert tool-package admission through durable T0 trust.
-//! No installed registry, extraction, executable identity, lease or execution.
+//! G6: strict inert tool-package admission and pure fixed media recipes.
+//! Separate inert ZIP storage is not extraction, an executable identity, a lease
+//! or permission to execute a program.
 use super::{
     archive::{validate_archive, ValidatedArchive},
     manifest::ManifestCompatibility,
@@ -10,6 +11,12 @@ use super::{
 use crate::data::DataStore;
 use serde::Deserialize;
 use std::collections::BTreeSet;
+
+#[cfg(windows)]
+pub mod builtin;
+#[cfg(windows)]
+pub mod install;
+pub mod media;
 
 const MAX_TOOL_MANIFEST_BYTES: usize = 65_536;
 const MAX_TOOL_FILES: usize = 32;
@@ -118,6 +125,83 @@ impl InertToolArchive {
     }
 }
 
+// Distinct from ordinary admission: never an installation/planning candidate.
+#[cfg(windows)]
+pub(crate) struct ExistingToolArchive {
+    archive: ValidatedArchive,
+    held: std::sync::Arc<super::trust::HeldDescriptor>,
+}
+#[cfg(windows)]
+impl ExistingToolArchive {
+    pub(crate) fn archive(&self) -> &ValidatedArchive {
+        &self.archive
+    }
+    pub(in crate::packages::tools) fn held(&self) -> &super::trust::HeldDescriptor {
+        &self.held
+    }
+}
+#[cfg(windows)]
+trait ToolArchiveBytes {
+    fn validated(&self) -> &ValidatedArchive;
+}
+#[cfg(windows)]
+impl ToolArchiveBytes for InertToolArchive {
+    fn validated(&self) -> &ValidatedArchive {
+        &self.archive
+    }
+}
+#[cfg(windows)]
+impl ToolArchiveBytes for ExistingToolArchive {
+    fn validated(&self) -> &ValidatedArchive {
+        &self.archive
+    }
+}
+#[cfg(windows)]
+pub(super) fn admit_existing_tool_archive(
+    trust: &PackageTrustStore,
+    store: &mut DataStore,
+    input: ToolArchiveInput<'_>,
+    clock: &mut dyn FnMut() -> u64,
+    held: std::sync::Arc<super::trust::HeldDescriptor>,
+) -> Result<ExistingToolArchive, ToolAdmissionError> {
+    admit_existing_with_profiles(trust, store, input, clock, held, REVIEWED_TOOLS)
+}
+#[cfg(windows)]
+fn admit_existing_with_profiles(
+    trust: &PackageTrustStore,
+    store: &mut DataStore,
+    input: ToolArchiveInput<'_>,
+    clock: &mut dyn FnMut() -> u64,
+    held: std::sync::Arc<super::trust::HeldDescriptor>,
+    profiles: &[ReviewedToolProfile],
+) -> Result<ExistingToolArchive, ToolAdmissionError> {
+    if input.manifest.len() > MAX_TOOL_MANIFEST_BYTES {
+        return Err(ToolAdmissionError::ManifestBudgetExceeded);
+    }
+    let target = ManifestCompatibility::embedded()?.target;
+    let descriptor = trust.verify_held_descriptor(
+        store,
+        &held,
+        DescriptorVerification {
+            envelope: input.envelope,
+            manifest: input.manifest,
+            archive: input.archive,
+            target: target.clone(),
+            now: clock(),
+        },
+    )?;
+    if descriptor.payload().files.len() > MAX_TOOL_FILES {
+        return Err(ToolAdmissionError::ManifestBudgetExceeded);
+    }
+    if descriptor.payload().kind != PackageKind::Tool {
+        return Err(ToolAdmissionError::ManifestInvalid);
+    }
+    let archive = validate_archive(&descriptor, input.manifest, input.archive)?;
+    let _programs = validate_manifest(&archive, &target, profiles)?;
+    trust.check_held_descriptor(store, &held, clock())?;
+    Ok(ExistingToolArchive { archive, held })
+}
+
 pub fn admit_tool_archive(
     trust: &PackageTrustStore,
     store: &mut DataStore,
@@ -192,6 +276,7 @@ fn validate_manifest(
     }
     let profile = profiles
         .iter()
+        .chain(builtin_policy(archive))
         .find(|profile| {
             profile.publisher == manifest.publisher
                 && profile.id == manifest.id
@@ -237,20 +322,17 @@ fn validate_manifest(
     Ok(roles.into_iter().collect())
 }
 
-#[cfg(test)]
-pub(super) fn admit_fixture(
-    trust: &PackageTrustStore,
-    store: &mut DataStore,
-    input: ToolArchiveInput<'_>,
-    clock: impl FnMut() -> u64,
-) -> Result<InertToolArchive, ToolAdmissionError> {
-    const FIXTURE: &[ReviewedToolProfile] = &[ReviewedToolProfile {
-        publisher: "fixture-publisher",
+// Separate maintainer-authorized Windows/T1 prototype policy. This does not
+// populate REVIEWED_TOOLS or confer formal release/security approval. Metadata
+// alone cannot select it: both original signed archive and manifest are pinned.
+fn builtin_policy(archive: &ValidatedArchive) -> Option<&'static ReviewedToolProfile> {
+    static POLICY: ReviewedToolProfile = ReviewedToolProfile {
+        publisher: "flowtools-builtin",
         id: "ffmpeg",
-        registry: "fixture-registry",
-        artifact: "fixture-ffmpeg",
+        registry: "ffmpeg-official",
+        artifact: "ffmpeg-8-1-3-flowtools-t1",
         license: "LGPL-2.1-or-later",
-        build_flavor: "fixture-static",
+        build_flavor: "flowtools-t1-lgpl-static-v1",
         target: PackageTarget {
             platform: super::PackagePlatform::Windows,
             arch: super::PackageArch::X64,
@@ -259,7 +341,62 @@ pub(super) fn admit_fixture(
             (ToolProgram::Ffmpeg, "bin/ffmpeg.exe"),
             (ToolProgram::Ffprobe, "bin/ffprobe.exe"),
         ],
-        resources: &["licenses/ffmpeg.txt"],
-    }];
+        resources: &[
+            "licenses/ffmpeg-lgpl.txt",
+            "licenses/libvpx.txt",
+            "licenses/libvpx-patents.txt",
+            "licenses/opus.txt",
+        ],
+    };
+    let payload = archive.descriptor().payload();
+    (payload.archive.sha256 == "2b26f1bc4731c8db82f2bda708a96354bd31acf1af2cc16058f108d25ccfe415"
+        && payload.manifest.sha256
+            == "198713e499838a7f09258835fcb90b4b4121937377e4fa7135af2eb9998af233"
+        && payload.version == "8.1.3")
+        .then_some(&POLICY)
+}
+
+#[cfg(all(test, windows, target_arch = "x86_64"))]
+#[allow(dead_code)]
+#[path = "../../../../apps/runtime/tests/isolation/harness.rs"]
+pub(crate) mod native_fixture;
+
+#[cfg(test)]
+const FIXTURE: &[ReviewedToolProfile] = &[ReviewedToolProfile {
+    publisher: "fixture-publisher",
+    id: "ffmpeg",
+    registry: "fixture-registry",
+    artifact: "fixture-ffmpeg",
+    license: "LGPL-2.1-or-later",
+    build_flavor: "fixture-static",
+    target: PackageTarget {
+        platform: super::PackagePlatform::Windows,
+        arch: super::PackageArch::X64,
+    },
+    programs: &[
+        (ToolProgram::Ffmpeg, "bin/ffmpeg.exe"),
+        (ToolProgram::Ffprobe, "bin/ffprobe.exe"),
+    ],
+    resources: &["licenses/ffmpeg.txt"],
+}];
+
+#[cfg(test)]
+pub(super) fn admit_fixture(
+    trust: &PackageTrustStore,
+    store: &mut DataStore,
+    input: ToolArchiveInput<'_>,
+    clock: impl FnMut() -> u64,
+) -> Result<InertToolArchive, ToolAdmissionError> {
     admit_with_profiles(trust, store, input, clock, FIXTURE)
+}
+
+#[cfg(all(windows, test))]
+pub(in crate::packages::tools) fn admit_existing_fixture(
+    trust: &PackageTrustStore,
+    store: &mut DataStore,
+    input: ToolArchiveInput<'_>,
+    clock: &mut dyn FnMut() -> u64,
+    held: std::sync::Arc<super::trust::HeldDescriptor>,
+) -> Result<ExistingToolArchive, ToolAdmissionError> {
+    admit_existing_with_profiles(trust, store, input, clock, held, FIXTURE)
 }

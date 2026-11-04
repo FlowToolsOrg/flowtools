@@ -225,6 +225,24 @@ try {
   await invoke(['permissions', 'grant', '--policy', policy])
   await invoke(['runtime', 'start'])
   active = true
+  // The restored tool trust stays blocked even after fresh tool-free grants.
+  // Management and ordinary jobs must remain usable without rearming media.
+  await invoke(['tools', 'list'], 'RECOVERY_PENDING')
+  const mediaInput = join(scratch, 'recovery-media-input.wav')
+  await writeFile(mediaInput, 'RECOVERY_MUST_NOT_START_NATIVE_MEDIA')
+  const mediaPlan = (
+    await invoke<{ data: { id: string; digest: string } }>([
+      'media',
+      'plan',
+      '--input',
+      mediaInput,
+      '--approve-read',
+    ])
+  ).data
+  await invoke(
+    ['media', 'start', mediaPlan.id, '--digest', mediaPlan.digest, '--approve'],
+    'RECOVERY_PENDING'
+  )
   const restored = (
     await invoke<{ data: RunDiagnostic }>(['jobs', 'diagnose', runId])
   ).data

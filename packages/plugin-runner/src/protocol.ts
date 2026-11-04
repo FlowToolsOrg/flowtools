@@ -1,5 +1,9 @@
 import type { JsonValue } from '@flowtools/sdk/manifest'
 import type { ServiceCapability } from '@flowtools/sdk/services'
+import type {
+  NotificationCapability,
+  NotificationStatus,
+} from '@flowtools/sdk/types'
 
 import { isJsonValue } from '@flowtools/sdk/manifest'
 import { serviceTargetSchema } from '@flowtools/sdk/services'
@@ -93,6 +97,43 @@ export class RunnerFrames {
         kind: 'capability',
         operation: { operation: 'file-read', parameters: { handle } },
       })
+    },
+  }
+  readonly media = {
+    run: (planId: string): Promise<JsonValue> => {
+      if (
+        !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(
+          planId
+        )
+      )
+        return Promise.reject(new Error('INPUT_INVALID'))
+      return this.exchange({ kind: 'media', planId })
+    },
+  }
+  readonly notification: NotificationCapability = {
+    notify: async input => {
+      await this.notification.deliver!(input)
+    },
+    deliver: async input => {
+      if (
+        !input.title.trim() ||
+        new TextEncoder().encode(input.title).length > 256 ||
+        new TextEncoder().encode(input.message ?? '').length > 4096
+      )
+        throw new Error('INPUT_INVALID')
+      const result = await this.exchange({
+        kind: 'capability',
+        operation: {
+          operation: 'notification',
+          parameters: { title: input.title, message: input.message ?? '' },
+        },
+      })
+      if (
+        typeof result !== 'string' ||
+        !['requested', 'unsupported', 'failed', 'unknown'].includes(result)
+      )
+        throw new Error('INVALID_RESPONSE')
+      return result as NotificationStatus
     },
   }
   async drained(): Promise<void> {

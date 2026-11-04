@@ -74,6 +74,61 @@ pub struct ServiceRegistry {
     installed: Option<DependencyLock>,
 }
 impl ServiceRegistry {
+    pub(crate) fn change_pending(&self, provider: &PackagePin) -> bool {
+        self.plans
+            .values()
+            .any(|plan| plan.provider.identity() == provider.identity())
+    }
+    pub(crate) fn matches_catalog(&self, catalog: &BuiltinCatalog) -> bool {
+        let expected: BTreeSet<_> = catalog
+            .list()
+            .map(|(id, manifest)| PackagePin {
+                publisher: manifest["publisher"].as_str().unwrap_or_default().into(),
+                id: id.clone(),
+                version: manifest["version"].as_str().unwrap_or_default().into(),
+                digest: digest(manifest),
+            })
+            .collect();
+        self.installed
+            .as_ref()
+            .is_some_and(|lock| lock.packages.iter().cloned().collect::<BTreeSet<_>>() == expected)
+    }
+    pub(crate) fn install_resolved_catalog(
+        &mut self,
+        catalog: &BuiltinCatalog,
+        lock: DependencyLock,
+    ) -> Result<(), ErrorCode> {
+        let tools: BTreeMap<_, _> = lock
+            .tools
+            .iter()
+            .map(|pin| {
+                (
+                    (
+                        pin.publisher.clone(),
+                        pin.id.clone(),
+                        pin.version.clone(),
+                        pin.target.clone(),
+                        pin.build_flavor.clone(),
+                        pin.digest.clone(),
+                    ),
+                    ToolCandidate {
+                        publisher: pin.publisher.clone(),
+                        id: pin.id.clone(),
+                        version: pin.version.clone(),
+                        target: pin.target.clone(),
+                        build_flavor: pin.build_flavor.clone(),
+                        digest: pin.digest.clone(),
+                    },
+                )
+            })
+            .collect();
+        let ids = catalog.list().map(|(id, _)| id.clone()).collect::<Vec<_>>();
+        if Self::plan_with_tools(catalog, &ids, &tools.into_values().collect::<Vec<_>>())? != lock {
+            return Err(ErrorCode::DependencyInvalid);
+        }
+        self.installed = Some(lock);
+        Ok(())
+    }
     pub fn disabled(&self) -> Vec<DependencyIdentity> {
         self.disabled.iter().cloned().collect()
     }
@@ -90,11 +145,34 @@ impl ServiceRegistry {
             .ok_or(ErrorCode::ApprovalRequired)
     }
     pub fn set_catalog(&mut self, catalog: &BuiltinCatalog) -> Result<(), ErrorCode> {
+        self.set_catalog_with_tools(catalog, &[])
+    }
+    pub(crate) fn set_catalog_with_tools(
+        &mut self,
+        catalog: &BuiltinCatalog,
+        tools: &[ToolCandidate],
+    ) -> Result<(), ErrorCode> {
         let ids = catalog.list().map(|(id, _)| id.clone()).collect::<Vec<_>>();
-        self.installed = Some(Self::plan(catalog, &ids)?);
+        self.installed = Some(Self::plan_with_tools(catalog, &ids, tools)?);
         Ok(())
     }
     pub fn plan(catalog: &BuiltinCatalog, ids: &[String]) -> Result<DependencyLock, ErrorCode> {
+        Self::plan_with_tools(catalog, ids, &[])
+    }
+    // Internal semantic projection only. Tool candidates never create the
+    // separately held, current signed-ZIP/image proof required by acceptance.
+    pub(crate) fn plan_with_tools(
+        catalog: &BuiltinCatalog,
+        ids: &[String],
+        tools: &[ToolCandidate],
+    ) -> Result<DependencyLock, ErrorCode> {
+        Ok(Self::dependency_plan_with_tools(catalog, ids, tools)?.lock)
+    }
+    pub(crate) fn dependency_plan_with_tools(
+        catalog: &BuiltinCatalog,
+        ids: &[String],
+        tools: &[ToolCandidate],
+    ) -> Result<DependencyPlan, ErrorCode> {
         let manifests: Vec<_> = catalog.list().map(|(_, m)| m.clone()).collect();
         let roots = ids
             .iter()
@@ -120,7 +198,7 @@ impl ServiceRegistry {
             "aarch64" => "arm64",
             _ => return Err(ErrorCode::DependencyPlatformMismatch),
         };
-        Ok(DependencyCatalog::from_manifests(manifests, vec![])
+        DependencyCatalog::from_manifests(manifests, tools.to_vec())
             .map_err(ErrorCode::from)?
             .resolve(
                 &roots,
@@ -129,8 +207,7 @@ impl ServiceRegistry {
                     arch: arch.into(),
                 },
             )
-            .map_err(ErrorCode::from)?
-            .lock)
+            .map_err(ErrorCode::from)
     }
     pub fn accept(
         &mut self,
@@ -192,6 +269,13 @@ impl ServiceRegistry {
         for lease in self.leases.values_mut() {
             lease.roots.remove(root);
         }
+    }
+    pub(crate) fn root_drained(&self, root: &str) -> bool {
+        !self.accepted.contains_key(root)
+            && !self.releasing.contains(root)
+            && !self.calls.values().any(|call| {
+                call.root_run_id == root && matches!(call.state.as_str(), "queued" | "running")
+            })
     }
     pub fn charge_output(&mut self, root: &str, bytes: usize) -> Result<(), ErrorCode> {
         if let Some(budget) = self.outputs.get_mut(root) {

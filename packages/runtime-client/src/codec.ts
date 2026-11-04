@@ -22,6 +22,10 @@ ajv.addFormat('uint32', {
   validate: value =>
     Number.isInteger(value) && value >= 0 && value <= 4294967295,
 })
+ajv.addFormat('uint64', {
+  type: 'number',
+  validate: value => Number.isSafeInteger(value) && value >= 0,
+})
 const validateRequest = ajv.compile<Request>(schemas.request)
 const validateResponse = ajv.compile<Response>(schemas.response)
 const validateStorageAction = ajv.compile<StorageAction>(schemas.storageAction)

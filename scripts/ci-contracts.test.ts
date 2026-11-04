@@ -2,7 +2,7 @@
 
 import { expect, test } from 'bun:test'
 import { spawnSync } from 'node:child_process'
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import {
   mkdirSync,
   mkdtempSync,
@@ -47,61 +47,110 @@ const workflow = Bun.YAML.parse(
   ).text()
 ) as Workflow
 
-test('native integrity hashing is optimized in the effective workspace without weakening debug checks', () => {
-  const metadata = spawnSync(
-    'cargo',
-    [
-      'metadata',
-      '--locked',
-      '--offline',
-      '--no-deps',
-      '--format-version',
-      '1',
-      '--manifest-path',
-      fileURLToPath(new URL('../apps/runtime/Cargo.toml', import.meta.url)),
-    ],
-    { encoding: 'utf8' }
-  )
-  expect(metadata.status, metadata.stdout + metadata.stderr).toBe(0)
-  const workspace = JSON.parse(metadata.stdout) as { workspace_root: string }
+test('native integrity hashing is optimized without weakening debug checks', () => {
+  // The mandatory Node companion verifies that Cargo actually resolves this
+  // workspace. Keep full TOML semantics and the exact profile assertion here.
   const manifest = Bun.TOML.parse(
-    readFileSync(join(workspace.workspace_root, 'Cargo.toml'), 'utf8')
+    readFileSync(new URL('../Cargo.toml', import.meta.url), 'utf8')
   ) as { profile: Record<string, unknown> }
   expect(manifest.profile).toEqual({
-    dev: { package: { sha2: { 'opt-level': 3 } } },
+    dev: {
+      package: {
+        sha2: { 'opt-level': 3 },
+        'ed25519-dalek': {
+          'opt-level': 3,
+          'debug-assertions': true,
+          'overflow-checks': true,
+        },
+        'curve25519-dalek': {
+          'opt-level': 3,
+          'debug-assertions': true,
+          'overflow-checks': true,
+        },
+      },
+    },
   })
+  for (const relative of [
+    '../apps/desktop/src-tauri/Cargo.toml',
+    '../apps/runtime/test/fixtures/managed-media-candidate/Cargo.toml',
+  ]) {
+    const other = Bun.TOML.parse(
+      readFileSync(new URL(relative, import.meta.url), 'utf8')
+    ) as { profile: Record<string, unknown> }
+    const packageOverrides = {
+      'ed25519-dalek': {
+        'opt-level': 3,
+        'debug-assertions': true,
+        'overflow-checks': true,
+      },
+      'curve25519-dalek': {
+        'opt-level': 3,
+        'debug-assertions': true,
+        'overflow-checks': true,
+      },
+    }
+    expect(other.profile).toEqual({
+      dev: {
+        package: relative.includes('managed-media')
+          ? { sha2: { 'opt-level': 3 }, ...packageOverrides }
+          : packageOverrides,
+      },
+    })
+  }
 })
 
-test('root and workspace lint accept defined CSS classes and reject unknown ones', () => {
-  const root = fileURLToPath(new URL('../', import.meta.url))
-  const consumer = join(root, 'apps', 'ui-test')
-  const fixture = join(consumer, 'src', `lint-probe-${randomUUID()}.tsx`)
-  try {
-    for (const cwd of [root, consumer]) {
-      writeFileSync(
-        fixture,
-        'export const probe = <div className="appearance-lab" />\n'
-      )
-      const allowed = spawnSync(process.execPath, ['x', 'oxlint', fixture], {
-        cwd,
-        encoding: 'utf8',
-      })
-      expect(allowed.status, allowed.stdout + allowed.stderr).toBe(0)
-      writeFileSync(
-        fixture,
-        'export const probe = <div className="appearance-lab-unknown" />\n'
-      )
-      const denied = spawnSync(process.execPath, ['x', 'oxlint', fixture], {
-        cwd,
-        encoding: 'utf8',
-      })
-      expect(denied.status, denied.stdout + denied.stderr).toBe(1)
-      expect(denied.stdout + denied.stderr).toContain('no-unknown-classes')
-    }
-  } finally {
-    unlinkSync(fixture)
-  }
-}, 30_000)
+test('Desktop requires the native Node companion and strictly checks its JavaScript', () => {
+  const desktop = JSON.parse(
+    readFileSync(
+      new URL('../apps/desktop/package.json', import.meta.url),
+      'utf8'
+    )
+  ) as { scripts: Record<string, string> }
+  expect(desktop.scripts.test).toBe(
+    'bun test test ../../scripts && node --test ../../scripts/ci-native-contracts.node.mjs && bun run test/rust-test-inventory.ts && cargo test --locked --features codegen --lib --test bindings --manifest-path src-tauri/Cargo.toml'
+  )
+  expect(desktop.scripts['check-types']).toBe(
+    'tsc --noEmit && tsc --noEmit -p tsconfig.test.json && tsc --noEmit -p ../../scripts/tsconfig.node.json'
+  )
+  expect(desktop.scripts.lint).toContain(
+    '&& bun run --cwd ../.. lint:ci-native'
+  )
+  const root = JSON.parse(
+    readFileSync(new URL('../package.json', import.meta.url), 'utf8')
+  ) as { scripts: Record<string, string> }
+  expect(root.scripts['lint:ci-native']).toBe(
+    'oxlint --type-aware --type-check --tsconfig scripts/tsconfig.node.json scripts/ci-native-contracts.node.mjs'
+  )
+  const config = JSON.parse(
+    readFileSync(new URL('./tsconfig.node.json', import.meta.url), 'utf8')
+  ) as { compilerOptions: Record<string, unknown>; include: string[] }
+  expect(config.compilerOptions).toMatchObject({
+    strict: true,
+    allowJs: true,
+    checkJs: true,
+    noEmit: true,
+    types: ['node'],
+  })
+  expect(config.include).toEqual(['ci-native-contracts.node.mjs'])
+})
+
+test('Node companion retains all actual CSS lint assertions and the original total deadline', () => {
+  const source = readFileSync(
+    new URL('./ci-native-contracts.node.mjs', import.meta.url),
+    'utf8'
+  )
+  expect(source).toContain('exactly two native contracts must complete')
+  expect(source).toContain("spawnSync('bun', ['x', 'oxlint', fixture]")
+  expect(source).toContain('for (const cwd of [root, consumer])')
+  expect(source).toContain('appearance-lab-unknown')
+  expect(source).toContain('assert.equal(allowed.status, 0,')
+  expect(source).toContain('assert.equal(denied.status, 1,')
+  expect(source).toContain('no-unknown-classes')
+  expect(source).toContain('timeout: 30_000')
+  expect(source).toContain('timeout: remaining')
+  expect(source).toContain('performance.now() - started < 30_000')
+  expect(source).toContain('unlinkSync(fixture)')
+})
 
 function psLiteral(value: string): string {
   return `'${value.replaceAll("'", "''")}'`
@@ -110,6 +159,498 @@ function psLiteral(value: string): string {
 const helperPath = psLiteral(
   fileURLToPath(new URL('./ci-gates.ps1', import.meta.url))
 )
+
+test('Core isolates full native cases without filtering tests or changing job deadlines', () => {
+  const core = JSON.parse(
+    readFileSync(
+      new URL('../packages/runtime-core/package.json', import.meta.url),
+      'utf8'
+    )
+  ) as { scripts: { test: string } }
+  expect(core.scripts.test.split(' && ')).toEqual([
+    'bun run manifest-conformance.ts --check',
+    'bun run generate-catalog.ts',
+    'cargo build --locked --manifest-path ../../apps/runtime/test/fixtures/isolation-probe/Cargo.toml',
+    'bun run ../../scripts/check-rust-tests.ts Cargo.toml',
+    'cargo test --locked --manifest-path Cargo.toml -- --test-threads=1',
+  ])
+  const scheduling = readFileSync(
+    new URL(
+      '../packages/runtime-core/src/runtime_scheduling.rs',
+      import.meta.url
+    ),
+    'utf8'
+  )
+  expect(scheduling).toContain('timeout_ms: 1_000,')
+  expect(scheduling).toContain(
+    'fn notification_needs_current_policy_and_durable_claim_before_os_effect()'
+  )
+  expect(scheduling).toContain(
+    'fn scheduled_acceptance_uses_private_inputs_and_survives_client_disconnect_without_replay()'
+  )
+})
+
+test('real media candidate stays an explicit pinned developer-only acceptance workspace', () => {
+  const root = fileURLToPath(new URL('../', import.meta.url))
+  const candidate = join(root, 'apps/runtime/test/fixtures/media-candidate')
+  const manifest = Bun.TOML.parse(
+    readFileSync(join(candidate, 'Cargo.toml'), 'utf8')
+  ) as {
+    package: { publish: boolean; autobins: boolean }
+    workspace: object
+  }
+  expect(manifest.package.publish).toBe(false)
+  expect(manifest.package.autobins).toBe(false)
+  expect(manifest.workspace).toEqual({})
+  const runtime = JSON.parse(
+    readFileSync(join(root, 'apps/runtime/package.json'), 'utf8')
+  ) as {
+    scripts: Record<string, string>
+  }
+  expect(runtime.scripts['validate:media-candidate']).toBe(
+    'pwsh -NoProfile -File ../../scripts/test-media-candidate.ps1'
+  )
+  for (const name of ['build', 'test'])
+    expect(runtime.scripts[name]).not.toContain('media-candidate')
+  const source = readFileSync(join(candidate, 'acceptance.rs'), 'utf8')
+  expect(source.match(/#\[test\]/g)).toHaveLength(6)
+  expect(source).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(source).toContain('include_bytes!(".generated/bin/ffmpeg.exe")')
+  expect(source).toContain('checked_image(FFMPEG')
+  const sourceLock = readFileSync(
+    join(root, 'scripts/media-candidate/source-lock.json')
+  )
+  const lock = JSON.parse(
+    readFileSync(join(candidate, 'candidate-lock.json'), 'utf8')
+  ) as {
+    maturity: string
+    sourceLockSha256: string
+    programs: Record<string, string>
+  }
+  expect(lock.maturity).toBe('prototype')
+  expect(lock.sourceLockSha256).toBe(
+    createHash('sha256').update(sourceLock).digest('hex')
+  )
+  expect(Object.keys(lock.programs).sort()).toEqual(['ffmpeg', 'ffprobe'])
+  for (const hash of Object.values(lock.programs))
+    expect(hash).toMatch(/^[0-9a-f]{64}$/)
+  const build = readFileSync(
+    join(root, 'scripts/media-candidate/build.sh'),
+    'utf8'
+  )
+  expect(build).toContain('--disable-autodetect --disable-network')
+  expect(build).toContain('--enable-bsf=vp9_superframe')
+  expect(build).not.toMatch(
+    /--enable-(?:gpl|nonfree|network)|curl[^\n]*\|\s*(?:sh|bash)/
+  )
+  const parseLock = (path: string) =>
+    Bun.TOML.parse(readFileSync(path, 'utf8')) as {
+      package: Array<{
+        name: string
+        version: string
+        source?: string
+        checksum?: string
+      }>
+    }
+  const known = new Set(
+    parseLock(join(root, 'Cargo.lock'))
+      .package.filter(p => p.source)
+      .map(p => `${p.name}@${p.version}:${p.source}:${p.checksum}`)
+  )
+  for (const pkg of parseLock(join(candidate, 'Cargo.lock')).package.filter(
+    p => p.source
+  )) {
+    expect(
+      known.has(`${pkg.name}@${pkg.version}:${pkg.source}:${pkg.checksum}`)
+    ).toBe(true)
+  }
+  const driver = readFileSync(
+    join(root, 'scripts/test-media-candidate.ps1'),
+    'utf8'
+  )
+  expect(driver).toContain(
+    "Invoke-QualityCommand 'Media candidate test inventory'"
+  )
+  expect(driver).toContain("$mediaManifest, '6'")
+  expect(driver).toContain(
+    "Invoke-QualityCommand 'Media candidate all-target Clippy'"
+  )
+  expect(driver).toContain("Invoke-QualityCommand 'Six real-media LPAC checks'")
+})
+
+test('signed installed-media candidate uses actual Core test sources in a separate pinned workspace', () => {
+  const root = fileURLToPath(new URL('../', import.meta.url))
+  const fixture = join(
+    root,
+    'apps/runtime/test/fixtures/managed-media-candidate'
+  )
+  const read = (path: string) => readFileSync(join(root, path), 'utf8')
+  type Dependency =
+    | string
+    | {
+        version?: string
+        workspace?: boolean
+        features?: string[]
+        [key: string]: unknown
+      }
+  type Cargo = {
+    package?: { publish?: boolean; autobins?: boolean }
+    workspace?: {
+      members?: string[]
+      dependencies?: Record<string, Dependency>
+    }
+    lib?: { path: string; doctest: boolean }
+    dependencies: Record<string, Dependency>
+    target?: Record<
+      string,
+      {
+        dependencies?: Record<string, Dependency>
+        'dev-dependencies'?: Record<string, Dependency>
+      }
+    >
+  }
+  const manifest = Bun.TOML.parse(
+    readFileSync(join(fixture, 'Cargo.toml'), 'utf8')
+  ) as Cargo
+  const core = Bun.TOML.parse(read('packages/runtime-core/Cargo.toml')) as Cargo
+  const workspace = Bun.TOML.parse(read('Cargo.toml')) as Cargo
+  expect(manifest.package?.publish).toBe(false)
+  expect(manifest.package?.autobins).toBe(false)
+  expect(manifest.workspace).toEqual({})
+  expect(manifest.lib).toEqual({ path: 'validation.rs', doctest: false })
+  expect(
+    readFileSync(join(fixture, '.gitignore'), 'utf8').trim().split(/\r?\n/)
+  ).toEqual(['/.generated/', '/target/'])
+  expect(workspace.workspace?.members).not.toContain(
+    'apps/runtime/test/fixtures/managed-media-candidate'
+  )
+  const normalize = (dependency: Dependency) =>
+    typeof dependency === 'string' ? { version: dependency } : dependency
+  expect(Object.keys(manifest.dependencies).sort()).toEqual(
+    Object.keys(core.dependencies).sort()
+  )
+  for (const [name, value] of Object.entries(core.dependencies)) {
+    const local = normalize(value)
+    const expected = local.workspace
+      ? {
+          ...normalize(workspace.workspace!.dependencies![name]!),
+          ...Object.fromEntries(
+            Object.entries(local).filter(([key]) => key !== 'workspace')
+          ),
+        }
+      : local
+    expect(normalize(manifest.dependencies[name]!)).toEqual(expected)
+  }
+  const windows = 'cfg(windows)'
+  const mergedFeatures = new Set([
+    ...normalize(core.target![windows]!.dependencies!['windows-sys']!)
+      .features!,
+    ...normalize(core.target![windows]!['dev-dependencies']!['windows-sys']!)
+      .features!,
+  ])
+  const actualWindows = normalize(
+    manifest.target![windows]!.dependencies!['windows-sys']!
+  )
+  expect(actualWindows.version).toBe('=0.61.2')
+  expect([...actualWindows.features!].sort()).toEqual(
+    [...mergedFeatures].sort()
+  )
+  const parseLock = (path: string) =>
+    Bun.TOML.parse(readFileSync(path, 'utf8')) as {
+      package: Array<{
+        name: string
+        version: string
+        source?: string
+        checksum?: string
+      }>
+    }
+  const trustedDependencies = new Set(
+    parseLock(join(root, 'Cargo.lock'))
+      .package.filter(p => p.source)
+      .map(p => `${p.name}@${p.version}:${p.source}:${p.checksum}`)
+  )
+  for (const pkg of parseLock(join(fixture, 'Cargo.lock')).package.filter(
+    p => p.source
+  )) {
+    expect(
+      trustedDependencies.has(
+        `${pkg.name}@${pkg.version}:${pkg.source}:${pkg.checksum}`
+      )
+    ).toBe(true)
+  }
+  const source = readFileSync(join(fixture, 'validation.rs'), 'utf8')
+  expect(source).toContain(
+    'include!("../../../../../packages/runtime-core/src/lib.rs");'
+  )
+  expect(source).toContain('#[cfg(test)]')
+  const tests = readFileSync(join(fixture, 'managed_media.rs'), 'utf8')
+  expect(tests.match(/#\[test\]/g)).toHaveLength(6)
+  expect(tests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(tests).toContain(
+    'include_bytes!("../media-candidate/.generated/bin/ffmpeg.exe")'
+  )
+  expect(tests).toContain('invoke_media_tool')
+  expect(tests).toContain(
+    'use crate::packages::tools::native_fixture as harness;'
+  )
+  expect(tests).toContain('launch_installed_media')
+  expect(tests).toMatch(/child\s*\.admitted_image/)
+  const harness = read('apps/runtime/tests/isolation/harness.rs')
+  const imageCheck = harness.indexOf('unexpected installed image before resume')
+  expect(imageCheck).toBeGreaterThanOrEqual(0)
+  expect(imageCheck).toBeLessThan(harness.indexOf('if ResumeThread('))
+  expect(tests).toContain('Duration::from_millis(500)')
+  const runtime = JSON.parse(read('apps/runtime/package.json')) as {
+    scripts: Record<string, string>
+  }
+  expect(runtime.scripts['validate:managed-media-candidate']).toBe(
+    'pwsh -NoProfile -File ../../scripts/test-managed-media-candidate.ps1'
+  )
+  for (const task of ['build', 'test', 'lint', 'check-types'])
+    expect(runtime.scripts[task]).not.toContain('managed-media-candidate')
+  const driver = read('scripts/test-managed-media-candidate.ps1')
+  expect(driver.match(/--target-dir/g)).toHaveLength(14)
+  expect(driver).toContain("'--target-dir', $managedTargetRoot")
+  expect(driver).toContain('$managedCount -ne 6')
+  expect(driver).toContain(
+    '$nativeCount -ne 10 -or $audioCount -ne 8 -or $videoCount -ne 9 -or $continuationCount -ne 6 -or $healthCount -ne 5 -or $progressCount -ne 5 -or $cohortCount -ne 4 -or $queueCount -ne 4 -or $officialCount -ne 4 -or $discardCount -ne 6 -or $allManagedCount -ne 67'
+  )
+  expect(driver).toContain("'--skip', 'managed_media::native_inspection::'")
+  expect(driver).toContain("'Ten Core-owned native inspection checks'")
+  const nativeTests = readFileSync(
+    join(fixture, 'native_inspection.rs'),
+    'utf8'
+  )
+  expect(nativeTests.match(/#\[test\]/g)).toHaveLength(10)
+  expect(nativeTests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(nativeTests).toContain('start_media_inspection')
+  expect(nativeTests).toContain('Duration::from_secs(5)')
+  expect(nativeTests).toContain('assert_eq!(observations[0].1, 0)')
+  const continuationTests = readFileSync(
+    join(fixture, 'native_continuation.rs'),
+    'utf8'
+  )
+  expect(continuationTests.match(/#\[test\]/g)).toHaveLength(6)
+  expect(continuationTests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(driver).toContain("'Six live media continuation checks'")
+  expect(driver).toContain("'--skip', 'managed_media::native_continuation::'")
+  const healthTests = readFileSync(join(fixture, 'native_health.rs'), 'utf8')
+  expect(healthTests.match(/#\[test\]/g)).toHaveLength(5)
+  expect(healthTests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(driver).toContain("'Five fixed native health checks'")
+  expect(driver).toContain("'--skip', 'managed_media::native_health::'")
+
+  const progressTests = readFileSync(
+    join(fixture, 'native_progress.rs'),
+    'utf8'
+  )
+  expect(progressTests.match(/#\[test\]/g)).toHaveLength(5)
+  expect(progressTests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(driver).toContain("'Five current native progress checks'")
+  expect(driver).toContain("'--skip', 'managed_media::native_progress::'")
+
+  const cohortTests = readFileSync(join(fixture, 'native_cohort.rs'), 'utf8')
+  expect(cohortTests.match(/#\[test\]/g)).toHaveLength(4)
+  expect(cohortTests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(driver).toContain("'Four signed native cohort update checks'")
+  expect(driver).toContain("'--skip', 'managed_media::native_cohort::'")
+
+  const queueTests = readFileSync(join(fixture, 'native_queue.rs'), 'utf8')
+  expect(queueTests.match(/#\[test\]/g)).toHaveLength(4)
+  expect(queueTests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(driver).toContain("'Four signed queued-tool policy checks'")
+  expect(driver).toContain("'--skip', 'managed_media::native_queue::'")
+
+  const officialTests = readFileSync(
+    join(fixture, 'native_official.rs'),
+    'utf8'
+  )
+  expect(officialTests.match(/#\[test\]/g)).toHaveLength(4)
+  expect(officialTests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(driver).toContain("'Four official signed-source media checks'")
+  expect(driver).toContain("'--skip', 'managed_media::native_official::'")
+  expect(driver).toContain("'prepare-official-media-candidate.ps1'")
+  expect(driver).toContain('-BuildRoot $OfficialBuildRoot')
+  const officialPreparation = read(
+    'scripts/prepare-official-media-candidate.ps1'
+  )
+  expect(officialPreparation).toContain('usr/bin/gpgv.exe')
+  expect(officialPreparation).toContain(
+    '--keyring $officialGpgKey --status-fd 1'
+  )
+  expect(officialPreparation).toContain(
+    'FCF986EA15E6E293A5644F10B4322F04D67658D8'
+  )
+  expect(officialPreparation).toContain('[IO.FileMode]::CreateNew')
+  expect(officialPreparation).not.toMatch(
+    /trust-model always|skip.signature|skip.verification/i
+  )
+  const officialRefusals = read('scripts/test-official-media-source.ps1')
+  expect(driver).toContain(
+    "Invoke-QualityCommand 'Four official source refusal controls'"
+  )
+  expect(driver).toContain("'test-official-media-source.ps1'")
+  expect(officialRefusals).toContain('$sourceCompleted -ne 4')
+  expect(officialRefusals).toContain(
+    "'Official PGP signature/fingerprint refused'"
+  )
+  expect(officialRefusals).toContain(
+    "'Invalid source/program material published fixture output'"
+  )
+  expect(officialRefusals).toContain("'Unknown download was changed'")
+  const officialBuild = read('scripts/media-candidate/build-official.sh')
+  expect(officialBuild).toContain('verify_official_source.py')
+  expect(officialBuild).toContain(
+    '--disable-autodetect --disable-network --disable-shared'
+  )
+  expect(officialBuild).toContain('--enable-protocol=file,pipe')
+  const officialSource = read(
+    'scripts/media-candidate/verify_official_source.py'
+  )
+  expect(officialSource).toContain('input=archive')
+  expect(officialSource).toContain(
+    'verify_or_extract(sources / "ffmpeg-8.1.3", entries, True)'
+  )
+  expect(officialSource).not.toMatch(/shell=True|check=False|verify=False/)
+  expect(tests).toContain(
+    'assert_eq!(world.row(&second)["toolArtifacts"]["retained"], false)'
+  )
+  expect(tests).toContain('released.elapsed() < Duration::from_millis(500)')
+  const discardTests = readFileSync(
+    join(fixture, 'native_queue_discard.rs'),
+    'utf8'
+  )
+  expect(discardTests.match(/#\[test\]/g)).toHaveLength(6)
+  expect(discardTests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(driver).toContain(
+    "Invoke-QualityCommand 'Six explicit queued-tool discard checks'"
+  )
+  expect(driver).toContain("'--skip', 'managed_media::native_queue_discard::'")
+  const discard = read(
+    'packages/runtime-core/src/runtime_tool_queue_discard.rs'
+  )
+  expect(discard).toContain('pub struct QueuedToolDiscardPlan')
+  expect(discard).toContain('job.started_at != job.accepted_at')
+  expect(discard).toContain('!self.services.root_drained(run)')
+  expect(discard).toContain('Some(&authority)')
+  expect(discard).toContain(
+    '.apply_confirmed_release(stored.tool_artifacts.unwrap())'
+  )
+  expect(discard).not.toMatch(
+    /Serialize,|Deserialize,|std::fs::|Command::new|std::env::/
+  )
+
+  const videoTests = readFileSync(join(fixture, 'native_video.rs'), 'utf8')
+  expect(videoTests.match(/#\[test\]/g)).toHaveLength(9)
+  expect(videoTests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(driver).toContain("'Nine Core-owned bounded WebM checks'")
+  expect(driver).toContain("'--skip', 'managed_media::native_video::'")
+  const audioTests = readFileSync(join(fixture, 'native_audio.rs'), 'utf8')
+  expect(audioTests.match(/#\[test\]/g)).toHaveLength(8)
+  expect(audioTests).not.toMatch(/#\[ignore|std::env::(?:var|args)/)
+  expect(driver).toContain("'Eight Core-owned bounded WAV checks'")
+  expect(driver).toContain(
+    "'--lib', 'managed_media::', '--', '--test-threads=1'"
+  )
+  expect(driver).toContain(
+    "Invoke-QualityCommand 'Managed candidate all-target Clippy'"
+  )
+  expect(driver).toContain(
+    "Invoke-QualityCommand 'Six signed installed-image LPAC checks'"
+  )
+  expect(driver).not.toMatch(/--features|--pass-with-no-tests/)
+  const preparation = read('scripts/prepare-managed-media-candidate.ps1')
+  expect(preparation).toContain("'prepare-media-candidate.ps1'")
+  expect(preparation).toContain('Exact source notice hash required')
+  expect(preparation).toContain(
+    'Unknown managed notice output preserved and refused'
+  )
+})
+
+test('native media stays T0-only and fatal maintenance includes actual call drain', () => {
+  const root = fileURLToPath(new URL('../', import.meta.url))
+  const read = (path: string) => readFileSync(join(root, path), 'utf8')
+  const native = read('packages/runtime-core/src/runtime_media/inspection.rs')
+  const kernel = read(
+    'packages/runtime-core/src/packages/tools/install/images/inspection/kernel.rs'
+  )
+  const profile = read(
+    'packages/runtime-core/src/packages/tools/install/images/inspection/profile.rs'
+  )
+  expect(native).toMatch(
+    /pub struct MediaInspectionHandle\s*\{\s*instance: String,\s*id: String,/
+  )
+  expect(profile).toContain('media::recipe(MediaActionV1::Inspect).arguments()')
+  expect(kernel).toContain('profile.arguments()')
+  expect(profile).not.toMatch(
+    /std::env::|Command::new|powershell|cmd\.exe|Deserialize|Serialize/i
+  )
+  expect(kernel).not.toMatch(/std::env::|Command::new|powershell|cmd\.exe/i)
+  for (const hook of [
+    'start_media_inspection_fixture',
+    'media_inspection_fixture_observations',
+    'tick_media_inspections_fixture',
+  ])
+    expect(native).toMatch(new RegExp(`#\\[cfg\\(test\\)\\]\\s*pub fn ${hook}`))
+  const server = read('apps/runtime/src/server.rs')
+  expect(server).toContain('locked.tick_media_inspections()')
+  expect(server).toContain('native_failure = true')
+  expect(server).toContain('locked.active_media_inspections() != 0')
+  expect(server).toContain('return Err("NATIVE_MEDIA_FAILED")')
+})
+
+test('native isolation probe is mandatory for tests and excluded from normal builds', () => {
+  const root = Bun.TOML.parse(
+    readFileSync(new URL('../Cargo.toml', import.meta.url), 'utf8')
+  ) as { workspace: { members: string[]; 'default-members': string[] } }
+  const fixture = 'apps/runtime/test/fixtures/isolation-probe'
+  expect(root.workspace.members).toContain(fixture)
+  expect(root.workspace['default-members']).toEqual([
+    'packages/runtime-core',
+    'apps/runtime',
+  ])
+  const manifest = Bun.TOML.parse(
+    readFileSync(new URL(`../${fixture}/Cargo.toml`, import.meta.url), 'utf8')
+  ) as { package: { publish: boolean } }
+  expect(manifest.package.publish).toBe(false)
+  const runtime = JSON.parse(
+    readFileSync(
+      new URL('../apps/runtime/package.json', import.meta.url),
+      'utf8'
+    )
+  ) as { scripts: Record<string, string> }
+  expect(runtime.scripts.build).toBe(
+    'bun run prepare.ts && cargo build --locked --manifest-path Cargo.toml'
+  )
+  expect(runtime.scripts.test?.split(' && ')).toEqual([
+    'bun run prepare.ts',
+    'cargo build --locked --manifest-path Cargo.toml',
+    'cargo build --locked --manifest-path test/fixtures/isolation-probe/Cargo.toml',
+    'bun run ../../scripts/check-rust-tests.ts Cargo.toml',
+    'cargo test --locked --manifest-path Cargo.toml',
+    'bun test test',
+  ])
+  expect(runtime.scripts.lint).toContain(
+    '&& cargo clippy --locked --manifest-path test/fixtures/isolation-probe/Cargo.toml --all-targets -- -D warnings'
+  )
+  expect(runtime.scripts['check-types']).toContain(
+    '&& cargo check --locked --manifest-path test/fixtures/isolation-probe/Cargo.toml --all-targets'
+  )
+  const core = JSON.parse(
+    readFileSync(
+      new URL('../packages/runtime-core/package.json', import.meta.url),
+      'utf8'
+    )
+  ) as { scripts: Record<string, string> }
+  expect(core.scripts.test?.split(' && ')).toEqual([
+    'bun run manifest-conformance.ts --check',
+    'bun run generate-catalog.ts',
+    'cargo build --locked --manifest-path ../../apps/runtime/test/fixtures/isolation-probe/Cargo.toml',
+    'bun run ../../scripts/check-rust-tests.ts Cargo.toml',
+    'cargo test --locked --manifest-path Cargo.toml -- --test-threads=1',
+  ])
+  expect(core.scripts.build).not.toContain('isolation-probe')
+})
 
 function runPowerShell(command: string, cwd?: string) {
   return spawnSync(
@@ -520,21 +1061,23 @@ process.stdout.write('OS-selected browser API port verified\\n')`,
 }, 30_000)
 
 test('PowerShell propagates native failure before subsequent gates run', () => {
-  const success = runPowerShell(
-    `. ${helperPath}; Invoke-QualityCommand 'fixture' bun @('-e', 'process.exit(0)')`
-  )
-  expect(success.error).toBeUndefined()
-  if (success.status !== 0) {
-    throw new Error(`PowerShell success probe failed: ${success.stderr}`)
+  for (const host of ['bun', 'node']) {
+    const success = runPowerShell(
+      `. ${helperPath}; Invoke-QualityCommand 'fixture' ${host} @('-e', 'process.exit(0)')`
+    )
+    expect(success.error).toBeUndefined()
+    if (success.status !== 0) {
+      throw new Error(`PowerShell success probe failed: ${success.stderr}`)
+    }
+    expect(success.status).toBe(0)
+    const failure = runPowerShell(
+      `. ${helperPath}; Invoke-QualityCommand 'fixture' ${host} @('-e', 'process.exit(17)'); Write-Output 'UNEXPECTED_CONTINUATION'`
+    )
+    expect(failure.error).toBeUndefined()
+    expect(failure.status).toBe(1)
+    expect(failure.stderr).toContain('exit code 17')
+    expect(failure.stdout).not.toContain('UNEXPECTED_CONTINUATION')
   }
-  expect(success.status).toBe(0)
-  const failure = runPowerShell(
-    `. ${helperPath}; Invoke-QualityCommand 'fixture' bun @('-e', 'process.exit(17)'); Write-Output 'UNEXPECTED_CONTINUATION'`
-  )
-  expect(failure.error).toBeUndefined()
-  expect(failure.status).toBe(1)
-  expect(failure.stderr).toContain('exit code 17')
-  expect(failure.stdout).not.toContain('UNEXPECTED_CONTINUATION')
 }, 30_000)
 
 test('production artifact refusal is a fatal post-build gate before the clean-worktree check', async () => {

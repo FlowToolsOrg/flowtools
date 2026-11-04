@@ -17,8 +17,10 @@ use crate::{
 use rusqlite::{params, OptionalExtension, TransactionBehavior};
 use std::collections::{BTreeMap, BTreeSet, HashSet, VecDeque};
 
-mod files;
-mod reconciliation;
+pub(crate) mod files;
+pub(crate) mod metadata;
+pub(crate) mod reconciliation;
+pub mod tool_consumers;
 pub use reconciliation::{
     abort_inert_reconciliation, apply_inert_reconciliation, plan_inert_reconciliation,
     resume_inert_reconciliation, InertReconciliationPlan, InertReconciliationSummary,
@@ -180,7 +182,7 @@ fn read<T: serde::de::DeserializeOwned>(
     }
 }
 fn write<T: Serialize>(
-    connection: &rusqlite::Connection,
+    transaction: &rusqlite::Transaction<'_>,
     key: &str,
     value: &T,
 ) -> Result<(), InstallError> {
@@ -188,8 +190,7 @@ fn write<T: Serialize>(
     if text.len() > MAX_STATE_BYTES {
         return Err(InstallError::BudgetExceeded);
     }
-    connection.execute("INSERT INTO core_metadata(key,value) VALUES(?1,?2) ON CONFLICT(key) DO UPDATE SET value=excluded.value", params![key,text]).map_err(|_| InstallError::Storage)?;
-    Ok(())
+    metadata::write(transaction, key, &text)
 }
 fn validate_record(record: &Record) -> Result<(), InstallError> {
     validate_package(&record.payload).map_err(|_| InstallError::StateInvalid)?;
@@ -261,6 +262,16 @@ fn observed_inventory(
     trust: &PackageTrustStore,
     store: &mut DataStore,
 ) -> Result<Inventory, InstallError> {
+    super::tools::install::require_no_pending_tool_transaction(&store.connection)?;
+    tool_consumers::ensure_references(trust, store)?;
+    validated_inventory(trust, store)
+}
+// Internal reuse by the separate tool-consumer transaction after its explicit
+// companion-pending checks. The legacy public entry points retain the guard.
+fn validated_inventory(
+    trust: &PackageTrustStore,
+    store: &mut DataStore,
+) -> Result<Inventory, InstallError> {
     let snapshot = trust.snapshot(store)?;
     let state = inventory(&store.connection)?;
     for record in &state.records {
@@ -317,6 +328,7 @@ fn guard_pending(
     expected: &Journal,
     digest: &str,
 ) -> Result<(), InstallError> {
+    super::tools::install::require_no_pending_tool_transaction(connection)?;
     let current = inventory(connection)?;
     if json_digest(&current)? != expected.before_digest {
         return Err(InstallError::InventoryChanged);
@@ -418,7 +430,7 @@ fn resolve(
             if manifest_bytes > 16_777_216 || expanded_bytes > 134_217_728 {
                 return Err(InstallError::BudgetExceeded);
             }
-            let (manifest, archive) = layout.ok_or(InstallError::ArtifactInvalid)?.read(record)?;
+            let (manifest, archive) = layout.ok_or(InstallError::ArtifactInvalid)?.read(*record)?;
             let envelope =
                 decode_base64(&record.envelope).map_err(|_| InstallError::StateInvalid)?;
             let provider = admit(
@@ -554,9 +566,19 @@ pub(super) fn install_with_hook(
     } else {
         0
     };
-    if layout
-        .disk_bytes_reserving(usize::from(new_artifact))?
-        .checked_add(extra)
+    let tool_usage = super::tools::install::retained_tool_usage(store)?;
+    let package_usage = layout.disk_usage_reserving(usize::from(new_artifact))?;
+    if package_usage
+        .groups
+        .checked_add(tool_usage.groups)
+        .is_none_or(|n| n > files::MAX_GROUPS)
+    {
+        return Err(InstallError::BudgetExceeded);
+    }
+    if package_usage
+        .bytes
+        .checked_add(tool_usage.bytes)
+        .and_then(|bytes| bytes.checked_add(extra))
         .is_none_or(|n| n > files::MAX_DISK_BYTES)
     {
         return Err(InstallError::BudgetExceeded);
@@ -646,8 +668,7 @@ pub(super) fn install_with_hook(
         state.records.push(pending.record.clone());
     }
     write(&tx, KEY, &state)?;
-    tx.execute("DELETE FROM core_metadata WHERE key=?1", [PENDING])
-        .map_err(|_| InstallError::Storage)?;
+    metadata::remove_pending(&tx, PENDING)?;
     tx.commit().map_err(|_| InstallError::Storage)?;
     hook(InstallPhase::Committed, store)?;
     Ok(InstalledInertPackage {
@@ -703,8 +724,7 @@ pub fn abort_inert_install(
         .transaction_with_behavior(TransactionBehavior::Immediate)
         .map_err(|_| InstallError::Storage)?;
     guard_pending(&tx, &pending, &json_digest(&pending)?)?;
-    tx.execute("DELETE FROM core_metadata WHERE key=?1", [PENDING])
-        .map_err(|_| InstallError::Storage)?;
+    metadata::remove_pending(&tx, PENDING)?;
     tx.commit().map_err(|_| InstallError::Storage)?;
     Ok(true)
 }

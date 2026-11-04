@@ -8,6 +8,11 @@ use specta::Type;
 use std::collections::HashMap;
 use uuid::Uuid;
 
+#[cfg(windows)]
+mod tool_calls;
+#[cfg(windows)]
+pub(crate) use tool_calls::ToolCallClaim;
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Type, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CommandIdentity {
@@ -58,6 +63,7 @@ pub enum CapabilityOperation {
     DataWrite { key: String },
     ClipboardRead,
     ClipboardWrite,
+    Notification { title: String, message: String },
     ToolExecute { lock: String, action: String },
 }
 
@@ -88,6 +94,7 @@ pub enum Scope {
     NetworkSend { origin: String, method: SendMethod },
     PluginData { key_prefix: String },
     Clipboard,
+    Notification,
     ToolLock { lock: String, action: String },
 }
 
@@ -148,6 +155,7 @@ impl CapabilityBroker {
                         | "clipboard-read"
                         | "clipboard-write"
                         | "tool-execute"
+                        | "notification"
                 )
             })
             || grant
@@ -256,6 +264,36 @@ impl CapabilityBroker {
             return Err(ErrorCode::ApprovalRequired);
         }
         Ok(policy.epoch)
+    }
+
+    // Accepted work is pinned to its original policy epoch. A missing, revoked,
+    // expired or replaced grant cannot become a fresh approval request or inherit
+    // a later regrant. New submissions keep authorize_command's existing errors.
+    pub(crate) fn reauthorize_accepted(
+        &self,
+        identity: &CommandIdentity,
+        command: &Value,
+        accepted_epoch: u32,
+        at: f64,
+    ) -> Result<(), ErrorCode> {
+        if !at.is_finite() {
+            return Err(ErrorCode::Timeout);
+        }
+        if accepted_epoch != 0 {
+            let policy = self.policies.get(identity).ok_or(ErrorCode::GrantRevoked)?;
+            if policy.epoch != accepted_epoch
+                || policy
+                    .grant
+                    .as_ref()
+                    .is_none_or(|grant| grant.expires_at <= at)
+            {
+                return Err(ErrorCode::GrantRevoked);
+            }
+        }
+        if self.authorize_command(identity, command, at)? != accepted_epoch {
+            return Err(ErrorCode::GrantRevoked);
+        }
+        Ok(())
     }
 
     pub fn bind(
@@ -391,6 +429,30 @@ impl CapabilityBroker {
         at: f64,
         adapter: impl FnOnce(&CommandIdentity) -> Result<T, ErrorCode>,
     ) -> Result<T, ErrorCode> {
+        let (identity, chain) = self.invocation_chain(session, operation, at)?;
+        for hop in &chain {
+            self.bindings.get_mut(&hop.id).unwrap().calls += 1;
+        }
+        adapter(&identity)
+    }
+    // Early refusal before potentially expensive T0 artifact IO. This produces
+    // no grant/ticket and consumes no call: invoke() repeats it at the effect.
+    #[cfg(windows)]
+    pub(crate) fn check_effect(
+        &self,
+        session: &BrokerSession,
+        operation: &CapabilityOperation,
+        at: f64,
+    ) -> Result<CommandIdentity, ErrorCode> {
+        self.invocation_chain(session, operation, at)
+            .map(|(identity, _)| identity)
+    }
+    fn invocation_chain(
+        &self,
+        session: &BrokerSession,
+        operation: &CapabilityOperation,
+        at: f64,
+    ) -> Result<(CommandIdentity, Vec<BrokerSession>), ErrorCode> {
         self.check_session(session, at)?;
         let binding = &self.bindings[&session.id];
         let identity = binding.identity.clone();
@@ -410,13 +472,19 @@ impl CapabilityBroker {
             self.check_operation(hop, operation)?;
             self.check_call_budget(hop)?;
         }
-        for hop in &chain {
-            self.bindings.get_mut(&hop.id).unwrap().calls += 1;
-        }
-        adapter(&identity)
+        Ok((identity, chain))
     }
 
     fn check_operation(
+        &self,
+        session: &BrokerSession,
+        operation: &CapabilityOperation,
+    ) -> Result<(), ErrorCode> {
+        self.check_operation_scope(session, operation)?;
+        self.check_call_budget(session)
+    }
+
+    fn check_operation_scope(
         &self,
         session: &BrokerSession,
         operation: &CapabilityOperation,
@@ -467,9 +535,6 @@ impl CapabilityBroker {
         if !grant.scopes.iter().any(|scope| scope.contains(operation)) {
             return Err(ErrorCode::ScopeDenied);
         }
-        if binding.calls >= grant.max_calls {
-            return Err(ErrorCode::BudgetExceeded);
-        }
         Ok(())
     }
 
@@ -481,6 +546,12 @@ impl CapabilityBroker {
 impl CapabilityOperation {
     fn in_manifest_scope(&self, scope: &str) -> bool {
         match self {
+            Self::FileRead { handle } if scope == "selected-media-input" => handle
+                .strip_suffix("-input")
+                .is_some_and(|id| uuid::Uuid::parse_str(id).is_ok_and(|u| u.to_string() == id)),
+            Self::FileCreate { handle } if scope == "selected-media-output" => handle
+                .strip_suffix("-output")
+                .is_some_and(|id| uuid::Uuid::parse_str(id).is_ok_and(|u| u.to_string() == id)),
             Self::FileRead { handle }
             | Self::FileCreate { handle }
             | Self::FileReplace { handle }
@@ -488,6 +559,7 @@ impl CapabilityOperation {
             Self::NetworkRead { origin, .. } | Self::NetworkSend { origin, .. } => scope == origin,
             Self::DataRead { .. } | Self::DataWrite { .. } => scope == "plugin-data",
             Self::ClipboardRead | Self::ClipboardWrite => scope == "text",
+            Self::Notification { .. } => scope == "local",
             Self::ToolExecute { lock, action } => scope == format!("lock:{lock}:{action}"),
         }
     }
@@ -503,6 +575,7 @@ impl CapabilityOperation {
             Self::DataWrite { .. } => ("data-write", "storage", "set"),
             Self::ClipboardRead => ("clipboard-read", "clipboard", "read"),
             Self::ClipboardWrite => ("clipboard-write", "clipboard", "write"),
+            Self::Notification { .. } => ("notification", "notification", "notify"),
             Self::ToolExecute { .. } => ("tool-execute", "tool", "execute"),
         }
     }
@@ -525,6 +598,7 @@ impl Scope {
             }
             Self::PluginData { key_prefix } => valid_key(key_prefix),
             Self::Clipboard => true,
+            Self::Notification => true,
             Self::ToolLock { lock, action } => valid_key(lock) && valid_key(action),
         }
     }
@@ -565,6 +639,15 @@ impl Scope {
                 Self::Clipboard,
                 CapabilityOperation::ClipboardRead | CapabilityOperation::ClipboardWrite,
             ) => true,
+            (Self::Notification, CapabilityOperation::Notification { title, message }) => {
+                !title.trim().is_empty()
+                    && title.len() <= 256
+                    && message.len() <= 4096
+                    && !title
+                        .chars()
+                        .chain(message.chars())
+                        .any(|c| c == '\0' || (c.is_control() && c != '\n' && c != '\t'))
+            }
             (
                 Self::ToolLock {
                     lock: approved,
@@ -627,6 +710,73 @@ mod tests {
                 max_calls: 2,
             },
         )
+    }
+
+    #[test]
+    fn accepted_authorization_pins_epochs_without_changing_new_request_errors() {
+        let (mut broker, identity, command, grant) = fixture();
+        let epoch = broker.approve(identity.clone(), grant.clone()).unwrap();
+        assert_eq!(
+            broker.reauthorize_accepted(&identity, &command, epoch, 10.0),
+            Ok(())
+        );
+        assert_eq!(
+            broker.reauthorize_accepted(&identity, &command, epoch, 200.0),
+            Err(ErrorCode::GrantRevoked)
+        );
+        assert_eq!(
+            broker.authorize_command(&identity, &command, 200.0),
+            Err(ErrorCode::ApprovalRequired)
+        );
+        assert_eq!(
+            broker.reauthorize_accepted(&identity, &command, epoch, f64::NAN),
+            Err(ErrorCode::Timeout)
+        );
+        broker.revoke(&identity).unwrap();
+        assert_eq!(
+            broker.reauthorize_accepted(&identity, &command, epoch, 10.0),
+            Err(ErrorCode::GrantRevoked)
+        );
+        assert_eq!(
+            broker.authorize_command(&identity, &command, 10.0),
+            Err(ErrorCode::ApprovalRequired)
+        );
+        let replacement = broker.approve(identity.clone(), grant).unwrap();
+        assert_eq!(
+            broker.reauthorize_accepted(&identity, &command, epoch, 10.0),
+            Err(ErrorCode::GrantRevoked)
+        );
+        assert_eq!(
+            broker.reauthorize_accepted(&identity, &command, replacement, 10.0),
+            Ok(())
+        );
+        assert_eq!(
+            CapabilityBroker::default().reauthorize_accepted(&identity, &command, epoch, 10.0),
+            Err(ErrorCode::GrantRevoked)
+        );
+
+        let catalog = BuiltinCatalog::embedded();
+        let (manifest, pure) = catalog.command("plugin-base64-encoder", "run").unwrap();
+        let pure_identity = CommandIdentity::from_manifest("host-cli", manifest, pure);
+        assert_eq!(
+            broker.reauthorize_accepted(&pure_identity, pure, 0, 10.0),
+            Ok(())
+        );
+        broker
+            .approve(
+                pure_identity.clone(),
+                Grant {
+                    effects: vec![],
+                    scopes: vec![],
+                    expires_at: 200.0,
+                    max_calls: 2,
+                },
+            )
+            .unwrap();
+        assert_eq!(
+            broker.reauthorize_accepted(&pure_identity, pure, 0, 10.0),
+            Err(ErrorCode::GrantRevoked)
+        );
     }
 
     #[test]

@@ -37,7 +37,25 @@ pub fn artifacts() -> Result<Vec<(&'static str, String)>, Box<dyn std::error::Er
         .register::<StorageAction>()
         .register::<StorageReport>();
     let bindings = format!("// Generated from Rust. Do not edit.\nexport const PROTOCOL_MAJOR = {PROTOCOL_MAJOR} as const\nexport const CLIENT_VERSION = '{CLIENT_VERSION}' as const\n{}", specta_typescript::Typescript::default().export(&types, specta_serde::Format)?);
+    let bindings = format!(
+        "{bindings}\nexport const SCHEDULE_LIMITS = {} as const\n",
+        json!({
+            "maxTimestampMs": crate::scheduling::MAX_TIMESTAMP_MS,
+            "maxOccurrences": crate::scheduling::MAX_OCCURRENCES,
+            "minIntervalMs": crate::scheduling::MIN_INTERVAL_MS,
+            "maxGraceMs": crate::scheduling::MAX_GRACE_MS,
+            "maxSchedules": 128,
+        })
+    );
     let schemas = json!({ "request": schemars::schema_for!(Request), "response": schemars::schema_for!(Response), "capabilityOperation": schemars::schema_for!(CapabilityOperation), "storageAction": schemars::schema_for!(StorageAction), "storageReport": schemars::schema_for!(StorageReport) });
+    // Canonical LF source, including enum docs emitted with trailing spaces by
+    // the exporter. Compare exactly this output in the unchanged drift gate.
+    let bindings = bindings
+        .lines()
+        .map(str::trim_end)
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n";
     let request = Request {
         version: PROTOCOL_MAJOR,
         request_id: "fixture-request".into(),
@@ -59,7 +77,7 @@ pub fn artifacts() -> Result<Vec<(&'static str, String)>, Box<dyn std::error::Er
             outcome: Outcome::Error(RuntimeError { code }),
         })
         .collect();
-    let manifests: Vec<Value> = BuiltinCatalog::embedded()
+    let manifests: Vec<Value> = BuiltinCatalog::embedded_with_media()
         .list()
         .map(|(_, manifest)| {
             let fixture = manifest_fixture(manifest);
@@ -95,6 +113,10 @@ pub fn artifacts() -> Result<Vec<(&'static str, String)>, Box<dyn std::error::Er
         },
         CapabilityOperation::ClipboardRead,
         CapabilityOperation::ClipboardWrite,
+        CapabilityOperation::Notification {
+            title: "Fixture reminder".into(),
+            message: "Fixture only".into(),
+        },
         CapabilityOperation::ToolExecute {
             lock: "host-lock".into(),
             action: "probe".into(),
@@ -120,8 +142,34 @@ pub fn artifacts() -> Result<Vec<(&'static str, String)>, Box<dyn std::error::Er
     )
     .map_err(|_| "Invalid build-owned dependency plan")?;
     let mut registry = crate::services::ServiceRegistry::default();
+    // The complete golden catalog includes the two native consumers. Its
+    // semantic tool candidate is metadata only, never an installed image/grant.
+    let tool = &manifests
+        .iter()
+        .find(|item| item["manifest"]["id"] == "plugin-media-inspector")
+        .ok_or("Missing media fixture")?["manifest"]["dependencies"]["tools"][0];
+    let tools = [crate::dependencies::ToolCandidate {
+        publisher: tool["publisher"]
+            .as_str()
+            .ok_or("Invalid tool fixture")?
+            .into(),
+        id: tool["id"].as_str().ok_or("Invalid tool fixture")?.into(),
+        version: tool["version"]
+            .as_str()
+            .ok_or("Invalid tool fixture")?
+            .into(),
+        target: serde_json::from_value(tool["target"].clone())?,
+        build_flavor: tool["buildFlavor"]
+            .as_str()
+            .ok_or("Invalid tool fixture")?
+            .into(),
+        digest: tool["digest"]
+            .as_str()
+            .ok_or("Invalid tool fixture")?
+            .into(),
+    }];
     registry
-        .set_catalog(
+        .set_catalog_with_tools(
             &BuiltinCatalog::from_host_manifests(
                 manifests
                     .iter()
@@ -129,6 +177,7 @@ pub fn artifacts() -> Result<Vec<(&'static str, String)>, Box<dyn std::error::Er
                     .collect(),
             )
             .map_err(|_| "Invalid fixture catalog")?,
+            &tools,
         )
         .map_err(|_| "Invalid fixture graph")?;
     let unload = registry
@@ -183,14 +232,14 @@ mod tests {
             assert_eq!(&serde_json::to_value(response).unwrap(), value);
             assert!(jsonschema::is_valid(&schemas["response"], value));
         }
-        let catalog = BuiltinCatalog::embedded();
-        assert_eq!(fixtures["operations"].as_array().unwrap().len(), 11);
+        let catalog = BuiltinCatalog::embedded_with_media();
+        assert_eq!(fixtures["operations"].as_array().unwrap().len(), 12);
         for value in fixtures["operations"].as_array().unwrap() {
             let operation: CapabilityOperation = serde_json::from_value(value.clone()).unwrap();
             assert_eq!(&serde_json::to_value(operation).unwrap(), value);
             assert!(jsonschema::is_valid(&schemas["capabilityOperation"], value));
         }
-        assert_eq!(fixtures["manifests"].as_array().unwrap().len(), 12);
+        assert_eq!(fixtures["manifests"].as_array().unwrap().len(), 15);
         for fixture in fixtures["manifests"].as_array().unwrap() {
             let (built, _) = catalog
                 .command(fixture["manifest"]["id"].as_str().unwrap(), "run")

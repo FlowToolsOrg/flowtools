@@ -111,6 +111,40 @@ pub fn runtime_prompts(call: &Call, initialize: bool) -> Result<Vec<String>, Err
         return Err(ErrorCode::SessionInvalid);
     }
     match call {
+        Call::FilePlanDiscard(key)=>Ok(vec![format!("作废恢复前的所有文件计划？\n核对码：{}\n保留文件当前名称和私有回执，不自动撤销或提交。旧计划永久取消，之后可重新选择目录生成新计划。",quoted(&key.challenge))]),
+        Call::MediaPlanCreate(create)=>Ok(vec![format!("读取所选媒体并生成预览？\n输入：{}\n输出：{}\n动作：{:?}\n最多 1 MiB 输入，暂不转换；现有输出文件将被拒绝。",quoted(&create.input_path),serde_json::to_string(&create.output_path).unwrap(),create.action)]),
+        Call::MediaStart(key)=>Ok(vec![format!("执行所选媒体计划并按需启动 Runtime？\n计划：{}\n摘要：{}\n将读取这份文件并运行固定媒体工具；转换结果只创建新文件。取消或失败不会自动重放。",quoted(&key.id),quoted(&key.digest))]),
+        Call::FilePlanCreate(create) => Ok(vec![format!("读取所选目录并生成只读改名计划？\n目录：{}\n前缀：{}\n只读取本层常规文件；拒绝链接和覆盖。最多 128 文件、合计 256 MiB；不提交改名。", quoted(&create.directory), quoted(&create.prefix))]),
+        Call::FilePlanCommit(key) | Call::FilePlanUndo(key) => Ok(vec![format!("{}所选文件计划？\n计划：{}\n版本：{}\n摘要：{}\n请核对后续全部文件名页面。原生操作逐项核对身份和内容，拒绝覆盖；失败后保留日志，只能显式重试。", if matches!(call, Call::FilePlanUndo(_)) { "撤销" } else { "提交" }, quoted(&key.id), key.revision, quoted(&key.digest))]),
+        Call::ScheduleReplace(replace) => {
+            replace.previous.validate()?;
+            let mut prompts = runtime_prompts(&Call::ScheduleCreate(replace.create.clone()), false)?;
+            prompts.insert(0, format!("修改后台调度？\n原调度：{}\n原版本：{}\n确认后原计划与新计划在同一提交中替换。旧运行未结束时拒绝修改；不自动重试或恢复旧计划。", replace.previous.id, replace.previous.revision));
+            Ok(prompts)
+        }
+        Call::ScheduleDiscard(key) => {
+            if key.challenge.len() != 64 || !key.challenge.bytes().all(|b| b.is_ascii_hexdigit()) {
+                return Err(ErrorCode::InvalidRequest);
+            }
+            Ok(vec![format!("作废恢复备份中的全部旧调度？\n核对码：{}\n保留原位置、历史尝试及私有正文，全部旧计划永久取消。此操作不恢复授权或重新执行；新提醒需要重新创建。", key.challenge)])
+        }
+        Call::ScheduleCreate(create) => {
+            create.validate()?;
+            // Never interpolate raw command input, paths or exception messages.
+            let mut lines = vec!["创建后台命令调度？".to_owned()];
+            field(&mut lines, "插件", quoted(&create.plugin_id));
+            field(&mut lines, "命令", quoted(&create.command_id));
+            field(&mut lines, "首次触发 UTC Unix 毫秒", create.definition.first_due_ms);
+            field(&mut lines, "有限次数", create.definition.occurrences);
+            field(&mut lines, "固定间隔毫秒", create.definition.interval_ms.unwrap_or(0));
+            field(&mut lines, "容许迟到毫秒", create.definition.grace_ms);
+            field(&mut lines, "漏触发策略", format!("{:?}", create.definition.missed));
+            field(&mut lines, "调用端", format!("{:?}", create.target));
+            field(&mut lines, "输入摘要", flowtools_runtime_core::catalog::digest(&create.input));
+            field(&mut lines, "每次最长毫秒", create.timeout_ms);
+            lines.push("只使用现有后台授权；授权撤销或包版本变化后拒绝触发。取消不会自动恢复调度。".into());
+            Ok(pages(lines, 1, 1))
+        }
         Call::Stop => Ok(vec!["停止 Runtime？\n此操作会取消所有活动任务并等待清理。\n收到停止回执后，仍需确认写入者已释放。".into()]),
         Call::Policy(policy) => Ok(vec![format!("修改 Runtime 按需启动设置？\ncoldStart：{}\n不授予插件权限，也不执行命令。", yes(policy.cold_start))]),
         Call::Grant(grant) => Ok(pages(grant_lines(grant, std::slice::from_ref(&grant.target), None)?, 1, 1)),
@@ -142,6 +176,32 @@ pub fn runtime_prompts(call: &Call, initialize: bool) -> Result<Vec<String>, Err
     }
 }
 
+pub fn file_plan_prompts(
+    view: &flowtools_runtime_core::file_workflows::FilePlanView,
+    undo: bool,
+) -> Vec<String> {
+    let mut lines = vec![format!(
+        "核对实际计划：{}；共 {} 个文件",
+        view.record.id,
+        view.preview.files.len()
+    )];
+    for file in &view.preview.files {
+        field(
+            &mut lines,
+            if undo { "当前名称" } else { "原名称" },
+            quoted(if undo { &file.target } else { &file.source }),
+        );
+        field(
+            &mut lines,
+            "改为",
+            quoted(if undo { &file.source } else { &file.target }),
+        );
+        field(&mut lines, "字节", file.bytes);
+        field(&mut lines, "SHA-256", &file.sha256);
+    }
+    pages(lines, 1, 1)
+}
+
 pub fn storage_prompt(action: &StorageAction) -> Result<Option<String>, ErrorCode> {
     Ok(match action {
         StorageAction::List => None,
@@ -154,6 +214,69 @@ pub fn storage_prompt(action: &StorageAction) -> Result<Option<String>, ErrorCod
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn fixed_file_media_consent_names_exact_effect_and_digest_without_forged_lines() {
+        use flowtools_runtime_core::file_workflows::{
+            media_io::{CreateMediaPlan, UserMediaAction},
+            ConfirmFilePlan,
+        };
+        let key = ConfirmFilePlan {
+            id: "plan\n伪造批准".into(),
+            revision: 7,
+            digest: "a".repeat(64),
+        };
+        let prompts = runtime_prompts(&Call::FilePlanCommit(key.clone()), false)
+            .unwrap()
+            .join("\n");
+        assert!(prompts.contains(&key.digest));
+        assert!(prompts.contains("版本：7"));
+        assert!(prompts.contains("\\n"));
+        assert!(!prompts.lines().any(|line| line == "伪造批准"));
+        let media = runtime_prompts(
+            &Call::MediaPlanCreate(CreateMediaPlan {
+                request_key: "id".into(),
+                input_path: "D:\\selected\\input.wav".into(),
+                output_path: Some("D:\\selected\\output.wav".into()),
+                action: UserMediaAction::Audio,
+            }),
+            false,
+        )
+        .unwrap()
+        .join("\n");
+        assert!(media.contains("1 MiB"));
+        assert!(media.contains("暂不转换"));
+        assert!(media.contains("input.wav"));
+        assert!(media.contains("output.wav"));
+    }
+
+    #[test]
+    fn schedule_confirmation_binds_timing_and_digest_without_exposing_private_input() {
+        use flowtools_runtime_core::scheduling::{
+            commands::CreateSchedule, store::ScheduleDefinition, MissedRunPolicy,
+        };
+        let call = Call::ScheduleCreate(CreateSchedule {
+            request_key: "00000000-0000-4000-8000-000000000001".into(),
+            target: GrantTarget::Desktop,
+            plugin_id: "plugin-todo-list".into(),
+            command_id: "run".into(),
+            input: serde_json::json!({"todo":"PRIVATE_NATIVE_SCHEDULE_BODY"}),
+            timeout_ms: 1000,
+            definition: ScheduleDefinition {
+                first_due_ms: 100000,
+                interval_ms: Some(1000),
+                occurrences: 3,
+                grace_ms: 500,
+                missed: MissedRunPolicy::CoalesceLatest,
+            },
+        });
+        let text = runtime_prompts(&call, false).unwrap().join("\n");
+        assert!(text.contains("有限次数：3"));
+        assert!(text.contains("后台"));
+        assert!(text.contains("输入摘要"));
+        assert!(!text.contains("PRIVATE_NATIVE_SCHEDULE_BODY"));
+        assert_eq!(runtime_prompts(&call, true), Err(ErrorCode::SessionInvalid));
+    }
     use flowtools_runtime_core::broker::Scope;
 
     fn grant(target: GrantTarget) -> PermissionGrant {

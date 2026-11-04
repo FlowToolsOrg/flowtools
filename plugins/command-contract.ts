@@ -9,6 +9,8 @@ import {
 } from '@flowtools/sdk/manifest'
 import { z } from 'zod'
 
+import { mediaResultSchema } from './media-contract'
+
 const text = z.strictObject({
   type: z.literal('text'),
   text: z.string(),
@@ -23,6 +25,15 @@ const json = <T extends z.ZodType>(value: T) =>
     stdio: z.string().optional(),
   })
 const outputById: Record<string, z.ZodType> = {
+  'plugin-media-inspector': json(z.strictObject({ result: mediaResultSchema })),
+  'plugin-media-converter': json(z.strictObject({ result: mediaResultSchema })),
+  'plugin-local-reminder': json(
+    z.strictObject({
+      result: z.strictObject({
+        status: z.enum(['requested', 'unsupported', 'failed', 'unknown']),
+      }),
+    })
+  ),
   'plugin-base64-encoder': json(
     z.strictObject({
       result: z.string(),
@@ -124,6 +135,14 @@ export function defineBuiltinCommand<T>(plugin: {
   if (!output) throw new Error('Unknown built-in command output contract')
   const outputSchema = z.union([text, output])
   let input: z.ZodType = plugin.inputSchema
+  if (
+    plugin.meta.id === 'plugin-media-inspector' ||
+    plugin.meta.id === 'plugin-media-converter'
+  )
+    input = z.object({
+      planId: z.string().min(36).max(36),
+      planDigest: z.string().min(64).max(64),
+    })
   // URL syntax has an explicit runtime validator; v1 advertises the serializable
   // string/array shape, rather than claiming to export URL format semantics.
   if (plugin.meta.id === 'plugin-website-latency')
@@ -156,6 +175,11 @@ export function defineBuiltinCommand<T>(plugin: {
   } else outputContract = exportOperationSchema(outputSchema)
   const network = plugin.meta.id === 'plugin-website-latency'
   const storage = plugin.meta.id === 'plugin-todo-list'
+  const notification = plugin.meta.id === 'plugin-local-reminder'
+  const media =
+    plugin.meta.id === 'plugin-media-inspector' ||
+    plugin.meta.id === 'plugin-media-converter'
+  const converter = plugin.meta.id === 'plugin-media-converter'
   const command: CommandManifestV1 = commandManifestSchema.parse({
     id: 'run',
     name: `执行${plugin.meta.name}`,
@@ -166,28 +190,61 @@ export function defineBuiltinCommand<T>(plugin: {
     headless: true,
     supportsColdStart: !network,
     interaction: 'none',
-    effects: network
-      ? ['network-read']
-      : storage
-        ? ['data-read', 'data-write']
-        : [],
-    permissions: network
+    effects: media
+      ? ['file-read', 'tool-execute', ...(converter ? ['file-create'] : [])]
+      : network
+        ? ['network-read']
+        : storage
+          ? ['data-read', 'data-write']
+          : notification
+            ? ['notification']
+            : [],
+    permissions: media
       ? [
           {
-            capability: 'network',
-            operations: ['request'],
-            scopes: ['input:urls', 'built-in-default-sites'],
+            capability: 'fs',
+            operations: ['read', ...(converter ? ['create'] : [])],
+            scopes: [
+              'selected-media-input',
+              ...(converter ? ['selected-media-output'] : []),
+            ],
+          },
+          {
+            capability: 'tool',
+            operations: ['execute'],
+            scopes: converter
+              ? [
+                  'lock:ffmpeg:extract-audio-wav-v1',
+                  'lock:ffmpeg:transcode-webm-v1',
+                ]
+              : ['lock:ffmpeg:inspect-v1'],
           },
         ]
-      : storage
+      : network
         ? [
             {
-              capability: 'storage',
-              operations: ['get', 'set'],
-              scopes: ['plugin-data'],
+              capability: 'network',
+              operations: ['request'],
+              scopes: ['input:urls', 'built-in-default-sites'],
             },
           ]
-        : [],
+        : storage
+          ? [
+              {
+                capability: 'storage',
+                operations: ['get', 'set'],
+                scopes: ['plugin-data'],
+              },
+            ]
+          : notification
+            ? [
+                {
+                  capability: 'notification',
+                  operations: ['notify'],
+                  scopes: ['local'],
+                },
+              ]
+            : [],
     resources: {
       timeoutMs: 30_000,
       maxInputBytes: 1_048_576,

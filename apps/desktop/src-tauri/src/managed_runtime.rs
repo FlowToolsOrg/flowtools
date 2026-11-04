@@ -55,6 +55,22 @@ fn check<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>) -> Result<PathBuf,
         .map(|root| PathBuf::from(root).join("FlowToolsRuntimeV1"))
         .ok_or_else(|| error(ErrorCode::ApprovalRequired))
 }
+fn main_status_profile<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+) -> Result<PathBuf, RuntimeError> {
+    let window = app
+        .get_webview_window("main")
+        .ok_or_else(|| error(ErrorCode::SessionInvalid))?;
+    check(&window)
+}
+
+// Native tray entry only. Keep the same Debug/main/origin/profile guard and
+// exact read-only connection as settings, without any initialization parameter.
+pub(super) async fn status_for_main_window<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+) -> Result<RuntimeStatus, RuntimeError> {
+    status_snapshot(main_status_profile(app)?).await
+}
 fn executable() -> Result<PathBuf, RuntimeError> {
     let path = PathBuf::from(env!("FLOWTOOLS_DESKTOP_RUNTIME_PATH"));
     flowtools_runtime_core::data::safe_path(&path).map_err(error)?;
@@ -198,11 +214,68 @@ async fn exchange(pipe: &mut NamedPipeClient, request: &Request) -> Result<Respo
     .map_err(|_| error(ErrorCode::RuntimeDisconnected))?
     .map_err(|_| error(ErrorCode::RuntimeDisconnected))
 }
+
+// Attach only: no ensure-runtime, manager fallback, initialization or grant query.
+async fn status_snapshot(profile: PathBuf) -> Result<RuntimeStatus, RuntimeError> {
+    match readonly_snapshot(profile, Call::Status).await? {
+        Outcome::Status(status) => Ok(status),
+        _ => Err(error(ErrorCode::InvalidResponse)),
+    }
+}
+async fn readonly_snapshot(profile: PathBuf, call: Call) -> Result<Outcome, RuntimeError> {
+    if !matches!(call, Call::Status | Call::ToolInventory(_)) {
+        return Err(error(ErrorCode::SessionInvalid));
+    }
+    let status_query = matches!(call, Call::Status);
+    let native = bootstrap(profile, false, false).await?;
+    let mut pipe = ClientOptions::new()
+        .open(native.pipe)
+        .map_err(|_| error(ErrorCode::RuntimeDisconnected))?;
+    let opened = exchange(
+        &mut pipe,
+        &Request {
+            version: PROTOCOL_MAJOR,
+            request_id: uuid(),
+            session: None,
+            call: Call::Open(OpenSession {
+                token: native.token,
+                client_version: CLIENT_VERSION.into(),
+                expected_instance_id: None,
+            }),
+        },
+    )
+    .await?;
+    let proof = match opened.outcome {
+        Outcome::Session(proof) => proof,
+        Outcome::Error(failure) => return Err(failure),
+        _ => return Err(error(ErrorCode::InvalidResponse)),
+    };
+    let response = exchange(
+        &mut pipe,
+        &Request {
+            version: PROTOCOL_MAJOR,
+            request_id: uuid(),
+            session: Some(proof.clone()),
+            call,
+        },
+    )
+    .await?;
+    match response.outcome {
+        Outcome::Status(status) if status_query && status.instance_id == proof.instance_id => {
+            Ok(Outcome::Status(status))
+        }
+        Outcome::ToolInventory(page) if !status_query => Ok(Outcome::ToolInventory(page)),
+        Outcome::Error(failure) => Err(failure),
+        _ => Err(error(ErrorCode::InvalidResponse)),
+    }
+}
 fn business(call: &Call) -> bool {
     matches!(
         call,
         Call::Open(_)
             | Call::Status
+            | Call::ToolInventory(_)
+            | Call::MediaProgress(_)
             | Call::Plugins
             | Call::Jobs
             | Call::Submit(_)
@@ -377,11 +450,50 @@ pub async fn managed_runtime_control<R: tauri::Runtime>(
     call: Call,
     initialize: bool,
 ) -> Result<Outcome, RuntimeError> {
+    if matches!(
+        call,
+        Call::Status | Call::ToolInventory(_) | Call::ScheduleResolve(_)
+    ) && initialize
+    {
+        return Err(error(ErrorCode::SessionInvalid));
+    }
     let profile = check(&window)?;
+    if matches!(call, Call::Status) {
+        return status_snapshot(profile).await.map(Outcome::Status);
+    }
+    if matches!(call, Call::ToolInventory(_)) {
+        return readonly_snapshot(profile, call).await;
+    }
+    if let Call::ScheduleResolve(input) = call {
+        // The same Runtime-owned pure conversion is usable before a Host exists.
+        // No bootstrap, manager helper, profile initialization or business start.
+        return flowtools_runtime_core::scheduling::time::resolve_time(input)
+            .map(Outcome::ScheduleTime)
+            .map_err(error);
+    }
     if !matches!(
         call,
         Call::Permissions
             | Call::Plugins
+            | Call::Schedules
+            | Call::ScheduleCreate(_)
+            | Call::ScheduleResolve(_)
+            | Call::ScheduleCancel(_)
+            | Call::ScheduleReplace(_)
+            | Call::ScheduleRecovery
+            | Call::ScheduleDiscard(_)
+            | Call::FilePlanCreate(_)
+            | Call::FilePlans
+            | Call::FilePlanPreview(_)
+            | Call::FilePlanCommit(_)
+            | Call::FilePlanUndo(_)
+            | Call::FilePlanCancel(_)
+            | Call::FilePlanRecovery
+            | Call::FilePlanDiscard(_)
+            | Call::MediaPlanCreate(_)
+            | Call::MediaPlanPreview(_)
+            | Call::MediaStart(_)
+            | Call::MediaProgress(_)
             | Call::Grant(_)
             | Call::Revoke(_)
             | Call::Policy(_)
@@ -391,12 +503,91 @@ pub async fn managed_runtime_control<R: tauri::Runtime>(
     {
         return Err(error(ErrorCode::SessionInvalid));
     }
-    if !matches!(call, Call::Permissions | Call::Plugins | Call::Revoke(_)) {
+    if !matches!(
+        call,
+        Call::Permissions
+            | Call::Plugins
+            | Call::Schedules
+            | Call::Revoke(_)
+            | Call::ScheduleRecovery
+            | Call::ScheduleResolve(_)
+            | Call::ScheduleCancel(_)
+            | Call::FilePlans
+            | Call::FilePlanPreview(_)
+            | Call::FilePlanCancel(_)
+            | Call::MediaPlanPreview(_)
+            | Call::FilePlanRecovery
+            | Call::MediaProgress(_)
+    ) {
         let encoded = serde_json::to_string(&call).map_err(|_| error(ErrorCode::InvalidRequest))?;
         if encoded.len() > 8192 {
             return Err(error(ErrorCode::FrameTooLarge));
         }
-        let prompts = crate::managed_approval::runtime_prompts(&call, initialize).map_err(error)?;
+        let mut prompts =
+            crate::managed_approval::runtime_prompts(&call, initialize).map_err(error)?;
+        if let Call::FilePlanCommit(key) | Call::FilePlanUndo(key) = &call {
+            let (mut preview_pipe, preview_proof, preview_child) =
+                manager(profile.clone(), false).await?;
+            let preview = exchange(
+                &mut preview_pipe,
+                &Request {
+                    version: 1,
+                    request_id: uuid(),
+                    session: Some(preview_proof),
+                    call: Call::FilePlanPreview(
+                        flowtools_runtime_core::file_workflows::FilePlanKey {
+                            id: key.id.clone(),
+                            revision: key.revision,
+                        },
+                    ),
+                },
+            )
+            .await?;
+            drop(preview_pipe);
+            if let Some(child) = preview_child {
+                child.close().await;
+            }
+            let Outcome::FilePlan(view) = preview.outcome else {
+                return Err(error(ErrorCode::RevisionConflict));
+            };
+            if view.record.digest != key.digest {
+                return Err(error(ErrorCode::RevisionConflict));
+            }
+            prompts.extend(crate::managed_approval::file_plan_prompts(
+                &view,
+                matches!(call, Call::FilePlanUndo(_)),
+            ));
+        }
+        if let Call::MediaStart(key) = &call {
+            let (mut preview_pipe, preview_proof, preview_child) =
+                manager(profile.clone(), false).await?;
+            let preview = exchange(
+                &mut preview_pipe,
+                &Request {
+                    version: 1,
+                    request_id: uuid(),
+                    session: Some(preview_proof),
+                    call: Call::MediaPlanPreview(
+                        flowtools_runtime_core::file_workflows::FilePlanKey {
+                            id: key.id.clone(),
+                            revision: 1,
+                        },
+                    ),
+                },
+            )
+            .await?;
+            drop(preview_pipe);
+            if let Some(child) = preview_child {
+                child.close().await;
+            }
+            let Outcome::MediaPlan(plan) = preview.outcome else {
+                return Err(error(ErrorCode::RevisionConflict));
+            };
+            if plan.digest != key.digest {
+                return Err(error(ErrorCode::RevisionConflict));
+            }
+            prompts.push(format!("核对实际媒体计划\n输入：{}\n大小：{} 字节\nSHA-256：{}\n输出：{}\n仅此输入/输出和固定工具动作；授权 60 秒，关闭界面后任务可继续。",serde_json::to_string(&plan.input_name).unwrap(),plan.input_bytes,plan.input_sha256,serde_json::to_string(&plan.output_name).unwrap()));
+        }
         for prompt in prompts {
             let app = window.app_handle().clone();
             let approved = tokio::task::spawn_blocking(move || {
@@ -411,6 +602,12 @@ pub async fn managed_runtime_control<R: tauri::Runtime>(
             if !approved {
                 return Err(error(ErrorCode::ApprovalRequired));
             }
+        }
+    }
+    if matches!(call, Call::MediaStart(_)) {
+        let output = native_output("--start-runtime", &profile).await?;
+        if !output.status.success() {
+            return Err(error(ErrorCode::ColdStartDenied));
         }
     }
     let (mut pipe, proof, child) = manager(profile, initialize).await?;
@@ -504,6 +701,132 @@ pub fn destroyed<R: tauri::Runtime>(window: &tauri::Window<R>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn status_profile() -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "flowtools-validation-desktop-status-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ))
+    }
+
+    #[tokio::test]
+    async fn status_snapshot_does_not_initialize_a_missing_profile() {
+        let profile = status_profile();
+        assert!(!profile.exists());
+        let result = status_snapshot(profile.clone()).await;
+        assert_eq!(result.unwrap_err().code, ErrorCode::ApprovalRequired);
+        assert!(
+            !profile.exists(),
+            "Status must not initialize profile storage"
+        );
+    }
+
+    #[tokio::test]
+    async fn tool_inventory_observation_never_initializes_or_cold_starts_an_offline_profile() {
+        let profile = status_profile();
+        let call = || {
+            Call::ToolInventory(flowtools_runtime_core::tool_inventory::ToolInventoryQuery {
+                offset: 0,
+                snapshot: None,
+            })
+        };
+        assert_eq!(
+            readonly_snapshot(profile.clone(), call())
+                .await
+                .unwrap_err()
+                .code,
+            ErrorCode::ApprovalRequired
+        );
+        assert!(!profile.exists());
+        let (pipe, _, temporary) = manager(profile.clone(), true).await.unwrap();
+        let observed = readonly_snapshot(profile.clone(), call()).await.unwrap();
+        let Outcome::ToolInventory(page) = observed else {
+            panic!("Expected the actual managed tool inventory");
+        };
+        assert_eq!(
+            page.availability,
+            flowtools_runtime_core::tool_inventory::ToolInventoryAvailability::Observed
+        );
+        let snapshot = page.snapshot.unwrap();
+        assert_eq!(snapshot.len(), 64);
+        assert!(snapshot
+            .bytes()
+            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b)));
+        assert_eq!(page.total, 1);
+        assert!(page.next_offset.is_none());
+        let storage = page.storage.unwrap();
+        assert_eq!((storage.bytes, storage.groups), (42764494, 2));
+        assert_eq!((storage.max_bytes, storage.max_groups), (268435456, 384));
+        assert_eq!(
+            serde_json::to_value(page.items).unwrap(),
+            serde_json::json!([{
+                "publisher":"flowtools-builtin", "id":"ffmpeg", "version":"8.1.3",
+                "buildFlavor":"flowtools-t1-lgpl-static-v1",
+                "archiveDigest":"2b26f1bc4731c8db82f2bda708a96354bd31acf1af2cc16058f108d25ccfe415",
+                "sourceRegistry":"ffmpeg-official", "sourceArtifact":"ffmpeg-8-1-3-flowtools-t1",
+                "archiveBytes":21380817, "materialized":true, "dependents":[], "retainedJobs":0,
+                "deletionBlockers":["deletion-not-implemented"]
+            }])
+        );
+        drop(pipe);
+        temporary.unwrap().close().await;
+        let before =
+            ["bootstrap.json", "runtime.sqlite"].map(|n| std::fs::read(profile.join(n)).unwrap());
+        assert_eq!(
+            readonly_snapshot(profile.clone(), call())
+                .await
+                .unwrap_err()
+                .code,
+            ErrorCode::RuntimeDisconnected
+        );
+        let after =
+            ["bootstrap.json", "runtime.sqlite"].map(|n| std::fs::read(profile.join(n)).unwrap());
+        assert_eq!(before, after);
+    }
+
+    #[tokio::test]
+    async fn status_snapshot_reads_the_actual_host_and_never_cold_starts_after_exit() {
+        let profile = status_profile();
+        let (mut pipe, proof, temporary) = manager(profile.clone(), true).await.unwrap();
+        let temporary = temporary.unwrap();
+        let observed = status_snapshot(profile.clone()).await;
+        let expected = exchange(
+            &mut pipe,
+            &Request {
+                version: PROTOCOL_MAJOR,
+                request_id: uuid(),
+                session: Some(proof),
+                call: Call::Status,
+            },
+        )
+        .await;
+        drop(pipe);
+        temporary.close().await;
+
+        let before = ["bootstrap.json", "runtime.sqlite"]
+            .map(|name| std::fs::read(profile.join(name)).unwrap());
+        let offline = status_snapshot(profile.clone()).await;
+        let after = ["bootstrap.json", "runtime.sqlite"]
+            .map(|name| std::fs::read(profile.join(name)).unwrap());
+        let native = bootstrap(profile, false, false).await.unwrap();
+        let listener_absent = ClientOptions::new().open(native.pipe).is_err();
+
+        let observed = observed.unwrap();
+        let Outcome::Status(expected) = expected.unwrap().outcome else {
+            panic!("Actual Host must return its status");
+        };
+        assert_eq!(observed.instance_id, expected.instance_id);
+        assert_eq!(observed.mode, "management");
+        assert_eq!(observed.active_jobs, 0);
+        assert_eq!(observed.jobs, 0);
+        assert_eq!(offline.unwrap_err().code, ErrorCode::RuntimeDisconnected);
+        assert!(listener_absent, "Status must not start an offline Host");
+        assert_eq!(before, after, "Offline status must not write profile state");
+    }
 
     #[tokio::test]
     async fn cold_helper_finishes_while_the_started_host_is_still_running() {

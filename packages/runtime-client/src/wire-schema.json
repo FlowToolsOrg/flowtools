@@ -267,6 +267,36 @@
         "additionalProperties": false,
         "properties": {
           "operation": {
+            "const": "notification",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title",
+              "message"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "parameters"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
             "const": "tool-execute",
             "type": "string"
           },
@@ -339,6 +369,330 @@
             },
             "required": [
               "method"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "tools.inventory",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ToolInventoryQuery"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "files.plan",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/CreateFilePlan"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "files.list",
+                "type": "string"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "files.preview",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/FilePlanKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "files.commit",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ConfirmFilePlan"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "files.undo",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ConfirmFilePlan"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "files.cancel",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/FilePlanKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "files.recovery",
+                "type": "string"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "files.discard-restored",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ScheduleRecoveryKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "media.plan",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/CreateMediaPlan"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "media.preview",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/FilePlanKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "media.start",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/StartMediaPlan"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "media.progress",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/JobKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "schedules.list",
+                "type": "string"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "schedules.resolve-time",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ResolveScheduleTime"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "schedules.create",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/CreateSchedule"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "schedules.cancel",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ScheduleKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "schedules.replace",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ReplaceSchedule"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "schedules.recovery",
+                "type": "string"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "schedules.discard-restored",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ScheduleRecoveryKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
             ],
             "type": "object"
           },
@@ -685,6 +1039,110 @@
           }
         ]
       },
+      "ConfirmFilePlan": {
+        "additionalProperties": false,
+        "properties": {
+          "digest": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "digest"
+        ],
+        "type": "object"
+      },
+      "CreateFilePlan": {
+        "additionalProperties": false,
+        "properties": {
+          "directory": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "requestKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestKey",
+          "directory",
+          "prefix"
+        ],
+        "type": "object"
+      },
+      "CreateMediaPlan": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "$ref": "#/$defs/UserMediaAction"
+          },
+          "inputPath": {
+            "type": "string"
+          },
+          "outputPath": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requestKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestKey",
+          "inputPath",
+          "action"
+        ],
+        "type": "object"
+      },
+      "CreateSchedule": {
+        "additionalProperties": false,
+        "properties": {
+          "commandId": {
+            "type": "string"
+          },
+          "definition": {
+            "$ref": "#/$defs/ScheduleDefinition"
+          },
+          "input": true,
+          "pluginId": {
+            "type": "string"
+          },
+          "requestKey": {
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/$defs/GrantTarget"
+          },
+          "timeoutMs": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "requestKey",
+          "target",
+          "pluginId",
+          "commandId",
+          "input",
+          "definition",
+          "timeoutMs"
+        ],
+        "type": "object"
+      },
       "DataImport": {
         "additionalProperties": false,
         "properties": {
@@ -806,6 +1264,24 @@
         ],
         "type": "object"
       },
+      "FilePlanKey": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision"
+        ],
+        "type": "object"
+      },
       "GrantTarget": {
         "enum": [
           "cli",
@@ -862,6 +1338,28 @@
           "web-localstorage-v1"
         ],
         "type": "string"
+      },
+      "LocalTimeChoice": {
+        "enum": [
+          "reject",
+          "earlier",
+          "later"
+        ],
+        "type": "string"
+      },
+      "MissedRunPolicy": {
+        "oneOf": [
+          {
+            "const": "skip",
+            "description": "Discard overdue occurrences outside the explicit lateness grace.",
+            "type": "string"
+          },
+          {
+            "const": "coalesce-latest",
+            "description": "Return only the latest due occurrence, even outside the grace.\nOlder occurrences are discarded; no catch-up burst is produced.",
+            "type": "string"
+          }
+        ]
       },
       "OpenSession": {
         "additionalProperties": false,
@@ -1007,6 +1505,114 @@
         ],
         "type": "string"
       },
+      "ReplaceSchedule": {
+        "additionalProperties": false,
+        "properties": {
+          "create": {
+            "$ref": "#/$defs/CreateSchedule"
+          },
+          "previous": {
+            "$ref": "#/$defs/ScheduleKey"
+          }
+        },
+        "required": [
+          "previous",
+          "create"
+        ],
+        "type": "object"
+      },
+      "ResolveScheduleTime": {
+        "additionalProperties": false,
+        "properties": {
+          "choice": {
+            "$ref": "#/$defs/LocalTimeChoice"
+          },
+          "local": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "local",
+          "timeZone",
+          "choice"
+        ],
+        "type": "object"
+      },
+      "ScheduleDefinition": {
+        "additionalProperties": false,
+        "properties": {
+          "firstDueMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "graceMs": {
+            "format": "uint64",
+            "maximum": 60000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "intervalMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 1000,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "missed": {
+            "$ref": "#/$defs/MissedRunPolicy"
+          },
+          "occurrences": {
+            "format": "uint32",
+            "maximum": 10000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "firstDueMs",
+          "occurrences",
+          "graceMs",
+          "missed"
+        ],
+        "type": "object"
+      },
+      "ScheduleKey": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision"
+        ],
+        "type": "object"
+      },
+      "ScheduleRecoveryKey": {
+        "additionalProperties": false,
+        "properties": {
+          "challenge": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "challenge"
+        ],
+        "type": "object"
+      },
       "Scope": {
         "description": "Exact, Host-approved scopes; there are no wildcard grants.",
         "oneOf": [
@@ -1130,6 +1736,19 @@
             "additionalProperties": false,
             "properties": {
               "kind": {
+                "const": "notification",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
                 "const": "tool-lock",
                 "type": "string"
               },
@@ -1183,6 +1802,26 @@
         ],
         "type": "object"
       },
+      "StartMediaPlan": {
+        "additionalProperties": false,
+        "properties": {
+          "digest": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/$defs/GrantTarget"
+          }
+        },
+        "required": [
+          "id",
+          "digest",
+          "target"
+        ],
+        "type": "object"
+      },
       "SubmitJob": {
         "additionalProperties": false,
         "properties": {
@@ -1213,6 +1852,34 @@
           "deadline"
         ],
         "type": "object"
+      },
+      "ToolInventoryQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "offset": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "snapshot": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "offset"
+        ],
+        "type": "object"
+      },
+      "UserMediaAction": {
+        "enum": [
+          "inspect",
+          "audio",
+          "webm"
+        ],
+        "type": "string"
       }
     },
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1262,6 +1929,70 @@
           "coldStart"
         ],
         "type": "object"
+      },
+      "ClaimResult": {
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "state": {
+                "const": "claimed",
+                "type": "string"
+              }
+            },
+            "required": [
+              "state"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "runId": {
+                "type": "string"
+              },
+              "state": {
+                "const": "submitted",
+                "type": "string"
+              }
+            },
+            "required": [
+              "state",
+              "runId"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "$ref": "#/$defs/ErrorCode"
+              },
+              "state": {
+                "const": "rejected",
+                "type": "string"
+              }
+            },
+            "required": [
+              "state",
+              "code"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "state": {
+                "const": "interrupted",
+                "type": "string"
+              }
+            },
+            "required": [
+              "state"
+            ],
+            "type": "object"
+          }
+        ]
       },
       "CommandIdentity": {
         "additionalProperties": false,
@@ -1589,6 +2320,129 @@
         "type": "object",
         "unevaluatedProperties": false
       },
+      "FileExecutionPhase": {
+        "enum": [
+          "applying",
+          "complete",
+          "undoing",
+          "undone"
+        ],
+        "type": "string"
+      },
+      "FileExecutionRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "completed": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "pending": {
+            "type": "boolean"
+          },
+          "phase": {
+            "$ref": "#/$defs/FileExecutionPhase"
+          },
+          "planId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "planId",
+          "phase",
+          "completed",
+          "pending"
+        ],
+        "type": "object"
+      },
+      "FilePlanRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "cancelled": {
+            "type": "boolean"
+          },
+          "digest": {
+            "type": "string"
+          },
+          "files": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "id": {
+            "type": "string"
+          },
+          "revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "skipped": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "totalBytes": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "digest",
+          "files",
+          "skipped",
+          "totalBytes",
+          "cancelled"
+        ],
+        "type": "object"
+      },
+      "FilePlanRecovery": {
+        "additionalProperties": false,
+        "properties": {
+          "challenge": {
+            "type": "string"
+          },
+          "count": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "challenge",
+          "count"
+        ],
+        "type": "object"
+      },
+      "FilePlanView": {
+        "additionalProperties": false,
+        "properties": {
+          "execution": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/FileExecutionRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "preview": {
+            "$ref": "#/$defs/RenamePreview"
+          },
+          "record": {
+            "$ref": "#/$defs/FilePlanRecord"
+          }
+        },
+        "required": [
+          "record",
+          "preview"
+        ],
+        "type": "object"
+      },
       "GrantTarget": {
         "enum": [
           "cli",
@@ -1763,6 +2617,60 @@
         ],
         "type": "string"
       },
+      "MediaPlanPreview": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "$ref": "#/$defs/UserMediaAction"
+          },
+          "digest": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "inputBytes": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "inputName": {
+            "type": "string"
+          },
+          "inputSha256": {
+            "type": "string"
+          },
+          "outputName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "digest",
+          "action",
+          "inputName",
+          "inputBytes",
+          "inputSha256"
+        ],
+        "type": "object"
+      },
+      "MissedRunPolicy": {
+        "oneOf": [
+          {
+            "const": "skip",
+            "description": "Discard overdue occurrences outside the explicit lateness grace.",
+            "type": "string"
+          },
+          {
+            "const": "coalesce-latest",
+            "description": "Return only the latest due occurrence, even outside the grace.\nOlder occurrences are discarded; no catch-up burst is produced.",
+            "type": "string"
+          }
+        ]
+      },
       "Outcome": {
         "oneOf": [
           {
@@ -1790,6 +2698,213 @@
               },
               "type": {
                 "const": "status",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/ToolInventoryPage"
+              },
+              "type": {
+                "const": "tool-inventory",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/$defs/FilePlanRecord"
+                },
+                "type": "array"
+              },
+              "type": {
+                "const": "file-plans",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/FilePlanView"
+              },
+              "type": {
+                "const": "file-plan",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/FileExecutionRecord"
+              },
+              "type": {
+                "const": "file-execution",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/FilePlanRecovery"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": {
+                "const": "file-recovery",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/MediaPlanPreview"
+              },
+              "type": {
+                "const": "media-plan",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/UserMediaProgress"
+              },
+              "type": {
+                "const": "media-progress",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/$defs/ScheduleRecord"
+                },
+                "type": "array"
+              },
+              "type": {
+                "const": "schedules",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ScheduleRecovery"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": {
+                "const": "schedule-recovery",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/ResolvedScheduleTime"
+              },
+              "type": {
+                "const": "schedule-time",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/ScheduleRecord"
+              },
+              "type": {
+                "const": "schedule",
                 "type": "string"
               }
             },
@@ -2262,6 +3377,90 @@
         ],
         "type": "string"
       },
+      "RenamePreview": {
+        "additionalProperties": false,
+        "properties": {
+          "digest": {
+            "type": "string"
+          },
+          "files": {
+            "items": {
+              "$ref": "#/$defs/RenamePreviewFile"
+            },
+            "type": "array"
+          },
+          "skipped": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "totalBytes": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "digest",
+          "files",
+          "skipped",
+          "totalBytes"
+        ],
+        "type": "object"
+      },
+      "RenamePreviewFile": {
+        "additionalProperties": false,
+        "properties": {
+          "bytes": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "target",
+          "bytes",
+          "sha256"
+        ],
+        "type": "object"
+      },
+      "ResolvedScheduleTime": {
+        "additionalProperties": false,
+        "properties": {
+          "dueMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "utc": {
+            "type": "string"
+          },
+          "zoned": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dueMs",
+          "utc",
+          "zoned",
+          "timeZone"
+        ],
+        "type": "object"
+      },
       "ReverseDependency": {
         "additionalProperties": false,
         "properties": {
@@ -2435,6 +3634,184 @@
         ],
         "type": "object"
       },
+      "ScheduleBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "grantEpoch": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "identity": {
+            "$ref": "#/$defs/CommandIdentity"
+          },
+          "inputDigest": {
+            "type": "string"
+          },
+          "timeoutMs": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "identity",
+          "grantEpoch",
+          "inputDigest",
+          "timeoutMs"
+        ],
+        "type": "object"
+      },
+      "ScheduleClaim": {
+        "additionalProperties": false,
+        "properties": {
+          "dueMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "index": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "result": {
+            "$ref": "#/$defs/ClaimResult"
+          },
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "index",
+          "dueMs",
+          "result"
+        ],
+        "type": "object"
+      },
+      "ScheduleDefinition": {
+        "additionalProperties": false,
+        "properties": {
+          "firstDueMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "graceMs": {
+            "format": "uint64",
+            "maximum": 60000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "intervalMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 1000,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "missed": {
+            "$ref": "#/$defs/MissedRunPolicy"
+          },
+          "occurrences": {
+            "format": "uint32",
+            "maximum": 10000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "firstDueMs",
+          "occurrences",
+          "graceMs",
+          "missed"
+        ],
+        "type": "object"
+      },
+      "ScheduleRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "binding": {
+            "$ref": "#/$defs/ScheduleBinding"
+          },
+          "cancelled": {
+            "type": "boolean"
+          },
+          "definition": {
+            "$ref": "#/$defs/ScheduleDefinition"
+          },
+          "id": {
+            "type": "string"
+          },
+          "lastClaim": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ScheduleClaim"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastObservedMs": {
+            "format": "uint64",
+            "maximum": 253402300799999,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "nextIndex": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "revision": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "skipped": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "definition",
+          "binding",
+          "nextIndex",
+          "cancelled",
+          "skipped"
+        ],
+        "type": "object"
+      },
+      "ScheduleRecovery": {
+        "additionalProperties": false,
+        "properties": {
+          "challenge": {
+            "type": "string"
+          },
+          "count": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "challenge",
+          "count"
+        ],
+        "type": "object"
+      },
       "Scope": {
         "description": "Exact, Host-approved scopes; there are no wildcard grants.",
         "oneOf": [
@@ -2546,6 +3923,19 @@
             "properties": {
               "kind": {
                 "const": "clipboard",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "notification",
                 "type": "string"
               }
             },
@@ -2698,6 +4088,156 @@
         ],
         "type": "object"
       },
+      "ToolDeletionBlocker": {
+        "enum": [
+          "installed-dependent",
+          "retained-task",
+          "deletion-not-implemented"
+        ],
+        "type": "string"
+      },
+      "ToolDependent": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "publisher",
+          "id",
+          "version"
+        ],
+        "type": "object"
+      },
+      "ToolInventoryAvailability": {
+        "enum": [
+          "not-configured",
+          "observed"
+        ],
+        "type": "string"
+      },
+      "ToolInventoryItem": {
+        "additionalProperties": false,
+        "properties": {
+          "archiveBytes": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "archiveDigest": {
+            "type": "string"
+          },
+          "buildFlavor": {
+            "type": "string"
+          },
+          "deletionBlockers": {
+            "items": {
+              "$ref": "#/$defs/ToolDeletionBlocker"
+            },
+            "type": "array"
+          },
+          "dependents": {
+            "items": {
+              "$ref": "#/$defs/ToolDependent"
+            },
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "materialized": {
+            "type": "boolean"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "retainedJobs": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "sourceArtifact": {
+            "type": "string"
+          },
+          "sourceRegistry": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "publisher",
+          "id",
+          "version",
+          "buildFlavor",
+          "archiveDigest",
+          "sourceRegistry",
+          "sourceArtifact",
+          "archiveBytes",
+          "materialized",
+          "dependents",
+          "retainedJobs",
+          "deletionBlockers"
+        ],
+        "type": "object"
+      },
+      "ToolInventoryPage": {
+        "additionalProperties": false,
+        "properties": {
+          "availability": {
+            "$ref": "#/$defs/ToolInventoryAvailability"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/$defs/ToolInventoryItem"
+            },
+            "type": "array"
+          },
+          "nextOffset": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "snapshot": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "storage": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ToolStorageUsage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "total": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "availability",
+          "total",
+          "items"
+        ],
+        "type": "object"
+      },
       "ToolPin": {
         "additionalProperties": false,
         "properties": {
@@ -2731,6 +4271,63 @@
           "target",
           "buildFlavor",
           "digest"
+        ],
+        "type": "object"
+      },
+      "ToolStorageUsage": {
+        "additionalProperties": false,
+        "description": "All four shared installation pools, including their retained/quarantined bytes.",
+        "properties": {
+          "bytes": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "groups": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxBytes": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxGroups": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bytes",
+          "groups",
+          "maxBytes",
+          "maxGroups"
+        ],
+        "type": "object"
+      },
+      "UserMediaAction": {
+        "enum": [
+          "inspect",
+          "audio",
+          "webm"
+        ],
+        "type": "string"
+      },
+      "UserMediaProgress": {
+        "additionalProperties": false,
+        "properties": {
+          "runId": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "runId",
+          "stage"
         ],
         "type": "object"
       }

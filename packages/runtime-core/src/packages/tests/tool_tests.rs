@@ -15,6 +15,10 @@ use std::{
 };
 use zip::{write::SimpleFileOptions, CompressionMethod, ZipWriter};
 
+mod dependency_tests;
+#[cfg(windows)]
+mod install_tests;
+
 struct ToolFixture {
     base: Fixture,
     manifest: Value,
@@ -663,4 +667,38 @@ fn tool_versions_keep_exact_zip_identity_and_release_floors_after_policy_refusal
         Some(ToolAdmissionError::Package(PackageError::ReleaseRollback))
     );
     assert_no_effects(&store);
+}
+
+#[cfg(windows)]
+#[test]
+fn production_existing_archive_review_refuses_even_an_actual_writer_bound_fixture_proof() {
+    let fixture = ToolFixture::new(CompressionMethod::Stored);
+    let trust = fixture.trust();
+    let path = std::env::temp_dir().join(format!(
+        "flowtools-held-tool-review-{}",
+        uuid::Uuid::new_v4()
+    ));
+    std::fs::create_dir(&path).unwrap();
+    let mut store = DataStore::open(&path.join("runtime.sqlite")).unwrap();
+    fixture.bootstrap(&mut store, &trust);
+    let envelope = signed(PACKAGE_PAYLOAD_TYPE, &fixture.base.package, &[3]);
+    let admitted = admit_fixture(&trust, &mut store, fixture.input(&envelope), || {
+        fixture.now()
+    })
+    .unwrap();
+    let held = trust
+        .hold_current_descriptor(&mut store, admitted.archive().descriptor(), fixture.now())
+        .unwrap();
+    let mut clock = || fixture.now();
+    assert_eq!(
+        crate::packages::tools::admit_existing_tool_archive(
+            &trust,
+            &mut store,
+            fixture.input(&envelope),
+            &mut clock,
+            std::sync::Arc::new(held)
+        )
+        .err(),
+        Some(ToolAdmissionError::PolicyDenied)
+    );
 }

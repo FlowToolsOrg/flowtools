@@ -744,15 +744,34 @@ mod tests {
         assert!(!profile.exists());
         let (pipe, _, temporary) = manager(profile.clone(), true).await.unwrap();
         let observed = readonly_snapshot(profile.clone(), call()).await.unwrap();
-        assert!(matches!(
-            observed,
-            Outcome::ToolInventory(flowtools_runtime_core::tool_inventory::ToolInventoryPage {
-                availability:
-                    flowtools_runtime_core::tool_inventory::ToolInventoryAvailability::NotConfigured,
-                storage: None,
-                ..
-            })
-        ));
+        let Outcome::ToolInventory(page) = observed else {
+            panic!("Expected the actual managed tool inventory");
+        };
+        assert_eq!(
+            page.availability,
+            flowtools_runtime_core::tool_inventory::ToolInventoryAvailability::Observed
+        );
+        let snapshot = page.snapshot.unwrap();
+        assert_eq!(snapshot.len(), 64);
+        assert!(snapshot
+            .bytes()
+            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b)));
+        assert_eq!(page.total, 1);
+        assert!(page.next_offset.is_none());
+        let storage = page.storage.unwrap();
+        assert_eq!((storage.bytes, storage.groups), (42764494, 2));
+        assert_eq!((storage.max_bytes, storage.max_groups), (268435456, 384));
+        assert_eq!(
+            serde_json::to_value(page.items).unwrap(),
+            serde_json::json!([{
+                "publisher":"flowtools-builtin", "id":"ffmpeg", "version":"8.1.3",
+                "buildFlavor":"flowtools-t1-lgpl-static-v1",
+                "archiveDigest":"2b26f1bc4731c8db82f2bda708a96354bd31acf1af2cc16058f108d25ccfe415",
+                "sourceRegistry":"ffmpeg-official", "sourceArtifact":"ffmpeg-8-1-3-flowtools-t1",
+                "archiveBytes":21380817, "materialized":true, "dependents":[], "retainedJobs":0,
+                "deletionBlockers":["deletion-not-implemented"]
+            }])
+        );
         drop(pipe);
         temporary.unwrap().close().await;
         let before =

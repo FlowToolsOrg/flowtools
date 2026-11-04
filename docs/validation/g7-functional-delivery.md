@@ -106,3 +106,13 @@ pending，不因原型签名或测试而获得法律/安全批准。一般第三
 库存 fixture 则核对真实锁定归档、镜像和原共享配额，未放宽原期限/保护。
 修复后精确运行当前 `clients.test.ts`，五项实际进程回归全部通过（85.65s），
 Runtime lint/严格 types/Clippy 与文档契约通过；完整根门禁再次单独执行。
+
+`caecf9c` 的完整门禁通过 Core 519+11+13（303.62s）、Runtime 27+6/Bun18
+及 Chromium117/36 后，在 Desktop 命令参考过期处停止（111 pass / 1 fail）。
+现从真实十五项契约重新生成 `builtin-commands.md`。随后的 Desktop 专项发现
+原生只读库存测试也仍预期空库存（37 pass / 1 fail）；已改为核对真实锁定包、
+镜像和原配额，保留离线不初始化/冷启动及查询前后原字节相同的全部断言。
+
+修复后的完整 Desktop 专项 112 Bun + Node2 + Rust38+6 全部通过；随后按原
+顺序完成 11/11 workspace build、Web25/Desktop29 实际产物等值/拒绝及最终
+Rust fmt/check/all-target Clippy。上述逐段结果不代替下一次干净完整根门禁。

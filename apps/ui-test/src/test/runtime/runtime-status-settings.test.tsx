@@ -151,7 +151,7 @@ it('late completion from an unmounted page does not populate a new page', async 
   let complete: (value: Outcome) => void = () => {}
   vi.mocked(controlManagedRuntime).mockImplementationOnce(
     () =>
-      new Promise(resolve => {
+      new Promise<Outcome>(resolve => {
         complete = resolve
       })
   )

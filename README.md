@@ -1,5 +1,11 @@
 # Flow Tool
 
+G7 Windows/T1 now connects journaled file commit/retry/undo and two real managed
+media plugins through Desktop settings and CLI. See [usage and validation](./docs/validation/g7-functional-delivery.md)
+for finite prototype limits, confirmation, recovery and pending release reviews.
+
+2026-11-03：维护者明确授权按 Windows 固定 T1 功能原型完成 G7，允许精确锁定的官方源码 FFmpeg/ffprobe 通过原受管工具链用于实际功能。正式发行、Windows 代码签名和独立安全/许可证审核保持 pending；人工验收为 waived。本授权仅覆盖固定内置流程，不开放任意工具路径、第三方代码或绕过当前 grant/身份/排空检查。
+
 G6 adds [explicit interrupted-queue disposition](./docs/validation/g6-queued-tool-discard.md):
 T0 can confirm cancellation of an unchanged tool queue proven never to have run.
 The original guarded transaction commits before its artifact references release;
@@ -308,14 +314,14 @@ development-mode results and standalone packaged-app acceptance are recorded
 separately; a successful build or URL-resolution test is not visual sign-off.
 This helper does not isolate code or stop synchronous loops. Execution
 metadata records input shape only, never raw input values or field names.
-`bun run smoke:plugins` builds package prerequisites and exercises all thirteen
+`bun run smoke:plugins` builds package prerequisites and exercises all fifteen
 real compiled entries through the CLI SDK runner with controlled in-memory
 storage and scoped fixture responses, not public network or user data. It also
 checks schema rejection, cancellation and actual plugin exceptions.
 Todo JSON runs share the host app store with its panel (CLI retains its existing
 validated `todos` key). Website latency uses SDK request with no raw fetch fallback.
 The SDK's maturity vocabulary is `prototype`, `experimental`, `beta`,
-`production`; missing metadata means `prototype`. All thirteen built-ins and both
+`production`; missing metadata means `prototype`. All fifteen built-ins and both
 host manifests explicitly declare `prototype`, also shown by CLI list/info.
 Compatibility evidence (`indexed` through `production-certified`) is separate
 and never grants execution or proves maturity. Shared UI, Web and Desktop read
@@ -399,7 +405,7 @@ verification is recorded in [the artifact gate](./docs/validation/p0-production-
     API globals expected by those plugins. Bridge calls are handled by the
     desktop SDK runtime context and then mapped to Tauri plugins where native
     access is required.
-- Local plugin workspace with 13 built-in plugins (all app type, all CLI-compatible via `run()` + `inputSchema`):
+- Local plugin workspace with 15 built-in plugins (all app type, all CLI-compatible via `run()` + `inputSchema`):
   - `plugins/plugin-todo-list` — 待办清单（host-managed store）
   - `plugins/plugin-uuid-generator` — UUID 生成器
   - `plugins/plugin-hash-generator` — 哈希生成器
@@ -412,6 +418,9 @@ verification is recorded in [the artifact gate](./docs/validation/p0-production-
   - `plugins/plugin-regex-tester` — 正则表达式测试
   - `plugins/plugin-image-base64` — 图片 ↔ Base64
   - `plugins/plugin-website-latency` — 网站延迟测试
+  - `plugins/plugin-local-reminder` — 本地提醒
+  - `plugins/plugin-media-inspector` — 受管媒体信息
+  - `plugins/plugin-media-converter` — 受管 WAV/WebM 转换
 - Planned (directory created, not yet implemented):
   - `apps/docs`
   - `apps/web`
@@ -895,7 +904,7 @@ All maturity labels stay prototype; SEC-001–SEC-012 remain open.
 The React-free SDK manifest subpath validates serialized commands and package
 metadata. Node file verification is a separate read-only subpath; it does not
 grant external execution. See [Manifest v1](./docs/manifest-v1.md). P1.1a is
-implemented. P1.1b now builds thirteen separate UI/command entries and validates the
+implemented. P1.1b now builds fifteen separate UI/command entries and validates the
 fixed compiled CLI packages before import. P1.1c adds Manifest-driven
 `commands`, `describe`, help, flags and sequential JSON batch input. Web/Desktop
 validate the same contract before UI import and use it for execution. See the
@@ -1093,7 +1102,7 @@ A/B/C fixtures execute through real compiled handlers and bounded child pipes.
 Updates wait for accepted work and owned processes, then back up and migrate;
 uncertain commits refuse admission and require recovery. CLI
 `dependencies unload-plan` and `dependencies calls` inspect metadata only.
-The thirteen bundled prototype built-ins still declare no services. G4 implementation
+The fifteen bundled prototype built-ins still declare no services. G4 implementation
 remains prototype; six real abnormal-drain fixtures have independent baseline
 evidence, while this integration and independent security approval remain pending. Signed installation,
 third-party isolation and real tool storage remain G5/G6.

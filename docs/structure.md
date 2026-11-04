@@ -1,6 +1,13 @@
 # Flow Tools 架构设计规范
 
+2026-11-03：维护者明确授权按 Windows 固定 T1 功能原型完成 G7，允许精确锁定的官方源码 FFmpeg/ffprobe 通过原受管工具链用于实际功能。正式发行、Windows 代码签名和独立安全/许可证审核保持 pending；人工验收为 waived。本授权仅覆盖固定内置流程，不开放任意工具路径、第三方代码或绕过当前 grant/身份/排空检查。
+
 ## 下一阶段结构与当前实现
+
+G7 用户闭环由 `file_workflows/store/execution.rs`、`file_workflows/media_io.rs`
+和 `runtime_user_media.rs` 提供；真实 Host adapter 在 `apps/runtime/src/user_media.rs`，
+GUI/CLI 共用生成协议。`packages/tools/builtin.rs` 只接入锁定的内置原型包。
+结构和边界见 [交付记录](./validation/g7-functional-delivery.md)。
 
 `runtime_tool_queue_discard.rs` 对能证明从未开始的 Interrupted 工具队列提供
 实例/原行/当前 scope 绑定的 T0 确认；原 writer 持久取消后才释放该任务根，

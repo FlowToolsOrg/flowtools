@@ -135,6 +135,13 @@ async function execute(
   if (
     !(managed && snapshot) &&
     !(managed && frames && request.pluginId === 'plugin-local-reminder') &&
+    !(
+      managed &&
+      frames &&
+      ['plugin-media-inspector', 'plugin-media-converter'].includes(
+        request.pluginId
+      )
+    ) &&
     !(frames && plugin.manifest.dependencies.services.length) &&
     (command.effects.length || command.permissions.length)
   ) {
@@ -163,6 +170,11 @@ async function execute(
     log: () => {},
     services: frames?.services,
     artifacts: frames?.artifacts,
+    media:
+      request.pluginId === 'plugin-media-inspector' ||
+      request.pluginId === 'plugin-media-converter'
+        ? frames?.media
+        : undefined,
     notification:
       request.pluginId === 'plugin-local-reminder'
         ? frames?.notification

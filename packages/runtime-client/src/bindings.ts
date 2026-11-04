@@ -14,7 +14,7 @@ export type BootstrapPolicy = {
 	coldStart: boolean,
 };
 
-export type Call = { method: "session.open"; payload: OpenSession } | { method: "runtime.status" } | { method: "tools.inventory"; payload: ToolInventoryQuery } | { method: "schedules.list" } | { method: "schedules.resolve-time"; payload: ResolveScheduleTime } | { method: "schedules.create"; payload: CreateSchedule } | { method: "schedules.cancel"; payload: ScheduleKey } | { method: "schedules.replace"; payload: ReplaceSchedule } | { method: "schedules.recovery" } | { method: "schedules.discard-restored"; payload: ScheduleRecoveryKey } | { method: "plugins.list" } | { method: "dependencies.plan"; payload: DependencyPlanRequest } | { method: "dependencies.unload-plan"; payload: ProviderKey } | { method: "services.calls"; payload: JobKey } | { method: "jobs.submit"; payload: SubmitJob } | { method: "jobs.lookup"; payload: IdempotencyKey } | { method: "jobs.status"; payload: JobKey } | { method: "jobs.diagnose"; payload: JobKey } | { method: "jobs.list" } | { method: "jobs.cancel"; payload: JobKey } | { method: "jobs.events"; payload: EventCursor } | { method: "data.read"; payload: DataRead } | { method: "data.write"; payload: DataWrite } | { method: "data.transaction"; payload: DataTransaction } | { method: "data.import-legacy"; payload: DataImport } | { method: "permissions.list" } | { method: "permissions.grant"; payload: PermissionGrant } | { method: "permissions.revoke"; payload: PermissionKey } | { method: "policy.set"; payload: BootstrapPolicy } | { method: "policy.import"; payload: PolicyImport } | { method: "runtime.stop" };
+export type Call = { method: "session.open"; payload: OpenSession } | { method: "runtime.status" } | { method: "tools.inventory"; payload: ToolInventoryQuery } | { method: "files.plan"; payload: CreateFilePlan } | { method: "files.list" } | { method: "files.preview"; payload: FilePlanKey } | { method: "files.commit"; payload: ConfirmFilePlan } | { method: "files.undo"; payload: ConfirmFilePlan } | { method: "files.cancel"; payload: FilePlanKey } | { method: "files.recovery" } | { method: "files.discard-restored"; payload: ScheduleRecoveryKey } | { method: "media.plan"; payload: CreateMediaPlan } | { method: "media.preview"; payload: FilePlanKey } | { method: "media.start"; payload: StartMediaPlan } | { method: "media.progress"; payload: JobKey } | { method: "schedules.list" } | { method: "schedules.resolve-time"; payload: ResolveScheduleTime } | { method: "schedules.create"; payload: CreateSchedule } | { method: "schedules.cancel"; payload: ScheduleKey } | { method: "schedules.replace"; payload: ReplaceSchedule } | { method: "schedules.recovery" } | { method: "schedules.discard-restored"; payload: ScheduleRecoveryKey } | { method: "plugins.list" } | { method: "dependencies.plan"; payload: DependencyPlanRequest } | { method: "dependencies.unload-plan"; payload: ProviderKey } | { method: "services.calls"; payload: JobKey } | { method: "jobs.submit"; payload: SubmitJob } | { method: "jobs.lookup"; payload: IdempotencyKey } | { method: "jobs.status"; payload: JobKey } | { method: "jobs.diagnose"; payload: JobKey } | { method: "jobs.list" } | { method: "jobs.cancel"; payload: JobKey } | { method: "jobs.events"; payload: EventCursor } | { method: "data.read"; payload: DataRead } | { method: "data.write"; payload: DataWrite } | { method: "data.transaction"; payload: DataTransaction } | { method: "data.import-legacy"; payload: DataImport } | { method: "permissions.list" } | { method: "permissions.grant"; payload: PermissionGrant } | { method: "permissions.revoke"; payload: PermissionKey } | { method: "policy.set"; payload: BootstrapPolicy } | { method: "policy.import"; payload: PolicyImport } | { method: "runtime.stop" };
 
 /**
  *  Narrow operations: no caller/plugin/namespace, raw paths, SQL, argv or env.
@@ -55,6 +55,25 @@ export type CommandIdentity = {
 	version: string,
 	packageDigest: string,
 	commandId: string,
+};
+
+export type ConfirmFilePlan = {
+	id: string,
+	revision: number,
+	digest: string,
+};
+
+export type CreateFilePlan = {
+	requestKey: string,
+	directory: string,
+	prefix: string,
+};
+
+export type CreateMediaPlan = {
+	requestKey: string,
+	inputPath: string,
+	outputPath: string | null,
+	action: UserMediaAction,
 };
 
 export type CreateSchedule = {
@@ -170,6 +189,41 @@ export type ExecutionResult = {
 	inputSummary: InputSummary,
 } & ExecutionOutcome;
 
+export type FileExecutionPhase = "applying" | "complete" | "undoing" | "undone";
+
+export type FileExecutionRecord = {
+	planId: string,
+	phase: FileExecutionPhase,
+	completed: number,
+	pending: boolean,
+};
+
+export type FilePlanKey = {
+	id: string,
+	revision: number,
+};
+
+export type FilePlanRecord = {
+	id: string,
+	revision: number,
+	digest: string,
+	files: number,
+	skipped: number,
+	totalBytes: number,
+	cancelled: boolean,
+};
+
+export type FilePlanRecovery = {
+	challenge: string,
+	count: number,
+};
+
+export type FilePlanView = {
+	record: FilePlanRecord,
+	preview: RenamePreview,
+	execution: FileExecutionRecord | null,
+};
+
 export type GrantTarget = "cli" | "desktop";
 
 export type IdempotencyKey = {
@@ -229,6 +283,16 @@ export type LegacySource = "cli-v0" | "desktop-localstorage-v1" | "web-localstor
 
 export type LocalTimeChoice = "reject" | "earlier" | "later";
 
+export type MediaPlanPreview = {
+	id: string,
+	digest: string,
+	action: UserMediaAction,
+	inputName: string,
+	inputBytes: number,
+	inputSha256: string,
+	outputName: string | null,
+};
+
 export type MissedRunPolicy =
 /**  Discard overdue occurrences outside the explicit lateness grace. */
 "skip" |
@@ -244,7 +308,7 @@ export type OpenSession = {
 	expectedInstanceId: string | null,
 };
 
-export type Outcome = { type: "session"; data: SessionProof } | { type: "status"; data: RuntimeStatus } | { type: "tool-inventory"; data: ToolInventoryPage } | { type: "schedules"; data: ScheduleRecord[] } | { type: "schedule-recovery"; data: ScheduleRecovery | null } | { type: "schedule-time"; data: ResolvedScheduleTime } | { type: "schedule"; data: ScheduleRecord } | { type: "plugins"; data: PluginStatus[] } | { type: "dependency-plan"; data: DependencyPlan } | { type: "provider-change-plan"; data: ProviderChangePlan } | { type: "service-calls"; data: ServiceCallDiagnostic[] } | { type: "receipt"; data: JobReceipt } | { type: "job"; data: JobSnapshot } | { type: "jobs"; data: JobSnapshot[] } | { type: "diagnostic"; data: RunDiagnostic } | { type: "events"; data: JobEvent[] } | { type: "data"; data: DataSnapshot } | { type: "data-batch"; data: DataSnapshot[] } | { type: "permissions"; data: PermissionRecord[] } | { type: "policy"; data: BootstrapPolicy } | { type: "stopping" } | { type: "error"; data: RuntimeError };
+export type Outcome = { type: "session"; data: SessionProof } | { type: "status"; data: RuntimeStatus } | { type: "tool-inventory"; data: ToolInventoryPage } | { type: "file-plans"; data: FilePlanRecord[] } | { type: "file-plan"; data: FilePlanView } | { type: "file-execution"; data: FileExecutionRecord } | { type: "file-recovery"; data: FilePlanRecovery | null } | { type: "media-plan"; data: MediaPlanPreview } | { type: "media-progress"; data: UserMediaProgress } | { type: "schedules"; data: ScheduleRecord[] } | { type: "schedule-recovery"; data: ScheduleRecovery | null } | { type: "schedule-time"; data: ResolvedScheduleTime } | { type: "schedule"; data: ScheduleRecord } | { type: "plugins"; data: PluginStatus[] } | { type: "dependency-plan"; data: DependencyPlan } | { type: "provider-change-plan"; data: ProviderChangePlan } | { type: "service-calls"; data: ServiceCallDiagnostic[] } | { type: "receipt"; data: JobReceipt } | { type: "job"; data: JobSnapshot } | { type: "jobs"; data: JobSnapshot[] } | { type: "diagnostic"; data: RunDiagnostic } | { type: "events"; data: JobEvent[] } | { type: "data"; data: DataSnapshot } | { type: "data-batch"; data: DataSnapshot[] } | { type: "permissions"; data: PermissionRecord[] } | { type: "policy"; data: BootstrapPolicy } | { type: "stopping" } | { type: "error"; data: RuntimeError };
 
 export type PackagePin = {
 	publisher: string,
@@ -316,6 +380,20 @@ export type RecoveryReceipt = {
 	phase: RecoveryPhase,
 	grantsRevoked: boolean,
 	payloadsQuarantined: boolean,
+};
+
+export type RenamePreview = {
+	digest: string,
+	files: RenamePreviewFile[],
+	skipped: number,
+	totalBytes: number,
+};
+
+export type RenamePreviewFile = {
+	source: string,
+	target: string,
+	bytes: number,
+	sha256: string,
 };
 
 export type ReplaceSchedule = {
@@ -480,6 +558,12 @@ export type SessionProof = {
 	instanceId: string,
 };
 
+export type StartMediaPlan = {
+	id: string,
+	digest: string,
+	target: GrantTarget,
+};
+
 /**  Offline T0 storage actions; never part of business Call or caller-selected paths. */
 export type StorageAction = { operation: "list" } | { operation: "create" } | { operation: "restore"; parameters: {
 	backupId: string,
@@ -555,6 +639,13 @@ export type ToolStorageUsage = {
 	groups: number,
 	maxBytes: number,
 	maxGroups: number,
+};
+
+export type UserMediaAction = "inspect" | "audio" | "webm";
+
+export type UserMediaProgress = {
+	runId: string,
+	stage: string,
 };
 
 export const SCHEDULE_LIMITS = {"maxGraceMs":60000,"maxOccurrences":10000,"maxSchedules":128,"maxTimestampMs":253402300799999,"minIntervalMs":1000} as const

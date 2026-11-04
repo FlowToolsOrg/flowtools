@@ -43,7 +43,7 @@ fn fixture_barrier(point: FixtureExit) {
     }
 }
 const ROWS: &str = "key GLOB 'package-trust-*' OR key='recovery-generation' OR key IN ('package-install-inventory-v1','package-install-pending-v1','package-reconciliation-pending-v1','tool-archive-inventory-v1','tool-archive-install-pending-v1','tool-archive-reconciliation-pending-v1','tool-image-inventory-v1','tool-image-materialization-pending-v1','tool-image-reconciliation-pending-v1','tool-consumer-inventory-v1','tool-consumer-install-pending-v1','tool-consumer-reconciliation-pending-v1')";
-pub(super) fn failed(error: ToolInstallError) -> ErrorCode {
+pub(in crate::packages::tools) fn failed(error: ToolInstallError) -> ErrorCode {
     match error {
         ToolInstallError::Storage(InstallError::RecoveryPending)
         | ToolInstallError::Admission(ToolAdmissionError::Package(

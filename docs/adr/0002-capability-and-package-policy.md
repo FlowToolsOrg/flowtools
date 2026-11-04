@@ -8,6 +8,13 @@
 
 ## 背景
 
+2026-11-04 的 G7 固定 T1 入口将本地用户确认转成一次有时限的文件 handle /
+工具 lock-action grant；原 plan、输入内容/身份及不可变 tool pin 共同约束效果。
+本地原型 quorum 签名与 exact archive/manifest policy 独立于仍为空的正式
+`REVIEWED_TOOLS`，不得当成独立安全/许可证批准。文件日志未知时保留回执，
+媒体发布未知时保留 staging/原输入并拒绝重放；恢复后不续借旧授权。
+见 [实际交付](../validation/g7-functional-delivery.md)。
+
 当前权限粒度是 `fs/network/storage/db/native` 等字符串，SDK 注入能力来自
 manifest；Desktop adapter 提供 raw SQL 和通用 invoke。目录解析与数据库
 记录不具备包准入的完整性或授权含义。具体入口见

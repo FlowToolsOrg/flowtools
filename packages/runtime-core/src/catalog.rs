@@ -10,6 +10,14 @@ pub struct BuiltinCatalog {
 
 impl BuiltinCatalog {
     pub fn embedded() -> Self {
+        let mut catalog = Self::embedded_with_media();
+        // Generic/validation Hosts have no native media adapter or tool authority.
+        // The actual Windows T0 Host opts into its fixed build-owned pair below.
+        catalog.manifests.remove("plugin-media-inspector");
+        catalog.manifests.remove("plugin-media-converter");
+        catalog
+    }
+    pub fn embedded_with_media() -> Self {
         let catalog: Value = serde_json::from_str(include_str!("../.generated/catalog.json"))
             .expect("Build-owned Manifest v1 artifact");
         let manifests = catalog["plugins"]

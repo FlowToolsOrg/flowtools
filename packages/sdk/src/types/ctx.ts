@@ -95,6 +95,8 @@ export interface PluginRuntimeContextValue {
   services?: ServiceCapability
   /** Opaque Host-bound handles only; no filesystem paths or executable selectors. */
   artifacts?: { read(handle: string): Promise<import('../manifest').JsonValue> }
+  /** Finite Host-managed media operation on this run's approved opaque plan. */
+  media?: { run(planId: string): Promise<import('../manifest').JsonValue> }
   /**
    * Optional host-managed app store capability.
    */

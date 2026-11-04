@@ -2,13 +2,13 @@ use super::*;
 use crate::file_workflows::prepare_rename;
 use std::{fs, path::PathBuf};
 
-struct Fixture {
+pub(super) struct Fixture {
     root: PathBuf,
-    directory: PathBuf,
-    profile: PathBuf,
+    pub(super) directory: PathBuf,
+    pub(super) profile: PathBuf,
 }
 impl Fixture {
-    fn new() -> Self {
+    pub(super) fn new() -> Self {
         let root =
             std::env::temp_dir().join(format!("flowtools-file-store-{}", uuid::Uuid::new_v4()));
         let directory = root.join("selected");
@@ -26,13 +26,13 @@ impl Fixture {
             profile,
         }
     }
-    fn open(&self) -> DataStore {
+    pub(super) fn open(&self) -> DataStore {
         DataStore::open(&self.profile.join("runtime.sqlite")).unwrap()
     }
-    fn draft(&self, prefix: &str) -> RenameDraft {
+    pub(super) fn draft(&self, prefix: &str) -> RenameDraft {
         prepare_rename(&self.directory, prefix, &self.profile).unwrap()
     }
-    fn create(&self, store: &mut DataStore) -> FilePlanRecord {
+    pub(super) fn create(&self, store: &mut DataStore) -> FilePlanRecord {
         FilePlanStore::persist(
             store,
             &uuid::Uuid::new_v4().to_string(),

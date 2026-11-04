@@ -99,6 +99,17 @@ export class RunnerFrames {
       })
     },
   }
+  readonly media = {
+    run: (planId: string): Promise<JsonValue> => {
+      if (
+        !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(
+          planId
+        )
+      )
+        return Promise.reject(new Error('INPUT_INVALID'))
+      return this.exchange({ kind: 'media', planId })
+    },
+  }
   readonly notification: NotificationCapability = {
     notify: async input => {
       await this.notification.deliver!(input)

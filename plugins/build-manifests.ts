@@ -73,7 +73,23 @@ export async function buildBuiltinManifests(root = import.meta.dir) {
         entries: { ui: `${id}.js`, executor: `${id}.commands.js` },
         files,
         commands: [plugin.command],
-        dependencies: { services: [], tools: [] },
+        dependencies: {
+          services: [],
+          tools:
+            id === 'plugin-media-inspector' || id === 'plugin-media-converter'
+              ? [
+                  {
+                    publisher: 'flowtools-builtin',
+                    id: 'ffmpeg',
+                    version: '8.1.3',
+                    target: { platform: 'windows', arch: 'x64' },
+                    buildFlavor: 'flowtools-t1-lgpl-static-v1',
+                    digest:
+                      '2b26f1bc4731c8db82f2bda708a96354bd31acf1af2cc16058f108d25ccfe415',
+                  },
+                ]
+              : [],
+        },
         signature: { status: 'unsigned' },
       })
     )

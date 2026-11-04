@@ -546,6 +546,12 @@ impl CapabilityBroker {
 impl CapabilityOperation {
     fn in_manifest_scope(&self, scope: &str) -> bool {
         match self {
+            Self::FileRead { handle } if scope == "selected-media-input" => handle
+                .strip_suffix("-input")
+                .is_some_and(|id| uuid::Uuid::parse_str(id).is_ok_and(|u| u.to_string() == id)),
+            Self::FileCreate { handle } if scope == "selected-media-output" => handle
+                .strip_suffix("-output")
+                .is_some_and(|id| uuid::Uuid::parse_str(id).is_ok_and(|u| u.to_string() == id)),
             Self::FileRead { handle }
             | Self::FileCreate { handle }
             | Self::FileReplace { handle }

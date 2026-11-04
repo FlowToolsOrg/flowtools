@@ -22,6 +22,8 @@ export const builtInManifestData = parseManifestCatalog(
     'plugin-image-base64',
     'plugin-json-formatter',
     'plugin-local-reminder',
+    'plugin-media-converter',
+    'plugin-media-inspector',
     'plugin-random-picker',
     'plugin-regex-tester',
     'plugin-text-ops',
@@ -211,6 +213,66 @@ export const builtInManifests: PluginManifestEntry[] = [
           maturity: 'prototype',
         },
         () => import('@flowtools/plugins/plugin-local-reminder')
+      ),
+  },
+  {
+    id: 'plugin-media-converter',
+    name: '媒体转换',
+    version: '0.0.1',
+    maturity: 'prototype',
+    description: '提取 WAV 音频或使用固定 VP9/Opus WebM 预设',
+    type: 'app',
+    permissions: ['fs', 'native'],
+    cliAvailable: true,
+    loader: () =>
+      loadManifestModule(
+        builtInManifestData.find(
+          value => value.id === 'plugin-media-converter'
+        ),
+        {
+          hostVersion: '0.1.0',
+          sdkVersion: '0.0.0',
+          platform: 'web',
+          arch: 'wasm32',
+        },
+        {
+          publisher: 'flowtools',
+          id: 'plugin-media-converter',
+          version: '0.0.1',
+          type: 'app',
+          maturity: 'prototype',
+        },
+        () => import('@flowtools/plugins/plugin-media-converter')
+      ),
+  },
+  {
+    id: 'plugin-media-inspector',
+    name: '媒体信息',
+    version: '0.0.1',
+    maturity: 'prototype',
+    description: '查看所选媒体的格式、时长与音视频轨道',
+    type: 'app',
+    permissions: ['fs', 'native'],
+    cliAvailable: true,
+    loader: () =>
+      loadManifestModule(
+        builtInManifestData.find(
+          value => value.id === 'plugin-media-inspector'
+        ),
+        {
+          hostVersion: '0.1.0',
+          sdkVersion: '0.0.0',
+          platform: 'web',
+          arch: 'wasm32',
+        },
+        {
+          publisher: 'flowtools',
+          id: 'plugin-media-inspector',
+          version: '0.0.1',
+          type: 'app',
+          maturity: 'prototype',
+        },
+        () => import('@flowtools/plugins/plugin-media-inspector')
       ),
   },
   {
@@ -446,7 +508,12 @@ export const pluginCategories = [
   {
     id: '其他',
     label: '其他',
-    pluginIds: ['plugin-local-reminder', 'plugin-todo-list'],
+    pluginIds: [
+      'plugin-local-reminder',
+      'plugin-media-converter',
+      'plugin-media-inspector',
+      'plugin-todo-list',
+    ],
   },
   {
     id: '实用工具',

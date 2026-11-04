@@ -594,6 +594,12 @@ Tauri [sidecar](https://v2.tauri.app/develop/sidecar/) 用于构建捆绑程序�
 
 ## 9. G7：统一 UI 与三个办公闭环
 
+2026-11-04：维护者已选择 Windows 固定 T1 功能原型，授权锁定的官方源码
+媒体 pair 接入实际受管链；正式发行/代码签名/独立审核继续 pending，人工
+项 waived。文件提交、逐效果日志/重试/撤销与两个实际媒体插件、用户输入/
+输出发布及 GUI/CLI 现已实现，见 [交付记录](./validation/g7-functional-delivery.md)。
+当前完整 Windows 与远端 CI 完成后再关闭 G7；下列旧记录为历史阶段证据。
+
 2026-10-29：T0 文件计划可在现有单写者/DPAPI 中持久化，保持稳定 ID、取消状态、
 复制/恢复 scope 和严格孤立清理保留；仅为惰性规划层，GUI/CLI 提交、文件效果
 journal/撤销与媒体执行尚未接入。见 [存储证据](./validation/g7-file-plan-store.md)。

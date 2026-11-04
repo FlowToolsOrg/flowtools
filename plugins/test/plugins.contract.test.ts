@@ -17,6 +17,8 @@ import hashPlugin from '../plugin-hash-generator/index.tsx'
 import imageBase64Plugin from '../plugin-image-base64/index.tsx'
 import jsonPlugin from '../plugin-json-formatter/index.tsx'
 import reminderPlugin from '../plugin-local-reminder/index.tsx'
+import mediaConverter from '../plugin-media-converter/index.tsx'
+import mediaInspector from '../plugin-media-inspector/index.tsx'
 import randomPickerPlugin from '../plugin-random-picker/index.tsx'
 import regexPlugin from '../plugin-regex-tester/index.tsx'
 import textOpsPlugin from '../plugin-text-ops/index.tsx'
@@ -32,6 +34,8 @@ const builtInPlugins = [
   imageBase64Plugin,
   jsonPlugin,
   reminderPlugin,
+  mediaInspector,
+  mediaConverter,
   randomPickerPlugin,
   regexPlugin,
   textOpsPlugin,

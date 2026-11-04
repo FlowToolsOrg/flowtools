@@ -6,6 +6,27 @@ export interface PluginSmokeFixture {
 
 /** Complete inventory: only real compiled plugins, never a replacement run(). */
 export const pluginSmokeFixtures: PluginSmokeFixture[] = [
+  ...['plugin-media-inspector', 'plugin-media-converter'].map(id => ({
+    id,
+    input: {
+      planId: '00000000-0000-4000-8000-000000000001',
+      planDigest: '0'.repeat(64),
+    },
+    expected: {
+      type: 'json',
+      value: {
+        result: {
+          formats: ['wav'],
+          durationMs: 1000,
+          sourceBytes: 32044,
+          streams: [],
+          published: false,
+          outputBytes: null,
+          outputSha256: null,
+        },
+      },
+    },
+  })),
   {
     id: 'plugin-local-reminder',
     input: { title: 'Fixture reminder' },

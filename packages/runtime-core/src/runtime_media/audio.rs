@@ -404,7 +404,7 @@ impl RuntimeCore {
             None,
             None,
             |_| Ok(()),
-            |broker, session, _, _| {
+            |broker, session, _, _, _store| {
                 broker.claim_tool_call(session, &leases::media_operation(kind.action()), now())
             },
         )?;
@@ -479,7 +479,7 @@ impl RuntimeCore {
             Some(&call.claim),
             None,
             |_| Ok(()),
-            |broker, _, _, tool| {
+            |broker, _, _, tool, _store| {
                 broker.invoke_claimed_tool(&call.claim, now(), |_| {
                     entered = true;
                     tool.prepare_conversion(&profile, &id, input, &known)
@@ -520,7 +520,7 @@ impl RuntimeCore {
                     &call.id,
                 )),
                 |_| Ok(()),
-                |broker, _, _, _| {
+                |broker, _, _, _, _store| {
                     broker.invoke_claimed_tool(&call.claim, now(), |_| {
                         call.process.as_mut().unwrap().resume()
                     })
@@ -669,7 +669,7 @@ impl RuntimeCore {
                 &call.id,
             )),
             |_| Ok(()),
-            |broker, _, _, tool| {
+            |broker, _, _, tool, _store| {
                 broker.invoke_claimed_tool(&call.claim, now(), |_| {
                     entered = true;
                     tool.prepare_conversion_probe(&profile, &probe_id, &bytes, &known)
@@ -707,7 +707,7 @@ impl RuntimeCore {
                 &call.id,
             )),
             |_| Ok(()),
-            |broker, _, _, _| {
+            |broker, _, _, _, _store| {
                 broker.invoke_claimed_tool(&call.claim, now(), |_| {
                     call.process.as_mut().unwrap().resume()
                 })
@@ -798,7 +798,7 @@ impl RuntimeCore {
                                     &call.id,
                                 )),
                                 |_| Ok(()),
-                                |broker, _, _, _| {
+                                |broker, _, _, _, _store| {
                                     broker.invoke_claimed_tool(&call.claim, now(), |_| output)
                                 },
                             );

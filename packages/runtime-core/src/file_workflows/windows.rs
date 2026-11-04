@@ -39,6 +39,12 @@ use windows_sys::{
     },
 };
 type Result<T> = std::result::Result<T, ErrorCode>;
+#[cfg(test)]
+std::thread_local! { static PUBLICATION_WRITE_ERROR: std::cell::Cell<Option<i32>> = const {std::cell::Cell::new(None)}; }
+#[cfg(test)]
+pub(super) fn fail_next_publication_write(code: i32) {
+    PUBLICATION_WRITE_ERROR.set(Some(code));
+}
 
 fn nt_error(status: i32) -> ErrorCode {
     match status as u32 {
@@ -135,6 +141,16 @@ fn relative(
     access: u32,
     sharing: u32,
 ) -> Result<Option<File>> {
+    relative_open(parent, name, directory, access, sharing, FILE_OPEN)
+}
+fn relative_open(
+    parent: &File,
+    name: &str,
+    directory: Option<bool>,
+    access: u32,
+    sharing: u32,
+    disposition: u32,
+) -> Result<Option<File>> {
     let units = component(name)?;
     let name = UNICODE_STRING {
         Length: (units.len() * 2) as u16,
@@ -164,7 +180,7 @@ fn relative(
             ptr::null(),
             0,
             sharing,
-            FILE_OPEN,
+            disposition,
             kind | FILE_OPEN_REPARSE_POINT | FILE_SYNCHRONOUS_IO_NONALERT,
             ptr::null(),
             0,
@@ -196,6 +212,65 @@ pub(super) struct HeldSource {
     pub pin: FilePin,
 }
 impl Directory {
+    pub fn publish(
+        &self,
+        stage: &str,
+        target: &str,
+        bytes: &[u8],
+        authorize: impl FnOnce() -> Result<()>,
+    ) -> Result<FilePin> {
+        use std::io::{Seek, SeekFrom, Write};
+        use windows_sys::Win32::Storage::FileSystem::{
+            FILE_WRITE_DATA, READ_CONTROL, WRITE_DAC, WRITE_OWNER,
+        };
+        self.validate()?;
+        if !self.absent(target)? {
+            return Err(ErrorCode::RevisionConflict);
+        }
+        let mut file = relative_open(
+            self.root(),
+            stage,
+            Some(false),
+            FILE_READ_DATA | FILE_WRITE_DATA | DELETE | READ_CONTROL | WRITE_DAC | WRITE_OWNER,
+            FILE_SHARE_READ,
+            windows_sys::Wdk::Storage::FileSystem::FILE_CREATE,
+        )?
+        .ok_or(ErrorCode::StorageFailed)?;
+        crate::packages::tools::install::images::protect_private_file(&file)
+            .map_err(|_| ErrorCode::StorageFailed)?;
+        #[cfg(test)]
+        if let Some(code) = PUBLICATION_WRITE_ERROR.take() {
+            let error = std::io::Error::from_raw_os_error(code);
+            debug_assert_eq!(error.raw_os_error(), Some(code));
+            return Err(ErrorCode::StorageFailed);
+        }
+        file.write_all(bytes)
+            .and_then(|_| file.sync_all())
+            .map_err(|_| ErrorCode::StorageFailed)?;
+        file.seek(SeekFrom::Start(0))
+            .map_err(|_| ErrorCode::StorageFailed)?;
+        let info = information(&file)?;
+        let pin = FilePin {
+            volume_id: self.pin.volume_id.clone(),
+            file_id: file_id(&info),
+            size: bytes.len() as u64,
+            modified: time(
+                info.ftLastWriteTime.dwHighDateTime,
+                info.ftLastWriteTime.dwLowDateTime,
+            ),
+            created: time(
+                info.ftCreationTime.dwHighDateTime,
+                info.ftCreationTime.dwLowDateTime,
+            ),
+            sha256: format!("{:x}", Sha256::digest(bytes)),
+        };
+        let source = HeldSource { file, pin };
+        if source.bytes(MAX_FILE_BYTES)? != bytes {
+            return Err(ErrorCode::RevisionConflict);
+        }
+        authorize()?;
+        self.rename(&source, target)
+    }
     fn root(&self) -> &File {
         self.guards.last().expect("an admitted directory")
     }
@@ -476,7 +551,6 @@ impl Directory {
         )?
         .is_none())
     }
-    #[cfg(test)]
     pub fn rename(&self, source: &HeldSource, target: &str) -> Result<FilePin> {
         use windows_sys::Wdk::Storage::FileSystem::{
             FileRenameInformation, NtSetInformationFile, FILE_RENAME_INFORMATION,
@@ -529,6 +603,30 @@ impl Directory {
     }
 }
 impl HeldSource {
+    pub fn bytes(&self, limit: u64) -> Result<Vec<u8>> {
+        use std::io::{Seek, SeekFrom};
+        if self.pin.size > limit {
+            return Err(ErrorCode::BudgetExceeded);
+        }
+        self.validate()?;
+        let mut file = self
+            .file
+            .try_clone()
+            .map_err(|_| ErrorCode::StorageFailed)?;
+        file.seek(SeekFrom::Start(0))
+            .map_err(|_| ErrorCode::StorageFailed)?;
+        let mut bytes = Vec::new();
+        file.take(limit + 1)
+            .read_to_end(&mut bytes)
+            .map_err(|_| ErrorCode::StorageFailed)?;
+        if bytes.len() as u64 != self.pin.size
+            || format!("{:x}", Sha256::digest(&bytes)) != self.pin.sha256
+        {
+            return Err(ErrorCode::RevisionConflict);
+        }
+        self.validate()?;
+        Ok(bytes)
+    }
     pub fn validate(&self) -> Result<()> {
         if self.observed()? != self.pin {
             return Err(ErrorCode::RevisionConflict);

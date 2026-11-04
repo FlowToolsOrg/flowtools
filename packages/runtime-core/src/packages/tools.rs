@@ -13,6 +13,8 @@ use serde::Deserialize;
 use std::collections::BTreeSet;
 
 #[cfg(windows)]
+pub mod builtin;
+#[cfg(windows)]
 pub mod install;
 pub mod media;
 
@@ -274,6 +276,7 @@ fn validate_manifest(
     }
     let profile = profiles
         .iter()
+        .chain(builtin_policy(archive))
         .find(|profile| {
             profile.publisher == manifest.publisher
                 && profile.id == manifest.id
@@ -317,6 +320,40 @@ fn validate_manifest(
         return Err(ToolAdmissionError::PolicyDenied);
     }
     Ok(roles.into_iter().collect())
+}
+
+// Separate maintainer-authorized Windows/T1 prototype policy. This does not
+// populate REVIEWED_TOOLS or confer formal release/security approval. Metadata
+// alone cannot select it: both original signed archive and manifest are pinned.
+fn builtin_policy(archive: &ValidatedArchive) -> Option<&'static ReviewedToolProfile> {
+    static POLICY: ReviewedToolProfile = ReviewedToolProfile {
+        publisher: "flowtools-builtin",
+        id: "ffmpeg",
+        registry: "ffmpeg-official",
+        artifact: "ffmpeg-8-1-3-flowtools-t1",
+        license: "LGPL-2.1-or-later",
+        build_flavor: "flowtools-t1-lgpl-static-v1",
+        target: PackageTarget {
+            platform: super::PackagePlatform::Windows,
+            arch: super::PackageArch::X64,
+        },
+        programs: &[
+            (ToolProgram::Ffmpeg, "bin/ffmpeg.exe"),
+            (ToolProgram::Ffprobe, "bin/ffprobe.exe"),
+        ],
+        resources: &[
+            "licenses/ffmpeg-lgpl.txt",
+            "licenses/libvpx.txt",
+            "licenses/libvpx-patents.txt",
+            "licenses/opus.txt",
+        ],
+    };
+    let payload = archive.descriptor().payload();
+    (payload.archive.sha256 == "2b26f1bc4731c8db82f2bda708a96354bd31acf1af2cc16058f108d25ccfe415"
+        && payload.manifest.sha256
+            == "198713e499838a7f09258835fcb90b4b4121937377e4fa7135af2eb9998af233"
+        && payload.version == "8.1.3")
+        .then_some(&POLICY)
 }
 
 #[cfg(all(test, windows, target_arch = "x86_64"))]

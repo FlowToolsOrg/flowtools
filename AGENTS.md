@@ -1,5 +1,7 @@
 # Repository Guidelines
 
+2026-11-03：维护者明确授权按 Windows 固定 T1 功能原型完成 G7，允许精确锁定的官方源码 FFmpeg/ffprobe 通过原受管工具链用于实际功能。正式发行、Windows 代码签名和独立安全/许可证审核保持 pending；人工验收为 waived。本授权仅覆盖固定内置流程，不开放任意工具路径、第三方代码或绕过当前 grant/身份/排空检查。
+
 ## Project Structure and Module Organization
 
 This repository is a Bun + Turbo monorepo.
@@ -25,7 +27,7 @@ This repository is a Bun + Turbo monorepo.
 - `apps/ui-test`: consumer app for manual validation of `@flowtools/ui`.
   Manual UI validation remains required and complements automated coverage; it
   does not replace it.
-- `plugins/`: local plugin workspace with 13 built-in plugins (all app type,
+- `plugins/`: local plugin workspace with 15 built-in plugins (all app type,
   all CLI-compatible via `run()` + `inputSchema`).
 - `configs/tsdown`: shared package build config.
 - `docs/` and root docs such as `README.md` and `architecture.md`: product and
@@ -81,7 +83,7 @@ Run from repository root:
 - `bun run lint`: runs workspace lint tasks.
 - `bun run check-types`: runs workspace type checks.
 - `bun run test`: runs required workspace automated tests via Turbo.
-- `bun run smoke:plugins`: builds prerequisites and validates all thirteen actual
+- `bun run smoke:plugins`: builds prerequisites and validates all fifteen actual
   compiled entries with controlled request/storage, schema rejection and abort.
 - `bun run docs:check`: read-only core/ADR/threat/PR-template contracts and inline
   local link path checks; no remote URL, anchor or security certification.
@@ -1120,7 +1122,7 @@ validation, and @flowtools/sdk/manifest/package for Node-only file verification.
 Use parsePluginManifest with an explicit Host target before loading artifacts.
 Keep custom Zod runtime validation explicit; never export an empty substitute.
 Run bun run verify:manifests after build:packages; it covers protocol fixtures
-and all thirteen actual compiled T1 packages. Keep commands.ts independent of
+and all fifteen actual compiled T1 packages. Keep commands.ts independent of
 React/UI/Tauri and build fixed <known-id>.commands.js entries. Generated JSON
 lives outside dist to avoid self-referential hashes. CLI validates the bounded
 catalog and exact file list/hash before importing a command; no source fallback.

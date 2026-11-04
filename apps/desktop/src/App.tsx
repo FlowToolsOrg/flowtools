@@ -79,10 +79,12 @@ import {
 import { ManagedRuntimePanel } from './runtime/managed-runtime-panel'
 import { DesktopAppearanceProvider } from './settings/appearance'
 import { DesktopAppearanceSettings } from './settings/appearance-settings'
+import { FileSettings } from './settings/file-settings'
 import {
   useLauncherPreferences,
   recordLauncherOpen,
 } from './settings/launcher-preferences'
+import { MediaSettings } from './settings/media-settings'
 import { RuntimeStatusSettings } from './settings/runtime-status-settings'
 import { ScheduleSettings } from './settings/schedule-settings'
 import { ToolSettings } from './settings/tool-settings'
@@ -1260,6 +1262,8 @@ function SettingsView() {
         <RuntimeStatusSettings />
         <ManagedRuntimePanel />
         <ScheduleSettings />
+        <FileSettings />
+        <MediaSettings />
         <ToolSettings />
         <DesktopAppearanceSettings />
         <SettingsRow

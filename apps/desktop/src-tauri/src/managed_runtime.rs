@@ -275,6 +275,7 @@ fn business(call: &Call) -> bool {
         Call::Open(_)
             | Call::Status
             | Call::ToolInventory(_)
+            | Call::MediaProgress(_)
             | Call::Plugins
             | Call::Jobs
             | Call::Submit(_)
@@ -481,6 +482,18 @@ pub async fn managed_runtime_control<R: tauri::Runtime>(
             | Call::ScheduleReplace(_)
             | Call::ScheduleRecovery
             | Call::ScheduleDiscard(_)
+            | Call::FilePlanCreate(_)
+            | Call::FilePlans
+            | Call::FilePlanPreview(_)
+            | Call::FilePlanCommit(_)
+            | Call::FilePlanUndo(_)
+            | Call::FilePlanCancel(_)
+            | Call::FilePlanRecovery
+            | Call::FilePlanDiscard(_)
+            | Call::MediaPlanCreate(_)
+            | Call::MediaPlanPreview(_)
+            | Call::MediaStart(_)
+            | Call::MediaProgress(_)
             | Call::Grant(_)
             | Call::Revoke(_)
             | Call::Policy(_)
@@ -499,12 +512,82 @@ pub async fn managed_runtime_control<R: tauri::Runtime>(
             | Call::ScheduleRecovery
             | Call::ScheduleResolve(_)
             | Call::ScheduleCancel(_)
+            | Call::FilePlans
+            | Call::FilePlanPreview(_)
+            | Call::FilePlanCancel(_)
+            | Call::MediaPlanPreview(_)
+            | Call::FilePlanRecovery
+            | Call::MediaProgress(_)
     ) {
         let encoded = serde_json::to_string(&call).map_err(|_| error(ErrorCode::InvalidRequest))?;
         if encoded.len() > 8192 {
             return Err(error(ErrorCode::FrameTooLarge));
         }
-        let prompts = crate::managed_approval::runtime_prompts(&call, initialize).map_err(error)?;
+        let mut prompts =
+            crate::managed_approval::runtime_prompts(&call, initialize).map_err(error)?;
+        if let Call::FilePlanCommit(key) | Call::FilePlanUndo(key) = &call {
+            let (mut preview_pipe, preview_proof, preview_child) =
+                manager(profile.clone(), false).await?;
+            let preview = exchange(
+                &mut preview_pipe,
+                &Request {
+                    version: 1,
+                    request_id: uuid(),
+                    session: Some(preview_proof),
+                    call: Call::FilePlanPreview(
+                        flowtools_runtime_core::file_workflows::FilePlanKey {
+                            id: key.id.clone(),
+                            revision: key.revision,
+                        },
+                    ),
+                },
+            )
+            .await?;
+            drop(preview_pipe);
+            if let Some(child) = preview_child {
+                child.close().await;
+            }
+            let Outcome::FilePlan(view) = preview.outcome else {
+                return Err(error(ErrorCode::RevisionConflict));
+            };
+            if view.record.digest != key.digest {
+                return Err(error(ErrorCode::RevisionConflict));
+            }
+            prompts.extend(crate::managed_approval::file_plan_prompts(
+                &view,
+                matches!(call, Call::FilePlanUndo(_)),
+            ));
+        }
+        if let Call::MediaStart(key) = &call {
+            let (mut preview_pipe, preview_proof, preview_child) =
+                manager(profile.clone(), false).await?;
+            let preview = exchange(
+                &mut preview_pipe,
+                &Request {
+                    version: 1,
+                    request_id: uuid(),
+                    session: Some(preview_proof),
+                    call: Call::MediaPlanPreview(
+                        flowtools_runtime_core::file_workflows::FilePlanKey {
+                            id: key.id.clone(),
+                            revision: 1,
+                        },
+                    ),
+                },
+            )
+            .await?;
+            drop(preview_pipe);
+            if let Some(child) = preview_child {
+                child.close().await;
+            }
+            let Outcome::MediaPlan(plan) = preview.outcome else {
+                return Err(error(ErrorCode::RevisionConflict));
+            };
+            if plan.digest != key.digest {
+                return Err(error(ErrorCode::RevisionConflict));
+            }
+            prompts.push(format!("核对实际媒体计划\n输入：{}\n大小：{} 字节\nSHA-256：{}\n输出：{}\n仅此输入/输出和固定工具动作；授权 60 秒，关闭界面后任务可继续。",serde_json::to_string(&plan.input_name).unwrap(),plan.input_bytes,plan.input_sha256,serde_json::to_string(&plan.output_name).unwrap()));
+        }
         for prompt in prompts {
             let app = window.app_handle().clone();
             let approved = tokio::task::spawn_blocking(move || {
@@ -519,6 +602,12 @@ pub async fn managed_runtime_control<R: tauri::Runtime>(
             if !approved {
                 return Err(error(ErrorCode::ApprovalRequired));
             }
+        }
+    }
+    if matches!(call, Call::MediaStart(_)) {
+        let output = native_output("--start-runtime", &profile).await?;
+        if !output.status.success() {
+            return Err(error(ErrorCode::ColdStartDenied));
         }
     }
     let (mut pipe, proof, child) = manager(profile, initialize).await?;

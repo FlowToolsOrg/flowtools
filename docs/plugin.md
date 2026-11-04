@@ -1,5 +1,12 @@
 # Flow Tool Plugin 开发指南
 
+G7 新增媒体信息/转换两个实际内置插件，总计十五个。其 `run()` 只调用
+Host 绑定的 `ctx.media.run(planId)`；源路径、输出路径、程序选择和原生权限
+不进入插件。请使用桌面“媒体处理”或 `flowtools media` 先选择/预览/授权，
+见 [流程与限制](./validation/g7-functional-delivery.md)。无 adapter 的 Host 明确拒绝。
+
+2026-11-03：维护者明确授权按 Windows 固定 T1 功能原型完成 G7，允许精确锁定的官方源码 FFmpeg/ffprobe 通过原受管工具链用于实际功能。正式发行、Windows 代码签名和独立安全/许可证审核保持 pending；人工验收为 waived。本授权仅覆盖固定内置流程，不开放任意工具路径、第三方代码或绕过当前 grant/身份/排空检查。
+
 G6 的 [显式未派发队列处置](./validation/g6-queued-tool-discard.md) 仅供 T0
 确认取消可证明从未执行的 Interrupted 队列。插件/SDK/CLI 不能构造或提交
 该 opaque 计划；它不新增 ToolExecute、文件权限或执行入口。原包/锁/epoch/

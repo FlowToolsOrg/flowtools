@@ -8,6 +8,13 @@
 
 ## 背景
 
+2026-11-04：维护者批准 G7 固定 Windows/T1 功能原型。实际文件管理只接受
+认证本地管理会话的明确目录选择与计划摘要；插件拿不到原始文件路径。
+两个内置媒体插件使用受管工具、普通 broker/job/lease、真实 LPAC/Job 以及
+独立 probe；T0 输出发布保持 create-only 和当前授权检查。
+见 [交付与残余边界](../validation/g7-functional-delivery.md)。该原型例外不扩展
+T2/T3、第三方工具或通用 native API，独立审阅与正式发行仍 pending。
+
 2026-10-28 G7 文件整理只提供 T0 惰性 `RenameDraft` 预览/复核，没有新 IPC、
 SDK 文件权限或生产文件写入 adapter；测试中的 create-only rename 不开放给
 插件。文件/媒体执行继续等待 G5/G6 门槛，见

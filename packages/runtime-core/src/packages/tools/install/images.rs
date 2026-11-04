@@ -5,6 +5,13 @@ pub(crate) mod lease_source;
 mod native;
 pub mod reconciliation;
 mod security;
+// Shared restrictive policy for T0-created publication staging files. This only
+// removes authority; it never applies an artifact capability or opens a path.
+pub(crate) fn protect_private_file(
+    file: &std::fs::File,
+) -> std::result::Result<(), crate::packages::install::InstallError> {
+    security::Policy::private()?.apply(file, false)
+}
 mod tree;
 
 use super::{

@@ -88,7 +88,7 @@ impl RuntimeCore {
             None,
             None,
             after_artifacts,
-            |broker, session, identity, admitted| {
+            |broker, session, identity, admitted, _store| {
                 broker.invoke(
                     session,
                     &leases::media_operation(action),
@@ -145,7 +145,7 @@ impl RuntimeCore {
         self.media_predecessor(root)?;
         live
     }
-    fn admit_media<T>(
+    pub(super) fn admit_media<T>(
         &mut self,
         run_id: &str,
         action: MediaActionV1,
@@ -157,6 +157,7 @@ impl RuntimeCore {
             &BrokerSession,
             &CommandIdentity,
             &AdmittedMediaTool<'_>,
+            &mut DataStore,
         ) -> Result<T, ErrorCode>,
     ) -> Result<T, ErrorCode> {
         if live.is_some() && claim.is_none() {
@@ -241,7 +242,13 @@ impl RuntimeCore {
             .as_ref()
             .unwrap()
             .media_tool(&lock, &consumer, action)?;
-        adapter(&mut self.broker, &session, &identity, &admitted)
+        adapter(
+            &mut self.broker,
+            &session,
+            &identity,
+            &admitted,
+            &mut self.data,
+        )
     }
 }
 

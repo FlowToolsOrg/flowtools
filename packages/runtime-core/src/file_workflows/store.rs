@@ -12,6 +12,7 @@ use std::collections::HashSet;
 const KEY: &str = "file-plans-v1";
 const MAX_PLANS: usize = 64;
 const MAX_STATE_BYTES: usize = 65_536;
+pub mod execution;
 
 #[derive(
     Clone, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type, schemars::JsonSchema,
@@ -44,10 +45,28 @@ struct Entry {
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct State {
+    #[serde(skip)]
+    predecessor: Option<String>,
     format_version: u16,
     profile_digest: String,
     recovery_generation: Option<String>,
     entries: Vec<Entry>,
+}
+
+pub(super) fn bounded_text(
+    connection: &rusqlite::Connection,
+    key: &str,
+    limit: usize,
+) -> Result<Option<String>, ErrorCode> {
+    let row: Option<Option<String>> = connection.query_row(
+        "SELECT CASE WHEN typeof(value)='text' AND length(CAST(value AS BLOB))<=?2 THEN value ELSE NULL END FROM core_metadata WHERE key=?1",
+        rusqlite::params![key, limit as i64], |row| row.get(0)
+    ).optional().map_err(|_| ErrorCode::StorageFailed)?;
+    match row {
+        None => Ok(None),
+        Some(Some(text)) => Ok(Some(text)),
+        Some(None) => Err(ErrorCode::StoreCorrupt),
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -73,15 +92,7 @@ fn scope(store: &DataStore) -> Result<(String, Option<String>), ErrorCode> {
     let profile = digest(&serde_json::json!(path
         .to_str()
         .ok_or(ErrorCode::StorageFailed)?));
-    let generation: Option<String> = store
-        .connection
-        .query_row(
-            "SELECT value FROM core_metadata WHERE key='recovery-generation'",
-            [],
-            |row| row.get(0),
-        )
-        .optional()
-        .map_err(|_| ErrorCode::StorageFailed)?;
+    let generation = bounded_text(&store.connection, "recovery-generation", 128)?;
     if generation
         .as_deref()
         .is_some_and(|v| v.is_empty() || v.len() > 128)
@@ -91,15 +102,7 @@ fn scope(store: &DataStore) -> Result<(String, Option<String>), ErrorCode> {
     Ok((profile, generation))
 }
 fn load(store: &DataStore, allow_restore: bool) -> Result<State, ErrorCode> {
-    let text: Option<String> = store
-        .connection
-        .query_row(
-            "SELECT value FROM core_metadata WHERE key=?1",
-            [KEY],
-            |row| row.get(0),
-        )
-        .optional()
-        .map_err(|_| ErrorCode::StorageFailed)?;
+    let text = bounded_text(&store.connection, KEY, MAX_STATE_BYTES)?;
     // A memory-only Runtime has no file plans and must still support orphan
     // retention. Creating a private plan always requires a disk profile.
     let Some(text) = text else {
@@ -109,6 +112,7 @@ fn load(store: &DataStore, allow_restore: bool) -> Result<State, ErrorCode> {
             (digest(&serde_json::json!("memory-only-file-plans")), None)
         };
         return Ok(State {
+            predecessor: None,
             format_version: 1,
             profile_digest,
             recovery_generation,
@@ -118,7 +122,11 @@ fn load(store: &DataStore, allow_restore: bool) -> Result<State, ErrorCode> {
     if text.len() > MAX_STATE_BYTES {
         return Err(ErrorCode::StoreCorrupt);
     }
-    let state: State = serde_json::from_str(&text).map_err(|_| ErrorCode::StoreCorrupt)?;
+    let mut state: State = serde_json::from_value(
+        crate::packages::strict_json(text.as_bytes()).map_err(|_| ErrorCode::StoreCorrupt)?,
+    )
+    .map_err(|_| ErrorCode::StoreCorrupt)?;
+    state.predecessor = Some(text);
     if state.format_version != 1
         || !valid_digest(&state.profile_digest)
         || state
@@ -167,8 +175,20 @@ fn save(store: &mut DataStore, state: &State) -> Result<(), ErrorCode> {
         .connection
         .transaction()
         .map_err(|_| ErrorCode::StorageFailed)?;
-    tx.execute("INSERT INTO core_metadata(key,value) VALUES(?1,?2) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+    if bounded_text(&tx, KEY, MAX_STATE_BYTES)? != state.predecessor
+        || bounded_text(&tx, "recovery-generation", 128)? != state.recovery_generation
+    {
+        return Err(ErrorCode::RevisionConflict);
+    }
+    let before = tx.total_changes();
+    let rows = tx.execute("INSERT INTO core_metadata(key,value) VALUES(?1,?2) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
         rusqlite::params![KEY, text]).map_err(|_| ErrorCode::StorageFailed)?;
+    if rows != 1
+        || tx.total_changes() != before + 1
+        || bounded_text(&tx, KEY, MAX_STATE_BYTES)?.as_deref() != Some(&text)
+    {
+        return Err(ErrorCode::StoreCorrupt);
+    }
     tx.commit().map_err(|_| ErrorCode::StorageFailed)
 }
 fn private(store: &DataStore) -> Result<PrivateJobs, ErrorCode> {
@@ -299,6 +319,7 @@ impl FilePlanStore {
         id: &str,
         revision: u32,
     ) -> Result<FilePlanRecord, ErrorCode> {
+        execution::ensure_unstarted(store, id)?;
         let mut state = load(store, false)?;
         let entry = state
             .entries
@@ -325,11 +346,14 @@ impl FilePlanStore {
     /// Preservation only: validate all metadata even when scope is stale. Never
     /// accept old plans merely to make generic private-payload cleanup succeed.
     pub(crate) fn retained_input_ids(store: &DataStore) -> Result<HashSet<String>, ErrorCode> {
-        Ok(load(store, true)?
+        let mut ids: HashSet<String> = load(store, true)?
             .entries
             .into_iter()
             .map(|entry| entry.input_id)
-            .collect())
+            .collect();
+        ids.extend(execution::retained_input_ids(store)?);
+        ids.extend(super::media_io::retained_input_ids(store)?);
+        Ok(ids)
     }
     pub fn recovery(store: &DataStore) -> Result<Option<FilePlanRecovery>, ErrorCode> {
         let state = load(store, true)?;
@@ -350,12 +374,15 @@ impl FilePlanStore {
         store: &mut DataStore,
         challenge: &str,
     ) -> Result<Vec<FilePlanRecord>, ErrorCode> {
-        let recovery = Self::recovery(store)?.ok_or(ErrorCode::InvalidRequest)?;
-        if recovery.challenge != challenge {
-            return Err(ErrorCode::RevisionConflict);
-        }
         let mut state = load(store, true)?;
         let current = scope(store)?;
+        if (state.profile_digest == current.0 && state.recovery_generation == current.1)
+            || digest(
+                &serde_json::json!({"state": state, "profile": current.0, "generation": current.1}),
+            ) != challenge
+        {
+            return Err(ErrorCode::RevisionConflict);
+        }
         state.profile_digest = current.0;
         state.recovery_generation = current.1;
         for entry in &mut state.entries {
@@ -366,7 +393,7 @@ impl FilePlanStore {
                 .checked_add(1)
                 .ok_or(ErrorCode::BudgetExceeded)?;
         }
-        save(store, &state)?;
+        execution::discard_scope(store, &state)?;
         Ok(state
             .entries
             .into_iter()

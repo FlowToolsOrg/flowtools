@@ -25,9 +25,11 @@ import {
   getBuiltinCommandManifest,
   scanPlugins,
 } from './discovery'
+import { addFileCommands } from './files'
 import { addRuntimeCommands } from './host'
 import { addJobCommands } from './jobs'
 import { addManagementCommands, managementFailure } from './management'
+import { addMediaCommands } from './media'
 import { parseRunArguments, requestedRunFormat } from './run-arguments'
 import { printExecutionResult, runPlugin } from './runner'
 import { addScheduleCommands } from './schedules'
@@ -49,6 +51,8 @@ addScheduleCommands(program)
 addSearchCommand(program)
 addDependencyCommands(program)
 addToolCommands(program)
+addFileCommands(program)
+addMediaCommands(program)
 
 function writeJson(value: unknown) {
   process.stdout.write(JSON.stringify(value, null, 2) + '\n')
@@ -379,6 +383,8 @@ main().catch(error => {
       'dependencies',
       'tools',
       'schedules',
+      'files',
+      'media',
     ].includes(process.argv[2] ?? '')
   ) {
     managementFailure(error)

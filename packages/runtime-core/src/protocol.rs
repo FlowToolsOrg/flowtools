@@ -34,6 +34,30 @@ pub enum Call {
     Status,
     #[serde(rename = "tools.inventory")]
     ToolInventory(crate::tool_inventory::ToolInventoryQuery),
+    #[serde(rename = "files.plan")]
+    FilePlanCreate(crate::file_workflows::CreateFilePlan),
+    #[serde(rename = "files.list")]
+    FilePlans,
+    #[serde(rename = "files.preview")]
+    FilePlanPreview(crate::file_workflows::FilePlanKey),
+    #[serde(rename = "files.commit")]
+    FilePlanCommit(crate::file_workflows::ConfirmFilePlan),
+    #[serde(rename = "files.undo")]
+    FilePlanUndo(crate::file_workflows::ConfirmFilePlan),
+    #[serde(rename = "files.cancel")]
+    FilePlanCancel(crate::file_workflows::FilePlanKey),
+    #[serde(rename = "files.recovery")]
+    FilePlanRecovery,
+    #[serde(rename = "files.discard-restored")]
+    FilePlanDiscard(crate::scheduling::commands::ScheduleRecoveryKey),
+    #[serde(rename = "media.plan")]
+    MediaPlanCreate(crate::file_workflows::media_io::CreateMediaPlan),
+    #[serde(rename = "media.preview")]
+    MediaPlanPreview(crate::file_workflows::FilePlanKey),
+    #[serde(rename = "media.start")]
+    MediaStart(crate::file_workflows::media_io::StartMediaPlan),
+    #[serde(rename = "media.progress")]
+    MediaProgress(JobKey),
     #[serde(rename = "schedules.list")]
     Schedules,
     #[serde(rename = "schedules.resolve-time")]
@@ -411,6 +435,18 @@ pub enum Outcome {
     Status(RuntimeStatus),
     #[serde(rename = "tool-inventory")]
     ToolInventory(crate::tool_inventory::ToolInventoryPage),
+    #[serde(rename = "file-plans")]
+    FilePlans(Vec<crate::file_workflows::store::FilePlanRecord>),
+    #[serde(rename = "file-plan")]
+    FilePlan(Box<crate::file_workflows::FilePlanView>),
+    #[serde(rename = "file-execution")]
+    FileExecution(crate::file_workflows::store::execution::FileExecutionRecord),
+    #[serde(rename = "file-recovery")]
+    FileRecovery(Option<crate::file_workflows::store::FilePlanRecovery>),
+    #[serde(rename = "media-plan")]
+    MediaPlan(crate::file_workflows::media_io::MediaPlanPreview),
+    #[serde(rename = "media-progress")]
+    MediaProgress(crate::file_workflows::media_io::UserMediaProgress),
     #[serde(rename = "schedules")]
     Schedules(Vec<crate::scheduling::store::ScheduleRecord>),
     #[serde(rename = "schedule-recovery")]

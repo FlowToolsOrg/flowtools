@@ -111,6 +111,11 @@ pub fn runtime_prompts(call: &Call, initialize: bool) -> Result<Vec<String>, Err
         return Err(ErrorCode::SessionInvalid);
     }
     match call {
+        Call::FilePlanDiscard(key)=>Ok(vec![format!("作废恢复前的所有文件计划？\n核对码：{}\n保留文件当前名称和私有回执，不自动撤销或提交。旧计划永久取消，之后可重新选择目录生成新计划。",quoted(&key.challenge))]),
+        Call::MediaPlanCreate(create)=>Ok(vec![format!("读取所选媒体并生成预览？\n输入：{}\n输出：{}\n动作：{:?}\n最多 1 MiB 输入，暂不转换；现有输出文件将被拒绝。",quoted(&create.input_path),serde_json::to_string(&create.output_path).unwrap(),create.action)]),
+        Call::MediaStart(key)=>Ok(vec![format!("执行所选媒体计划并按需启动 Runtime？\n计划：{}\n摘要：{}\n将读取这份文件并运行固定媒体工具；转换结果只创建新文件。取消或失败不会自动重放。",quoted(&key.id),quoted(&key.digest))]),
+        Call::FilePlanCreate(create) => Ok(vec![format!("读取所选目录并生成只读改名计划？\n目录：{}\n前缀：{}\n只读取本层常规文件；拒绝链接和覆盖。最多 128 文件、合计 256 MiB；不提交改名。", quoted(&create.directory), quoted(&create.prefix))]),
+        Call::FilePlanCommit(key) | Call::FilePlanUndo(key) => Ok(vec![format!("{}所选文件计划？\n计划：{}\n版本：{}\n摘要：{}\n请核对后续全部文件名页面。原生操作逐项核对身份和内容，拒绝覆盖；失败后保留日志，只能显式重试。", if matches!(call, Call::FilePlanUndo(_)) { "撤销" } else { "提交" }, quoted(&key.id), key.revision, quoted(&key.digest))]),
         Call::ScheduleReplace(replace) => {
             replace.previous.validate()?;
             let mut prompts = runtime_prompts(&Call::ScheduleCreate(replace.create.clone()), false)?;
@@ -171,6 +176,32 @@ pub fn runtime_prompts(call: &Call, initialize: bool) -> Result<Vec<String>, Err
     }
 }
 
+pub fn file_plan_prompts(
+    view: &flowtools_runtime_core::file_workflows::FilePlanView,
+    undo: bool,
+) -> Vec<String> {
+    let mut lines = vec![format!(
+        "核对实际计划：{}；共 {} 个文件",
+        view.record.id,
+        view.preview.files.len()
+    )];
+    for file in &view.preview.files {
+        field(
+            &mut lines,
+            if undo { "当前名称" } else { "原名称" },
+            quoted(if undo { &file.target } else { &file.source }),
+        );
+        field(
+            &mut lines,
+            "改为",
+            quoted(if undo { &file.source } else { &file.target }),
+        );
+        field(&mut lines, "字节", file.bytes);
+        field(&mut lines, "SHA-256", &file.sha256);
+    }
+    pages(lines, 1, 1)
+}
+
 pub fn storage_prompt(action: &StorageAction) -> Result<Option<String>, ErrorCode> {
     Ok(match action {
         StorageAction::List => None,
@@ -183,6 +214,41 @@ pub fn storage_prompt(action: &StorageAction) -> Result<Option<String>, ErrorCod
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn fixed_file_media_consent_names_exact_effect_and_digest_without_forged_lines() {
+        use flowtools_runtime_core::file_workflows::{
+            media_io::{CreateMediaPlan, UserMediaAction},
+            ConfirmFilePlan,
+        };
+        let key = ConfirmFilePlan {
+            id: "plan\n伪造批准".into(),
+            revision: 7,
+            digest: "a".repeat(64),
+        };
+        let prompts = runtime_prompts(&Call::FilePlanCommit(key.clone()), false)
+            .unwrap()
+            .join("\n");
+        assert!(prompts.contains(&key.digest));
+        assert!(prompts.contains("版本：7"));
+        assert!(prompts.contains("\\n"));
+        assert!(!prompts.lines().any(|line| line == "伪造批准"));
+        let media = runtime_prompts(
+            &Call::MediaPlanCreate(CreateMediaPlan {
+                request_key: "id".into(),
+                input_path: "D:\\selected\\input.wav".into(),
+                output_path: Some("D:\\selected\\output.wav".into()),
+                action: UserMediaAction::Audio,
+            }),
+            false,
+        )
+        .unwrap()
+        .join("\n");
+        assert!(media.contains("1 MiB"));
+        assert!(media.contains("暂不转换"));
+        assert!(media.contains("input.wav"));
+        assert!(media.contains("output.wav"));
+    }
 
     #[test]
     fn schedule_confirmation_binds_timing_and_digest_without_exposing_private_input() {

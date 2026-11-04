@@ -9,9 +9,38 @@ const MAX_FILES: usize = 128;
 const MAX_FILE_BYTES: u64 = 67_108_864;
 const MAX_TOTAL_BYTES: u64 = 268_435_456;
 
+pub mod media_io;
 pub mod store;
 #[cfg(windows)]
 mod windows;
+
+#[derive(Clone, Debug, Serialize, Deserialize, specta::Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct CreateFilePlan {
+    pub request_key: String,
+    pub directory: String,
+    pub prefix: String,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, specta::Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct FilePlanKey {
+    pub id: String,
+    pub revision: u32,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, specta::Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ConfirmFilePlan {
+    pub id: String,
+    pub revision: u32,
+    pub digest: String,
+}
+#[derive(Clone, Debug, Serialize, Deserialize, specta::Type, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct FilePlanView {
+    pub record: store::FilePlanRecord,
+    pub preview: RenamePreview,
+    pub execution: Option<store::execution::FileExecutionRecord>,
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

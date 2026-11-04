@@ -88,6 +88,11 @@ impl RunnerBackend {
 #[derive(Deserialize)]
 #[serde(tag = "kind", rename_all = "kebab-case", deny_unknown_fields)]
 enum RunnerMessage {
+    Media {
+        id: u32,
+        #[serde(rename = "planId")]
+        plan_id: String,
+    },
     Service {
         id: u32,
         target: ServiceTarget,
@@ -209,6 +214,11 @@ pub(super) fn execute(
                     frames+=1; if frames>256 { return Err(ErrorCode::BudgetExceeded); }
                     core.lock().await.check_run(&run_id)?;
                     match frame_read(&mut stdout).await? {
+                        RunnerMessage::Media{id,plan_id}=> {
+                            if id<=last_id {return Err(ErrorCode::InvalidRequest);} last_id=id;
+                            let response=super::user_media::execute(&core,&run_id,&plan_id).await?;
+                            frame_write(&mut stdin,&reply(id,Ok(response))).await?;
+                        }
                         RunnerMessage::Service{id,target,input}=> {
                             if id<=last_id { return Err(ErrorCode::InvalidRequest); } last_id=id;
                             let next=core.lock().await.prepare_service(&run_id,target,input);

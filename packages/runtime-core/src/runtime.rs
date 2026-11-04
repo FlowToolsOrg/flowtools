@@ -46,6 +46,9 @@ pub use tool_queue_discard::QueuedToolDiscardPlan;
 mod scheduling;
 #[path = "runtime_service_journal.rs"]
 mod service_journal;
+#[cfg(windows)]
+#[path = "runtime_user_media.rs"]
+mod user_media;
 pub use provider_cohorts::ProviderCohortPlan;
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -264,6 +267,7 @@ pub struct RuntimeCore {
     sessions: HashMap<String, Session>,
     catalog: BuiltinCatalog,
     jobs: BTreeMap<String, Job>,
+    user_media_stages: BTreeMap<String, String>,
     keys: HashMap<(String, String), String>,
     pending: HashMap<String, RunSpec>,
     broker: CapabilityBroker,
@@ -289,6 +293,25 @@ pub struct RuntimeCore {
 }
 
 impl RuntimeCore {
+    fn file_plan_view(&self, id: &str, revision: u32) -> Result<Outcome, ErrorCode> {
+        use crate::file_workflows::{
+            store::{execution, FilePlanStore},
+            FilePlanView,
+        };
+        let record = FilePlanStore::list(&self.data)?
+            .into_iter()
+            .find(|p| p.id == id)
+            .ok_or(ErrorCode::InvalidRequest)?;
+        let preview = FilePlanStore::preview(&self.data, id, revision)?;
+        let execution = execution::records(&self.data)?
+            .into_iter()
+            .find(|p| p.plan_id == id);
+        Ok(Outcome::FilePlan(Box::new(FilePlanView {
+            record,
+            preview,
+            execution,
+        })))
+    }
     // Host binds credentials to caller identities. Neither comes from the wire payload.
     pub fn validation(cli_token: String, desktop_token: String) -> Self {
         Self {
@@ -300,6 +323,7 @@ impl RuntimeCore {
             sessions: HashMap::new(),
             catalog: BuiltinCatalog::embedded(),
             jobs: BTreeMap::new(),
+            user_media_stages: BTreeMap::new(),
             keys: HashMap::new(),
             pending: HashMap::new(),
             broker: CapabilityBroker::default(),
@@ -1009,6 +1033,17 @@ impl RuntimeCore {
                 | Call::ScheduleReplace(_)
                 | Call::ScheduleRecovery
                 | Call::ScheduleDiscard(_)
+                | Call::FilePlanCreate(_)
+                | Call::FilePlans
+                | Call::FilePlanPreview(_)
+                | Call::FilePlanCommit(_)
+                | Call::FilePlanUndo(_)
+                | Call::FilePlanCancel(_)
+                | Call::FilePlanRecovery
+                | Call::FilePlanDiscard(_)
+                | Call::MediaPlanCreate(_)
+                | Call::MediaPlanPreview(_)
+                | Call::MediaStart(_)
         ) && !management
         {
             return Err(ErrorCode::SessionInvalid);
@@ -1025,7 +1060,122 @@ impl RuntimeCore {
         {
             return Err(ErrorCode::ApprovalRequired);
         }
+        #[cfg(windows)]
+        let request_method_undo = matches!(&request.call, Call::FilePlanUndo(_));
         match request.call {
+            Call::FilePlanRecovery => {
+                crate::file_workflows::store::FilePlanStore::recovery(&self.data)
+                    .map(Outcome::FileRecovery)
+            }
+            Call::FilePlanDiscard(key) => {
+                crate::file_workflows::store::FilePlanStore::discard_restored(
+                    &mut self.data,
+                    &key.challenge,
+                )
+                .map(Outcome::FilePlans)
+            }
+            Call::MediaPlanCreate(create) => {
+                #[cfg(windows)]
+                {
+                    crate::file_workflows::media_io::create(&mut self.data, create)
+                        .map(Outcome::MediaPlan)
+                }
+                #[cfg(not(windows))]
+                {
+                    let _ = create;
+                    Err(ErrorCode::CapabilityUndeclared)
+                }
+            }
+            Call::MediaPlanPreview(key) => {
+                crate::file_workflows::media_io::get(&self.data, &key.id).map(Outcome::MediaPlan)
+            }
+            Call::MediaStart(key) => {
+                #[cfg(windows)]
+                {
+                    self.start_user_media(connection, key).map(Outcome::Receipt)
+                }
+                #[cfg(not(windows))]
+                {
+                    let _ = key;
+                    Err(ErrorCode::CapabilityUndeclared)
+                }
+            }
+            Call::MediaProgress(key) => {
+                let job = self.jobs.get(&key.run_id).ok_or(ErrorCode::JobNotFound)?;
+                if job.snapshot.state == JobState::Running {
+                    self.check_run(&key.run_id)?;
+                }
+                let stage = if job.snapshot.state.terminal() {
+                    format!("{:?}", job.snapshot.state).to_ascii_lowercase()
+                } else {
+                    self.user_media_stages
+                        .get(&key.run_id)
+                        .cloned()
+                        .unwrap_or("queued".into())
+                };
+                Ok(Outcome::MediaProgress(
+                    crate::file_workflows::media_io::UserMediaProgress {
+                        run_id: key.run_id,
+                        stage,
+                    },
+                ))
+            }
+            Call::FilePlanCreate(create) => {
+                if create.directory.len() > 32768 {
+                    return Err(ErrorCode::InputInvalid);
+                }
+                let draft = crate::file_workflows::prepare_rename(
+                    std::path::Path::new(&create.directory),
+                    &create.prefix,
+                    self.data.profile().ok_or(ErrorCode::StorageFailed)?,
+                )?;
+                let record = crate::file_workflows::store::FilePlanStore::persist(
+                    &mut self.data,
+                    &create.request_key,
+                    draft,
+                )?;
+                self.file_plan_view(&record.id, record.revision)
+            }
+            Call::FilePlans => crate::file_workflows::store::FilePlanStore::list(&self.data)
+                .map(Outcome::FilePlans),
+            Call::FilePlanPreview(key) => self.file_plan_view(&key.id, key.revision),
+            Call::FilePlanCancel(key) => {
+                crate::file_workflows::store::FilePlanStore::cancel(
+                    &mut self.data,
+                    &key.id,
+                    key.revision,
+                )?;
+                crate::file_workflows::store::FilePlanStore::list(&self.data)
+                    .map(Outcome::FilePlans)
+            }
+            Call::FilePlanCommit(key) | Call::FilePlanUndo(key) => {
+                #[cfg(windows)]
+                {
+                    // The management session is bound to this connection/instance.
+                    // The single writer holds it through every exact-digest effect.
+                    let undo = request_method_undo;
+                    crate::file_workflows::store::execution::execute(
+                        &mut self.data,
+                        &key.id,
+                        key.revision,
+                        &key.digest,
+                        undo,
+                        || {
+                            if management {
+                                Ok(())
+                            } else {
+                                Err(ErrorCode::ApprovalRequired)
+                            }
+                        },
+                    )
+                    .map(Outcome::FileExecution)
+                }
+                #[cfg(not(windows))]
+                {
+                    let _ = key;
+                    Err(ErrorCode::CapabilityUndeclared)
+                }
+            }
             Call::ToolInventory(query) => {
                 if self.policy.is_none() {
                     return Err(ErrorCode::ApprovalRequired);

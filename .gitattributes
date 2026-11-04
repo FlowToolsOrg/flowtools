@@ -1,4 +1,5 @@
 packages/runtime-client/src/bindings.ts text eol=lf
+packages/runtime-core/assets/builtin-media/** -text
 packages/runtime-client/src/wire-schema.json text eol=lf
 packages/runtime-client/src/wire-fixtures.json text eol=lf
 scripts/media-candidate/* text eol=lf

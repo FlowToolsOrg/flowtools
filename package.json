@@ -50,7 +50,7 @@
     "test:desktop-shell": "bun test apps/desktop/test/desktop-shell.test.ts && cargo test --locked --features codegen --lib --test bindings --manifest-path apps/desktop/src-tauri/Cargo.toml shell",
     "test:dependencies": "bun run build:packages && bun test packages/sdk/test/dependencies.test.ts packages/sdk/test/services.test.ts packages/runtime-client/test/dependency-plan.test.ts packages/runtime-client/test/services.test.ts packages/plugin-runner/test/protocol.test.ts packages/cli/src/entry.test.ts && bun run --cwd packages/runtime-core test && bun run --cwd apps/runtime test",
     "smoke:plugins": "bun run build:packages && bun run --cwd plugins smoke:plugins",
-    "lint:staged": "lint-staged",
+    "lint:staged": "lint-staged --config scripts/lint-staged.config.mjs",
     "prepare": "husky",
     "generate:manifests": "bun run scripts/generate-manifests.ts",
     "generate:command-docs": "bun run scripts/generate-command-docs.ts",
@@ -87,13 +87,6 @@
     "tsdown": "catalog:",
     "turbo": "^2.9.8",
     "typescript": "catalog:"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}": [
-      "oxlint --fix",
-      "oxfmt"
-    ],
-    "*.{json,md,css,scss,html,yml,yaml}": "oxfmt"
   },
   "engines": {
     "node": ">=20.19.0"

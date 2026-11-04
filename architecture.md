@@ -1,5 +1,12 @@
 # Flow Tool Architecture
 
+G7 固定 T1 的实际文件/媒体链见 [交付记录](./docs/validation/g7-functional-delivery.md)：
+管理面绑定显式选择与 plan 摘要，Core 单 writer 保存私有定义/逐效果日志；
+工具经过精确本地原型签名包、受管安装/镜像、普通 job/grant 和原生排空后，
+独立校验的结果再由 T0 create-only 发布。发布与插件执行不接收任意程序路径。
+
+2026-11-03：维护者明确授权按 Windows 固定 T1 功能原型完成 G7，允许精确锁定的官方源码 FFmpeg/ffprobe 通过原受管工具链用于实际功能。正式发行、Windows 代码签名和独立安全/许可证审核保持 pending；人工验收为 waived。本授权仅覆盖固定内置流程，不开放任意工具路径、第三方代码或绕过当前 grant/身份/排空检查。
+
 G6 的 [未派发队列处置](./docs/validation/g6-queued-tool-discard.md) 由 T0 提供
 不可序列化的实例/整行/当前 scope 计划。只允许完整事件证明从未执行、没有
 服务或原生准备且已排空的 Interrupted 队列；原 jobs.metadata 事务确认后
@@ -270,7 +277,7 @@ RPC 路由，二进制工具由共享 artifact store 与受管任务进程执行
   - `apps/web-vite/src/stores`：pluginRegistryStore、commandStore、runHistoryStore、settingsStore
   - `packages/sdk/src/compat/html-plugin.ts`：HTML `plugin.json` 类型、命令解析和兼容分级
   - `scripts/inspect-html-plugins.ts`：扫描本地 HTML 插件 checkout 并生成 `apps/desktop/src/data/html-plugin-catalog.json` 与 `docs/html-plugin-catalog.json`
-  - 13 个内置插件（全部为 app 类型，均提供 `setup()` + `run()` + `inputSchema`）
+  - 15 个内置插件（全部为 app 类型，均提供 `setup()` + `run()` + `inputSchema`）
 - 目录已创建，尚未实现：
   - `apps/docs`
   - `apps/web`

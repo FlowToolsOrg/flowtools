@@ -1,5 +1,15 @@
 # FlowTools 插件威胁模型
 
+2026-11-04 G7 固定 Windows/T1 功能原型的入口与拒绝证据见
+[交付记录](../validation/g7-functional-delivery.md)。新增认证管理面的文件/媒体
+计划、明确确认、逐效果 journal/撤销和两个固定媒体插件；实际工具通过本地
+原型 quorum 签名、exact archive/manifest policy、原受管安装/lease/LPAC/
+独立 probe 后使用。调用方 token 仅由本地 T0 bootstrap 提供，GUI 敏感操作
+仍受 Debug/main/origin 和原生确认约束。路径、源内容和私有回执保持 DPAPI
+私密，发布拒绝覆盖，未知/恢复状态不重放。Owner 为 Runtime/Desktop 维护者；
+本轮为 Codex 工程自查，SEC-001/003/004/008/010/014/015 与独立安全审阅仍
+open/pending，正式发行/许可证/完整平台认证未完成。
+
 2026-10-31 [消费方孤儿恢复](../validation/g6-tool-consumer-reconciliation.md)
 冻结原始观察、profile/库存与信任 scope，先整批复核，再在持有原生源句柄的
 callback 内比较相关元数据，create-only 隔离且不删除/采纳。新 scope 先受控

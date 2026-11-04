@@ -1,5 +1,10 @@
 # FlowTools 生产化路线图
 
+2026-11-04：P2.7b 修复原生嵌套重复键被覆盖的问题，协议/私有 runner 共用
+严格帧解码，新增真实解析器的确定性 property 回归和 SEC-001–015 测试索引。
+见 [证据](./validation/g8-security-regressions.md)。P2.7/G8 仍 pending；发行
+签名按维护者要求暂缓，独立审核、macOS 验收及 dogfood/Beta 记录尚无。
+
 2026-11-04：G8 先实施 P2.7a 扫描基础：完整历史密钥检测、Bun 与四份 Cargo
 锁实时审计、固定工具双摘要和实际拒绝对照接入 Windows PR/main/codex/release
 门禁。依赖安全更新保留原 Manifest/Runtime 拒绝契约；见

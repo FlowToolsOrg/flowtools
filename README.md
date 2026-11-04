@@ -1,5 +1,10 @@
 # Flow Tool
 
+G8 P2.7b now rejects duplicate JSON keys in native requests and service output
+before dispatch. Deterministic parser/property regressions cover the wire,
+re-signed ZIPs and media projections; see the
+[security regression record](./docs/validation/g8-security-regressions.md).
+
 G8 starts with P2.7a: `bun run test:security` runs scanner contracts, full-history
 redacted secret scanning and live dependency audits of Bun and all four Cargo
 locks. Windows PR/main/feature/release gates run it before builds. See

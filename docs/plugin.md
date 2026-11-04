@@ -1,5 +1,9 @@
 # Flow Tool Plugin 开发指南
 
+Runtime 请求与服务输出不接受任何深度的重复 JSON 键，包含插件业务 input/
+execution 数据。客户端应发送无歧义 JSON；语法验证不替代 Manifest、身份、
+grant 和效果检查。见 [P2.7b](./validation/g8-security-regressions.md)。
+
 G8 P2.7a 将仓库依赖与历史密钥扫描纳入 Windows 门禁；新增依赖或密钥 fixture
 不能靠扩大豁免通过。Manifest v1 的 UTF-16 文本长度和有限操作 JSON Schema
 保持兼容，Zod 导出的原始类型 union 在构建时展开为既有 anyOf。不会因此开放

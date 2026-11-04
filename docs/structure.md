@@ -1,5 +1,10 @@
 # Flow Tools 架构设计规范
 
+`packages/runtime-core/src/protocol.rs` 的严格帧解码供 Runtime 连接与私有
+runner 共用；`packages/tests/security_properties.rs` 在原 Core 测试 inventory
+运行确定性变异，实际 framed IO 拒绝在 Runtime tests 中验证。见
+[P2.7b 记录](./validation/g8-security-regressions.md)。
+
 G8 P2.7a 的 `scripts/security-tools.ps1` 固定 Windows x64 扫描器来源与双摘要；
 `check-security.ps1` 负责完整历史密钥扫描、Bun 和四份 Cargo 锁审计；
 `test-security-scanners.ps1` 运行真实干净/恶意历史与锁文件对照，

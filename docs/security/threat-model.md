@@ -1,5 +1,10 @@
 # FlowTools 插件威胁模型
 
+2026-11-04 P2.7b：原生请求和私有服务输出递归拒绝重复 JSON 键，修复
+不透明 input/execution 的 last-wins 行为。真实 framed IO 及协议/重签 ZIP/
+媒体 mutation/property 回归见 [风险索引与证据](../validation/g8-security-regressions.md)。
+SEC-001–015 保持 open；语法验证不赋予身份、grant 或执行权限。
+
 2026-11-04 G8 P2.7a 为 SEC-001/008/009/010 的供应链回归补充扫描证据：
 固定 Gitleaks/cargo-audit 上游归档与程序摘要、完整历史精确豁免、实时依赖
 审计和真实恶意对照；不接受 scan error 作为通过，不输出原始秘密。移除桌面

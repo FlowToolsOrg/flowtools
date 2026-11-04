@@ -1,5 +1,12 @@
 # Repository Guidelines
 
+G8 P2.7b routes native requests and private service output through the shared
+strict JSON frame decoder. Reject duplicate keys at every depth before dispatch;
+preserve existing size/deadline/authorization checks and wire versions. Keep the
+deterministic protocol, re-signed ZIP and media property regressions in the normal
+Core test inventory. See [evidence](./docs/validation/g8-security-regressions.md).
+This is neither a fuzz campaign nor independent review; P2.7/G8 remain pending.
+
 G8 P2.7a adds `bun run test:security` / `audit:dependencies` and
 `scripts/check-security.ps1`. Preserve complete Git history, upstream Gitleaks
 rules, redacted output, exact historical finding fingerprints, both archive and

@@ -1,5 +1,10 @@
 # Flow Tool Architecture
 
+G8 P2.7b：原生请求和私有 runner 输出先共用 Core 严格 JSON 帧解码，递归
+拒绝重复键，再验证原 DTO；身份/grant/效果仍由原 Runtime 检查负责。
+固定种子协议、重新签名 ZIP、媒体变异回归见
+[记录](./docs/validation/g8-security-regressions.md)，不改变线协议或生产信任。
+
 G8 P2.7a 的安全扫描由仓库构建脚本管理：固定上游 ZIP/程序摘要、完整 Git
 历史与精确历史豁免、实时 Bun/Rust 审计及真实拒绝对照。扫描工具只安装到
 系统临时目录，不进入产品 bundle、IPC、Host selector 或用户 profile。

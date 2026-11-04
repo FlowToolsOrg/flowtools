@@ -722,6 +722,11 @@ grace、跳过/合并漏触发、重复检查/时钟回拨/取消与算术限额
 
 ## 10. G8：分发与未来生态
 
+P2.7b（2026-11-04）：严格帧解析与确定性协议/重签 ZIP/媒体 property 回归，
+详见 [证据与风险索引](./validation/g8-security-regressions.md)。本子项只加固
+输入边界，不关闭 P2.7/G8。维护者暂缓发行签名；独立审核、macOS 实机和
+7 天 dogfood/30 天 Beta 记录目前均无，不能填写为通过。
+
 2026-11-04：P2.7a 先加入固定 Windows 扫描工具、完整历史密钥检测、全部
 Bun/Cargo 锁审计及真实拒绝对照；依赖修复保留原 405 项跨语言 Manifest
 语义。见 [实施与验证](./validation/g8-security-scanners.md)。下一步仍需补齐

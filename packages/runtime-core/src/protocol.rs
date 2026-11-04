@@ -9,6 +9,16 @@ pub const PROTOCOL_MAJOR: u16 = 1;
 pub const MAX_FRAME_BYTES: usize = 1_048_576;
 pub const CLIENT_VERSION: &str = "0.3.0";
 
+/// Decode syntax only. Identity, role, grants and effects remain Runtime checks.
+/// Duplicate keys are refused at every depth, including opaque plugin JSON.
+pub fn decode_frame<T: serde::de::DeserializeOwned>(bytes: &[u8]) -> Result<T, ErrorCode> {
+    if bytes.len() > MAX_FRAME_BYTES {
+        return Err(ErrorCode::FrameTooLarge);
+    }
+    let value = crate::packages::strict_json(bytes).map_err(|_| ErrorCode::InvalidRequest)?;
+    serde_json::from_value(value).map_err(|_| ErrorCode::InvalidRequest)
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SessionProof {

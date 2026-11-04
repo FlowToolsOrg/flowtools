@@ -1006,6 +1006,632 @@
       }
     },
     {
+      "digest": "f029af113b89da969c8bf335482491afc7b42e09f67643a11b948519e70748d7",
+      "manifest": {
+        "commands": [
+          {
+            "description": "提取 WAV 音频或使用固定 VP9/Opus WebM 预设",
+            "effects": [
+              "file-read",
+              "tool-execute",
+              "file-create"
+            ],
+            "headless": true,
+            "id": "run",
+            "inputSchema": {
+              "additionalProperties": false,
+              "properties": {
+                "planDigest": {
+                  "maxLength": 64,
+                  "minLength": 64,
+                  "type": "string"
+                },
+                "planId": {
+                  "maxLength": 36,
+                  "minLength": 36,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "planId",
+                "planDigest"
+              ],
+              "type": "object"
+            },
+            "interaction": "none",
+            "name": "执行媒体转换",
+            "outputSchema": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "text",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "text"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "json",
+                      "type": "string"
+                    },
+                    "value": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "result": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "durationMs": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "formats": {
+                              "items": {
+                                "type": "string"
+                              },
+                              "maxItems": 8,
+                              "type": "array"
+                            },
+                            "outputBytes": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "outputSha256": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "published": {
+                              "type": "boolean"
+                            },
+                            "sourceBytes": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "streams": {
+                              "items": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "channels": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "codec": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "height": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "kind": {
+                                    "type": "string"
+                                  },
+                                  "sampleRate": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "width": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "codec",
+                                  "width",
+                                  "height",
+                                  "sampleRate",
+                                  "channels"
+                                ],
+                                "type": "object"
+                              },
+                              "maxItems": 32,
+                              "type": "array"
+                            }
+                          },
+                          "required": [
+                            "formats",
+                            "durationMs",
+                            "sourceBytes",
+                            "streams",
+                            "published",
+                            "outputBytes",
+                            "outputSha256"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "result"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "permissions": [
+              {
+                "capability": "fs",
+                "operations": [
+                  "read",
+                  "create"
+                ],
+                "scopes": [
+                  "selected-media-input",
+                  "selected-media-output"
+                ]
+              },
+              {
+                "capability": "tool",
+                "operations": [
+                  "execute"
+                ],
+                "scopes": [
+                  "lock:ffmpeg:extract-audio-wav-v1",
+                  "lock:ffmpeg:transcode-webm-v1"
+                ]
+              }
+            ],
+            "resources": {
+              "maxInputBytes": 1048576,
+              "maxOutputBytes": 1048576,
+              "timeoutMs": 30000
+            },
+            "runtimeValidation": {
+              "input": "required",
+              "output": "required"
+            },
+            "supportsColdStart": true
+          }
+        ],
+        "dependencies": {
+          "services": [],
+          "tools": [
+            {
+              "buildFlavor": "flowtools-t1-lgpl-static-v1",
+              "digest": "2b26f1bc4731c8db82f2bda708a96354bd31acf1af2cc16058f108d25ccfe415",
+              "id": "ffmpeg",
+              "publisher": "flowtools-builtin",
+              "target": {
+                "arch": "x64",
+                "platform": "windows"
+              },
+              "version": "8.1.3"
+            }
+          ]
+        },
+        "description": "提取 WAV 音频或使用固定 VP9/Opus WebM 预设",
+        "engines": {
+          "host": "^0.1.0",
+          "sdk": ">=0.0.0 <1.0.0"
+        },
+        "entries": {
+          "executor": "plugin-media-converter.commands.js",
+          "ui": "plugin-media-converter.js"
+        },
+        "files": [
+          {
+            "path": "plugin-media-converter.commands.js",
+            "sha256": "f5ef3ace84aad9b3e6267e6c233d475feb21d25277f171cfebaf759706ce6d12",
+            "size": 70
+          },
+          {
+            "path": "plugin-media-converter.js",
+            "sha256": "a9d50a6792bce0534175ad8a4c7fd3bea26875a030a3d1fdf307ea55bcf86a79",
+            "size": 61
+          }
+        ],
+        "formatVersion": 1,
+        "id": "plugin-media-converter",
+        "maturity": "prototype",
+        "name": "媒体转换",
+        "publisher": "flowtools",
+        "signature": {
+          "status": "unsigned"
+        },
+        "targets": [
+          {
+            "arch": "x64",
+            "platform": "windows"
+          },
+          {
+            "arch": "wasm32",
+            "platform": "web"
+          }
+        ],
+        "type": "app",
+        "version": "0.0.1"
+      }
+    },
+    {
+      "digest": "5d37cc8866379444d18a8051e2166a90af8398f74a3ecebc2e30584a647d4842",
+      "manifest": {
+        "commands": [
+          {
+            "description": "查看所选媒体的格式、时长与音视频轨道",
+            "effects": [
+              "file-read",
+              "tool-execute"
+            ],
+            "headless": true,
+            "id": "run",
+            "inputSchema": {
+              "additionalProperties": false,
+              "properties": {
+                "planDigest": {
+                  "maxLength": 64,
+                  "minLength": 64,
+                  "type": "string"
+                },
+                "planId": {
+                  "maxLength": 36,
+                  "minLength": 36,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "planId",
+                "planDigest"
+              ],
+              "type": "object"
+            },
+            "interaction": "none",
+            "name": "执行媒体信息",
+            "outputSchema": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "text",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "text"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "stdio": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "const": "json",
+                      "type": "string"
+                    },
+                    "value": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "result": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "durationMs": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "formats": {
+                              "items": {
+                                "type": "string"
+                              },
+                              "maxItems": 8,
+                              "type": "array"
+                            },
+                            "outputBytes": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "outputSha256": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "published": {
+                              "type": "boolean"
+                            },
+                            "sourceBytes": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "streams": {
+                              "items": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "channels": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "codec": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "height": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "kind": {
+                                    "type": "string"
+                                  },
+                                  "sampleRate": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "width": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "codec",
+                                  "width",
+                                  "height",
+                                  "sampleRate",
+                                  "channels"
+                                ],
+                                "type": "object"
+                              },
+                              "maxItems": 32,
+                              "type": "array"
+                            }
+                          },
+                          "required": [
+                            "formats",
+                            "durationMs",
+                            "sourceBytes",
+                            "streams",
+                            "published",
+                            "outputBytes",
+                            "outputSha256"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "result"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "type": "object"
+                }
+              ]
+            },
+            "permissions": [
+              {
+                "capability": "fs",
+                "operations": [
+                  "read"
+                ],
+                "scopes": [
+                  "selected-media-input"
+                ]
+              },
+              {
+                "capability": "tool",
+                "operations": [
+                  "execute"
+                ],
+                "scopes": [
+                  "lock:ffmpeg:inspect-v1"
+                ]
+              }
+            ],
+            "resources": {
+              "maxInputBytes": 1048576,
+              "maxOutputBytes": 1048576,
+              "timeoutMs": 30000
+            },
+            "runtimeValidation": {
+              "input": "required",
+              "output": "required"
+            },
+            "supportsColdStart": true
+          }
+        ],
+        "dependencies": {
+          "services": [],
+          "tools": [
+            {
+              "buildFlavor": "flowtools-t1-lgpl-static-v1",
+              "digest": "2b26f1bc4731c8db82f2bda708a96354bd31acf1af2cc16058f108d25ccfe415",
+              "id": "ffmpeg",
+              "publisher": "flowtools-builtin",
+              "target": {
+                "arch": "x64",
+                "platform": "windows"
+              },
+              "version": "8.1.3"
+            }
+          ]
+        },
+        "description": "查看所选媒体的格式、时长与音视频轨道",
+        "engines": {
+          "host": "^0.1.0",
+          "sdk": ">=0.0.0 <1.0.0"
+        },
+        "entries": {
+          "executor": "plugin-media-inspector.commands.js",
+          "ui": "plugin-media-inspector.js"
+        },
+        "files": [
+          {
+            "path": "plugin-media-inspector.commands.js",
+            "sha256": "383144c264569c99407d402ee3631f1fb35598169adf6031ac759a831707f4ab",
+            "size": 70
+          },
+          {
+            "path": "plugin-media-inspector.js",
+            "sha256": "e3437db3d126f3e567b0bc7dd67e0713dc1c661a7115269fcaf1eb314a255d2e",
+            "size": 61
+          }
+        ],
+        "formatVersion": 1,
+        "id": "plugin-media-inspector",
+        "maturity": "prototype",
+        "name": "媒体信息",
+        "publisher": "flowtools",
+        "signature": {
+          "status": "unsigned"
+        },
+        "targets": [
+          {
+            "arch": "x64",
+            "platform": "windows"
+          },
+          {
+            "arch": "wasm32",
+            "platform": "web"
+          }
+        ],
+        "type": "app",
+        "version": "0.0.1"
+      }
+    },
+    {
       "digest": "6335b9a045524004bd11521e04868fde76a9a854ba2d784bc5033af1e37b81a0",
       "manifest": {
         "commands": [
@@ -2261,10 +2887,10 @@
   ],
   "providerUnloadPlan": {
     "affectedLocks": [
-      "f2dd39cc2bfaf7efe3841d3f5539a6db1dbdada8a7e214739b4e1360166e4f2f"
+      "0b2996a90d729d36d132f9806d83c7051d94f050a2cf5cdc3dec9526ed748b32"
     ],
     "consumers": [],
-    "digest": "c0cc5d1cdbfddde45f7dfc9cf24d3c47827617b62c7fbfb222f0de8864f71de0",
+    "digest": "e147c171664771de0b35b9d0f958dc5f9e124af7d3448d382340b91a56c43af9",
     "mode": "plan-only",
     "provider": {
       "digest": "aa50110fe95a458f2cc1b91c994f86bf325a52a16c8c643951452e06262c2906",

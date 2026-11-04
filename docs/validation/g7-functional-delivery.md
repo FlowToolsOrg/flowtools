@@ -83,3 +83,9 @@ pending，不因原型签名或测试而获得法律/安全批准。一般第三
   （6/10/8/9/6/5/5/4/4/4/6，无 fail/ignored），来源四项真实拒绝对照与实际
   GPGv 签名验证、精确 inventory、原 source/program pins、fmt/all-target Clippy
   通过。完整 Windows 根门禁及当前提交远端 CI 继续收尾，结果随后单独记录。
+
+实现提交 `bcce635` 的首次完整门禁通过静态/类型阶段后，在 Rust golden
+清单仍为十三项的完整性测试停止。现改由完整十五项 build-owned catalog
+生成 fixture，并给纯语义图提供同一工具的 metadata candidate；不增加
+安装/执行 authority。对应 Rust roundtrip 与 Runtime client 检查随后复验，
+新的完整门禁单独记录，不覆盖首次失败。

@@ -1,11 +1,15 @@
 # FlowTools 生产化路线图
 
-2026-11-04：G7 Windows/T1 的文件逐效果提交/重试/撤销及媒体实际用户闭环
-已实现，GUI/CLI 同源计划与普通 Runtime 执行见 [交付记录](./validation/g7-functional-delivery.md)。
-当前完整门禁/远端验证正在收尾；正式发行、独立安全/许可证审核继续 pending，
-工具 GC、公开分发与跨平台不因这次原型实现而宣称完成。
+2026-11-04：G7 已按维护者批准的 Windows/T1 功能原型范围完成：文件逐效果
+提交/重试/撤销、两插件共享的实际媒体处理与日程/提醒、桌面和搜索。
+实现源代码 `02d416a` 的干净完整本机根门禁已通过；最终文档提交与同 SHA
+远端结果见 [交付记录](./validation/g7-functional-delivery.md) 和
+[PR #15](https://github.com/FlowToolsOrg/flowtools/pull/15)。生产成熟度仍为 prototype；
+正式发行、代码签名、独立安全/许可证审核、工具 GC、公开分发与跨平台继续 pending。
 
 2026-11-03：维护者明确授权按 Windows 固定 T1 功能原型完成 G7，允许精确锁定的官方源码 FFmpeg/ffprobe 通过原受管工具链用于实际功能。正式发行、Windows 代码签名和独立安全/许可证审核保持 pending；人工验收为 waived。本授权仅覆盖固定内置流程，不开放任意工具路径、第三方代码或绕过当前 grant/身份/排空检查。
+
+下列早期阶段记录保留当时状态；其中 G7 pending 由上述批准范围的交付结论替代。
 
 2026-11-03：G6 新增 [未派发队列的 T0 显式处置](./validation/g6-queued-tool-discard.md)。
 精确实例/原行/当前 scope 确认后，原事务持久取消并释放从未执行队列的引用；
@@ -21,7 +25,7 @@ GC/LKG、正式发行/独立审核和 G7 文件/媒体用户闭环继续 pending
 > 2026-10-04 产品决策：面向知识工作者/普通办公用户，GUI 与外部 agents
 > 共用命令；支持独立 CLI、轻量后台内核、集中管理和共享二进制工具依赖。
 > 低代码、内置 AI 助手与模型接入保留为未来插件。具体顺序与实现见
-> [下一阶段目标与实施设计](./next-milestones.md)。G1、G2 固定验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4 P1.6a/P1.6b 与六条异常排空基线已实施为固定 Windows/T1 prototype，2026-10-12 本地完整集成已过，当前提交远端 CI 与独立安全批准 pending；G5 P2.5a 及 P2.5b 六个惰性准入/事务子步骤已实现为 prototype，2026-10-12 契约加固本地完整门禁已过，当前提交远端 CI 与独立安全批准 pending；P2.5b/G5 整体和 G6–G8 保持 pending。
+> [下一阶段目标与实施设计](./next-milestones.md)。G1、G2 固定验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4 P1.6a/P1.6b 与六条异常排空基线已实施为固定 Windows/T1 prototype，2026-10-12 本地完整集成已过，当前提交远端 CI 与独立安全批准 pending；G5 P2.5a 及 P2.5b 六个惰性准入/事务子步骤已实现为 prototype，2026-10-12 契约加固本地完整门禁已过，当前提交远端 CI 与独立安全批准 pending；P2.5b/G5、G6 的生产范围和 G8 保持 pending；G7 已完成批准的 Windows/T1 功能原型，人工项 waived，当前证据见 G7 交付记录。
 
 本文档是 FlowTools 从 Demo 级原型走向生产版本的执行台账。它不以
 “页面已存在”或“类型已定义”作为完成标准，而以真实执行、失败可恢复、
@@ -1118,9 +1122,9 @@ G4 服务依赖 -> G5 签名安装与隔离 -> G6 工具链 -> G7 办公闭环 -
 | P2.8a | pending     | P2.5、P1.6          | 工具包目录/侧载准入、多版本只读共享、locks/leases/journal                                                                                 |
 | P2.8b | pending     | P2.8a、P2.2、P2.3b  | FFmpeg typed adapter、实际平台访问约束、进程树/预算/取消                                                                                  |
 | P2.8c | pending     | P2.8b、P2.4b、P2.6b | 两插件共享、原子更新指针、回滚/撤销、lease-aware GC 与崩溃恢复                                                                            |
-| P3.1a | pending     | P1.4、P2.3          | 托盘/热键/单实例、轻量驻留与可选自启动；GUI 不决定内核存活                                                                                |
-| P3.1b | pending     | P3.1a、P1.3b、P2.4  | Host 调度/通知、时区/休眠/重复策略；授权到期或撤销不执行                                                                                  |
-| P3.4a | pending     | P2.7、P3.1、P3.2    | 文件/媒体/日程三闭环与实际 UI/CLI E2E，发布成熟度仍按范围证据                                                                             |
+| P3.1a | implemented | P1.4、P2.3          | 托盘/热键/单实例、轻量驻留与可选自启动；GUI 不决定内核存活                                                                                |
+| P3.1b | implemented | P3.1a、P1.3b、P2.4  | Host 调度/通知、时区/休眠/重复策略；授权到期或撤销不执行                                                                                  |
+| P3.4a | implemented | P2.7、P3.1、P3.2    | 文件/媒体/日程三闭环与实际 UI/CLI E2E，发布成熟度仍按范围证据                                                                             |
 | P3.4b | pending     | P3.4a、P3.3         | 扩大插件认证与 Legacy 迁移，每项平台/API/资源矩阵实际通过                                                                                 |
 
 P1.1/1.2/1.3/1.4/1.5、P2.3/2.4/2.5/2.6、P3.1/3.4 父项分别由上述同前缀

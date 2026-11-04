@@ -1,5 +1,11 @@
 # Repository Guidelines
 
+2026-11-04：G7 已完成维护者批准的 Windows/T1 功能原型范围。当前实现源代码
+`02d416a` 已通过干净完整本机根门禁，详见
+[交付与边界](./docs/validation/g7-functional-delivery.md)；最终文档提交的远端
+验证记录在 [Draft PR #15](https://github.com/FlowToolsOrg/flowtools/pull/15)。
+后续阶段继续保留正式发行、代码签名、独立审核 pending 与人工验收 waived。
+
 2026-11-03：维护者明确授权按 Windows 固定 T1 功能原型完成 G7，允许精确锁定的官方源码 FFmpeg/ffprobe 通过原受管工具链用于实际功能。正式发行、Windows 代码签名和独立安全/许可证审核保持 pending；人工验收为 waived。本授权仅覆盖固定内置流程，不开放任意工具路径、第三方代码或绕过当前 grant/身份/排空检查。
 
 ## Project Structure and Module Organization

@@ -1,7 +1,7 @@
 # FlowTools 下一阶段目标与实施设计
 
 - 决策日期：2026-10-04
-- 状态：accepted-design；G1、G2 固定 Windows/T1 验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4 P1.6a/P1.6b 与六条异常排空基线已实现为固定 Windows/T1 prototype，2026-10-12 本地完整集成已过，当前提交远端 CI 与独立安全批准 pending；G5 P2.5a 及 P2.5b 六个惰性准入/事务子步骤已实现为 prototype，2026-10-12 契约加固本地完整门禁已过，当前提交远端 CI 与独立安全批准 pending；P2.5b/G5 整体和 G6–G8 保持 pending
+- 状态：accepted-design；G1、G2 固定 Windows/T1 验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4 P1.6a/P1.6b 与六条异常排空基线已实现为固定 Windows/T1 prototype，2026-10-12 本地完整集成已过，当前提交远端 CI 与独立安全批准 pending；G5 P2.5a 及 P2.5b 六个惰性准入/事务子步骤已实现为 prototype，2026-10-12 契约加固本地完整门禁已过，当前提交远端 CI 与独立安全批准 pending；P2.5b/G5、G6 的生产范围和 G8 保持 pending；G7 已完成批准的 Windows/T1 功能原型，人工项 waived，当前证据见 G7 交付记录
 - 决策来源：维护者已确认的产品讨论；实施责任由 Repository Maintainer 分配
 - 进度来源：[生产路线图](./production-roadmap.md)
 
@@ -594,11 +594,12 @@ Tauri [sidecar](https://v2.tauri.app/develop/sidecar/) 用于构建捆绑程序�
 
 ## 9. G7：统一 UI 与三个办公闭环
 
-2026-11-04：维护者已选择 Windows 固定 T1 功能原型，授权锁定的官方源码
-媒体 pair 接入实际受管链；正式发行/代码签名/独立审核继续 pending，人工
-项 waived。文件提交、逐效果日志/重试/撤销与两个实际媒体插件、用户输入/
-输出发布及 GUI/CLI 现已实现，见 [交付记录](./validation/g7-functional-delivery.md)。
-当前完整 Windows 与远端 CI 完成后再关闭 G7；下列旧记录为历史阶段证据。
+2026-11-04：G7 已完成维护者批准的 Windows 固定 T1 功能原型范围。文件提交、
+逐效果日志/重试/撤销与两个实际媒体插件、用户输入/输出发布、日程/提醒及
+GUI/CLI 共用 Runtime，当前源代码的完整本机根门禁已通过，见
+[交付记录](./validation/g7-functional-delivery.md)。最终文档提交的同 SHA 远端
+验证记录在 [PR #15](https://github.com/FlowToolsOrg/flowtools/pull/15)。正式发行/
+代码签名/独立审核继续 pending，人工项 waived；下列旧记录为历史阶段证据。
 
 2026-10-29：T0 文件计划可在现有单写者/DPAPI 中持久化，保持稳定 ID、取消状态、
 复制/恢复 scope 和严格孤立清理保留；仅为惰性规划层，GUI/CLI 提交、文件效果

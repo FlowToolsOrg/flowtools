@@ -4,6 +4,10 @@
 
 ## 下一阶段结构与当前实现
 
+G7 的 Windows/T1 功能原型范围已完成，当前完整验证见
+[交付记录](./validation/g7-functional-delivery.md)。下列早期阶段记录的
+pending 表述保留历史语境，正式发行与独立审核继续 pending。
+
 G7 用户闭环由 `file_workflows/store/execution.rs`、`file_workflows/media_io.rs`
 和 `runtime_user_media.rs` 提供；真实 Host adapter 在 `apps/runtime/src/user_media.rs`，
 GUI/CLI 共用生成协议。`packages/tools/builtin.rs` 只接入锁定的内置原型包。

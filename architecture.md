@@ -1,6 +1,7 @@
 # Flow Tool Architecture
 
-G7 固定 T1 的实际文件/媒体链见 [交付记录](./docs/validation/g7-functional-delivery.md)：
+G7 已按批准范围完成 Windows/T1 功能原型；当前完整门禁与边界见
+[交付记录](./docs/validation/g7-functional-delivery.md)。实际文件/媒体链为：
 管理面绑定显式选择与 plan 摘要，Core 单 writer 保存私有定义/逐效果日志；
 工具经过精确本地原型签名包、受管安装/镜像、普通 job/grant 和原生排空后，
 独立校验的结果再由 T0 create-only 发布。发布与插件执行不接收任意程序路径。
@@ -9,6 +10,8 @@ G7 固定 T1 的实际文件/媒体链见 [交付记录](./docs/validation/g7-fu
 仍经过原当前信任/镜像检查，不以目录图代替工具准入。
 
 2026-11-03：维护者明确授权按 Windows 固定 T1 功能原型完成 G7，允许精确锁定的官方源码 FFmpeg/ffprobe 通过原受管工具链用于实际功能。正式发行、Windows 代码签名和独立安全/许可证审核保持 pending；人工验收为 waived。本授权仅覆盖固定内置流程，不开放任意工具路径、第三方代码或绕过当前 grant/身份/排空检查。
+
+下列早期阶段说明保留当时的 pending 状态；G7 当前结论以上述交付记录为准。
 
 G6 的 [未派发队列处置](./docs/validation/g6-queued-tool-discard.md) 由 T0 提供
 不可序列化的实例/整行/当前 scope 计划。只允许完整事件证明从未执行、没有

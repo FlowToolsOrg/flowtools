@@ -1,7 +1,10 @@
 # G7 Windows/T1 功能交付
 
 日期：2026-11-04。维护者选择固定 Windows/T1 功能原型，人工验收 waived。
-本页记录文件/媒体实际实现；当前整仓及远端结果在完成后补记，不借用旧提交的绿色。
+G7 已完成上述范围，产品成熟度保持 prototype。文件、媒体、日程/提醒、
+桌面及搜索的完成边界见 [矩阵](./g7-completion-matrix.md)。源代码 `02d416a`
+已通过干净完整本机根门禁；最终文档提交的同 SHA 远端结果记录在
+[Draft PR #15](https://github.com/FlowToolsOrg/flowtools/pull/15)。
 
 ## 用户流程
 
@@ -83,7 +86,7 @@ pending，不因原型签名或测试而获得法律/安全批准。一般第三
   maturity/清单和原有插件行为检查通过。完整独立 driver 原 67 项全部通过
   （6/10/8/9/6/5/5/4/4/4/6，无 fail/ignored），来源四项真实拒绝对照与实际
   GPGv 签名验证、精确 inventory、原 source/program pins、fmt/all-target Clippy
-  通过。完整 Windows 根门禁及当前提交远端 CI 继续收尾，结果随后单独记录。
+  通过。完整 Windows 根门禁结果见下文，最终文档提交的远端结果见上述 PR。
 
 实现提交 `bcce635` 的首次完整门禁通过静态/类型阶段后，在 Rust golden
 清单仍为十三项的完整性测试停止。现改由完整十五项 build-owned catalog
@@ -116,3 +119,25 @@ Runtime lint/严格 types/Clippy 与文档契约通过；完整根门禁再次�
 修复后的完整 Desktop 专项 112 Bun + Node2 + Rust38+6 全部通过；随后按原
 顺序完成 11/11 workspace build、Web25/Desktop29 实际产物等值/拒绝及最终
 Rust fmt/check/all-target Clippy。上述逐段结果不代替下一次干净完整根门禁。
+
+## 完整本机交付门禁
+
+实现源代码 `02d416a1ea134ba7a350c2c974d67eb8db8230c4` 的
+`pwsh -NoProfile -File scripts/check-ci.ps1` 完整通过，exit 0，最终工作区
+无漂移。使用固定 native target 与工作区外 TEMP；原共享/身份保护、执行/
+排空期限、原生/Node 断言与内容漂移检查全部保留。
+
+- 11/11 workspace lint、types、test、build；Core 519+11+13（单元 295.03s）。
+- Runtime 原生 27+6 / Bun18；固定 Chromium 117 项、36 文件。
+- Desktop Bun112 + 真实 Node2 + Rust38+6；CLI101 + Node2、实际十五插件。
+- Web25 / Desktop29 个真实产物在子进程 opt-in/canary 重建后逐字节等值，
+  已知不安全入口/认证开关/canary 拒绝与最终 Rust fmt/check/all-target Clippy 通过。
+- 额外执行 `bun run --cwd apps/desktop tauri build --debug --no-bundle`，实际
+  完成桌面应用编译/链接（55.16s native build），产物为
+  `<CARGO_TARGET_DIR>/debug/desktop.exe`。本机对应
+  `D:/code/projects/flowtools/apps/desktop/src-tauri/target/debug/desktop.exe`；
+  它是本地未签名 Debug 原型，正式发行和人工实窗验收状态仍按上述约定。
+
+最终状态同步仅更新 Markdown 文档；全部非 Markdown Git blobs 须与上述
+完整验证源代码相同，并单独运行文档契约/差异检查。最终 SHA、推送核对和
+同 SHA 的 PR/push 两路 Windows 结果维护在上述 Draft PR，不用旧提交绿色替代。

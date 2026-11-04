@@ -1,10 +1,15 @@
 # Flow Tool
 
-G7 Windows/T1 now connects journaled file commit/retry/undo and two real managed
-media plugins through Desktop settings and CLI. See [usage and validation](./docs/validation/g7-functional-delivery.md)
-for finite prototype limits, confirmation, recovery and pending release reviews.
+G7 is complete within the approved Windows/T1 functional prototype scope:
+journaled file commit/retry/undo, two real managed media plugins, scheduling,
+reminders, launcher search and Desktop settings share the Runtime and CLI.
+See [usage and validation](./docs/validation/g7-functional-delivery.md) and the
+[completion matrix](./docs/validation/g7-completion-matrix.md) for limits and gate evidence.
 
 2026-11-03：维护者明确授权按 Windows 固定 T1 功能原型完成 G7，允许精确锁定的官方源码 FFmpeg/ffprobe 通过原受管工具链用于实际功能。正式发行、Windows 代码签名和独立安全/许可证审核保持 pending；人工验收为 waived。本授权仅覆盖固定内置流程，不开放任意工具路径、第三方代码或绕过当前 grant/身份/排空检查。
+
+The following implementation notes retain their historical stage conclusions;
+their pending G7 statements are superseded by the current completion matrix above.
 
 G6 adds [explicit interrupted-queue disposition](./docs/validation/g6-queued-tool-discard.md):
 T0 can confirm cancellation of an unchanged tool queue proven never to have run.

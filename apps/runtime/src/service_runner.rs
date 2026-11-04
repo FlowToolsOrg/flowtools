@@ -146,36 +146,6 @@ fn reply(id: u32, result: Result<Value, ErrorCode>) -> Value {
     }
 }
 
-#[cfg(test)]
-mod frame_security_tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn duplicate_runner_output_is_refused_before_result_or_mutation_dispatch() {
-        for (bytes, valid) in [
-            (
-                br#"{"kind":"result","execution":{"value":1},"mutations":[]}"#.as_slice(),
-                true,
-            ),
-            (
-                br#"{"kind":"result","execution":{"value":1,"value":2},"mutations":[]}"#.as_slice(),
-                false,
-            ),
-        ] {
-            let (mut writer, mut reader) = tokio::io::duplex(4096);
-            writer.write_u32_le(bytes.len() as u32).await.unwrap();
-            writer.write_all(bytes).await.unwrap();
-            let result = tokio::time::timeout(Duration::from_secs(1), frame_read(&mut reader))
-                .await
-                .unwrap();
-            if valid {
-                assert!(matches!(result, Ok(RunnerMessage::Result { .. })));
-            } else {
-                assert!(matches!(result, Err(ErrorCode::OutputInvalid)));
-            }
-        }
-    }
-}
 async fn monitor(core: &Core, id: &str) -> ErrorCode {
     loop {
         tokio::time::sleep(Duration::from_millis(10)).await;
@@ -406,4 +376,35 @@ pub(super) fn execute(
         }
         Ok(data)
     })
+}
+
+#[cfg(test)]
+mod frame_security_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn duplicate_runner_output_is_refused_before_result_or_mutation_dispatch() {
+        for (bytes, valid) in [
+            (
+                br#"{"kind":"result","execution":{"value":1},"mutations":[]}"#.as_slice(),
+                true,
+            ),
+            (
+                br#"{"kind":"result","execution":{"value":1,"value":2},"mutations":[]}"#.as_slice(),
+                false,
+            ),
+        ] {
+            let (mut writer, mut reader) = tokio::io::duplex(4096);
+            writer.write_u32_le(bytes.len() as u32).await.unwrap();
+            writer.write_all(bytes).await.unwrap();
+            let result = tokio::time::timeout(Duration::from_secs(1), frame_read(&mut reader))
+                .await
+                .unwrap();
+            if valid {
+                assert!(matches!(result, Ok(RunnerMessage::Result { .. })));
+            } else {
+                assert!(matches!(result, Err(ErrorCode::OutputInvalid)));
+            }
+        }
+    }
 }

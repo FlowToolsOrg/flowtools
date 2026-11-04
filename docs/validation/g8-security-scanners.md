@@ -28,6 +28,8 @@ Rust 对照必须实际命中 `RUSTSEC-2020-0071`，另有干净锁及无效 TOM
 devtools/传递 Rust 依赖中的公开漏洞。更新锁文件与直接安全版本下限；移除
 未使用的 glob/ESLint 依赖和 CrabNebula 调试插件，通知库升到官方 0.8.1。
 oxfmt 的 tinypool 精确旧版本由根 override 固定到修复版 2.1.2。
+将 Runtime Tokio 下限及根锁提升到 1.53.3，修复实时审计额外提示的
+`RUSTSEC-2026-0386` 健全性问题；Desktop 独立锁已使用修复后的 1.54.1。
 Playwright 保持原 1.59.1 与 Chromium gate，Bun/Rust 工具链固定版本不变。
 HeroUI React/styles 固定为原先验证的 3.0.3，oxlint 固定为 1.66.0；
 依赖重新求解不顺带迁移 UI API 或引入另一套 lint 规则版本。
@@ -47,7 +49,12 @@ type 数组或 type=object 也保持原样；增加实际默认值补齐的拒�
 - 首轮完整本机根门禁 `a297b6f` 在安全扫描/生成检查后停于 UI lint：
   重新求解的 HeroUI 移除了仍被依赖的 Text 导出。固定回原验证版本后，
   11 工作区 lint 已通过；没有禁用 lint 规则或删除原有断言。
-- 修复后的完整本机根门禁与同 SHA 远端 CI：进行中，收口后补充。
+- 修复后的本机完整基线 `772f5db` 全部门禁通过：117 项 Chromium、
+  Core 519+11+13、Runtime 27+6、Desktop 原生测试、全部工作区构建、
+  production artifact 对照和最终干净工作区检查；没有过滤/跳过测试。
+- 后续默认数据导出修复的 50 项 SDK 专项通过；Tokio 补丁不改变原生参数/期限。
+  最终提交的完整本机与同 SHA 远端验证记录汇总于
+  [Draft PR #17](https://github.com/FlowToolsOrg/flowtools/pull/17)。
 
 本机 Windows 原有 loopback 网络代理只用于当前验证进程联网；不提交代理值，
 不改用户 Git/系统代理或 CI。无法获取实时 advisory 时 gate 失败。

@@ -1,5 +1,9 @@
 # Flow Tools 架构设计规范
 
+Desktop index.html 先加载 `src/bootstrap.ts`，由 `csp-schema-policy.ts` 在
+SDK/路由之前配置解释器，再加载 main。生产与开发 CSP 位于同一原生配置，
+实际 Chromium 拒绝测试在 UI-test/security，见 [c2](./validation/g8-desktop-csp.md)。
+
 `packages/runtime-client/generate-validators.ts` 从 Rust wire-schema 生成固定
 校验器，正常 Core generate/verify 流程接入生成/只读比较，client build 也检查
 漂移。见 [P2.7c1](./validation/g8-csp-validators.md)。

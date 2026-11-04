@@ -1,5 +1,9 @@
 # Flow Tool Architecture
 
+P2.7c2：Desktop 生产 CSP 限制脚本、资源与嵌入；独立 devCsp 保留开发需求。
+bootstrap 先设置 Zod jitless，再加载 SDK/路由，wire 校验采用 c1 静态产物。
+HTTP(S) connect 仍为 T1 兼容范围，见 [证据](./docs/validation/g8-desktop-csp.md)。
+
 P2.7c1 将 Rust wire schema 的 AJV 校验移至构建期，客户端运行时不再编译
 Schema；build/契约检查拒绝陈旧产物。见 [证据](./docs/validation/g8-csp-validators.md)。
 

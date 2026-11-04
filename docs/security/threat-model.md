@@ -1,5 +1,11 @@
 # FlowTools 插件威胁模型
 
+P2.7c2（2026-11-04）以非空 CSP 取代 Desktop 空策略；拒绝远程/内联脚本、
+eval、frame/object/worker、base/form，保留动态样式与 T1 HTTP(S) connect。
+下方“CSP 为空”的早期描述由此替代；出站 broker、第三方隔离与独立批准仍
+未完成，SEC-002/003/005/010/011/012 保持 open，见
+[浏览器证据](../validation/g8-desktop-csp.md)。
+
 2026-11-04 P2.7b：原生请求和私有服务输出递归拒绝重复 JSON 键，修复
 不透明 input/execution 的 last-wins 行为。真实 framed IO 及协议/重签 ZIP/
 媒体 mutation/property 回归见 [风险索引与证据](../validation/g8-security-regressions.md)。

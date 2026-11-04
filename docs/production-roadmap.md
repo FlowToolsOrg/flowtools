@@ -1,5 +1,9 @@
 # FlowTools 生产化路线图
 
+P2.7c2 配置非空 Desktop 生产 CSP，实际 Chromium 拦截脚本/eval/嵌入/
+form/worker 等，并验证构建客户端在无 eval 权限下工作。见
+[证据与残余范围](./validation/g8-desktop-csp.md)。P2.7/G8 与独立审核不提前完成。
+
 P2.7c 分为 c1 构建期 wire 校验与 c2 实际 CSP。c1 的客户端产物已在禁止
 动态代码生成的实际运行中通过正反校验，见
 [记录](./validation/g8-csp-validators.md)；不据此声称 c2 或 P2.7/G8 完成。

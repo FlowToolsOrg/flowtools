@@ -722,6 +722,10 @@ grace、跳过/合并漏触发、重复检查/时钟回拨/取消与算术限额
 
 ## 10. G8：分发与未来生态
 
+P2.7c2 的非空生产 CSP 与实际攻击/客户端回归见
+[验证](./validation/g8-desktop-csp.md)。HTTP(S) 出站仍未成为 per-plugin
+broker，正式包 WebView/macOS 与独立安全审核不能用源策略测试替代。
+
 P2.7c1 移除客户端 CSP 阻碍：从 Rust schema 生成 standalone wire 校验，
 build/契约检查只读拒绝漂移。见 [证据](./validation/g8-csp-validators.md)。
 下一子项 P2.7c2 配置并验证实际 CSP，不允许为兼容 AJV 放开 unsafe-eval。

@@ -1,5 +1,9 @@
 # Flow Tool
 
+Desktop now has a production CSP with restricted scripts and blocked embedded
+content. [P2.7c2 evidence](./docs/validation/g8-desktop-csp.md) records actual
+browser refusals and the remaining network/native acceptance boundaries.
+
 Runtime client wire validation is generated at build time for CSP compatibility.
 Builds reject stale validators; see [P2.7c1](./docs/validation/g8-csp-validators.md).
 

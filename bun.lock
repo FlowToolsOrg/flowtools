@@ -52,6 +52,7 @@
         "react": "catalog:",
         "react-dom": "catalog:",
         "tailwindcss": "catalog:",
+        "zod": "catalog:",
       },
       "devDependencies": {
         "@rolldown/plugin-babel": "^0.2.3",

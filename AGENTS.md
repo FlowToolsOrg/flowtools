@@ -1,5 +1,12 @@
 # Repository Guidelines
 
+G8 P2.7c2 requires the nonempty production Desktop CSP and pre-SDK Zod jitless
+bootstrap. Keep production scripts free of unsafe-inline/unsafe-eval and remote
+sources; preserve Tauri's hash/nonce injection. Dev-only sources must remain in
+devCsp. Keep the actual Chromium attack and built-client regressions. HTTP(S)
+connect remains a T1 compatibility boundary, not per-plugin network isolation.
+See [evidence](./docs/validation/g8-desktop-csp.md).
+
 G8 P2.7c1 generates standalone wire validators from the Rust schema before CSP
 hardening. Client builds and Runtime contract verification must reject stale
 validator bytes; never refresh them to bypass CI. Keep generated LF attributes,

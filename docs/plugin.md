@@ -1,5 +1,9 @@
 # Flow Tool Plugin 开发指南
 
+Desktop 生产 CSP 不允许动态脚本/eval、第三方 frame/worker 或远程脚本；
+内置插件仍使用已编译入口。HTTP(S) request 保持现有 T1 行为，不构成通用
+网络隔离或 grant。开发策略独立，见 [c2](./validation/g8-desktop-csp.md)。
+
 客户端 wire 校验改用构建期生成函数；原 DTO、有限数字格式和接受/拒绝规则
 不变，不授予插件权限。修改协议需运行生成与漂移检查，见
 [P2.7c1](./validation/g8-csp-validators.md)。

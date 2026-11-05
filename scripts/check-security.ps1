@@ -25,7 +25,7 @@ try {
     'apps/runtime/test/fixtures/media-candidate/Cargo.lock',
     'apps/runtime/test/fixtures/managed-media-candidate/Cargo.lock'
   )) {
-    Invoke-QualityCommand "Rust dependency audit: $lockfile" $audit @(
+    Invoke-QualityCommand -RejectErrorOutput "Rust dependency audit: $lockfile" $audit @(
       'audit', '--file', $lockfile
     )
   }

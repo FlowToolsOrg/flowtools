@@ -173,6 +173,7 @@ test('Core isolates full native cases without filtering tests or changing job de
   ) as { scripts: { test: string } }
   expect(core.scripts.test.split(' && ')).toEqual([
     'bun run manifest-conformance.ts --check',
+    'bun run manifest-v2-conformance.ts --check',
     'bun run generate-catalog.ts',
     'cargo build --locked --manifest-path ../../apps/runtime/test/fixtures/isolation-probe/Cargo.toml',
     'bun run ../../scripts/check-rust-tests.ts Cargo.toml',
@@ -648,6 +649,7 @@ test('native isolation probe is mandatory for tests and excluded from normal bui
   ) as { scripts: Record<string, string> }
   expect(core.scripts.test?.split(' && ')).toEqual([
     'bun run manifest-conformance.ts --check',
+    'bun run manifest-v2-conformance.ts --check',
     'bun run generate-catalog.ts',
     'cargo build --locked --manifest-path ../../apps/runtime/test/fixtures/isolation-probe/Cargo.toml',
     'bun run ../../scripts/check-rust-tests.ts Cargo.toml',
@@ -709,6 +711,9 @@ test('security gates require full history and remain fatal on PR and release bra
     new URL('./check-security.ps1', import.meta.url)
   ).text()
   expect(scanner).toContain(". (Join-Path $PSScriptRoot 'ci-gates.ps1')")
+  expect(scanner).toContain(
+    'Invoke-QualityCommand -RejectErrorOutput "Rust dependency audit: $lockfile"'
+  )
   expect(scanner).not.toMatch(
     /continue-on-error|SilentlyContinue|catch\s*\{\s*\}/
   )
@@ -1119,6 +1124,37 @@ test('PowerShell propagates native failure before subsequent gates run', () => {
     expect(failure.stderr).toContain('exit code 17')
     expect(failure.stdout).not.toContain('UNEXPECTED_CONTINUATION')
   }
+}, 30_000)
+
+test('audit errors with exit zero refuse continuation while warnings remain visible', () => {
+  for (const stream of ['stdout', 'stderr'] as const) {
+    const diagnostic =
+      '\u001b[31merror: could not check registry package status\u001b[0m\n'
+    const code = `process.${stream}.write(${JSON.stringify(diagnostic)})`
+    const failed = runPowerShell(
+      `. ${helperPath}; Invoke-QualityCommand -RejectErrorOutput 'audit fixture' node @('-e', '${code.replaceAll("'", "''")}'); Write-Output 'UNEXPECTED_CONTINUATION'`
+    )
+    expect(failed.error).toBeUndefined()
+    expect(failed.status).toBe(1)
+    expect(failed.stderr).toContain('reported errors despite exit code 0')
+    expect(failed.stdout).toContain('could not check registry package status')
+    expect(failed.stdout).not.toContain('UNEXPECTED_CONTINUATION')
+  }
+  const warning = runPowerShell(
+    `. ${helperPath}; Invoke-QualityCommand -RejectErrorOutput 'audit fixture' node @('-e', 'console.error("warning: unmaintained control"); console.log("clean control")'); Write-Output 'EXPECTED_CONTINUATION'`
+  )
+  expect(warning.error).toBeUndefined()
+  expect(warning.status).toBe(0)
+  expect(warning.stdout).toContain('warning: unmaintained control')
+  expect(warning.stdout).toContain('clean control')
+  expect(warning.stdout).toContain('EXPECTED_CONTINUATION')
+  const nonzero = runPowerShell(
+    `. ${helperPath}; Invoke-QualityCommand -RejectErrorOutput 'audit fixture' node @('-e', 'process.exit(17)'); Write-Output 'UNEXPECTED_CONTINUATION'`
+  )
+  expect(nonzero.error).toBeUndefined()
+  expect(nonzero.status).toBe(1)
+  expect(nonzero.stderr).toContain('exit code 17')
+  expect(nonzero.stdout).not.toContain('UNEXPECTED_CONTINUATION')
 }, 30_000)
 
 test('production artifact refusal is a fatal post-build gate before the clean-worktree check', async () => {

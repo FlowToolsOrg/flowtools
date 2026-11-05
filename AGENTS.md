@@ -1,5 +1,9 @@
 # Repository Guidelines
 
+Cargo audits must retain `Invoke-QualityCommand -RejectErrorOutput`: pinned
+cargo-audit can print registry errors and still exit zero. Keep actual stdout/
+stderr, ANSI, nonzero and warning regression controls; do not hide diagnostics.
+
 NA0 preserves the closed v1 parser, original 405-case bytes and structural export
 digest. Use explicit version dispatch for Manifest v2/profile declarations;
 never reinterpret its typed scopes as legacy grants. Wire client 0.4.0/private

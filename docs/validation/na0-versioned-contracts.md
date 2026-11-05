@@ -98,6 +98,14 @@ adapter 在 NA1/NA5 实施。取消仍由当前 root/provider 生命周期、期
 远端 Windows CI 与 PR 状态在本次 PR 记录。生成物来自真实 Rust/SDK 源码变更，
 验证使用原只读比较；不得暂存刷新来绕过清洁工作区或 validator 拒绝。
 
+前置核查遇到 RustSec 直连失败和 crates.io 查询超时，均未计入通过。实际观察到
+固定 cargo-audit 0.22.2 可在 registry 查询报错后仍返回 0，因此四份实时审计
+额外启用 `Invoke-QualityCommand -RejectErrorOutput`：保留输出与既有 native
+非零退出拒绝，去除 ANSI 后发现 `error:` 即中止；informational warnings 继续
+完整显示。`scripts/ci-contracts.test.ts` 以实际 Node 子进程覆盖 stdout/stderr 的
+彩色错误加 exit 0、非零退出、告警正对照及禁止继续执行。原 pins、扫描选项、
+实际扫描器拒绝 controls、完整历史与精确例外不变，无离线/陈旧数据库回退。
+
 安全评审：Codex 工程自查；实际独立 Security Reviewer/date/conclusion pending。
 SEC-001/003/004/005/006/007/008/009/010/012/013/014/015 保持 open。
 正式发行、平台隔离、签名分发、四项 IO 的原生/UI 验收均不由本项批准。

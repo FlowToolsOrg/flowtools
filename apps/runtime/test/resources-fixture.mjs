@@ -31,7 +31,8 @@ const bun = /** @type {{bun:{path:string}}} */ (
 ).bun.path
 /** @type {import('node:child_process').ChildProcessWithoutNullStreams|undefined} */ let child
 /** @type {Promise<unknown>|undefined} */ let exited
-/** @type {RuntimeClient|undefined} */ let manager, desktop
+/** @type {RuntimeClient|undefined} */ let manager
+/** @type {RuntimeClient|undefined} */ let desktop
 async function start(/** @type {boolean} */ initialize) {
   child = spawn(
     runtime,
@@ -98,9 +99,14 @@ async function invoke(/** @type {string[]} */ args, expected = 0) {
     stderr = ''
   command.stdout.on('data', b => (stdout += b.toString()))
   command.stderr.on('data', b => (stderr += b.toString()))
+  /** @type {Promise<number|null>} */
+  const commandExit = new Promise((resolve, reject) => {
+    command.once('exit', resolve)
+    command.once('error', reject)
+  })
   const timer = setTimeout(() => command.kill(), 35000)
   try {
-    const [code] = await once(command, 'exit')
+    const code = await commandExit
     assert.equal(code, expected, stderr + ' ' + stdout)
     assert.equal(stderr, '')
     return /** @type {{success:boolean;data:Record<string,unknown>;error?:{code:string}}} */ (
@@ -270,8 +276,8 @@ try {
     e => e instanceof RuntimeClientError && e.code === 'SCOPE_DENIED'
   )
   assert.equal(await readFile(path, 'utf8'), 'PRIVATE-CONTENT')
-  console.log(
-    'NA1 actual CLI and Desktop protocol resource selection/read and restart refusal passed'
+  process.stdout.write(
+    'NA1 actual CLI and Desktop protocol resource selection/read and restart refusal passed\n'
   )
 } finally {
   clearTimeout(watchdog)

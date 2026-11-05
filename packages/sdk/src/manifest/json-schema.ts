@@ -209,6 +209,11 @@ function matches(schema: OperationSchema, value: JsonValue): boolean {
 }
 
 function wellFormed(schema: OperationSchema): boolean {
+  if (
+    (schema.description?.length ?? 0) > 4096 ||
+    Object.keys(schema.properties ?? {}).some(key => key.length > 128)
+  )
+    return false
   if (!schema.type && !schema.anyOf && !schema.enum && !hasOwn(schema, 'const'))
     return false
   if (schema.type === 'object') {
@@ -350,8 +355,22 @@ export function exportOperationSchema(
   const closeObjects = (value: unknown): void => {
     if (!value || typeof value !== 'object') return
     const node = value as Record<string, unknown>
+    // Zod 4.6 compacts bare primitive anyOf branches into a type array.
+    // Expand only that build-owned representation; signed v1 input stays strict.
+    if (Array.isArray(node.type)) {
+      if (node.anyOf !== undefined)
+        throw new Error('Ambiguous exported primitive union')
+      const types: unknown[] = node.type
+      node.anyOf = types.map(type => ({ type }))
+      delete node.type
+    }
     if (node.type === 'object') node.additionalProperties = false
-    Object.values(node).forEach(closeObjects)
+    // Visit schema positions only. Defaults and enum/const values are data,
+    // even when their keys happen to be named type, properties or anyOf.
+    if (node.properties && typeof node.properties === 'object')
+      Object.values(node.properties).forEach(closeObjects)
+    if (node.items) closeObjects(node.items)
+    if (Array.isArray(node.anyOf)) node.anyOf.forEach(closeObjects)
   }
   closeObjects(data)
   return operationSchema.parse(data)

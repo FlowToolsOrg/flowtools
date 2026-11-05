@@ -209,9 +209,6 @@ pub fn run() {
             }
         });
 
-    #[cfg(debug_assertions)]
-    let tauri_builder = tauri_builder.plugin(tauri_plugin_devtools::init());
-
     tauri_builder
         .run(context)
         .expect("error while running tauri application");

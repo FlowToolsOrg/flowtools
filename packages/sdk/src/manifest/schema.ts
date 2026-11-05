@@ -58,6 +58,10 @@ export const pluginManifestSchema = z
   })
   .superRefine((manifest, ctx) => {
     const fail = (message: string) => ctx.addIssue({ code: 'custom', message })
+    // Manifest v1 and the native validator measure text in UTF-16 units.
+    // Zod 4.6 measures .max() in code points, so retain the original limits.
+    if (manifest.name.length > 256 || manifest.description.length > 4096)
+      fail('Manifest text exceeds the v1 UTF-16 limit')
     if (!unique(manifest.commands.map(command => command.id)))
       fail('Duplicate command ID')
     const paths = manifest.files.map(file => file.path.toLowerCase())

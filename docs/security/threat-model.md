@@ -1,5 +1,31 @@
 # FlowTools 插件威胁模型
 
+P2.7d（2026-11-04）将应用命令接入 AppManifest ACL，普通 capability 不再
+使用插件/core default 集合，验证命令仅在固定身份 overlay 授权。下方早期
+“未配置 AppManifest”的描述由此替代；实际 native IPC 与原 guard 证据见
+[记录](../validation/g8-native-acl.md)。主窗口同 realm/T1、store load 与通用
+IO 残余不因此消失，SEC-003/004/006/007/011/012 仍 open。
+
+P2.7c2（2026-11-04）以非空 CSP 取代 Desktop 空策略；拒绝远程/内联脚本、
+eval、frame/object/worker、base/form，保留动态样式与 T1 HTTP(S) connect。
+下方“CSP 为空”的早期描述由此替代；出站 broker、第三方隔离与独立批准仍
+未完成，SEC-002/003/005/010/011/012 保持 open，见
+[浏览器证据](../validation/g8-desktop-csp.md)。
+
+2026-11-04 P2.7b：原生请求和私有服务输出递归拒绝重复 JSON 键，修复
+不透明 input/execution 的 last-wins 行为。真实 framed IO 及协议/重签 ZIP/
+媒体 mutation/property 回归见 [风险索引与证据](../validation/g8-security-regressions.md)。
+SEC-001–015 保持 open；语法验证不赋予身份、grant 或执行权限。
+
+2026-11-04 G8 P2.7a 为 SEC-001/008/009/010 的供应链回归补充扫描证据：
+固定 Gitleaks/cargo-audit 上游归档与程序摘要、完整历史精确豁免、实时依赖
+审计和真实恶意对照；不接受 scan error 作为通过，不输出原始秘密。移除桌面
+CrabNebula 调试服务依赖并升级通知库；没有新增 IPC/原生权限或 grant。
+Reviewer 为 Codex 工程自查，独立 Reviewer/日期/结论 pending / pending / 未批准；
+Owner 为 Build/Runtime/Desktop 维护者。informational 警告与全部 SEC 风险继续
+open，不能以零漏洞报告证明无漏洞或发行安全；见
+[扫描范围与残余项](../validation/g8-security-scanners.md)。
+
 2026-11-04 G7 固定 Windows/T1 功能原型的入口与拒绝证据见
 [交付记录](../validation/g7-functional-delivery.md)。新增认证管理面的文件/媒体
 计划、明确确认、逐效果 journal/撤销和两个固定媒体插件；实际工具通过本地

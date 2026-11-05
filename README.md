@@ -1,5 +1,27 @@
 # Flow Tool
 
+Desktop native commands now use an application ACL and explicit main-window
+permissions. See [P2.7d validation](./docs/validation/g8-native-acl.md) for actual
+pre-handler refusals and remaining T1 boundaries.
+
+Desktop now has a production CSP with restricted scripts and blocked embedded
+content. [P2.7c2 evidence](./docs/validation/g8-desktop-csp.md) records actual
+browser refusals and the remaining network/native acceptance boundaries.
+
+Runtime client wire validation is generated at build time for CSP compatibility.
+Builds reject stale validators; see [P2.7c1](./docs/validation/g8-csp-validators.md).
+
+G8 P2.7b now rejects duplicate JSON keys in native requests and service output
+before dispatch. Deterministic parser/property regressions cover the wire,
+re-signed ZIPs and media projections; see the
+[security regression record](./docs/validation/g8-security-regressions.md).
+
+G8 starts with P2.7a: `bun run test:security` runs scanner contracts, full-history
+redacted secret scanning and live dependency audits of Bun and all four Cargo
+locks. Windows PR/main/feature/release gates run it before builds. See
+[scope and evidence](./docs/validation/g8-security-scanners.md); security review,
+signed distribution, marketplace and Beta acceptance remain pending.
+
 G7 is complete within the approved Windows/T1 functional prototype scope:
 journaled file commit/retry/undo, two real managed media plugins, scheduling,
 reminders, launcher search and Desktop settings share the Runtime and CLI.

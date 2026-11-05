@@ -67,6 +67,17 @@ export const commandManifestSchema = z
   })
   .superRefine((command, ctx) => {
     if (
+      command.name.length > 256 ||
+      command.description.length > 4096 ||
+      command.permissions.some(permission =>
+        permission.scopes.some(scope => scope.length > 1024)
+      )
+    )
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Command text exceeds the v1 UTF-16 limit',
+      })
+    if (
       command.supportsColdStart &&
       (!command.headless || command.interaction === 'required')
     )

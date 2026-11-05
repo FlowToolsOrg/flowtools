@@ -352,21 +352,19 @@ async fn connection(
     let mut request_ids = HashSet::new();
     let mut recent_ids = VecDeque::new();
     loop {
-        let frame =
-            tokio::time::timeout(
-                Duration::from_secs(if recent_ids.is_empty() { 5 } else { 60 }),
-                async {
-                    let size = pipe.read_u32_le().await? as usize;
-                    if size > MAX_FRAME_BYTES {
-                        return Ok::<_, std::io::Error>(Err(ErrorCode::FrameTooLarge));
-                    }
-                    let mut bytes = vec![0u8; size];
-                    pipe.read_exact(&mut bytes).await?;
-                    Ok(serde_json::from_slice::<Request>(&bytes)
-                        .map_err(|_| ErrorCode::InvalidRequest))
-                },
-            )
-            .await;
+        let frame = tokio::time::timeout(
+            Duration::from_secs(if recent_ids.is_empty() { 5 } else { 60 }),
+            async {
+                let size = pipe.read_u32_le().await? as usize;
+                if size > MAX_FRAME_BYTES {
+                    return Ok::<_, std::io::Error>(Err(ErrorCode::FrameTooLarge));
+                }
+                let mut bytes = vec![0u8; size];
+                pipe.read_exact(&mut bytes).await?;
+                Ok(decode_frame::<Request>(&bytes))
+            },
+        )
+        .await;
         let request = match frame {
             Ok(Ok(Ok(request))) => request,
             Ok(Ok(Err(code))) => {
@@ -518,6 +516,46 @@ async fn execute(spec: &RunSpec, core: Core, workspace: &Path) -> Result<Value, 
 mod tests {
     use super::*;
     use flowtools_runtime_core::protocol::{Call, OpenSession, SubmitJob, CLIENT_VERSION};
+
+    #[tokio::test]
+    async fn duplicate_nested_wire_input_is_refused_before_dispatch() {
+        let core = Arc::new(Mutex::new(RuntimeCore::validation(
+            "cli".into(),
+            "desktop".into(),
+        )));
+        let (tasks, mut receiver) = mpsc::channel(128);
+        let (server, mut peer) = tokio::io::duplex(4096);
+        let worker = tokio::spawn(connection(
+            server,
+            core.clone(),
+            tasks,
+            Arc::new(Semaphore::new(1)),
+        ));
+        let bytes = br#"{"version":1,"requestId":"duplicate-input","session":null,"call":{"method":"jobs.submit","payload":{"pluginId":"plugin-base64-encoder","commandId":"run","input":{"text":"first","text":"second"},"idempotencyKey":"duplicate-input","background":false,"deadline":10000}}}"#;
+        peer.write_u32_le(bytes.len() as u32).await.unwrap();
+        peer.write_all(bytes).await.unwrap();
+        let response = tokio::time::timeout(Duration::from_secs(1), async {
+            let length = peer.read_u32_le().await.unwrap() as usize;
+            let mut body = vec![0; length];
+            peer.read_exact(&mut body).await.unwrap();
+            serde_json::from_slice::<Response>(&body).unwrap()
+        })
+        .await
+        .unwrap();
+        assert!(matches!(
+            response.outcome,
+            Outcome::Error(RuntimeError {
+                code: ErrorCode::InvalidRequest
+            })
+        ));
+        assert!(receiver.try_recv().is_err());
+        assert!(!core.lock().await.stopping());
+        drop(peer);
+        tokio::time::timeout(Duration::from_secs(1), worker)
+            .await
+            .unwrap()
+            .unwrap();
+    }
 
     #[tokio::test(flavor = "current_thread")]
     async fn deferred_pipe_close_waits_for_iocp_without_losing_owner_or_capacity() {

@@ -722,6 +722,28 @@ grace、跳过/合并漏触发、重复检查/时钟回拨/取消与算术限额
 
 ## 10. G8：分发与未来生态
 
+P2.7d 使用显式 AppManifest/main capability 和独立验证权限，实际 native IPC
+回归见 [证据](./validation/g8-native-acl.md)。剩余独立审核、网络/平台边界、
+正式分发与真实试用退出条件保留。
+
+P2.7c2 的非空生产 CSP 与实际攻击/客户端回归见
+[验证](./validation/g8-desktop-csp.md)。HTTP(S) 出站仍未成为 per-plugin
+broker，正式包 WebView/macOS 与独立安全审核不能用源策略测试替代。
+
+P2.7c1 移除客户端 CSP 阻碍：从 Rust schema 生成 standalone wire 校验，
+build/契约检查只读拒绝漂移。见 [证据](./validation/g8-csp-validators.md)。
+下一子项 P2.7c2 配置并验证实际 CSP，不允许为兼容 AJV 放开 unsafe-eval。
+
+P2.7b（2026-11-04）：严格帧解析与确定性协议/重签 ZIP/媒体 property 回归，
+详见 [证据与风险索引](./validation/g8-security-regressions.md)。本子项只加固
+输入边界，不关闭 P2.7/G8。维护者暂缓发行签名；独立审核、macOS 实机和
+7 天 dogfood/30 天 Beta 记录目前均无，不能填写为通过。
+
+2026-11-04：P2.7a 先加入固定 Windows 扫描工具、完整历史密钥检测、全部
+Bun/Cargo 锁审计及真实拒绝对照；依赖修复保留原 405 项跨语言 Manifest
+语义。见 [实施与验证](./validation/g8-security-scanners.md)。下一步仍需补齐
+高风险场景与 fuzz/property 证据、剩余警告和独立评审，P2.7/G8 不提前关闭。
+
 先关闭 P2.7 安全回归，再完成真实市场、Windows 签名、应用 updater、插件/工具
 签名分发、SBOM、灰度、失败回滚和支持文档。独立 CLI 与 runtime 同样纳入签名/
 兼容/更新验收，不能只签 Desktop 安装包。跨版本断连时提示升级，不悄悄回退到

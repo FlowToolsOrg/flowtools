@@ -7,6 +7,7 @@ mod dependency_tests;
 #[cfg(windows)]
 mod install_tests;
 mod manifest_tests;
+mod security_properties;
 #[cfg(all(windows, target_arch = "x86_64"))]
 mod tool_tests;
 mod trust_tests;

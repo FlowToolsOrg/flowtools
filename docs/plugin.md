@@ -1,5 +1,26 @@
 # Flow Tool Plugin 开发指南
 
+Desktop 原生命令现在受 main/local AppManifest ACL 约束，插件/core 默认
+权限集已收敛为显式列表；这不是插件自身的 grant。普通构建无 validation、
+raw SQL/FS 写入/clipboard/shell 权限，详见 [d](./validation/g8-native-acl.md)。
+
+Desktop 生产 CSP 不允许动态脚本/eval、第三方 frame/worker 或远程脚本；
+内置插件仍使用已编译入口。HTTP(S) request 保持现有 T1 行为，不构成通用
+网络隔离或 grant。开发策略独立，见 [c2](./validation/g8-desktop-csp.md)。
+
+客户端 wire 校验改用构建期生成函数；原 DTO、有限数字格式和接受/拒绝规则
+不变，不授予插件权限。修改协议需运行生成与漂移检查，见
+[P2.7c1](./validation/g8-csp-validators.md)。
+
+Runtime 请求与服务输出不接受任何深度的重复 JSON 键，包含插件业务 input/
+execution 数据。客户端应发送无歧义 JSON；语法验证不替代 Manifest、身份、
+grant 和效果检查。见 [P2.7b](./validation/g8-security-regressions.md)。
+
+G8 P2.7a 将仓库依赖与历史密钥扫描纳入 Windows 门禁；新增依赖或密钥 fixture
+不能靠扩大豁免通过。Manifest v1 的 UTF-16 文本长度和有限操作 JSON Schema
+保持兼容，Zod 导出的原始类型 union 在构建时展开为既有 anyOf。不会因此开放
+第三方加载、工具路径或 grant。见 [验证](./validation/g8-security-scanners.md)。
+
 G7 已完成批准的 Windows/T1 功能原型；新增媒体信息/转换两个实际内置插件，
 总计十五个。其 `run()` 只调用
 Host 绑定的 `ctx.media.run(planId)`；源路径、输出路径、程序选择和原生权限

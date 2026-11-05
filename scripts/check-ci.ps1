@@ -8,6 +8,9 @@ try {
   Invoke-QualityCommand 'Frozen dependency install' bun @(
     'install', '--frozen-lockfile'
   )
+  Invoke-QualityCommand 'Security contracts, secret and dependency scans' bun @(
+    'run', 'test:security'
+  )
   Invoke-QualityCommand 'Workspace task contracts' bun @(
     'run', 'verify:workspace-tasks'
   )

@@ -1,6 +1,19 @@
 {
   "identifier": "com.flowtools.g2-validation-20261004",
   "app": {
+    "security": {
+      "capabilities": [
+        "default",
+        {
+          "identifier": "runtime-validation-only",
+          "windows": ["main"],
+          "permissions": [
+            "allow-validation-runtime",
+            "allow-validation-runtime-disconnect"
+          ]
+        }
+      ]
+    },
     "windows": [
       {
         "label": "main",

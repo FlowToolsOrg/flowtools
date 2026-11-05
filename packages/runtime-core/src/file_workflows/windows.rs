@@ -212,6 +212,9 @@ pub(super) struct HeldSource {
     pub pin: FilePin,
 }
 impl Directory {
+    pub fn handle_count(&self) -> usize {
+        self.guards.len()
+    }
     pub fn publish(
         &self,
         stage: &str,
@@ -390,6 +393,9 @@ impl Directory {
         Ok(())
     }
     pub fn entries(&self) -> Result<Vec<String>> {
+        self.entries_with_directories(false)
+    }
+    fn entries_with_directories(&self, include_directories: bool) -> Result<Vec<String>> {
         self.validate()?;
         let mut result = Vec::new();
         let mut restart = true;
@@ -454,7 +460,7 @@ impl Directory {
                     if count > MAX_ENTRIES {
                         return Err(ErrorCode::BudgetExceeded);
                     }
-                    if entry.FileAttributes & FILE_ATTRIBUTE_DIRECTORY == 0 {
+                    if include_directories || entry.FileAttributes & FILE_ATTRIBUTE_DIRECTORY == 0 {
                         component(&name)?;
                         result.push(name);
                     }
@@ -653,5 +659,262 @@ impl HeldSource {
             ),
             sha256: self.pin.sha256.clone(),
         })
+    }
+}
+
+// Read-only NA1 admission shares the original component/ancestor/NTFS guards.
+// The rename source API and its DELETE access remain unchanged above.
+pub(super) struct ReadSource {
+    source: HeldSource,
+    chunks: Vec<[u8; 32]>,
+}
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
+pub(super) struct EntryPin {
+    pub name: String,
+    pub directory: bool,
+    pub size: u64,
+    identity: String,
+    modified: String,
+    created: String,
+}
+pub(super) struct MetadataSource {
+    file: File,
+    pub pin: EntryPin,
+}
+fn entry_pin(file: &File, name: &str) -> Result<EntryPin> {
+    let info = information(file)?;
+    if info.nNumberOfLinks != 1 {
+        return Err(ErrorCode::ScopeDenied);
+    }
+    let directory = info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY != 0;
+    if directory {
+        let mut case = FILE_CASE_SENSITIVE_INFO::default();
+        if unsafe {
+            GetFileInformationByHandleEx(
+                file.as_raw_handle(),
+                FileCaseSensitiveInfo,
+                (&mut case as *mut FILE_CASE_SENSITIVE_INFO).cast(),
+                size_of::<FILE_CASE_SENSITIVE_INFO>() as u32,
+            )
+        } == 0
+            || case.Flags != 0
+        {
+            return Err(ErrorCode::ScopeDenied);
+        }
+    }
+    Ok(EntryPin {
+        name: name.into(),
+        directory,
+        size: if directory {
+            0
+        } else {
+            (u64::from(info.nFileSizeHigh) << 32) | u64::from(info.nFileSizeLow)
+        },
+        identity: digest(&serde_json::json!([
+            info.dwVolumeSerialNumber,
+            file_id(&info)
+        ])),
+        modified: time(
+            info.ftLastWriteTime.dwHighDateTime,
+            info.ftLastWriteTime.dwLowDateTime,
+        ),
+        created: time(
+            info.ftCreationTime.dwHighDateTime,
+            info.ftCreationTime.dwLowDateTime,
+        ),
+    })
+}
+impl Directory {
+    pub fn related_to(&self, protected: &Path) -> Result<bool> {
+        let protected = Self::open(protected, None)?;
+        let same = |a: &RootPin, b: &RootPin| a.volume_id == b.volume_id && a.file_id == b.file_id;
+        for ancestor in &protected.guards {
+            if same(&root_pin(ancestor)?, &self.pin) {
+                return Ok(true);
+            }
+        }
+        for ancestor in &self.guards {
+            if same(&root_pin(ancestor)?, &protected.pin) {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
+    pub fn metadata_source(&self, name: &str) -> Result<MetadataSource> {
+        self.validate()?;
+        let file = relative(
+            self.root(),
+            name,
+            None,
+            0,
+            FILE_SHARE_READ | FILE_SHARE_WRITE,
+        )?
+        .ok_or(ErrorCode::RevisionConflict)?;
+        let pin = entry_pin(&file, name)?;
+        Ok(MetadataSource { file, pin })
+    }
+    pub fn resource_entries(&self, check: &impl Fn() -> Result<()>) -> Result<Vec<EntryPin>> {
+        let mut entries = Vec::new();
+        let mut files = 0;
+        let mut bytes = 0u64;
+        for name in self.entries_with_directories(true)? {
+            check()?;
+            let source = self.metadata_source(&name)?;
+            if !source.pin.directory {
+                files += 1;
+                bytes = bytes
+                    .checked_add(source.pin.size)
+                    .ok_or(ErrorCode::BudgetExceeded)?;
+                if files > super::MAX_FILES
+                    || source.pin.size > MAX_FILE_BYTES
+                    || bytes > super::MAX_TOTAL_BYTES
+                {
+                    return Err(ErrorCode::BudgetExceeded);
+                }
+            }
+            entries.push(source.pin);
+        }
+        self.validate()?;
+        Ok(entries)
+    }
+    pub fn read_source(&self, name: &str, check: &impl Fn() -> Result<()>) -> Result<ReadSource> {
+        check()?;
+        self.validate()?;
+        let file = relative(
+            self.root(),
+            name,
+            Some(false),
+            FILE_READ_DATA,
+            FILE_SHARE_READ,
+        )?
+        .ok_or(ErrorCode::RevisionConflict)?;
+        let before = information(&file)?;
+        if before.nNumberOfLinks != 1 {
+            return Err(ErrorCode::ScopeDenied);
+        }
+        let size = (u64::from(before.nFileSizeHigh) << 32) | u64::from(before.nFileSizeLow);
+        if size > MAX_FILE_BYTES {
+            return Err(ErrorCode::BudgetExceeded);
+        }
+        let (sha256, chunks, read) = read_pins(&file, check)?;
+        if read != size {
+            return Err(ErrorCode::RevisionConflict);
+        }
+        let source = HeldSource {
+            file,
+            pin: FilePin {
+                volume_id: self.pin.volume_id.clone(),
+                file_id: file_id(&before),
+                size,
+                modified: time(
+                    before.ftLastWriteTime.dwHighDateTime,
+                    before.ftLastWriteTime.dwLowDateTime,
+                ),
+                created: time(
+                    before.ftCreationTime.dwHighDateTime,
+                    before.ftCreationTime.dwLowDateTime,
+                ),
+                sha256,
+            },
+        };
+        let result = ReadSource { source, chunks };
+        result.validate(check)?;
+        self.validate()?;
+        Ok(result)
+    }
+}
+fn read_at(
+    file: &File,
+    bytes: &mut [u8],
+    offset: u64,
+    check: &impl Fn() -> Result<()>,
+) -> Result<usize> {
+    use std::os::windows::fs::FileExt;
+    let mut count = 0;
+    while count < bytes.len() {
+        check()?;
+        let read = file
+            .seek_read(&mut bytes[count..], offset + count as u64)
+            .map_err(|error| {
+                if error.raw_os_error() == Some(995) {
+                    ErrorCode::Aborted
+                } else {
+                    ErrorCode::StorageFailed
+                }
+            })?;
+        if read == 0 {
+            break;
+        }
+        count += read;
+    }
+    check()?;
+    Ok(count)
+}
+fn read_pins(file: &File, check: &impl Fn() -> Result<()>) -> Result<(String, Vec<[u8; 32]>, u64)> {
+    let mut hasher = Sha256::new();
+    let mut chunks = Vec::new();
+    let mut offset = 0u64;
+    let mut buffer = [0u8; 65536];
+    loop {
+        let read = read_at(file, &mut buffer, offset, check)?;
+        if read == 0 {
+            break;
+        }
+        offset += read as u64;
+        if offset > MAX_FILE_BYTES {
+            return Err(ErrorCode::BudgetExceeded);
+        }
+        hasher.update(&buffer[..read]);
+        chunks.push(Sha256::digest(&buffer[..read]).into());
+    }
+    Ok((format!("{:x}", hasher.finalize()), chunks, offset))
+}
+impl MetadataSource {
+    pub fn validate(&self) -> Result<()> {
+        if entry_pin(&self.file, &self.pin.name)? != self.pin {
+            return Err(ErrorCode::RevisionConflict);
+        }
+        Ok(())
+    }
+}
+impl ReadSource {
+    pub fn size(&self) -> u64 {
+        self.source.pin.size
+    }
+    pub fn validate(&self, check: &impl Fn() -> Result<()>) -> Result<()> {
+        check()?;
+        self.source.validate()?;
+        let (hash, chunks, bytes) = read_pins(&self.source.file, check)?;
+        if hash != self.source.pin.sha256 || chunks != self.chunks || bytes != self.source.pin.size
+        {
+            return Err(ErrorCode::RevisionConflict);
+        }
+        self.source.validate()?;
+        check()
+    }
+    pub fn chunk(&self, offset: u32, max: u32, check: &impl Fn() -> Result<()>) -> Result<Vec<u8>> {
+        if max == 0 || max > 65536 || u64::from(offset) > self.size() {
+            return Err(ErrorCode::InputInvalid);
+        }
+        self.validate(check)?;
+        let end = (u64::from(offset) + u64::from(max)).min(self.size());
+        let mut bytes = Vec::with_capacity((end - u64::from(offset)) as usize);
+        let mut start = u64::from(offset) / 65536 * 65536;
+        while start < end {
+            let block_len = (self.size() - start).min(65536) as usize;
+            let mut block = vec![0u8; block_len];
+            if read_at(&self.source.file, &mut block, start, check)? != block_len
+                || self.chunks.get((start / 65536) as usize)
+                    != Some(&<[u8; 32]>::from(Sha256::digest(&block)))
+            {
+                return Err(ErrorCode::RevisionConflict);
+            }
+            let from = u64::from(offset).saturating_sub(start) as usize;
+            let to = (end - start).min(block_len as u64) as usize;
+            bytes.extend_from_slice(&block[from..to]);
+            start += 65536;
+        }
+        self.validate(check)?;
+        Ok(bytes)
     }
 }

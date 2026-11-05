@@ -10,6 +10,8 @@ const MAX_FILE_BYTES: u64 = 67_108_864;
 const MAX_TOTAL_BYTES: u64 = 268_435_456;
 
 pub mod media_io;
+#[cfg(windows)]
+pub(crate) mod resource_source;
 pub mod store;
 #[cfg(windows)]
 mod windows;

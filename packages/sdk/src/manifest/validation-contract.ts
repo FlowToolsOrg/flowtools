@@ -14,6 +14,11 @@ import {
 import { commandManifestSchema } from './command'
 import { exportOperationValidationSchema, operationSchema } from './json-schema'
 import { pluginManifestSchema } from './schema'
+import {
+  nativeV2Refinements,
+  pluginManifestV2Schema,
+  NATIVE_CAPABILITY_PROFILE,
+} from './v2'
 import { exportCheckedSchema } from './validation-export'
 
 /** Structural contract plus explicit native semantics; never trust or grants. */
@@ -39,6 +44,27 @@ export function exportManifestValidationContract() {
     formatVersion: 1,
     semantics: 'flowtools-manifest-v1',
     manifest: exportCheckedSchema(pluginManifestSchema, refinements),
+    operation: exportOperationValidationSchema(),
+  }
+}
+
+/** Separate versioned artifact. Never changes the v1 structural export. */
+export function exportManifestV2ValidationContract() {
+  const refinements = new Map<object, string>([
+    ...nativeV2Refinements,
+    [dependencyVersionSchema, 'version'],
+    [dependencyRangeSchema, 'range'],
+    [portablePluginPathSchema, 'path'],
+    [dependencyDeclarationsSchema, 'dependencies-v1'],
+    [serviceDependencySchema, 'service-selector-v1'],
+    [toolDependencySchema, 'tool-selector-v1'],
+    [operationSchema, 'operation-v1'],
+  ])
+  return {
+    formatVersion: 2,
+    semantics: 'flowtools-manifest-v2',
+    capabilityProfile: NATIVE_CAPABILITY_PROFILE,
+    manifest: exportCheckedSchema(pluginManifestV2Schema, refinements, true),
     operation: exportOperationValidationSchema(),
   }
 }

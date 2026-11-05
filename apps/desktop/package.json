@@ -38,7 +38,8 @@
     "motion": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "tailwindcss": "catalog:"
+    "tailwindcss": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@rolldown/plugin-babel": "^0.2.3",

@@ -1,5 +1,40 @@
 # Flow Tool Architecture
 
+NA1 在原 Runtime/PolicyStore/broker 上增加只读资源 adapter。原 grants 表保存独立
+format-2 资源记录，SQLite schema 2 与旧 v1 行不迁移。Core 持有 owner/run/epoch/
+deadline、原生对象/内容 pin 与游标；Runtime 在锁外执行可取消 IO，每个原生读取
+及交付复核当前权限。只有 T0 管理选择接收路径，插件只见 run Ref。当前 wire 为
+0.5.0/私有帧 3，见 [NA1 证据与边界](./docs/validation/na1-resources.md)。
+
+NA0 的 [版本契约基础](./docs/validation/na0-versioned-contracts.md) 在原 Runtime
+与包准入上增加独立 Manifest v2 profile/typed scopes；v1 parser 与字节保留。
+SDK/原生签名 ZIP/G4 metadata 显式分派，旧 policy 不迁移成新授权。wire client
+0.4.0 与私有帧 2 由 Rust codegen 同源；新效果在真实 adapter 到位前拒绝。
+四项 IO 与第三方执行状态不变，详见 [分步计划](./docs/plugin-native-api-design.md)。
+
+P2.7d 通过 AppManifest 将已有应用命令接入 Tauri ACL，主窗口权限逐项列出，
+验证权限只存在固定身份的验证配置。原 Runtime grant/origin 检查保留，见
+[证据](./docs/validation/g8-native-acl.md)。不是逐插件隔离或新执行授权。
+
+P2.7c2：Desktop 生产 CSP 限制脚本、资源与嵌入；独立 devCsp 保留开发需求。
+bootstrap 先设置 Zod jitless，再加载 SDK/路由，wire 校验采用 c1 静态产物。
+HTTP(S) connect 仍为 T1 兼容范围，见 [证据](./docs/validation/g8-desktop-csp.md)。
+
+P2.7c1 将 Rust wire schema 的 AJV 校验移至构建期，客户端运行时不再编译
+Schema；build/契约检查拒绝陈旧产物。见 [证据](./docs/validation/g8-csp-validators.md)。
+
+G8 P2.7b：原生请求和私有 runner 输出先共用 Core 严格 JSON 帧解码，递归
+拒绝重复键，再验证原 DTO；身份/grant/效果仍由原 Runtime 检查负责。
+固定种子协议、重新签名 ZIP、媒体变异回归见
+[记录](./docs/validation/g8-security-regressions.md)，不改变线协议或生产信任。
+
+G8 P2.7a 的安全扫描由仓库构建脚本管理：固定上游 ZIP/程序摘要、完整 Git
+历史与精确历史豁免、实时 Bun/Rust 审计及真实拒绝对照。扫描工具只安装到
+系统临时目录，不进入产品 bundle、IPC、Host selector 或用户 profile。
+Desktop 移除 CrabNebula 调试依赖；通知 adapter 升级官方库，固定身份/纯文本
+和 broker/claim 语义不变。Zod 安全升级保留 v1 UTF-16 边界和旧原生契约。
+见 [验证与残余限制](./docs/validation/g8-security-scanners.md)；P2.7/G8 仍 pending。
+
 G7 已按批准范围完成 Windows/T1 功能原型；当前完整门禁与边界见
 [交付记录](./docs/validation/g7-functional-delivery.md)。实际文件/媒体链为：
 管理面绑定显式选择与 plan 摘要，Core 单 writer 保存私有定义/逐效果日志；
@@ -283,7 +318,7 @@ RPC 路由，二进制工具由共享 artifact store 与受管任务进程执行
   - `apps/web-vite/src/stores`：pluginRegistryStore、commandStore、runHistoryStore、settingsStore
   - `packages/sdk/src/compat/html-plugin.ts`：HTML `plugin.json` 类型、命令解析和兼容分级
   - `scripts/inspect-html-plugins.ts`：扫描本地 HTML 插件 checkout 并生成 `apps/desktop/src/data/html-plugin-catalog.json` 与 `docs/html-plugin-catalog.json`
-  - 15 个内置插件（全部为 app 类型，均提供 `setup()` + `run()` + `inputSchema`）
+  - 16 个内置插件（均为 app，提供 `setup()` + `run()` + `inputSchema`；原 15 个保留 v1，资源读取为显式 v2）
 - 目录已创建，尚未实现：
   - `apps/docs`
   - `apps/web`

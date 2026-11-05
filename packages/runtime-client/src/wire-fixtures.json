@@ -1966,6 +1966,155 @@
       }
     },
     {
+      "digest": "f3e8a57968fed37a32b8237d5377d40adb7df62323b4f0928a7c366892106532",
+      "manifest": {
+        "capabilityProfile": "flowtools-native-v2",
+        "commands": [
+          {
+            "capabilityProfile": "flowtools-native-v2",
+            "description": "分块读取文件或分页统计目录；结果仅含计数",
+            "effects": [
+              "file-read"
+            ],
+            "headless": true,
+            "id": "run",
+            "inputSchema": {
+              "additionalProperties": false,
+              "properties": {},
+              "type": "object"
+            },
+            "interaction": "optional",
+            "name": "读取所选资源",
+            "outputSchema": {
+              "additionalProperties": false,
+              "properties": {
+                "stdio": {
+                  "type": "string"
+                },
+                "type": {
+                  "const": "json",
+                  "type": "string"
+                },
+                "value": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "result": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "bytes": {
+                          "maximum": 9007199254740991,
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "entries": {
+                          "maximum": 9007199254740991,
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "kind": {
+                          "enum": [
+                            "file",
+                            "directory"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "bytes",
+                        "entries"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "result"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "type",
+                "value"
+              ],
+              "type": "object"
+            },
+            "permissions": [
+              {
+                "capability": "fs",
+                "operations": [
+                  "read",
+                  "stat",
+                  "list"
+                ],
+                "scopes": [
+                  {
+                    "kind": "resource",
+                    "slot": "source"
+                  }
+                ]
+              }
+            ],
+            "resources": {
+              "maxInputBytes": 1024,
+              "maxOutputBytes": 4096,
+              "timeoutMs": 30000
+            },
+            "runtimeValidation": {
+              "input": "required",
+              "output": "required"
+            },
+            "supportsColdStart": false
+          }
+        ],
+        "dependencies": {
+          "services": [],
+          "tools": []
+        },
+        "description": "授权后读取所选文件或统计目录",
+        "engines": {
+          "host": "^0.1.0",
+          "sdk": ">=0.0.0 <1.0.0"
+        },
+        "entries": {
+          "executor": "plugin-resource-reader.commands.js",
+          "ui": "plugin-resource-reader.js"
+        },
+        "files": [
+          {
+            "path": "plugin-resource-reader.commands.js",
+            "sha256": "8e8e831f7a62172b7860d18251d4e652628c9362f929d2cfcb83420d0ccd4624",
+            "size": 70
+          },
+          {
+            "path": "plugin-resource-reader.js",
+            "sha256": "c58a102d9f48e37cb47299dbab9244db4e4078728fd64ed2e7d1afdafcec81ca",
+            "size": 61
+          }
+        ],
+        "formatVersion": 2,
+        "id": "plugin-resource-reader",
+        "maturity": "prototype",
+        "name": "资源读取",
+        "publisher": "flowtools",
+        "signature": {
+          "status": "unsigned"
+        },
+        "targets": [
+          {
+            "arch": "x64",
+            "platform": "windows"
+          },
+          {
+            "arch": "wasm32",
+            "platform": "web"
+          }
+        ],
+        "type": "app",
+        "version": "0.0.1"
+      }
+    },
+    {
       "digest": "8448961499ad2b254826925f5bee5eb838a1f696734260548255bfb427e3aee3",
       "manifest": {
         "commands": [
@@ -2887,10 +3036,10 @@
   ],
   "providerUnloadPlan": {
     "affectedLocks": [
-      "0b2996a90d729d36d132f9806d83c7051d94f050a2cf5cdc3dec9526ed748b32"
+      "722c8f73860659a9f6a41b755595687b43f6f6ee65c560ab421bc9f651e43c34"
     ],
     "consumers": [],
-    "digest": "e147c171664771de0b35b9d0f958dc5f9e124af7d3448d382340b91a56c43af9",
+    "digest": "d2f48f9432a1aa55556ee21a3395dc1cf296f6354bd3478b75d7fa4f7f95e41e",
     "mode": "plan-only",
     "provider": {
       "digest": "aa50110fe95a458f2cc1b91c994f86bf325a52a16c8c643951452e06262c2906",
@@ -2919,6 +3068,36 @@
     "version": 1
   },
   "responses": [
+    {
+      "outcome": {
+        "data": {
+          "code": "CAPABILITY_UNAVAILABLE"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "RESOURCE_EXPIRED"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "NETWORK_FAILED"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
     {
       "outcome": {
         "data": {

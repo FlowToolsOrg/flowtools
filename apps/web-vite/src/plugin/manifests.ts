@@ -26,6 +26,7 @@ export const builtInManifestData = parseManifestCatalog(
     'plugin-media-inspector',
     'plugin-random-picker',
     'plugin-regex-tester',
+    'plugin-resource-reader',
     'plugin-text-ops',
     'plugin-timestamp-converter',
     'plugin-todo-list',
@@ -335,6 +336,36 @@ export const builtInManifests: PluginManifestEntry[] = [
       ),
   },
   {
+    id: 'plugin-resource-reader',
+    name: '资源读取',
+    version: '0.0.1',
+    maturity: 'prototype',
+    description: '授权后读取所选文件或统计目录',
+    type: 'app',
+    permissions: ['fs'],
+    cliAvailable: true,
+    loader: () =>
+      loadManifestModule(
+        builtInManifestData.find(
+          value => value.id === 'plugin-resource-reader'
+        ),
+        {
+          hostVersion: '0.1.0',
+          sdkVersion: '0.0.0',
+          platform: 'web',
+          arch: 'wasm32',
+        },
+        {
+          publisher: 'flowtools',
+          id: 'plugin-resource-reader',
+          version: '0.0.1',
+          type: 'app',
+          maturity: 'prototype',
+        },
+        () => import('@flowtools/plugins/plugin-resource-reader')
+      ),
+  },
+  {
     id: 'plugin-text-ops',
     name: '文本集合运算',
     version: '0.1.0',
@@ -512,6 +543,7 @@ export const pluginCategories = [
       'plugin-local-reminder',
       'plugin-media-converter',
       'plugin-media-inspector',
+      'plugin-resource-reader',
       'plugin-todo-list',
     ],
   },

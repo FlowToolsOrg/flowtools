@@ -88,6 +88,13 @@ impl RunnerBackend {
 #[derive(Deserialize)]
 #[serde(tag = "kind", rename_all = "kebab-case", deny_unknown_fields)]
 enum RunnerMessage {
+    Resource {
+        id: u32,
+        operation: flowtools_runtime_core::resources::ResourceOperation,
+    },
+    ResourceCancel {
+        id: u32,
+    },
     Media {
         id: u32,
         #[serde(rename = "planId")]
@@ -107,26 +114,75 @@ enum RunnerMessage {
         mutations: Vec<DataMutation>,
     },
 }
-async fn frame_read(stdout: &mut (impl AsyncRead + Unpin)) -> Result<RunnerMessage, ErrorCode> {
-    let length = stdout
-        .read_u32_le()
-        .await
-        .map_err(|_| ErrorCode::OutputInvalid)? as usize;
-    if length == 0 || length > MAX_FRAME_BYTES {
-        return Err(ErrorCode::OutputInvalid);
+#[derive(Default)]
+struct FrameReader {
+    header: [u8; 4],
+    header_read: usize,
+    body: Vec<u8>,
+    body_read: usize,
+}
+impl FrameReader {
+    async fn read(
+        &mut self,
+        stdout: &mut (impl AsyncRead + Unpin),
+    ) -> Result<RunnerMessage, ErrorCode> {
+        while self.header_read < 4 {
+            let count = stdout
+                .read(&mut self.header[self.header_read..])
+                .await
+                .map_err(|_| ErrorCode::OutputInvalid)?;
+            if count == 0 {
+                return Err(ErrorCode::OutputInvalid);
+            }
+            self.header_read += count;
+        }
+        let length = u32::from_le_bytes(self.header) as usize;
+        if length == 0 || length > MAX_FRAME_BYTES {
+            return Err(ErrorCode::OutputInvalid);
+        }
+        if self.body.is_empty() {
+            self.body.resize(length, 0);
+        }
+        while self.body_read < length {
+            let count = stdout
+                .read(&mut self.body[self.body_read..])
+                .await
+                .map_err(|_| ErrorCode::OutputInvalid)?;
+            if count == 0 {
+                return Err(ErrorCode::OutputInvalid);
+            }
+            self.body_read += count;
+        }
+        let bytes = std::mem::take(&mut self.body);
+        self.header_read = 0;
+        self.body_read = 0;
+        let mut value: Value = decode_frame(&bytes).map_err(|_| ErrorCode::OutputInvalid)?;
+        let object = value.as_object_mut().ok_or(ErrorCode::OutputInvalid)?;
+        if object.remove("version").and_then(|v| v.as_u64())
+            != Some(flowtools_runtime_core::native_contract::RUNNER_PROTOCOL_VERSION.into())
+        {
+            return Err(ErrorCode::ProtocolMismatch);
+        }
+        serde_json::from_value(value).map_err(|_| ErrorCode::OutputInvalid)
     }
-    let mut bytes = vec![0; length];
-    stdout
-        .read_exact(&mut bytes)
-        .await
-        .map_err(|_| ErrorCode::OutputInvalid)?;
-    serde_json::from_slice(&bytes).map_err(|_| ErrorCode::OutputInvalid)
+}
+#[cfg(test)]
+async fn frame_read(stdout: &mut (impl AsyncRead + Unpin)) -> Result<RunnerMessage, ErrorCode> {
+    FrameReader::default().read(stdout).await
 }
 async fn frame_write(
     stdin: &mut (impl AsyncWrite + Unpin),
     value: &Value,
 ) -> Result<(), ErrorCode> {
-    let bytes = serde_json::to_vec(value).map_err(|_| ErrorCode::OutputInvalid)?;
+    let mut value = value.clone();
+    value
+        .as_object_mut()
+        .ok_or(ErrorCode::OutputInvalid)?
+        .insert(
+            "version".into(),
+            json!(flowtools_runtime_core::native_contract::RUNNER_PROTOCOL_VERSION),
+        );
+    let bytes = serde_json::to_vec(&value).map_err(|_| ErrorCode::OutputInvalid)?;
     if bytes.len() > MAX_FRAME_BYTES {
         return Err(ErrorCode::OutputInvalid);
     }
@@ -145,6 +201,7 @@ fn reply(id: u32, result: Result<Value, ErrorCode>) -> Value {
         Err(code) => json!({"kind":"reply","id":id,"success":false,"errorCode":code}),
     }
 }
+
 async fn monitor(core: &Core, id: &str) -> ErrorCode {
     loop {
         tokio::time::sleep(Duration::from_millis(10)).await;
@@ -200,6 +257,9 @@ pub(super) fn execute(
         let mut stdin = child.stdin.take().ok_or(ErrorCode::ExecutionFailed)?;
         let mut stdout = child.stdout.take().ok_or(ErrorCode::ExecutionFailed)?;
         let mut payload = json!({"pluginId":spec.plugin_id,"commandId":spec.command_id,"input":spec.input,"packageDigest":spec.package_digest,"data":spec.data,"deadline":spec.deadline});
+        if target.is_none() && core.lock().await.resources_available(&spec.run_id) {
+            payload["resourceAccess"] = json!(true);
+        }
         if let Some(ref target) = target {
             payload["serviceTarget"] =
                 serde_json::to_value(target).map_err(|_| ErrorCode::InputInvalid)?;
@@ -209,17 +269,46 @@ pub(super) fn execute(
         let result = tokio::select! {
             result=tokio::time::timeout(duration,async {
                 frame_write(&mut stdin,&json!({"kind":"start","payload":payload})).await?;
-                let mut last_id=0; let mut frames=0;
+                let mut last_id=0; let mut frames=0;let mut reader=FrameReader::default();let mut completed_resource=None;
                 loop {
                     frames+=1; if frames>256 { return Err(ErrorCode::BudgetExceeded); }
                     core.lock().await.check_run(&run_id)?;
-                    match frame_read(&mut stdout).await? {
+                    match reader.read(&mut stdout).await? {
+                        RunnerMessage::ResourceCancel{id}=>{if completed_resource.take()!=Some(id) {return Err(ErrorCode::InvalidRequest);}},
+                        RunnerMessage::Resource{id,operation}=>{
+                            if id<=last_id {return Err(ErrorCode::InvalidRequest);}last_id=id;
+                            let prepared=core.lock().await.prepare_resource_call(&run_id,operation);
+                            let response=match prepared {
+                                Err(code)=>Err(code),
+                                Ok(work)=>{
+                                    let cancellation=work.cancellation.clone();
+                                    let mut io=crate::resource_io::execute(core.clone(),work,false);let mut cancelled=false;
+                                    loop {
+                                        tokio::select! {
+                                            result=&mut io=>break result.map_err(|_|ErrorCode::ExecutionInterrupted).and_then(|r|r),
+                                            frame=reader.read(&mut stdout)=>{
+                                                frames+=1;if frames>256{return Err(ErrorCode::BudgetExceeded);}
+                                                match frame? {
+                                                    RunnerMessage::ResourceCancel{id:cancel_id}if cancel_id==id&&!cancelled=>{
+                                                        cancelled=true;cancellation.cancel()?;
+                                                    },
+                                                    _=>{cancellation.cancel()?;return Err(ErrorCode::InvalidRequest);}
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            };
+                            completed_resource=Some(id);frame_write(&mut stdin,&reply(id,response)).await?;
+                        },
                         RunnerMessage::Media{id,plan_id}=> {
+                            completed_resource=None;
                             if id<=last_id {return Err(ErrorCode::InvalidRequest);} last_id=id;
                             let response=super::user_media::execute(&core,&run_id,&plan_id).await?;
                             frame_write(&mut stdin,&reply(id,Ok(response))).await?;
                         }
                         RunnerMessage::Service{id,target,input}=> {
+                            completed_resource=None;
                             if id<=last_id { return Err(ErrorCode::InvalidRequest); } last_id=id;
                             let next=core.lock().await.prepare_service(&run_id,target,input);
                             let response=match next {
@@ -250,6 +339,7 @@ pub(super) fn execute(
                             frame_write(&mut stdin,&reply(id,response)).await?;
                         }
                         RunnerMessage::Capability{id,operation}=> {
+                            completed_resource=None;
                             if id<=last_id { return Err(ErrorCode::InvalidRequest); } last_id=id;
                             let response=if let CapabilityOperation::Notification {title,message} = &operation {
                                 core.lock().await.deliver_notification(&run_id,title,message,|| crate::notification::send(title,message))
@@ -375,4 +465,74 @@ pub(super) fn execute(
         }
         Ok(data)
     })
+}
+
+#[cfg(test)]
+mod frame_security_tests {
+    use super::*;
+    #[tokio::test]
+    async fn cancelled_frame_read_keeps_partial_header_and_body_before_strict_resource_dispatch() {
+        let bytes =
+            serde_json::to_vec(&json!({"version":3,"kind":"resource-cancel","id":1})).unwrap();
+        for split in [2, 7] {
+            let mut frame = (bytes.len() as u32).to_le_bytes().to_vec();
+            frame.extend_from_slice(&bytes);
+            let (mut writer, mut stdout) = tokio::io::duplex(4096);
+            let mut reader = FrameReader::default();
+            writer.write_all(&frame[..split]).await.unwrap();
+            assert!(
+                tokio::time::timeout(Duration::from_millis(10), reader.read(&mut stdout))
+                    .await
+                    .is_err()
+            );
+            writer.write_all(&frame[split..]).await.unwrap();
+            assert!(matches!(
+                reader.read(&mut stdout).await,
+                Ok(RunnerMessage::ResourceCancel { id: 1 })
+            ));
+        }
+    }
+    #[tokio::test]
+    async fn old_or_missing_private_frame_version_is_refused_before_dispatch() {
+        for version in [None, Some(1), Some(2), Some(4), Some(65536)] {
+            let mut value = json!({"kind":"result","execution":{},"mutations":[]});
+            if let Some(version) = version {
+                value["version"] = json!(version);
+            }
+            let bytes = serde_json::to_vec(&value).unwrap();
+            let (mut writer, mut reader) = tokio::io::duplex(4096);
+            writer.write_u32_le(bytes.len() as u32).await.unwrap();
+            writer.write_all(&bytes).await.unwrap();
+            assert!(matches!(
+                frame_read(&mut reader).await,
+                Err(ErrorCode::ProtocolMismatch)
+            ));
+        }
+    }
+
+    #[tokio::test]
+    async fn duplicate_runner_output_is_refused_before_result_or_mutation_dispatch() {
+        for (bytes, valid) in [
+            (
+                br#"{"version":3,"kind":"result","execution":{"value":1},"mutations":[]}"#.as_slice(),
+                true,
+            ),
+            (
+                br#"{"version":3,"kind":"result","execution":{"value":1,"value":2},"mutations":[]}"#.as_slice(),
+                false,
+            ),
+        ] {
+            let (mut writer, mut reader) = tokio::io::duplex(4096);
+            writer.write_u32_le(bytes.len() as u32).await.unwrap();
+            writer.write_all(bytes).await.unwrap();
+            let result = tokio::time::timeout(Duration::from_secs(1), frame_read(&mut reader))
+                .await
+                .unwrap();
+            if valid {
+                assert!(matches!(result, Ok(RunnerMessage::Result { .. })));
+            } else {
+                assert!(matches!(result, Err(ErrorCode::OutputInvalid)));
+            }
+        }
+    }
 }

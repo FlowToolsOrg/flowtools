@@ -9,7 +9,7 @@ import type { Permission, ToolContext } from '@flowtools/sdk/types'
 import { createExecutionFailure, executePlugin } from '@flowtools/sdk/execution'
 import {
   executeManifestCommand,
-  type PluginManifestV1,
+  type PluginManifest,
 } from '@flowtools/sdk/manifest'
 
 import {
@@ -31,7 +31,7 @@ export type RunResult =
       error: { code: string; message: string }
     })
 interface CLIExecutablePlugin extends ExecutablePlugin {
-  manifest?: PluginManifestV1
+  manifest?: PluginManifest
   type?: 'app' | 'tool'
   meta: ExecutablePlugin['meta'] & { permissions?: readonly Permission[] }
 }

@@ -1,5 +1,64 @@
 # Repository Guidelines
 
+NA1 resources use the existing Runtime/PolicyStore/broker/DataStore writer.
+Keep v1 grants/Scope/corpus closed, format-2 rows guarded, paths in T0 selection
+only, ephemeral run refs and current authorization before each IO and delivery.
+Keep real NTFS/reparse/mapping, cursor/quota, cancellation and actual IO/process
+drain regressions. No service delegation or replay follows. Current wire client
+is 0.5.0/private frames 3; only the explicit main-window managed_resource_select
+permission is added. See [NA1](./docs/validation/na1-resources.md).
+
+Cargo audits must retain `Invoke-QualityCommand -RejectErrorOutput`: pinned
+cargo-audit can print registry errors and still exit zero. Keep actual stdout/
+stderr, ANSI, nonzero and warning regression controls; do not hide diagnostics.
+
+NA0 preserves the closed v1 parser, original 405-case bytes and structural export
+digest. Use explicit version dispatch for Manifest v2/profile declarations;
+never reinterpret its typed scopes as legacy grants. NA1 advances the exact wire
+versions above; unsupported v2 effects remain unavailable. Keep the separate LF
+v2 corpus/drift checks,
+actual signed ZIP/runner controls and byte-preserving policy tests. See
+[NA0 evidence](./docs/validation/na0-versioned-contracts.md).
+
+G8 P2.7d uses an explicit application AppManifest and local main-window command
+permissions. Never restore broad plugin/core default sets or grant validation
+commands in production capabilities. Keep generated permission TOML LF/content
+drift checks, actual pre-handler IPC refusals and the original native guard tests.
+See [evidence](./docs/validation/g8-native-acl.md). Main-window T1 authority is
+not per-plugin isolation or release approval.
+
+G8 P2.7c2 requires the nonempty production Desktop CSP and pre-SDK Zod jitless
+bootstrap. Keep production scripts free of unsafe-inline/unsafe-eval and remote
+sources; preserve Tauri's hash/nonce injection. Dev-only sources must remain in
+devCsp. Keep the actual Chromium attack and built-client regressions. HTTP(S)
+connect remains a T1 compatibility boundary, not per-plugin network isolation.
+See [evidence](./docs/validation/g8-desktop-csp.md).
+
+G8 P2.7c1 generates standalone wire validators from the Rust schema before CSP
+hardening. Client builds and Runtime contract verification must reject stale
+validator bytes; never refresh them to bypass CI. Keep generated LF attributes,
+original numeric formats and the actual no-dynamic-code artifact regression.
+See [evidence](./docs/validation/g8-csp-validators.md).
+
+G8 P2.7b routes native requests and private service output through the shared
+strict JSON frame decoder. Reject duplicate keys at every depth before dispatch;
+preserve existing size/deadline/authorization checks and wire versions. Keep the
+deterministic protocol, re-signed ZIP and media property regressions in the normal
+Core test inventory. See [evidence](./docs/validation/g8-security-regressions.md).
+This is neither a fuzz campaign nor independent review; P2.7/G8 remain pending.
+
+G8 P2.7a adds `bun run test:security` / `audit:dependencies` and
+`scripts/check-security.ps1`. Preserve complete Git history, upstream Gitleaks
+rules, redacted output, exact historical finding fingerprints, both archive and
+executable SHA-256 pins, actual scanner refusal controls and live audits of all
+four Cargo lockfiles. Network/database/scanner errors must fail; never suppress
+advisories, use stale/offline fallback or widen secret exceptions. Rust
+informational warnings remain visible and require review. Desktop no longer
+compiles CrabNebula devtools. Zod updates must preserve v1 UTF-16 limits, the
+original 405-case corpus and finite operation dialect. See
+[scope and evidence](./docs/validation/g8-security-scanners.md). This substep does
+not complete P2.7/G8 or authorize releases/third-party execution.
+
 2026-11-04：G7 已完成维护者批准的 Windows/T1 功能原型范围。当前实现源代码
 `02d416a` 已通过干净完整本机根门禁，详见
 [交付与边界](./docs/validation/g7-functional-delivery.md)；最终文档提交的远端
@@ -33,7 +92,7 @@ This repository is a Bun + Turbo monorepo.
 - `apps/ui-test`: consumer app for manual validation of `@flowtools/ui`.
   Manual UI validation remains required and complements automated coverage; it
   does not replace it.
-- `plugins/`: local plugin workspace with 15 built-in plugins (all app type,
+- `plugins/`: local plugin workspace with 16 built-in plugins (all app type,
   all CLI-compatible via `run()` + `inputSchema`).
 - `configs/tsdown`: shared package build config.
 - `docs/` and root docs such as `README.md` and `architecture.md`: product and
@@ -89,7 +148,7 @@ Run from repository root:
 - `bun run lint`: runs workspace lint tasks.
 - `bun run check-types`: runs workspace type checks.
 - `bun run test`: runs required workspace automated tests via Turbo.
-- `bun run smoke:plugins`: builds prerequisites and validates all fifteen actual
+- `bun run smoke:plugins`: builds prerequisites and validates all sixteen actual
   compiled entries with controlled request/storage, schema rejection and abort.
 - `bun run docs:check`: read-only core/ADR/threat/PR-template contracts and inline
   local link path checks; no remote URL, anchor or security certification.
@@ -1125,10 +1184,11 @@ All maturity labels stay prototype; SEC-001–SEC-012 remain open.
 
 Use @flowtools/sdk/manifest for bounded serialized metadata and operation
 validation, and @flowtools/sdk/manifest/package for Node-only file verification.
-Use parsePluginManifest with an explicit Host target before loading artifacts.
+Use parsePluginManifest for v1 and explicit parseVersionedPluginManifest dispatch
+for build-known v2, with an explicit Host target before loading artifacts.
 Keep custom Zod runtime validation explicit; never export an empty substitute.
 Run bun run verify:manifests after build:packages; it covers protocol fixtures
-and all fifteen actual compiled T1 packages. Keep commands.ts independent of
+and all sixteen actual compiled T1 packages. Keep commands.ts independent of
 React/UI/Tauri and build fixed <known-id>.commands.js entries. Generated JSON
 lives outside dist to avoid self-referential hashes. CLI validates the bounded
 catalog and exact file list/hash before importing a command; no source fallback.

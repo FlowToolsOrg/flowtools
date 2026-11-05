@@ -1,5 +1,35 @@
 # Flow Tool
 
+NA1 adds [selected read-only resources](./docs/validation/na1-resources.md) through
+the existing Runtime, grants and single writer. `ctx.resources` reads run-bound
+references in bounded chunks or directory pages. Desktop settings and
+`flowtools resources` explicitly select and bind resources. The original 15 v1
+plugins remain; one fixed v2 resource-reader brings the inventory to 16.
+Wire client 0.5.0/private frames 3 refuse old peers. Other native effects,
+third-party execution and release approval remain pending.
+
+Desktop native commands now use an application ACL and explicit main-window
+permissions. See [P2.7d validation](./docs/validation/g8-native-acl.md) for actual
+pre-handler refusals and remaining T1 boundaries.
+
+Desktop now has a production CSP with restricted scripts and blocked embedded
+content. [P2.7c2 evidence](./docs/validation/g8-desktop-csp.md) records actual
+browser refusals and the remaining network/native acceptance boundaries.
+
+Runtime client wire validation is generated at build time for CSP compatibility.
+Builds reject stale validators; see [P2.7c1](./docs/validation/g8-csp-validators.md).
+
+G8 P2.7b now rejects duplicate JSON keys in native requests and service output
+before dispatch. Deterministic parser/property regressions cover the wire,
+re-signed ZIPs and media projections; see the
+[security regression record](./docs/validation/g8-security-regressions.md).
+
+G8 starts with P2.7a: `bun run test:security` runs scanner contracts, full-history
+redacted secret scanning and live dependency audits of Bun and all four Cargo
+locks. Windows PR/main/feature/release gates run it before builds. See
+[scope and evidence](./docs/validation/g8-security-scanners.md); security review,
+signed distribution, marketplace and Beta acceptance remain pending.
+
 G7 is complete within the approved Windows/T1 functional prototype scope:
 journaled file commit/retry/undo, two real managed media plugins, scheduling,
 reminders, launcher search and Desktop settings share the Runtime and CLI.
@@ -319,14 +349,14 @@ development-mode results and standalone packaged-app acceptance are recorded
 separately; a successful build or URL-resolution test is not visual sign-off.
 This helper does not isolate code or stop synchronous loops. Execution
 metadata records input shape only, never raw input values or field names.
-`bun run smoke:plugins` builds package prerequisites and exercises all fifteen
+`bun run smoke:plugins` builds package prerequisites and exercises all sixteen
 real compiled entries through the CLI SDK runner with controlled in-memory
 storage and scoped fixture responses, not public network or user data. It also
 checks schema rejection, cancellation and actual plugin exceptions.
 Todo JSON runs share the host app store with its panel (CLI retains its existing
 validated `todos` key). Website latency uses SDK request with no raw fetch fallback.
 The SDK's maturity vocabulary is `prototype`, `experimental`, `beta`,
-`production`; missing metadata means `prototype`. All fifteen built-ins and both
+`production`; missing metadata means `prototype`. All sixteen built-ins and both
 host manifests explicitly declare `prototype`, also shown by CLI list/info.
 Compatibility evidence (`indexed` through `production-certified`) is separate
 and never grants execution or proves maturity. Shared UI, Web and Desktop read
@@ -410,7 +440,7 @@ verification is recorded in [the artifact gate](./docs/validation/p0-production-
     API globals expected by those plugins. Bridge calls are handled by the
     desktop SDK runtime context and then mapped to Tauri plugins where native
     access is required.
-- Local plugin workspace with 15 built-in plugins (all app type, all CLI-compatible via `run()` + `inputSchema`):
+- Local plugin workspace with 16 built-in plugins (all app type, all CLI-compatible via `run()` + `inputSchema`; resources require explicit management binding):
   - `plugins/plugin-todo-list` — 待办清单（host-managed store）
   - `plugins/plugin-uuid-generator` — UUID 生成器
   - `plugins/plugin-hash-generator` — 哈希生成器
@@ -909,7 +939,8 @@ All maturity labels stay prototype; SEC-001–SEC-012 remain open.
 The React-free SDK manifest subpath validates serialized commands and package
 metadata. Node file verification is a separate read-only subpath; it does not
 grant external execution. See [Manifest v1](./docs/manifest-v1.md). P1.1a is
-implemented. P1.1b now builds fifteen separate UI/command entries and validates the
+implemented. The current inventory builds sixteen separate UI/command entries (15 v1,
+one resource-reader v2) and validates the
 fixed compiled CLI packages before import. P1.1c adds Manifest-driven
 `commands`, `describe`, help, flags and sequential JSON batch input. Web/Desktop
 validate the same contract before UI import and use it for execution. See the
@@ -1107,7 +1138,7 @@ A/B/C fixtures execute through real compiled handlers and bounded child pipes.
 Updates wait for accepted work and owned processes, then back up and migrate;
 uncertain commits refuse admission and require recovery. CLI
 `dependencies unload-plan` and `dependencies calls` inspect metadata only.
-The fifteen bundled prototype built-ins still declare no services. G4 implementation
+The sixteen bundled prototype built-ins still declare no services. G4 implementation
 remains prototype; six real abnormal-drain fixtures have independent baseline
 evidence, while this integration and independent security approval remain pending. Signed installation,
 third-party isolation and real tool storage remain G5/G6.

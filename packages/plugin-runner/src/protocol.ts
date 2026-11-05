@@ -5,6 +5,10 @@ import type {
   NotificationStatus,
 } from '@flowtools/sdk/types'
 
+import {
+  RUNNER_PROTOCOL_VERSION,
+  createResourceCapability,
+} from '@flowtools/runtime-client'
 import { isJsonValue } from '@flowtools/sdk/manifest'
 import { serviceTargetSchema } from '@flowtools/sdk/services'
 
@@ -36,24 +40,53 @@ export class RunnerFrames {
     await fill(length + 4)
     const bytes = this.buffer.subarray(4, length + 4)
     this.buffer = this.buffer.subarray(length + 4)
-    return JSON.parse(bytes.toString('utf8')) as unknown
+    const value: unknown = JSON.parse(
+      new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+    )
+    if (
+      !value ||
+      typeof value !== 'object' ||
+      !('version' in value) ||
+      value.version !== RUNNER_PROTOCOL_VERSION
+    )
+      throw new Error('PROTOCOL_MISMATCH')
+    return value
   }
   write(value: unknown): void {
-    const body = Buffer.from(JSON.stringify(value))
+    const body = Buffer.from(
+      JSON.stringify({ ...(value as object), version: RUNNER_PROTOCOL_VERSION })
+    )
     if (!body.length || body.length > limit) throw new Error('FRAME_TOO_LARGE')
     const header = Buffer.alloc(4)
     header.writeUInt32LE(body.length)
     process.stdout.write(Buffer.concat([header, body]))
   }
-  private exchange(value: unknown): Promise<JsonValue> {
+  private exchange(value: unknown, signal?: AbortSignal): Promise<JsonValue> {
     // Snapshot and bound before entering the queue; callers cannot race mutation.
     const snapshot = JSON.stringify(value)
     if (Buffer.byteLength(snapshot) > limit - 1024)
       return Promise.reject(new Error('FRAME_TOO_LARGE'))
     const request = async () => {
+      if (signal?.aborted) throw new Error('ABORTED')
+      if (this.sequence >= 255) throw new Error('BUDGET_EXCEEDED')
       const id = ++this.sequence
       this.write({ ...(JSON.parse(snapshot) as object), id })
-      const reply = await this.read()
+      let cancelled = false
+      const cancel = () => {
+        if (!cancelled) {
+          cancelled = true
+          this.write({ kind: 'resource-cancel', id })
+        }
+      }
+      signal?.addEventListener('abort', cancel, { once: true })
+      let reply: unknown
+      try {
+        if (signal?.aborted) cancel()
+        reply = await this.read()
+      } finally {
+        signal?.removeEventListener('abort', cancel)
+      }
+      if (cancelled) throw new Error('ABORTED')
       if (!reply || typeof reply !== 'object')
         throw new Error('INVALID_RESPONSE')
       const response = reply as Record<string, unknown>
@@ -63,8 +96,8 @@ export class RunnerFrames {
         typeof response.success !== 'boolean' ||
         Object.keys(response).sort().join(',') !==
           (response.success
-            ? 'data,id,kind,success'
-            : 'errorCode,id,kind,success')
+            ? 'data,id,kind,success,version'
+            : 'errorCode,id,kind,success,version')
       )
         throw new Error('INVALID_RESPONSE')
       if (!response.success) {
@@ -89,6 +122,9 @@ export class RunnerFrames {
       return this.exchange({ kind: 'service', target: parsed, input })
     },
   }
+  readonly resources = createResourceCapability((operation, signal) =>
+    this.exchange({ kind: 'resource', operation }, signal)
+  )
   readonly artifacts: ArtifactCapability = {
     read: handle => {
       if (!/^[a-zA-Z0-9_-]{1,128}$/.test(handle))
@@ -150,7 +186,7 @@ export async function serveRunner(
   if (
     !initial ||
     typeof initial !== 'object' ||
-    Object.keys(initial).sort().join(',') !== 'kind,payload' ||
+    Object.keys(initial).sort().join(',') !== 'kind,payload,version' ||
     (initial as { kind?: unknown }).kind !== 'start'
   )
     throw new Error('INVALID_REQUEST')

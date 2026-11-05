@@ -13,7 +13,7 @@ import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 
-import { parsePluginManifest } from '@flowtools/sdk/manifest'
+import { parseVersionedPluginManifest } from '@flowtools/sdk/manifest'
 import ts from 'typescript'
 
 import { pluginSmokeFixtures } from './smoke-fixtures'
@@ -107,7 +107,9 @@ test('all real command artifacts run in a consumer with no React, GUI or source 
         'utf8'
       )
     ) as { plugins: unknown[] }
-    const manifests = catalog.plugins.map(value => parsePluginManifest(value))
+    const manifests = catalog.plugins.map(value =>
+      parseVersionedPluginManifest(value)
+    )
     writeFileSync(
       join(root, 'fixtures.json'),
       JSON.stringify(pluginSmokeFixtures)
@@ -135,6 +137,7 @@ test('all real command artifacts run in a consumer with no React, GUI or source 
           ui:{toast(){},openPanel(){},closePanel(){}},signal:new AbortController().signal,log(){},utils:{now:Date.now},
           storage:{get:key=>values.get(key),set:(key,value)=>{writes.push(key);values.set(key,value)}},
           media:{run:async planId=>{assert.equal(planId,'00000000-0000-4000-8000-000000000001');return structuredClone(fixture.expected.value.result)}},
+          resources:{resolve:async()=>({ref:'fixture',kind:'file',name:'fixture',size:3,revision:'one',rights:['read','stat']}),read:async(ref,options)=>{assert.equal(ref,'fixture');assert.equal(options.revision,'one');assert.equal(options.offset,0);return {bytes:new Uint8Array([1,2,3]),nextOffset:3,eof:true}},release:async ref=>{assert.equal(ref,'fixture')}},
           request:async input=>{assert.equal(input,'https://latency.fixture.invalid/');requests.push(input);return new Response('fixture')}};
         const manifest=manifests.find(item=>item.id===fixture.id);
         const target={hostVersion:'0.1.0',sdkVersion:'0.0.0',platform:'windows',arch:'x64'};
@@ -148,7 +151,7 @@ test('all real command artifacts run in a consumer with no React, GUI or source 
         const cancelled=await executeManifestCommand(manifest,'run',plugin,fixture.input,ctx,target,{signal:abort.signal});
         assert.equal(cancelled.error.code,'ABORTED');
       }
-      console.log('15 real command artifacts: no React/UI/source; actual outputs, schema rejection and abort passed');
+      console.log('16 real command artifacts: no React/UI/source; actual outputs, schema rejection and abort passed');
     `
     )
     const child = Bun.spawn(['node', join(root, 'probe.mjs')], {
@@ -163,7 +166,7 @@ test('all real command artifacts run in a consumer with no React, GUI or source 
     ])
     expect(stderr).toBe('')
     expect(code).toBe(0)
-    expect(stdout).toContain('15 real command artifacts')
+    expect(stdout).toContain('16 real command artifacts')
   } finally {
     const canonical = realpathSync(root)
     expect(dirname(canonical)).toBe(realpathSync(tmpdir()))

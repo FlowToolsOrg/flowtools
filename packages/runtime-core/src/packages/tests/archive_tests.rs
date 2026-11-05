@@ -16,7 +16,7 @@ fn zip_bytes(files: &[(&str, &[u8])], method: CompressionMethod) -> Vec<u8> {
     }
     zip.finish().unwrap().into_inner()
 }
-fn fixture(method: CompressionMethod) -> Fixture {
+pub(super) fn fixture(method: CompressionMethod) -> Fixture {
     let mut fixture = Fixture::new();
     let source = b"throw new Error('FIXTURE_MUST_NOT_EXECUTE')";
     fixture.package.files = vec![PackageFile {

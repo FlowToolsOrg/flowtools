@@ -94,7 +94,7 @@ test('client validates schedules and rejects substituted positions and duplicate
     await client({ type: 'schedule', data: record }).createSchedule(create)
   ).toEqual(record)
   expect(validScheduleRecord({ ...record, nextIndex: 4 })).toBe(false)
-  await expect(
+  expect(
     client({ type: 'schedules', data: [record, record] }).schedules()
   ).rejects.toThrow('INVALID_RESPONSE')
   expect(() =>

@@ -85,6 +85,7 @@ import {
   recordLauncherOpen,
 } from './settings/launcher-preferences'
 import { MediaSettings } from './settings/media-settings'
+import { ResourceSettings } from './settings/resource-settings'
 import { RuntimeStatusSettings } from './settings/runtime-status-settings'
 import { ScheduleSettings } from './settings/schedule-settings'
 import { ToolSettings } from './settings/tool-settings'
@@ -1264,6 +1265,7 @@ function SettingsView() {
         <ScheduleSettings />
         <FileSettings />
         <MediaSettings />
+        <ResourceSettings />
         <ToolSettings />
         <DesktopAppearanceSettings />
         <SettingsRow

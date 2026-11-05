@@ -2,10 +2,7 @@
 
 import type { OutputFormat } from './types'
 import type { ExecutionErrorCode } from '@flowtools/sdk/execution'
-import type {
-  PluginManifestV1,
-  CommandManifestV1,
-} from '@flowtools/sdk/manifest'
+import type { PluginManifest, CommandManifest } from '@flowtools/sdk/manifest'
 
 import { createExecutionFailure } from '@flowtools/sdk/execution'
 import { commandIdentity } from '@flowtools/sdk/manifest'
@@ -30,6 +27,7 @@ import { addRuntimeCommands } from './host'
 import { addJobCommands } from './jobs'
 import { addManagementCommands, managementFailure } from './management'
 import { addMediaCommands } from './media'
+import { addResourceCommands } from './resources'
 import { parseRunArguments, requestedRunFormat } from './run-arguments'
 import { printExecutionResult, runPlugin } from './runner'
 import { addScheduleCommands } from './schedules'
@@ -53,6 +51,7 @@ addDependencyCommands(program)
 addToolCommands(program)
 addFileCommands(program)
 addMediaCommands(program)
+addResourceCommands(program)
 
 function writeJson(value: unknown) {
   process.stdout.write(JSON.stringify(value, null, 2) + '\n')
@@ -90,7 +89,7 @@ function formatOption(format: string): OutputFormat {
   throw new CLIInputError('INVALID_INPUT_SHAPE', 'Unsupported format')
 }
 
-function manifestFor(pluginId: string, format: OutputFormat): PluginManifestV1 {
+function manifestFor(pluginId: string, format: OutputFormat): PluginManifest {
   if (!getBuiltinPluginInfo(pluginId))
     fail(pluginId, 'PLUGIN_NOT_FOUND', format)
   try {
@@ -103,21 +102,18 @@ function manifestFor(pluginId: string, format: OutputFormat): PluginManifestV1 {
 }
 
 function operationFor(
-  manifest: PluginManifestV1,
+  manifest: PluginManifest,
   commandId: string,
   format: OutputFormat
-): CommandManifestV1 {
+): CommandManifest {
   const command = manifest.commands.find(item => item.id === commandId)
   if (!command) fail(manifest.id, 'NOT_RUNNABLE', format)
   return command
 }
 
-function describeCommand(
-  manifest: PluginManifestV1,
-  command: CommandManifestV1
-) {
+function describeCommand(manifest: PluginManifest, command: CommandManifest) {
   return {
-    formatVersion: 1,
+    formatVersion: manifest.formatVersion,
     identity: commandIdentity(manifest, command),
     publisher: manifest.publisher,
     packageDigest: manifestPackageDigest(manifest),
@@ -176,7 +172,11 @@ program
         describeCommand(manifest, command)
       )
     })
-    if (format === 'json') return writeJson({ formatVersion: 1, commands })
+    if (format === 'json')
+      return writeJson({
+        formatVersion: commands.some(item => item.formatVersion === 2) ? 2 : 1,
+        commands,
+      })
     for (const item of commands)
       process.stdout.write(
         `${item.identity} [${item.maturity}] ${item.command.name} — ${item.command.description}\n`
@@ -385,6 +385,7 @@ main().catch(error => {
       'schedules',
       'files',
       'media',
+      'resources',
     ].includes(process.argv[2] ?? '')
   ) {
     managementFailure(error)

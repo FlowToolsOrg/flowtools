@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 
 import {
   exportManifestValidationContract,
+  exportManifestV2ValidationContract,
   parseManifestCatalog,
 } from '@flowtools/sdk/manifest'
 
@@ -34,4 +35,8 @@ writeFileSync(
 writeFileSync(
   resolve(directory, 'manifest-validation.json'),
   JSON.stringify(exportManifestValidationContract()) + '\n'
+)
+writeFileSync(
+  resolve(directory, 'manifest-validation-v2.json'),
+  JSON.stringify(exportManifestV2ValidationContract()) + '\n'
 )

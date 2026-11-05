@@ -16,6 +16,160 @@ use tokio::{
 
 #[derive(Default)]
 pub struct ManagedConnections(pub std::sync::Arc<Mutex<HashMap<String, NamedPipeClient>>>);
+#[derive(serde::Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ResourceChoice {
+    pub owner: flowtools_runtime_core::resources::ResourceOwner,
+    pub resource: flowtools_runtime_core::resources::ResourceInfo,
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn managed_resource_select<R: tauri::Runtime>(
+    app: tauri::AppHandle<R>,
+    window: tauri::WebviewWindow<R>,
+    kind: flowtools_runtime_core::resources::ResourceKind,
+    plugin_id: String,
+    command_id: String,
+    slot: String,
+) -> Result<Option<ResourceChoice>, RuntimeError> {
+    use flowtools_runtime_core::resources::*;
+    let profile = check(&window)?;
+    if [&plugin_id, &command_id, &slot]
+        .iter()
+        .any(|id| id.is_empty() || id.len() > 96)
+    {
+        return Err(error(ErrorCode::InvalidRequest));
+    }
+    let catalog = flowtools_runtime_core::catalog::BuiltinCatalog::embedded_with_media();
+    let (manifest, declared_command) = catalog.command(&plugin_id, &command_id).map_err(error)?;
+    let required = if kind == ResourceKind::File {
+        ResourceRight::Read
+    } else {
+        ResourceRight::List
+    };
+    if !readonly_command(declared_command) || !declared(declared_command, &slot, required) {
+        return Err(error(ErrorCode::CapabilityUnavailable));
+    }
+    let mut rights = vec![required];
+    if declared(declared_command, &slot, ResourceRight::Stat) {
+        rights.push(ResourceRight::Stat);
+    }
+    let dialog_app = app.clone();
+    let picked = tauri::async_runtime::spawn_blocking(move || {
+        let picker = dialog_app
+            .dialog()
+            .file()
+            .set_title("选择供资源读取命令使用的资源");
+        if kind == ResourceKind::File {
+            picker.blocking_pick_file()
+        } else {
+            picker.blocking_pick_folder()
+        }
+    })
+    .await
+    .map_err(|_| error(ErrorCode::InteractionRequired))?;
+    let Some(picked) = picked else {
+        return Ok(None);
+    };
+    if check(&window)? != profile {
+        return Err(error(ErrorCode::SessionInvalid));
+    }
+    let path = picked
+        .into_path()
+        .map_err(|_| error(ErrorCode::ScopeDenied))?;
+    let name = path
+        .file_name()
+        .and_then(|s| s.to_str())
+        .ok_or_else(|| error(ErrorCode::ScopeDenied))?;
+    let prompt=format!("允许内置包 {} / 命令 {} 使用所选资源 {}？\n{}\n授权有效期 5 分钟，仅供桌面本次选择绑定；点击运行后开始。",manifest["name"],declared_command["name"],serde_json::to_string(name).map_err(|_|error(ErrorCode::InvalidRequest))?,if kind==ResourceKind::File{"只读文件，最多 64 MiB；不修改文件。"}else{"只列出一层条目，不读取子文件内容。"});
+    let approved = tauri::async_runtime::spawn_blocking(move || {
+        app.dialog()
+            .message(prompt)
+            .title("确认资源权限")
+            .buttons(MessageDialogButtons::OkCancel)
+            .blocking_show()
+    })
+    .await
+    .map_err(|_| error(ErrorCode::InteractionRequired))?;
+    if !approved {
+        return Err(error(ErrorCode::ApprovalRequired));
+    }
+    if check(&window)? != profile {
+        return Err(error(ErrorCode::SessionInvalid));
+    }
+    let output = native_output("--start-runtime", &profile).await?;
+    if !output.status.success() {
+        return Err(error(ErrorCode::ColdStartDenied));
+    }
+    let grant = ResourceGrant {
+        format_version: 2,
+        capability_profile: flowtools_runtime_core::native_contract::NATIVE_CAPABILITY_PROFILE
+            .into(),
+        plugin_id: plugin_id.clone(),
+        command_id: command_id.clone(),
+        target: GrantTarget::Desktop,
+        package_digest: flowtools_runtime_core::catalog::digest(manifest),
+        scopes: vec![ResourceScope {
+            slot: slot.clone(),
+            operations: rights,
+        }],
+        expires_at: flowtools_runtime_core::runtime::now() + 300_000.0,
+        max_calls: 4096,
+    };
+    let (mut pipe, proof, temporary) = manager(profile, false).await?;
+    if temporary.is_some() {
+        return Err(error(ErrorCode::InteractionRequired));
+    }
+    let mut send = async |call| -> Result<Outcome, RuntimeError> {
+        let response = exchange(
+            &mut pipe,
+            &Request {
+                version: PROTOCOL_MAJOR,
+                request_id: uuid(),
+                session: Some(proof.clone()),
+                call,
+            },
+        )
+        .await?;
+        match response.outcome {
+            Outcome::Error(e) => Err(e),
+            v => Ok(v),
+        }
+    };
+    send(Call::ResourceGrant(grant)).await?;
+    let Outcome::ResourceOwner(owner) = send(Call::ResourceOwner(ResourceOwnerRequest {
+        key: PermissionKey {
+            plugin_id,
+            command_id,
+            target: GrantTarget::Desktop,
+        },
+    }))
+    .await?
+    else {
+        return Err(error(ErrorCode::OutputInvalid));
+    };
+    let selected = send(Call::ResourceSelect(ResourceSelection {
+        owner: owner.id.clone(),
+        slot,
+        kind,
+        path: path
+            .to_str()
+            .ok_or_else(|| error(ErrorCode::ScopeDenied))?
+            .into(),
+    }))
+    .await;
+    match selected {
+        Ok(Outcome::Resource(resource)) => Ok(Some(ResourceChoice { owner, resource })),
+        result => {
+            let _ = send(Call::ResourceDrop(ResourceOwnerKey { owner: owner.id })).await;
+            Err(match result {
+                Err(e) => e,
+                _ => error(ErrorCode::OutputInvalid),
+            })
+        }
+    }
+}
 fn error(code: ErrorCode) -> RuntimeError {
     RuntimeError { code }
 }
@@ -279,6 +433,7 @@ fn business(call: &Call) -> bool {
             | Call::Plugins
             | Call::Jobs
             | Call::Submit(_)
+            | Call::ResourceSubmit(_)
             | Call::Lookup(_)
             | Call::Job(_)
             | Call::Diagnose(_)
@@ -474,6 +629,7 @@ pub async fn managed_runtime_control<R: tauri::Runtime>(
     if !matches!(
         call,
         Call::Permissions
+            | Call::ResourceDrop(_)
             | Call::Plugins
             | Call::Schedules
             | Call::ScheduleCreate(_)
@@ -506,6 +662,7 @@ pub async fn managed_runtime_control<R: tauri::Runtime>(
     if !matches!(
         call,
         Call::Permissions
+            | Call::ResourceDrop(_)
             | Call::Plugins
             | Call::Schedules
             | Call::Revoke(_)
@@ -916,5 +1073,32 @@ mod tests {
             cold_start: true
         })));
         assert!(business(&Call::Jobs));
+        assert!(business(&Call::ResourceSubmit(
+            flowtools_runtime_core::resources::ResourceSubmission {
+                owner: "candidate-owner".into(),
+                submit: SubmitJob {
+                    plugin_id: "plugin-resource-reader".into(),
+                    command_id: "run".into(),
+                    input: serde_json::json!({}),
+                    background: false,
+                    deadline: 1.0,
+                    idempotency_key: "native-resource-test".into(),
+                },
+            }
+        )));
+        assert!(!business(&Call::ResourcePermissions));
+        assert!(!business(&Call::ResourceDrop(
+            flowtools_runtime_core::resources::ResourceOwnerKey {
+                owner: "candidate-owner".into()
+            }
+        )));
+        assert!(!business(&Call::ResourceSelect(
+            flowtools_runtime_core::resources::ResourceSelection {
+                owner: "candidate-owner".into(),
+                slot: "source".into(),
+                path: "C:\\never-open".into(),
+                kind: flowtools_runtime_core::resources::ResourceKind::File,
+            }
+        )));
     }
 }

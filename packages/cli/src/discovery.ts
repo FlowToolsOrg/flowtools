@@ -3,8 +3,8 @@ import type { CLIPluginInfo } from './types'
 import type { ExecutablePlugin } from '@flowtools/sdk/execution'
 import type {
   ManifestTarget,
-  PluginManifestV1,
-  CommandManifestV1,
+  PluginManifest,
+  CommandManifest,
 } from '@flowtools/sdk/manifest'
 import type { PluginMeta } from '@flowtools/sdk/types'
 import type { z as Zod } from 'zod'
@@ -13,7 +13,11 @@ import { lstatSync, realpathSync, readFileSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
-import { parsePluginManifest, equalJsonValues } from '@flowtools/sdk/manifest'
+import {
+  parseVersionedPluginManifest,
+  equalJsonValues,
+  isResourceCommand,
+} from '@flowtools/sdk/manifest'
 import {
   manifestPackageDigest,
   verifyManifestPackage,
@@ -41,8 +45,8 @@ export interface CLICommandPlugin extends ExecutablePlugin {
   meta: PluginMeta
   inputSchema: Zod.ZodObject<Zod.ZodRawShape>
   outputSchema: Zod.ZodType
-  command: CommandManifestV1
-  manifest: PluginManifestV1
+  command: CommandManifest
+  manifest: PluginManifest
 }
 
 export const cliManifestTarget: ManifestTarget = {
@@ -58,7 +62,7 @@ export const cliManifestTarget: ManifestTarget = {
 }
 
 /** Fixed build data only. It cannot add inventory IDs, paths, or an execution grant. */
-function readBuiltinManifests(): Map<string, PluginManifestV1> {
+function readBuiltinManifests(): Map<string, PluginManifest> {
   for (const directory of [PLUGINS_DIR, CATALOG_DIR]) {
     const stat = lstatSync(directory)
     if (
@@ -78,9 +82,9 @@ function readBuiltinManifests(): Map<string, PluginManifestV1> {
       plugins: z.array(z.unknown()).length(inventory.size),
     })
     .parse(JSON.parse(readFileSync(path, 'utf8')))
-  const manifests = new Map<string, PluginManifestV1>()
+  const manifests = new Map<string, PluginManifest>()
   for (const value of catalog.plugins) {
-    const manifest = parsePluginManifest(value, cliManifestTarget)
+    const manifest = parseVersionedPluginManifest(value, cliManifestTarget)
     const expected = inventory.get(manifest.id)
     if (
       !expected ||
@@ -99,7 +103,7 @@ function readBuiltinManifests(): Map<string, PluginManifestV1> {
   return manifests
 }
 
-export function getBuiltinCommandManifest(id: string): PluginManifestV1 | null {
+export function getBuiltinCommandManifest(id: string): PluginManifest | null {
   if (!inventory.has(id)) return null
   if (!compiledArtifact(id))
     throw new Error('Built-in command artifact unavailable')
@@ -156,6 +160,15 @@ export async function loadBuiltinServices(
   if (!inventory.has(id)) return null
   if (!/^[a-f0-9]{64}$/.test(expectedPackageDigest)) return null
   const manifest = getBuiltinCommandManifest(id)
+  if (
+    manifest?.formatVersion === 2 &&
+    manifest.services?.some(service =>
+      service.operations.some(
+        operation => operation.effects.length || operation.permissions.length
+      )
+    )
+  )
+    return null
   if (
     !manifest?.services?.length ||
     manifest.entries.services !== `${id}.services.js` ||
@@ -216,7 +229,10 @@ export async function loadBuiltinServices(
  * Only load the compiled T1 module declared by this host build. This is not a
  * package signature, an OS sandbox, or protection against replacing T1 files.
  */
-export async function loadPlugin(id: string): Promise<CLICommandPlugin | null> {
+export async function loadPlugin(
+  id: string,
+  adapters: { resources?: boolean } = {}
+): Promise<CLICommandPlugin | null> {
   const expected = getBuiltinPluginInfo(id)
   if (!expected?.hasRun) return null
   const artifact = compiledArtifact(id)
@@ -224,6 +240,15 @@ export async function loadPlugin(id: string): Promise<CLICommandPlugin | null> {
   try {
     const manifest = getBuiltinCommandManifest(id)
     if (!manifest) return null
+    if (
+      manifest.formatVersion === 2 &&
+      manifest.commands.some(
+        command =>
+          (command.effects.length || command.permissions.length) &&
+          !(adapters.resources && isResourceCommand(command))
+      )
+    )
+      return null
     verifyManifestPackage(DIST_DIR, manifest, cliManifestTarget)
     const imported: unknown = await import(pathToFileURL(artifact).href)
     const module = imported as { default?: CLICommandPlugin }

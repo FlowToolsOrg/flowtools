@@ -1,7 +1,42 @@
 # Flow Tool Plugin 开发指南
 
+NA1 的 Windows/T1 Runtime 提供可选 `ctx.resources`：resolve、stat、read、list 和
+幂等 release。read 返回最多 64 KiB 的 Uint8Array，要求 revision/offset/maxBytes，
+可传 signal；list 要求 revision/cursor/limit，只列一层，child 仅 stat。名称只作
+文本，不能拼接为路径或授权。Manifest v2 使用 fs 的 resource slot，T0 显式 grant/
+选择后才可绑定前台命令；普通 run 输入/flags 不授予资源。原 15 个 v1 插件保持，
+新增固定 resource-reader 后为 16。当前 wire 0.5.0/私有帧 3，见
+[使用与限制](./validation/na1-resources.md)。其他能力继续按计划推进。
+
+NA0 提供 `parseVersionedPluginManifest()` 和独立的 Manifest v2/profile 声明；
+`parsePluginManifest()` 仍仅接受 v1，原内置库存不升级。新 typed scope 不等于
+grant，NA0 时带效果的 v2 命令拒绝，历史 client 为 0.4.0，见
+[契约与验证](./validation/na0-versioned-contracts.md)。`ctx.resources/opener/secrets`
+与 `ctx.request.managed` 仍按 [NA1–NA7 计划](./plugin-native-api-design.md) 实施。
+
+Desktop 原生命令现在受 main/local AppManifest ACL 约束，插件/core 默认
+权限集已收敛为显式列表；这不是插件自身的 grant。普通构建无 validation、
+raw SQL/FS 写入/clipboard/shell 权限，详见 [d](./validation/g8-native-acl.md)。
+
+Desktop 生产 CSP 不允许动态脚本/eval、第三方 frame/worker 或远程脚本；
+内置插件仍使用已编译入口。HTTP(S) request 保持现有 T1 行为，不构成通用
+网络隔离或 grant。开发策略独立，见 [c2](./validation/g8-desktop-csp.md)。
+
+客户端 wire 校验改用构建期生成函数；原 DTO、有限数字格式和接受/拒绝规则
+不变，不授予插件权限。修改协议需运行生成与漂移检查，见
+[P2.7c1](./validation/g8-csp-validators.md)。
+
+Runtime 请求与服务输出不接受任何深度的重复 JSON 键，包含插件业务 input/
+execution 数据。客户端应发送无歧义 JSON；语法验证不替代 Manifest、身份、
+grant 和效果检查。见 [P2.7b](./validation/g8-security-regressions.md)。
+
+G8 P2.7a 将仓库依赖与历史密钥扫描纳入 Windows 门禁；新增依赖或密钥 fixture
+不能靠扩大豁免通过。Manifest v1 的 UTF-16 文本长度和有限操作 JSON Schema
+保持兼容，Zod 导出的原始类型 union 在构建时展开为既有 anyOf。不会因此开放
+第三方加载、工具路径或 grant。见 [验证](./validation/g8-security-scanners.md)。
+
 G7 已完成批准的 Windows/T1 功能原型；新增媒体信息/转换两个实际内置插件，
-总计十五个。其 `run()` 只调用
+当时总计十五个。两个媒体插件的 `run()` 只调用
 Host 绑定的 `ctx.media.run(planId)`；源路径、输出路径、程序选择和原生权限
 不进入插件。请使用桌面“媒体处理”或 `flowtools media` 先选择/预览/授权，
 见 [流程与限制](./validation/g7-functional-delivery.md)。无 adapter 的 Host 明确拒绝。

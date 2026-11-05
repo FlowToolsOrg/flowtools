@@ -1,0 +1,4 @@
+title = "FlowTools: upstream rules, no path or rule exclusions"
+
+[extend]
+useDefault = true

@@ -91,6 +91,8 @@ export interface PluginRuntimeContextValue {
   storage?: StorageCapability
   /** Asynchronous Host-bound shared data; legacy synchronous storage is separate. */
   data?: DataCapability
+  /** Explicitly selected, run-bound read-only resources. No paths or grants. */
+  resources?: import('../resources').ResourceCapability
   /** Host-bound service calls use the accepted dependency lock and caller's grants. */
   services?: ServiceCapability
   /** Opaque Host-bound handles only; no filesystem paths or executable selectors. */

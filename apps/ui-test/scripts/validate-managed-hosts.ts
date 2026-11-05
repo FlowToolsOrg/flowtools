@@ -201,7 +201,7 @@ try {
           method: 'session.open',
           payload: {
             token: '',
-            clientVersion: '0.3.0',
+            clientVersion: '0.4.0',
             expectedInstanceId: null,
           },
         },
@@ -517,7 +517,7 @@ try {
         method: 'session.open',
         payload: {
           token: '',
-          clientVersion: '0.3.0',
+          clientVersion: '0.4.0',
           expectedInstanceId: null,
         },
       },

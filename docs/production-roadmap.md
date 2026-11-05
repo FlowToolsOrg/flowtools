@@ -1,5 +1,39 @@
 # FlowTools 生产化路线图
 
+2026-11-05：NA1 实现 Windows/T1 [只读资源绑定与 IO](./validation/na1-resources.md)。
+Desktop 原生选择/确认和 CLI 管理路径绑定到一个命令，SDK 仅得到本 run Ref；
+format-2 资源授权复用原表/写入器，client 0.5.0/私有帧 3 显式拒绝旧 peer。
+NA2–NA7、独立 Reviewer/date/conclusion、G8 与正式发行继续 pending。
+
+2026-11-05：NA0 已实现 [Manifest/wire 版本契约基础](./validation/na0-versioned-contracts.md)：
+v1 parser/405-case corpus/结构摘要保留，独立 v2 声明与 SDK/Rust/签名包/G4
+元数据校验、旧 policy 保留和新效果拒绝、0.4.0 client/私有帧 2。
+[四项业务 API](./plugin-native-api-design.md) 的 NA1–NA7 仍 pending；NA0 不新增
+原生 IO/授权或关闭 G8/独立审阅，实施分支依赖尚未合入 main 的 G8 PR #17。
+
+P2.7d 加入实际应用命令 ACL，移除宽泛 default 权限集合，并把验证命令授权
+留在单独配置；已有原生身份拒绝与新增 pre-handler 对照通过，见
+[记录](./validation/g8-native-acl.md)。T1、独立审核与 P2.7/G8 状态不升级。
+
+P2.7c2 配置非空 Desktop 生产 CSP，实际 Chromium 拦截脚本/eval/嵌入/
+form/worker 等，并验证构建客户端在无 eval 权限下工作。见
+[证据与残余范围](./validation/g8-desktop-csp.md)。P2.7/G8 与独立审核不提前完成。
+
+P2.7c 分为 c1 构建期 wire 校验与 c2 实际 CSP。c1 的客户端产物已在禁止
+动态代码生成的实际运行中通过正反校验，见
+[记录](./validation/g8-csp-validators.md)；不据此声称 c2 或 P2.7/G8 完成。
+
+2026-11-04：P2.7b 修复原生嵌套重复键被覆盖的问题，协议/私有 runner 共用
+严格帧解码，新增真实解析器的确定性 property 回归和 SEC-001–015 测试索引。
+见 [证据](./validation/g8-security-regressions.md)。P2.7/G8 仍 pending；发行
+签名按维护者要求暂缓，独立审核、macOS 验收及 dogfood/Beta 记录尚无。
+
+2026-11-04：G8 先实施 P2.7a 扫描基础：完整历史密钥检测、Bun 与四份 Cargo
+锁实时审计、固定工具双摘要和实际拒绝对照接入 Windows PR/main/codex/release
+门禁。依赖安全更新保留原 Manifest/Runtime 拒绝契约；见
+[证据与边界](./validation/g8-security-scanners.md)。P2.7/G8 整体仍 pending，
+informational 维护性/健全性警告、独立审核、签名/市场和 Beta 均未由扫描批准。
+
 2026-11-04：G7 已按维护者批准的 Windows/T1 功能原型范围完成：文件逐效果
 提交/重试/撤销、两插件共享的实际媒体处理与日程/提醒、桌面和搜索。
 实现源代码 `02d416a` 的干净完整本机根门禁已通过；最终文档提交与同 SHA

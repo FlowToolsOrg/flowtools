@@ -15,6 +15,7 @@ impl BuiltinCatalog {
         // The actual Windows T0 Host opts into its fixed build-owned pair below.
         catalog.manifests.remove("plugin-media-inspector");
         catalog.manifests.remove("plugin-media-converter");
+        catalog.manifests.remove("plugin-resource-reader");
         catalog
     }
     pub fn embedded_with_media() -> Self {

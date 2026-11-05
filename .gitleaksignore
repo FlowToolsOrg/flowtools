@@ -1,0 +1,6 @@
+# Exact historical findings only. New commits at these paths are still scanned.
+# Public loopback-only TLS fixture, never a deployment/signing credential.
+a7219b588e9ae47971b6762dfcdb41dcdf308fe2:apps/ui-test/fixtures/plugin-webviews/loopback.key:private-key:1
+# Public SHA-256 source/key/signature provenance, not API credentials.
+c24b2743e10465b1b5d19912f1ac2013a25373bf:scripts/media-candidate/source-lock.json:generic-api-key:13
+2cfb8e1b5117bbc2af2952545620c1003fbecc7c:scripts/media-candidate/official-8.1.3-lock.json:generic-api-key:10

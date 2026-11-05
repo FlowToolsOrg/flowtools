@@ -6,6 +6,8 @@ mod process_job;
 #[cfg(windows)]
 mod profile;
 #[cfg(windows)]
+mod resource_io;
+#[cfg(windows)]
 mod security;
 #[cfg(windows)]
 mod server;

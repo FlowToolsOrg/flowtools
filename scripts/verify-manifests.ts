@@ -4,6 +4,7 @@ import { resolve } from 'node:path'
 import { builtInCLIManifests } from '../packages/cli/src/builtin-manifests'
 import {
   parsePluginManifest,
+  parseVersionedPluginManifest,
   commandIdentity,
 } from '../packages/sdk/src/manifest'
 import { verifyManifestPackage } from '../packages/sdk/src/manifest/package'
@@ -43,7 +44,7 @@ export function verifyBuiltinManifests() {
   )
     throw new Error('Invalid built-in manifest catalog')
   const manifests = catalog.plugins.map(value =>
-    parsePluginManifest(value, manifestTarget)
+    parseVersionedPluginManifest(value, manifestTarget)
   )
   if (
     JSON.stringify(manifests.map(item => item.id).sort()) !==

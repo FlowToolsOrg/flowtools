@@ -1,7 +1,4 @@
-import type {
-  CommandManifestV1,
-  PluginManifestV1,
-} from '@flowtools/sdk/manifest'
+import type { CommandManifest, PluginManifest } from '@flowtools/sdk/manifest'
 import type { PluginMeta } from '@flowtools/sdk/types'
 
 import { createHash } from 'node:crypto'
@@ -15,13 +12,13 @@ import {
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
-import { parsePluginManifest } from '@flowtools/sdk/manifest'
+import { parseVersionedPluginManifest } from '@flowtools/sdk/manifest'
 
 import { getPluginEntries } from './plugin-entries'
 
 export async function buildBuiltinManifests(root = import.meta.dir) {
   const dist = resolve(root, 'dist')
-  const files: PluginManifestV1['files'] = []
+  const files: PluginManifest['files'] = []
   const walk = (directory: string, prefix = '') => {
     for (const entry of readdirSync(directory, { withFileTypes: true }).sort(
       (a, b) => a.name.localeCompare(b.name)
@@ -44,20 +41,23 @@ export async function buildBuiltinManifests(root = import.meta.dir) {
     }
   }
   walk(dist)
-  const manifests: PluginManifestV1[] = []
+  const manifests: PluginManifest[] = []
   for (const id of Object.keys(getPluginEntries(root))) {
     // Build-time import of actual pure command output, never CLI source execution.
     const module = (await import(
       pathToFileURL(join(dist, `${id}.commands.js`)).href
     )) as {
-      default: { meta: PluginMeta; type: 'app'; command: CommandManifestV1 }
+      default: { meta: PluginMeta; type: 'app'; command: CommandManifest }
     }
     const plugin = module.default
     if (plugin.meta.id !== id)
       throw new Error('Built-in artifact identity mismatch')
     manifests.push(
-      parsePluginManifest({
-        formatVersion: 1,
+      parseVersionedPluginManifest({
+        formatVersion: id === 'plugin-resource-reader' ? 2 : 1,
+        ...(id === 'plugin-resource-reader'
+          ? { capabilityProfile: 'flowtools-native-v2' }
+          : {}),
         publisher: 'flowtools',
         id,
         name: plugin.meta.name,

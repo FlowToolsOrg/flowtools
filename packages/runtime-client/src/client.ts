@@ -252,7 +252,7 @@ export class RuntimeClient {
           : 'RUNTIME_DISCONNECTED'
       throw new RuntimeClientError(
         code,
-        call.method === 'jobs.submit' &&
+        ['jobs.submit', 'resources.submit'].includes(call.method) &&
           ['RUNTIME_DISCONNECTED', 'INVALID_RESPONSE'].includes(code)
       )
     }
@@ -261,18 +261,18 @@ export class RuntimeClient {
     } catch {
       throw new RuntimeClientError(
         'INVALID_RESPONSE',
-        call.method === 'jobs.submit'
+        ['jobs.submit', 'resources.submit'].includes(call.method)
       )
     }
     if (response.version !== PROTOCOL_MAJOR)
       throw new RuntimeClientError(
         'PROTOCOL_MISMATCH',
-        call.method === 'jobs.submit'
+        ['jobs.submit', 'resources.submit'].includes(call.method)
       )
     if (response.requestId !== request.requestId)
       throw new RuntimeClientError(
         'INVALID_RESPONSE',
-        call.method === 'jobs.submit'
+        ['jobs.submit', 'resources.submit'].includes(call.method)
       )
     if (response.outcome.type === 'error')
       throw new RuntimeClientError(
@@ -280,6 +280,12 @@ export class RuntimeClient {
         response.outcome.data.code === 'ACCEPTANCE_UNKNOWN'
       )
     const expected = {
+      'resources.permissions': 'resource-permissions',
+      'resources.grant': 'resource-permissions',
+      'resources.owner': 'resource-owner',
+      'resources.select': 'resource',
+      'resources.drop': 'resource-released',
+      'resources.submit': 'receipt',
       'session.open': 'session',
       'runtime.status': 'status',
       'tools.inventory': 'tool-inventory',
@@ -327,7 +333,7 @@ export class RuntimeClient {
     if (response.outcome.type !== expected[call.method])
       throw new RuntimeClientError(
         'INVALID_RESPONSE',
-        call.method === 'jobs.submit'
+        ['jobs.submit', 'resources.submit'].includes(call.method)
       )
     return response.outcome
   }

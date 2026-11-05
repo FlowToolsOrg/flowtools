@@ -21,6 +21,7 @@ import mediaConverter from '../plugin-media-converter/index.tsx'
 import mediaInspector from '../plugin-media-inspector/index.tsx'
 import randomPickerPlugin from '../plugin-random-picker/index.tsx'
 import regexPlugin from '../plugin-regex-tester/index.tsx'
+import resourcePlugin from '../plugin-resource-reader/index.tsx'
 import textOpsPlugin from '../plugin-text-ops/index.tsx'
 import timestampPlugin from '../plugin-timestamp-converter/index.tsx'
 import todoPlugin from '../plugin-todo-list/index.tsx'
@@ -38,6 +39,7 @@ const builtInPlugins = [
   mediaConverter,
   randomPickerPlugin,
   regexPlugin,
+  resourcePlugin,
   textOpsPlugin,
   timestampPlugin,
   todoPlugin,

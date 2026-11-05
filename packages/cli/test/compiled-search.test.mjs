@@ -15,7 +15,7 @@ import { dirname, join, resolve } from 'node:path'
 import { after, afterEach, test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 
-import { parsePluginManifest } from '@flowtools/sdk/manifest'
+import { parseVersionedPluginManifest } from '@flowtools/sdk/manifest'
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const parent = join(packageRoot, 'node_modules/.tmp')
@@ -51,7 +51,7 @@ function fixture() {
       Array.isArray(catalog.plugins)
   )
   for (const entry of catalog.plugins) {
-    const manifest = parsePluginManifest(entry)
+    const manifest = parseVersionedPluginManifest(entry)
     copyFileSync(
       join(packageRoot, 'test-fixtures/broken-compiled.txt'),
       join(plugins, 'dist', `${manifest.id}.commands.js`)

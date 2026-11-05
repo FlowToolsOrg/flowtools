@@ -178,7 +178,7 @@ function generateManifests(
       builtInManifestData.find(value => value.id === '${p.id}'),
       { hostVersion: '0.1.0', sdkVersion: '0.0.0', platform: '${host === 'desktop' ? 'windows' : 'web'}', arch: '${host === 'desktop' ? 'x64' : 'wasm32'}' },
       { publisher: 'flowtools', id: '${p.id}', version: '${p.version}', type: '${p.type}', maturity: '${p.maturity}' },
-      () => import('@flowtools/plugins/${p.id}')
+      () => import('@flowtools/plugins/${p.id}')${host === 'desktop' && p.id === 'plugin-resource-reader' ? ',\n      { resources: true }' : ''}
     ),
   }`
     )

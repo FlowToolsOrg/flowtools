@@ -1,5 +1,10 @@
 # Flow Tool
 
+The [native plugin API design](./docs/plugin-native-api-design.md) proposes
+resource handles, controlled opening, credential references and managed HTTP/file
+transfers on the existing Runtime. This is a design-only delivery; NA0–NA7 remain
+pending and no new API or production permission is enabled.
+
 G7 is complete within the approved Windows/T1 functional prototype scope:
 journaled file commit/retry/undo, two real managed media plugins, scheduling,
 reminders, launcher search and Desktop settings share the Runtime and CLI.

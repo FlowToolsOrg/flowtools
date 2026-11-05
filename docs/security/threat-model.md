@@ -1,5 +1,11 @@
 # FlowTools 插件威胁模型
 
+2026-11-05 [原生 API 设计与验证矩阵](../plugin-native-api-design.md) 为文件资源、
+外部打开、凭据引用和受管网络列出 SEC-003/004/005/006/007/008/009/010/012/
+013/014/015 的拟议控制与拒绝证据要求。当前只有设计，未增加入口、schema、
+grant、凭据存储或网络 IO；NA0–NA7 的实际证据与独立安全 Reviewer/date/conclusion
+均 pending，风险状态不关闭。G8 分支的安全保护另行评审，不由本文认定已合入。
+
 2026-11-04 G7 固定 Windows/T1 功能原型的入口与拒绝证据见
 [交付记录](../validation/g7-functional-delivery.md)。新增认证管理面的文件/媒体
 计划、明确确认、逐效果 journal/撤销和两个固定媒体插件；实际工具通过本地

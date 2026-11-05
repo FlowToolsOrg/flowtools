@@ -1,5 +1,10 @@
 # FlowTools 下一阶段目标与实施设计
 
+2026-11-05 补充：[四项原生插件 API 设计](./plugin-native-api-design.md) 将文件
+资源、opener、凭据引用和受管请求接入既有 Runtime。NA0–NA7 是待实现工作包，
+不替换下文 G0–G8 顺序或宣布阶段完成；新能力先依赖显式 Manifest/wire 版本与
+G8 安全基线，按独立实现、验证和提交推进。
+
 - 决策日期：2026-10-04
 - 状态：accepted-design；G1、G2 固定 Windows/T1 验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4 P1.6a/P1.6b 与六条异常排空基线已实现为固定 Windows/T1 prototype，2026-10-12 本地完整集成已过，当前提交远端 CI 与独立安全批准 pending；G5 P2.5a 及 P2.5b 六个惰性准入/事务子步骤已实现为 prototype，2026-10-12 契约加固本地完整门禁已过，当前提交远端 CI 与独立安全批准 pending；P2.5b/G5、G6 的生产范围和 G8 保持 pending；G7 已完成批准的 Windows/T1 功能原型，人工项 waived，当前证据见 G7 交付记录
 - 决策来源：维护者已确认的产品讨论；实施责任由 Repository Maintainer 分配

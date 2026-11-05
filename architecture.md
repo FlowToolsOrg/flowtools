@@ -1,5 +1,11 @@
 # Flow Tool Architecture
 
+2026-11-05 [原生插件 API 设计](./docs/plugin-native-api-design.md) 提议由既有
+Runtime 管理文件资源、凭据与网络事实，Desktop 负责可信交互和外部打开。
+插件通过用途受限的 Ref 与 broker 调用；Manifest/wire 显式版本分派、同一
+writer/任务/恢复体系为前置。当前只交付文档，NA0–NA7 未实现，G8 安全基线
+另行集成，生产授权与 G0–G8/E 里程碑状态不变。
+
 G7 已按批准范围完成 Windows/T1 功能原型；当前完整门禁与边界见
 [交付记录](./docs/validation/g7-functional-delivery.md)。实际文件/媒体链为：
 管理面绑定显式选择与 plan 摘要，Core 单 writer 保存私有定义/逐效果日志；

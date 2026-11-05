@@ -1,5 +1,12 @@
 # Repository Guidelines
 
+The [native plugin API plan](./docs/plugin-native-api-design.md) is a design
+proposal for resources, opener, credentials and managed networking. NA0–NA7 are
+pending. Preserve Manifest v1 bytes/semantics; new permission contracts need
+explicit version dispatch, Rust-generated wire validation and the existing
+Runtime writer/broker. Keep G8 CSP/ACL/scanner hardening as implementation
+prerequisites; this document grants no native or third-party execution authority.
+
 2026-11-04：G7 已完成维护者批准的 Windows/T1 功能原型范围。当前实现源代码
 `02d416a` 已通过干净完整本机根门禁，详见
 [交付与边界](./docs/validation/g7-functional-delivery.md)；最终文档提交的远端

@@ -1,5 +1,10 @@
 # Flow Tool Plugin 开发指南
 
+文件资源、外部打开、安全凭据和受管网络的拟议 SDK 接口见
+[API 设计与分阶段计划](./plugin-native-api-design.md)。`ctx.resources`、
+`ctx.opener`、`ctx.secrets` 与 `ctx.request.managed` 当前尚不可用；文中的
+Manifest v2 与新权限是待实现契约，不能添加到现有 v1 插件来获取能力。
+
 G7 已完成批准的 Windows/T1 功能原型；新增媒体信息/转换两个实际内置插件，
 总计十五个。其 `run()` 只调用
 Host 绑定的 `ctx.media.run(planId)`；源路径、输出路径、程序选择和原生权限

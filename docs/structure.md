@@ -1,5 +1,10 @@
 # Flow Tools 架构设计规范
 
+[原生插件 API 计划](./plugin-native-api-design.md) 描述拟新增的 SDK resources /
+network 契约、Core resources/secrets/network 服务、Runtime 平台适配及 Desktop
+可信交互。所有新路径与 NA0–NA7 均为待实现；复用现有 broker、single writer、
+file_workflows 和任务生命周期，不建立第二套资源授权或凭据数据库事实源。
+
 2026-11-03：维护者明确授权按 Windows 固定 T1 功能原型完成 G7，允许精确锁定的官方源码 FFmpeg/ffprobe 通过原受管工具链用于实际功能。正式发行、Windows 代码签名和独立安全/许可证审核保持 pending；人工验收为 waived。本授权仅覆盖固定内置流程，不开放任意工具路径、第三方代码或绕过当前 grant/身份/排空检查。
 
 ## 下一阶段结构与当前实现

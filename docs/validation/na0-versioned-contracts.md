@@ -86,6 +86,10 @@ adapter 在 NA1/NA5 实施。取消仍由当前 root/provider 生命周期、期
   digest 绑定与篡改拒绝；v2 不能借旧 grant、旧持久 grant 字节不变/错误导入不写入。
 - 实际 compiled runner：缺失/旧/未知版本拒绝、真实 Base64 的 v2 纯命令正对照、
   旧 Host pin 的导入前拒绝；原服务 pin 拒绝和 Todo 的实际受控 CAS 均保留。
+  新 v2 场景统一由一个 Node Host 驱动，复制实际 CLI 分发及 chunks，并用新 Bun
+  编译进程打包实际 Base64 实现；整组沿用 25 秒 Host / 30 秒测试上限，每次提交
+  仍有原 10 秒调用期限。初版多次从 Bun 启动 Host 在整仓运行时超时，未计为
+  通过；改为单 Host 后专项通过，原协议夹具与原期限/拒绝断言未放宽。
 - wire：实际 named pipe 旧 0.3.0 client 拒绝；原客户端正常握手；static validator
   与数字格式/无动态代码回归、codegen LF/漂移和原 G8 安全测试不放宽。
 

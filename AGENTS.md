@@ -148,7 +148,7 @@ Run from repository root:
 - `bun run lint`: runs workspace lint tasks.
 - `bun run check-types`: runs workspace type checks.
 - `bun run test`: runs required workspace automated tests via Turbo.
-- `bun run smoke:plugins`: builds prerequisites and validates all fifteen actual
+- `bun run smoke:plugins`: builds prerequisites and validates all sixteen actual
   compiled entries with controlled request/storage, schema rejection and abort.
 - `bun run docs:check`: read-only core/ADR/threat/PR-template contracts and inline
   local link path checks; no remote URL, anchor or security certification.
@@ -1184,10 +1184,11 @@ All maturity labels stay prototype; SEC-001–SEC-012 remain open.
 
 Use @flowtools/sdk/manifest for bounded serialized metadata and operation
 validation, and @flowtools/sdk/manifest/package for Node-only file verification.
-Use parsePluginManifest with an explicit Host target before loading artifacts.
+Use parsePluginManifest for v1 and explicit parseVersionedPluginManifest dispatch
+for build-known v2, with an explicit Host target before loading artifacts.
 Keep custom Zod runtime validation explicit; never export an empty substitute.
 Run bun run verify:manifests after build:packages; it covers protocol fixtures
-and all fifteen actual compiled T1 packages. Keep commands.ts independent of
+and all sixteen actual compiled T1 packages. Keep commands.ts independent of
 React/UI/Tauri and build fixed <known-id>.commands.js entries. Generated JSON
 lives outside dist to avoid self-referential hashes. CLI validates the bounded
 catalog and exact file list/hash before importing a command; no source fallback.

@@ -101,7 +101,17 @@ plans 和保守 media input/output 预留，没有第二份资源贷款。原 Ru
   该验证发现并修复 Desktop business 白名单漏接 resources.submit；管理选择/授权
   仍拒绝从 business transport 进入，原 native guard 测试保留。
 - Pinned Chromium ResourceSettings 的选择取消、显式运行与卸载释放回归通过。
-- 完整干净根门禁和远端 CI 最终记录待验证完成后补充。
+- 干净提交 `c65c695d93efeff14ce4e801354bfcfbf5827883` 完整执行原
+  `pwsh -NoProfile -File scripts/check-ci.ps1`，exit 0，首尾 tracked/untracked
+  均干净；lint/types/test/build 各 11/11 工作区成功。Core 547 + 11 + 13、
+  Runtime 31 原生 + 6 隔离 + 19 集成、Desktop 121 Bun + 原 Node 两例 + 38
+  原生 + 8 bindings、Chromium 38 文件/120 用例通过，未过滤或跳过原测试。
+  Web 38/Desktop 34 个生产产物与 opt-in/canary 重建字节相同；Rust
+  fmt/locked check/all-target Clippy 与最终生成漂移检查通过。
+- 全历史脱敏扫描、Bun 全严重度审计和四份 Cargo 锁实时审计通过。首次联网审计
+  registry 超时被门禁拒绝；清理新夹具类型/日志警告后从干净提交完整重跑。
+  7 项既有 Rust informational warnings 保留，依赖锁、scanner pins/例外、
+  原期限与工作流均未改；告警处置仍归 G8 独立审阅。远端同 SHA CI 随 PR 记录。
 
 工程自查：Codex，2026-11-05。独立安全 Reviewer/date/conclusion pending。
 非 Windows、第三方隔离、E07、write/create/export/opener/secrets/network、发行/

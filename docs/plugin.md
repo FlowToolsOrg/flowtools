@@ -36,7 +36,7 @@ G8 P2.7a 将仓库依赖与历史密钥扫描纳入 Windows 门禁；新增依�
 第三方加载、工具路径或 grant。见 [验证](./validation/g8-security-scanners.md)。
 
 G7 已完成批准的 Windows/T1 功能原型；新增媒体信息/转换两个实际内置插件，
-总计十五个。其 `run()` 只调用
+当时总计十五个。两个媒体插件的 `run()` 只调用
 Host 绑定的 `ctx.media.run(planId)`；源路径、输出路径、程序选择和原生权限
 不进入插件。请使用桌面“媒体处理”或 `flowtools media` 先选择/预览/授权，
 见 [流程与限制](./validation/g7-functional-delivery.md)。无 adapter 的 Host 明确拒绝。

@@ -120,13 +120,28 @@ async fn frame_read(stdout: &mut (impl AsyncRead + Unpin)) -> Result<RunnerMessa
         .read_exact(&mut bytes)
         .await
         .map_err(|_| ErrorCode::OutputInvalid)?;
-    serde_json::from_slice(&bytes).map_err(|_| ErrorCode::OutputInvalid)
+    let mut value: Value = decode_frame(&bytes).map_err(|_| ErrorCode::OutputInvalid)?;
+    let object = value.as_object_mut().ok_or(ErrorCode::OutputInvalid)?;
+    if object.remove("version").and_then(|v| v.as_u64())
+        != Some(flowtools_runtime_core::native_contract::RUNNER_PROTOCOL_VERSION.into())
+    {
+        return Err(ErrorCode::ProtocolMismatch);
+    }
+    serde_json::from_value(value).map_err(|_| ErrorCode::OutputInvalid)
 }
 async fn frame_write(
     stdin: &mut (impl AsyncWrite + Unpin),
     value: &Value,
 ) -> Result<(), ErrorCode> {
-    let bytes = serde_json::to_vec(value).map_err(|_| ErrorCode::OutputInvalid)?;
+    let mut value = value.clone();
+    value
+        .as_object_mut()
+        .ok_or(ErrorCode::OutputInvalid)?
+        .insert(
+            "version".into(),
+            json!(flowtools_runtime_core::native_contract::RUNNER_PROTOCOL_VERSION),
+        );
+    let bytes = serde_json::to_vec(&value).map_err(|_| ErrorCode::OutputInvalid)?;
     if bytes.len() > MAX_FRAME_BYTES {
         return Err(ErrorCode::OutputInvalid);
     }
@@ -145,6 +160,7 @@ fn reply(id: u32, result: Result<Value, ErrorCode>) -> Value {
         Err(code) => json!({"kind":"reply","id":id,"success":false,"errorCode":code}),
     }
 }
+
 async fn monitor(core: &Core, id: &str) -> ErrorCode {
     loop {
         tokio::time::sleep(Duration::from_millis(10)).await;
@@ -375,4 +391,52 @@ pub(super) fn execute(
         }
         Ok(data)
     })
+}
+
+#[cfg(test)]
+mod frame_security_tests {
+    use super::*;
+    #[tokio::test]
+    async fn old_or_missing_private_frame_version_is_refused_before_dispatch() {
+        for version in [None, Some(1), Some(3), Some(65536)] {
+            let mut value = json!({"kind":"result","execution":{},"mutations":[]});
+            if let Some(version) = version {
+                value["version"] = json!(version);
+            }
+            let bytes = serde_json::to_vec(&value).unwrap();
+            let (mut writer, mut reader) = tokio::io::duplex(4096);
+            writer.write_u32_le(bytes.len() as u32).await.unwrap();
+            writer.write_all(&bytes).await.unwrap();
+            assert!(matches!(
+                frame_read(&mut reader).await,
+                Err(ErrorCode::ProtocolMismatch)
+            ));
+        }
+    }
+
+    #[tokio::test]
+    async fn duplicate_runner_output_is_refused_before_result_or_mutation_dispatch() {
+        for (bytes, valid) in [
+            (
+                br#"{"version":2,"kind":"result","execution":{"value":1},"mutations":[]}"#.as_slice(),
+                true,
+            ),
+            (
+                br#"{"version":2,"kind":"result","execution":{"value":1,"value":2},"mutations":[]}"#.as_slice(),
+                false,
+            ),
+        ] {
+            let (mut writer, mut reader) = tokio::io::duplex(4096);
+            writer.write_u32_le(bytes.len() as u32).await.unwrap();
+            writer.write_all(bytes).await.unwrap();
+            let result = tokio::time::timeout(Duration::from_secs(1), frame_read(&mut reader))
+                .await
+                .unwrap();
+            if valid {
+                assert!(matches!(result, Ok(RunnerMessage::Result { .. })));
+            } else {
+                assert!(matches!(result, Err(ErrorCode::OutputInvalid)));
+            }
+        }
+    }
 }

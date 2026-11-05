@@ -1,5 +1,10 @@
 # ADR-0001：插件信任边界与执行位置
 
+2026-11-05 [NA0 契约基础](../validation/na0-versioned-contracts.md) 增加显式
+Manifest v2 与 wire/private-frame 版本拒绝；仍是固定 Windows/T1。新声明
+不发放资源/凭据或 native authority，旧 scope 不升级成新权限，第三方与
+同 realm 绕过边界不变。后续 [四项 API](../plugin-native-api-design.md) 按 adapter 验收。
+
 - 日期：2026-10-03
 - 范围修订：2026-10-04；独立 CLI、后台内核、共享受管工具按维护者确认纳入目标
 - 状态：accepted-design；实现未完成，不能作为生产安全认证

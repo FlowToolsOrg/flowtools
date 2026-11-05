@@ -1,5 +1,10 @@
 # FlowTools 下一阶段目标与实施设计
 
+2026-11-05：新增 [四项原生 API 计划](./plugin-native-api-design.md) 的 NA0
+[版本化声明与兼容基础](./validation/na0-versioned-contracts.md)。v1 与现有授权/
+安全门禁保持，v2 新效果仍拒绝；NA1–NA7、G0–G8 与 E 的原有依赖/成熟度
+分别保留。此局部工作包不等于开启四项原生能力或第三方执行。
+
 - 决策日期：2026-10-04
 - 状态：accepted-design；G1、G2 固定 Windows/T1 验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4 P1.6a/P1.6b 与六条异常排空基线已实现为固定 Windows/T1 prototype，2026-10-12 本地完整集成已过，当前提交远端 CI 与独立安全批准 pending；G5 P2.5a 及 P2.5b 六个惰性准入/事务子步骤已实现为 prototype，2026-10-12 契约加固本地完整门禁已过，当前提交远端 CI 与独立安全批准 pending；P2.5b/G5、G6 的生产范围和 G8 保持 pending；G7 已完成批准的 Windows/T1 功能原型，人工项 waived，当前证据见 G7 交付记录
 - 决策来源：维护者已确认的产品讨论；实施责任由 Repository Maintainer 分配
@@ -721,6 +726,28 @@ grace、跳过/合并漏触发、重复检查/时钟回拨/取消与算术限额
 用户不用终端或手动安装 FFmpeg 就能完成三条任务；未过矩阵版本保持 prototype。
 
 ## 10. G8：分发与未来生态
+
+P2.7d 使用显式 AppManifest/main capability 和独立验证权限，实际 native IPC
+回归见 [证据](./validation/g8-native-acl.md)。剩余独立审核、网络/平台边界、
+正式分发与真实试用退出条件保留。
+
+P2.7c2 的非空生产 CSP 与实际攻击/客户端回归见
+[验证](./validation/g8-desktop-csp.md)。HTTP(S) 出站仍未成为 per-plugin
+broker，正式包 WebView/macOS 与独立安全审核不能用源策略测试替代。
+
+P2.7c1 移除客户端 CSP 阻碍：从 Rust schema 生成 standalone wire 校验，
+build/契约检查只读拒绝漂移。见 [证据](./validation/g8-csp-validators.md)。
+下一子项 P2.7c2 配置并验证实际 CSP，不允许为兼容 AJV 放开 unsafe-eval。
+
+P2.7b（2026-11-04）：严格帧解析与确定性协议/重签 ZIP/媒体 property 回归，
+详见 [证据与风险索引](./validation/g8-security-regressions.md)。本子项只加固
+输入边界，不关闭 P2.7/G8。维护者暂缓发行签名；独立审核、macOS 实机和
+7 天 dogfood/30 天 Beta 记录目前均无，不能填写为通过。
+
+2026-11-04：P2.7a 先加入固定 Windows 扫描工具、完整历史密钥检测、全部
+Bun/Cargo 锁审计及真实拒绝对照；依赖修复保留原 405 项跨语言 Manifest
+语义。见 [实施与验证](./validation/g8-security-scanners.md)。下一步仍需补齐
+高风险场景与 fuzz/property 证据、剩余警告和独立评审，P2.7/G8 不提前关闭。
 
 先关闭 P2.7 安全回归，再完成真实市场、Windows 签名、应用 updater、插件/工具
 签名分发、SBOM、灰度、失败回滚和支持文档。独立 CLI 与 runtime 同样纳入签名/

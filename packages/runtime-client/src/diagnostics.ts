@@ -3,6 +3,18 @@ import type { ErrorCode } from './bindings'
 import { RuntimeClientError } from './client'
 
 const explanations = {
+  CAPABILITY_UNAVAILABLE: [
+    '当前宿主尚未提供此能力',
+    '选择支持该能力的宿主版本。',
+  ],
+  RESOURCE_EXPIRED: [
+    '资源引用已失效',
+    '重新选择资源并确认授权，再主动发起操作。',
+  ],
+  NETWORK_FAILED: [
+    '受管网络请求失败',
+    '检查连接并核对任务状态；发送结果未知时不要自动重试。',
+  ],
   ACCEPTANCE_UNKNOWN: [
     '任务提交是否完成尚未确认',
     '保留原幂等键并查询回执；不要用新键重试写入。',

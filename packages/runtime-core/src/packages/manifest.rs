@@ -102,31 +102,43 @@ struct Contract {
     manifest_validator: jsonschema::Validator,
     operation_validator: jsonschema::Validator,
 }
-fn contract() -> Result<&'static Contract, PackageError> {
+fn contract(version: u8) -> Result<&'static Contract, PackageError> {
     static CONTRACT: OnceLock<Result<Contract, PackageError>> = OnceLock::new();
-    CONTRACT
-        .get_or_init(|| {
-            let value: Value =
-                serde_json::from_str(include_str!("../../.generated/manifest-validation.json"))
-                    .map_err(|_| PackageError::ManifestInvalid)?;
-            if value["formatVersion"] != 1 || value["semantics"] != "flowtools-manifest-v1" {
-                return Err(PackageError::ManifestInvalid);
-            }
-            let manifest = value["manifest"].clone();
-            let operation = value["operation"].clone();
-            let manifest_validator =
-                jsonschema::validator_for(&manifest).map_err(|_| PackageError::ManifestInvalid)?;
-            let operation_validator =
-                jsonschema::validator_for(&operation).map_err(|_| PackageError::ManifestInvalid)?;
-            Ok(Contract {
-                manifest,
-                operation,
-                manifest_validator,
-                operation_validator,
-            })
+    static CONTRACT_V2: OnceLock<Result<Contract, PackageError>> = OnceLock::new();
+    (if version == 1 {
+        &CONTRACT
+    } else {
+        &CONTRACT_V2
+    })
+    .get_or_init(|| {
+        let value: Value = serde_json::from_str(if version == 1 {
+            include_str!("../../.generated/manifest-validation.json")
+        } else {
+            include_str!("../../.generated/manifest-validation-v2.json")
         })
-        .as_ref()
-        .map_err(|error| *error)
+        .map_err(|_| PackageError::ManifestInvalid)?;
+        if value["formatVersion"] != version
+            || value["semantics"] != format!("flowtools-manifest-v{version}")
+            || (version == 2
+                && value["capabilityProfile"] != crate::native_contract::NATIVE_CAPABILITY_PROFILE)
+        {
+            return Err(PackageError::ManifestInvalid);
+        }
+        let manifest = value["manifest"].clone();
+        let operation = value["operation"].clone();
+        let manifest_validator =
+            jsonschema::validator_for(&manifest).map_err(|_| PackageError::ManifestInvalid)?;
+        let operation_validator =
+            jsonschema::validator_for(&operation).map_err(|_| PackageError::ManifestInvalid)?;
+        Ok(Contract {
+            manifest,
+            operation,
+            manifest_validator,
+            operation_validator,
+        })
+    })
+    .as_ref()
+    .map_err(|error| *error)
 }
 
 fn invalid<T>() -> Result<T, PackageError> {
@@ -174,19 +186,39 @@ pub(super) fn validate_bytes(
         return invalid();
     }
     let value = strict_json(bytes).map_err(|_| PackageError::ManifestInvalid)?;
-    validate_value(&value, Some(target))
+    validate_versioned_value(&value, Some(target))
 }
 
+pub(crate) fn validate_versioned_value(
+    value: &Value,
+    target: Option<&ManifestCompatibility>,
+) -> Result<Value, PackageError> {
+    let version = match value["formatVersion"].as_f64() {
+        Some(1.0) => 1,
+        Some(2.0) => 2,
+        _ => return invalid(),
+    };
+    validate_value_with_version(value, target, version)
+}
+
+#[cfg(test)]
 fn validate_value(
     value: &Value,
     target: Option<&ManifestCompatibility>,
+) -> Result<Value, PackageError> {
+    validate_value_with_version(value, target, 1)
+}
+fn validate_value_with_version(
+    value: &Value,
+    target: Option<&ManifestCompatibility>,
+    version: u8,
 ) -> Result<Value, PackageError> {
     if !operation::bounded_json(value, 1_048_576) {
         return invalid();
     }
     let mut value = value.clone();
     normalize_numbers(&mut value)?;
-    let contract = contract()?;
+    let contract = contract(version)?;
     if !contract.manifest_validator.is_valid(&value) {
         return invalid();
     }
@@ -296,6 +328,14 @@ fn check(schema: &Value, value: &Value, root: &Value) -> Result<(), PackageError
             "unique" => unique(array(value)?.iter().cloned()),
             "manifest-v1" => manifest_semantics(value)?,
             "command-v1" => command_semantics(value)?,
+            "native-command-v2" => {
+                command_semantics(value)? && crate::native_contract::command_valid(value)
+            }
+            "native-permission-v2" => {
+                serde_json::from_value::<crate::native_contract::NativePermissionV2>(value.clone())
+                    .is_ok_and(|permission| permission.valid())
+            }
+            "native-origin-v2" => crate::native_contract::origin(text(value)?),
             "dependencies-v1" => dependencies_semantics(value)?,
             "services-v1" => unique(array(value)?.iter().map(|item| item["id"].clone())),
             "service-v1" => {
@@ -437,7 +477,7 @@ fn dependencies_semantics(value: &Value) -> Result<bool, PackageError> {
 }
 
 fn operation(value: &Value) -> Result<bool, PackageError> {
-    let contract = contract()?;
+    let contract = contract(1)?;
     if !contract.operation_validator.is_valid(value) {
         return Ok(false);
     }

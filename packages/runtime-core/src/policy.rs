@@ -191,6 +191,16 @@ impl PolicyStore {
         if self.identity(grant)?.package_digest != grant.package_digest {
             return Err(ErrorCode::InvalidRequest);
         }
+        if command.get("capabilityProfile").is_some() {
+            if !crate::native_contract::command_valid(command) {
+                return Err(ErrorCode::InvalidRequest);
+            }
+            if !command["effects"].as_array().is_some_and(Vec::is_empty)
+                || !command["permissions"].as_array().is_some_and(Vec::is_empty)
+            {
+                return Err(ErrorCode::CapabilityUnavailable);
+            }
+        }
         if !grant.expires_at.is_finite()
             || (grant.cold_start && command["supportsColdStart"] != true)
             || command["headless"] != true
@@ -308,6 +318,41 @@ impl PolicyStore {
 mod tests {
     use super::*;
     use crate::data::DataStore;
+    use serde_json::json;
+    #[test]
+    fn contract_upgrade_preserves_v1_grant_bytes_and_rejects_v2_policy_import() {
+        let mut store = DataStore::memory().unwrap();
+        let mut policy = PolicyStore::load(&mut store, "same-catalog").unwrap();
+        policy.grant(&mut store, grant()).unwrap();
+        let read = |store: &DataStore| -> Vec<(String, u32, String)> {
+            store
+                .connection
+                .prepare("SELECT identity,epoch,state FROM grants ORDER BY identity")
+                .unwrap()
+                .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))
+                .unwrap()
+                .map(Result::unwrap)
+                .collect()
+        };
+        let before = read(&store);
+        assert_eq!(crate::data::SCHEMA_VERSION, 2);
+        let mut policy = PolicyStore::load(&mut store, "same-catalog").unwrap();
+        assert_eq!(read(&store), before);
+        assert!(policy
+            .import(
+                &mut store,
+                PolicyImport {
+                    format_version: 2,
+                    cold_start: true,
+                    grants: vec![grant()]
+                }
+            )
+            .is_err());
+        assert_eq!(read(&store), before);
+        assert!(!policy.cold_start);
+        let typed = json!({"kind":"resource","slot":"source"});
+        assert!(serde_json::from_value::<crate::broker::Scope>(typed).is_err());
+    }
 
     fn grant() -> PermissionGrant {
         PermissionGrant {

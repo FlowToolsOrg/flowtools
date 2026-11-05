@@ -1,35 +1,15 @@
-import type {
-  Request,
-  Response,
-  StorageAction,
-  StorageReport,
-} from './bindings'
+import type { Response, StorageReport } from './bindings'
 
 import { isJsonValue } from '@flowtools/sdk/manifest'
-import Ajv2020 from 'ajv/dist/2020'
 
-import schemas from './wire-schema.json'
+import {
+  validateRequest,
+  validateResponse,
+  validateStorageAction,
+  validateStorageReport,
+} from './wire-validators.cjs'
 
 export const MAX_FRAME_BYTES = 1_048_576
-const ajv = new Ajv2020({ strict: false, allErrors: false })
-ajv.addFormat('double', { type: 'number', validate: Number.isFinite })
-ajv.addFormat('uint16', {
-  type: 'number',
-  validate: value => Number.isInteger(value) && value >= 0 && value <= 65535,
-})
-ajv.addFormat('uint32', {
-  type: 'number',
-  validate: value =>
-    Number.isInteger(value) && value >= 0 && value <= 4294967295,
-})
-ajv.addFormat('uint64', {
-  type: 'number',
-  validate: value => Number.isSafeInteger(value) && value >= 0,
-})
-const validateRequest = ajv.compile<Request>(schemas.request)
-const validateResponse = ajv.compile<Response>(schemas.response)
-const validateStorageAction = ajv.compile<StorageAction>(schemas.storageAction)
-const validateStorageReport = ajv.compile<StorageReport>(schemas.storageReport)
 
 export function encodeStorageAction(value: unknown): string {
   if (!isJsonValue(value) || !validateStorageAction(value))

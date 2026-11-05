@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-managed-runtime-storage"
+description = "Enables the managed_runtime_storage command without any pre-configured scope."
+commands.allow = ["managed_runtime_storage"]
+
+[[permission]]
+identifier = "deny-managed-runtime-storage"
+description = "Denies the managed_runtime_storage command without any pre-configured scope."
+commands.deny = ["managed_runtime_storage"]

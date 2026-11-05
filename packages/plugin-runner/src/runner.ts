@@ -11,6 +11,7 @@ import {
 
 import {
   loadPlugin,
+  getBuiltinCommandManifest,
   loadBuiltinServices,
   cliManifestTarget,
 } from '../../cli/src/discovery'
@@ -121,6 +122,12 @@ async function execute(
     snapshot = data as DataSnapshot
   } else if (managed && request.data !== null)
     throw new Error('Invalid runner data')
+  const acceptedManifest = getBuiltinCommandManifest(request.pluginId)
+  if (
+    acceptedManifest &&
+    manifestDigest(acceptedManifest) !== request.packageDigest
+  )
+    throw new Error('Package changed')
   const plugin = await loadPlugin(request.pluginId)
   if (!plugin)
     return failure(

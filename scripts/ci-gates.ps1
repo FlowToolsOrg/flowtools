@@ -4,14 +4,32 @@ function Invoke-QualityCommand {
   param(
     [Parameter(Mandatory)][string]$Name,
     [Parameter(Mandatory)][string]$Command,
-    [string[]]$CommandArguments = @()
+    [string[]]$CommandArguments = @(),
+    [switch]$RejectErrorOutput
   )
 
   Write-Output "::group::$Name"
   try {
-    & $Command @CommandArguments
+    $qualityErrorOutput = $false
+    if ($RejectErrorOutput) {
+      # cargo-audit can report failed registry queries while returning zero.
+      # Preserve every diagnostic, including informational warnings.
+      & $Command @CommandArguments 2>&1 | ForEach-Object {
+        $qualityLine = [string]$_
+        Write-Output $qualityLine
+        $qualityPlainLine = $qualityLine -replace '\x1b\[[0-?]*[ -/]*[@-~]', ''
+        if ($qualityPlainLine.TrimStart() -match '^error:') {
+          $qualityErrorOutput = $true
+        }
+      }
+    } else {
+      & $Command @CommandArguments
+    }
     if ($LASTEXITCODE -ne 0) {
       throw "$Name failed with exit code $LASTEXITCODE"
+    }
+    if ($qualityErrorOutput) {
+      throw "$Name reported errors despite exit code 0"
     }
   } finally {
     Write-Output '::endgroup::'

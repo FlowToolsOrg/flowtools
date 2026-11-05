@@ -3,7 +3,7 @@ import type { ManifestTarget } from './schema'
 import { z } from 'zod'
 
 import { isJsonValue } from './json-schema'
-import { parsePluginManifest } from './schema'
+import { parseVersionedPluginManifest } from './v2'
 
 /** Bounded pure data for a host-compiled inventory; it never adds loader paths. */
 export function parseManifestCatalog(
@@ -20,7 +20,7 @@ export function parseManifestCatalog(
     })
     .parse(value)
   const manifests = catalog.plugins.map(item =>
-    parsePluginManifest(item, target)
+    parseVersionedPluginManifest(item, target)
   )
   const ids = manifests.map(item => item.id)
   if (

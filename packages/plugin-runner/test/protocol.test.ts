@@ -13,6 +13,7 @@ import {
 import { tmpdir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 
+import { RUNNER_PROTOCOL_VERSION } from '@flowtools/runtime-client'
 import {
   parsePluginManifest,
   type PluginManifestV1,
@@ -25,7 +26,9 @@ import {
 import { cliManifestTarget } from '../../cli/src/discovery'
 
 const frame = (value: unknown) => {
-  const body = Buffer.from(JSON.stringify(value))
+  const body = Buffer.from(
+    JSON.stringify({ version: RUNNER_PROTOCOL_VERSION, ...(value as object) })
+  )
   const header = Buffer.alloc(4)
   header.writeUInt32LE(body.length)
   return Buffer.concat([header, body])
@@ -97,6 +100,9 @@ test('actual compiled runner refuses truncated, oversized and forged Host frames
     Buffer.from([5, 0, 0, 0, 123]),
     oversized,
     frame({ kind: 'start', payload: {}, grant: 'injected' }),
+    frame({ kind: 'start', payload: {}, version: undefined }),
+    frame({ kind: 'start', payload: {}, version: 1 }),
+    frame({ kind: 'start', payload: {}, version: 65536 }),
     frame({
       kind: 'service',
       target: { id: 'untrusted' },
@@ -112,6 +118,77 @@ test('actual compiled runner refuses truncated, oversized and forged Host frames
     expect(stderr).toContain('RUNNER_FAILED')
     expect(stderr).not.toContain('canary')
   }
+}, 30_000)
+
+test('actual compiled v2 runner executes the real pure builtin and refuses stale pins', async () => {
+  const host = Bun.spawnSync(
+    ['node', resolve(import.meta.dirname, 'manifest-v2-fixture.mjs')],
+    {
+      stdin: Buffer.from(
+        JSON.stringify({ bun: process.execPath, target: cliManifestTarget })
+      ),
+      stdout: 'pipe',
+      stderr: 'pipe',
+    }
+  )
+  expect(host.exitCode).toBe(0)
+  expect(host.stderr.toString()).toBe('')
+  type Observation = {
+    code: number
+    stdout: string
+    stdoutBase64: string
+    stderr: string
+    oversized: boolean
+    pid: number
+    submittedAt: number
+    finishedAt: number
+    deadlineAt: number
+  }
+  const report = JSON.parse(host.stdout.toString()) as {
+    timedOut: boolean
+    discovery: Observation
+    results: Observation[]
+    marker: string
+  }
+  expect(report.timedOut).toBe(false)
+  expect(report.results).toHaveLength(3)
+  for (const result of [report.discovery, ...report.results]) {
+    expect(result.oversized).toBe(false)
+    expect(result.pid).toBeGreaterThan(0)
+  }
+  for (const result of report.results) {
+    expect(result.deadlineAt).toBe(result.submittedAt + 10_000)
+    expect(result.finishedAt).toBeLessThanOrEqual(result.deadlineAt)
+  }
+  expect(report.discovery.code).toBe(0)
+  expect(report.discovery.stderr).toBe('')
+  expect(JSON.parse(report.discovery.stdout)).toMatchObject({
+    formatVersion: 2,
+    command: { capabilityProfile: 'flowtools-native-v2' },
+    authorization: 'declarations-only',
+  })
+  const [stale, pure, denied] = report.results
+  expect(stale!.code).toBe(1)
+  expect(stale!.stdout).toBe('')
+  expect(pure!.code).toBe(0)
+  expect(pure!.stderr).toBe('')
+  const output = Buffer.from(pure!.stdoutBase64, 'base64')
+  expect(output.readUInt32LE(0)).toBe(output.length - 4)
+  const execution = JSON.parse(output.subarray(4).toString('utf8')) as {
+    version: number
+    kind: string
+    execution: { success: boolean; data: unknown }
+  }
+  expect(execution.version).toBe(RUNNER_PROTOCOL_VERSION)
+  expect(execution.kind).toBe('result')
+  expect(execution.execution.success).toBe(true)
+  expect(JSON.stringify(execution.execution.data)).toContain('aGVsbG8=')
+  expect(denied!.stderr).not.toContain(report.marker)
+  const rejected = Buffer.from(denied!.stdoutBase64, 'base64')
+  expect(rejected.readUInt32LE(0)).toBe(rejected.length - 4)
+  expect(JSON.parse(rejected.subarray(4).toString('utf8'))).toMatchObject({
+    execution: { success: false, error: { code: 'LOAD_FAILED' } },
+  })
 }, 30_000)
 
 test('actual compiled runner verifies the Host package pin before importing service code', async () => {

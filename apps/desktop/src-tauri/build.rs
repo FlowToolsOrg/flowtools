@@ -22,7 +22,26 @@ fn main() {
             Sha256::digest(bytes)
         );
     }
-    tauri_build::build();
+    // Defining the application manifest makes custom commands subject to the
+    // same window/origin ACL as official plugins. Validation permissions are
+    // declared here but granted only by the explicit validation config.
+    let manifest = tauri_build::AppManifest::new().commands(&[
+        "get_plugins",
+        "get_plugin",
+        "add_plugin",
+        "update_plugin",
+        "enable_plugin",
+        "disable_plugin",
+        "remove_plugin",
+        "managed_runtime",
+        "managed_runtime_disconnect",
+        "managed_runtime_storage",
+        "managed_runtime_control",
+        "validation_runtime",
+        "validation_runtime_disconnect",
+    ]);
+    tauri_build::try_build(tauri_build::Attributes::new().app_manifest(manifest))
+        .expect("Build the explicit application command ACL");
 
     // Tauri embeds its resources in app binaries, but integration-test harnesses
     // also need Common Controls v6 when linked code imports TaskDialogIndirect.

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-validation-runtime-disconnect"
+description = "Enables the validation_runtime_disconnect command without any pre-configured scope."
+commands.allow = ["validation_runtime_disconnect"]
+
+[[permission]]
+identifier = "deny-validation-runtime-disconnect"
+description = "Denies the validation_runtime_disconnect command without any pre-configured scope."
+commands.deny = ["validation_runtime_disconnect"]

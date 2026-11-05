@@ -242,6 +242,15 @@ impl CapabilityBroker {
         let permissions = command["permissions"]
             .as_array()
             .ok_or(ErrorCode::CapabilityUndeclared)?;
+        // Typed v2 scopes are inert in NA0 and cannot borrow legacy grants.
+        if command.get("capabilityProfile").is_some() {
+            if !crate::native_contract::command_valid(command) {
+                return Err(ErrorCode::CapabilityUndeclared);
+            }
+            if !effects.is_empty() || !permissions.is_empty() {
+                return Err(ErrorCode::CapabilityUnavailable);
+            }
+        }
         // Preserve G2's explicit validation-only pure T1 evaluation.
         if effects.is_empty() && permissions.is_empty() {
             return Ok(self
@@ -662,7 +671,7 @@ impl Scope {
 
 // This is an exact-origin policy contract, not DNS/redirect enforcement. The
 // network adapter remains unavailable until it enforces those constraints.
-fn valid_origin(origin: &str) -> bool {
+pub(crate) fn valid_origin(origin: &str) -> bool {
     let Some(authority) = origin.strip_prefix("https://") else {
         return false;
     };
@@ -692,6 +701,23 @@ mod tests {
     use super::*;
     use crate::catalog::BuiltinCatalog;
     use serde_json::json;
+    #[test]
+    fn v2_effects_cannot_borrow_a_legacy_grant_or_start_an_adapter() {
+        let (mut broker, identity, mut command, grant) = fixture();
+        broker.approve(identity.clone(), grant).unwrap();
+        command["capabilityProfile"] = json!(crate::native_contract::NATIVE_CAPABILITY_PROFILE);
+        command["effects"] = json!(["file-read"]);
+        command["permissions"] = json!([{"capability":"fs","operations":["read"],"scopes":[{"kind":"resource","slot":"source"}]}]);
+        assert_eq!(
+            broker.authorize_command(&identity, &command, 100.0),
+            Err(ErrorCode::CapabilityUnavailable)
+        );
+        command["permissions"][0]["scopes"] = json!(["handle:source"]);
+        assert_eq!(
+            broker.authorize_command(&identity, &command, 100.0),
+            Err(ErrorCode::CapabilityUndeclared)
+        );
+    }
 
     fn fixture() -> (CapabilityBroker, CommandIdentity, Value, Grant) {
         let catalog = BuiltinCatalog::embedded();

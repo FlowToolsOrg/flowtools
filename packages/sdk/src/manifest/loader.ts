@@ -3,7 +3,7 @@ import type { ManifestTarget, PluginManifestV1 } from './schema'
 import { resolvePluginMaturity } from '../types/maturity'
 
 import { equalJsonValues } from './json-schema'
-import { parsePluginManifest } from './schema'
+import { parseVersionedPluginManifest } from './v2'
 
 type BoundIdentity = Pick<
   PluginManifestV1,
@@ -25,7 +25,19 @@ export async function loadManifestModule<T extends ManifestModule>(
   expected: BoundIdentity,
   load: () => Promise<T>
 ): Promise<T> {
-  const manifest = parsePluginManifest(value, target)
+  const manifest = parseVersionedPluginManifest(value, target)
+  if (
+    manifest.formatVersion === 2 &&
+    (manifest.commands.some(
+      command => command.effects.length || command.permissions.length
+    ) ||
+      manifest.services?.some(service =>
+        service.operations.some(
+          operation => operation.effects.length || operation.permissions.length
+        )
+      ))
+  )
+    throw new Error('Native v2 effect adapters are unavailable')
   if (
     manifest.id !== expected.id ||
     manifest.publisher !== expected.publisher ||

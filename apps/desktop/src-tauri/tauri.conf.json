@@ -19,7 +19,36 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": {
+        "default-src": "'none'",
+        "script-src": "'self'",
+        "style-src": "'self' 'unsafe-inline'",
+        "img-src": "'self' data: blob:",
+        "font-src": "'self' data:",
+        "connect-src": "'self' ipc: http: https:",
+        "media-src": "'self' blob:",
+        "object-src": "'none'",
+        "frame-src": "'none'",
+        "worker-src": "'none'",
+        "base-uri": "'none'",
+        "form-action": "'none'",
+        "frame-ancestors": "'none'"
+      },
+      "devCsp": {
+        "default-src": "'none'",
+        "script-src": "'self' 'unsafe-inline' blob:",
+        "style-src": "'self' 'unsafe-inline'",
+        "img-src": "'self' data: blob:",
+        "font-src": "'self' data:",
+        "connect-src": "'self' ipc: http: https: ws: wss:",
+        "media-src": "'self' blob:",
+        "object-src": "'none'",
+        "frame-src": "'self' blob:",
+        "worker-src": "'none'",
+        "base-uri": "'none'",
+        "form-action": "'none'",
+        "frame-ancestors": "'none'"
+      }
     }
   },
   "bundle": {

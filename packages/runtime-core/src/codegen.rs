@@ -31,12 +31,14 @@ fn manifest_fixture(manifest: &Value) -> Value {
 
 pub fn artifacts() -> Result<Vec<(&'static str, String)>, Box<dyn std::error::Error>> {
     let types = specta::Types::default()
+        .register::<crate::native_contract::NativePermissionV2>()
         .register::<CapabilityOperation>()
         .register::<Request>()
         .register::<Response>()
         .register::<StorageAction>()
         .register::<StorageReport>();
     let bindings = format!("// Generated from Rust. Do not edit.\nexport const PROTOCOL_MAJOR = {PROTOCOL_MAJOR} as const\nexport const CLIENT_VERSION = '{CLIENT_VERSION}' as const\n{}", specta_typescript::Typescript::default().export(&types, specta_serde::Format)?);
+    let bindings = format!("{bindings}\nexport const NATIVE_CAPABILITY_PROFILE = '{}' as const\nexport const RUNNER_PROTOCOL_VERSION = {} as const\nexport const SUPPORTED_MANIFEST_FORMATS = [1, 2] as const\n", crate::native_contract::NATIVE_CAPABILITY_PROFILE, crate::native_contract::RUNNER_PROTOCOL_VERSION);
     let bindings = format!(
         "{bindings}\nexport const SCHEDULE_LIMITS = {} as const\n",
         json!({

@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "generate": "bun run manifest-conformance.ts --check && bun run generate-catalog.ts && cargo run --locked --manifest-path Cargo.toml --bin export-runtime-bindings",
-    "verify:bindings": "bun run manifest-conformance.ts --check && cargo run --locked --manifest-path Cargo.toml --bin export-runtime-bindings -- --check",
+    "generate": "bun run manifest-conformance.ts --check && bun run manifest-v2-conformance.ts --check && bun run generate-catalog.ts && cargo run --locked --manifest-path Cargo.toml --bin export-runtime-bindings && bun run --cwd ../runtime-client generate:validators",
+    "verify:bindings": "bun run manifest-conformance.ts --check && bun run manifest-v2-conformance.ts --check && cargo run --locked --manifest-path Cargo.toml --bin export-runtime-bindings -- --check && bun run --cwd ../runtime-client verify:validators",
     "build": "bun run generate-catalog.ts && cargo build --locked --manifest-path Cargo.toml",
     "lint": "oxlint --type-aware --type-check *.ts && cargo fmt --manifest-path Cargo.toml -- --check && cargo clippy --locked --manifest-path Cargo.toml --all-targets -- -D warnings",
     "check-types": "tsgo --noEmit && cargo check --locked --manifest-path Cargo.toml --all-targets",
-    "test": "bun run manifest-conformance.ts --check && bun run generate-catalog.ts && cargo build --locked --manifest-path ../../apps/runtime/test/fixtures/isolation-probe/Cargo.toml && bun run ../../scripts/check-rust-tests.ts Cargo.toml && cargo test --locked --manifest-path Cargo.toml -- --test-threads=1"
+    "test": "bun run manifest-conformance.ts --check && bun run manifest-v2-conformance.ts --check && bun run generate-catalog.ts && cargo build --locked --manifest-path ../../apps/runtime/test/fixtures/isolation-probe/Cargo.toml && bun run ../../scripts/check-rust-tests.ts Cargo.toml && cargo test --locked --manifest-path Cargo.toml -- --test-threads=1"
   },
   "dependencies": {
     "@flowtools/plugins": "workspace:*",

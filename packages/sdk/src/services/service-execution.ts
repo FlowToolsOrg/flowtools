@@ -3,7 +3,7 @@ import type {
   ExecutePluginOptions,
   ExecutionErrorCode,
 } from '../execution'
-import type { PluginManifestV1, ManifestTarget, JsonValue } from '../manifest'
+import type { PluginManifest, ManifestTarget, JsonValue } from '../manifest'
 import type { ToolContext } from '../types/ctx'
 
 import { z } from 'zod'
@@ -12,7 +12,7 @@ import { dependencyIdSchema } from '../dependencies'
 import { createExecutionFailure, executePlugin } from '../execution'
 import {
   isJsonValue,
-  parsePluginManifest,
+  parseVersionedPluginManifest,
   validateOperationValue,
 } from '../manifest'
 
@@ -33,7 +33,7 @@ export type ServiceImplementations = Readonly<
 
 /** Execution helper only; possession of a handler never grants permission to run it. */
 export async function executeManifestService(
-  value: PluginManifestV1,
+  value: PluginManifest,
   serviceId: string,
   operationId: string,
   implementation: ExecutablePlugin,
@@ -52,15 +52,21 @@ export async function executeManifestService(
         message: code,
       }
     )
-  let manifest: PluginManifestV1
+  let manifest: PluginManifest
   try {
-    manifest = parsePluginManifest(value, target)
+    manifest = parseVersionedPluginManifest(value, target)
   } catch {
     return fail('NOT_RUNNABLE')
   }
   const operation = manifest.services
     ?.find(service => service.id === serviceId)
     ?.operations.find(operation => operation.id === operationId)
+  if (
+    manifest.formatVersion === 2 &&
+    operation &&
+    (operation.effects.length || operation.permissions.length)
+  )
+    return fail('NOT_RUNNABLE')
   if (!operation || !operation.headless || operation.interaction !== 'none')
     return fail('NOT_RUNNABLE')
   if (

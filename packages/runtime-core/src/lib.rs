@@ -4,6 +4,7 @@ pub mod codegen;
 pub mod data;
 pub mod dependencies;
 pub mod file_workflows;
+pub mod native_contract;
 pub mod notifications;
 pub mod packages;
 pub mod policy;

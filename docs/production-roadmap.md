@@ -1,5 +1,11 @@
 # FlowTools 生产化路线图
 
+2026-11-05：NA0 已实现 [Manifest/wire 版本契约基础](./validation/na0-versioned-contracts.md)：
+v1 parser/405-case corpus/结构摘要保留，独立 v2 声明与 SDK/Rust/签名包/G4
+元数据校验、旧 policy 保留和新效果拒绝、0.4.0 client/私有帧 2。
+[四项业务 API](./plugin-native-api-design.md) 的 NA1–NA7 仍 pending；NA0 不新增
+原生 IO/授权或关闭 G8/独立审阅，实施分支依赖尚未合入 main 的 G8 PR #17。
+
 P2.7d 加入实际应用命令 ACL，移除宽泛 default 权限集合，并把验证命令授权
 留在单独配置；已有原生身份拒绝与新增 pre-handler 对照通过，见
 [记录](./validation/g8-native-acl.md)。T1、独立审核与 P2.7/G8 状态不升级。

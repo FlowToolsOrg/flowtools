@@ -1,5 +1,10 @@
 # Flow Tool
 
+NA0 adds [explicit Manifest/wire version contracts](./docs/validation/na0-versioned-contracts.md):
+the v1 parser/corpus stay unchanged, v2 declarations use a separate profile, and
+wire client 0.4.0/private frames 2 refuse old peers. New native effects remain
+unavailable; the four plugin APIs are still pending their adapters.
+
 Desktop native commands now use an application ACL and explicit main-window
 permissions. See [P2.7d validation](./docs/validation/g8-native-acl.md) for actual
 pre-handler refusals and remaining T1 boundaries.

@@ -1,5 +1,11 @@
 # Flow Tool Plugin 开发指南
 
+NA0 提供 `parseVersionedPluginManifest()` 和独立的 Manifest v2/profile 声明；
+`parsePluginManifest()` 仍仅接受 v1，原内置库存不升级。新 typed scope 不等于
+grant，带效果的 v2 命令暂时拒绝；wire client 需 0.4.0，见
+[契约与验证](./validation/na0-versioned-contracts.md)。`ctx.resources/opener/secrets`
+与 `ctx.request.managed` 仍按 [NA1–NA7 计划](./plugin-native-api-design.md) 实施。
+
 Desktop 原生命令现在受 main/local AppManifest ACL 约束，插件/core 默认
 权限集已收敛为显式列表；这不是插件自身的 grant。普通构建无 validation、
 raw SQL/FS 写入/clipboard/shell 权限，详见 [d](./validation/g8-native-acl.md)。

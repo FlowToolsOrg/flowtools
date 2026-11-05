@@ -1,5 +1,10 @@
 # FlowTools 下一阶段目标与实施设计
 
+2026-11-05：新增 [四项原生 API 计划](./plugin-native-api-design.md) 的 NA0
+[版本化声明与兼容基础](./validation/na0-versioned-contracts.md)。v1 与现有授权/
+安全门禁保持，v2 新效果仍拒绝；NA1–NA7、G0–G8 与 E 的原有依赖/成熟度
+分别保留。此局部工作包不等于开启四项原生能力或第三方执行。
+
 - 决策日期：2026-10-04
 - 状态：accepted-design；G1、G2 固定 Windows/T1 验证范围已完成；G3 七项已实现为 Windows/T1 prototype，原生确认/恢复、Windows 键盘、200% 缩放与 NVDA 实际输出已有实窗证据，独立安全批准仍 pending；G4 P1.6a/P1.6b 与六条异常排空基线已实现为固定 Windows/T1 prototype，2026-10-12 本地完整集成已过，当前提交远端 CI 与独立安全批准 pending；G5 P2.5a 及 P2.5b 六个惰性准入/事务子步骤已实现为 prototype，2026-10-12 契约加固本地完整门禁已过，当前提交远端 CI 与独立安全批准 pending；P2.5b/G5、G6 的生产范围和 G8 保持 pending；G7 已完成批准的 Windows/T1 功能原型，人工项 waived，当前证据见 G7 交付记录
 - 决策来源：维护者已确认的产品讨论；实施责任由 Repository Maintainer 分配

@@ -3,7 +3,8 @@ import { z } from 'zod'
 /** Build-owned export. Unknown or newly stacked custom rules must be mapped. */
 export function exportCheckedSchema(
   schema: z.ZodType,
-  refinements: ReadonlyMap<object, string>
+  refinements: ReadonlyMap<object, string>,
+  allowNativeUnion = false
 ) {
   return z.toJSONSchema(schema, {
     target: 'draft-7',
@@ -21,6 +22,7 @@ export function exportCheckedSchema(
         (custom && !refinement) ||
         customChecks > 1 ||
         ![
+          ...(allowNativeUnion ? ['union'] : []),
           'string',
           'number',
           'boolean',

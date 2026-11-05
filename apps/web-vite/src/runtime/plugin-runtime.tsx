@@ -5,8 +5,8 @@ import { PluginErrorBoundary, PluginLoader } from '@flowtools/sdk'
 import { createExecutionFailure } from '@flowtools/sdk/execution'
 import {
   executeManifestCommand,
-  parsePluginManifest,
-  type PluginManifestV1,
+  parseVersionedPluginManifest,
+  type PluginManifest,
 } from '@flowtools/sdk/manifest'
 
 import { builtInManifestData } from '../plugin/manifests'
@@ -48,9 +48,9 @@ export async function runWebPlugin(
     platform: 'web' as const,
     arch: 'wasm32' as const,
   }
-  let manifest: PluginManifestV1
+  let manifest: PluginManifest
   try {
-    manifest = parsePluginManifest(
+    manifest = parseVersionedPluginManifest(
       builtInManifestData.find(item => item.id === plugin.meta.id),
       target
     )

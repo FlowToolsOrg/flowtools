@@ -7,10 +7,10 @@ import {
 } from '@flowtools/runtime-client'
 import { createExecutionFailure } from '@flowtools/sdk/execution'
 import {
-  parsePluginManifest,
+  parseVersionedPluginManifest,
   validateOperationValue,
   isJsonValue,
-  type PluginManifestV1,
+  type PluginManifest,
 } from '@flowtools/sdk/manifest'
 
 import { builtInManifestData } from '../plugin/manifests'
@@ -28,9 +28,9 @@ export async function runDesktopPlugin(
     platform: 'windows' as const,
     arch: 'x64' as const,
   }
-  let manifest: PluginManifestV1
+  let manifest: PluginManifest
   try {
-    manifest = parsePluginManifest(
+    manifest = parseVersionedPluginManifest(
       builtInManifestData.find(item => item.id === plugin.meta.id),
       target
     )

@@ -1,5 +1,13 @@
 # Repository Guidelines
 
+NA0 preserves the closed v1 parser, original 405-case bytes and structural export
+digest. Use explicit version dispatch for Manifest v2/profile declarations;
+never reinterpret its typed scopes as legacy grants. Wire client 0.4.0/private
+frames 2 must refuse old peers before business IO. V2 effects remain unavailable
+until their real adapter gates pass. Keep the separate LF v2 corpus/drift checks,
+actual signed ZIP/runner controls and byte-preserving policy tests. See
+[NA0 evidence](./docs/validation/na0-versioned-contracts.md).
+
 G8 P2.7d uses an explicit application AppManifest and local main-window command
 permissions. Never restore broad plugin/core default sets or grant validation
 commands in production capabilities. Keep generated permission TOML LF/content

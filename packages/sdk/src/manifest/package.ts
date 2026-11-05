@@ -1,8 +1,10 @@
+import type { ManifestTarget } from './schema'
+
 import { createHash } from 'node:crypto'
 import { lstatSync, readdirSync, readFileSync, realpathSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
 
-import { parsePluginManifest, type ManifestTarget } from './schema'
+import { parseVersionedPluginManifest } from './v2'
 
 /** Full canonical manifest identity, including actual artifact hashes. */
 export function manifestPackageDigest(value: unknown): string {
@@ -27,7 +29,7 @@ export function verifyManifestPackage(
   value: unknown,
   target: ManifestTarget
 ) {
-  const manifest = parsePluginManifest(value, target)
+  const manifest = parseVersionedPluginManifest(value, target)
   const absolute = resolve(root)
   // Refuse redirects in every ancestor, including junctions above the package root.
   let ancestor = absolute

@@ -5,6 +5,7 @@ import type {
   NotificationStatus,
 } from '@flowtools/sdk/types'
 
+import { RUNNER_PROTOCOL_VERSION } from '@flowtools/runtime-client'
 import { isJsonValue } from '@flowtools/sdk/manifest'
 import { serviceTargetSchema } from '@flowtools/sdk/services'
 
@@ -36,10 +37,22 @@ export class RunnerFrames {
     await fill(length + 4)
     const bytes = this.buffer.subarray(4, length + 4)
     this.buffer = this.buffer.subarray(length + 4)
-    return JSON.parse(bytes.toString('utf8')) as unknown
+    const value: unknown = JSON.parse(
+      new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+    )
+    if (
+      !value ||
+      typeof value !== 'object' ||
+      !('version' in value) ||
+      value.version !== RUNNER_PROTOCOL_VERSION
+    )
+      throw new Error('PROTOCOL_MISMATCH')
+    return value
   }
   write(value: unknown): void {
-    const body = Buffer.from(JSON.stringify(value))
+    const body = Buffer.from(
+      JSON.stringify({ ...(value as object), version: RUNNER_PROTOCOL_VERSION })
+    )
     if (!body.length || body.length > limit) throw new Error('FRAME_TOO_LARGE')
     const header = Buffer.alloc(4)
     header.writeUInt32LE(body.length)
@@ -51,6 +64,7 @@ export class RunnerFrames {
     if (Buffer.byteLength(snapshot) > limit - 1024)
       return Promise.reject(new Error('FRAME_TOO_LARGE'))
     const request = async () => {
+      if (this.sequence >= 255) throw new Error('BUDGET_EXCEEDED')
       const id = ++this.sequence
       this.write({ ...(JSON.parse(snapshot) as object), id })
       const reply = await this.read()
@@ -63,8 +77,8 @@ export class RunnerFrames {
         typeof response.success !== 'boolean' ||
         Object.keys(response).sort().join(',') !==
           (response.success
-            ? 'data,id,kind,success'
-            : 'errorCode,id,kind,success')
+            ? 'data,id,kind,success,version'
+            : 'errorCode,id,kind,success,version')
       )
         throw new Error('INVALID_RESPONSE')
       if (!response.success) {
@@ -150,7 +164,7 @@ export async function serveRunner(
   if (
     !initial ||
     typeof initial !== 'object' ||
-    Object.keys(initial).sort().join(',') !== 'kind,payload' ||
+    Object.keys(initial).sort().join(',') !== 'kind,payload,version' ||
     (initial as { kind?: unknown }).kind !== 'start'
   )
     throw new Error('INVALID_REQUEST')

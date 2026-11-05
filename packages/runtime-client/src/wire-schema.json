@@ -2199,6 +2199,9 @@
       },
       "ErrorCode": {
         "enum": [
+          "CAPABILITY_UNAVAILABLE",
+          "RESOURCE_EXPIRED",
+          "NETWORK_FAILED",
           "PROTOCOL_MISMATCH",
           "CLIENT_INCOMPATIBLE",
           "FRAME_TOO_LARGE",
@@ -4471,6 +4474,9 @@
       },
       "ErrorCode": {
         "enum": [
+          "CAPABILITY_UNAVAILABLE",
+          "RESOURCE_EXPIRED",
+          "NETWORK_FAILED",
           "PROTOCOL_MISMATCH",
           "CLIENT_INCOMPATIBLE",
           "FRAME_TOO_LARGE",

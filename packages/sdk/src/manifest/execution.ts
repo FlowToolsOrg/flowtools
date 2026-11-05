@@ -3,16 +3,17 @@ import type {
   ExecutePluginOptions,
 } from '../execution/executor'
 import type { ToolContext } from '../types/ctx'
-import type { ManifestTarget, PluginManifestV1 } from './schema'
+import type { ManifestTarget } from './schema'
+import type { PluginManifest } from './v2'
 
 import { createExecutionFailure, executePlugin } from '../execution/executor'
 
 import { isJsonValue, validateOperationValue } from './json-schema'
-import { parsePluginManifest } from './schema'
+import { parseVersionedPluginManifest } from './v2'
 
 /** Explicit transitional adapter; a legacy function object is never serialized. */
 export async function executeManifestCommand<T>(
-  value: PluginManifestV1,
+  value: PluginManifest,
   commandId: string,
   plugin: ExecutablePlugin<T>,
   input: unknown,
@@ -37,9 +38,9 @@ export async function executeManifestCommand<T>(
       { code, message },
       startedAt
     )
-  let manifest: PluginManifestV1
+  let manifest: PluginManifest
   try {
-    manifest = parsePluginManifest(value, target)
+    manifest = parseVersionedPluginManifest(value, target)
   } catch {
     return fail('NOT_RUNNABLE', 'Invalid or incompatible command manifest')
   }
@@ -52,6 +53,12 @@ export async function executeManifestCommand<T>(
       'Manifest does not match executor identity'
     )
   const command = manifest.commands.find(item => item.id === commandId)
+  if (
+    manifest.formatVersion === 2 &&
+    command &&
+    (command.effects.length || command.permissions.length)
+  )
+    return fail('NOT_RUNNABLE', 'Native v2 effect adapters are unavailable')
   if (!command || !command.headless || command.interaction === 'required')
     return fail(
       'NOT_RUNNABLE',

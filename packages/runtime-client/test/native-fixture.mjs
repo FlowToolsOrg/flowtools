@@ -46,6 +46,22 @@ const ready = /** @type {{ pipe: string }} */ (
 const cli = new RuntimeClient(await connectNamedPipe(ready.pipe))
 const desktop = new RuntimeClient(await connectNamedPipe(ready.pipe))
 try {
+  const legacy = await rawExchange(ready.pipe, {
+    version: 1,
+    requestId: 'legacy-client',
+    session: null,
+    call: {
+      method: 'session.open',
+      payload: {
+        token: cliToken,
+        clientVersion: '0.3.0',
+        expectedInstanceId: null,
+      },
+    },
+  })
+  partial(legacy, {
+    outcome: { type: 'error', data: { code: 'CLIENT_INCOMPATIBLE' } },
+  })
   const mismatch = await rawExchange(ready.pipe, {
     version: 2,
     requestId: 'wrong-version',
@@ -63,7 +79,7 @@ try {
       method: 'session.open',
       payload: {
         token: cliToken,
-        clientVersion: '0.3.0',
+        clientVersion: '0.4.0',
         expectedInstanceId: null,
         agentId: 'admin',
       },

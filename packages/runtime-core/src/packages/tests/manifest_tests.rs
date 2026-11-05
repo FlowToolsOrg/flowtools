@@ -20,6 +20,48 @@ fn target() -> ManifestCompatibility {
     }
 }
 #[test]
+fn actual_signed_v2_zip_retains_bytes_and_binds_g4_lock_to_complete_manifest() {
+    use crate::dependencies::{
+        DependencyCatalog, DependencyIdentity, DependencyTarget, PackageCandidate,
+    };
+    let corpus: Value =
+        serde_json::from_str(include_str!("../../../manifest-v2-conformance.json")).unwrap();
+    let value = corpus["cases"][0]["manifest"].clone();
+    let archive = signed_archive(value, PackageKind::Plugin);
+    let original = archive.files()["manifest.json"].clone();
+    let admitted = validate_plugin_manifest(archive, &target()).unwrap();
+    assert_eq!(admitted.archive().files()["manifest.json"], original);
+    assert_eq!(admitted.manifest()["formatVersion"], 2);
+    let root = DependencyIdentity {
+        publisher: admitted.manifest()["publisher"].as_str().unwrap().into(),
+        id: admitted.manifest()["id"].as_str().unwrap().into(),
+    };
+    let candidate = PackageCandidate::from_verified_archive(&admitted).unwrap();
+    let plan = DependencyCatalog::new(vec![candidate], vec![])
+        .unwrap()
+        .resolve(
+            std::slice::from_ref(&root),
+            &DependencyTarget {
+                platform: "windows".into(),
+                arch: "x64".into(),
+            },
+        )
+        .unwrap();
+    assert_eq!(
+        plan.lock.packages[0].digest,
+        crate::catalog::digest(admitted.manifest())
+    );
+    let mut changed = admitted.manifest().clone();
+    changed["capabilityProfile"] = json!("forged");
+    assert_ne!(
+        crate::catalog::digest(&changed),
+        plan.lock.packages[0].digest
+    );
+    assert!(
+        validate_plugin_manifest(signed_archive(changed, PackageKind::Plugin), &target()).is_err()
+    );
+}
+#[test]
 fn all_thirteen_sdk_validated_builtin_manifests_also_pass_native_full_validation() {
     let catalog = crate::catalog::BuiltinCatalog::embedded();
     let mut count = 0;

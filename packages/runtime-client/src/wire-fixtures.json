@@ -2922,6 +2922,36 @@
     {
       "outcome": {
         "data": {
+          "code": "CAPABILITY_UNAVAILABLE"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "RESOURCE_EXPIRED"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
+          "code": "NETWORK_FAILED"
+        },
+        "type": "error"
+      },
+      "requestId": "fixture-request",
+      "version": 1
+    },
+    {
+      "outcome": {
+        "data": {
           "code": "DEPENDENCY_INVALID"
         },
         "type": "error"

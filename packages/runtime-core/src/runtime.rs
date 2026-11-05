@@ -3750,6 +3750,7 @@ mod tests {
         let mut core = RuntimeCore::validation("private-token".into(), "desktop".into());
         for (version, instance, expected) in [
             ("future", None, ErrorCode::ClientIncompatible),
+            ("0.3.0", None, ErrorCode::ClientIncompatible),
             (
                 CLIENT_VERSION,
                 Some("old-instance".to_owned()),

@@ -1,5 +1,10 @@
 # ADR-0002：能力授权、包准入与恢复策略
 
+2026-11-05 [NA0](../validation/na0-versioned-contracts.md) 在独立 profile 中
+接受 v2 typed scope 声明和 signed ZIP/G4 元数据。原 v1 parser、grant/Scope、
+SQLite schema 2 与行字节保持，新效果在真实 adapter 到位前明确拒绝。
+新 wire client 0.4.0/私有帧 2 不与旧 peer 混跑；没有新增自动授权或恢复许可。
+
 - 日期：2026-10-03
 - 范围修订：2026-10-04；增加冷启动/副作用授权、服务委托与共享工具包生命周期
 - 状态：accepted-design；实现未完成，不能作为生产安全认证

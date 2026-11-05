@@ -1,5 +1,12 @@
 # FlowTools 插件威胁模型
 
+2026-11-05 [NA0 版本契约](../validation/na0-versioned-contracts.md) 添加显式
+v2 声明/类型化 scope、真实 signed ZIP/G4 digest/compiled runner 对照与旧
+client/私有帧拒绝。旧 v1 corpus/结构/授权行保留；没有新增 IO adapter 或
+生产 grant。SEC-001/003/004/005/006/007/008/009/010/012/013/014/015 均保持
+open，独立 Reviewer/date/conclusion pending；同 realm、DNS 与平台边界未被
+元数据校验替代。实际代码与分阶段验证见证据链接。
+
 P2.7d（2026-11-04）将应用命令接入 AppManifest ACL，普通 capability 不再
 使用插件/core default 集合，验证命令仅在固定身份 overlay 授权。下方早期
 “未配置 AppManifest”的描述由此替代；实际 native IPC 与原 guard 证据见

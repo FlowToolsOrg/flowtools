@@ -176,6 +176,7 @@
       "dependencies": {
         "@flowtools/cli": "workspace:*",
         "@flowtools/plugins": "workspace:*",
+        "@flowtools/runtime-client": "workspace:*",
         "@flowtools/sdk": "workspace:*",
       },
       "devDependencies": {

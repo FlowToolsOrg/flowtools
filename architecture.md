@@ -1,5 +1,11 @@
 # Flow Tool Architecture
 
+NA0 的 [版本契约基础](./docs/validation/na0-versioned-contracts.md) 在原 Runtime
+与包准入上增加独立 Manifest v2 profile/typed scopes；v1 parser 与字节保留。
+SDK/原生签名 ZIP/G4 metadata 显式分派，旧 policy 不迁移成新授权。wire client
+0.4.0 与私有帧 2 由 Rust codegen 同源；新效果在真实 adapter 到位前拒绝。
+四项 IO 与第三方执行状态不变，详见 [分步计划](./docs/plugin-native-api-design.md)。
+
 P2.7d 通过 AppManifest 将已有应用命令接入 Tauri ACL，主窗口权限逐项列出，
 验证权限只存在固定身份的验证配置。原 Runtime grant/origin 检查保留，见
 [证据](./docs/validation/g8-native-acl.md)。不是逐插件隔离或新执行授权。

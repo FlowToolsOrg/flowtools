@@ -13,9 +13,12 @@ import {
 import { tmpdir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 
+import { RUNNER_PROTOCOL_VERSION } from '@flowtools/runtime-client'
 import {
   parsePluginManifest,
+  parseVersionedPluginManifest,
   type PluginManifestV1,
+  type PluginManifest,
 } from '@flowtools/sdk/manifest'
 import {
   manifestPackageDigest,
@@ -25,7 +28,9 @@ import {
 import { cliManifestTarget } from '../../cli/src/discovery'
 
 const frame = (value: unknown) => {
-  const body = Buffer.from(JSON.stringify(value))
+  const body = Buffer.from(
+    JSON.stringify({ version: RUNNER_PROTOCOL_VERSION, ...(value as object) })
+  )
   const header = Buffer.alloc(4)
   header.writeUInt32LE(body.length)
   return Buffer.concat([header, body])
@@ -34,7 +39,9 @@ const frame = (value: unknown) => {
 function runFrames(
   runner: string,
   frames: Buffer[],
-  submissionDeadline = false
+  submissionDeadline = false,
+  args: readonly string[] = [],
+  compileEntry?: string
 ) {
   const host = Bun.spawnSync(
     ['node', resolve(import.meta.dirname, 'protocol-fixture.mjs')],
@@ -45,6 +52,8 @@ function runFrames(
           runner,
           frames: frames.map(bytes => bytes.toString('base64')),
           submissionDeadline,
+          args,
+          compileEntry,
         })
       ),
       stdout: 'pipe',
@@ -58,6 +67,7 @@ function runFrames(
     results: {
       code: number
       stdout: string
+      stdoutBase64: string
       stderr: string
       oversized: boolean
       pid: number
@@ -97,6 +107,9 @@ test('actual compiled runner refuses truncated, oversized and forged Host frames
     Buffer.from([5, 0, 0, 0, 123]),
     oversized,
     frame({ kind: 'start', payload: {}, grant: 'injected' }),
+    frame({ kind: 'start', payload: {}, version: undefined }),
+    frame({ kind: 'start', payload: {}, version: 1 }),
+    frame({ kind: 'start', payload: {}, version: 65536 }),
     frame({
       kind: 'service',
       target: { id: 'untrusted' },
@@ -111,6 +124,165 @@ test('actual compiled runner refuses truncated, oversized and forged Host frames
     expect(stdout).toBe('')
     expect(stderr).toContain('RUNNER_FAILED')
     expect(stderr).not.toContain('canary')
+  }
+}, 30_000)
+
+test('actual compiled v2 runner executes the real pure builtin and refuses stale pins', async () => {
+  const parent = realpathSync(tmpdir())
+  const directory = mkdtempSync(join(parent, 'flowtools-service-pin-'))
+  try {
+    const source = resolve(import.meta.dirname, '../../../plugins')
+    const dist = join(directory, 'plugins/dist')
+    const generated = join(directory, 'plugins/.generated')
+    const runner = join(directory, 'packages/plugin-runner/dist/runner.js')
+    mkdirSync(dirname(runner), { recursive: true })
+    mkdirSync(generated, { recursive: true })
+    copyFileSync(resolve(import.meta.dirname, '../dist/runner.js'), runner)
+    cpSync(join(source, 'dist'), dist, { recursive: true })
+    const catalog = JSON.parse(
+      readFileSync(join(source, '.generated/builtin-manifests.json'), 'utf8')
+    ) as { formatVersion: 1; plugins: PluginManifest[] }
+    const index = catalog.plugins.findIndex(
+      item => item.id === 'plugin-base64-encoder'
+    )
+    const original = catalog.plugins[index]!
+    const oldDigest = manifestPackageDigest(original)
+    const manifest = parseVersionedPluginManifest(
+      {
+        ...original,
+        formatVersion: 2,
+        capabilityProfile: 'flowtools-native-v2',
+        commands: original.commands.map(command => ({
+          ...command,
+          capabilityProfile: 'flowtools-native-v2',
+          effects: [],
+          permissions: [],
+        })),
+      },
+      cliManifestTarget
+    )
+    const wrapper = join(directory, 'v2-wrapper.ts')
+    writeFileSync(
+      wrapper,
+      `import original from ${JSON.stringify(join(source, 'dist/plugin-base64-encoder.commands.js'))};export default {...original,command:${JSON.stringify(manifest.commands[0])}}`
+    )
+    const entry = 'plugin-base64-encoder.commands.js'
+    runFrames(join(dist, entry), [], false, [], wrapper)
+    const bytes = readFileSync(join(dist, entry))
+    const file = manifest.files.find(file => file.path === entry)!
+    file.size = bytes.length
+    file.sha256 = createHash('sha256').update(bytes).digest('hex')
+    catalog.plugins[index] = manifest
+    writeFileSync(
+      join(generated, 'builtin-manifests.json'),
+      JSON.stringify(catalog)
+    )
+    verifyManifestPackage(dist, manifest, cliManifestTarget)
+    const cli = join(directory, 'packages/cli/dist/cli.js')
+    mkdirSync(dirname(cli), { recursive: true })
+    const [discovery] = runFrames(
+      cli,
+      [Buffer.alloc(0)],
+      false,
+      ['describe', manifest.id, 'run', '--format', 'json'],
+      resolve(import.meta.dirname, '../../cli/src/cli.ts')
+    )
+    expect(discovery!.code).toBe(0)
+    expect(discovery!.stderr).toBe('')
+    expect(JSON.parse(discovery!.stdout)).toMatchObject({
+      formatVersion: 2,
+      command: { capabilityProfile: 'flowtools-native-v2' },
+      authorization: 'declarations-only',
+    })
+    const digest = manifestPackageDigest(manifest)
+    const results = runFrames(
+      runner,
+      [oldDigest, digest].map(packageDigest =>
+        frame({
+          kind: 'start',
+          payload: {
+            pluginId: manifest.id,
+            commandId: 'run',
+            input: { text: 'hello', mode: 'encode' },
+            data: null,
+            deadline: 0,
+            packageDigest,
+          },
+        })
+      ),
+      true
+    )
+    expect(results[0]!.code).toBe(1)
+    expect(results[0]!.stdout).toBe('')
+    expect(results[1]!.code).toBe(0)
+    expect(results[1]!.stderr).toBe('')
+    const output = Buffer.from(results[1]!.stdoutBase64, 'base64')
+    expect(output.readUInt32LE(0)).toBe(output.length - 4)
+    const report = JSON.parse(output.subarray(4).toString('utf8')) as {
+      version: number
+      kind: string
+      execution: { success: boolean; data: unknown }
+    }
+    expect(report.version).toBe(RUNNER_PROTOCOL_VERSION)
+    expect(report.kind).toBe('result')
+    expect(report.execution.success).toBe(true)
+    expect(JSON.stringify(report.execution.data)).toContain('aGVsbG8=')
+    const marker = 'V2_NATIVE_IMPORT_MUST_NOT_RUN'
+    const marked = Buffer.concat([
+      Buffer.from(`console.error('${marker}');`),
+      bytes,
+    ])
+    writeFileSync(join(dist, entry), marked)
+    const unavailable = parseVersionedPluginManifest(
+      {
+        ...manifest,
+        commands: manifest.commands.map(command => ({
+          ...command,
+          effects: ['file-read'],
+          permissions: [
+            {
+              capability: 'fs',
+              operations: ['read'],
+              scopes: [{ kind: 'resource', slot: 'source' }],
+            },
+          ],
+        })),
+      },
+      cliManifestTarget
+    )
+    const markedFile = unavailable.files.find(file => file.path === entry)!
+    markedFile.size = marked.length
+    markedFile.sha256 = createHash('sha256').update(marked).digest('hex')
+    catalog.plugins[index] = unavailable
+    writeFileSync(
+      join(generated, 'builtin-manifests.json'),
+      JSON.stringify(catalog)
+    )
+    verifyManifestPackage(dist, unavailable, cliManifestTarget)
+    const [denied] = runFrames(
+      runner,
+      [
+        frame({
+          kind: 'start',
+          payload: {
+            pluginId: manifest.id,
+            commandId: 'run',
+            input: { text: 'hello' },
+            data: null,
+            deadline: 0,
+            packageDigest: manifestPackageDigest(unavailable),
+          },
+        }),
+      ],
+      true
+    )
+    expect(denied!.stderr).not.toContain(marker)
+    const rejected = Buffer.from(denied!.stdoutBase64, 'base64')
+    expect(JSON.parse(rejected.subarray(4).toString('utf8'))).toMatchObject({
+      execution: { success: false, error: { code: 'LOAD_FAILED' } },
+    })
+  } finally {
+    removeServiceFixture(directory, parent)
   }
 }, 30_000)
 

@@ -1,5 +1,5 @@
 import type {
-  CommandManifestV1,
+  CommandManifest,
   JsonValue,
   OperationSchema,
 } from '@flowtools/sdk/manifest'
@@ -32,7 +32,7 @@ export interface CommandFlag {
 }
 
 /** CLI presentation and parsing consume the same serialized schema, never Zod code. */
-export function commandFlags(command: CommandManifestV1): CommandFlag[] {
+export function commandFlags(command: CommandManifest): CommandFlag[] {
   const flags = new Set<string>()
   const names = new Set(
     Object.keys(command.inputSchema.properties ?? {}).map(toKebab)
@@ -97,7 +97,7 @@ function valueFromFlag(schema: OperationSchema, value: string): JsonValue {
 }
 
 export function validateCommandInput(
-  command: CommandManifestV1,
+  command: CommandManifest,
   input: unknown
 ): Record<string, JsonValue> {
   if (
@@ -121,7 +121,7 @@ export function validateCommandInput(
 
 /** Reject unknown/duplicate scalar flags; only declared arrays can repeat. */
 export function parseCommandFlags(
-  command: CommandManifestV1,
+  command: CommandManifest,
   args: string[]
 ): Record<string, JsonValue> {
   const fields = new Map(
@@ -212,7 +212,7 @@ function exampleValue(schema: OperationSchema): JsonValue {
 }
 
 /** Schema-valid sample only; declared runtime validators remain authoritative. */
-export function commandExample(command: CommandManifestV1) {
+export function commandExample(command: CommandManifest) {
   try {
     return validateCommandInput(command, exampleValue(command.inputSchema))
   } catch {
@@ -220,7 +220,7 @@ export function commandExample(command: CommandManifestV1) {
   }
 }
 
-export function commandFlagHelp(command: CommandManifestV1): string {
+export function commandFlagHelp(command: CommandManifest): string {
   return commandFlags(command)
     .map(field => {
       const value =

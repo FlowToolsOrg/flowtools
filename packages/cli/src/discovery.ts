@@ -16,6 +16,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import {
   parseVersionedPluginManifest,
   equalJsonValues,
+  isResourceCommand,
 } from '@flowtools/sdk/manifest'
 import {
   manifestPackageDigest,
@@ -228,7 +229,10 @@ export async function loadBuiltinServices(
  * Only load the compiled T1 module declared by this host build. This is not a
  * package signature, an OS sandbox, or protection against replacing T1 files.
  */
-export async function loadPlugin(id: string): Promise<CLICommandPlugin | null> {
+export async function loadPlugin(
+  id: string,
+  adapters: { resources?: boolean } = {}
+): Promise<CLICommandPlugin | null> {
   const expected = getBuiltinPluginInfo(id)
   if (!expected?.hasRun) return null
   const artifact = compiledArtifact(id)
@@ -239,7 +243,9 @@ export async function loadPlugin(id: string): Promise<CLICommandPlugin | null> {
     if (
       manifest.formatVersion === 2 &&
       manifest.commands.some(
-        command => command.effects.length || command.permissions.length
+        command =>
+          (command.effects.length || command.permissions.length) &&
+          !(adapters.resources && isResourceCommand(command))
       )
     )
       return null

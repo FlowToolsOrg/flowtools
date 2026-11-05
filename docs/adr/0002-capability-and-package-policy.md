@@ -1,5 +1,10 @@
 # ADR-0002：能力授权、包准入与恢复策略
 
+2026-11-05 [NA1](../validation/na1-resources.md) 的封闭 format-2 只读资源 grant
+继续使用原 grants 表/单 DataStore writer，不扩张旧 Scope、PermissionGrant 或
+format-1 policy import。新行采用有界 TEXT、精确前驱、affected/actual/readback
+事务检查，旧行保留。撤销推进原 epoch，grant/选择/绑定分开，路径不进任务 metadata。
+
 2026-11-05 [NA0](../validation/na0-versioned-contracts.md) 在独立 profile 中
 接受 v2 typed scope 声明和 signed ZIP/G4 元数据。原 v1 parser、grant/Scope、
 SQLite schema 2 与行字节保持，新效果在真实 adapter 到位前明确拒绝。

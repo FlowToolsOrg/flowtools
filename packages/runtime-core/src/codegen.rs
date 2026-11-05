@@ -33,6 +33,8 @@ pub fn artifacts() -> Result<Vec<(&'static str, String)>, Box<dyn std::error::Er
     let types = specta::Types::default()
         .register::<crate::native_contract::NativePermissionV2>()
         .register::<CapabilityOperation>()
+        .register::<crate::resources::ResourceOperation>()
+        .register::<crate::resources::ResourceResponse>()
         .register::<Request>()
         .register::<Response>()
         .register::<StorageAction>()
@@ -49,7 +51,7 @@ pub fn artifacts() -> Result<Vec<(&'static str, String)>, Box<dyn std::error::Er
             "maxSchedules": 128,
         })
     );
-    let schemas = json!({ "request": schemars::schema_for!(Request), "response": schemars::schema_for!(Response), "capabilityOperation": schemars::schema_for!(CapabilityOperation), "storageAction": schemars::schema_for!(StorageAction), "storageReport": schemars::schema_for!(StorageReport) });
+    let schemas = json!({ "request": schemars::schema_for!(Request), "response": schemars::schema_for!(Response), "capabilityOperation": schemars::schema_for!(CapabilityOperation), "resourceOperation":schemars::schema_for!(crate::resources::ResourceOperation), "resourceResponse":schemars::schema_for!(crate::resources::ResourceResponse), "storageAction": schemars::schema_for!(StorageAction), "storageReport": schemars::schema_for!(StorageReport) });
     // Canonical LF source, including enum docs emitted with trailing spaces by
     // the exporter. Compare exactly this output in the unchanged drift gate.
     let bindings = bindings
@@ -241,7 +243,26 @@ mod tests {
             assert_eq!(&serde_json::to_value(operation).unwrap(), value);
             assert!(jsonschema::is_valid(&schemas["capabilityOperation"], value));
         }
-        assert_eq!(fixtures["manifests"].as_array().unwrap().len(), 15);
+        assert_eq!(fixtures["manifests"].as_array().unwrap().len(), 16);
+        assert_eq!(
+            fixtures["manifests"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter(|m| m["manifest"]["formatVersion"] == 1)
+                .count(),
+            15
+        );
+        assert_eq!(
+            fixtures["manifests"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter(|m| m["manifest"]["formatVersion"] == 2)
+                .map(|m| m["manifest"]["id"].as_str().unwrap())
+                .collect::<Vec<_>>(),
+            vec!["plugin-resource-reader"]
+        );
         for fixture in fixtures["manifests"].as_array().unwrap() {
             let (built, _) = catalog
                 .command(fixture["manifest"]["id"].as_str().unwrap(), "run")

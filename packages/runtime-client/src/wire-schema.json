@@ -346,6 +346,104 @@
             "additionalProperties": false,
             "properties": {
               "method": {
+                "const": "resources.permissions",
+                "type": "string"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "resources.grant",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ResourceGrant"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "resources.owner",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ResourceOwnerRequest"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "resources.select",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ResourceSelection"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "resources.drop",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ResourceOwnerKey"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
+                "const": "resources.submit",
+                "type": "string"
+              },
+              "payload": {
+                "$ref": "#/$defs/ResourceSubmission"
+              }
+            },
+            "required": [
+              "method",
+              "payload"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "method": {
                 "const": "session.open",
                 "type": "string"
               },
@@ -1541,6 +1639,157 @@
         ],
         "type": "object"
       },
+      "ResourceGrant": {
+        "additionalProperties": false,
+        "properties": {
+          "capabilityProfile": {
+            "type": "string"
+          },
+          "commandId": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "double",
+            "type": "number"
+          },
+          "formatVersion": {
+            "format": "uint16",
+            "maximum": 65535,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxCalls": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "packageDigest": {
+            "type": "string"
+          },
+          "pluginId": {
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "$ref": "#/$defs/ResourceScope"
+            },
+            "type": "array"
+          },
+          "target": {
+            "$ref": "#/$defs/GrantTarget"
+          }
+        },
+        "required": [
+          "formatVersion",
+          "capabilityProfile",
+          "pluginId",
+          "commandId",
+          "target",
+          "packageDigest",
+          "scopes",
+          "expiresAt",
+          "maxCalls"
+        ],
+        "type": "object"
+      },
+      "ResourceKind": {
+        "enum": [
+          "file",
+          "directory"
+        ],
+        "type": "string"
+      },
+      "ResourceOwnerKey": {
+        "additionalProperties": false,
+        "properties": {
+          "owner": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner"
+        ],
+        "type": "object"
+      },
+      "ResourceOwnerRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "$ref": "#/$defs/PermissionKey"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "type": "object"
+      },
+      "ResourceRight": {
+        "enum": [
+          "read",
+          "stat",
+          "list"
+        ],
+        "type": "string"
+      },
+      "ResourceScope": {
+        "additionalProperties": false,
+        "properties": {
+          "operations": {
+            "items": {
+              "$ref": "#/$defs/ResourceRight"
+            },
+            "type": "array"
+          },
+          "slot": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "slot",
+          "operations"
+        ],
+        "type": "object"
+      },
+      "ResourceSelection": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "$ref": "#/$defs/ResourceKind"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "slot": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "slot",
+          "kind",
+          "path"
+        ],
+        "type": "object"
+      },
+      "ResourceSubmission": {
+        "additionalProperties": false,
+        "properties": {
+          "owner": {
+            "type": "string"
+          },
+          "submit": {
+            "$ref": "#/$defs/SubmitJob"
+          }
+        },
+        "required": [
+          "owner",
+          "submit"
+        ],
+        "type": "object"
+      },
       "ScheduleDefinition": {
         "additionalProperties": false,
         "properties": {
@@ -1915,6 +2164,343 @@
     ],
     "title": "Request",
     "type": "object"
+  },
+  "resourceOperation": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "oneOf": [
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "resolve",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {
+              "slot": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "slot"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "parameters"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "stat",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {
+              "ref": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "ref"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "parameters"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "read",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {
+              "maxBytes": {
+                "format": "uint32",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "offset": {
+                "format": "uint32",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "ref": {
+                "type": "string"
+              },
+              "revision": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "ref",
+              "revision",
+              "offset",
+              "maxBytes"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "parameters"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "list",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {
+              "cursor": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "limit": {
+                "format": "uint32",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "ref": {
+                "type": "string"
+              },
+              "revision": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "ref",
+              "revision",
+              "limit"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "parameters"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "release",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": false,
+            "properties": {
+              "ref": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "ref"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation",
+          "parameters"
+        ],
+        "type": "object"
+      }
+    ],
+    "title": "ResourceOperation"
+  },
+  "resourceResponse": {
+    "$defs": {
+      "ResourceChunk": {
+        "additionalProperties": false,
+        "properties": {
+          "base64": {
+            "type": "string"
+          },
+          "eof": {
+            "type": "boolean"
+          },
+          "nextOffset": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "base64",
+          "nextOffset",
+          "eof"
+        ],
+        "type": "object"
+      },
+      "ResourceInfo": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "$ref": "#/$defs/ResourceKind"
+          },
+          "name": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "rights": {
+            "items": {
+              "$ref": "#/$defs/ResourceRight"
+            },
+            "type": "array"
+          },
+          "size": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ref",
+          "kind",
+          "name",
+          "revision",
+          "rights"
+        ],
+        "type": "object"
+      },
+      "ResourceKind": {
+        "enum": [
+          "file",
+          "directory"
+        ],
+        "type": "string"
+      },
+      "ResourcePage": {
+        "additionalProperties": false,
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/$defs/ResourceInfo"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "entries"
+        ],
+        "type": "object"
+      },
+      "ResourceRight": {
+        "enum": [
+          "read",
+          "stat",
+          "list"
+        ],
+        "type": "string"
+      }
+    },
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "oneOf": [
+      {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "info",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/$defs/ResourceInfo"
+          }
+        },
+        "required": [
+          "kind",
+          "value"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "chunk",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/$defs/ResourceChunk"
+          }
+        },
+        "required": [
+          "kind",
+          "value"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "page",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/$defs/ResourcePage"
+          }
+        },
+        "required": [
+          "kind",
+          "value"
+        ],
+        "type": "object"
+      },
+      {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "released",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "type": "object"
+      }
+    ],
+    "title": "ResourceResponse"
   },
   "response": {
     "$defs": {
@@ -2676,6 +3262,73 @@
       },
       "Outcome": {
         "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/$defs/ResourcePermission"
+                },
+                "type": "array"
+              },
+              "type": {
+                "const": "resource-permissions",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/ResourceOwner"
+              },
+              "type": {
+                "const": "resource-owner",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/ResourceInfo"
+              },
+              "type": {
+                "const": "resource",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "data"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "const": "resource-released",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          },
           {
             "additionalProperties": false,
             "properties": {
@@ -3461,6 +4114,195 @@
           "utc",
           "zoned",
           "timeZone"
+        ],
+        "type": "object"
+      },
+      "ResourceGrant": {
+        "additionalProperties": false,
+        "properties": {
+          "capabilityProfile": {
+            "type": "string"
+          },
+          "commandId": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "double",
+            "type": "number"
+          },
+          "formatVersion": {
+            "format": "uint16",
+            "maximum": 65535,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxCalls": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "packageDigest": {
+            "type": "string"
+          },
+          "pluginId": {
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "$ref": "#/$defs/ResourceScope"
+            },
+            "type": "array"
+          },
+          "target": {
+            "$ref": "#/$defs/GrantTarget"
+          }
+        },
+        "required": [
+          "formatVersion",
+          "capabilityProfile",
+          "pluginId",
+          "commandId",
+          "target",
+          "packageDigest",
+          "scopes",
+          "expiresAt",
+          "maxCalls"
+        ],
+        "type": "object"
+      },
+      "ResourceInfo": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "$ref": "#/$defs/ResourceKind"
+          },
+          "name": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "rights": {
+            "items": {
+              "$ref": "#/$defs/ResourceRight"
+            },
+            "type": "array"
+          },
+          "size": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ref",
+          "kind",
+          "name",
+          "revision",
+          "rights"
+        ],
+        "type": "object"
+      },
+      "ResourceKind": {
+        "enum": [
+          "file",
+          "directory"
+        ],
+        "type": "string"
+      },
+      "ResourceOwner": {
+        "additionalProperties": false,
+        "properties": {
+          "expiresAt": {
+            "format": "double",
+            "type": "number"
+          },
+          "id": {
+            "type": "string"
+          },
+          "identity": {
+            "$ref": "#/$defs/CommandIdentity"
+          },
+          "scopes": {
+            "items": {
+              "$ref": "#/$defs/ResourceScope"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "identity",
+          "expiresAt",
+          "scopes"
+        ],
+        "type": "object"
+      },
+      "ResourcePermission": {
+        "additionalProperties": false,
+        "properties": {
+          "epoch": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "formatVersion": {
+            "format": "uint16",
+            "maximum": 65535,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "grant": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ResourceGrant"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "identity": {
+            "$ref": "#/$defs/CommandIdentity"
+          }
+        },
+        "required": [
+          "formatVersion",
+          "identity",
+          "epoch"
+        ],
+        "type": "object"
+      },
+      "ResourceRight": {
+        "enum": [
+          "read",
+          "stat",
+          "list"
+        ],
+        "type": "string"
+      },
+      "ResourceScope": {
+        "additionalProperties": false,
+        "properties": {
+          "operations": {
+            "items": {
+              "$ref": "#/$defs/ResourceRight"
+            },
+            "type": "array"
+          },
+          "slot": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "slot",
+          "operations"
         ],
         "type": "object"
       },

@@ -6,11 +6,14 @@ use crate::{
     protocol::*,
 };
 use rusqlite::{params, OptionalExtension};
+mod resources;
 
 pub struct PolicyStore {
     pub records: Vec<PermissionRecord>,
     pub cold_start: bool,
     catalog: BuiltinCatalog,
+    pub resource_records: Vec<crate::resources::ResourcePermission>,
+    resource_predecessors: std::collections::HashMap<CommandIdentity, String>,
 }
 impl PolicyStore {
     pub fn set_catalog(&mut self, catalog: BuiltinCatalog) {
@@ -20,6 +23,13 @@ impl PolicyStore {
         connection: &rusqlite::Connection,
         action: &str,
         records: &[PermissionRecord],
+    ) -> Result<(), ErrorCode> {
+        Self::audit_decisions(connection,action,records.iter().map(|r|serde_json::json!({"identityDigest":digest(&serde_json::to_value(&r.identity).expect("identity")),"epoch":r.epoch,"approved":r.grant.is_some()})).collect())
+    }
+    fn audit_decisions(
+        connection: &rusqlite::Connection,
+        action: &str,
+        decisions: Vec<serde_json::Value>,
     ) -> Result<(), ErrorCode> {
         let text: Option<String> = connection
             .query_row(
@@ -42,7 +52,7 @@ impl PolicyStore {
             .unwrap_or(0)
             .checked_add(1)
             .ok_or(ErrorCode::BudgetExceeded)?;
-        events.push(serde_json::json!({"sequence":sequence,"action":action,"at":crate::runtime::now(),"decisions":records.iter().map(|r|serde_json::json!({"identityDigest":digest(&serde_json::to_value(&r.identity).expect("identity")),"epoch":r.epoch,"approved":r.grant.is_some()})).collect::<Vec<_>>() }));
+        events.push(serde_json::json!({"sequence":sequence,"action":action,"at":crate::runtime::now(),"decisions":decisions }));
         if events.len() > 256 {
             events.remove(0);
         }
@@ -79,18 +89,26 @@ impl PolicyStore {
                 grant: Some(grant),
             });
         }
-        if changed.len() > 256 {
+        if changed.len() + self.resource_records.len() > 256 {
             return Err(ErrorCode::BudgetExceeded);
         }
         let tx = store
             .connection
             .transaction()
             .map_err(|_| ErrorCode::StorageFailed)?;
+        self.verify_resource_rows(&tx)?;
+        let native_before = tx.total_changes();
         for record in &changed {
             Self::save(&tx, record)?;
         }
         tx.execute("INSERT INTO core_metadata(key,value) VALUES('cold-start',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value",[if import.cold_start {"true"} else {"false"}]).map_err(|_|ErrorCode::StorageFailed)?;
         Self::audit(&tx, "import", &changed)?;
+        self.verify_resource_rows(&tx)?;
+        if !self.resource_records.is_empty()
+            && tx.total_changes().checked_sub(native_before) != Some(changed.len() as u64 + 2)
+        {
+            return Err(ErrorCode::StorageFailed);
+        }
         tx.commit().map_err(|_| ErrorCode::StorageFailed)?;
         self.records = changed;
         self.cold_start = import.cold_start;
@@ -113,29 +131,44 @@ impl PolicyStore {
             )
             .optional()
             .map_err(|_| ErrorCode::StorageFailed)?;
+        let mut resource_records = Vec::new();
+        let mut resource_predecessors = std::collections::HashMap::new();
         let mut records: Vec<PermissionRecord> = store
             .connection
-            .prepare("SELECT epoch,state FROM grants ORDER BY identity")
+            .prepare("SELECT epoch,CASE WHEN typeof(state)='text' AND length(CAST(state AS BLOB))<=32768 THEN state ELSE NULL END,identity FROM grants ORDER BY identity LIMIT 257")
             .map_err(|_| ErrorCode::StorageFailed)?
             .query_map([], |row| {
-                Ok((row.get::<_, u32>(0)?, row.get::<_, String>(1)?))
+                Ok((row.get::<_, u32>(0)?, row.get::<_, Option<String>>(1)?,row.get::<_,String>(2)?))
             })
             .map_err(|_| ErrorCode::StorageFailed)?
             .map(|row| {
-                let (epoch, state) = row.map_err(|_| ErrorCode::StoreCorrupt)?;
+                let (epoch, state,identity_key) = row.map_err(|_| ErrorCode::StoreCorrupt)?;
+                let state=state.ok_or(ErrorCode::StoreCorrupt)?;
+                let value:serde_json::Value=serde_json::from_str(&state).map_err(|_|ErrorCode::StoreCorrupt)?;
+                if value.get("formatVersion").is_some() {
+                    let value=crate::packages::strict_json(state.as_bytes()).map_err(|_|ErrorCode::StoreCorrupt)?;
+                    let record:crate::resources::ResourcePermission=serde_json::from_value(value).map_err(|_|ErrorCode::StoreCorrupt)?;
+                    if epoch==0||epoch!=record.epoch||record.format_version!=2||serde_json::to_string(&record.identity).map_err(|_|ErrorCode::StoreCorrupt)?!=identity_key {return Err(ErrorCode::StoreCorrupt);}
+                    if resource_predecessors.insert(record.identity.clone(),state).is_some() {return Err(ErrorCode::StoreCorrupt);}
+                    resource_records.push(record);return Ok(None);
+                }
                 let record: PermissionRecord =
                     serde_json::from_str(&state).map_err(|_| ErrorCode::StoreCorrupt)?;
                 if epoch == 0 || epoch != record.epoch {
                     return Err(ErrorCode::StoreCorrupt);
                 }
-                Ok(record)
+                Ok(Some(record))
             })
-            .collect::<Result<_, _>>()?;
+            .collect::<Result<Vec<_>, _>>()?.into_iter().flatten().collect();
+        if records.len() + resource_records.len() > 256 {
+            return Err(ErrorCode::StoreCorrupt);
+        }
         if previous.as_deref() != Some(catalog_digest) {
             let tx = store
                 .connection
                 .transaction()
                 .map_err(|_| ErrorCode::StorageFailed)?;
+            let native_before = tx.total_changes();
             for record in &mut records {
                 record.epoch = record
                     .epoch
@@ -144,14 +177,54 @@ impl PolicyStore {
                 record.grant = None;
                 Self::save(&tx, record)?;
             }
-            Self::audit(&tx, "catalog-change", &records)?;
+            for record in &mut resource_records {
+                record.epoch = record
+                    .epoch
+                    .checked_add(1)
+                    .ok_or(ErrorCode::BudgetExceeded)?;
+                record.grant = None;
+                let text = resources::save_resource(
+                    &tx,
+                    record,
+                    resource_predecessors
+                        .get(&record.identity)
+                        .map(String::as_str),
+                )?;
+                resource_predecessors.insert(record.identity.clone(), text);
+            }
+            if resource_records.is_empty() {
+                Self::audit(&tx, "catalog-change", &records)?;
+            } else {
+                let mut decisions:Vec<_>=records.iter().map(|r|serde_json::json!({"identityDigest":digest(&serde_json::to_value(&r.identity).unwrap()),"epoch":r.epoch,"approved":false})).collect();
+                decisions.extend(resource_records.iter().map(|r|serde_json::json!({"identityDigest":digest(&serde_json::to_value(&r.identity).unwrap()),"epoch":r.epoch,"approved":false})));
+                Self::audit_decisions(&tx, "catalog-change", decisions)?;
+            }
             tx.execute("INSERT INTO core_metadata(key,value) VALUES('catalog-digest',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value",[catalog_digest]).map_err(|_|ErrorCode::StorageFailed)?;
+            if !resource_records.is_empty() {
+                if tx.total_changes().checked_sub(native_before)
+                    != Some((records.len() + resource_records.len()) as u64 + 2)
+                {
+                    return Err(ErrorCode::StorageFailed);
+                }
+                for record in &resource_records {
+                    if resources::read(&tx, &record.identity)?
+                        != Some((
+                            record.epoch,
+                            resource_predecessors[&record.identity].clone(),
+                        ))
+                    {
+                        return Err(ErrorCode::StorageFailed);
+                    }
+                }
+            }
             tx.commit().map_err(|_| ErrorCode::StorageFailed)?;
         }
         let mut policy = Self {
             records: vec![],
             cold_start: false,
             catalog,
+            resource_records: Vec::new(),
+            resource_predecessors: std::collections::HashMap::new(),
         };
         for record in &records {
             if let Some(ref grant) = record.grant {
@@ -160,6 +233,14 @@ impl PolicyStore {
                     return Err(ErrorCode::StoreCorrupt);
                 }
                 policy.validate(grant)?;
+            }
+        }
+        for record in &resource_records {
+            if let Some(grant) = &record.grant {
+                if policy.resource_identity(grant)? != record.identity {
+                    return Err(ErrorCode::StoreCorrupt);
+                }
+                policy.validate_resource(grant)?;
             }
         }
         let cold_start = store
@@ -174,6 +255,8 @@ impl PolicyStore {
             .is_some_and(|v| v == "true");
         policy.records = records;
         policy.cold_start = cold_start;
+        policy.resource_records = resource_records;
+        policy.resource_predecessors = resource_predecessors;
         Ok(policy)
     }
     fn identity(&self, grant: &PermissionGrant) -> Result<CommandIdentity, ErrorCode> {
@@ -242,7 +325,9 @@ impl PolicyStore {
         }
         self.validate(&grant)?;
         let identity = self.identity(&grant)?;
-        if self.records.len() >= 256 && !self.records.iter().any(|r| r.identity == identity) {
+        if self.records.len() + self.resource_records.len() >= 256
+            && !self.records.iter().any(|r| r.identity == identity)
+        {
             return Err(ErrorCode::BudgetExceeded);
         }
         let epoch = self
@@ -261,8 +346,16 @@ impl PolicyStore {
             .connection
             .transaction()
             .map_err(|_| ErrorCode::StorageFailed)?;
+        self.verify_resource_rows(&tx)?;
+        let native_before = tx.total_changes();
         Self::save(&tx, &record)?;
         Self::audit(&tx, "grant", std::slice::from_ref(&record))?;
+        self.verify_resource_rows(&tx)?;
+        if !self.resource_records.is_empty()
+            && tx.total_changes().checked_sub(native_before) != Some(2)
+        {
+            return Err(ErrorCode::StorageFailed);
+        }
         tx.commit().map_err(|_| ErrorCode::StorageFailed)?;
         self.records.retain(|r| r.identity != record.identity);
         self.records.push(record.clone());
@@ -271,6 +364,7 @@ impl PolicyStore {
     pub fn revoke(&mut self, store: &mut DataStore, key: PermissionKey) -> Result<(), ErrorCode> {
         // Revoke all versions for this stable command identity, including rollback.
         let mut changed = self.records.clone();
+        let resource_changes = self.resource_revoke_changes(&key)?;
         for record in &mut changed {
             if record.identity.caller == key.target.caller()
                 && record.identity.plugin_id == key.plugin_id
@@ -287,12 +381,29 @@ impl PolicyStore {
             .connection
             .transaction()
             .map_err(|_| ErrorCode::StorageFailed)?;
+        self.verify_resource_rows(&tx)?;
+        let native_before = tx.total_changes();
         for record in &changed {
             Self::save(&tx, record)?;
         }
-        Self::audit(&tx, "revoke", &changed)?;
+        let resource_texts = self.save_resource_changes(&tx, &resource_changes)?;
+        if resource_changes.is_empty() {
+            Self::audit(&tx, "revoke", &changed)?;
+        } else {
+            let mut decisions:Vec<_>=changed.iter().map(|r|serde_json::json!({"identityDigest":digest(&serde_json::to_value(&r.identity).unwrap()),"epoch":r.epoch,"approved":r.grant.is_some()})).collect();
+            decisions.extend(resource_changes.iter().map(|r|serde_json::json!({"identityDigest":digest(&serde_json::to_value(&r.identity).unwrap()),"epoch":r.epoch,"approved":false})));
+            Self::audit_decisions(&tx, "revoke", decisions)?;
+        }
+        self.verify_unchanged_resource_rows(&tx, &resource_changes)?;
+        if !self.resource_records.is_empty()
+            && tx.total_changes().checked_sub(native_before)
+                != Some((changed.len() + resource_changes.len()) as u64 + 1)
+        {
+            return Err(ErrorCode::StorageFailed);
+        }
         tx.commit().map_err(|_| ErrorCode::StorageFailed)?;
         self.records = changed;
+        self.apply_resource_changes(resource_changes, resource_texts);
         Ok(())
     }
     pub fn set(&mut self, store: &mut DataStore, policy: BootstrapPolicy) -> Result<(), ErrorCode> {
@@ -300,8 +411,16 @@ impl PolicyStore {
             .connection
             .transaction()
             .map_err(|_| ErrorCode::StorageFailed)?;
+        self.verify_resource_rows(&tx)?;
+        let native_before = tx.total_changes();
         tx.execute("INSERT INTO core_metadata(key,value) VALUES('cold-start',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value",[if policy.cold_start {"true"}else{"false"}]).map_err(|_|ErrorCode::StorageFailed)?;
         Self::audit(&tx, "bootstrap-policy", &[])?;
+        self.verify_resource_rows(&tx)?;
+        if !self.resource_records.is_empty()
+            && tx.total_changes().checked_sub(native_before) != Some(2)
+        {
+            return Err(ErrorCode::StorageFailed);
+        }
         tx.commit().map_err(|_| ErrorCode::StorageFailed)?;
         self.cold_start = policy.cold_start;
         Ok(())
@@ -354,7 +473,7 @@ mod tests {
         assert!(serde_json::from_value::<crate::broker::Scope>(typed).is_err());
     }
 
-    fn grant() -> PermissionGrant {
+    pub(super) fn grant() -> PermissionGrant {
         PermissionGrant {
             plugin_id: "plugin-base64-encoder".into(),
             command_id: "run".into(),

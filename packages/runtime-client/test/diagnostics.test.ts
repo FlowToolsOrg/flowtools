@@ -75,7 +75,7 @@ test('Rust-derived golden protocol and full metadata match TS validators and dig
       },
       builtInCLIManifests.map(plugin => plugin.id)
     )
-  ).toHaveLength(15)
+  ).toHaveLength(16)
   const canonical = (value: unknown): unknown =>
     Array.isArray(value)
       ? value.map(canonical)

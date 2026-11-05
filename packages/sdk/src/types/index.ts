@@ -44,3 +44,10 @@ export type {
 } from './ui'
 
 export * from './plugin-features'
+export type {
+  ResourceRef,
+  ResourceRight,
+  ResourceInfo,
+  ResourceOptions,
+  ResourceCapability,
+} from '../resources'

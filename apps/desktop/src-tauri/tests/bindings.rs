@@ -91,6 +91,24 @@ mod ipc_tests {
             (
                 "main",
                 "http://tauri.localhost",
+                "managed_resource_select",
+                true,
+            ),
+            (
+                "external",
+                "http://tauri.localhost",
+                "managed_resource_select",
+                false,
+            ),
+            (
+                "main",
+                "https://untrusted.invalid",
+                "managed_resource_select",
+                false,
+            ),
+            (
+                "main",
+                "http://tauri.localhost",
                 "not_in_app_manifest",
                 false,
             ),
@@ -166,6 +184,51 @@ mod ipc_tests {
         }
     }
 
+    #[test]
+    fn resource_picker_guard_refuses_foreign_windows_and_origins_before_opening_a_dialog() {
+        for (label, origin) in [
+            ("external", "http://localhost:1420"),
+            ("main", "https://untrusted.invalid"),
+            ("main", "http://tauri.localhost"),
+        ] {
+            let mut context = tauri::generate_context!();
+            context.config_mut().build.dev_url = Some("http://localhost:1420".parse().unwrap());
+            context
+                .runtime_authority_mut()
+                .add_capability(
+                    tauri::ipc::CapabilityBuilder::new("test-resource-native-guard")
+                        .window(label)
+                        .permission("allow-managed-resource-select"),
+                )
+                .unwrap();
+            let app = desktop_lib::mock_command_builder().build(context).unwrap();
+            let window = tauri::WebviewWindowBuilder::new(
+                &app,
+                label,
+                tauri::WebviewUrl::External(origin.parse().unwrap()),
+            )
+            .build()
+            .unwrap();
+            let response = tauri::test::get_ipc_response(
+                &window,
+                tauri::webview::InvokeRequest {
+                    cmd: "managed_resource_select".into(),
+                    callback: tauri::ipc::CallbackFn(0),
+                    error: tauri::ipc::CallbackFn(1),
+                    url: "http://tauri.localhost".parse().unwrap(),
+                    body: tauri::ipc::InvokeBody::Json(
+                        serde_json::json!({"kind":"file","pluginId":"plugin-resource-reader","commandId":"run","slot":"source"}),
+                    ),
+                    headers: Default::default(),
+                    invoke_key: tauri::test::INVOKE_KEY.into(),
+                },
+            );
+            assert_eq!(
+                response.unwrap_err(),
+                serde_json::json!({"code":"SESSION_INVALID"})
+            );
+        }
+    }
     #[test]
     fn status_control_refuses_untrusted_windows_origins_and_initialization() {
         for call in [

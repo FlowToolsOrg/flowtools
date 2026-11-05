@@ -33,6 +33,35 @@ function controlledContext(pluginId: string) {
     log: () => {},
     utils: { now: Date.now },
     storage,
+    resources: {
+      resolve: async () => ({
+        ref: 'fixture',
+        kind: 'file',
+        name: 'fixture',
+        size: 3,
+        revision: 'one',
+        rights: ['read', 'stat'],
+      }),
+      stat: async () => {
+        throw new Error('SCOPE_DENIED')
+      },
+      read: async (ref, request) => {
+        if (
+          ref !== 'fixture' ||
+          request.revision !== 'one' ||
+          request.offset !== 0 ||
+          request.signal?.aborted
+        )
+          throw new Error('SCOPE_DENIED')
+        return { bytes: new Uint8Array([1, 2, 3]), nextOffset: 3, eof: true }
+      },
+      list: async () => {
+        throw new Error('SCOPE_DENIED')
+      },
+      release: async ref => {
+        if (ref !== 'fixture') throw new Error('SCOPE_DENIED')
+      },
+    },
     media: {
       run: async planId => {
         if (planId !== '00000000-0000-4000-8000-000000000001')
@@ -66,7 +95,7 @@ function controlledContext(pluginId: string) {
 
 test('smoke fixtures exactly cover the runnable CLI inventory', () => {
   const discovered = scanPlugins()
-  expect(discovered).toHaveLength(15)
+  expect(discovered).toHaveLength(16)
   expect(discovered.every(plugin => plugin.hasRun && plugin.hasSchema)).toBe(
     true
   )
@@ -81,10 +110,10 @@ for (const fixture of pluginSmokeFixtures) {
     async () => {
       const controlled = controlledContext(fixture.id)
       const runner = createPluginRunner({
-        loadPlugin,
+        loadPlugin: id => loadPlugin(id, { resources: true }),
         createContext: () => controlled.ctx,
       })
-      const plugin = await loadPlugin(fixture.id)
+      const plugin = await loadPlugin(fixture.id, { resources: true })
       expect(plugin).not.toBeNull()
       const success = await runner(fixture.id, fixture.input)
       expect(success).toMatchObject({

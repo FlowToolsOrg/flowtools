@@ -9,6 +9,7 @@ import type { PluginManifest } from './v2'
 import { createExecutionFailure, executePlugin } from '../execution/executor'
 
 import { isJsonValue, validateOperationValue } from './json-schema'
+import { isResourceCommand } from './resource-command'
 import { parseVersionedPluginManifest } from './v2'
 
 /** Explicit transitional adapter; a legacy function object is never serialized. */
@@ -56,7 +57,8 @@ export async function executeManifestCommand<T>(
   if (
     manifest.formatVersion === 2 &&
     command &&
-    (command.effects.length || command.permissions.length)
+    (command.effects.length || command.permissions.length) &&
+    !(ctx.resources && isResourceCommand(command))
   )
     return fail('NOT_RUNNABLE', 'Native v2 effect adapters are unavailable')
   if (!command || !command.headless || command.interaction === 'required')

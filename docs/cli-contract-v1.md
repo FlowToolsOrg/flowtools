@@ -1,5 +1,10 @@
 # CLI command contract v1 (P1.1c)
 
+NA1 保留原 15 个 v1 插件，增加显式 v2 resource-reader。混合库存的 commands
+envelope 使用 formatVersion 2；每项仍保留自己的 manifest 版本。新资源选择只能
+通过 `flowtools resources select ... --approve-read` 管理绑定，普通 run flags/
+input 不授权路径，见 [NA1](./validation/na1-resources.md)。原 v1 parser/输入规则不变。
+
 当前 CLI 是 monorepo 的固定 T1 adapter，需先 `bun run build:packages`。
 独立安装 CLI、无界面 Host、授权存储和后台任务属于 G2/G3；这里不开放任意包、
 源码、执行路径或 shell。命令身份为 publisher/plugin/command。

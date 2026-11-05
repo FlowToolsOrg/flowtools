@@ -8,12 +8,12 @@ import { builtInManifests as desktop } from '../../apps/desktop/src/plugin/manif
 import { builtInManifests as web } from '../../apps/web-vite/src/plugin/manifests'
 
 test('built-in metadata, both manifests and CLI all declare only prototype maturity', async () => {
-  expect(web).toHaveLength(15)
+  expect(web).toHaveLength(16)
   expect(desktop.map(({ loader: _loader, ...meta }) => meta)).toEqual(
     web.map(({ loader: _loader, ...meta }) => meta)
   )
   for (const cli of scanPlugins()) {
-    const plugin = await loadPlugin(cli.id)
+    const plugin = await loadPlugin(cli.id, { resources: true })
     expect(plugin?.meta.maturity).toBe('prototype')
     expect(web.find(manifest => manifest.id === cli.id)?.maturity).toBe(
       'prototype'
@@ -43,7 +43,7 @@ test('compiled CLI list/info report maturity in JSON and text', async () => {
   const listed = z
     .array(z.object({ id: z.string(), maturity: z.literal('prototype') }))
     .parse(JSON.parse(await run(['list', '--format', 'json'])))
-  expect(listed).toHaveLength(15)
+  expect(listed).toHaveLength(16)
   expect(await run(['list', '--format', 'text'])).toContain('[prototype]')
   expect(
     JSON.parse(await run(['info', 'plugin-base64-encoder', '--format', 'json']))

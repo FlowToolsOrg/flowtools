@@ -7,6 +7,7 @@ use serde_json::Value;
 use specta::Type;
 use std::collections::HashMap;
 use uuid::Uuid;
+mod resources;
 
 #[cfg(windows)]
 mod tool_calls;
@@ -115,6 +116,22 @@ pub struct BrokerSession {
 struct Policy {
     epoch: u32,
     grant: Option<Grant>,
+    resource: Option<crate::resources::ResourceGrant>,
+}
+impl Policy {
+    fn expires_at(&self) -> Option<f64> {
+        self.grant
+            .as_ref()
+            .map(|g| g.expires_at)
+            .or_else(|| self.resource.as_ref().map(|g| g.expires_at))
+    }
+    fn max_calls(&self) -> u32 {
+        self.grant
+            .as_ref()
+            .map(|g| g.max_calls)
+            .or_else(|| self.resource.as_ref().map(|g| g.max_calls))
+            .unwrap_or(64)
+    }
 }
 struct Binding {
     identity: CommandIdentity,
@@ -175,9 +192,11 @@ impl CapabilityBroker {
         let policy = self.policies.entry(identity).or_insert(Policy {
             epoch: 0,
             grant: None,
+            resource: None,
         });
         policy.epoch = policy.epoch.checked_add(1).ok_or(ErrorCode::RuntimeBusy)?;
         policy.grant = Some(grant);
+        policy.resource = None;
         Ok(policy.epoch)
     }
 
@@ -194,7 +213,14 @@ impl CapabilityBroker {
             let mut validator = Self::default();
             validator.approve(identity.clone(), approved.clone())?;
         }
-        self.policies.insert(identity, Policy { epoch, grant });
+        self.policies.insert(
+            identity,
+            Policy {
+                epoch,
+                grant,
+                resource: None,
+            },
+        );
         Ok(())
     }
 
@@ -207,11 +233,7 @@ impl CapabilityBroker {
             .policies
             .get(identity)
             .ok_or(ErrorCode::ApprovalRequired)?;
-        if policy
-            .grant
-            .as_ref()
-            .is_none_or(|grant| grant.expires_at <= at)
-        {
+        if policy.expires_at().is_none_or(|expires| expires <= at) {
             return Err(ErrorCode::ApprovalRequired);
         }
         Ok(policy.epoch)
@@ -221,9 +243,11 @@ impl CapabilityBroker {
         let policy = self.policies.entry(identity.clone()).or_insert(Policy {
             epoch: 0,
             grant: None,
+            resource: None,
         });
         policy.epoch = policy.epoch.checked_add(1).ok_or(ErrorCode::RuntimeBusy)?;
         policy.grant = None;
+        policy.resource = None;
         Ok(())
     }
 
@@ -242,13 +266,36 @@ impl CapabilityBroker {
         let permissions = command["permissions"]
             .as_array()
             .ok_or(ErrorCode::CapabilityUndeclared)?;
-        // Typed v2 scopes are inert in NA0 and cannot borrow legacy grants.
+        // Only the NA1 read-only resource subset has an adapter. It never borrows
+        // a legacy grant, even when its top-level effect has the same spelling.
         if command.get("capabilityProfile").is_some() {
             if !crate::native_contract::command_valid(command) {
                 return Err(ErrorCode::CapabilityUndeclared);
             }
             if !effects.is_empty() || !permissions.is_empty() {
-                return Err(ErrorCode::CapabilityUnavailable);
+                if !crate::resources::readonly_command(command) {
+                    return Err(ErrorCode::CapabilityUnavailable);
+                }
+                let policy = self
+                    .policies
+                    .get(identity)
+                    .ok_or(ErrorCode::ApprovalRequired)?;
+                let grant = policy
+                    .resource
+                    .as_ref()
+                    .ok_or(ErrorCode::CapabilityUnavailable)?;
+                if !at.is_finite() || grant.expires_at <= at {
+                    return Err(ErrorCode::ApprovalRequired);
+                }
+                if !grant.scopes.iter().all(|scope| {
+                    scope
+                        .operations
+                        .iter()
+                        .all(|right| crate::resources::declared(command, &scope.slot, *right))
+                }) {
+                    return Err(ErrorCode::CapabilityUndeclared);
+                }
+                return Ok(policy.epoch);
             }
         }
         // Preserve G2's explicit validation-only pure T1 evaluation.
@@ -291,10 +338,7 @@ impl CapabilityBroker {
         if accepted_epoch != 0 {
             let policy = self.policies.get(identity).ok_or(ErrorCode::GrantRevoked)?;
             if policy.epoch != accepted_epoch
-                || policy
-                    .grant
-                    .as_ref()
-                    .is_none_or(|grant| grant.expires_at <= at)
+                || policy.expires_at().is_none_or(|expires| expires <= at)
             {
                 return Err(ErrorCode::GrantRevoked);
             }
@@ -359,7 +403,7 @@ impl CapabilityBroker {
                 .get(&binding.identity)
                 .ok_or(ErrorCode::GrantRevoked)?;
             if policy.epoch != binding.epoch
-                || policy.grant.as_ref().is_none_or(|g| g.expires_at <= at)
+                || policy.expires_at().is_none_or(|expires| expires <= at)
             {
                 return Err(ErrorCode::GrantRevoked);
             }
@@ -419,8 +463,7 @@ impl CapabilityBroker {
         let max = self
             .policies
             .get(&binding.identity)
-            .and_then(|policy| policy.grant.as_ref())
-            .map_or(64, |grant| grant.max_calls);
+            .map_or(64, Policy::max_calls);
         if binding.calls >= max {
             Err(ErrorCode::BudgetExceeded)
         } else {

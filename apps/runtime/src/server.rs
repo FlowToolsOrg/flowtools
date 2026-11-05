@@ -200,7 +200,7 @@ pub async fn run() -> Result<(), &'static str> {
                 #[cfg(windows)]
                 {
                     let mut locked = core.lock().await;
-                    if locked.tick_media_inspections().is_err() {
+                    if locked.tick_media_inspections().and_then(|_|locked.tick_resources()).is_err() {
                         locked.fail_closed();
                         native_failure = true;
                         break;
@@ -266,7 +266,9 @@ pub async fn run() -> Result<(), &'static str> {
         while workers.join_next().await.is_some() {}
         while {
             let locked = core.lock().await;
-            locked.active_service_calls() != 0 || locked.active_media_inspections() != 0
+            locked.active_service_calls() != 0
+                || locked.active_media_inspections() != 0
+                || locked.active_resource_calls() != 0
         } {
             tokio::time::sleep(Duration::from_millis(10)).await;
         }
@@ -399,9 +401,41 @@ async fn connection(
         if recent_ids.len() > 256 {
             request_ids.remove(&recent_ids.pop_front().unwrap());
         }
+        let selection_response = if matches!(&request.call, Call::ResourceSelect(_)) {
+            let prepared = core
+                .lock()
+                .await
+                .prepare_resource_selection(&connection_id, &request);
+            let result = match prepared {
+                Err(code) => Err(code),
+                Ok(work) => {
+                    let cancellation = work.cancellation.clone();
+                    let mut task = crate::resource_io::execute(core.clone(), work, true);
+                    tokio::select! {
+                        result=&mut task=>result.map_err(|_|ErrorCode::ExecutionInterrupted).and_then(|v|v),
+                        _=pipe.read_u8()=>{if cancellation.cancel().is_err(){core.lock().await.fail_closed();}let _=task.await;break;}
+                    }
+                }
+            };
+            Some(Response {
+                version: PROTOCOL_MAJOR,
+                request_id: request.request_id.clone(),
+                outcome: match result {
+                    Ok(value) => serde_json::from_value(value)
+                        .map(Outcome::Resource)
+                        .unwrap_or(Outcome::Error(RuntimeError {
+                            code: ErrorCode::OutputInvalid,
+                        })),
+                    Err(code) => Outcome::Error(RuntimeError { code }),
+                },
+            })
+        } else {
+            None
+        };
         let (response, stop_receipt) = {
             let mut core = core.lock().await;
-            let response = core.handle(&connection_id, request);
+            let response =
+                selection_response.unwrap_or_else(|| core.handle(&connection_id, request));
             // Claim the receipt barrier under the same lock that marks stopping.
             // The shutdown tick cannot abort this connection between those steps.
             let receipt = matches!(response.outcome, Outcome::Stopping)

@@ -6,6 +6,14 @@ export interface PluginSmokeFixture {
 
 /** Complete inventory: only real compiled plugins, never a replacement run(). */
 export const pluginSmokeFixtures: PluginSmokeFixture[] = [
+  {
+    id: 'plugin-resource-reader',
+    input: {},
+    expected: {
+      type: 'json',
+      value: { result: { kind: 'file', bytes: 3, entries: 0 } },
+    },
+  },
   ...['plugin-media-inspector', 'plugin-media-converter'].map(id => ({
     id,
     input: {

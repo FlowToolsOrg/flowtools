@@ -1,5 +1,10 @@
 # FlowTools 生产化路线图
 
+2026-11-05：NA1 实现 Windows/T1 [只读资源绑定与 IO](./validation/na1-resources.md)。
+Desktop 原生选择/确认和 CLI 管理路径绑定到一个命令，SDK 仅得到本 run Ref；
+format-2 资源授权复用原表/写入器，client 0.5.0/私有帧 3 显式拒绝旧 peer。
+NA2–NA7、独立 Reviewer/date/conclusion、G8 与正式发行继续 pending。
+
 2026-11-05：NA0 已实现 [Manifest/wire 版本契约基础](./validation/na0-versioned-contracts.md)：
 v1 parser/405-case corpus/结构摘要保留，独立 v2 声明与 SDK/Rust/签名包/G4
 元数据校验、旧 policy 保留和新效果拒绝、0.4.0 client/私有帧 2。

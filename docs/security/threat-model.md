@@ -1,5 +1,11 @@
 # FlowTools 插件威胁模型
 
+2026-11-05 [NA1](../validation/na1-resources.md) 增加 SEC-003/004/005/008/010/013 的
+工程对照：T0 选择/原生确认、独立 v2 grant、owner/run/epoch/catalog/实例绑定，
+held NTFS/内容 pin、稳定单次游标、共享预算、真正取消/排空、事务和 metadata
+canary 拒绝。原 AppManifest/CSP/strict frame/scanner 保留。Codex 工程自查不关闭
+风险或 G8；独立 Reviewer/date/conclusion pending，不构成第三方隔离或发布批准。
+
 2026-11-05 [NA0 版本契约](../validation/na0-versioned-contracts.md) 添加显式
 v2 声明/类型化 scope、真实 signed ZIP/G4 digest/compiled runner 对照与旧
 client/私有帧拒绝。旧 v1 corpus/结构/授权行保留；没有新增 IO adapter 或

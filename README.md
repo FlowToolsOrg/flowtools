@@ -1,9 +1,12 @@
 # Flow Tool
 
-NA0 adds [explicit Manifest/wire version contracts](./docs/validation/na0-versioned-contracts.md):
-the v1 parser/corpus stay unchanged, v2 declarations use a separate profile, and
-wire client 0.4.0/private frames 2 refuse old peers. New native effects remain
-unavailable; the four plugin APIs are still pending their adapters.
+NA1 adds [selected read-only resources](./docs/validation/na1-resources.md) through
+the existing Runtime, grants and single writer. `ctx.resources` reads run-bound
+references in bounded chunks or directory pages. Desktop settings and
+`flowtools resources` explicitly select and bind resources. The original 15 v1
+plugins remain; one fixed v2 resource-reader brings the inventory to 16.
+Wire client 0.5.0/private frames 3 refuse old peers. Other native effects,
+third-party execution and release approval remain pending.
 
 Desktop native commands now use an application ACL and explicit main-window
 permissions. See [P2.7d validation](./docs/validation/g8-native-acl.md) for actual
@@ -437,7 +440,7 @@ verification is recorded in [the artifact gate](./docs/validation/p0-production-
     API globals expected by those plugins. Bridge calls are handled by the
     desktop SDK runtime context and then mapped to Tauri plugins where native
     access is required.
-- Local plugin workspace with 15 built-in plugins (all app type, all CLI-compatible via `run()` + `inputSchema`):
+- Local plugin workspace with 16 built-in plugins (all app type, all CLI-compatible via `run()` + `inputSchema`; resources require explicit management binding):
   - `plugins/plugin-todo-list` — 待办清单（host-managed store）
   - `plugins/plugin-uuid-generator` — UUID 生成器
   - `plugins/plugin-hash-generator` — 哈希生成器

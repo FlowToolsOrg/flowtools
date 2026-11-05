@@ -7,8 +7,9 @@
   [G8 安全 PR #17](https://github.com/FlowToolsOrg/flowtools/pull/17)
   的 `0b99b4c` 实现。PR #17 尚未合并，不能把其保护描述成 main 已具备。
 - NA0 的版本化声明/惰性准入与拒绝基础已实施，见
-  [当前契约证据](./validation/na0-versioned-contracts.md)；NA1–NA7 均 pending。
-  文中四项业务 API 仍为待实现草案，不改写 G0–G8、E01–E10 状态。
+  [当前契约证据](./validation/na0-versioned-contracts.md)；NA1 的资源子集已实现，
+  当前范围/验证见 [NA1](./validation/na1-resources.md)，NA2–NA7 仍 pending。
+  未交付分支仍为草案，不改写 G0–G8、E01–E10 状态。
   正式发行、签名、第三方隔离、独立安全审阅保持各自原有门禁。
 
 ## 1. 当前基础与设计取舍
@@ -542,7 +543,7 @@ Host-only API 不由普通 SDK 主入口导出，Web 原型对原生分支明确
 
 原设计文档交付运行 docs:check、现有 docs-check 测试、Markdown 格式与 diff
 检查，并额外检查本文本地链接；不把文档通过当成任何新 API 的运行证据。
-NA0 的实现与验证见专门证据；NA1–NA7 的实现测试、Native/UI 验收及独立安全 Reviewer/date/conclusion 均 pending。
+NA0 的实现与验证见专门证据；NA1 的资源子集与验证见上述证据，NA2–NA7 与独立安全 Reviewer/date/conclusion 仍 pending。
 既有 G7 manual waived 只适用其原验收范围，不自动覆盖这里的新用户流程。
 
 ## 10. 关联决策与后续范围

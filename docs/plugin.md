@@ -1,8 +1,16 @@
 # Flow Tool Plugin 开发指南
 
+NA1 的 Windows/T1 Runtime 提供可选 `ctx.resources`：resolve、stat、read、list 和
+幂等 release。read 返回最多 64 KiB 的 Uint8Array，要求 revision/offset/maxBytes，
+可传 signal；list 要求 revision/cursor/limit，只列一层，child 仅 stat。名称只作
+文本，不能拼接为路径或授权。Manifest v2 使用 fs 的 resource slot，T0 显式 grant/
+选择后才可绑定前台命令；普通 run 输入/flags 不授予资源。原 15 个 v1 插件保持，
+新增固定 resource-reader 后为 16。当前 wire 0.5.0/私有帧 3，见
+[使用与限制](./validation/na1-resources.md)。其他能力继续按计划推进。
+
 NA0 提供 `parseVersionedPluginManifest()` 和独立的 Manifest v2/profile 声明；
 `parsePluginManifest()` 仍仅接受 v1，原内置库存不升级。新 typed scope 不等于
-grant，带效果的 v2 命令暂时拒绝；wire client 需 0.4.0，见
+grant，NA0 时带效果的 v2 命令拒绝，历史 client 为 0.4.0，见
 [契约与验证](./validation/na0-versioned-contracts.md)。`ctx.resources/opener/secrets`
 与 `ctx.request.managed` 仍按 [NA1–NA7 计划](./plugin-native-api-design.md) 实施。
 

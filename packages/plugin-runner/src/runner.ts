@@ -39,7 +39,11 @@ async function execute(
     throw new Error('Invalid runner request')
   const request = value as Record<string, unknown>
   const requestKeys = Object.keys(request)
-    .filter(key => !frames || !['deadline', 'serviceTarget'].includes(key))
+    .filter(
+      key =>
+        !frames ||
+        !['deadline', 'serviceTarget', 'resourceAccess'].includes(key)
+    )
     .sort()
     .join(',')
   if (
@@ -60,6 +64,18 @@ async function execute(
       request.deadline <= Date.now())
   )
     throw new Error('TIMEOUT')
+  if (
+    frames &&
+    request.resourceAccess !== undefined &&
+    typeof request.resourceAccess !== 'boolean'
+  )
+    throw new Error('INVALID_REQUEST')
+  const resourceAccess = Boolean(
+    managed &&
+    frames &&
+    request.resourceAccess === true &&
+    request.serviceTarget === undefined
+  )
   if (frames && request.serviceTarget !== undefined) {
     const target = serviceTargetSchema.parse(request.serviceTarget)
     if (
@@ -128,7 +144,9 @@ async function execute(
     manifestDigest(acceptedManifest) !== request.packageDigest
   )
     throw new Error('Package changed')
-  const plugin = await loadPlugin(request.pluginId)
+  const plugin = await loadPlugin(request.pluginId, {
+    resources: resourceAccess,
+  })
   if (!plugin)
     return failure(
       createExecutionFailure(request.pluginId, null, request.input, {
@@ -141,6 +159,7 @@ async function execute(
     throw new Error('Package changed')
   if (
     !(managed && snapshot) &&
+    !resourceAccess &&
     !(managed && frames && request.pluginId === 'plugin-local-reminder') &&
     !(
       managed &&
@@ -177,6 +196,7 @@ async function execute(
     log: () => {},
     services: frames?.services,
     artifacts: frames?.artifacts,
+    resources: resourceAccess ? frames?.resources : undefined,
     media:
       request.pluginId === 'plugin-media-inspector' ||
       request.pluginId === 'plugin-media-converter'

@@ -15,6 +15,7 @@
     "allow-managed-runtime-disconnect",
     "allow-managed-runtime-storage",
     "allow-managed-runtime-control",
+    "allow-managed-resource-select",
     "core:app:allow-version",
     "core:app:allow-tauri-version",
     "core:event:allow-listen",

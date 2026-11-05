@@ -11,6 +11,7 @@ pub mod policy;
 pub mod private_jobs;
 pub mod protocol;
 pub mod recovery;
+pub mod resources;
 pub mod runtime;
 pub mod scheduling;
 pub mod services;

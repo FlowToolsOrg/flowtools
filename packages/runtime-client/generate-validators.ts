@@ -39,6 +39,8 @@ const exports: Record<string, string> = {}
 for (const key of [
   'request',
   'response',
+  'resourceOperation',
+  'resourceResponse',
   'storageAction',
   'storageReport',
 ] as const) {
@@ -50,8 +52,15 @@ const header =
 const source = header + standaloneCode(ajv, exports).trimEnd() + '\n'
 const declarations =
   header +
-  "import type { Request, Response, StorageAction, StorageReport } from './bindings'\n" +
-  ['Request', 'Response', 'StorageAction', 'StorageReport']
+  "import type { Request, Response, ResourceOperation, ResourceResponse, StorageAction, StorageReport } from './bindings'\n" +
+  [
+    'Request',
+    'Response',
+    'ResourceOperation',
+    'ResourceResponse',
+    'StorageAction',
+    'StorageReport',
+  ]
     .map(
       type =>
         `export function validate${type}(value: unknown): value is ${type}\n`

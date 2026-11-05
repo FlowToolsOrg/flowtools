@@ -42,6 +42,9 @@ mod provider_cohorts;
 mod tool_queue_discard;
 #[cfg(windows)]
 pub use tool_queue_discard::QueuedToolDiscardPlan;
+#[cfg(windows)]
+#[path = "runtime_resources.rs"]
+mod resources;
 #[path = "runtime_scheduling.rs"]
 mod scheduling;
 #[path = "runtime_service_journal.rs"]
@@ -196,7 +199,8 @@ fn persist_stored_job(
 ) -> Result<(), ErrorCode> {
     let value = serde_json::to_value(stored).map_err(|_| ErrorCode::StorageFailed)?;
     #[cfg(windows)]
-    if stored.tool_artifacts.is_some() {
+    if stored.tool_artifacts.is_some() || stored.snapshot.resources.get("resourceBinding").is_some()
+    {
         let previous = durable.borrow().clone();
         let committed = leases::persist_job(
             store,
@@ -290,6 +294,8 @@ pub struct RuntimeCore {
     native_calls: HashMap<String, media::NativeCall>,
     #[cfg(windows)]
     audio_calls: HashMap<String, media::audio::AudioCall>,
+    #[cfg(windows)]
+    resources: crate::resources::native::State,
 }
 
 impl RuntimeCore {
@@ -345,6 +351,8 @@ impl RuntimeCore {
             native_calls: HashMap::new(),
             #[cfg(windows)]
             audio_calls: HashMap::new(),
+            #[cfg(windows)]
+            resources: crate::resources::native::State::default(),
         }
     }
 
@@ -496,6 +504,13 @@ impl RuntimeCore {
                 record.identity.clone(),
                 record.epoch,
                 record.grant.as_ref().map(PolicyStore::capability),
+            )?;
+        }
+        for record in &policy.resource_records {
+            core.broker.restore_resource_policy(
+                record.identity.clone(),
+                record.epoch,
+                record.grant.clone(),
             )?;
         }
         core.policy = Some(policy);
@@ -944,6 +959,17 @@ impl RuntimeCore {
     ) -> Result<(), ErrorCode> {
         if let Some(ref policy) = self.policy {
             self.broker.require_command_grant(identity, now())?;
+            if let Some(record) = policy
+                .resource_records
+                .iter()
+                .find(|r| r.identity == *identity)
+            {
+                policy.verify_resource_record(&self.data, identity)?;
+                if background || self.cold_started || record.grant.is_none() {
+                    return Err(ErrorCode::ApprovalRequired);
+                }
+                return Ok(());
+            }
             let grant = policy
                 .records
                 .iter()
@@ -1054,6 +1080,11 @@ impl RuntimeCore {
         if matches!(
             &request.call,
             Call::Permissions
+                | Call::ResourcePermissions
+                | Call::ResourceGrant(_)
+                | Call::ResourceOwner(_)
+                | Call::ResourceSelect(_)
+                | Call::ResourceDrop(_)
                 | Call::Grant(_)
                 | Call::Revoke(_)
                 | Call::Policy(_)
@@ -1083,6 +1114,7 @@ impl RuntimeCore {
             && matches!(
                 &request.call,
                 Call::Submit(_)
+                    | Call::ResourceSubmit(_)
                     | Call::DataRead(_)
                     | Call::DataWrite(_)
                     | Call::DataTransaction(_)
@@ -1094,6 +1126,58 @@ impl RuntimeCore {
         #[cfg(windows)]
         let request_method_undo = matches!(&request.call, Call::FilePlanUndo(_));
         match request.call {
+            Call::ResourcePermissions => Ok(Outcome::ResourcePermissions(
+                self.policy.as_ref().unwrap().resource_records.clone(),
+            )),
+            Call::ResourceGrant(grant) => {
+                let record = self
+                    .policy
+                    .as_mut()
+                    .unwrap()
+                    .grant_resources(&mut self.data, grant)?;
+                self.broker.restore_resource_policy(
+                    record.identity.clone(),
+                    record.epoch,
+                    record.grant.clone(),
+                )?;
+                Ok(Outcome::ResourcePermissions(vec![record]))
+            }
+            Call::ResourceSelect(_) => Err(ErrorCode::CapabilityUnavailable),
+            Call::ResourceOwner(request) => {
+                #[cfg(windows)]
+                {
+                    self.resource_owner(request.key).map(Outcome::ResourceOwner)
+                }
+                #[cfg(not(windows))]
+                {
+                    let _ = request;
+                    Err(ErrorCode::CapabilityUnavailable)
+                }
+            }
+            Call::ResourceDrop(key) => {
+                #[cfg(windows)]
+                {
+                    self.drop_resource_owner(&key.owner)?;
+                    Ok(Outcome::ResourceReleased)
+                }
+                #[cfg(not(windows))]
+                {
+                    let _ = key;
+                    Err(ErrorCode::CapabilityUnavailable)
+                }
+            }
+            Call::ResourceSubmit(submission) => {
+                #[cfg(windows)]
+                {
+                    self.submit_resources(connection, &caller, submission)
+                        .map(Outcome::Receipt)
+                }
+                #[cfg(not(windows))]
+                {
+                    let _ = submission;
+                    Err(ErrorCode::CapabilityUnavailable)
+                }
+            }
             Call::FilePlanRecovery => {
                 crate::file_workflows::store::FilePlanStore::recovery(&self.data)
                     .map(Outcome::FileRecovery)
@@ -1108,6 +1192,14 @@ impl RuntimeCore {
             Call::MediaPlanCreate(create) => {
                 #[cfg(windows)]
                 {
+                    if self.resources.observed() > 0
+                        && self
+                            .resource_observed_bytes()?
+                            .saturating_add(crate::file_workflows::media_io::MAX_INPUT_BYTES * 2)
+                            > crate::resources::MAX_OBSERVED
+                    {
+                        return Err(ErrorCode::BudgetExceeded);
+                    }
                     crate::file_workflows::media_io::create(&mut self.data, create)
                         .map(Outcome::MediaPlan)
                 }
@@ -1160,6 +1252,15 @@ impl RuntimeCore {
                     &create.prefix,
                     self.data.profile().ok_or(ErrorCode::StorageFailed)?,
                 )?;
+                #[cfg(windows)]
+                if self.resources.observed() > 0
+                    && self
+                        .resource_observed_bytes()?
+                        .saturating_add(u64::from(draft.preview().total_bytes))
+                        > crate::resources::MAX_OBSERVED
+                {
+                    return Err(ErrorCode::BudgetExceeded);
+                }
                 let record = crate::file_workflows::store::FilePlanStore::persist(
                     &mut self.data,
                     &create.request_key,
@@ -1281,6 +1382,13 @@ impl RuntimeCore {
                         record.identity.clone(),
                         record.epoch,
                         record.grant.as_ref().map(PolicyStore::capability),
+                    )?;
+                }
+                for record in &policy.resource_records {
+                    self.broker.restore_resource_policy(
+                        record.identity.clone(),
+                        record.epoch,
+                        record.grant.clone(),
                     )?;
                 }
                 Ok(Outcome::Permissions(policy.records.clone()))
@@ -1607,12 +1715,24 @@ impl RuntimeCore {
         caller: &str,
         submit: SubmitJob,
     ) -> Result<JobReceipt, ErrorCode> {
+        self.submit_bound(connection, caller, submit, None)
+    }
+    fn submit_bound(
+        &mut self,
+        connection: &str,
+        caller: &str,
+        submit: SubmitJob,
+        resource_binding: Option<String>,
+    ) -> Result<JobReceipt, ErrorCode> {
         if !valid_key(&submit.idempotency_key) || !submit.deadline.is_finite() {
             return Err(ErrorCode::InvalidRequest);
         }
         let catalog = self.catalog.clone();
         let (manifest, command) = catalog.command(&submit.plugin_id, &submit.command_id)?;
         let identity = CommandIdentity::from_manifest(caller, manifest, command);
+        if crate::resources::readonly_command(command) && resource_binding.is_none() {
+            return Err(ErrorCode::InteractionRequired);
+        }
         self.managed_authorization(&identity, submit.background)?;
         let grant_epoch = self.broker.authorize_command(&identity, command, now())?;
         let input = self.catalog.prepare_input_mode(
@@ -1658,9 +1778,11 @@ impl RuntimeCore {
         let dependency_lock = planned.as_ref().map(|planned| planned.lock.clone());
         let lock_digest =
             existing.unwrap_or_else(|| dependency_lock.as_ref().unwrap().digest.clone());
-        let action_digest = digest(
-            &json!({ "package":package_digest, "command":submit.command_id, "lock":lock_digest, "input":input, "background":submit.background, "deadline":submit.deadline }),
-        );
+        let mut action = json!({ "package":package_digest, "command":submit.command_id, "lock":lock_digest, "input":input, "background":submit.background, "deadline":submit.deadline });
+        if let Some(binding) = &resource_binding {
+            action["resourceBinding"] = json!(binding);
+        }
+        let action_digest = digest(&action);
         if let Some(run_id) = self.keys.get(&key) {
             let job = &self.jobs[run_id];
             if job.action_digest != action_digest {
@@ -1679,6 +1801,10 @@ impl RuntimeCore {
         self.managed_authorization(&identity, submit.background)?;
         let accepted_at = final_at;
         let run_id = Uuid::new_v4().to_string();
+        let mut resources = command["resources"].clone();
+        if let Some(binding) = resource_binding {
+            resources["resourceBinding"] = json!(binding);
+        }
         let snapshot = JobSnapshot {
             format_version: 1,
             run_id: run_id.clone(),
@@ -1691,7 +1817,7 @@ impl RuntimeCore {
             dependency_lock: lock_digest,
             deadline: submit.deadline,
             grant_epoch,
-            resources: command["resources"].clone(),
+            resources,
             state: JobState::Accepted,
             sequence: 0,
             result: None,
@@ -1967,6 +2093,15 @@ impl RuntimeCore {
         }
         if job.snapshot.state != JobState::Running {
             return Err(ErrorCode::SessionInvalid);
+        }
+        #[cfg(windows)]
+        if job.snapshot.resources.get("resourceBinding").is_some() {
+            let expected = job.durable_metadata.borrow();
+            leases::check_job_predecessor(
+                &self.data,
+                run_id,
+                expected.as_deref().ok_or(ErrorCode::StoreCorrupt)?,
+            )?;
         }
         self.broker.check_session(
             job.broker_session
@@ -2251,9 +2386,13 @@ impl RuntimeCore {
                 && spec.command_id == job.snapshot.command_id
                 && spec.package_digest == job.snapshot.package_digest
                 && spec.deadline <= job.snapshot.deadline
-                && digest(
-                    &json!({"package":spec.package_digest,"command":spec.command_id,"lock":job.snapshot.dependency_lock,"input":spec.input,"background":job.background,"deadline":job.snapshot.deadline}),
-                ) == job.action_digest
+                && {
+                    let mut action = json!({"package":spec.package_digest,"command":spec.command_id,"lock":job.snapshot.dependency_lock,"input":spec.input,"background":job.background,"deadline":job.snapshot.deadline});
+                    if let Some(binding) = job.snapshot.resources.get("resourceBinding") {
+                        action["resourceBinding"] = binding.clone();
+                    }
+                    digest(&action) == job.action_digest
+                }
         } else {
             false
         };
@@ -2471,6 +2610,21 @@ impl RuntimeCore {
         if self.state(run_id).is_none_or(JobState::terminal) {
             return;
         }
+        #[cfg(windows)]
+        if self
+            .resources
+            .active
+            .values()
+            .any(|a| a.run.as_deref() == Some(run_id))
+        {
+            if self.resources.cancel_run(run_id).is_err() {
+                self.stopping = true;
+            }
+            self.resources
+                .deferred
+                .insert(run_id.into(), (result, recovered));
+            return;
+        }
         let cancelled = self.state(run_id) == Some(JobState::Cancelling);
         #[cfg(windows)]
         if result.is_ok()
@@ -2578,6 +2732,8 @@ impl RuntimeCore {
             return;
         }
         #[cfg(windows)]
+        self.resources.runs.remove(run_id);
+        #[cfg(windows)]
         if self.release_tool_handles_if_drained(run_id).is_err() {
             self.stopping = true;
             return;
@@ -2660,6 +2816,11 @@ impl RuntimeCore {
         Ok(())
     }
     pub fn cancel(&mut self, run_id: &str) {
+        #[cfg(windows)]
+        if self.resources.cancel_run(run_id).is_err() {
+            self.stopping = true;
+            return;
+        }
         if matches!(
             self.state(run_id),
             Some(JobState::Queued | JobState::Running)
@@ -2697,6 +2858,12 @@ impl RuntimeCore {
     }
 
     pub fn shutdown(&mut self) {
+        #[cfg(windows)]
+        for active in self.resources.active.values() {
+            if active.cancellation.cancel().is_err() {
+                self.stopping = true;
+            }
+        }
         // A transient policy Host never owns restored business execution.
         if self.management_only {
             self.sessions.clear();
@@ -2804,7 +2971,9 @@ pub(crate) fn interrupt_restored_jobs(connection: &rusqlite::Connection) -> Resu
                 },
             });
             #[cfg(windows)]
-            if stored.tool_artifacts.is_some() {
+            if stored.tool_artifacts.is_some()
+                || stored.snapshot.resources.get("resourceBinding").is_some()
+            {
                 leases::persist_restored_job(
                     connection,
                     &run,

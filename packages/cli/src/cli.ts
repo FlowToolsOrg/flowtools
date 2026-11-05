@@ -27,6 +27,7 @@ import { addRuntimeCommands } from './host'
 import { addJobCommands } from './jobs'
 import { addManagementCommands, managementFailure } from './management'
 import { addMediaCommands } from './media'
+import { addResourceCommands } from './resources'
 import { parseRunArguments, requestedRunFormat } from './run-arguments'
 import { printExecutionResult, runPlugin } from './runner'
 import { addScheduleCommands } from './schedules'
@@ -50,6 +51,7 @@ addDependencyCommands(program)
 addToolCommands(program)
 addFileCommands(program)
 addMediaCommands(program)
+addResourceCommands(program)
 
 function writeJson(value: unknown) {
   process.stdout.write(JSON.stringify(value, null, 2) + '\n')
@@ -383,6 +385,7 @@ main().catch(error => {
       'schedules',
       'files',
       'media',
+      'resources',
     ].includes(process.argv[2] ?? '')
   ) {
     managementFailure(error)

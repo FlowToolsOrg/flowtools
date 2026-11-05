@@ -104,6 +104,16 @@ export const builtInCLIManifests = [
     hasSchema: true,
   },
   {
+    id: 'plugin-resource-reader',
+    name: '资源读取',
+    version: '0.0.1',
+    maturity: 'prototype',
+    description: '授权后读取所选文件或统计目录',
+    type: 'app',
+    hasRun: true,
+    hasSchema: true,
+  },
+  {
     id: 'plugin-text-ops',
     name: '文本集合运算',
     version: '0.1.0',

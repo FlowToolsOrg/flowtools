@@ -79,7 +79,7 @@ try {
       method: 'session.open',
       payload: {
         token: cliToken,
-        clientVersion: '0.4.0',
+        clientVersion: '0.5.0',
         expectedInstanceId: null,
         agentId: 'admin',
       },

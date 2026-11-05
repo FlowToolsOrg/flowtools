@@ -156,6 +156,17 @@ describe('built-in plugin contracts', () => {
   test.each(builtInManifests)(
     'manifest $id metadata matches the loaded SDK plugin contract',
     async manifest => {
+      if (manifest.id === 'plugin-resource-reader') {
+        const failure = await manifest.loader().then(
+          () => null,
+          error => error as unknown
+        )
+        expect(failure).toBeInstanceOf(Error)
+        expect((failure as Error).message).toBe(
+          'Native v2 effect adapters are unavailable'
+        )
+        return
+      }
       const { default: plugin } = await manifest.loader()
 
       expect({
@@ -201,9 +212,14 @@ describe('built-in plugin contracts', () => {
       })
 
       const commands = commandRegistry.getAll()
-      expect(commands).toHaveLength(builtInManifests.length)
+      const supported = builtInManifests.filter(
+        manifest => manifest.id !== 'plugin-resource-reader'
+      )
+      expect(supported).toHaveLength(15)
+      expect(registry.get('plugin-resource-reader')?.plugin).toBeUndefined()
+      expect(commands).toHaveLength(supported.length)
       expect(commands.map(command => command.id)).toEqual(
-        builtInManifests.map(manifest => `plugin:${manifest.id}`)
+        supported.map(manifest => `plugin:${manifest.id}`)
       )
 
       for (const command of commands) {

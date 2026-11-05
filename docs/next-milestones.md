@@ -1,5 +1,9 @@
 # FlowTools 下一阶段目标与实施设计
 
+2026-11-05：NA1 接通 [资源选择与读取](./validation/na1-resources.md)，依赖尚未合并
+的 G8 #17、NA0 #19。固定 v2 只读命令复用 Runtime、原 epoch 和 DataStore writer，
+v1 与 G8 门禁保留。NA2–NA7、独立安全审阅、G8/发行与 E07 仍 pending。
+
 2026-11-05：新增 [四项原生 API 计划](./plugin-native-api-design.md) 的 NA0
 [版本化声明与兼容基础](./validation/na0-versioned-contracts.md)。v1 与现有授权/
 安全门禁保持，v2 新效果仍拒绝；NA1–NA7、G0–G8 与 E 的原有依赖/成熟度

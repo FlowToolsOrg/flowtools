@@ -7,7 +7,7 @@ use specta::Type;
 
 pub const PROTOCOL_MAJOR: u16 = 1;
 pub const MAX_FRAME_BYTES: usize = 1_048_576;
-pub const CLIENT_VERSION: &str = "0.4.0";
+pub const CLIENT_VERSION: &str = "0.5.0";
 
 /// Decode syntax only. Identity, role, grants and effects remain Runtime checks.
 /// Duplicate keys are refused at every depth, including opaque plugin JSON.
@@ -38,6 +38,18 @@ pub struct Request {
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
 #[serde(tag = "method", content = "payload", deny_unknown_fields)]
 pub enum Call {
+    #[serde(rename = "resources.permissions")]
+    ResourcePermissions,
+    #[serde(rename = "resources.grant")]
+    ResourceGrant(crate::resources::ResourceGrant),
+    #[serde(rename = "resources.owner")]
+    ResourceOwner(crate::resources::ResourceOwnerRequest),
+    #[serde(rename = "resources.select")]
+    ResourceSelect(crate::resources::ResourceSelection),
+    #[serde(rename = "resources.drop")]
+    ResourceDrop(crate::resources::ResourceOwnerKey),
+    #[serde(rename = "resources.submit")]
+    ResourceSubmit(crate::resources::ResourceSubmission),
     #[serde(rename = "session.open")]
     Open(OpenSession),
     #[serde(rename = "runtime.status")]
@@ -448,6 +460,14 @@ pub struct Response {
 #[derive(Clone, Debug, Serialize, Deserialize, Type, schemars::JsonSchema)]
 #[serde(tag = "type", content = "data", deny_unknown_fields)]
 pub enum Outcome {
+    #[serde(rename = "resource-permissions")]
+    ResourcePermissions(Vec<crate::resources::ResourcePermission>),
+    #[serde(rename = "resource-owner")]
+    ResourceOwner(crate::resources::ResourceOwner),
+    #[serde(rename = "resource")]
+    Resource(crate::resources::ResourceInfo),
+    #[serde(rename = "resource-released")]
+    ResourceReleased,
     #[serde(rename = "session")]
     Session(SessionProof),
     #[serde(rename = "status")]

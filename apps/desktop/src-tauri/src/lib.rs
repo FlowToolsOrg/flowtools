@@ -55,7 +55,8 @@ fn command_builder<R: tauri::Runtime>() -> Builder<R> {
         managed_runtime::managed_runtime::<tauri::Wry>,
         managed_runtime::managed_runtime_disconnect::<tauri::Wry>,
         managed_runtime::managed_runtime_storage::<tauri::Wry>,
-        managed_runtime::managed_runtime_control::<tauri::Wry>
+        managed_runtime::managed_runtime_control::<tauri::Wry>,
+        managed_runtime::managed_resource_select::<tauri::Wry>
     ]);
     #[cfg(all(windows, any(debug_assertions, feature = "codegen")))]
     let builder = Builder::<R>::new().commands(collect_commands![
@@ -70,6 +71,7 @@ fn command_builder<R: tauri::Runtime>() -> Builder<R> {
         managed_runtime::managed_runtime_disconnect::<tauri::Wry>,
         managed_runtime::managed_runtime_storage::<tauri::Wry>,
         managed_runtime::managed_runtime_control::<tauri::Wry>,
+        managed_runtime::managed_resource_select::<tauri::Wry>,
         validation_runtime::validation_runtime::<tauri::Wry>,
         validation_runtime::validation_runtime_disconnect::<tauri::Wry>
     ]);

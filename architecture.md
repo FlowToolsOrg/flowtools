@@ -1,5 +1,11 @@
 # Flow Tool Architecture
 
+NA1 在原 Runtime/PolicyStore/broker 上增加只读资源 adapter。原 grants 表保存独立
+format-2 资源记录，SQLite schema 2 与旧 v1 行不迁移。Core 持有 owner/run/epoch/
+deadline、原生对象/内容 pin 与游标；Runtime 在锁外执行可取消 IO，每个原生读取
+及交付复核当前权限。只有 T0 管理选择接收路径，插件只见 run Ref。当前 wire 为
+0.5.0/私有帧 3，见 [NA1 证据与边界](./docs/validation/na1-resources.md)。
+
 NA0 的 [版本契约基础](./docs/validation/na0-versioned-contracts.md) 在原 Runtime
 与包准入上增加独立 Manifest v2 profile/typed scopes；v1 parser 与字节保留。
 SDK/原生签名 ZIP/G4 metadata 显式分派，旧 policy 不迁移成新授权。wire client
@@ -312,7 +318,7 @@ RPC 路由，二进制工具由共享 artifact store 与受管任务进程执行
   - `apps/web-vite/src/stores`：pluginRegistryStore、commandStore、runHistoryStore、settingsStore
   - `packages/sdk/src/compat/html-plugin.ts`：HTML `plugin.json` 类型、命令解析和兼容分级
   - `scripts/inspect-html-plugins.ts`：扫描本地 HTML 插件 checkout 并生成 `apps/desktop/src/data/html-plugin-catalog.json` 与 `docs/html-plugin-catalog.json`
-  - 15 个内置插件（全部为 app 类型，均提供 `setup()` + `run()` + `inputSchema`）
+  - 16 个内置插件（均为 app，提供 `setup()` + `run()` + `inputSchema`；原 15 个保留 v1，资源读取为显式 v2）
 - 目录已创建，尚未实现：
   - `apps/docs`
   - `apps/web`

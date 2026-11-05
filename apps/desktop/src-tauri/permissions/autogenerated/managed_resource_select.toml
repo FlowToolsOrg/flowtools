@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-managed-resource-select"
+description = "Enables the managed_resource_select command without any pre-configured scope."
+commands.allow = ["managed_resource_select"]
+
+[[permission]]
+identifier = "deny-managed-resource-select"
+description = "Denies the managed_resource_select command without any pre-configured scope."
+commands.deny = ["managed_resource_select"]

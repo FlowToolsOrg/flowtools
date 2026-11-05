@@ -37,6 +37,7 @@ fn main() {
         "managed_runtime_disconnect",
         "managed_runtime_storage",
         "managed_runtime_control",
+        "managed_resource_select",
         "validation_runtime",
         "validation_runtime_disconnect",
     ]);

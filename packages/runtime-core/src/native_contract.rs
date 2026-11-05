@@ -4,7 +4,7 @@ use serde_json::Value;
 use specta::Type;
 
 pub const NATIVE_CAPABILITY_PROFILE: &str = "flowtools-native-v2";
-pub const RUNNER_PROTOCOL_VERSION: u16 = 2;
+pub const RUNNER_PROTOCOL_VERSION: u16 = 3;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Type, schemars::JsonSchema)]
 #[serde(rename_all = "UPPERCASE")]

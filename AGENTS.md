@@ -1,14 +1,22 @@
 # Repository Guidelines
 
+NA1 resources use the existing Runtime/PolicyStore/broker/DataStore writer.
+Keep v1 grants/Scope/corpus closed, format-2 rows guarded, paths in T0 selection
+only, ephemeral run refs and current authorization before each IO and delivery.
+Keep real NTFS/reparse/mapping, cursor/quota, cancellation and actual IO/process
+drain regressions. No service delegation or replay follows. Current wire client
+is 0.5.0/private frames 3; only the explicit main-window managed_resource_select
+permission is added. See [NA1](./docs/validation/na1-resources.md).
+
 Cargo audits must retain `Invoke-QualityCommand -RejectErrorOutput`: pinned
 cargo-audit can print registry errors and still exit zero. Keep actual stdout/
 stderr, ANSI, nonzero and warning regression controls; do not hide diagnostics.
 
 NA0 preserves the closed v1 parser, original 405-case bytes and structural export
 digest. Use explicit version dispatch for Manifest v2/profile declarations;
-never reinterpret its typed scopes as legacy grants. Wire client 0.4.0/private
-frames 2 must refuse old peers before business IO. V2 effects remain unavailable
-until their real adapter gates pass. Keep the separate LF v2 corpus/drift checks,
+never reinterpret its typed scopes as legacy grants. NA1 advances the exact wire
+versions above; unsupported v2 effects remain unavailable. Keep the separate LF
+v2 corpus/drift checks,
 actual signed ZIP/runner controls and byte-preserving policy tests. See
 [NA0 evidence](./docs/validation/na0-versioned-contracts.md).
 
@@ -84,7 +92,7 @@ This repository is a Bun + Turbo monorepo.
 - `apps/ui-test`: consumer app for manual validation of `@flowtools/ui`.
   Manual UI validation remains required and complements automated coverage; it
   does not replace it.
-- `plugins/`: local plugin workspace with 15 built-in plugins (all app type,
+- `plugins/`: local plugin workspace with 16 built-in plugins (all app type,
   all CLI-compatible via `run()` + `inputSchema`).
 - `configs/tsdown`: shared package build config.
 - `docs/` and root docs such as `README.md` and `architecture.md`: product and
